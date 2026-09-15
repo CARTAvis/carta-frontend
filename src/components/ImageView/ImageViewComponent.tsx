@@ -521,8 +521,8 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 
 function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: boolean, pixelRatio: number): number {
     if (!isImagePixelSize) {
-        // Screen-pixel sizes are already expressed in the SVG canvas coordinate space.
-        return size;
+        // SVG coordinates are device pixels; pixelRatio includes both Retina and export-resolution scaling.
+        return size * pixelRatio;
     }
 
     const frameView = getDestinationFrameView(frame);
@@ -586,8 +586,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
                 minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
                 color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
                 rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
-                // Keep the catalog stroke in the same units as its source size.
-                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * (catalogWidgetStore.isImagePixelSize ? pixelRatio : 1) : undefined
+                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * pixelRatio : undefined
             });
         }
         positionArrays.set(fileId, points.subarray(0, pointCount * 2));

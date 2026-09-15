@@ -323,20 +323,23 @@ describe("getPanelSvg", () => {
         expect(beam).toHaveAttribute("ry", "12");
     });
 
-    test("does not apply the device pixel ratio twice to catalog source sizes", () => {
+    test("scales screen-pixel catalog source dimensions on Retina displays", () => {
         mockAppStore.pixelRatio = 2;
+        mockAppStore.imageRatio = 1;
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
-            catalogShape: 2,
+            catalogShape: 1,
             catalogSize: 6,
             catalogColor: "#00ff00",
             isImagePixelSize: false,
+            thickness: 2,
             shapeSettings: {diameterBase: 0}
         });
 
         const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
-        const source = panelSvg?.querySelector("#catalog-overlay circle");
+        const source = panelSvg?.querySelector("#catalog-overlay rect");
 
-        expect(source).toHaveAttribute("r", "3");
+        expect(source).toHaveAttribute("width", "12");
+        expect(source).toHaveAttribute("stroke-width", "4");
     });
 
     test("scales image-pixel catalog source sizes with the exported image view", () => {
