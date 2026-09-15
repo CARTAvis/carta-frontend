@@ -827,10 +827,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const difference = rangeMax - rangeMin;
         const exponential = difference.toExponential(2);
         const power = parseFloat(exponential.split("e")[1]);
-        const maxPower = parseFloat(rangeMax.toExponential(1).split("e")[1]);
-        const minPower = parseFloat(rangeMin.toExponential(1).split("e")[1]);
-        if (maxPower >= 5 || minPower <= -5) {
-            return toExponential(value, 2);
+        const maxAbsoluteValue = Math.max(Math.abs(rangeMin), Math.abs(rangeMax));
+        const maxPower = parseFloat(maxAbsoluteValue.toExponential(1).split("e")[1]);
+        if (maxPower >= 3 || maxPower <= -3) {
+            return toExponential(value, 1);
         } else if (power <= 0) {
             return value.toFixed(Math.abs(power) + 1);
         } else {
