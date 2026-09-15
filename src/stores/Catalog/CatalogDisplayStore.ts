@@ -1716,11 +1716,9 @@ export class CatalogDisplayStore {
      * the reaction on those is the same number, and a bound that still follows the data stays
      * recognisable as one.
      */
-    private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string): {min: number; max: number} {
+    private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string, dataState = this.catalogDataState(profileStore)): {min: number; max: number} {
         const data = profileStore.catalogControlHeader.has(column) ? profileStore.get1DPlotData(column).wcsData : undefined;
         const visibleRows = Math.min(data?.length ?? 0, profileStore.numVisibleRows);
-        const sortingInfo = profileStore.sortingInfo;
-        const dataState = JSON.stringify([sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
         const cached = this.columnRangeCache.get(column);
         const canExtend = cached?.profileStore === profileStore && cached.dataState === dataState && cached.rowsScanned <= visibleRows && (cached.rowsScanned < visibleRows || cached.data === data);
         let min = canExtend ? cached.min : Number.MAX_VALUE;
@@ -1742,6 +1740,11 @@ export class CatalogDisplayStore {
         };
     }
 
+    private catalogDataState(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore): string {
+        const sortingInfo = profileStore.sortingInfo;
+        return JSON.stringify([sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
+    }
+
     /**
      * Widen the data-derived bounds of every mapped column to the rows loaded so far. A bound the
      * user has clipped away from its default is theirs to keep, so only its default follows the
@@ -1752,21 +1755,29 @@ export class CatalogDisplayStore {
         if (!profileStore) {
             return;
         }
-        this.refreshDataDerivedClip(profileStore, "sizeMajor");
+        const hasDataDerivedClip = (group: ClipGroup) => {
+            const {column} = this.clipGroupState(group);
+            return column !== CatalogOverlay.NONE && !this.pendingClipRestore.has(group);
+        };
+        if (!hasDataDerivedClip("sizeMajor") && !hasDataDerivedClip("sizeMinor") && !hasDataDerivedClip("color") && !hasDataDerivedClip("orientation")) {
+            return;
+        }
+        const dataState = this.catalogDataState(profileStore);
+        this.refreshDataDerivedClip(profileStore, "sizeMajor", dataState);
         // A locked minor bound follows the major axis rather than its own column.
-        this.refreshDataDerivedClip(profileStore, "sizeMinor", this.isSizeColumnMinLocked, this.isSizeColumnMaxLocked);
-        this.refreshDataDerivedClip(profileStore, "color");
-        this.refreshDataDerivedClip(profileStore, "orientation");
+        this.refreshDataDerivedClip(profileStore, "sizeMinor", dataState, this.isSizeColumnMinLocked, this.isSizeColumnMaxLocked);
+        this.refreshDataDerivedClip(profileStore, "color", dataState);
+        this.refreshDataDerivedClip(profileStore, "orientation", dataState);
     }
 
-    private refreshDataDerivedClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, group: ClipGroup, isMinLocked: boolean = false, isMaxLocked: boolean = false) {
+    private refreshDataDerivedClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, group: ClipGroup, dataState: string, isMinLocked: boolean = false, isMaxLocked: boolean = false) {
         const {column, min, max} = this.clipGroupState(group);
         // A clip a config authored is restored by the reaction that is still to run; leave it to it.
         if (column === CatalogOverlay.NONE || this.pendingClipRestore.has(group)) {
             return;
         }
 
-        const range = this.columnRange(profileStore, column);
+        const range = this.columnRange(profileStore, column, dataState);
         if (!isMinLocked && min.clipd === min.default) {
             min.clipd = range.min;
         }

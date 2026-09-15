@@ -9,7 +9,7 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, CatalogUpdateMode, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
@@ -414,6 +414,27 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeMapColumn).toBe("Fmag");
         expect(store.sizeColumnMin.clipd).toBe(2);
         expect(store.sizeColumnMax.clipd).toBe(8);
+    });
+
+    test("restores the profile state when the hidden-column request cannot be sent", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(false);
+
+        runInAction(() => {
+            profileStore.catalogOriginalData.delete(0);
+            profileStore.setHeaderDisplay(false, "Fmag");
+            profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+        });
+
+        const result = store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag"}});
+
+        expect(result.success).toBe(false);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
+        expect(profileStore.isUpdateColumnMode).toBe(false);
+        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.isLoadingOntoImage).toBe(false);
+        expect(profileStore.updateMode).toBe(CatalogUpdateMode.ViewUpdate);
     });
 
     test("reports a deferred config after one column request still has no data", () => {

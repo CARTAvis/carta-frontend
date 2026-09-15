@@ -1293,12 +1293,15 @@ export class AppStore {
             return false;
         }
 
+        const previousUpdateMode = profileStore.updateMode;
+        const isOriginalUpdateColumnMode = profileStore.isUpdateColumnMode;
+        const isOriginalLoadingData = profileStore.isLoadingData;
+
         // Hidden config columns must be displayed temporarily so the backend includes their data;
         // this intentionally changes the table's displayed-column selection during restoration.
         columnNames.forEach(columnName => profileStore.setHeaderDisplay(true, columnName));
         profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
         profileStore.setIsUpdateColumn(true);
-        profileStore.resetFilterRequest();
 
         const filter = profileStore.updateRequestDataSize;
         const displayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
@@ -1309,7 +1312,16 @@ export class AppStore {
         filter.fileId = catalogFileId;
         filter.filterConfigs = profileStore.getUserFilters();
         filter.columnIndices = profileStore.displayedColumnHeaders.map(column => column.columnIndex);
-        return this.sendCatalogFilter(filter);
+        const requestId = this.sendCatalogFilter(filter);
+        if (requestId === false) {
+            profileStore.setIsUpdateColumn(isOriginalUpdateColumnMode);
+            profileStore.setUpdateMode(previousUpdateMode);
+            profileStore.setLoadingDataStatus(isOriginalLoadingData);
+            return false;
+        }
+
+        profileStore.resetFilterRequest();
+        return requestId;
     };
 
     /**
