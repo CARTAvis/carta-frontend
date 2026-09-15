@@ -979,8 +979,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
         const chart = this.histogramPlotRef;
-        const widgetStore = this.widgetStore;
-        if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart && widgetStore) {
+        if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart) {
             const xScale = chart.scales["x"];
             if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
                 this.hasHistogramDragHandled = true;
@@ -989,11 +988,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 if (x1 !== undefined && x2 !== undefined) {
                     const newMin = Math.min(x1, x2);
                     const newMax = Math.max(x1, x2);
-                    if (widgetStore.histogramDragMode === DragMode.Select) {
-                        this.selectHistogramBinsInRange(newMin, newMax);
-                    } else {
-                        widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
-                    }
+                    this.selectHistogramBinsInRange(newMin, newMax);
                 }
             }
         }
@@ -1005,19 +1000,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (target?.closest(".profiler-toolbar")) {
             return;
         }
-        if (this.widgetStore?.histogramDragMode === DragMode.Select) {
-            clearTimeout(this.pendingHistogramClickHandle);
-            this.pendingHistogramClickHandle = undefined;
-            requestAnimationFrame(() => {
-                const didDoubleClickBar = this.hasHistogramBarDoubleClickHandled;
-                this.hasHistogramBarDoubleClickHandled = false;
-                if (!didDoubleClickBar) {
-                    this.onAutoscale();
-                }
-            });
-            return;
-        }
-        this.onDoubleClick();
+        clearTimeout(this.pendingHistogramClickHandle);
+        this.pendingHistogramClickHandle = undefined;
+        requestAnimationFrame(() => {
+            const didDoubleClickBar = this.hasHistogramBarDoubleClickHandled;
+            this.hasHistogramBarDoubleClickHandled = false;
+            if (!didDoubleClickBar) {
+                this.onAutoscale();
+            }
+        });
     };
 
     private exportHistogramImage = () => {
@@ -1429,7 +1420,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         this.hasHistogramDragHandled = false;
                         return;
                     }
-                    if (widgetStore.histogramDragMode === DragMode.Select && elements.length > 0) {
+                    if (elements.length > 0) {
                         clearTimeout(this.pendingHistogramClickHandle);
                         this.pendingHistogramClickHandle = undefined;
                         if (((event.native as MouseEvent | null)?.detail ?? 0) > 1) {
@@ -1442,7 +1433,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             const binIndices = histData.binIndices[binIndex];
                             this.pendingHistogramClickHandle = setTimeout(() => {
                                 this.pendingHistogramClickHandle = undefined;
-                                if (this.widgetStore?.histogramDragMode === DragMode.Select && this.histogramData === histData) {
+                                if (this.histogramData === histData) {
                                     this.selectCatalogPoints(binIndices);
                                 }
                             }, DOUBLE_CLICK_THRESHOLD);
@@ -1570,11 +1561,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         onDoubleClick={this.onHistogramDoubleClick}
                     >
                         <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
-                        <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData}>
-                            <Tooltip content="Box select">
-                                <AnchorButton icon="widget" active={widgetStore.histogramDragMode === DragMode.Select} onClick={() => widgetStore.setHistogramDragMode(DragMode.Select)} />
-                            </Tooltip>
-                        </ToolbarComponent>
+                        <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData} />
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="scatter-info" data-testid="catalog-plot-info">
@@ -1583,7 +1570,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
                                 <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
-                                    <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
+                                    <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} data-testid="catalog-plot-selected-only-switch" />
                                 </FormGroup>
                             </Tooltip>
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
@@ -1707,7 +1694,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
-                                <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
+                                <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} data-testid="catalog-plot-selected-only-switch" />
                             </FormGroup>
                         </Tooltip>
                         {renderLinearRegressionButton}

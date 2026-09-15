@@ -12,7 +12,6 @@ export interface CatalogPlotWidgetStoreProps {
 
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
-export type HistogramDragMode = Exclude<DragMode, DragMode.Lasso>;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
@@ -22,7 +21,6 @@ export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterBorder: Border | undefined = undefined;
     @observable dragMode: DragMode | false = DragMode.Select;
-    @observable histogramDragMode: HistogramDragMode = DragMode.Select;
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
@@ -71,10 +69,6 @@ export class CatalogPlotWidgetStore {
 
     @action setDragMode(mode: DragMode | false) {
         this.dragMode = mode;
-    }
-
-    @action setHistogramDragMode(mode: HistogramDragMode) {
-        this.histogramDragMode = mode;
     }
 
     @action setLogScaleY(isLogScaleY: boolean) {
