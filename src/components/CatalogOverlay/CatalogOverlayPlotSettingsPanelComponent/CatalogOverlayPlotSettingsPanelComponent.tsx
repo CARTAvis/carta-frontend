@@ -54,6 +54,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private readonly disposers: IReactionDisposer[] = [];
     private readonly scalingPreviewSessions = new Map<CatalogScalingKey, CatalogScalingPreviewSession>();
     private colormapPreviewSession: CatalogColormapPreviewSession | null = null;
+    private emptyDisplayStore: CatalogDisplayStore | undefined;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -173,6 +174,16 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         this.revertAllPreviews();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.emptyDisplayStore?.dispose();
+        this.emptyDisplayStore = undefined;
+    }
+
+    /** The store standing in for a catalog that is not there, holding the defaults the disabled controls show. */
+    private getEmptyDisplayStore(): CatalogDisplayStore {
+        if (!this.emptyDisplayStore) {
+            this.emptyDisplayStore = new CatalogDisplayStore(CatalogStore.PENDING_CATALOG_FILE_ID);
+        }
+        return this.emptyDisplayStore;
     }
 
     private setScaling(displayStore: CatalogDisplayStore, key: CatalogScalingKey, scaling: FrameScaling) {
@@ -295,10 +306,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const isDarkTheme = AppStore.Instance.isDarkTheme;
 
-        const displayStore = this.displayStore;
-        if (!displayStore) {
-            return null;
-        }
+        const selectedDisplayStore = this.displayStore;
+        // Without a catalog there is nothing to configure, but the panel still shows its controls,
+        // filled with defaults and disabled, rather than collapsing to an empty pane.
+        const displayStore = selectedDisplayStore ?? this.getEmptyDisplayStore();
 
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
@@ -314,7 +325,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         if (fileName !== undefined && catalogFileId !== undefined) {
             activeFileName = `${catalogFileId}: ${fileName}`;
         }
-        const isOverlayPanelDisabled = catalogFileIds.length <= 0;
+        const isFileSelectionDisabled = catalogFileIds.length <= 0;
+        const isOverlayPanelDisabled = isFileSelectionDisabled || !selectedDisplayStore;
         const shouldDisableSizeMap = isOverlayPanelDisabled || displayStore.isSizeMapDisabled;
         const shouldDisableColorMap = isOverlayPanelDisabled || displayStore.isColorMapDisabled;
         const shouldDisableOrientationMap = isOverlayPanelDisabled || displayStore.isOrientationMapDisabled;
@@ -909,10 +921,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return (
             <ScrollShadow>
                 <div className={"catalog-settings"}>
-                    <FormGroup className={"file-menu"} inline={true} label="File" disabled={isOverlayPanelDisabled}>
+                    <FormGroup className={"file-menu"} inline={true} label="File" disabled={isFileSelectionDisabled}>
                         <Select
                             className={Classes.FILL}
-                            disabled={isOverlayPanelDisabled}
+                            disabled={isFileSelectionDisabled}
                             filterable={false}
                             items={catalogFileItems}
                             activeItem={this.catalogFileId}
@@ -921,7 +933,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             fill={true}
                         >
-                            <Button text={activeFileName} endIcon="double-caret-vertical" disabled={isOverlayPanelDisabled} />
+                            <Button text={activeFileName} endIcon="double-caret-vertical" disabled={isFileSelectionDisabled} />
                         </Select>
                     </FormGroup>
                     <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={isOverlayPanelDisabled}>
