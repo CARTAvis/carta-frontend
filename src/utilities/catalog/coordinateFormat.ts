@@ -122,10 +122,7 @@ export function recognizeCoordinateString(value: string | number | null | undefi
     }
 
     const fields = parts.map(Number);
-    if (!fields.length || fields.length > 3 || fields.some(field => !isFinite(field))) {
-        return undefined;
-    }
-    if (!isValidSexagesimalFields(fields)) {
+    if (!fields.length || fields.length > 3 || !isValidSexagesimalFields(fields)) {
         return undefined;
     }
 
@@ -238,7 +235,7 @@ function getSniffIndices(valueCount: number, sampleSize: number): number[] {
     // Do not change the small-array behavior of the sniffer: callers may deliberately use a small
     // sample to inspect only the prefix. Once a full default scan has been exhausted, however,
     // inspect a bounded set of distributed positions in the remaining rows.
-    if (valueCount <= COORDINATE_SNIFF_SAMPLE_SIZE * EMPTY_VALUE_SCAN_FACTOR || laterSampleCount <= 0) {
+    if (valueCount <= COORDINATE_SNIFF_SCAN_LIMIT || laterSampleCount <= 0) {
         return indices;
     }
 
@@ -270,24 +267,6 @@ export function hasCoordinateValuesToInspect(values: ReadonlyArray<string | numb
     return false;
 }
 
-/**
- * Derives a descriptor from the data itself, for columns that declare no units. Only the values
- * are consulted; the column name is deliberately not an input here, because a name states intent
- * and intent is the ranking layer's business, not the parser's.
- *
- * A format is a property of the column, not of every row in it, so a minority of unreadable
- * values does not overturn what the rest plainly are: catalogs write a missing coordinate as a
- * placeholder ("--", "N/A"), and parseCoordinateValue already drops such a row as NaN once the
- * format is settled. Letting one of them veto the column instead removed it from the axis menu
- * altogether, where the user had no way to say otherwise. Recognized values must still be a
- * strict majority, and must still all agree -- two formats in one column is a genuine ambiguity
- * that guessing cannot resolve.
- *
- * Returns undefined when the recognized values disagree or fail to carry the majority, and when
- * there was nothing to inspect. The caller separates that last case from the others with
- * {@link hasCoordinateValuesToInspect}: only values that were read and rejected are evidence that
- * a column is not a coordinate.
- */
 interface CoordinateSampleResult {
     descriptor: CoordinateDescriptor | undefined;
     /** A recognized format, even when it did not reach the majority threshold. */
@@ -344,6 +323,24 @@ function hasDifferentCoordinateFormat(left: CoordinateDescriptor, right: Coordin
     return left.kind !== right.kind || left.fieldUnit !== right.fieldUnit;
 }
 
+/**
+ * Derives a descriptor from the data itself, for columns that declare no units. Only the values
+ * are consulted; the column name is deliberately not an input here, because a name states intent
+ * and intent is the ranking layer's business, not the parser's.
+ *
+ * A format is a property of the column, not of every row in it, so a minority of unreadable
+ * values does not overturn what the rest plainly are: catalogs write a missing coordinate as a
+ * placeholder ("--", "N/A"), and parseCoordinateValue already drops such a row as NaN once the
+ * format is settled. Letting one of them veto the column instead removed it from the axis menu
+ * altogether, where the user had no way to say otherwise. Recognized values must still be a
+ * strict majority, and must still all agree -- two formats in one column is a genuine ambiguity
+ * that guessing cannot resolve.
+ *
+ * Returns undefined when the recognized values disagree or fail to carry the majority, and when
+ * there was nothing to inspect. The caller separates that last case from the others with
+ * {@link hasCoordinateValuesToInspect}: only values that were read and rejected are evidence that
+ * a column is not a coordinate.
+ */
 export function sniffCoordinateDescriptor(values: ReadonlyArray<string | number | null | undefined> | undefined, sampleSize: number = COORDINATE_SNIFF_SAMPLE_SIZE): CoordinateDescriptor | undefined {
     if (!values?.length) {
         return undefined;

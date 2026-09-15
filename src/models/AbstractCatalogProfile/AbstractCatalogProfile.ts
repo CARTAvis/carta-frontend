@@ -252,10 +252,6 @@ export abstract class AbstractCatalogProfileStore {
         return {equinox: "J2000.0", epoch: "J2000.0"};
     }
 
-    public getCoordinateEligibilityStatus(columnName: string): CatalogAxisEligibility {
-        return this.getCoordinateEligibility(columnName).status;
-    }
-
     /**
      * Values for a scatter plot of any two columns. The axes carry no coordinate meaning here --
      * a flux against a velocity is as valid a pair as a longitude against a latitude -- so the
@@ -271,11 +267,7 @@ export abstract class AbstractCatalogProfileStore {
         const wcsX = getNumericPlotData(xColumn);
         const wcsY = getNumericPlotData(yColumn);
 
-        if (wcsX && wcsY) {
-            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
-        } else {
-            return {xHeaderInfo, yHeaderInfo};
-        }
+        return wcsX && wcsY ? {wcsX, wcsY, xHeaderInfo, yHeaderInfo} : {xHeaderInfo, yHeaderInfo};
     }
 
     /**
@@ -293,11 +285,7 @@ export abstract class AbstractCatalogProfileStore {
         const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
         const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
 
-        if (wcsX && wcsY) {
-            return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
-        } else {
-            return {xHeaderInfo, yHeaderInfo};
-        }
+        return wcsX && wcsY ? {wcsX, wcsY, xHeaderInfo, yHeaderInfo} : {xHeaderInfo, yHeaderInfo};
     }
 
     /**
@@ -317,17 +305,17 @@ export abstract class AbstractCatalogProfileStore {
      * by the overlay, so eligibility cannot disagree with the UI's sample.
      */
     public getCoordinateEligibility(columnName: string): CatalogAxisEligibilityResult {
-        const controlHeader = this.catalogControlHeader.get(columnName);
-        const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
         const settled = this._coordinateEligibility.get(columnName);
         if (settled) {
             return settled;
         }
 
+        const controlHeader = this.catalogControlHeader.get(columnName);
+        const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
         const column = this.catalogData.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
-        const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
+        const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo.units);
         // A partial file stream can contain too many placeholders for the current sample to reach
         // the majority threshold. Keep that result Unknown until the requested rows are exhausted;
         // unlike a settled Ineligible result, it must reserve its absolute row slots in the GL
@@ -431,6 +419,23 @@ export abstract class AbstractCatalogProfileStore {
             }
         });
         return displayedColumnHeaders;
+    }
+
+    /** Whether a column's declared type is already numeric, so plotting it needs no parsing. */
+    public isNumericColumn(columnName: string): boolean {
+        const controlHeader = this.catalogControlHeader.get(columnName);
+        return controlHeader?.dataIndex !== undefined && isCatalogNumericDataType(this.catalogHeader[controlHeader.dataIndex]?.dataType);
+    }
+
+    /** The displayed columns a scatter plot or histogram can read directly, in table order. */
+    @computed get displayedNumericColumnNames(): Array<string> {
+        const columnNames: string[] = [];
+        this.catalogControlHeader.forEach((header, columnName) => {
+            if (header.display && this.isNumericColumn(columnName)) {
+                columnNames.push(columnName);
+            }
+        });
+        return columnNames;
     }
 
     @computed get selectedData(): Map<number, ProcessedColumnData> {

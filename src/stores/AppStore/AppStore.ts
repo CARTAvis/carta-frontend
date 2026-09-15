@@ -51,6 +51,7 @@ import {ApiService, BackendService, ScriptingService, TelemetryService, TileServ
 import {
     AlertStore,
     AnimatorStore,
+    type CatalogDisplayStore,
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
@@ -146,6 +147,16 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
+}
+
+/** The two columns currently plotted on the image overlay, or undefined when either slot is empty. */
+function getPlottedOverlayColumns(catalogDisplayStore: CatalogDisplayStore | undefined): [string, string] | undefined {
+    const xColumn = catalogDisplayStore?.xAxis;
+    const yColumn = catalogDisplayStore?.yAxis;
+    if (!xColumn || !yColumn || xColumn === CatalogOverlay.NONE || yColumn === CatalogOverlay.NONE) {
+        return undefined;
+    }
+    return [xColumn, yColumn];
 }
 
 export class AppStore {
@@ -2474,14 +2485,10 @@ export class AppStore {
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
             const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-            const xColumn = catalogDisplayStore?.xAxis;
-            const yColumn = catalogDisplayStore?.yAxis;
             const isViewUpdate = !isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate;
-            const getEligibilityStatus = (columnName: string) => (typeof catalogProfileStore.getCoordinateEligibilityStatus === "function" ? catalogProfileStore.getCoordinateEligibilityStatus(columnName) : undefined);
-            const didHaveUnknownCoordinateFormat =
-                isViewUpdate &&
-                Boolean(xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) &&
-                [xColumn, yColumn].some(columnName => columnName !== undefined && getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown);
+            const overlayColumns = getPlottedOverlayColumns(catalogDisplayStore);
+            const getEligibilityStatus = (columnName: string) => catalogProfileStore.getCoordinateEligibility(columnName).status;
+            const didHaveUnknownCoordinateFormat = isViewUpdate && Boolean(overlayColumns?.some(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown));
             const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
             catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
             catalogProfileStore.setProgress(progress);
@@ -2490,11 +2497,12 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (isViewUpdate) {
+            if (isViewUpdate && overlayColumns) {
+                const [xColumn, yColumn] = overlayColumns;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
+                if (frame) {
                     let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
-                    const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && [xColumn, yColumn].every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
+                    const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && overlayColumns.every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
                     if (isCoordinateFormatSettled) {
                         // Earlier chunks were deliberately kept in the buffer as NaN while the
                         // unitless string descriptor was unresolved. Re-read the accumulated

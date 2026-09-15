@@ -3,7 +3,7 @@ import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
-import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits} from "utilities";
+import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -38,6 +38,8 @@ type MockProfileStore = {
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string; units?: string}>;
+    displayedNumericColumnNames: string[];
+    isNumericColumn: (columnName: string) => boolean;
     isFileBasedCatalog: boolean;
     maxRows: number;
     shouldUpdateData?: boolean;
@@ -109,12 +111,23 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         };
     });
 
+    const isNumericColumn = (columnName: string): boolean => {
+        const controlHeader = catalogControlHeader.get(columnName);
+        return controlHeader !== undefined && isCatalogNumericDataType(catalogHeader[controlHeader.dataIndex]?.dataType);
+    };
+
     const profileStore = {
         activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
         catalogData,
         catalogHeader,
+        get displayedNumericColumnNames(): string[] {
+            return Array.from(catalogControlHeader)
+                .filter(([columnName, header]) => header.display && isNumericColumn(columnName))
+                .map(([columnName]) => columnName);
+        },
+        isNumericColumn,
         isFileBasedCatalog: false,
         maxRows: 100,
         getCoordinateEligibility: jest.fn(),

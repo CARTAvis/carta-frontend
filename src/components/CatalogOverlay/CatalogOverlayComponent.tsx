@@ -21,7 +21,6 @@ import {
     COORDINATE_SNIFF_SCAN_LIMIT,
     getAutoSelectedCatalogAxisColumn,
     getCatalogDataTypeDisplayName,
-    isCatalogNumericDataType,
     type ProcessedColumnData,
     rankCatalogAxisColumns,
     toFixed
@@ -182,12 +181,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const catalogDisplayStore = this.displayStore;
                     const profileStore = this.profileStore;
                     const canAutoSelectAxes = this.catalogFileId !== undefined && profileStore !== undefined && catalogDisplayStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
-                    // Include the streamed eligibility state so a column that is still being
-                    // sniffed gets another chance when a later response provides enough values.
-                    const eligibilityState = Array.from(this.axisColumnEligibility.entries())
-                        .map(([columnName, result]) => `${columnName}:${result.status}`)
-                        .join("|");
-                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityState] as const;
+                    // Reading the eligibility statuses subscribes this reaction to them, so a
+                    // column that is still being sniffed gets another chance once a later response
+                    // provides enough values.
+                    const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
+                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityStatuses] as const;
                 },
                 ([catalogDisplayStore, canAutoSelectAxes]) => {
                     if (!catalogDisplayStore || !canAutoSelectAxes || catalogDisplayStore.hasAttemptedAutoSelectImageOverlayAxes) {
@@ -353,14 +351,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return [CatalogOverlay.NONE];
         }
 
+        // Scatter plots and histograms consume raw numeric arrays, so only a column that is
+        // already numeric belongs in their menus.
         if (this.displayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            const numericOptions: string[] = [];
-            profileStore.catalogControlHeader.forEach((header, columnName) => {
-                if (header?.dataIndex !== undefined && header.display && isCatalogNumericDataType(profileStore.catalogHeader[header.dataIndex]?.dataType)) {
-                    numericOptions.push(columnName);
-                }
-            });
-            return [CatalogOverlay.NONE, ...numericOptions];
+            return [CatalogOverlay.NONE, ...profileStore.displayedNumericColumnNames];
         }
 
         // Anything that can become a number stays selectable; ranking pushes the unlikely
@@ -446,18 +440,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
     }
 
+    /** Whether a streamed file may still settle the format of a name-matched coordinate column. */
     private hasPendingStreamedAxisEligibility(): boolean {
         const profileStore = this.profileStore;
+        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
+            return false;
+        }
+
         let loadedRowCount = 0;
-        profileStore?.catalogData.forEach(columnData => {
+        profileStore.catalogData.forEach(columnData => {
             loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
         });
-        return Boolean(
-            profileStore?.isFileBasedCatalog &&
-            profileStore.shouldUpdateData &&
-            loadedRowCount < COORDINATE_SNIFF_SCAN_LIMIT &&
-            Array.from(this.axisColumnEligibility.entries()).some(([columnName, result]) => result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName))
-        );
+        if (loadedRowCount >= COORDINATE_SNIFF_SCAN_LIMIT) {
+            return false;
+        }
+
+        for (const [columnName, result] of this.axisColumnEligibility) {
+            if (result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private isCoordinateNameCandidate(columnName: string): boolean {
@@ -866,27 +869,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const isImageOverlay = catalogDisplayStore.catalogPlotType === CatalogPlotType.ImageOverlay;
+        const profileStore = this.profileStore;
+        const didLeaveImageOverlay = plotType !== CatalogPlotType.ImageOverlay && catalogDisplayStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         catalogDisplayStore.setCatalogPlotType(plotType);
+        if (!profileStore || !didLeaveImageOverlay) {
+            return;
+        }
 
         // Image overlays accept coordinate strings, while scatter plots and histograms consume
-        // raw numeric arrays. Do not leave a string coordinate selected when changing modes: the
-        // plot button would otherwise remain enabled and the new plot would be empty.
-        if (isImageOverlay && plotType !== CatalogPlotType.ImageOverlay) {
-            if (!this.isNumericPlotColumn(catalogDisplayStore.xAxis)) {
-                catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
-            }
-            if (!this.isNumericPlotColumn(catalogDisplayStore.yAxis)) {
-                catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
-            }
+        // raw numeric arrays. Do not leave a string coordinate selected when leaving the overlay:
+        // the plot button would otherwise stay enabled and the new plot would be empty.
+        if (!profileStore.isNumericColumn(catalogDisplayStore.xAxis)) {
+            catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
+        }
+        if (!profileStore.isNumericColumn(catalogDisplayStore.yAxis)) {
+            catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
         }
     };
-
-    private isNumericPlotColumn(columnName: string): boolean {
-        const profileStore = this.profileStore;
-        const controlHeader = profileStore?.catalogControlHeader.get(columnName);
-        return controlHeader?.dataIndex !== undefined && isCatalogNumericDataType(profileStore?.catalogHeader[controlHeader.dataIndex]?.dataType);
-    }
 
     // source selected in table
     private onCatalogTableDataSelected = (selectedDataIndices: number[]) => {

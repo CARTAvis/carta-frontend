@@ -63,6 +63,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
+            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
@@ -109,6 +110,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 xHeaderInfo: {units: ""},
                 yHeaderInfo: {units: ""}
             })),
+            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
@@ -199,7 +201,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 .fn()
                 .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
                 .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),
-            getCoordinateEligibilityStatus: jest.fn(() => (isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown)),
+            getCoordinateEligibility: jest.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
