@@ -586,6 +586,32 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
         });
 
+        test("offers a hidden coordinate column once the user displays it by hand", () => {
+            // With auto-select off, nothing nominates a coordinate column that sits past the
+            // display cut, so displaying it by hand is the only way in. It has to reach the menu
+            // from there, both before its values arrive and after.
+            const {component, profileStore} = CreateComponentHarness(CatalogSystemType.FK5, [
+                {name: "flux"},
+                {name: "RAJ2000", dataType: CARTA.ColumnType.String, display: false},
+                {name: "DEJ2000", dataType: CARTA.ColumnType.String, display: false}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "flux"]);
+
+            profileStore.setHeaderDisplay(true, "RAJ2000");
+            profileStore.setHeaderDisplay(true, "DEJ2000");
+
+            // Still unreadable -- no values have arrived yet -- but Unknown is not a verdict, so
+            // the columns must be selectable rather than hidden. RAJ2000 leads on the RA axis by
+            // name; the other two match nothing and keep their column order.
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RAJ2000", "flux", "DEJ2000"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEJ2000", "flux", "RAJ2000"]);
+            expect(component["axisColumnEligibility"].get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Unknown);
+
+            runInAction(() => profileStore.catalogData.set(1, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
+            expect(component["axisColumnEligibility"].get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Eligible);
+        });
+
         test("uses safe defaults when profile store is unavailable", () => {
             const {component, widgetStore} = CreateComponentWithoutProfileStore("ra", "dec");
 
