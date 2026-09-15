@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
@@ -265,7 +265,7 @@ const CreateConstructedComponentHarness = (
     }
 
     runInAction(() => {
-        CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileId);
+        WidgetsStore.Instance.getCatalogWidgetStore(componentId, catalogFileId);
         CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore);
         CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, widgetStore);
     });
@@ -281,7 +281,7 @@ afterEach(() => {
         component.componentWillUnmount();
         widgetStore.dispose();
         runInAction(() => {
-            CatalogStore.Instance.catalogProfiles.delete(componentId);
+            WidgetsStore.Instance.catalogWidgets.delete(componentId);
             CatalogStore.Instance.catalogProfileStores.delete(catalogFileId);
             CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
         });
@@ -936,6 +936,18 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.xAxis).toBe("_RAJ2000");
             expect(widgetStore.yAxis).toBe("_DEJ2000");
         });
+    });
+
+    test("resets the size-axis tab when a settings shortcut is opened", () => {
+        const {component, componentId, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
+        const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);
+        displayStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+        jest.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(jest.fn());
+
+        component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
+
+        expect(widgetStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(displayStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
     });
 
     describe("isImageOverlaySelectionDirty", () => {

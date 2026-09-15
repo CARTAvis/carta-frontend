@@ -1,17 +1,77 @@
 import type {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode} from "enums";
-import {AppStore, scaleZoomForImageRatio} from "stores";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
+import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
+    const widgetsStore = appStore.widgetsStore;
 
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.clear();
+        catalogStore.catalogPlots.clear();
+        catalogStore.imageAssociatedCatalogId.clear();
+        widgetsStore.catalogWidgets.clear();
+        widgetsStore.catalogPlotWidgets.clear();
+    });
+
+    test("updates an existing widget when loading a catalog after the widget store exists", () => {
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        catalogStore.imageAssociatedCatalogId.set(100, [1]);
+
+        jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
+
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
+        expect(widget.selectedCatalogId).toBe(2);
+    });
+
+    test("creates a widget store for the first loaded catalog", () => {
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBeDefined();
+        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(2);
+    });
+
+    test("gives a catalog its own widget when every widget waits for a different one", () => {
+        const pendingWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", CatalogStore.PENDING_CATALOG_FILE_ID);
+        pendingWidget.setCatalogAssociation({catalogDirectory: "/data", catalogFilename: "a.xml"});
+        catalogStore.imageAssociatedCatalogId.set(103, []);
+
+        const componentId = appStore.updateCatalogProfile(11, {frameInfo: {fileId: 103}} as any, {directory: "/data", fileInfo: {name: "b.xml"}} as any);
+
+        expect(componentId).toBeDefined();
+        expect(componentId).not.toBe("catalog-overlay-component-0");
+        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(11);
+        expect(pendingWidget.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+    });
+
+    test("updates every widget when the first catalog is loaded for a new image", () => {
+        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
+        catalogStore.imageAssociatedCatalogId.set(101, []);
+
+        const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(firstWidget.selectedCatalogId).toBe(3);
+        expect(secondWidget.selectedCatalogId).toBe(3);
+    });
+
+    test("binds restored catalog plots when this session loads its first catalog", () => {
+        const widgetStoreId = widgetsStore.addCatalogPlotWidget({plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag"});
+        catalogStore.setCatalogPlots("catalog-plot-component-0", CatalogStore.PENDING_CATALOG_FILE_ID, widgetStoreId!);
+        catalogStore.imageAssociatedCatalogId.set(102, []);
+
+        appStore.updateCatalogProfile(4, {frameInfo: {fileId: 102}} as any);
+
+        expect(catalogStore.getAssociatedIdByWidgetId(widgetStoreId!).catalogFileId).toBe(4);
     });
 
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {
@@ -236,6 +296,21 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(clearSpy).toHaveBeenCalledWith(1);
         expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, 3);
         expect(convertSpy).toHaveBeenCalledWith(1, [1, 2, 3], [4, 5, 6], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}), 0, 0);
+    });
+
+    test("completes a request when its profile store was removed before the final response", () => {
+        catalogStore.registerCatalogRequest(7, 42);
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            eventId: 42,
+            fileId: 7,
+            progress: 1,
+            subsetDataSize: 0,
+            subsetEndIndex: 0
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(catalogStore.acceptsCatalogResponse(7, 42)).toBe(false);
     });
 });
 

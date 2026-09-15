@@ -190,7 +190,7 @@ export class LayoutConfig {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
             // add plot type
-            const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+            const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(config.id);
             if (plotWidget) {
                 floatingConfig.plotType = plotWidget.plotType;
             }
@@ -220,7 +220,7 @@ export class LayoutConfig {
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
                 }
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
+                const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(instanceId);
                 if (plotWidget) {
                     child.plotType = plotWidget.plotType;
                 }

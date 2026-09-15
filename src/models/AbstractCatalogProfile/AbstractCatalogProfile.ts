@@ -271,6 +271,12 @@ export abstract class AbstractCatalogProfileStore {
         return {equinox: "J2000.0", epoch: "J2000.0"};
     }
 
+    /** The header of one column, or undefined when this catalog does not have that column. */
+    public getColumnHeader(columnName: string): CARTA.CatalogHeader | undefined {
+        const dataIndex = this.catalogControlHeader.get(columnName)?.dataIndex;
+        return dataIndex !== undefined ? this.catalogHeader[dataIndex] : undefined;
+    }
+
     /**
      * Values for a scatter plot of any two columns. The axes carry no coordinate meaning here --
      * a flux against a velocity is as valid a pair as a longitude against a latitude -- so the

@@ -126,8 +126,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
 
         this.catalogDataVersion++;
 
-        // Reset column update mode flag after processing the filter response
-        if (this.isUpdateColumnMode) {
+        // Keep column-update mode for every streamed chunk; the final response ends the request.
+        if (this.isUpdateColumnMode && catalogFilter.progress >= 1) {
             this.setIsUpdateColumn(false);
         }
     }
