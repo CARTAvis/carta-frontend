@@ -31,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a catalog's `COOSYS` declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (`ecl_FK5`, `ecl_FK4`) were read as equatorial, and the declared equinox and epoch were ignored ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
-* Changed catalog files to display their coordinate columns on load, alongside the first N columns, instead of relying on those columns happening to fall within the first N ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 
 ## [6.0.0]
 

@@ -174,10 +174,10 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const catalogHeader = this.catalogHeader;
 
         if (catalogHeader.length) {
-            // Which columns land in the first N is an accident of their order in the file, so the
-            // ones the image overlay is going to need are displayed alongside them. Their values
-            // then arrive with the first data request, which is what lets a string coordinate
-            // column that declares no units be recognized at all.
+            // Auto-select can already reach a coordinate column past the display cut, but only by
+            // enabling it and spending a round trip re-fetching. Nominating it here gets its values
+            // into the first response instead, which is what a unitless string column needs before
+            // its format can be judged at all.
             const coordinateColumnNames = this.initialCoordinateColumnNames;
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
@@ -193,8 +193,16 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
      * The best-named candidate for each of the image overlay axes this catalog's coordinate system
      * uses. Names only nominate here: whether a column is actually usable is still decided from its
      * units or its values, once there are values to look at.
+     *
+     * Empty when the user has turned off automatic axis selection. Displaying these columns is only
+     * useful because auto-select is going to want them, so guessing at them anyway would be doing
+     * the very thing that preference asks us not to do.
      */
     @computed private get initialCoordinateColumnNames(): Set<string> {
+        if (!PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns) {
+            return new Set<string>();
+        }
+
         const system = AbstractCatalogProfileStore.getCatalogSystem(this.catalogInfo.fileInfo.coosys?.[0]?.system);
         const axes = this.systemCoordinateMap.get(system);
         if (!axes) {

@@ -47,17 +47,21 @@ const DisplayedColumnNames = (store: CatalogProfileStore): string[] => {
 
 describe("CatalogProfileStore initial column display", () => {
     let originalColumnSize: number;
+    let shouldAutoSelectOriginally: boolean;
 
     beforeAll(() => {
         originalColumnSize = PreferenceStore.Instance.catalogDisplayedColumnSize;
+        shouldAutoSelectOriginally = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
     });
 
     beforeEach(() => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, DISPLAYED_COLUMN_SIZE);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, true);
     });
 
     afterAll(() => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, originalColumnSize);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, shouldAutoSelectOriginally);
     });
 
     test("displays the first N columns", () => {
@@ -70,6 +74,14 @@ describe("CatalogProfileStore initial column display", () => {
         // coordinates sit further along would otherwise open with no way to plot it.
         const store = CreateProfileStore([{name: "id"}, {name: "flux"}, {name: "mag"}, {name: "note"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
         expect(DisplayedColumnNames(store)).toEqual(["id", "flux", "mag", "RAJ2000", "DEJ2000"]);
+    });
+
+    test("nominates no columns when the user has turned off automatic axis selection", () => {
+        // The extra columns are only worth a slot because auto-select is going to want them.
+        // Guessing at them anyway would be doing the very thing the preference asks us not to.
+        PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, false);
+        const store = CreateProfileStore([{name: "id"}, {name: "flux"}, {name: "mag"}, {name: "note"}, {name: "RAJ2000"}, {name: "DEJ2000"}]);
+        expect(DisplayedColumnNames(store)).toEqual(["id", "flux", "mag"]);
     });
 
     test("brings a unitless string coordinate column along, so its values can be sniffed", () => {
