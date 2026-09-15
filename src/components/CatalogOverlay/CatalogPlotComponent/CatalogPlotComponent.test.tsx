@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType} from "enums";
+import {CatalogOverlay, CatalogPlotType, DragMode} from "enums";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 
 import {CatalogPlotComponent} from "./CatalogPlotComponent";
@@ -40,6 +40,9 @@ describe("CatalogPlotComponent catalog selection", () => {
         const widgetsStore = WidgetsStore.Instance;
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
+            catalogData: [],
+            numVisibleRows: 4,
+            get2DPlotData: jest.fn(() => ({wcsX: [0, 10, 20, 30], wcsY: [0, 10, 20, 30]})),
             getOriginIndices: jest.fn(() => [12]),
             setSelectedPointIndices: jest.fn()
         };
@@ -47,7 +50,9 @@ describe("CatalogPlotComponent catalog selection", () => {
             setCatalogTableAutoScroll: jest.fn()
         };
         const widgetStore = {
-            dragMode: "lasso",
+            dragMode: DragMode.Lasso,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag",
             plotType: CatalogPlotType.D2Scatter
         };
         catalogStore.catalogProfileStores.set(7, profileStore as any);
@@ -57,7 +62,12 @@ describe("CatalogPlotComponent catalog selection", () => {
         const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
 
-        component["onLassoSelected"]({points: [{pointIndex: 3}]} as any);
+        component["onLassoSelected"]([
+            {x: 25, y: 25},
+            {x: 35, y: 25},
+            {x: 35, y: 35},
+            {x: 25, y: 35}
+        ]);
         component.componentWillUnmount();
 
         expect(widget.selectedCatalogId).toBe(7);
