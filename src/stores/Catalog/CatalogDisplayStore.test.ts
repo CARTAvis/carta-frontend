@@ -1,7 +1,8 @@
 import * as CARTACompute from "carta_computation";
+import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogDisplayMode, CatalogSizeUnits, CatalogTextureType} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType} from "enums";
 import {CatalogWebGLService} from "services";
 import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
 
@@ -12,15 +13,13 @@ describe("CatalogDisplayStore angular size axis type", () => {
 
         diameterDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
         radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-        const fixedCatalogSize = radiusDisplayStore.catalogSize;
-
         radiusDisplayStore.setCatalogSourceRadiusType("radius");
 
         expect(diameterDisplayStore.catalogSourceRadiusType).toBe("diameter");
         expect(radiusDisplayStore.catalogSourceRadiusType).toBe("radius");
         expect(diameterDisplayStore.pixelSizeFactor).toBe(1);
         expect(radiusDisplayStore.pixelSizeFactor).toBe(2);
-        expect(radiusDisplayStore.catalogSize).toBe(fixedCatalogSize);
+        expect(radiusDisplayStore.catalogSize).toBe(radiusDisplayStore.showedCatalogSize * 2);
 
         radiusDisplayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
         radiusDisplayStore.setCanvasSizeUnit(CatalogSizeUnits.ARCSEC);
@@ -45,7 +44,6 @@ describe("CatalogDisplayStore angular size axis type", () => {
             widgetStore.setSizeMap("size");
             widgetStore.setSizeColumnMin(2, "default");
             widgetStore.setSizeColumnMax(4, "default");
-            const fixedCatalogSize = widgetStore.catalogSize;
             calculateCatalogSize.mockClear();
 
             widgetStore.sizeArray();
@@ -56,7 +54,7 @@ describe("CatalogDisplayStore angular size axis type", () => {
 
             expect(diameterCall?.[7]).toBe(1);
             expect(radiusCall?.[7]).toBe(2);
-            expect(widgetStore.catalogSize).toBe(fixedCatalogSize);
+            expect(widgetStore.catalogSize).toBe(widgetStore.showedCatalogSize * 2);
         } finally {
             widgetStore.dispose();
             if (previousProfileStore) {
@@ -66,6 +64,65 @@ describe("CatalogDisplayStore angular size axis type", () => {
             }
             calculateCatalogSize.mockRestore();
         }
+    });
+
+    test("recomputes a fixed angular size when its world unit changes", () => {
+        const displayStore = new CatalogDisplayStore(0);
+
+        displayStore.setCatalogSourceRadiusType("radius");
+        displayStore.setCatalogSize(12);
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+
+        expect(displayStore.catalogSize).toBe(24);
+
+        displayStore.setWorldSizeUnit(AngularSizeUnit.ARCMIN);
+
+        expect(displayStore.showedCatalogSize).toBe(12);
+        expect(displayStore.pixelSizeFactor).toBe(120);
+        expect(displayStore.catalogSize).toBe(1440);
+
+        displayStore.dispose();
+    });
+
+    test("leaves the sources with no size to draw until an angular size column is mapped", () => {
+        const fileId = 987655;
+        const profileStore = {
+            get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
+        };
+        const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
+        const displayStore = new CatalogDisplayStore(fileId);
+        CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
+
+        try {
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+            expect(displayStore.isSourceSizeDefined).toBe(false);
+
+            displayStore.setSizeMap("size");
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+
+            // A fixed size is a size again once the sources are no longer drawn on the sky.
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
+            displayStore.setSizeMap(CatalogOverlay.NONE);
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+        } finally {
+            displayStore.dispose();
+            runInAction(() => CatalogStore.Instance.catalogProfileStores.delete(fileId));
+            calculateCatalogSize.mockRestore();
+        }
+    });
+
+    test("clamps a fixed size when its canvas unit changes range", () => {
+        const displayStore = new CatalogDisplayStore(0);
+
+        displayStore.setCatalogSize(30);
+        displayStore.setCanvasSizeUnit(CatalogSizeUnits.DEG);
+
+        expect(displayStore.showedCatalogSize).toBe(10);
+        expect(displayStore.catalogSize).toBe(10 * displayStore.pixelSizeFactor);
+
+        displayStore.dispose();
     });
 });
 
@@ -188,5 +245,50 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
         expect([displayStore.orientationMin.clipd, displayStore.orientationMax.clipd]).toEqual([20, 30]);
         expect([displayStore.angleMin, displayStore.angleMax]).toEqual([20, 30]);
         expect(CARTACompute.CalculateCatalogOrientation).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything());
+    });
+});
+
+describe("CatalogDisplayStore data-derived range cache", () => {
+    test("scans only rows appended after the cached prefix", () => {
+        const displayStore = new CatalogDisplayStore(13579);
+        let data = Float32Array.from([1, 2, 3, 4]);
+        const profileStore = {
+            catalogControlHeader: new Map([["VALUE", {filter: "", display: true}]]),
+            numVisibleRows: 2,
+            sortingInfo: {columnName: null, sortingType: null},
+            get1DPlotData: () => ({wcsData: data})
+        } as unknown as CatalogProfileStore;
+        const columnRange = (displayStore as any).columnRange.bind(displayStore);
+        const fround = jest.spyOn(Math, "fround").mockImplementation(value => value);
+
+        try {
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 2});
+
+            data = Float32Array.from([1, 2, 3, 4]);
+            profileStore.numVisibleRows = 4;
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 4});
+            expect(fround).toHaveBeenCalledTimes(4);
+
+            data = Float32Array.from([10, 20, 30, 40]);
+            profileStore.numVisibleRows = 2;
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 20});
+            expect(fround).toHaveBeenCalledTimes(6);
+
+            profileStore.numVisibleRows = 4;
+            profileStore.sortingInfo = {columnName: "VALUE", sortingType: CARTA.SortingType.Ascending};
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(10);
+
+            profileStore.catalogControlHeader.get("VALUE")!.filter = "> 15";
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(14);
+
+            displayStore.setSizeMap("VALUE");
+            expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
+            expect(fround).toHaveBeenCalledTimes(18);
+        } finally {
+            fround.mockRestore();
+            displayStore.dispose();
+        }
     });
 });

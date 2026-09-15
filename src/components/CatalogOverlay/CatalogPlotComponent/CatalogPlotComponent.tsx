@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import type * as Plotly from "plotly.js";
 
@@ -26,7 +26,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable height: number = 400;
     @observable toolbarHeight: number = 40;
     @observable profileId: string = "";
-    @observable catalogFileId: number = 0;
     @observable componentId: string = "";
     private plotType: CatalogPlotType;
     private histogramY: {yMin?: number; yMax?: number};
@@ -57,8 +56,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         this.histogramY = {yMin: undefined, yMax: undefined};
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId);
-        this.componentId = catalogPlot.catalogPlotComponentId;
-        this.catalogFileId = catalogPlot.catalogFileId;
+        this.componentId = catalogPlot.catalogPlotComponentId ?? "";
+        // The catalog a component is showing outlives the component, so it is only seeded here.
+        if (catalogPlot.catalogPlotComponentId !== undefined && catalogPlot.catalogFileId !== undefined && CatalogStore.Instance.getCatalogPlotSelection(this.componentId) === undefined) {
+            CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogPlot.catalogFileId);
+        }
         this.catalogFileNames = new Map<number, string>();
 
         makeObservable(this);
@@ -68,10 +70,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 const profileStore = this.profileStore;
                 const widgetStore = this.widgetStore;
                 const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-                if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                    runInAction(() => {
-                        this.catalogFileId = catalogFileIds[0];
-                    });
+                // A plot restored from a workspace waits for the catalog it was saved against, and
+                // bindPendingCatalogPlots moves it on when that catalog arrives. Adopting whichever
+                // catalog happens to load first would strand the restored plot behind an empty one.
+                const isPending = this.catalogFileId === CatalogStore.PENDING_CATALOG_FILE_ID;
+                if (!isPending && !catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
+                    CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogFileIds[0]);
                 }
                 if (widgetStore) {
                     this.plotType = widgetStore.plotType;
@@ -147,6 +151,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.toolbarHeight = toolbarHeight;
     };
 
+    /** The catalog this component is showing. Held by the store, so that a restored binding can move it. */
+    @computed get catalogFileId(): number {
+        return CatalogStore.Instance.getCatalogPlotSelection(this.componentId) ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+    }
+
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
         const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
         if (!catalogWidgetMap) {
@@ -169,7 +178,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        this.catalogFileId = fileId;
+        CatalogStore.Instance.setCatalogPlotSelection(this.componentId, fileId);
         const widgetStore = WidgetsStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetMap = catalogStore.catalogPlots.get(this.componentId);
@@ -588,7 +597,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
-            const catalogStore = CatalogStore.Instance;
             const profileStore = this.profileStore;
             const catalogDisplayStore = this.catalogDisplayStore;
             const widgetStore = this.widgetStore;
@@ -596,7 +604,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return;
             }
             const catalogFileId = profileStore.catalogInfo.fileId;
-            catalogStore.updateCatalogProfiles(catalogFileId);
+            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
 
             let selectedPointIndices;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
@@ -633,11 +641,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onDeselect = () => {
-        const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        catalogStore.updateCatalogProfiles(this.catalogFileId);
+        WidgetsStore.Instance.updateCatalogWidgetSelection(this.catalogFileId);
         profileStore?.setSelectedPointIndices([], false);
         catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
@@ -653,9 +660,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.catalogDisplayStore;
         if (event?.points?.length > 0 && isInDragMode && profileStore && catalogDisplayStore) {
-            const catalogStore = CatalogStore.Instance;
             const catalogFileId = profileStore.catalogInfo.fileId;
-            catalogStore.updateCatalogProfiles(catalogFileId);
+            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
             let selectedPointIndex: number[] = [];
             const selectedPoint = event.points[0] as any;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
