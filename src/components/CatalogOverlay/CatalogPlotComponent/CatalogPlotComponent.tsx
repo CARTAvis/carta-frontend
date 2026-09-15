@@ -3,7 +3,7 @@ import {Bar} from "react-chartjs-2";
 import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
-import {BarController, BarElement, Chart, type ChartArea, type ChartOptions, Legend, LinearScale, LogarithmicScale, type Plugin, PointElement} from "chart.js";
+import {BarController, BarElement, Chart, type ChartArea, type ChartOptions, Legend, LinearScale, LogarithmicScale, type Plugin, PointElement, type Tick} from "chart.js";
 import {type AnnotationOptions} from "chartjs-plugin-annotation";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
@@ -823,16 +823,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         widgetStore.setFitting(result);
     };
 
-    private formatTickValue = (value: number, rangeMin: number, rangeMax: number): string => {
+    private formatTickValue = (value: number, rangeMin: number, rangeMax: number, ticks: Tick[] = []): string => {
         const difference = rangeMax - rangeMin;
         const exponential = difference.toExponential(2);
         const power = parseFloat(exponential.split("e")[1]);
         const maxAbsoluteValue = Math.max(Math.abs(rangeMin), Math.abs(rangeMax));
         const maxPower = parseFloat(maxAbsoluteValue.toExponential(1).split("e")[1]);
-        if (maxPower >= 3 || maxPower <= -3) {
-            return toExponential(value, 1);
+        const shouldUseScientificNotation = maxPower >= 3 || maxPower <= -3;
+        const tickValues = ticks.map(tick => Number(tick.value)).filter(Number.isFinite);
+        const formatLabel = (tickValue: number, decimals: number) => (shouldUseScientificNotation ? toExponential(tickValue, decimals) : tickValue.toFixed(decimals));
+        let decimals = 0;
+        while (decimals < 20 && tickValues.some((tickValue, index) => index > 0 && formatLabel(tickValue, decimals) === formatLabel(tickValues[index - 1], decimals))) {
+            decimals++;
+        }
+        if (shouldUseScientificNotation) {
+            return toExponential(value, decimals);
         } else if (power <= 0) {
-            return value.toFixed(Math.abs(power) + 1);
+            return value.toFixed(decimals);
         } else {
             return String(value);
         }
@@ -1390,9 +1397,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             includeBounds: false,
                             display: true,
                             color: labelColor,
-                            callback: (value: string | number) => {
+                            callback: (value: string | number, _index: number, ticks: Tick[]) => {
                                 if (xMin !== undefined && xMax !== undefined) {
-                                    return this.formatTickValue(Number(value), xMin, xMax);
+                                    return this.formatTickValue(Number(value), xMin, xMax, ticks);
                                 }
                                 return String(value);
                             }
