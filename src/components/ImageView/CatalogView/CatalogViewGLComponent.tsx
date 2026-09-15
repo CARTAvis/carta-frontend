@@ -193,6 +193,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
                 const isActive = frame === destinationFrame;
 
+                if (!catalogDisplayStore.isSourceSizeDefined) {
+                    return;
+                }
+
                 const shape = catalogDisplayStore.shapeSettings;
                 if (!shape) {
                     return;
@@ -360,6 +364,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         catalogStore.catalogGLData?.forEach((catalog, fileId) => {
             const frame = AppStore.Instance.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             if (!frame) {
+                return;
+            }
+            if (!catalogStore.getCatalogDisplayStore(fileId)?.isSourceSizeDefined) {
                 return;
             }
             const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);

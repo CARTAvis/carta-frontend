@@ -2,7 +2,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogSizeUnits, CatalogTextureType} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType} from "enums";
 import {CatalogWebGLService} from "services";
 import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
 
@@ -82,6 +82,35 @@ describe("CatalogDisplayStore angular size axis type", () => {
         expect(displayStore.catalogSize).toBe(1440);
 
         displayStore.dispose();
+    });
+
+    test("leaves the sources with no size to draw until an angular size column is mapped", () => {
+        const fileId = 987655;
+        const profileStore = {
+            get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
+        };
+        const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
+        const displayStore = new CatalogDisplayStore(fileId);
+        CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
+
+        try {
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+            expect(displayStore.isSourceSizeDefined).toBe(false);
+
+            displayStore.setSizeMap("size");
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+
+            // A fixed size is a size again once the sources are no longer drawn on the sky.
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS);
+            displayStore.setSizeMap(CatalogOverlay.NONE);
+            expect(displayStore.isSourceSizeDefined).toBe(true);
+        } finally {
+            displayStore.dispose();
+            runInAction(() => CatalogStore.Instance.catalogProfileStores.delete(fileId));
+            calculateCatalogSize.mockRestore();
+        }
     });
 
     test("clamps a fixed size when its canvas unit changes range", () => {

@@ -1324,6 +1324,14 @@ export class CatalogDisplayStore {
         return this.sizeMapColumn === CatalogOverlay.NONE;
     }
 
+    /**
+     * Whether the sources have a size to be drawn at. An angular size is the size the source has on
+     * the sky, which only the mapped column states, so without one there is nothing to draw.
+     */
+    @computed get isSourceSizeDefined(): boolean {
+        return this.catalogDisplayMode !== CatalogDisplayMode.WORLD || !this.isSizeMapDisabled;
+    }
+
     @computed get isSizeMinorMapDisabled(): boolean {
         return this.sizeMinorMapColumn === CatalogOverlay.NONE;
     }
