@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed persistent scrollbars in the region list and catalog scatter plot, and fixed the catalog plot widget toolbar being clipped without a scrollbar when the widget is too narrow ([#2848](https://github.com/CARTAvis/carta-frontend/issues/2848)).
 * Fixed incorrect color mapping in the Stokes QU scatter plot after applying data smoothing ([#2851](https://github.com/CARTAvis/carta-frontend/issues/2851)).
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
+* Fixed incorrect color, size, and orientation mapping of catalog overlay sources after replotting with a new column filter ([#2849](https://github.com/CARTAvis/carta-frontend/issues/2849)).
 * Fixed catalog overlay sources with a latitude beyond a pole being plotted at an arbitrary position instead of being dropped ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed numeric catalog coordinate columns that declare hour or radian units being plotted as though their values were degrees ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed a catalog's `COOSYS` declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (`ecl_FK5`, `ecl_FK4`) were read as equatorial, and the declared equinox and epoch were ignored ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).

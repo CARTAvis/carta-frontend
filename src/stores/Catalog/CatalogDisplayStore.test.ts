@@ -1,6 +1,8 @@
 import * as CARTACompute from "carta_computation";
+import {runInAction} from "mobx";
 
-import {CatalogDisplayMode, CatalogSizeUnits} from "enums";
+import {CatalogDisplayMode, CatalogSizeUnits, CatalogTextureType} from "enums";
+import {CatalogWebGLService} from "services";
 import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
 
 describe("CatalogDisplayStore angular size axis type", () => {
@@ -64,5 +66,127 @@ describe("CatalogDisplayStore angular size axis type", () => {
             }
             calculateCatalogSize.mockRestore();
         }
+    });
+});
+
+describe("CatalogDisplayStore overlay maps after replotting", () => {
+    const fileId = 246810;
+    const catalogStore = CatalogStore.Instance;
+    let columnData: Float32Array;
+    let previousProfileStore: CatalogProfileStore | undefined;
+    let displayStore: CatalogDisplayStore;
+    let updateDataTexture: jest.SpyInstance;
+
+    // Rebuilding the overlay positions (Plot, a filter, streamed data) resets and refills the plotted source count
+    const replot = (sourceCount: number) => {
+        runInAction(() => {
+            catalogStore.catalogCounts.set(fileId, 0);
+            catalogStore.catalogCounts.set(fileId, sourceCount);
+        });
+    };
+
+    beforeEach(() => {
+        columnData = Float32Array.from([10, 20, 30, 40]);
+        // the catalog data of the profile store is not observable: the accessor returns whatever data is currently loaded
+        const profileStore = {get1DPlotData: jest.fn(() => ({wcsData: columnData}))};
+        previousProfileStore = catalogStore.catalogProfileStores.get(fileId) as CatalogProfileStore | undefined;
+        runInAction(() => {
+            catalogStore.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
+            catalogStore.catalogCounts.set(fileId, columnData.length);
+        });
+        updateDataTexture = jest.spyOn(CatalogWebGLService.Instance, "updateDataTexture").mockImplementation(() => {});
+        jest.spyOn(CARTACompute, "CalculateCatalogColor").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        jest.spyOn(CARTACompute, "CalculateCatalogSize").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        displayStore = new CatalogDisplayStore(fileId);
+    });
+
+    afterEach(() => {
+        displayStore.dispose();
+        runInAction(() => {
+            if (previousProfileStore) {
+                catalogStore.catalogProfileStores.set(fileId, previousProfileStore);
+            } else {
+                catalogStore.catalogProfileStores.delete(fileId);
+            }
+            catalogStore.catalogCounts.delete(fileId);
+        });
+        jest.restoreAllMocks();
+    });
+
+    test("recomputes the color texture from the current catalog data when the sources are replotted", () => {
+        displayStore.setColorMapColumn("ANG_DIST");
+        expect(displayStore.colorColumnMin.default).toBe(10);
+        expect(displayStore.colorColumnMax.default).toBe(40);
+        expect(updateDataTexture).toHaveBeenLastCalledWith(fileId, Float32Array.from([10, 20, 30, 40]), CatalogTextureType.Color);
+
+        // a filter replaces the loaded catalog data without any observable change (#2849)
+        updateDataTexture.mockClear();
+        columnData = Float32Array.from([20, 30]);
+        expect(updateDataTexture).not.toHaveBeenCalled();
+
+        replot(columnData.length);
+        expect(displayStore.colorColumnMin.default).toBe(20);
+        expect(displayStore.colorColumnMax.default).toBe(30);
+        expect(updateDataTexture).toHaveBeenLastCalledWith(fileId, Float32Array.from([20, 30]), CatalogTextureType.Color);
+    });
+
+    test("keeps a customized color range when the same sources are replotted", () => {
+        displayStore.setColorMapColumn("ANG_DIST");
+        displayStore.setColorColumnMin(15, "clipd");
+        displayStore.setColorColumnMax(35, "clipd");
+
+        replot(columnData.length);
+        expect(displayStore.colorColumnMin.default).toBe(10);
+        expect(displayStore.colorColumnMin.clipd).toBe(15);
+        expect(displayStore.colorColumnMax.default).toBe(40);
+        expect(displayStore.colorColumnMax.clipd).toBe(35);
+        expect(CARTACompute.CalculateCatalogColor).toHaveBeenLastCalledWith(expect.any(Float32Array), false, 15, 35, expect.anything(), expect.anything(), expect.anything());
+    });
+
+    test("recomputes the size texture from the current catalog data when the sources are replotted", () => {
+        displayStore.setSizeMap("FLUX");
+        expect(updateDataTexture).toHaveBeenLastCalledWith(fileId, Float32Array.from([10, 20, 30, 40]), CatalogTextureType.Size);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect(displayStore.sizeColumnMin.default).toBe(20);
+        expect(displayStore.sizeColumnMax.default).toBe(30);
+        expect(updateDataTexture).toHaveBeenLastCalledWith(fileId, Float32Array.from([20, 30]), CatalogTextureType.Size);
+    });
+
+    test("keeps the canvas size range when the sources are replotted", () => {
+        displayStore.setSizeMap("FLUX");
+        displayStore.setSizeMax(30);
+        displayStore.setSizeMin(8);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([8, 30]);
+    });
+
+    // In world mode the columns are used as they are: the output range has to follow the data range (PR #2965 review)
+    test("keeps the angular size range equal to the data range when the sources are replotted", () => {
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        displayStore.setSizeMap("MAJOR_AXIS");
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([10, 40]);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.sizeColumnMin.clipd, displayStore.sizeColumnMax.clipd]).toEqual([20, 30]);
+        expect([displayStore.sizeMin.diameter, displayStore.sizeMax.diameter]).toEqual([20, 30]);
+        expect(CARTACompute.CalculateCatalogSize).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything(), expect.anything(), expect.anything());
+    });
+
+    test("keeps the position angle range equal to the data range when the sources are replotted", () => {
+        jest.spyOn(CARTACompute, "CalculateCatalogOrientation").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        displayStore.setOrientationMapColumn("PA");
+        expect([displayStore.angleMin, displayStore.angleMax]).toEqual([10, 40]);
+
+        columnData = Float32Array.from([20, 30]);
+        replot(columnData.length);
+        expect([displayStore.orientationMin.clipd, displayStore.orientationMax.clipd]).toEqual([20, 30]);
+        expect([displayStore.angleMin, displayStore.angleMax]).toEqual([20, 30]);
+        expect(CARTACompute.CalculateCatalogOrientation).toHaveBeenLastCalledWith(expect.any(Float32Array), 20, 30, 20, 30, expect.anything(), expect.anything(), expect.anything());
     });
 });
