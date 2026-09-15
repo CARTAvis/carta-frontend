@@ -37,15 +37,13 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.catalogCoordinateSystem = {
                 system: system,
                 equinox: coordinateSystem.equinox || defaults.equinox,
-                epoch: coordinateSystem.epoch || defaults.epoch,
-                coordinate: this.systemCoordinateMap.get(system)
+                epoch: coordinateSystem.epoch || defaults.epoch
             };
         } else {
             this.catalogCoordinateSystem = {
                 system: CatalogSystemType.ICRS,
                 equinox: null,
-                epoch: null,
-                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+                epoch: null
             };
         }
         const initTableRows = CatalogProfileStore.INIT_TABLE_ROWS;

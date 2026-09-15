@@ -5,6 +5,8 @@ import {CatalogSystemType, CatalogType, PreferenceKeys} from "enums";
 import {PreferenceStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
+import {CatalogOnlineQueryProfileStore} from "../CatalogOnlineQuery/CatalogOnlineQueryProfileStore";
+
 import {CatalogProfileStore} from "./CatalogProfileStore";
 
 const DISPLAYED_COLUMN_SIZE = 3;
@@ -177,6 +179,36 @@ describe("CatalogProfileStore coordinate system", () => {
         const store = CreateProfileStore([{name: "label", dataType: CARTA.ColumnType.String, data: ["value"]}]);
 
         expect(isObservableArray(store.catalogOriginalData.get(0)?.data)).toBe(false);
+    });
+
+    test("uses the filtered data view for online coordinate eligibility", () => {
+        const catalogHeader = [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.String, name: "ra"}), new CARTA.CatalogHeader({columnIndex: 1, dataType: CARTA.ColumnType.String, name: "dec"})];
+        const catalogData = new Map<number, ProcessedColumnData>([
+            [0, {dataType: CARTA.ColumnType.String, data: ["not a coordinate", "12:30:00"]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["not a coordinate", "-21:57:15"]}]
+        ]);
+        const store = new CatalogOnlineQueryProfileStore(
+            {
+                dataSize: 2,
+                directory: "",
+                fileId: 1,
+                fileInfo: new CARTA.CatalogFileInfo({name: "online-catalog"})
+            },
+            catalogHeader,
+            catalogData,
+            CatalogType.SIMBAD
+        );
+
+        runInAction(() => {
+            store.filterIndexMap = [0];
+            store.numVisibleRows = 1;
+        });
+        expect(store.getCoordinateEligibility("ra").status).toBe("ineligible");
+
+        runInAction(() => {
+            store.filterIndexMap = [1];
+        });
+        expect(store.getCoordinateEligibility("ra").status).toBe("eligible");
     });
 });
 

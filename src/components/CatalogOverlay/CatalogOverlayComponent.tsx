@@ -4,7 +4,7 @@ import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -18,10 +18,9 @@ import {
     CatalogAxisEligibility,
     type CatalogAxisEligibilityResult,
     clamp,
+    COORDINATE_SNIFF_SCAN_LIMIT,
     getAutoSelectedCatalogAxisColumn,
-    getCatalogAxisEligibility,
     getCatalogDataTypeDisplayName,
-    getCoordinateDescriptorFromUnits,
     isCatalogNumericDataType,
     type ProcessedColumnData,
     rankCatalogAxisColumns,
@@ -321,19 +320,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     /**
-     * Values to sniff a string column's format from, or undefined when the column's data has not
-     * been fetched. Only displayed columns are requested from the backend, so this is routinely
-     * empty for a column the user has not switched on yet.
-     */
-    private getColumnSampleData(catalogData: Map<number, ProcessedColumnData>, columnIndex: number | undefined): Array<string | null | undefined> | undefined {
-        if (columnIndex === undefined) {
-            return undefined;
-        }
-        const columnData = catalogData.get(columnIndex);
-        return columnData?.dataType === CARTA.ColumnType.String ? (columnData.data as Array<string | null | undefined>) : undefined;
-    }
-
-    /**
      * Eligibility is per column, not per axis: whether a column can be read as a number has
      * nothing to do with which slot it lands in. Only the ordering below is axis-specific.
      */
@@ -344,30 +330,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return eligibility;
         }
 
-        const catalogData = profileStore.catalogData;
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex === undefined || !header.display) {
                 return;
             }
-            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
-            const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
-            eligibility.set(columnName, this.getAxisColumnEligibility(catalogHeader, sampleData));
+            eligibility.set(columnName, profileStore.getCoordinateEligibility(columnName));
         });
-        return eligibility;
-    }
-
-    /**
-     * A file response is only a prefix of the catalog. An unresolved unitless string column must
-     * remain Unknown while more rows can still establish its coordinate format; otherwise the UI
-     * can hide it or permanently skip it before the useful rows arrive.
-     */
-    private getAxisColumnEligibility(catalogHeader: CARTA.CatalogHeader.$Properties | undefined, sampleData: Array<string | null | undefined> | undefined): CatalogAxisEligibilityResult {
-        const eligibility = getCatalogAxisEligibility(catalogHeader?.dataType, catalogHeader?.units, sampleData);
-        const profileStore = this.profileStore;
-        const isUnresolvedString = catalogHeader?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(catalogHeader?.units);
-        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore?.isFileBasedCatalog && profileStore.shouldUpdateData) {
-            return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
-        }
         return eligibility;
     }
 
@@ -420,15 +388,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         const axisOptions: string[] = [];
-        const catalogData = profileStore.catalogData;
         profileStore.catalogControlHeader.forEach((header, columnName) => {
             if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
                 return;
             }
 
-            const catalogHeader = profileStore.catalogHeader[header.dataIndex];
-            const sampleData = this.getColumnSampleData(catalogData, catalogHeader?.columnIndex);
-            const status = this.getAxisColumnEligibility(catalogHeader, sampleData).status;
+            const status = profileStore.getCoordinateEligibility(columnName).status;
             if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
                 axisOptions.push(columnName);
             }
@@ -483,9 +448,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private hasPendingStreamedAxisEligibility(): boolean {
         const profileStore = this.profileStore;
+        let loadedRowCount = 0;
+        profileStore?.catalogData.forEach(columnData => {
+            loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
+        });
         return Boolean(
             profileStore?.isFileBasedCatalog &&
             profileStore.shouldUpdateData &&
+            loadedRowCount < COORDINATE_SNIFF_SCAN_LIMIT &&
             Array.from(this.axisColumnEligibility.entries()).some(([columnName, result]) => result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName))
         );
     }

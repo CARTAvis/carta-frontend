@@ -123,8 +123,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable catalogCoordinateSystem: CatalogCoordinateSystem = {
         system: CatalogSystemType.ICRS,
         equinox: null,
-        epoch: null,
-        coordinate: {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}
+        epoch: null
     };
     @observable filterDataSize: number | undefined = undefined;
     @observable progress: number;
@@ -254,9 +253,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     public getCoordinateEligibilityStatus(columnName: string): CatalogAxisEligibility {
-        const controlHeader = this.catalogControlHeader.get(columnName);
-        const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
-        return this.getCoordinateEligibility(columnName, headerInfo).status;
+        return this.getCoordinateEligibility(columnName).status;
     }
 
     /**
@@ -293,8 +290,8 @@ export abstract class AbstractCatalogProfileStore {
         rowCount?: number
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
-        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName, xHeaderInfo), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
-        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName, yHeaderInfo), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
 
         if (wcsX && wcsY) {
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
@@ -315,19 +312,22 @@ export abstract class AbstractCatalogProfileStore {
      * have arrived, so once it is known the rows that do not fit it are read as NaN and dropped
      * individually.
      *
-     * The evidence is the store's own accumulated data rather than the rows passed in, which is
-     * always at least as much to go on.
+     * The evidence is the store's current data view rather than the rows passed in. For a file
+     * stream that is the accumulated prefix; for an online catalog it is the filtered view used
+     * by the overlay, so eligibility cannot disagree with the UI's sample.
      */
-    private getCoordinateEligibility(columnName: string, headerInfo: CARTA.CatalogHeader.$Properties | undefined): CatalogAxisEligibilityResult {
+    public getCoordinateEligibility(columnName: string): CatalogAxisEligibilityResult {
+        const controlHeader = this.catalogControlHeader.get(columnName);
+        const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
         const settled = this._coordinateEligibility.get(columnName);
         if (settled) {
             return settled;
         }
 
-        const column = this.catalogOriginalData.get(headerInfo?.columnIndex ?? NaN);
+        const column = this.catalogData.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
-        const isUnresolvedString = column?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
+        const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
         // A partial file stream can contain too many placeholders for the current sample to reach
         // the majority threshold. Keep that result Unknown until the requested rows are exhausted;
         // unlike a settled Ineligible result, it must reserve its absolute row slots in the GL
@@ -531,8 +531,7 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogCoordinateSystem = {
             system: catalogSystem,
             equinox: defaults.equinox,
-            epoch: defaults.epoch,
-            coordinate: this.systemCoordinateMap.get(catalogSystem)
+            epoch: defaults.epoch
         };
     }
 

@@ -182,12 +182,7 @@ describe("catalog coordinate reference frames in the sky-to-pixel transform", ()
         const catalogFrame = AST.copy(frameSet);
         try {
             AST.set(catalogFrame, settings);
-            return AST.transformPointArrays(
-                catalogFrame,
-                new Float64Array([longitudeDegrees * DEGREES_TO_RADIANS]),
-                new Float64Array([latitudeDegrees * DEGREES_TO_RADIANS]),
-                false
-            );
+            return AST.transformPointArrays(catalogFrame, new Float64Array([longitudeDegrees * DEGREES_TO_RADIANS]), new Float64Array([latitudeDegrees * DEGREES_TO_RADIANS]), false);
         } finally {
             AST.deleteObject(catalogFrame);
         }

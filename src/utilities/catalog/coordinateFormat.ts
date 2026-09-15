@@ -213,6 +213,7 @@ export function getCoordinateDescriptorFromUnits(units: string | null | undefine
 export const COORDINATE_SNIFF_SAMPLE_SIZE = 100;
 /** How many rows may be scanned per sample wanted, before giving up on a mostly-empty column. */
 const EMPTY_VALUE_SCAN_FACTOR = 10;
+export const COORDINATE_SNIFF_SCAN_LIMIT = COORDINATE_SNIFF_SAMPLE_SIZE * EMPTY_VALUE_SCAN_FACTOR;
 
 /**
  * Bounds the scan itself, not just the number of values inspected: a column that is empty for its

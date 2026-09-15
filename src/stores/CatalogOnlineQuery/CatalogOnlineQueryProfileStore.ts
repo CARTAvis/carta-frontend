@@ -28,8 +28,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.catalogCoordinateSystem = {
             system: system,
             equinox: coordinateSystem?.equinox || defaults.equinox,
-            epoch: coordinateSystem?.epoch || defaults.epoch,
-            coordinate: this.systemCoordinateMap.get(system)
+            epoch: coordinateSystem?.epoch || defaults.epoch
         };
         this.initSortedIndexMap();
         this.initFilterIndexMap();

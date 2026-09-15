@@ -232,8 +232,7 @@ describe("setAstCatalogSystem", () => {
         setAstCatalogSystem(frameSet, {
             system: CatalogSystemType.Ecliptic,
             equinox: "B1950.0",
-            epoch: "B1950.0",
-            coordinate: undefined
+            epoch: "B1950.0"
         });
 
         expect(AST.set).toHaveBeenCalledWith(frameSet, "System=ECLIPTIC, Equinox=B1950.0, Epoch=B1950.0");
@@ -245,8 +244,7 @@ describe("setAstCatalogSystem", () => {
         setAstCatalogSystem(frameSet, {
             system: CatalogSystemType.ICRS,
             equinox: "not-an-equinox",
-            epoch: "J2000 nonsense",
-            coordinate: undefined
+            epoch: "J2000 nonsense"
         });
 
         expect(AST.set).toHaveBeenCalledWith(frameSet, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0");

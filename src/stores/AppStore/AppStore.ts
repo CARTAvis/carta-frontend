@@ -2509,8 +2509,8 @@ export class AppStore {
                             coords.wcsX,
                             coords.wcsY,
                             wcs,
-                            coords.xHeaderInfo.units ?? "",
-                            coords.yHeaderInfo.units ?? "",
+                            coords.xHeaderInfo?.units ?? "",
+                            coords.yHeaderInfo?.units ?? "",
                             catalogProfileStore.catalogCoordinateSystem,
                             isCoordinateFormatSettled ? 0 : catalogFilter.subsetEndIndex,
                             isCoordinateFormatSettled ? 0 : catalogFilter.subsetDataSize

@@ -3,6 +3,7 @@ import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
@@ -36,9 +37,11 @@ type MockProfileStore = {
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
     catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
-    catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
+    catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string; units?: string}>;
     isFileBasedCatalog: boolean;
     maxRows: number;
+    shouldUpdateData?: boolean;
+    getCoordinateEligibility: jest.Mock<CatalogAxisEligibilityResult, [string]>;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
     setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
@@ -114,11 +117,25 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         catalogHeader,
         isFileBasedCatalog: false,
         maxRows: 100,
+        getCoordinateEligibility: jest.fn(),
         setCatalogCoordinateSystem: jest.fn(),
         setIsUpdateColumn: jest.fn(),
         setHeaderDisplay: jest.fn(),
         setUpdateMode: jest.fn()
     } as MockProfileStore;
+
+    profileStore.getCoordinateEligibility.mockImplementation((columnName: string) => {
+        const controlHeader = profileStore.catalogControlHeader.get(columnName);
+        const headerInfo = controlHeader ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+        const column = profileStore.catalogData.get(headerInfo?.columnIndex ?? NaN);
+        const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
+        const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
+        const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.isFileBasedCatalog && profileStore.shouldUpdateData) {
+            return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
+        }
+        return eligibility;
+    });
 
     profileStore.setCatalogCoordinateSystem.mockImplementation((nextSystem: CatalogSystemType) => {
         profileStore.catalogCoordinateSystem.system = nextSystem;
@@ -367,6 +384,26 @@ describe("CatalogOverlayComponent", () => {
             expect(component["updateByInfiniteScroll"]).toHaveBeenCalledTimes(1);
             expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
             expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
+        test("stops streaming once the coordinate sniff scan limit is loaded", () => {
+            const sample = new Array<string>(COORDINATE_SNIFF_SCAN_LIMIT).fill("not a coordinate");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "ra", dataType: CARTA.ColumnType.String, data: sample},
+                {name: "dec", dataType: CARTA.ColumnType.String, data: sample}
+            ]);
+            Object.assign(profileStore, {
+                isFileBasedCatalog: true,
+                isLoadingData: false,
+                shouldUpdateData: true,
+                updateMode: CatalogUpdateMode.TableUpdate
+            });
+            component["updateByInfiniteScroll"] = jest.fn();
+
+            expect(component["autoSelectAxes"]()).toBe(false);
+            expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
         });
 
         test("does not stream ordinary string columns while looking for axes", () => {
