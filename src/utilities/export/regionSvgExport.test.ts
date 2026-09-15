@@ -101,8 +101,13 @@ describe("renderRegionsToSvg", () => {
 
         expect(polylines).toHaveLength(2);
         expect(polylines[0].getAttribute("points")).toBe("100.00,900.00 200.00,700.00 400.00,800.00");
-        expect(polylines[1].getAttribute("points")).toBe("100,900 200,700 400,800");
-        expect(polylines[1].getAttribute("marker-end")).toContain("arrowhead-");
+        const vectorEnd = polylines[1].getAttribute("points")?.split(" ")[2]?.split(",").map(Number);
+        expect(vectorEnd?.[0]).toBeCloseTo(392.8446);
+        expect(vectorEnd?.[1]).toBeCloseTo(796.4223);
+        const vectorArrowhead = group.querySelector("#regions > g polygon");
+        expect(vectorArrowhead).not.toBeNull();
+        expect(vectorArrowhead?.getAttribute("points")?.trim().split(" ")).toHaveLength(3);
+        expect(vectorArrowhead?.getAttribute("stroke-width")).toBe("2");
     });
 
     it("exports compass and ruler annotations", () => {
@@ -145,10 +150,16 @@ describe("renderRegionsToSvg", () => {
         expect(group.querySelectorAll("line").length).toBeGreaterThanOrEqual(2);
         expect(group.querySelectorAll("polyline").length).toBe(3);
         expect(group.querySelectorAll("text").length).toBe(2);
+        const compassLines = [...group.querySelectorAll("line")].slice(0, 2);
+        expect(Number(compassLines[0].getAttribute("y2"))).toBeCloseTo(788);
+        expect(Number(compassLines[1].getAttribute("x2"))).toBeCloseTo(188);
+        const compassArrowheads = group.querySelectorAll("#regions > g polygon");
+        expect(compassArrowheads).toHaveLength(2);
+        compassArrowheads.forEach(arrowhead => expect(arrowhead.getAttribute("points")?.trim().split(" ")).toHaveLength(3));
 
         const compassTexts = [...group.querySelectorAll("text")];
-        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(732.5);
+        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(772.5);
         expect(Number(compassTexts[1].getAttribute("x"))).toBeCloseTo(172.5);
-        expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(820);
+        expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(800);
     });
 });

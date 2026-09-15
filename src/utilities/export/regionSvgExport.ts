@@ -170,36 +170,68 @@ function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: b
     });
 }
 
-function renderVectorAnnotation(points: Point2D[], region: RegionStore, defsElement: SVGDefsElement, pixelRatio: number, idPrefix = ""): SVGGElement {
-    const group = document.createElementNS(SVG_NS, "g");
-    const markerId = `${idPrefix}arrowhead-${region.regionId}`;
-    const vector = region as RegionStore & {pointerLength?: number; pointerWidth?: number};
-    const markerWidth = (vector.pointerLength ?? 10) * pixelRatio;
-    const markerHeight = (vector.pointerWidth ?? 7) * pixelRatio;
+function getArrowLineEnd(start: Point2D, tip: Point2D, arrowLength: number): Point2D {
+    const dx = tip.x - start.x;
+    const dy = tip.y - start.y;
+    const segmentLength = Math.hypot(dx, dy);
+    if (segmentLength === 0) {
+        return tip;
+    }
 
-    // Create arrowhead marker
-    const marker = createSvgElement("marker", {
-        id: markerId,
-        markerWidth,
-        markerHeight,
-        refX: markerWidth,
-        refY: markerHeight / 2,
-        markerUnits: "userSpaceOnUse",
-        orient: "auto"
-    });
-    const arrowPath = createSvgElement("polygon", {
-        points: `0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`,
-        fill: region.color
-    });
-    marker.appendChild(arrowPath);
-    defsElement.appendChild(marker);
+    const offset = Math.min(arrowLength, segmentLength);
+    return {
+        x: tip.x - (dx / segmentLength) * offset,
+        y: tip.y - (dy / segmentLength) * offset
+    };
+}
+
+function getArrowheadPoints(start: Point2D, tip: Point2D, arrowLength: number, arrowWidth: number): string | null {
+    const dx = tip.x - start.x;
+    const dy = tip.y - start.y;
+    const segmentLength = Math.hypot(dx, dy);
+    if (segmentLength === 0) {
+        return null;
+    }
+
+    const base = getArrowLineEnd(start, tip, arrowLength);
+    const perpendicular = {x: (-dy / segmentLength) * (arrowWidth / 2), y: (dx / segmentLength) * (arrowWidth / 2)};
+    return `${base.x + perpendicular.x},${base.y + perpendicular.y} ${tip.x},${tip.y} ${base.x - perpendicular.x},${base.y - perpendicular.y}`;
+}
+
+function renderArrowhead(start: Point2D, tip: Point2D, region: RegionStore, pixelRatio: number, length: number, width: number): SVGElement | null {
+    const points = getArrowheadPoints(start, tip, length, width);
+    return points
+        ? createSvgElement("polygon", {
+              points,
+              fill: region.color,
+              stroke: region.color,
+              "stroke-width": region.lineWidth * pixelRatio
+          })
+        : null;
+}
+
+function renderVectorAnnotation(points: Point2D[], region: RegionStore, pixelRatio: number): SVGGElement {
+    const group = document.createElementNS(SVG_NS, "g");
+    const vector = region as RegionStore & {pointerLength?: number; pointerWidth?: number};
+    const arrowLength = (vector.pointerLength ?? 10) * pixelRatio;
+    const arrowWidth = (vector.pointerWidth ?? 7) * pixelRatio;
+
+    const linePoints = points.map(point => ({...point}));
+    if (linePoints.length > 1) {
+        linePoints[linePoints.length - 1] = getArrowLineEnd(linePoints[linePoints.length - 2], linePoints[linePoints.length - 1], arrowLength);
+    }
 
     const line = createSvgElement("polyline", {
-        points: points.map(point => `${point.x},${point.y}`).join(" "),
-        "marker-end": `url(#${markerId})`,
+        points: linePoints.map(point => `${point.x},${point.y}`).join(" "),
         ...getStrokeAttrs(region, pixelRatio)
     });
     group.appendChild(line);
+    if (points.length > 1) {
+        const arrowhead = renderArrowhead(points[points.length - 2], points[points.length - 1], region, pixelRatio, arrowLength, arrowWidth);
+        if (arrowhead) {
+            group.appendChild(arrowhead);
+        }
+    }
     return group;
 }
 
@@ -252,7 +284,7 @@ function renderAnnotationText(text: string, position: Point2D, region: RegionSto
     });
 }
 
-function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassAnnotationStore, pixelRatio: number, fallbackDirection: Point2D, yOffset: number): Point2D {
+function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassAnnotationStore, pixelRatio: number, fallbackDirection: Point2D): Point2D {
     let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
     const length = Math.hypot(direction.x, direction.y);
     if (length === 0) {
@@ -263,11 +295,11 @@ function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassA
     const labelGap = Math.max(4, (region.fontSize ?? 20) * 0.75) * pixelRatio;
     return {
         x: tip.x + direction.x * labelGap,
-        y: tip.y + direction.y * labelGap + yOffset * pixelRatio
+        y: tip.y + direction.y * labelGap
     };
 }
 
-function renderCompassAnnotation(region: CompassAnnotationStore, frameView: FrameView, layerWidth: number, layerHeight: number, defsElement: SVGDefsElement, options: RegionSvgOptions): SVGGElement {
+function renderCompassAnnotation(region: CompassAnnotationStore, frameView: FrameView, layerWidth: number, layerHeight: number, options: RegionSvgOptions): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     const originImage = options.frame?.spatialReference && options.frame.spatialTransformAST ? transformImagePoint(options.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const origin = secondaryImageToCanvas(originImage, options.frame, frameView, layerWidth, layerHeight);
@@ -289,36 +321,27 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
         eastEnd = {x: origin.x - length, y: origin.y};
     }
 
-    const addArrow = (start: Point2D, end: Point2D, hasArrowhead: boolean, markerSuffix: string) => {
+    const addArrow = (start: Point2D, end: Point2D, hasArrowhead: boolean) => {
         const lineAttrs = {x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...getStrokeAttrs(region, options.pixelRatio)};
         if (hasArrowhead) {
-            const markerId = `compass-${options.idPrefix ?? ""}${region.regionId}-${markerSuffix}`;
-            const marker = createSvgElement("marker", {
-                id: markerId,
-                markerWidth: region.pointerLength * options.pixelRatio,
-                markerHeight: region.pointerWidth * options.pixelRatio,
-                refX: region.pointerLength * options.pixelRatio,
-                refY: (region.pointerWidth * options.pixelRatio) / 2,
-                markerUnits: "userSpaceOnUse",
-                orient: "auto"
-            });
-            marker.appendChild(
-                createSvgElement("polygon", {
-                    points: `0 0, ${region.pointerLength * options.pixelRatio} ${(region.pointerWidth * options.pixelRatio) / 2}, 0 ${region.pointerWidth * options.pixelRatio}`,
-                    fill: region.color
-                })
-            );
-            defsElement.appendChild(marker);
-            lineAttrs["marker-end"] = `url(#${markerId})`;
+            const lineEnd = getArrowLineEnd(start, end, region.pointerLength * options.pixelRatio);
+            lineAttrs.x2 = lineEnd.x;
+            lineAttrs.y2 = lineEnd.y;
         }
         group.appendChild(createSvgElement("line", lineAttrs));
+        if (hasArrowhead) {
+            const arrowhead = renderArrowhead(start, end, region, options.pixelRatio, region.pointerLength * options.pixelRatio, region.pointerWidth * options.pixelRatio);
+            if (arrowhead) {
+                group.appendChild(arrowhead);
+            }
+        }
     };
 
-    addArrow(origin, northEnd, region.hasNorthArrowhead, "north");
-    addArrow(origin, eastEnd, region.hasEastArrowhead, "east");
+    addArrow(origin, northEnd, region.hasNorthArrowhead);
+    addArrow(origin, eastEnd, region.hasEastArrowhead);
 
-    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northEnd, region, options.pixelRatio, {x: 0, y: -1}, region.northTextOffset.y), region, options.pixelRatio);
-    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastEnd, region, options.pixelRatio, {x: -1, y: 0}, region.eastTextOffset.y), region, options.pixelRatio);
+    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northEnd, region, options.pixelRatio, {x: 0, y: -1}), region, options.pixelRatio);
+    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastEnd, region, options.pixelRatio, {x: -1, y: 0}), region, options.pixelRatio);
     group.append(northText, eastText);
     return group;
 }
@@ -523,7 +546,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         }
         case CARTA.RegionType.ANNVECTOR: {
             const points = spatialPoints ?? cp.map(point => transformedImageToCanvas(point, frame, frameView, layerWidth, layerHeight));
-            return renderVectorAnnotation(points, region, defsElement, options.pixelRatio, options.idPrefix);
+            return renderVectorAnnotation(points, region, options.pixelRatio);
         }
         case CARTA.RegionType.ANNTEXT: {
             const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
@@ -532,7 +555,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
             return renderTextAnnotation(center, size, region, options.pixelRatio, rotation);
         }
         case CARTA.RegionType.ANNCOMPASS:
-            return renderCompassAnnotation(region as CompassAnnotationStore, frameView, layerWidth, layerHeight, defsElement, options);
+            return renderCompassAnnotation(region as CompassAnnotationStore, frameView, layerWidth, layerHeight, options);
         case CARTA.RegionType.ANNRULER:
             return renderRulerAnnotation(region as RulerAnnotationStore, frameView, layerWidth, layerHeight, options);
         default:

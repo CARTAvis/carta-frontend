@@ -774,6 +774,20 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     // 9. Regions — vector SVG from store data
     const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio, `panel-${column}-${row}-`);
     if (regionsSvg) {
+        const clipId = `regions-clip-${column}-${row}`;
+        const clipPath = createSvgElement("clipPath", {id: clipId});
+        clipPath.appendChild(
+            createSvgElement("rect", {
+                x: 0,
+                y: 0,
+                width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
+                height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
+            })
+        );
+        const defs = createSvgElement("defs", {});
+        defs.appendChild(clipPath);
+        panelGroup.appendChild(defs);
+        regionsSvg.setAttribute("clip-path", `url(#${clipId})`);
         panelGroup.appendChild(regionsSvg);
     }
 

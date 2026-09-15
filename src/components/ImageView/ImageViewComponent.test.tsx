@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 import {AstFonts} from "components/Shared";
 import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
@@ -166,6 +168,30 @@ describe("getPanelSvg", () => {
         expect(astClipRect).toHaveAttribute("y", "0");
         expect(astClipRect).toHaveAttribute("width", "120");
         expect(astClipRect).toHaveAttribute("height", "100");
+    });
+
+    test("clips regions and annotations at the image viewer boundary", () => {
+        frame.regionSet.regionsAndAnnotationsForRender = [
+            {
+                regionId: 1,
+                regionType: CARTA.RegionType.ANNPOINT,
+                controlPoints: [{x: 50, y: 40}],
+                isTemporary: false,
+                color: "#00ffff",
+                lineWidth: 1,
+                pointWidth: 8,
+                pointShape: CARTA.PointAnnotationShape.BOX
+            }
+        ];
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panelSvg?.querySelector("#regions")).toHaveAttribute("clip-path", "url(#regions-clip-0-0)");
+        const regionClipRect = panelSvg?.querySelector("#regions-clip-0-0 rect");
+        expect(regionClipRect).toHaveAttribute("x", "0");
+        expect(regionClipRect).toHaveAttribute("y", "0");
+        expect(regionClipRect).toHaveAttribute("width", "100");
+        expect(regionClipRect).toHaveAttribute("height", "80");
     });
 
     test("renders the AST grid below contours and vector overlays", () => {
