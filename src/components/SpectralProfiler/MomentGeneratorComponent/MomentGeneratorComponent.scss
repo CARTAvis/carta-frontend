@@ -11,18 +11,18 @@
     }
 
     .moment-panel {
+        .label-info {
+            max-width: calc(100% - 92px);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
         .image-region-select {
             .#{$ns}-html-select {
                 width: 100%;
-            }
-
-            .label-info {
-                max-width: calc(100% - 92px); // because of the popover, we need the subtraction
-                text-overflow: ellipsis;
-                overflow: hidden;
-                white-space: nowrap;
-                display: inline-block;
-                vertical-align: middle;
             }
 
             .region-help {

@@ -132,6 +132,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = widgetStore.effectiveFrame;
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = widgetStore.momentRegionInfo;
+        const renderRangeLabelInfo = (labelInfo: string, testId: string) =>
+            labelInfo ? (
+                <span className="label-info" title={labelInfo} data-testid={testId}>
+                    {labelInfo}
+                </span>
+            ) : undefined;
         const spectralRangeLabelInfo = [frame?.spectralUnitStr ? `(${frame.spectralUnitStr})` : "", widgetStore.isXAxisRestFrameActive ? "(rest frame)" : ""].filter(Boolean).join(" ");
         const maskRangeLabelInfo = [frame?.requiredUnit ? `(${frame.requiredUnit})` : "", widgetStore.isYAxisRestFrameActive ? "(rest frame)" : ""].filter(Boolean).join(" ");
 
@@ -188,7 +194,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame.isPVImage || !frame.isSpectralChannel} />
                 {frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={spectralRangeLabelInfo}>
+                    <FormGroup label="Range" inline={true} labelInfo={renderRangeLabelInfo(spectralRangeLabelInfo, "moment-generator-spectral-range-info")}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.displayChannelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
@@ -220,7 +226,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={maskRangeLabelInfo}>
+                    <FormGroup label="Range" inline={true} labelInfo={renderRangeLabelInfo(maskRangeLabelInfo, "moment-generator-mask-range-info")}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.displayMaskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} data-testid="moment-generator-mask-range-from-input" />
