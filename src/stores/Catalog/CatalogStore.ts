@@ -232,6 +232,10 @@ export class CatalogStore {
     /** Mark the current request as finished so late responses cannot mutate the catalog. */
     @action completeCatalogRequest = (catalogFileId: number, requestId?: number) => {
         const currentRequestId = this.catalogRequestIds.get(catalogFileId);
+        // Event id 0 identifies an unsolicited stream, so it must not complete a live request.
+        if (requestId === 0 && currentRequestId !== undefined) {
+            return;
+        }
         if (requestId !== undefined && requestId !== 0 && currentRequestId !== requestId) {
             return;
         }

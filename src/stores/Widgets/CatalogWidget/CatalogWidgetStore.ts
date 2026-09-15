@@ -6,14 +6,12 @@ import {PreferenceStore} from "stores";
 
 /** State owned by one catalog widget rather than by the catalog it displays. */
 export interface CatalogWidgetLayoutSettings extends WorkspaceCatalogAssociation {
-    widgetId?: string;
     tableSeparatorPosition?: string;
     /** The settings section this widget was left on. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
 export class CatalogWidgetStore {
-    @observable widgetId: string;
     @observable selectedCatalogId: number = 1;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
@@ -27,15 +25,10 @@ export class CatalogWidgetStore {
     /** Stable association retained while the matching catalog is not loaded. */
     private catalogAssociation: WorkspaceCatalogAssociation | undefined;
 
-    constructor(selectedCatalogId: number = 1, widgetId: string = "") {
+    constructor(selectedCatalogId: number = 1) {
         this.selectedCatalogId = selectedCatalogId;
-        this.widgetId = widgetId;
         makeObservable(this);
     }
-
-    @action setWidgetId = (widgetId: string) => {
-        this.widgetId = widgetId;
-    };
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
         this.selectedCatalogId = catalogFileId;
@@ -89,7 +82,6 @@ export class CatalogWidgetStore {
     };
 
     public toLayoutSettings = (): CatalogWidgetLayoutSettings => ({
-        ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         ...this.catalogAssociation,
         tableSeparatorPosition: this.tableSeparatorPosition,
         settingsTabId: this.settingsTabId
@@ -98,9 +90,6 @@ export class CatalogWidgetStore {
     @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {
         if (!settings) {
             return;
-        }
-        if (typeof settings.widgetId === "string" && settings.widgetId) {
-            this.widgetId = settings.widgetId;
         }
         if (typeof settings.catalogFileId === "number") {
             this.selectedCatalogId = settings.catalogFileId;

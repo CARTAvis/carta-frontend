@@ -1293,6 +1293,8 @@ export class AppStore {
             return false;
         }
 
+        // Hidden config columns must be displayed temporarily so the backend includes their data;
+        // this intentionally changes the table's displayed-column selection during restoration.
         columnNames.forEach(columnName => profileStore.setHeaderDisplay(true, columnName));
         profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
         profileStore.setIsUpdateColumn(true);

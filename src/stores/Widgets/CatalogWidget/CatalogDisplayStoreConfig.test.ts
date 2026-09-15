@@ -9,7 +9,7 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
 import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
@@ -163,6 +163,44 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.angleMax).toBe(CatalogDisplayStore.MAX_ANGLE);
     });
 
+    test("normalizes malformed scalar display config values", () => {
+        const store = createStore();
+
+        expect(
+            store.applyConfig({
+                displayMode: "invalid",
+                canvasSizeUnit: "invalid",
+                worldSizeUnit: "invalid",
+                plotType: "invalid",
+                shape: 999,
+                size: "invalid",
+                thickness: Infinity,
+                sizeAxis: {
+                    scalingType: 999,
+                    min: {area: -1, diameter: 0},
+                    max: {area: 99999, diameter: 999}
+                },
+                colorAxis: {colorMap: "invalid", scalingType: 999},
+                orientationAxis: {scalingType: 999, angleMin: -10, angleMax: 9999}
+            } as any)
+        ).toEqual({success: true, errors: []});
+
+        expect(store.catalogDisplayMode).toBe(CatalogDisplayMode.CANVAS);
+        expect(store.canvasSizeUnit).toBe(CatalogSizeUnits.SCREENPIXEL);
+        expect(store.worldSizeUnit).toBe(AngularSizeUnit.ARCSEC);
+        expect(store.catalogPlotType).toBe(CatalogPlotType.ImageOverlay);
+        expect(store.catalogShape).toBe(CatalogOverlayShape.CIRCLE_LINED);
+        expect(store.showedCatalogSize).toBe(10);
+        expect(store.thickness).toBe(2);
+        expect(store.sizeScalingType).toBe(FrameScaling.LINEAR);
+        expect(store.sizeMin).toEqual({area: 0, diameter: 1});
+        expect(store.sizeMax).toEqual({area: CatalogDisplayStore.MAX_AREA_SIZE, diameter: CatalogDisplayStore.MAX_OVERLAY_SIZE});
+        expect(store.colorMap).toBe(ColorMap.Viridis);
+        expect(store.colorScalingType).toBe(FrameScaling.LINEAR);
+        expect(store.angleMin).toBe(CatalogDisplayStore.MIN_ANGLE);
+        expect(store.angleMax).toBe(CatalogDisplayStore.MAX_ANGLE);
+    });
+
     test("restores the angular axis type, which scales the source size", () => {
         const store = createStore();
         store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
@@ -277,7 +315,7 @@ describe("CatalogDisplayStore display config", () => {
         const store = createStore();
         const config: WorkspaceCatalogConfig = {
             sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8, columnMinLocked: true, columnMaxLocked: true},
-            sizeMinorAxis: {mapColumn: "Bmag", columnMinClip: 2, columnMaxClip: 8}
+            sizeMinorAxis: {mapColumn: "Bmag", columnMinClip: 30, columnMaxClip: 90}
         };
 
         store.applyConfig(config);
@@ -288,6 +326,25 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeColumnMax.clipd).toBe(8);
         expect(store.sizeMinorColumnMin.clipd).toBe(2);
         expect(store.sizeMinorColumnMax.clipd).toBe(8);
+        expect(store.toConfig().sizeMinorAxis?.columnMinClip).toBeUndefined();
+        expect(store.toConfig().sizeMinorAxis?.columnMaxClip).toBe(8);
+    });
+
+    test("applies the size-map cascade when a config disables the major axis", () => {
+        const store = createStore();
+        store.setSizeMap("Fmag");
+        store.setSizeMinorMap("Bmag");
+        store.toggleSizeColumnMinLock();
+        store.toggleSizeColumnMaxLock();
+
+        expect(store.applyConfig({sizeAxis: {mapColumn: CatalogOverlay.NONE}, sizeMinorAxis: {mapColumn: "Bmag"}})).toEqual({success: true, errors: []});
+
+        expect(store.sizeMapColumn).toBe(CatalogOverlay.NONE);
+        expect(store.sizeMinorMapColumn).toBe(CatalogOverlay.NONE);
+        expect(store.isSizeColumnMinLocked).toBe(false);
+        expect(store.isSizeColumnMaxLocked).toBe(false);
+        expect(store.isSizeMinorColumnMinLocked).toBe(false);
+        expect(store.isSizeMinorColumnMaxLocked).toBe(false);
     });
 
     test("rejects a config when the catalog data is not loaded, without changing anything", () => {
@@ -299,6 +356,24 @@ describe("CatalogDisplayStore display config", () => {
         expect(result.success).toBe(false);
         expect(result.errors).toEqual(["The catalog data has not been loaded"]);
         expect(store.toConfig()).toEqual(before);
+    });
+
+    test("clears deferred config when maps or size are reset", () => {
+        const resetMapsStore = createStoreWithoutData();
+        const resetSizeStore = createStoreWithoutData();
+
+        resetMapsStore.applyConfigWhenReady({color: "red"});
+        resetSizeStore.applyConfigWhenReady({color: "blue"});
+        resetMapsStore.resetMaps();
+        resetSizeStore.resetSize();
+
+        runInAction(() => {
+            CatalogStore.Instance.catalogProfileStores.set(resetMapsStore.catalogFileId, createProfileStore(resetMapsStore.catalogFileId));
+            CatalogStore.Instance.catalogProfileStores.set(resetSizeStore.catalogFileId, createProfileStore(resetSizeStore.catalogFileId));
+        });
+
+        expect(resetMapsStore.catalogColor).not.toBe("red");
+        expect(resetSizeStore.catalogColor).not.toBe("blue");
     });
 
     test("retries deferred layout config when catalog data becomes available", () => {
@@ -339,6 +414,38 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeMapColumn).toBe("Fmag");
         expect(store.sizeColumnMin.clipd).toBe(2);
         expect(store.sizeColumnMax.clipd).toBe(8);
+    });
+
+    test("reports a deferred config after one column request still has no data", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+
+        runInAction(() => {
+            profileStore.catalogOriginalData.delete(0);
+            profileStore.setHeaderDisplay(false, "Fmag");
+            profileStore.setLoadingDataStatus(false);
+            profileStore.setUpdatingDataStream(false);
+        });
+
+        expect(store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag"}}).success).toBe(false);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
+
+        runInAction(() => {
+            profileStore.setLoadingDataStatus(false);
+            profileStore.setUpdatingDataStream(false);
+        });
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
+        expect(store.getConfigForSerialization().sizeAxis?.mapColumn).toBe(CatalogOverlay.NONE);
+
+        runInAction(() => profileStore.setLoadingDataStatus(true));
+        runInAction(() => profileStore.setLoadingDataStatus(false));
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
     });
 
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
@@ -550,12 +657,11 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("round-trips widget presentation without persisting a session-local catalog selection", () => {
-        const widget = new CatalogWidgetStore(7, "catalog-widget-primary");
+        const widget = new CatalogWidgetStore(7);
         widget.setTableSeparatorPosition("40%");
         widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
 
         expect(widget.toLayoutSettings()).toEqual({
-            widgetId: "catalog-widget-primary",
             tableSeparatorPosition: "40%",
             settingsTabId: CatalogSettingsTabs.COLOR
         });
@@ -568,7 +674,7 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("remembers the settings section of each catalog the widget has shown", () => {
-        const widget = new CatalogWidgetStore(1, "catalog-widget-primary");
+        const widget = new CatalogWidgetStore(1);
         widget.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
 
         widget.setSelectedCatalogId(2);
@@ -582,8 +688,8 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("keeps the settings section of each widget separate", () => {
-        const first = new CatalogWidgetStore(7, "catalog-widget-primary");
-        const second = new CatalogWidgetStore(7, "catalog-widget-secondary");
+        const first = new CatalogWidgetStore(7);
+        const second = new CatalogWidgetStore(7);
 
         first.setSettingsTabId(CatalogSettingsTabs.COLOR);
 

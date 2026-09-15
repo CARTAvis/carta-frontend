@@ -543,6 +543,8 @@ export class WidgetsStore {
             const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
             const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
             widgetStore.setCatalogAssociation(association);
+            // Older layouts stored the tab per catalog; keep accepting that shape even though new
+            // layouts persist the widget's current tab directly as settingsTabId.
             const savedSettingsTabId = widgetSettings["settingsTabId"] ?? (typeof savedCatalogFileId === "number" ? widgetSettings["settingsTabIdByCatalog"]?.[String(savedCatalogFileId)] : undefined);
             widgetStore.applyLayoutSettings({
                 ...(widgetSettings as CatalogWidgetLayoutSettings),
@@ -1602,7 +1604,7 @@ export class WidgetsStore {
     @action getCatalogWidgetStore = (componentId: string, selectedCatalogId: number = 1): CatalogWidgetStore => {
         let widgetStore = this.catalogWidgets.get(componentId);
         if (!widgetStore) {
-            widgetStore = new CatalogWidgetStore(selectedCatalogId, componentId);
+            widgetStore = new CatalogWidgetStore(selectedCatalogId);
             this.catalogWidgets.set(componentId, widgetStore);
         }
         return widgetStore;

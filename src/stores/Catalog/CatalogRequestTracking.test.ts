@@ -34,13 +34,16 @@ describe("CatalogStore request tracking", () => {
         expect(catalogStore.acceptsCatalogResponse(catalogFileId)).toBe(true);
     });
 
-    test("accepts and completes a stream response whose request id is zero", () => {
+    test("accepts an unsolicited stream without completing a live request", () => {
         catalogStore.registerCatalogRequest(catalogFileId, 21);
 
         expect(catalogStore.acceptsCatalogResponse(catalogFileId, 0)).toBe(true);
 
         catalogStore.completeCatalogRequest(catalogFileId, 0);
 
+        expect(catalogStore.acceptsCatalogResponse(catalogFileId, 21)).toBe(true);
+
+        catalogStore.completeCatalogRequest(catalogFileId, 21);
         expect(catalogStore.acceptsCatalogResponse(catalogFileId, 21)).toBe(false);
     });
 });
