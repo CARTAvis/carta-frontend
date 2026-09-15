@@ -8,7 +8,7 @@ import {type AnnotationOptions} from "chartjs-plugin-annotation";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
@@ -48,7 +48,6 @@ type ScatterSpatialIndex = {
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable profileId: string = "";
-    @observable catalogFileId: number = 0;
     @observable componentId: string = "";
     @observable private histogramChartArea: ChartArea | undefined;
     @observable private isHistogramMouseEntered: boolean = false;
@@ -92,8 +91,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         this.widgetId = props.id;
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId);
-        this.componentId = catalogPlot.catalogPlotComponentId;
-        this.catalogFileId = catalogPlot.catalogFileId;
+        this.componentId = catalogPlot.catalogPlotComponentId ?? "";
+        // The catalog a component is showing outlives the component, so it is only seeded here.
+        if (catalogPlot.catalogPlotComponentId !== undefined && catalogPlot.catalogFileId !== undefined && CatalogStore.Instance.getCatalogPlotSelection(this.componentId) === undefined) {
+            CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogPlot.catalogFileId);
+        }
         this.catalogFileNames = new Map<number, string>();
 
         makeObservable(this);
@@ -103,10 +105,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 const profileStore = this.profileStore;
                 const widgetStore = this.widgetStore;
                 const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-                if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                    runInAction(() => {
-                        this.catalogFileId = catalogFileIds[0];
-                    });
+                // A plot restored from a workspace waits for the catalog it was saved against, and
+                // bindPendingCatalogPlots moves it on when that catalog arrives. Adopting whichever
+                // catalog happens to load first would strand the restored plot behind an empty one.
+                const isPending = this.catalogFileId === CatalogStore.PENDING_CATALOG_FILE_ID;
+                if (!isPending && !catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
+                    CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogFileIds[0]);
                 }
                 if (widgetStore) {
                     this.plotType = widgetStore.plotType;
@@ -164,6 +168,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         clearTimeout(this.pendingHistogramClickHandle);
     }
 
+    /** The catalog this component is showing. Held by the store, so that a restored binding can move it. */
+    @computed get catalogFileId(): number {
+        return CatalogStore.Instance.getCatalogPlotSelection(this.componentId) ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+    }
+
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
         const catalogWidgetMap = CatalogStore.Instance.catalogPlots.get(this.componentId);
         if (!catalogWidgetMap) {
@@ -186,7 +195,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        this.catalogFileId = fileId;
+        CatalogStore.Instance.setCatalogPlotSelection(this.componentId, fileId);
         const widgetStore = WidgetsStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetMap = catalogStore.catalogPlots.get(this.componentId);
@@ -692,7 +701,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!rawIndices.length || !profileStore || !catalogDisplayStore) {
             return;
         }
-        CatalogStore.Instance.updateCatalogProfiles(profileStore.catalogInfo.fileId);
+        WidgetsStore.Instance.updateCatalogWidgetSelection(profileStore.catalogInfo.fileId);
         profileStore.setSelectedPointIndices(profileStore.getOriginIndices(rawIndices), true);
         catalogDisplayStore.setCatalogTableAutoScroll(true);
     }
@@ -757,11 +766,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onDeselect = () => {
-        const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        catalogStore.updateCatalogProfiles(this.catalogFileId);
+        WidgetsStore.Instance.updateCatalogWidgetSelection(this.catalogFileId);
         profileStore?.setSelectedPointIndices([], false);
         catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
