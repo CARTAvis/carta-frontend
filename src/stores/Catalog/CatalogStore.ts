@@ -353,8 +353,7 @@ export class CatalogStore {
             const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
             plotStore
                 ?.resetUnknownColumns(column => {
-                    const controlHeader = profileStore.catalogControlHeader.get(column);
-                    const header = controlHeader?.dataIndex !== undefined ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+                    const header = profileStore.getColumnHeader(column);
                     return header !== undefined && isCatalogAxisDataType(header.dataType);
                 })
                 .forEach(column => dropped.add(column));

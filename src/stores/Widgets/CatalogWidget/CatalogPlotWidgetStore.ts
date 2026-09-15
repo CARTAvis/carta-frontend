@@ -79,18 +79,12 @@ export class CatalogPlotWidgetStore {
      */
     @action resetUnknownColumns(hasColumn: (column: string) => boolean): string[] {
         const dropped: string[] = [];
-        const isMissing = (column: string | undefined): boolean => column !== undefined && column !== CatalogOverlay.NONE && !hasColumn(column);
-        if (isMissing(this.xColumnName)) {
-            dropped.push(this.xColumnName);
-            this.xColumnName = CatalogOverlay.NONE;
-        }
-        if (isMissing(this.yColumnName)) {
-            dropped.push(this.yColumnName as string);
-            this.yColumnName = CatalogOverlay.NONE;
-        }
-        if (isMissing(this.statisticColumnName)) {
-            dropped.push(this.statisticColumnName);
-            this.statisticColumnName = CatalogOverlay.NONE;
+        for (const key of ["xColumnName", "yColumnName", "statisticColumnName"] as const) {
+            const column = this[key];
+            if (column !== undefined && column !== CatalogOverlay.NONE && !hasColumn(column)) {
+                dropped.push(column);
+                this[key] = CatalogOverlay.NONE;
+            }
         }
         return dropped;
     }

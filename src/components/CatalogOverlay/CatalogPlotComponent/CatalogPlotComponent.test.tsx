@@ -12,14 +12,19 @@ function loadCatalog(fileId: number, filename: string) {
         new CARTA.CatalogHeader({columnIndex: 1, dataType: CARTA.ColumnType.Double, name: "Bmag"}),
         new CARTA.CatalogHeader({columnIndex: 2, dataType: CARTA.ColumnType.UnsupportedType, name: "Unsupported"})
     ];
+    const catalogControlHeader = new Map([
+        ["Fmag", {dataIndex: 0}],
+        ["Bmag", {dataIndex: 1}],
+        ["Unsupported", {dataIndex: 2}]
+    ]);
     CatalogStore.Instance.catalogProfileStores.set(fileId, {
         catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
         catalogHeader,
-        catalogControlHeader: new Map([
-            ["Fmag", {dataIndex: 0}],
-            ["Bmag", {dataIndex: 1}],
-            ["Unsupported", {dataIndex: 2}]
-        ])
+        catalogControlHeader,
+        getColumnHeader: (columnName: string) => {
+            const dataIndex = catalogControlHeader.get(columnName)?.dataIndex;
+            return dataIndex !== undefined ? catalogHeader[dataIndex] : undefined;
+        }
     } as any);
     CatalogStore.Instance.bindPendingCatalogPlots(fileId, {directory: "/catalogs", fileInfo: {name: filename}} as any);
 }

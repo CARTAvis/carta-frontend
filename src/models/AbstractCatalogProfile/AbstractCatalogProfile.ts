@@ -114,6 +114,12 @@ export abstract class AbstractCatalogProfileStore {
         return catalogSystem;
     }
 
+    /** The header of one column, or undefined when this catalog does not have that column. */
+    public getColumnHeader(columnName: string): CARTA.CatalogHeader | undefined {
+        const dataIndex = this.catalogControlHeader.get(columnName)?.dataIndex;
+        return dataIndex !== undefined ? this.catalogHeader[dataIndex] : undefined;
+    }
+
     public get2DPlotData(
         xColumnName: string,
         yColumnName: string,

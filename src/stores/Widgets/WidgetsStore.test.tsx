@@ -202,7 +202,7 @@ describe("WidgetsStore PV preview test ids", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
         const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
-        const displayStore = {toConfig: () => displayConfig};
+        const displayStore = {getConfigForSerialization: () => displayConfig};
         CatalogStore.Instance.catalogProfileStores.set(7, {catalogInfo: {fileId: 7, directory: "/catalogs", fileInfo: {name: "sources.xml"}}} as any);
 
         CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);

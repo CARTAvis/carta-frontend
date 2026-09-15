@@ -69,48 +69,38 @@ export interface WorkspaceVectorOverlayConfig {
     rotationOffset: number;
 }
 
-/** One catalog size axis: the major axis, or the minor axis of an ellipse. */
-export interface WorkspaceCatalogSizeAxisConfig {
+/** What every mapped catalog axis holds: the column it maps, its clipped range, and its scaling. */
+export interface WorkspaceCatalogAxisConfig {
     mapColumn?: string;
     /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMinClip?: number;
     /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
     columnMaxClip?: number;
+    scalingType?: FrameScaling;
+    scalingParameters?: ScalingParameters;
+}
+
+/** One catalog size axis: the major axis, or the minor axis of an ellipse. */
+export interface WorkspaceCatalogSizeAxisConfig extends WorkspaceCatalogAxisConfig {
     min?: {area: number; diameter: number};
     max?: {area: number; diameter: number};
     areaMode?: boolean;
-    scalingType?: FrameScaling;
-    scalingParameters?: ScalingParameters;
     /** Whether the other size axis follows this axis at the lower end. */
     columnMinLocked?: boolean;
     /** Whether the other size axis follows this axis at the upper end. */
     columnMaxLocked?: boolean;
 }
 
-export interface WorkspaceCatalogColorAxisConfig {
-    mapColumn?: string;
-    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
-    columnMinClip?: number;
-    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
-    columnMaxClip?: number;
+export interface WorkspaceCatalogColorAxisConfig extends WorkspaceCatalogAxisConfig {
     colorMap?: string;
     inverted?: boolean;
-    scalingType?: FrameScaling;
-    scalingParameters?: ScalingParameters;
 }
 
-export interface WorkspaceCatalogOrientationAxisConfig {
-    mapColumn?: string;
-    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
-    columnMinClip?: number;
-    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
-    columnMaxClip?: number;
+export interface WorkspaceCatalogOrientationAxisConfig extends WorkspaceCatalogAxisConfig {
     /** Lower end of the angle range the mapped data is spread over, in degrees. */
     angleMin?: number;
     /** Upper end of the angle range the mapped data is spread over, in degrees. */
     angleMax?: number;
-    scalingType?: FrameScaling;
-    scalingParameters?: ScalingParameters;
 }
 
 /** A catalog association that remains meaningful when backend file IDs change between sessions. */
