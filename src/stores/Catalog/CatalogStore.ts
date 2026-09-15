@@ -216,7 +216,11 @@ export class CatalogStore {
 
     /** Associate a catalog filter request with the catalog it updates. */
     @action registerCatalogRequest = (catalogFileId: number, requestId: number) => {
+        const previousRequestId = this.catalogRequestIds.get(catalogFileId);
         this.catalogRequestIds.set(catalogFileId, requestId);
+        if (previousRequestId !== undefined && previousRequestId !== requestId) {
+            this.getCatalogDisplayStore(catalogFileId)?.handleCatalogRequestSuperseded(previousRequestId);
+        }
     };
 
     /** Return false for a response belonging to a superseded or completed request. */

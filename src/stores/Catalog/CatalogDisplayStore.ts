@@ -272,6 +272,10 @@ export class CatalogDisplayStore {
     private readonly columnRangeCache = new Map<string, ColumnRangeCache>();
     /** Layout display settings waiting for the catalog data they validate against. */
     private pendingConfig: WorkspaceCatalogConfig | undefined;
+    /** Result from the most recent attempt to apply the pending layout config. */
+    private pendingConfigResult: CatalogConfigApplyResult | undefined;
+    /** Request that is fetching the data needed by the pending layout config. */
+    private pendingConfigRequestId: number | undefined;
     /** Number of column-fetch attempts made for the current deferred config. */
     private pendingConfigRequestCount = 0;
 
@@ -1522,33 +1526,58 @@ export class CatalogDisplayStore {
     @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
         if (this.pendingConfig !== config) {
             this.pendingConfigRequestCount = 0;
+            this.pendingConfigRequestId = undefined;
         }
         const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         const configColumns = profileStore && !profileStore.isLoadingOntoImage ? this.configColumnsWithoutData(profileStore, config) : [];
         const shouldDefer = !profileStore || profileStore.isLoadingOntoImage || Boolean(configColumns.length && profileStore.isFileBasedCatalog);
         const result = this.applyConfig(config);
         this.pendingConfig = shouldDefer ? config : undefined;
+        this.pendingConfigResult = shouldDefer ? result : undefined;
         if (shouldDefer && profileStore && !profileStore.isLoadingOntoImage && configColumns.length) {
             if (this.pendingConfigRequestCount >= 1) {
                 this.pendingConfig = undefined;
+                this.pendingConfigResult = undefined;
+                this.pendingConfigRequestId = undefined;
                 this.pendingConfigRequestCount = 0;
                 this.reportRejectedConfig(result);
             } else {
                 const requestId = AppStore.Instance.requestCatalogColumns(this.catalogFileId, this.configColumnNames(config));
                 if (requestId === false) {
                     this.pendingConfig = undefined;
+                    this.pendingConfigResult = undefined;
+                    this.pendingConfigRequestId = undefined;
                     this.pendingConfigRequestCount = 0;
                     this.reportRejectedConfig(result);
                 } else {
+                    this.pendingConfigRequestId = requestId;
                     this.pendingConfigRequestCount += 1;
                 }
             }
         }
         if (!shouldDefer) {
+            this.pendingConfigRequestId = undefined;
             this.pendingConfigRequestCount = 0;
             this.reportRejectedConfig(result);
         }
         return result;
+    };
+
+    /** Drop a restore whose data request was superseded before it could complete. */
+    @action handleCatalogRequestSuperseded = (requestId: number) => {
+        if (this.pendingConfigRequestId !== requestId || !this.pendingConfig) {
+            return;
+        }
+
+        const result = this.pendingConfigResult;
+        this.pendingConfig = undefined;
+        this.pendingConfigResult = undefined;
+        this.pendingConfigRequestId = undefined;
+        this.pendingConfigRequestCount = 0;
+        this.reportRejectedConfig({
+            success: false,
+            errors: [...(result?.errors ?? []), "The catalog data request was superseded before the display settings could be restored"]
+        });
     };
 
     /** Columns referenced by a restored display config, including image-overlay coordinates. */
@@ -1585,6 +1614,8 @@ export class CatalogDisplayStore {
     private clearPendingRestoreState() {
         this.pendingClipRestore.clear();
         this.pendingConfig = undefined;
+        this.pendingConfigResult = undefined;
+        this.pendingConfigRequestId = undefined;
         this.pendingConfigRequestCount = 0;
     }
 

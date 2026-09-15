@@ -448,6 +448,39 @@ describe("CatalogDisplayStore display config", () => {
         expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
     });
 
+    test("clears deferred config when its column request is superseded", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+
+        runInAction(() => {
+            profileStore.catalogOriginalData.delete(0);
+            profileStore.setHeaderDisplay(false, "Fmag");
+            profileStore.setLoadingDataStatus(false);
+            profileStore.setUpdatingDataStream(false);
+            CatalogStore.Instance.catalogDisplayStores.set(store.catalogFileId, store);
+        });
+
+        expect(store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag"}}).success).toBe(false);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
+        CatalogStore.Instance.registerCatalogRequest(store.catalogFileId, 42);
+
+        CatalogStore.Instance.registerCatalogRequest(store.catalogFileId, 43);
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(store.getConfigForSerialization().sizeAxis?.mapColumn).toBe(CatalogOverlay.NONE);
+
+        runInAction(() => {
+            profileStore.setLoadingDataStatus(true);
+            profileStore.setLoadingDataStatus(false);
+        });
+
+        expect(addWarning).toHaveBeenCalledTimes(1);
+        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
+        CatalogStore.Instance.catalogDisplayStores.delete(store.catalogFileId);
+    });
+
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
         const store = createStore();
         const before = store.toConfig();
