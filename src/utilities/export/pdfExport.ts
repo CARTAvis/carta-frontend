@@ -29,6 +29,16 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
         }
     });
 
+    // Canvas grid borders are drawn on half-pixels. Align embedded rasters with
+    // those vector borders when svg2pdf maps them into PDF coordinates.
+    pdfSvg.querySelectorAll<SVGImageElement>("image").forEach(imageElement => {
+        const x = imageElement.getAttribute("x");
+        const numericX = Number(x);
+        if (x !== null && Number.isFinite(numericX)) {
+            imageElement.setAttribute("x", `${numericX + 0.5}`);
+        }
+    });
+
     return pdfSvg;
 }
 
