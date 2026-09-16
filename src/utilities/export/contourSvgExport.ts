@@ -51,8 +51,7 @@ export function renderContoursToSvg(vertexDataArrays: (Float32Array | null)[], c
             d: pathData,
             fill: "none",
             stroke: color,
-            "stroke-width": lineWidth,
-            "stroke-linejoin": "round"
+            "stroke-width": lineWidth
         };
 
         if (dashLength > 0) {
