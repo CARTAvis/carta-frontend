@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AstFonts} from "components/Shared";
 import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
+import * as colorUtils from "utilities/color/color";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 
@@ -19,6 +20,7 @@ describe("getPanelSvg", () => {
     const padding = {left: 5, right: 0, top: 7, bottom: 0};
     const renderAstOverlayToSvgMock = jest.mocked(renderAstOverlayToSvg);
     const renderColorbarToSvgMock = jest.mocked(renderColorbarToSvg);
+    let getColorsForValuesSpy: jest.SpyInstance;
     let appStoreSpy: jest.SpyInstance;
     let mockAppStore: any;
     let frame: any;
@@ -120,11 +122,13 @@ describe("getPanelSvg", () => {
 
         renderAstOverlayToSvgMock.mockReturnValue(null);
         renderColorbarToSvgMock.mockReturnValue(null);
+        getColorsForValuesSpy = jest.spyOn(colorUtils, "getColorsForValues").mockReturnValue({color: new Uint8ClampedArray([0, 10, 20, 255, 100, 110, 120, 255]), size: 2});
         appStoreSpy = jest.spyOn(AppStore, "Instance", "get").mockReturnValue(mockAppStore as never);
     });
 
     afterEach(() => {
         appStoreSpy.mockRestore();
+        getColorsForValuesSpy.mockRestore();
     });
 
     test("keeps only the raster layer embedded as an image while vectorizing overlays", () => {
@@ -216,6 +220,19 @@ describe("getPanelSvg", () => {
 
         expect(line).toHaveAttribute("x1", "20.00");
         expect(line).toHaveAttribute("x2", "20.00");
+    });
+
+    test("uses the normalized intensity range for color-mapped angle-only overlays", () => {
+        frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        frame.vectorOverlayConfig.isColormapEnabled = true;
+        frame.vectorOverlayStore.tiles[0].vertexData[2] = 0;
+        frame.vectorOverlayStore.intensityMin = 0;
+        frame.vectorOverlayStore.intensityMax = 0;
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const line = panelSvg?.querySelector("#vector-overlay line");
+
+        expect(line).toHaveAttribute("stroke", "rgba(0, 10, 20, 1)");
     });
 
     test("maps spatial contours into the reference frame before exporting", () => {
@@ -331,6 +348,18 @@ describe("getPanelSvg", () => {
         const beams = panelSvg?.querySelector("#beams");
 
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
+    });
+
+    test("renders vector overlays in front of the beam", () => {
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 10, y: 6, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const children = [...(panelSvg?.children ?? [])];
+        const indexOf = (id: string) => children.findIndex(child => child.id === id);
+
+        expect(indexOf("vector-overlays")).toBeGreaterThan(indexOf("beams"));
     });
 
     test("scales beam geometry once for SVG output", () => {

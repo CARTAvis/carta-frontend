@@ -91,6 +91,12 @@ describe("renderVectorOverlayToSvg", () => {
         expect(lines[1]).toHaveAttribute("stroke", "#ff00ff");
     });
 
+    test("includes the WebGL feather width in vector line thickness", () => {
+        const group = renderVectorOverlayToSvg(new Float32Array([10, 20, 8, 0]), 1, 1, 3, "#00ff00", 0, 0, false, 1);
+
+        expect(group.querySelector("line")).toHaveAttribute("stroke-width", "4");
+    });
+
     test("renders intensity plots as filled squares", () => {
         const group = renderVectorOverlayToSvg(new Float32Array([10, 20, 8, 0]), 1, 1, 3, "#00ff00", 0, 0, true);
 

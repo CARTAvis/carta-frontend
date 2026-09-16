@@ -68,7 +68,8 @@ export function renderVectorOverlayToSvg(
             x2: (x + dx).toFixed(2),
             y2: (y + dy).toFixed(2),
             stroke,
-            "stroke-width": lineWidth,
+            // Match the WebGL quad's outer geometry, which includes feathering.
+            "stroke-width": lineWidth + featherWidth,
             fill: "none"
         });
         group.appendChild(line);

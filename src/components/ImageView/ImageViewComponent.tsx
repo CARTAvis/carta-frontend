@@ -344,8 +344,8 @@ function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
         return fallbackColor;
     }
 
-    const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin ?? NaN) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
-    const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
+    const intensityMin = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None ? 0 : isFinite(frame.vectorOverlayConfig.intensityMin ?? NaN) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
+    const intensityMax = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None ? 1 : isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
     const fraction = !isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax ? 1 : (intensity - (intensityMin ?? 0)) / ((intensityMax ?? 0) - (intensityMin ?? 0));
 
     return sampleColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor);
@@ -715,7 +715,13 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(contoursSvg);
     }
 
-    // 4. Vector overlay — vector SVG from store data
+    // 4. Beam — vector SVG from store data
+    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
+    if (beamGroup) {
+        panelGroup.appendChild(beamGroup);
+    }
+
+    // 5. Vector overlay — vector SVG from store data
     const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
     if (vectorOverlaySvg) {
         if (rasterCanvas) {
@@ -730,19 +736,13 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(vectorOverlaySvg);
     }
 
-    // 5. Colorbar — vector SVG from store data
+    // 6. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
     if (!isColorBlending && colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
         const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
         if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
         }
-    }
-
-    // 6. Beam — vector SVG from store data
-    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
-    if (beamGroup) {
-        panelGroup.appendChild(beamGroup);
     }
 
     // 7. Catalog — vector SVG from store data
