@@ -27,6 +27,8 @@ const COLUMNS: ReadonlyArray<{name: string; values: number[]}> = [
 /** A column no axis can be plotted against, for configs that name the wrong kind of column. */
 const STRING_COLUMN = "Name";
 const UNSUPPORTED_COLUMN = "Unsupported";
+/** A string column the image overlay can still read, because its units declare the format. */
+const STRING_COORDINATE_COLUMN = "RAJ2000";
 
 let nextCatalogFileId = 0;
 const CREATED_STORES: CatalogDisplayStore[] = [];
@@ -39,6 +41,8 @@ function createProfileStore(catalogFileId: number, scale: number = 1): CatalogPr
     catalogData.set(COLUMNS.length, {dataType: CARTA.ColumnType.String, data: ["a", "b", "c", "d"]});
     catalogHeader.push(new CARTA.CatalogHeader({columnIndex: COLUMNS.length + 1, dataType: CARTA.ColumnType.UnsupportedType, name: UNSUPPORTED_COLUMN}));
     catalogData.set(COLUMNS.length + 1, {dataType: CARTA.ColumnType.UnsupportedType, data: []});
+    catalogHeader.push(new CARTA.CatalogHeader({columnIndex: COLUMNS.length + 2, dataType: CARTA.ColumnType.String, name: STRING_COORDINATE_COLUMN, units: "h:m:s"}));
+    catalogData.set(COLUMNS.length + 2, {dataType: CARTA.ColumnType.String, data: ["10:24:33.1", "10:25:01.7", "10:25:44.0", "10:26:12.9"]});
 
     return new CatalogProfileStore({dataSize: COLUMNS[0].values.length, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData, CatalogType.FILE);
 }
@@ -531,7 +535,7 @@ describe("CatalogDisplayStore display config", () => {
         const result = store.applyConfig({color: "#123456", xAxis: STRING_COLUMN, yAxis: "DEC"});
 
         expect(result.success).toBe(false);
-        expect(result.errors).toEqual([`The x axis is set to "${STRING_COLUMN}", which is not a numeric column`]);
+        expect(result.errors).toEqual([`The x axis is set to "${STRING_COLUMN}", which cannot be read as a coordinate`]);
         expect(store.toConfig()).toEqual(before);
     });
 
@@ -541,7 +545,32 @@ describe("CatalogDisplayStore display config", () => {
 
         const result = store.applyConfig({xAxis: UNSUPPORTED_COLUMN, yAxis: "DEC"});
 
-        expect(result).toEqual({success: false, errors: [`The x axis is set to "${UNSUPPORTED_COLUMN}", which is not a numeric column`]});
+        expect(result).toEqual({success: false, errors: [`The x axis is set to "${UNSUPPORTED_COLUMN}", which cannot be read as a coordinate`]});
+        expect(store.toConfig()).toEqual(before);
+    });
+
+    // The axis menu offers string columns the overlay can parse, so a workspace that saved one
+    // must be able to restore it. Validating the axis as a number instead would reject a setting
+    // the user had plotted successfully before saving it.
+    test("restores an image overlay axis set to a string coordinate column", () => {
+        const store = createStore();
+
+        expect(store.applyConfig({xAxis: STRING_COORDINATE_COLUMN, yAxis: "DEC"})).toEqual({success: true, errors: []});
+
+        expect(store.xAxis).toBe(STRING_COORDINATE_COLUMN);
+        expect(store.yAxis).toBe("DEC");
+    });
+
+    // A mapped column is read as a plain number, so the looser coordinate rule must not leak into
+    // the groups that cannot parse anything.
+    test("rejects a mapped column set to a string coordinate column, without changing anything", () => {
+        const store = createStore();
+        const before = store.toConfig();
+
+        const result = store.applyConfig({colorAxis: {mapColumn: STRING_COORDINATE_COLUMN}});
+
+        expect(result.success).toBe(false);
+        expect(result.errors).toEqual([`The color axis is mapped to "${STRING_COORDINATE_COLUMN}", which is not a numeric column`]);
         expect(store.toConfig()).toEqual(before);
     });
 

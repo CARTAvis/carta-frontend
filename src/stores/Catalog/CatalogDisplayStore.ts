@@ -21,6 +21,7 @@ import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalog
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
 import {
+    CatalogAxisEligibility,
     clamp,
     createScalingParameters,
     getScalingParameter,
@@ -162,19 +163,36 @@ function authoredClip(bound: ClipBound): number | undefined {
 }
 
 /**
- * Why one column a config names cannot be used, or undefined when it can. The verb names how the
- * column is used, so that the message reads the way the setting does.
+ * How a config uses a column. The two roles differ in the rule a column must satisfy, in whether
+ * its data must already have arrived, and in the verb that names the setting in an error message.
  */
-function getColumnError(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: string, column: string, verb: string, shouldHaveData: boolean): string | undefined {
-    const subject = `The ${axis} axis is ${verb} "${column}", which`;
+type ColumnRole = "mapped" | "coordinate";
+
+/**
+ * Why one column a config names cannot be used, or undefined when it can.
+ *
+ * A mapped column is read as a plain number, so its declared type settles it. An image overlay
+ * coordinate is not so limited -- a string column holding a sexagesimal value is a coordinate too
+ * -- so it is judged by {@link AbstractCatalogProfileStore.getCoordinateEligibility}, the same
+ * authority the axis menu and the plotting path use. Deciding it here instead would let a workspace
+ * reject a column the user was offered and successfully plotted before saving it.
+ *
+ * `Unknown` passes: it means the column's values have not been fetched yet, not that they were read
+ * and found wanting, and a coordinate column need not hold data at restore time anyway.
+ */
+function getColumnError(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: string, column: string, role: ColumnRole): string | undefined {
+    const subject = `The ${axis} axis is ${role === "mapped" ? "mapped to" : "set to"} "${column}", which`;
     const header = profileStore.getColumnHeader(column);
     if (!header) {
         return `${subject} this catalog does not have`;
     }
+    if (role === "coordinate") {
+        return profileStore.getCoordinateEligibility(column).status === CatalogAxisEligibility.Ineligible ? `${subject} cannot be read as a coordinate` : undefined;
+    }
     if (!isCatalogNumericDataType(header.dataType)) {
         return `${subject} is not a numeric column`;
     }
-    if (shouldHaveData && !profileStore.get1DPlotData(column).wcsData?.length) {
+    if (!profileStore.get1DPlotData(column).wcsData?.length) {
         return `${subject} has no data to map`;
     }
     return undefined;
@@ -1463,17 +1481,17 @@ export class CatalogDisplayStore {
         // catalog does not have, or one that cannot hold a coordinate, is rejected rather than left
         // to fail when the overlay is drawn; its data alone need not have arrived yet, because the
         // overlay is plotted from whatever streams in later.
-        const columnsToValidate: ReadonlyArray<[axis: string, column: string, verb: string, shouldHaveData: boolean]> = [
-            ["size", sizeAxis.mapColumn, "mapped to", true],
-            ["minor size", sizeMinorAxis.mapColumn, "mapped to", true],
-            ["color", colorAxis.mapColumn, "mapped to", true],
-            ["orientation", orientationAxis.mapColumn, "mapped to", true],
-            ["x", typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE, "set to", false],
-            ["y", typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE, "set to", false]
+        const columnsToValidate: ReadonlyArray<[axis: string, column: string, role: ColumnRole]> = [
+            ["size", sizeAxis.mapColumn, "mapped"],
+            ["minor size", sizeMinorAxis.mapColumn, "mapped"],
+            ["color", colorAxis.mapColumn, "mapped"],
+            ["orientation", orientationAxis.mapColumn, "mapped"],
+            ["x", typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE, "coordinate"],
+            ["y", typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE, "coordinate"]
         ];
         const errors = columnsToValidate
             .filter(([, column]) => column !== CatalogOverlay.NONE)
-            .map(([axis, column, verb, shouldHaveData]) => getColumnError(profileStore, axis, column, verb, shouldHaveData))
+            .map(([axis, column, role]) => getColumnError(profileStore, axis, column, role))
             .filter((error): error is string => error !== undefined);
 
         if (errors.length) {
