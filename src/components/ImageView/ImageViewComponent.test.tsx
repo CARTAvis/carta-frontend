@@ -362,6 +362,18 @@ describe("getPanelSvg", () => {
         expect(indexOf("vector-overlays")).toBeGreaterThan(indexOf("beams"));
     });
 
+    test("renders contours in front of the beam", () => {
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 10, y: 6, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const children = [...(panelSvg?.children ?? [])];
+        const indexOf = (id: string) => children.findIndex(child => child.id === id);
+
+        expect(indexOf("contours")).toBeGreaterThan(indexOf("beams"));
+    });
+
     test("scales beam geometry once for SVG output", () => {
         mockAppStore.pixelRatio = 2;
         frame.hasVisibleBeam = true;

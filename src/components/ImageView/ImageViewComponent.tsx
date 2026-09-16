@@ -700,7 +700,13 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(astSvg);
     }
 
-    // 3. Contour — vector SVG from store data
+    // 3. Beam — vector SVG from store data
+    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
+    if (beamGroup) {
+        panelGroup.appendChild(beamGroup);
+    }
+
+    // 4. Contour — vector SVG from store data
     const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
     if (contoursSvg) {
         if (rasterCanvas) {
@@ -713,12 +719,6 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
             contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
         }
         panelGroup.appendChild(contoursSvg);
-    }
-
-    // 4. Beam — vector SVG from store data
-    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
-    if (beamGroup) {
-        panelGroup.appendChild(beamGroup);
     }
 
     // 5. Vector overlay — vector SVG from store data
