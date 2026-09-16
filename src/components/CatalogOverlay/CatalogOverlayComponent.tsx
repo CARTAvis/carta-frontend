@@ -565,7 +565,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const previousSystem = profileStore.activedSystem;
         profileStore.setCatalogCoordinateSystem(system);
         if (this.shouldAutoSelectImageOverlayColumns) {
-            this.autoSelectAxes(true);
+            catalogDisplayStore?.setAutoSelectImageOverlayAxesAttempted(false);
+            const isWaitingForStreamedAxes = this.autoSelectAxes(true);
+            if (!isWaitingForStreamedAxes) {
+                catalogDisplayStore?.setAutoSelectImageOverlayAxesAttempted(true);
+            }
             return;
         }
 

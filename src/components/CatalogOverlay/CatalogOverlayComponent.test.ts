@@ -767,6 +767,32 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
         });
 
+        test("retries after a coordinate-system change leaves string axes unresolved", () => {
+            const profileStore = CreateCatalogProfileStore(12347, CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "GLON", dataType: CARTA.ColumnType.String}, {name: "GLAT", dataType: CARTA.ColumnType.String}], 200);
+            const {component, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+            component["updateByInfiniteScroll"] = jest.fn();
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+
+            component["handleCatalogSystemChange"](CatalogSystemType.Galactic);
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(2, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("12:30:00")});
+                profileStore.catalogOriginalData.set(3, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("-21:57:15")});
+                profileStore.setSubsetEndIndex(200);
+            });
+
+            expect(widgetStore.xAxis).toBe("GLON");
+            expect(widgetStore.yAxis).toBe("GLAT");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+        });
+
         test("only attempts auto-selection once per catalog", () => {
             const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 
