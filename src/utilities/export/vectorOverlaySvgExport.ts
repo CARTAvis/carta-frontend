@@ -4,7 +4,17 @@ import {createSvgElement, svgGroupFromLayer} from "./svgExport";
  * Converts vector overlay data to SVG line elements.
  * Each vector has position (x, y), intensity, and angle.
  */
-export function renderVectorOverlayToSvg(positions: Float32Array | null, numVectors: number, lengthScale: number, lineWidth: number, color: string | string[], offsetX: number, offsetY: number, isIntensityPlot = false): SVGGElement {
+export function renderVectorOverlayToSvg(
+    positions: Float32Array | null,
+    numVectors: number,
+    lengthScale: number,
+    lineWidth: number,
+    color: string | string[],
+    offsetX: number,
+    offsetY: number,
+    isIntensityPlot = false,
+    featherWidth = 0
+): SVGGElement {
     const group = svgGroupFromLayer("vector-overlay");
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
@@ -34,12 +44,15 @@ export function renderVectorOverlayToSvg(positions: Float32Array | null, numVect
         const stroke = Array.isArray(color) ? (color[i] ?? color[color.length - 1] ?? "#ffffff") : color;
 
         if (isIntensityPlot) {
+            // WebGL includes the feather width in the outer square geometry.
+            const pointSize = length + featherWidth;
+            const halfPointSize = pointSize / 2;
             group.appendChild(
                 createSvgElement("rect", {
-                    x: (x - halfLength).toFixed(2),
-                    y: (y - halfLength).toFixed(2),
-                    width: length.toFixed(2),
-                    height: length.toFixed(2),
+                    x: (x - halfPointSize).toFixed(2),
+                    y: (y - halfPointSize).toFixed(2),
+                    width: pointSize.toFixed(2),
+                    height: pointSize.toFixed(2),
                     fill: stroke
                 })
             );

@@ -510,7 +510,8 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 strokeColors,
                 padding.left * pixelRatio,
                 padding.top * pixelRatio,
-                vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None
+                vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None,
+                pixelRatio / (frame.spatialTransform?.scale ?? 1)
             );
             group.appendChild(vectorSvg);
         }

@@ -100,6 +100,15 @@ describe("renderVectorOverlayToSvg", () => {
         expect(group.querySelector("rect")).toHaveAttribute("width", "8.00");
         expect(group.querySelector("rect")).toHaveAttribute("height", "8.00");
     });
+
+    test("includes the WebGL feather width in intensity plot size", () => {
+        const group = renderVectorOverlayToSvg(new Float32Array([10, 20, 8, 0]), 1, 1, 3, "#00ff00", 0, 0, true, 1);
+
+        expect(group.querySelector("rect")).toHaveAttribute("x", "5.50");
+        expect(group.querySelector("rect")).toHaveAttribute("y", "15.50");
+        expect(group.querySelector("rect")).toHaveAttribute("width", "9.00");
+        expect(group.querySelector("rect")).toHaveAttribute("height", "9.00");
+    });
 });
 
 describe("renderColorbarToSvg", () => {
