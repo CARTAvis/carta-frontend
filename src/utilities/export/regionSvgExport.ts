@@ -170,7 +170,7 @@ function renderPolygonRegion(points: Point2D[], region: RegionStore, isClosed: b
     });
 }
 
-function getArrowLineEnd(start: Point2D, tip: Point2D, arrowLength: number): Point2D {
+function getArrowLineEnd(start: Point2D, tip: Point2D, arrowLength: number, isExtrapolated = false): Point2D {
     const dx = tip.x - start.x;
     const dy = tip.y - start.y;
     const segmentLength = Math.hypot(dx, dy);
@@ -178,11 +178,49 @@ function getArrowLineEnd(start: Point2D, tip: Point2D, arrowLength: number): Poi
         return tip;
     }
 
-    const offset = Math.min(arrowLength, segmentLength);
+    const offset = isExtrapolated ? arrowLength : Math.min(arrowLength, segmentLength);
     return {
         x: tip.x - (dx / segmentLength) * offset,
         y: tip.y - (dy / segmentLength) * offset
     };
+}
+
+function trimPathForArrow(points: Point2D[], arrowLength: number): Point2D[] {
+    if (points.length < 2 || arrowLength <= 0) {
+        return points.map(point => ({...point}));
+    }
+
+    const trimmed = points.slice(0, -1).map(point => ({...point}));
+    let tip = points[points.length - 1];
+    let remaining = arrowLength;
+
+    for (let index = points.length - 2; index >= 0; index--) {
+        const start = points[index];
+        const segmentLength = Math.hypot(tip.x - start.x, tip.y - start.y);
+        if (segmentLength === 0) {
+            tip = start;
+            continue;
+        }
+        if (segmentLength >= remaining) {
+            trimmed.splice(index + 1);
+            trimmed.push(getArrowLineEnd(start, tip, remaining));
+            return trimmed;
+        }
+        remaining -= segmentLength;
+        tip = start;
+    }
+
+    return [getArrowLineEnd(points[0], points[points.length - 1], arrowLength)];
+}
+
+function getArrowDirectionStart(points: Point2D[]): Point2D | null {
+    const tip = points[points.length - 1];
+    for (let index = points.length - 2; index >= 0; index--) {
+        if (Math.hypot(tip.x - points[index].x, tip.y - points[index].y) > 0) {
+            return points[index];
+        }
+    }
+    return null;
 }
 
 function getArrowheadPoints(start: Point2D, tip: Point2D, arrowLength: number, arrowWidth: number): string | null {
@@ -193,7 +231,7 @@ function getArrowheadPoints(start: Point2D, tip: Point2D, arrowLength: number, a
         return null;
     }
 
-    const base = getArrowLineEnd(start, tip, arrowLength);
+    const base = getArrowLineEnd(start, tip, arrowLength, true);
     const perpendicular = {x: (-dy / segmentLength) * (arrowWidth / 2), y: (dx / segmentLength) * (arrowWidth / 2)};
     return `${base.x + perpendicular.x},${base.y + perpendicular.y} ${tip.x},${tip.y} ${base.x - perpendicular.x},${base.y - perpendicular.y}`;
 }
@@ -216,18 +254,16 @@ function renderVectorAnnotation(points: Point2D[], region: RegionStore, pixelRat
     const arrowLength = (vector.pointerLength ?? 10) * pixelRatio;
     const arrowWidth = (vector.pointerWidth ?? 7) * pixelRatio;
 
-    const linePoints = points.map(point => ({...point}));
-    if (linePoints.length > 1) {
-        linePoints[linePoints.length - 1] = getArrowLineEnd(linePoints[linePoints.length - 2], linePoints[linePoints.length - 1], arrowLength);
-    }
+    const linePoints = trimPathForArrow(points, arrowLength);
 
     const line = createSvgElement("polyline", {
         points: linePoints.map(point => `${point.x},${point.y}`).join(" "),
         ...getStrokeAttrs(region, pixelRatio)
     });
     group.appendChild(line);
-    if (points.length > 1) {
-        const arrowhead = renderArrowhead(points[points.length - 2], points[points.length - 1], region, pixelRatio, arrowLength, arrowWidth);
+    const arrowStart = points.length > 1 ? getArrowDirectionStart(points) : null;
+    if (arrowStart) {
+        const arrowhead = renderArrowhead(arrowStart, points[points.length - 1], region, pixelRatio, arrowLength, arrowWidth);
         if (arrowhead) {
             group.appendChild(arrowhead);
         }

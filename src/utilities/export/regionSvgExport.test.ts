@@ -110,6 +110,37 @@ describe("renderRegionsToSvg", () => {
         expect(vectorArrowhead?.getAttribute("stroke-width")).toBe("2");
     });
 
+    it("keeps the full arrowhead when spatial approximation ends with a short segment", () => {
+        const vector = {
+            ...baseRegion(CARTA.RegionType.ANNVECTOR, [
+                {x: 10, y: 10},
+                {x: 40, y: 20}
+            ]),
+            getRegionApproximation: () => [
+                {x: 10, y: 10},
+                {x: 20, y: 10},
+                {x: 30, y: 10},
+                {x: 30.1, y: 10}
+            ],
+            pointerWidth: 6,
+            pointerLength: 8
+        };
+
+        const group = renderRegionsToSvg([vector as any], FRAME_VIEW, 1000, 1000, 0, 0, {frame: matchedFrame() as any});
+        const polyline = group.querySelector("polyline");
+        const arrowhead = group.querySelector("polygon");
+        const lineEnd = polyline?.getAttribute("points")?.split(" ").at(-1)?.split(",").map(Number);
+        const arrowPoints = arrowhead
+            ?.getAttribute("points")
+            ?.trim()
+            .split(" ")
+            .map(point => point.split(",").map(Number));
+
+        expect(lineEnd?.[0]).toBeCloseTo(292.99999999999994);
+        expect(arrowPoints?.[1][0]).toBeCloseTo(301);
+        expect(arrowPoints?.[0][0]).toBeCloseTo(293);
+    });
+
     it("exports compass and ruler annotations", () => {
         const compass = {
             ...baseRegion(CARTA.RegionType.ANNCOMPASS, [
