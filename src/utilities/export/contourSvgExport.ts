@@ -23,6 +23,16 @@ export function renderContoursToSvg(vertexDataArrays: (Float32Array | null)[], c
         const totalPairs = vertexData.length / VERTEX_DATA_ELEMENTS;
         let pathData = "";
         let isFirstPoint = true;
+        let firstPoint: {x: number; y: number} | null = null;
+        let lastPoint: {x: number; y: number} | null = null;
+
+        const finishSubpath = () => {
+            if (firstPoint && lastPoint && Math.abs(firstPoint.x - lastPoint.x) < 1e-6 && Math.abs(firstPoint.y - lastPoint.y) < 1e-6) {
+                pathData += "Z";
+            }
+            firstPoint = null;
+            lastPoint = null;
+        };
 
         for (let i = 0; i < totalPairs; i++) {
             const dataOffset = i * VERTEX_DATA_ELEMENTS;
@@ -31,17 +41,22 @@ export function renderContoursToSvg(vertexDataArrays: (Float32Array | null)[], c
             const y = vertexData[dataOffset + 1] + offsetY;
 
             if (!isFinite(x) || !isFinite(y)) {
+                finishSubpath();
                 isFirstPoint = true;
                 continue;
             }
 
             if (isFirstPoint) {
                 pathData += `M${x.toFixed(2)},${y.toFixed(2)}`;
+                firstPoint = {x, y};
                 isFirstPoint = false;
             } else {
                 pathData += `L${x.toFixed(2)},${y.toFixed(2)}`;
             }
+            lastPoint = {x, y};
         }
+
+        finishSubpath();
 
         if (!pathData) {
             continue;

@@ -76,6 +76,13 @@ describe("renderContoursToSvg", () => {
         // Two separate sub-paths, no line connecting (3,4) to (10,20)
         expect(path).toHaveAttribute("d", "M1.00,2.00L3.00,4.00M10.00,20.00L30.00,40.00");
     });
+
+    test("closes enclosed contour subpaths", () => {
+        const vertexData = new Float32Array([10, 20, 0, 0, 10, 20, 0, 0, 30, 40, 0, 0, 30, 40, 0, 0, 10, 20, 0, 0, 10, 20, 0, 0]);
+        const path = renderContoursToSvg([vertexData], "#ffffff", 1, 0, 0, 0).querySelector("path");
+
+        expect(path).toHaveAttribute("d", "M10.00,20.00L30.00,40.00L10.00,20.00Z");
+    });
 });
 
 describe("renderVectorOverlayToSvg", () => {
