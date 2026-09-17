@@ -15,12 +15,12 @@ export default defineConfig({
     clearMocks: true,
     globals: true,
     include: ["src/**/*.{test,spec}.{js,jsx,ts,tsx}", "wasm_src/**/*.{test,spec}.{js,jsx,ts,tsx}"],
-    setupFiles: ["./src/setupRstest.js"],
+    setupFiles: ["./src/setupTests.js"],
     testEnvironment: "jsdom",
     coverage: {
         provider: "v8",
         include: ["src/**/*.{js,jsx,ts,tsx}"],
-        exclude: ["src/**/*.d.ts", "src/index.tsx", "src/registerServiceWorker.ts", "src/setup*.js"]
+        exclude: ["src/**/*.d.ts", "src/index.tsx", "src/registerServiceWorker.ts", "src/setupTests.js"]
     },
 	resolve: {
 		alias: {

@@ -1,7 +1,7 @@
 const FS = require("fs");
 const OS = require("os");
 const PATH = require("path");
-const {spawnSync: SPAWN_SYNC} = require("child_process");
+const {spawnSync: SpawnSync} = require("child_process");
 
 // @ts-expect-error The CLI checker is intentionally outside the frontend rootDir.
 const CHECKER = require("../../scripts/check_python_enum");
@@ -24,7 +24,7 @@ function runChecker(value) {
     const manifestPath = PATH.join(directory, "manifest.json");
     FS.writeFileSync(manifestPath, JSON.stringify(value));
     try {
-        return SPAWN_SYNC(process.execPath, [SCRIPT, "--manifest", manifestPath], {encoding: "utf8"});
+        return SpawnSync(process.execPath, [SCRIPT, "--manifest", manifestPath], {encoding: "utf8"});
     } finally {
         FS.rmSync(directory, {recursive: true, force: true});
     }
