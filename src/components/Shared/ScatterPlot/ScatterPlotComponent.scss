@@ -14,4 +14,8 @@
         position: relative;
         z-index: 1;
     }
+
+    > .profiler-toolbar {
+        z-index: 3;
+    }
 }

@@ -67,6 +67,7 @@ export class ScatterPlotComponentProps {
     zeroLineWidth?: number;
     cursorNearestPoint?: {x: number; y: number};
     cursorNearestPointAt?: (x: number, y: number) => {x: number; y: number} | undefined;
+    cursorIndicatorStyle?: "ring" | "crosshair";
     cursorHitRadius?: number;
     updateChartArea?: (chartArea: ChartArea) => void;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
@@ -88,6 +89,7 @@ const DOUBLE_CLICK_DISTANCE = 5;
 const DRAG_THRESHOLD = 3;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
+const MAX_LASSO_VERTICES = 512;
 // indicator default Radius
 const INNERRADIUS = 0.5;
 const OUTERRADIUS = 3;
@@ -342,7 +344,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
         if (this.isMouseEntered && this.props.cursorNearestPoint && this.props.xMin !== undefined && this.props.xMax !== undefined && this.props.yMin !== undefined && this.props.yMax !== undefined) {
             const nearestPoint = this.props.cursorNearestPoint;
-            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : Colors.DARK_GRAY3;
+            const markerColor = this.props.isDarkMode ? Colors.GRAY4 : this.props.cursorIndicatorStyle === "crosshair" ? Colors.DARK_GRAY3 : Colors.GRAY2;
             if (nearestPoint.x >= this.props.xMin && nearestPoint.x <= this.props.xMax && nearestPoint.y >= this.props.yMin && nearestPoint.y <= this.props.yMax) {
                 const devicePixelRatio = window.devicePixelRatio || 1;
                 const xPixelValue = this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true);
@@ -350,8 +352,12 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (xPixelValue !== undefined && yPixelValue !== undefined) {
                     const x = Math.floor(xPixelValue) + 0.5 * devicePixelRatio;
                     const y = Math.floor(yPixelValue) + 0.5 * devicePixelRatio;
-                    indicator.push(this.genXline("scatter-indicator-x-hovered-nearest", markerColor, markerOpacity, x));
-                    indicator.push(this.genYline("scatter-indicator-y-hovered-nearest", markerColor, markerOpacity, y));
+                    if (this.props.cursorIndicatorStyle === "crosshair") {
+                        indicator.push(this.genXline("scatter-indicator-x-hovered-nearest", markerColor, markerOpacity, x));
+                        indicator.push(this.genYline("scatter-indicator-y-hovered-nearest", markerColor, markerOpacity, y));
+                    } else {
+                        indicator.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor, x, y));
+                    }
                 }
             }
         }
@@ -510,7 +516,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     }
 
     @action updateLassoSelection(x: number, y: number) {
-        this.lassoPoints = [...this.lassoPoints, x, y];
+        this.lassoPoints.push(x, y);
     }
 
     @action updatePan(x: number, y: number) {
@@ -521,7 +527,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
-        if (mouseEvent.shiftKey) {
+        const isPanModifier = mouseEvent.shiftKey || (!this.props.dragAction && (mouseEvent.ctrlKey || mouseEvent.altKey));
+        if (this.props.dragAction === false) {
+            return;
+        }
+        if (isPanModifier) {
             this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
         } else if (this.props.dragAction === DragMode.Lasso) {
             this.startLassoSelection(mouseEvent.offsetX, mouseEvent.offsetY);
@@ -615,9 +625,20 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (this.isLassoSelecting && this.props.onLassoSelected && this.lassoPoints.length >= 6) {
                     // Convert lasso pixel coords to graph coords
                     const polygonGraph: Point2D[] = [];
-                    for (let i = 0; i < this.lassoPoints.length; i += 2) {
+                    const vertexCount = this.lassoPoints.length / 2;
+                    const step = Math.max(1, Math.ceil(vertexCount / MAX_LASSO_VERTICES));
+                    for (let vertex = 0; vertex < vertexCount; vertex += step) {
+                        const i = vertex * 2;
                         const gx = this.getValueForPixelX(this.lassoPoints[i]);
                         const gy = this.getValueForPixelY(this.lassoPoints[i + 1]);
+                        if (gx !== undefined && gy !== undefined) {
+                            polygonGraph.push({x: gx, y: gy});
+                        }
+                    }
+                    const lastIndex = this.lassoPoints.length - 2;
+                    if (lastIndex >= 0 && (vertexCount - 1) % step !== 0) {
+                        const gx = this.getValueForPixelX(this.lassoPoints[lastIndex]);
+                        const gy = this.getValueForPixelY(this.lassoPoints[lastIndex + 1]);
                         if (gx !== undefined && gy !== undefined) {
                             polygonGraph.push({x: gx, y: gy});
                         }
@@ -689,6 +710,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
+        if (this.props.dragAction === DragMode.Zoom && this.props.graphZoomedXY && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD)) {
+            return ZoomMode.XY;
+        }
         if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
         } else if (this.props.graphZoomedX && this.props.graphZoomedY) {
