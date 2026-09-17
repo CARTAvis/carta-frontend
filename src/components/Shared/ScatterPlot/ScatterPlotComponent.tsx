@@ -790,7 +790,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 <div
                     ref={this.containerRef}
                     className={"scatter-plot-component"}
-                    style={{cursor: this.isPanning ? "move" : "crosshair"}}
+                    style={{cursor: "crosshair"}}
                     onKeyDown={this.onKeyDown}
                     onMouseEnter={this.onMouseEnter}
                     onMouseMove={this.onMouseMove}
