@@ -1,4 +1,5 @@
 import {Intent} from "@blueprintjs/core";
+import {rs} from "@rstest/core";
 import {observable, runInAction} from "mobx";
 
 import {AppStore} from "stores";
@@ -17,7 +18,7 @@ interface TestableImageViewSettingsPanelComponent {
 
 describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("clears validation intent when the active frame changes", () => {
@@ -27,7 +28,7 @@ describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
                 return activeFrame.get();
             }
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
 
         const component = new ImageViewSettingsPanelComponent({} as any) as unknown as TestableImageViewSettingsPanelComponent;
         component.restFrameShiftInputIntent = Intent.DANGER;
