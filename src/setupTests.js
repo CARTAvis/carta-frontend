@@ -47,3 +47,13 @@ Object.defineProperty(window, "matchMedia", {
         dispatchEvent: () => {}
     })
 });
+
+// jsdom does not implement top-layer elements, and nwsapi recursively evaluates
+// these selectors when Floating UI checks whether a popover is in the top layer.
+const OriginalMatches = Element.prototype.matches;
+Element.prototype.matches = function (selector) {
+    if (selector === ":modal" || selector === ":popover-open" || selector === ":fullscreen") {
+        return false;
+    }
+    return OriginalMatches.call(this, selector);
+};
