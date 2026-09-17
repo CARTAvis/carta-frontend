@@ -1,3 +1,5 @@
+import {rs} from "@rstest/core";
+
 import {CatalogDatabase, PreferenceKeys, SimbadMirror} from "enums";
 import {ApiService} from "services";
 import {PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
@@ -5,27 +7,27 @@ import {CATALOG_MIRROR_URLS} from "utilities/catalog/constants";
 
 import {MirrorSiteStore} from "./MirrorSiteStore";
 
-jest.mock("models", () => ({
+rs.mock("models", () => ({
     CARTA_INFO: {version: "test"},
     CompressionQuality: {IMAGE_DEFAULT: 1, ANIMATION_DEFAULT: 1},
     CursorPosition: {TRACKING: "tracking", FIXED: "fixed"},
-    Event: {EVENT_NUMBER: 0, EVENT_TYPES: [], isTypeValid: jest.fn(() => false)},
-    getEventList: jest.fn(),
+    Event: {EVENT_NUMBER: 0, EVENT_TYPES: [], isTypeValid: rs.fn(() => false)},
+    getEventList: rs.fn(),
     PresetLayout: {DEFAULT: {}},
     RegionCreationMode: {CENTER: "center", CORNER: "corner"},
     Theme: {AUTO: "auto"},
     TileCache: {GPU_DEFAULT: 1, SYSTEM_DEFAULT: 1},
-    WCSMatching: {isTypeValid: jest.fn(() => false)},
+    WCSMatching: {isTypeValid: rs.fn(() => false)},
     WCSType: {AUTOMATIC: "automatic"},
     Zoom: {FIT: "fit", FULL: "full"},
     ZoomPoint: {CURSOR: "cursor"}
 }));
 
-jest.mock("services", () => ({
+rs.mock("services", () => ({
     ApiService: {
         Instance: {
-            clearPreferences: jest.fn().mockResolvedValue(true),
-            setPreference: jest.fn().mockResolvedValue(true)
+            clearPreferences: rs.fn().mockResolvedValue(true),
+            setPreference: rs.fn().mockResolvedValue(true)
         }
     }
 }));
@@ -39,7 +41,7 @@ describe("[unit] MirrorSiteStore", () => {
     beforeEach(() => {
         PreferenceStore.Instance.preferences.clear();
         mirrorStore.resetAllSettings();
-        jest.clearAllMocks();
+        rs.clearAllMocks();
     });
 
     test("stores only mirror enum values in the enabled preference and preserves their order", () => {
