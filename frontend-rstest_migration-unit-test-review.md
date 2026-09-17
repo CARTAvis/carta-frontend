@@ -33,7 +33,7 @@ These tests were nondeterministic, could contact external services, and left wor
 
 `TileCoordinate.test.ts:51-63` asserts that one million encodes complete in less than 20 ms. V8 coverage instrumentation changes that operation to 41-47 ms on the same Node 24 host, so the repository's coverage script ends with one failing test despite the functional assertion passing.
 
-Wall-clock microbenchmarks should not be unit-test pass/fail gates. The test now retains the one-million-coordinate correctness checks and no longer makes timing a pass/fail condition. Coverage completes successfully.
+Wall-clock microbenchmarks should not use the same threshold under instrumentation. The tests retain one-million-coordinate correctness and duration checks: normal runs enforce the 20 ms budget, while `test:coverage` uses a dedicated 100 ms V8-instrumentation budget.
 
 ### Medium: `FrameStore` zoom tests leave real timers active — resolved
 

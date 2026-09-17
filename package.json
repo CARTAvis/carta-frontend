@@ -108,7 +108,7 @@
         "test": "rstest",
         "test:leaks": "rstest --detectAsyncLeaks",
         "test:watch": "rstest --watch",
-        "test:coverage": "rstest --coverage",
+        "test:coverage": "CARTA_TEST_COVERAGE=1 rstest --coverage",
         "check-python-api": "node scripts/check_python_api.js",
         "check-python-enum": "node scripts/check_python_enum.js",
         "reformat": "npx prettier --write ./src",

@@ -35,28 +35,51 @@ test("returns identical round trip coordinates", () => {
     }
 });
 
-test("encodes 1M coordinates correctly", () => {
+/** Timings under parallel workers are noisy in one direction only, so the fastest
+ *  run of several is the stable estimate; the first run is also JIT warm-up. */
+function fastestRun(run: () => void, samples = 5): number {
+    run();
+    let best = Infinity;
+    for (let i = 0; i < samples; i++) {
+        const tStart = performance.now();
+        run();
+        best = Math.min(best, performance.now() - tStart);
+    }
+    return best;
+}
+
+const TILE_COORDINATE_DURATION_BUDGET = process.env.CARTA_TEST_COVERAGE === "1" ? 100 : 20;
+
+test("encodes 1M coordinates within the performance budget", () => {
     const layer = 12;
     let encodedVal = 0;
-    for (let i = 0; i < 1000; i++) {
-        for (let j = 0; j < 1000; j++) {
-            encodedVal += TileCoordinate.encode(i, j, layer);
+    const duration = fastestRun(() => {
+        encodedVal = 0;
+        for (let i = 0; i < 1000; i++) {
+            for (let j = 0; j < 1000; j++) {
+                encodedVal += TileCoordinate.encode(i, j, layer);
+            }
         }
-    }
+    });
     expect(encodedVal).toBe(203373043500000);
+    expect(duration).toBeLessThan(TILE_COORDINATE_DURATION_BUDGET);
 });
 
-test("decodes 1M coordinates correctly", () => {
+test("decodes 1M coordinates within the performance budget", () => {
     const layer = 12;
     const layerWidth = 2 ** layer;
     let counter = 0;
-    let encVal = TileCoordinate.encode(0, 0, layer);
-    for (let i = 0; i < 1000; i++) {
-        for (let j = 0; j < 1000; j++) {
-            counter += TileCoordinate.decode(encVal).x;
-            encVal++;
+    const duration = fastestRun(() => {
+        counter = 0;
+        let encVal = TileCoordinate.encode(0, 0, layer);
+        for (let i = 0; i < 1000; i++) {
+            for (let j = 0; j < 1000; j++) {
+                counter += TileCoordinate.decode(encVal).x;
+                encVal++;
+            }
+            encVal += layerWidth;
         }
-        encVal += layerWidth;
-    }
+    });
     expect(counter).toBe(2046486240);
+    expect(duration).toBeLessThan(TILE_COORDINATE_DURATION_BUDGET);
 });
