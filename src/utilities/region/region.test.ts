@@ -1,25 +1,28 @@
+import {type Mock, rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {PasteOffsetUnit, RegionOpacity} from "enums";
 
+const MOCK_UTILITIES = rs.hoisted(() => ({
+    isAstBadPoint: rs.fn(),
+    scale2D: rs.fn(),
+    toFixed: rs.fn(),
+    transformPoint: rs.fn()
+}));
+
 // Mock heavy barrels to avoid the production circular import chain
 // (models -> services/stores/components -> back to models) that breaks
 // module evaluation under Jest.
-jest.mock("models", () => ({
+rs.mock("models", () => ({
     Transform2D: class {
         scale = 2;
         rotation = 0;
     }
 }));
-jest.mock("services", () => ({}));
-jest.mock("stores", () => ({}));
-jest.mock("stores/Frame", () => ({}));
-jest.mock("utilities", () => ({
-    isAstBadPoint: jest.fn(),
-    scale2D: jest.fn(),
-    toFixed: jest.fn(),
-    transformPoint: jest.fn()
-}));
+rs.mock("services", () => ({}));
+rs.mock("stores", () => ({}));
+rs.mock("stores/Frame", () => ({}));
+rs.mock("utilities", () => MOCK_UTILITIES);
 
 import {
     doSelectionRectAndRegionPointsIntersect,
@@ -50,9 +53,9 @@ const MakeRegion = (overrides: Partial<any>) =>
         ...overrides
     }) as any;
 
-const MockedIsAstBadPoint = jest.requireMock("utilities").isAstBadPoint as jest.Mock;
-const MockedScale2D = jest.requireMock("utilities").scale2D as jest.Mock;
-const MockedTransformPoint = jest.requireMock("utilities").transformPoint as jest.Mock;
+const MockedIsAstBadPoint = MOCK_UTILITIES.isAstBadPoint as Mock;
+const MockedScale2D = MOCK_UTILITIES.scale2D as Mock;
+const MockedTransformPoint = MOCK_UTILITIES.transformPoint as Mock;
 
 beforeEach(() => {
     MockedIsAstBadPoint.mockReset();
