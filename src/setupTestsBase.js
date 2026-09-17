@@ -11,6 +11,15 @@ if (typeof global.TextEncoder === "undefined") {
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
 
+if (typeof global.Worker === "undefined") {
+    global.Worker = class {
+        postMessage() {}
+        terminate() {}
+        addEventListener() {}
+        removeEventListener() {}
+    };
+}
+
 // jsdom doesn't implement WebGL contexts; avoid noisy console.error logs when
 // app code probes for WebGL2 support during unit tests.
 if (typeof HTMLCanvasElement !== "undefined" && HTMLCanvasElement.prototype?.getContext) {
