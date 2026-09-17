@@ -102,7 +102,7 @@ export function minMaxArray(data: ArrayLike<number>): {minVal: number; maxVal: n
 
         for (let i = data.length - 1; i >= 0; i--) {
             const val = data[i];
-            if (isNaN(val)) {
+            if (!Number.isFinite(val)) {
                 continue;
             }
             if (val > maxVal) {

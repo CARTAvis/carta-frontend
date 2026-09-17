@@ -78,6 +78,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
     private positionData: Float32Array = new Float32Array(0);
     private selectedData: Float32Array = new Float32Array(0);
+    private pointIndices: number[] = [];
     private previousXData: ArrayLike<number> | undefined;
     private previousYData: ArrayLike<number> | undefined;
     private positionOriginX = 0;
@@ -183,6 +184,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.selectedBuffer = gl.createBuffer();
         this.positionData = new Float32Array(0);
         this.selectedData = new Float32Array(0);
+        this.pointIndices = [];
         this.previousXData = undefined;
         this.previousYData = undefined;
         this.positionOriginX = 0;
@@ -237,30 +239,30 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         }
 
         const numPoints = Math.min(xData.length, yData.length);
-        const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData || this.positionData.length !== numPoints * 2;
+        const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData;
         if (isPositionChanged) {
-            let hasXOrigin = false;
-            let hasYOrigin = false;
-            this.positionOriginX = 0;
-            this.positionOriginY = 0;
+            let originIndex = -1;
             for (let i = 0; i < numPoints; i++) {
-                if (!hasXOrigin && Number.isFinite(xData[i])) {
-                    this.positionOriginX = xData[i];
-                    hasXOrigin = true;
-                }
-                if (!hasYOrigin && Number.isFinite(yData[i])) {
-                    this.positionOriginY = yData[i];
-                    hasYOrigin = true;
-                }
-                if (hasXOrigin && hasYOrigin) {
+                if (Number.isFinite(xData[i]) && Number.isFinite(yData[i])) {
+                    originIndex = i;
                     break;
                 }
             }
-            this.positionData = new Float32Array(numPoints * 2);
-            for (let i = 0; i < numPoints; i++) {
-                this.positionData[i * 2] = xData[i] - this.positionOriginX;
-                this.positionData[i * 2 + 1] = yData[i] - this.positionOriginY;
+            this.positionOriginX = 0;
+            this.positionOriginY = 0;
+            if (originIndex >= 0) {
+                this.positionOriginX = xData[originIndex];
+                this.positionOriginY = yData[originIndex];
             }
+            this.pointIndices = [];
+            const positions: number[] = [];
+            for (let i = 0; i < numPoints; i++) {
+                if (Number.isFinite(xData[i]) && Number.isFinite(yData[i])) {
+                    this.pointIndices.push(i);
+                    positions.push(xData[i] - this.positionOriginX, yData[i] - this.positionOriginY);
+                }
+            }
+            this.positionData = new Float32Array(positions);
             this.previousXData = xData;
             this.previousYData = yData;
         }
@@ -273,11 +275,11 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
-        const isSelectionChanged = !this.hasSameSelectedIndices(selectedIndices) || this.selectedData.length !== numPoints;
+        const isSelectionChanged = !this.hasSameSelectedIndices(selectedIndices) || this.selectedData.length !== this.pointIndices.length;
         if (isSelectionChanged) {
-            this.selectedData = new Float32Array(numPoints);
-            for (let i = 0; i < numPoints; i++) {
-                this.selectedData[i] = selectedIndices.has(i) ? 1.0 : 0.0;
+            this.selectedData = new Float32Array(this.pointIndices.length);
+            for (let i = 0; i < this.pointIndices.length; i++) {
+                this.selectedData[i] = selectedIndices.has(this.pointIndices[i]) ? 1.0 : 0.0;
             }
             this.previousSelectedIndices = new Set(selectedIndices);
         }
@@ -309,7 +311,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enable(GL2.SCISSOR_TEST);
         gl.scissor(Math.floor(viewLeft), Math.floor(canvas.height - viewTop - viewHeight), Math.ceil(viewWidth), Math.ceil(viewHeight));
 
-        gl.drawArrays(GL2.POINTS, 0, numPoints);
+        gl.drawArrays(GL2.POINTS, 0, this.pointIndices.length);
 
         gl.disable(GL2.SCISSOR_TEST);
         gl.disable(GL2.BLEND);

@@ -22,7 +22,7 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
     if (binSize <= 0) {
         const validIndices: number[] = [];
         for (let i = 0; i < data.length; i++) {
-            if (!isNaN(data[i])) {
+            if (Number.isFinite(data[i])) {
                 validIndices.push(i);
             }
         }
@@ -33,7 +33,7 @@ export function computeHistogramBins(data: ArrayLike<number> | TypedArray, numBi
     const binIndices: number[][] = Array.from({length: numBins}, () => []);
     for (let i = 0; i < data.length; i++) {
         const val = data[i];
-        if (isNaN(val)) {
+        if (!Number.isFinite(val)) {
             continue;
         }
         let binIndex = Math.floor((val - start) / binSize);

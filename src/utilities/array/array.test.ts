@@ -11,6 +11,18 @@ test("keeps identical histogram values in one bin", () => {
     expect(computeHistogramBins([4, 4, NaN], 10)).toEqual({bins: [{x: 4, y: 2}], binSize: 0, start: 4, binIndices: [[0, 1]]});
 });
 
+test("ignores non-finite histogram values", () => {
+    expect(computeHistogramBins([1, Infinity, 3, -Infinity, NaN], 2)).toEqual({
+        bins: [
+            {x: 1.5005, y: 1},
+            {x: 2.5015, y: 1}
+        ],
+        binSize: 1.001,
+        start: 1,
+        binIndices: [[0], [2]]
+    });
+});
+
 test("test binarySearchByX with sorted array in incremental/decremental order", () => {
     const incremental: Point2D[] = [
         {x: -1, y: 0},
