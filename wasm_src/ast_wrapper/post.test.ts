@@ -1,12 +1,16 @@
-type SpectralTransformMock = jest.Mock<number, [number | null, string | null, string | null, string | null, number, number, boolean, number]>;
+import {type Mock, rs} from "@rstest/core";
+
+type SpectralTransformMock = Mock<
+    (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, npoint: number, zInPointer: number, forward: boolean, zOutPointer: number) => number
+>;
 
 type TestModule = {
     HEAPF32: Float32Array;
     HEAPF64: Float64Array;
-    _free: jest.Mock<void, [number]>;
-    _malloc: jest.Mock<number, [number]>;
+    _free: Mock<(pointer: number) => void>;
+    _malloc: Mock<(size: number) => number>;
     calledRun: boolean;
-    cwrap: jest.Mock;
+    cwrap: Mock;
     spectralTransform?: SpectralTransformMock;
     transformSpectralPoint?: (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: number, forward?: boolean) => number;
     transformSpectralPointArray?: (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: number[], forward?: boolean) => Float64Array;
@@ -15,23 +19,23 @@ type TestModule = {
 };
 
 const loadPostModule = (spectralTransformStatus: number, invalidOutputIndex?: number) => {
-    jest.resetModules();
+    rs.resetModules();
 
     const buffer = new ArrayBuffer(4096);
     let nextPointer = 8;
     const module: TestModule = {
         HEAPF32: new Float32Array(buffer),
         HEAPF64: new Float64Array(buffer),
-        _free: jest.fn(),
-        _malloc: jest.fn((size: number) => {
+        _free: rs.fn(),
+        _malloc: rs.fn((size: number) => {
             const pointer = nextPointer;
             nextPointer += size;
             return pointer;
         }),
         calledRun: false,
-        cwrap: jest.fn()
+        cwrap: rs.fn()
     };
-    const spectralTransform: SpectralTransformMock = jest.fn((_spectralFrameFrom, _specType, _specUnit, _specSys, npoint, zInPointer, _forward, zOutPointer) => {
+    const spectralTransform: SpectralTransformMock = rs.fn((_spectralFrameFrom, _specType, _specUnit, _specSys, npoint, zInPointer, _forward, zOutPointer) => {
         if (spectralTransformStatus === 0) {
             const input = new Float64Array(buffer, zInPointer, npoint);
             const output = new Float64Array(buffer, zOutPointer, npoint);
@@ -39,14 +43,14 @@ const loadPostModule = (spectralTransformStatus: number, invalidOutputIndex?: nu
         }
         return spectralTransformStatus;
     });
-    module.cwrap.mockImplementation((name: string) => (name === "spectralTransform" ? spectralTransform : jest.fn()));
+    module.cwrap.mockImplementation((name: string) => (name === "spectralTransform" ? spectralTransform : rs.fn()));
 
     const globals = globalThis as typeof globalThis & {Module?: TestModule; addOnPostRun?: (callback: () => void) => void};
     globals.Module = module;
     globals.addOnPostRun = callback => callback();
 
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-    jest.isolateModules(() => require("./post"));
+    const consoleSpy = rs.spyOn(console, "log").mockImplementation();
+    require("./post");
     consoleSpy.mockRestore();
 
     return {module, spectralTransform};
