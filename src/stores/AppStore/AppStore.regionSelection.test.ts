@@ -1,70 +1,72 @@
-jest.mock("axios", () => ({
-    get: jest.fn(() => Promise.resolve({data: []})),
-    post: jest.fn(() => Promise.resolve({data: {}}))
+import {rs} from "@rstest/core";
+
+rs.mock("axios", () => ({
+    get: rs.fn(() => Promise.resolve({data: []})),
+    post: rs.fn(() => Promise.resolve({data: {}}))
 }));
 
-jest.mock("mobx", () => {
-    const actual = jest.requireActual("mobx");
+rs.mock("mobx", () => {
+    const actual = rs.requireActual("mobx");
     return {
         ...actual,
-        autorun: jest.fn(() => jest.fn()),
-        reaction: jest.fn(() => jest.fn())
+        autorun: rs.fn(() => rs.fn()),
+        reaction: rs.fn(() => rs.fn())
     };
 });
 
-jest.mock("stores/Frame", () => ({
+rs.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0,
-    FrameStore: jest.fn()
+    FrameStore: rs.fn()
 }));
 
-jest.mock("components", () => ({
-    PvGeneratorComponent: jest.fn(),
-    getImageViewCanvas: jest.fn()
+rs.mock("components", () => ({
+    PvGeneratorComponent: rs.fn(),
+    getImageViewCanvas: rs.fn()
 }));
 
-jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()},
-    ErrorToast: jest.fn(),
-    SuccessToast: jest.fn(),
-    WarningToast: jest.fn()
+rs.mock("components/Shared", () => ({
+    AppToaster: {show: rs.fn()},
+    ErrorToast: rs.fn(),
+    SuccessToast: rs.fn(),
+    WarningToast: rs.fn()
 }));
 
-jest.mock("models", () => ({
+rs.mock("models", () => ({
     CARTA_INFO: {},
     COMPUTED_POLARIZATIONS: [],
-    FloatingObjzIndexManager: jest.fn().mockImplementation(() => ({})),
+    FloatingObjzIndexManager: rs.fn().mockImplementation(() => ({})),
     PresetLayout: {},
     Theme: {DARK: "dark", LIGHT: "light"},
-    ToFileListFilterMode: jest.fn(),
-    distinct: jest.fn((values: unknown[]) => Array.from(new Set(values))),
-    getColorForTheme: jest.fn(() => "#000"),
-    getTimestamp: jest.fn(() => "")
+    ToFileListFilterMode: rs.fn(),
+    distinct: rs.fn((values: unknown[]) => Array.from(new Set(values))),
+    getColorForTheme: rs.fn(() => "#000"),
+    getTimestamp: rs.fn(() => "")
 }));
 
-jest.mock("services", () => ({
+rs.mock("services", () => ({
     ApiService: {
         Instance: {
             authenticated: false,
-            setToken: jest.fn()
+            setToken: rs.fn()
         }
     },
     BackendService: {
         Instance: {
-            catalogStream: {subscribe: jest.fn()},
+            catalogStream: {subscribe: rs.fn()},
             connectionStatus: 0,
-            contourStream: {subscribe: jest.fn()},
-            errorStream: {subscribe: jest.fn()},
-            fittingProgressStream: {subscribe: jest.fn()},
-            histogramStream: {subscribe: jest.fn()},
-            listProgressStream: {subscribe: jest.fn()},
-            momentProgressStream: {subscribe: jest.fn()},
-            pvPreviewStream: {subscribe: jest.fn()},
-            pvProgressStream: {subscribe: jest.fn()},
-            scriptingStream: {subscribe: jest.fn()},
-            spatialProfileStream: {subscribe: jest.fn()},
-            spectralProfileStream: {subscribe: jest.fn()},
-            statsStream: {subscribe: jest.fn()},
-            vectorTileStream: {subscribe: jest.fn()}
+            contourStream: {subscribe: rs.fn()},
+            errorStream: {subscribe: rs.fn()},
+            fittingProgressStream: {subscribe: rs.fn()},
+            histogramStream: {subscribe: rs.fn()},
+            listProgressStream: {subscribe: rs.fn()},
+            momentProgressStream: {subscribe: rs.fn()},
+            pvPreviewStream: {subscribe: rs.fn()},
+            pvProgressStream: {subscribe: rs.fn()},
+            scriptingStream: {subscribe: rs.fn()},
+            spatialProfileStream: {subscribe: rs.fn()},
+            spectralProfileStream: {subscribe: rs.fn()},
+            statsStream: {subscribe: rs.fn()},
+            vectorTileStream: {subscribe: rs.fn()}
         }
     },
     ScriptingService: {
@@ -75,15 +77,15 @@ jest.mock("services", () => ({
     },
     TileService: {
         Instance: {
-            tileStream: {subscribe: jest.fn()},
+            tileStream: {subscribe: rs.fn()},
             zfpReady: false
         }
     }
 }));
 
-const MockMakeStore = (overrides = {}) => ({...overrides});
+const MockMakeStore = rs.hoisted(() => (overrides = {}) => ({...overrides}));
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AlertStore: {Instance: MockMakeStore()},
     AnimatorStore: {Instance: MockMakeStore()},
     CatalogStore: {Instance: MockMakeStore()},
@@ -96,14 +98,14 @@ jest.mock("stores", () => ({
     ImageFittingStore: {Instance: MockMakeStore()},
     ImageViewConfigStore: {Instance: MockMakeStore({frames: [], visibleFrames: []})},
     LayoutStore: {Instance: MockMakeStore()},
-    LogStore: {Instance: MockMakeStore({addDebug: jest.fn(), addInfo: jest.fn()})},
+    LogStore: {Instance: MockMakeStore({addDebug: rs.fn(), addInfo: rs.fn()})},
     OverlaySettings: {Instance: MockMakeStore()},
     PreferenceStore: {Instance: MockMakeStore({autoLaunch: false})},
     SnippetStore: {Instance: MockMakeStore()},
-    SpatialProfileStore: jest.fn(),
-    SpectralProfileStore: jest.fn(),
+    SpatialProfileStore: rs.fn(),
+    SpectralProfileStore: rs.fn(),
     TimeSeriesStore: {Instance: MockMakeStore()},
-    WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
+    WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: rs.fn(), updateRenderConfigSettingsVisibility: rs.fn()})}
 }));
 
 import {CARTA} from "carta-protobuf";
@@ -151,8 +153,8 @@ describe("AppStore.deleteSelectedRegions", () => {
         Object.defineProperty(appStore, "widgetsStore", {
             configurable: true,
             value: {
-                removeRegionFromRegionWidgets: jest.fn(),
-                updateRenderConfigSettingsVisibility: jest.fn()
+                removeRegionFromRegionWidgets: rs.fn(),
+                updateRenderConfigSettingsVisibility: rs.fn()
             }
         });
         appStore.setActiveImage({type: ImageType.FRAME, store: frame} as any);
@@ -169,7 +171,7 @@ describe("AppStore.deleteSelectedRegions", () => {
         const regionSet = {
             focusedRegion: first,
             isLocked: false,
-            deleteRegion: jest.fn(),
+            deleteRegion: rs.fn(),
             regions: [cursor, first, locked, second],
             selectedRegionIds: new Set([first.regionId, locked.regionId, second.regionId])
         };
@@ -183,7 +185,7 @@ describe("AppStore.deleteSelectedRegions", () => {
 
     test("does not delete when the region set is locked", () => {
         const regionSet = {
-            deleteRegion: jest.fn(),
+            deleteRegion: rs.fn(),
             focusedRegion: MakeRegion(1),
             isLocked: true,
             regions: [MakeRegion(1)],
@@ -198,7 +200,7 @@ describe("AppStore.deleteSelectedRegions", () => {
     test("deletes focused region when there is no explicit selection", () => {
         const focusedRegion = MakeRegion(7);
         const regionSet = {
-            deleteRegion: jest.fn(),
+            deleteRegion: rs.fn(),
             focusedRegion,
             isLocked: false,
             regions: [focusedRegion],
@@ -213,7 +215,7 @@ describe("AppStore.deleteSelectedRegions", () => {
     test("does not delete locked focused region", () => {
         const focusedRegion = MakeRegion(7, true);
         const regionSet = {
-            deleteRegion: jest.fn(),
+            deleteRegion: rs.fn(),
             focusedRegion,
             isLocked: false,
             regions: [focusedRegion],
@@ -295,7 +297,7 @@ describe("AppStore region copy-paste", () => {
         const pastedRegions: any[] = [];
         let nextRegionId = -1;
         const regionSet = {
-            addExistingRegion: jest.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
+            addExistingRegion: rs.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
                 const region = MakeRegion(regionId, false, {
                     annotationStyles,
                     color,
@@ -305,15 +307,15 @@ describe("AppStore region copy-paste", () => {
                     name,
                     regionType,
                     rotation,
-                    setLocked: jest.fn()
+                    setLocked: rs.fn()
                 });
                 pastedRegions.push(region);
                 return region;
             }),
-            getTempRegionId: jest.fn(() => nextRegionId--),
+            getTempRegionId: rs.fn(() => nextRegionId--),
             regions: [existingRegion],
             selectedRegionIds: new Set(),
-            setSelectionByIds: jest.fn()
+            setSelectionByIds: rs.fn()
         };
         setActiveFrame(regionSet);
         appStore.regionClipboard = {
@@ -357,7 +359,7 @@ describe("AppStore region copy-paste", () => {
         const pastedRegions: any[] = [];
         let nextRegionId = -1;
         const regionSet = {
-            addExistingRegion: jest.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
+            addExistingRegion: rs.fn((points, rotation, regionType, regionId, name, color, lineWidth, dashes, isTemporary, annotationStyles) => {
                 const region = MakeRegion(regionId, false, {
                     annotationStyles,
                     color,
@@ -367,15 +369,15 @@ describe("AppStore region copy-paste", () => {
                     name,
                     regionType,
                     rotation,
-                    setLocked: jest.fn()
+                    setLocked: rs.fn()
                 });
                 pastedRegions.push(region);
                 return region;
             }),
-            getTempRegionId: jest.fn(() => nextRegionId--),
+            getTempRegionId: rs.fn(() => nextRegionId--),
             regions: [],
             selectedRegionIds: new Set(),
-            setSelectionByIds: jest.fn()
+            setSelectionByIds: rs.fn()
         };
         setActiveFrame(regionSet);
         appStore.regionClipboard = {
