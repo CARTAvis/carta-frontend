@@ -1,3 +1,4 @@
+import {type Mock, rs} from "@rstest/core";
 import * as AST from "ast_wrapper";
 
 import {CatalogSystemType, SystemType} from "../../enums";
@@ -21,16 +22,16 @@ const DEFAULT_FK4 = GS(SystemType.FK4, "B1950.0", "B1953.2");
 const DEFAULT_FK5 = GS(SystemType.FK5, "J2012.0", "J2000.0");
 const DEFAULT_ICRS = GS(SystemType.ICRS, "J2000.0", "J2000.0");
 
-jest.mock("ast_wrapper", () => ({
+rs.mock("ast_wrapper", () => ({
     __esModule: true,
-    set: jest.fn(),
-    setColor: jest.fn(),
-    getString: jest.fn().mockReturnValue(""),
+    set: rs.fn(),
+    setColor: rs.fn(),
+    getString: rs.fn().mockReturnValue(""),
     fonts: []
 }));
 
 // Mock heavy modules to avoid initializing MobX decorators and React trees in tests.
-jest.mock("../../stores", () => ({
+rs.mock("../../stores", () => ({
     __esModule: true,
     SystemType: {
         Auto: "AUTO",
@@ -43,7 +44,7 @@ jest.mock("../../stores", () => ({
     }
 }));
 
-jest.mock("../../models", () => ({
+rs.mock("../../models", () => ({
     __esModule: true,
     CatalogSystemType: {
         Ecliptic: "ECLIPTIC",
@@ -193,13 +194,13 @@ describe("setAstSystem", () => {
     const frameSet = {} as AST.FrameSet;
 
     beforeEach(() => {
-        (AST.set as jest.Mock).mockClear();
+        (AST.set as Mock).mockClear();
     });
 
     test("calls AST.set with correct settings string for a standard system", () => {
         setAstSystem(frameSet, SystemType.Galactic, DEFAULT_FK5);
 
-        const mockSet = AST.set as jest.Mock;
+        const mockSet = AST.set as Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
         expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(SystemType.Galactic, DEFAULT_FK5));
     });
@@ -207,7 +208,7 @@ describe("setAstSystem", () => {
     test("calls AST.set for Image system", () => {
         setAstSystem(frameSet, SystemType.Image, DEFAULT_FK5);
 
-        const mockSet = AST.set as jest.Mock;
+        const mockSet = AST.set as Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
         expect(mockSet).toHaveBeenCalledWith(frameSet, "System=CARTESIAN");
     });
@@ -215,7 +216,7 @@ describe("setAstSystem", () => {
     test("calls AST.set for catalog systems", () => {
         setAstSystem(frameSet, CatalogSystemType.ICRS, DEFAULT_FK5);
 
-        const mockSet = AST.set as jest.Mock;
+        const mockSet = AST.set as Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
         expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(CatalogSystemType.ICRS, DEFAULT_FK5));
     });
