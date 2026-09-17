@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogPlotType} from "enums";
@@ -32,7 +33,7 @@ function loadCatalog(fileId: number, filename: string) {
 describe("CatalogPlotComponent catalog selection", () => {
     afterEach(() => {
         WidgetsStore.Instance.catalogWidgets.clear();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("updates the widget selection when a plot selection is made", () => {
@@ -40,11 +41,11 @@ describe("CatalogPlotComponent catalog selection", () => {
         const widgetsStore = WidgetsStore.Instance;
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
-            getOriginIndices: jest.fn(() => [12]),
-            setSelectedPointIndices: jest.fn()
+            getOriginIndices: rs.fn(() => [12]),
+            setSelectedPointIndices: rs.fn()
         };
         const catalogDisplayStore = {
-            setCatalogTableAutoScroll: jest.fn()
+            setCatalogTableAutoScroll: rs.fn()
         };
         const widgetStore = {
             dragMode: "lasso",
@@ -92,11 +93,11 @@ describe("CatalogPlotComponent restored plots", () => {
         Array.from(catalogStore.catalogPlots.keys()).forEach(plotComponentId => catalogStore.clearCatalogPlotsByComponentId(plotComponentId));
         catalogStore.catalogProfileStores.clear();
         widgetsStore.catalogPlotWidgets.clear();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("drops restored columns the catalog lacks when the layout is applied against a loaded one", () => {
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
         loadCatalog(11, "first.xml");
 
         const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {
@@ -117,7 +118,7 @@ describe("CatalogPlotComponent restored plots", () => {
     });
 
     test("drops restored plot columns whose catalog type is unsupported", () => {
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
         loadCatalog(11, "first.xml");
 
         const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {
