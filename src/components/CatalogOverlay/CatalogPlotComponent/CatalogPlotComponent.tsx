@@ -21,7 +21,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
-import {clamp, computeHistogramBins, exportTsvFile, getTimestamp, isPointInPolygon, minMaxArray, toExponential, toFixed, type TypedArray} from "utilities";
+import {clamp, computeHistogramBins, exportTsvFile, getTimestamp, isPointInPolygon, minMaxArray, toExponential, toFixed} from "utilities";
 
 import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
 
@@ -50,7 +50,6 @@ type ScatterSpatialIndex = {
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable profileId: string = "";
     @observable componentId: string = "";
-    @observable private histogramChartArea: ChartArea | undefined;
     @observable private isHistogramMouseEntered: boolean = false;
     private plotType: CatalogPlotType;
     private static emptyColumn = "None";
@@ -156,6 +155,17 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             )
         );
+
+        this.disposers.push(
+            reaction(
+                () => {
+                    const scatter = this.scatterData;
+                    return [scatter.xData, scatter.yData] as const;
+                },
+                ([xData, yData]) => this.resetScatterCursorIfDataChanged(xData, yData),
+                {fireImmediately: true}
+            )
+        );
     }
 
     componentWillUnmount() {
@@ -230,8 +240,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (xColumnName) {
                             const histogramCoords = profileStore?.get1DPlotData(xColumnName);
                             if (histogramCoords?.wcsData) {
-                                const histogramXBorder = this.getHistogramXBorder(histogramCoords.wcsData);
-                                plotWidgetStore.setHistogramXBorder(histogramXBorder);
+                                const histogramXBorder = this.initHistogramXBorder;
+                                if (histogramXBorder) {
+                                    plotWidgetStore.setHistogramXBorder(histogramXBorder);
+                                }
                             }
                         }
                     }
@@ -289,15 +301,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
-        const xBounds = minMaxArray(xArray);
-        const xPadding = xBounds.minVal === xBounds.maxVal ? (xBounds.maxVal === 0 ? 1 : Math.abs(xBounds.maxVal * 0.05)) : 0;
-        return {
-            xMin: xBounds.minVal - xPadding,
-            xMax: xBounds.maxVal + xPadding
-        };
-    }
-
     @computed get initScatterBorder(): Border | undefined {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -314,8 +317,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
             return undefined;
         }
-        const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        return coords.wcsData ? this.getHistogramXBorder(coords.wcsData) : undefined;
+        const {start, binSize, bins} = this.histogramData;
+        if (!bins.length || !Number.isFinite(start)) {
+            return undefined;
+        }
+        const end = start + bins.length * binSize;
+        const padding = start === end ? (end === 0 ? 1 : Math.abs(end * 0.05)) : 0;
+        return {xMin: start - padding, xMax: end + padding};
     }
 
     @computed get scatterData() {
@@ -731,11 +739,48 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
         const scatter = this.scatterData;
+        const widgetStore = this.widgetStore;
+        const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
+        const polygonMinX = Math.min(...polygon.map(point => point.x));
+        const polygonMaxX = Math.max(...polygon.map(point => point.x));
+        const polygonMinY = Math.min(...polygon.map(point => point.y));
+        const polygonMaxY = Math.max(...polygon.map(point => point.y));
         const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        let candidateIndices: Iterable<number> | undefined;
+        const chartArea = this.scatterChartArea;
+        if (border && chartArea && Number.isFinite(polygonMinX) && Number.isFinite(polygonMaxX) && Number.isFinite(polygonMinY) && Number.isFinite(polygonMaxY)) {
+            const xRange = border.xMax - border.xMin;
+            const yRange = border.yMax - border.yMin;
+            const chartWidth = chartArea.right - chartArea.left;
+            const chartHeight = chartArea.bottom - chartArea.top;
+            if (Number.isFinite(xRange) && Number.isFinite(yRange) && xRange > 0 && yRange > 0 && chartWidth > 0 && chartHeight > 0) {
+                const spatialIndex = this.getScatterSpatialIndex(scatter.xData, scatter.yData, border.xMin, border.xMax, border.yMin, border.yMax, chartWidth, chartHeight);
+                const minCellX = clamp(Math.floor(((polygonMinX - border.xMin) / xRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
+                const maxCellX = clamp(Math.floor(((polygonMaxX - border.xMin) / xRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
+                const minCellY = clamp(Math.floor(((polygonMinY - border.yMin) / yRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
+                const maxCellY = clamp(Math.floor(((polygonMaxY - border.yMin) / yRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
+                const candidates = new Set<number>();
+                for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
+                    for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+                        spatialIndex.cells.get(cellY * SCATTER_GRID_SIZE + cellX)?.forEach(index => candidates.add(index));
+                    }
+                }
+                candidateIndices = candidates;
+            }
+        }
         const selected: number[] = [];
-        for (let i = 0; i < numPoints; i++) {
-            if (isPointInPolygon({x: scatter.xData[i], y: scatter.yData[i]}, polygon)) {
-                selected.push(i);
+        const addIfInside = (index: number) => {
+            if (isPointInPolygon({x: scatter.xData[index], y: scatter.yData[index]}, polygon)) {
+                selected.push(index);
+            }
+        };
+        if (candidateIndices) {
+            for (const index of candidateIndices) {
+                addIfInside(index);
+            }
+        } else {
+            for (let index = 0; index < numPoints; index++) {
+                addIfInside(index);
             }
         }
         this.selectCatalogPoints(selected);
@@ -857,12 +902,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const tickValues = ticks.map(tick => Number(tick.value)).filter(Number.isFinite);
         const decimals = this.getMinimumTickDecimals(tickValues, shouldUseScientificNotation);
         return shouldUseScientificNotation || power <= 0 ? this.formatTickLabel(value, decimals, shouldUseScientificNotation) : String(value);
-    };
-
-    @action private updateHistogramChartArea = (chart: Chart) => {
-        if (chart.chartArea) {
-            this.histogramChartArea = chart.chartArea;
-        }
     };
 
     private onHistogramPlotRef = (ref: Chart<"bar"> | undefined | null) => {
@@ -1388,13 +1427,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return unselectedColor;
             });
 
-            const chartAreaPlugin: Plugin<"bar"> = {
-                id: "chartAreaTracker",
-                afterLayout: (chart: Chart) => {
-                    this.updateHistogramChartArea(chart);
-                }
-            };
-
             const histogramOptions: ChartOptions<"bar"> = {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -1581,7 +1613,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         onMouseUp={this.onHistogramMouseUp}
                         onDoubleClick={this.onHistogramDoubleClick}
                     >
-                        <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[chartAreaPlugin, crosshairPlugin, dragBoxPlugin]} />
+                        <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[crosshairPlugin, dragBoxPlugin]} />
                         <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData} />
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
@@ -1603,7 +1635,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         // Scatter plot rendering
         const scatter = this.scatterData;
-        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         let border: Border | undefined;
         if (widgetStore.isScatterAutoScaled) {
             border = scatter.border;
@@ -1681,6 +1712,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         updateChartArea={this.updateScatterChartArea}
                         graphClicked={this.onGraphClicked}
                         pointRadius={0.001}
+                        cursorIndicatorStyle="crosshair"
                         cursorHitRadius={5}
                         shouldScrollZoom={true}
                         multiPlotPropsMap={scatterMultiPlotMap}
@@ -1696,13 +1728,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         toolbarChildren={
                             <React.Fragment>
                                 <Tooltip content="Box select">
-                                    <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} />
+                                    <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} data-testid="catalog-scatter-box-select-button" />
                                 </Tooltip>
                                 <Tooltip content="Lasso select">
-                                    <AnchorButton icon={<CustomIcon icon="lasso" />} active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} />
+                                    <AnchorButton icon={<CustomIcon icon="lasso" />} active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} data-testid="catalog-scatter-lasso-button" />
                                 </Tooltip>
                                 <Tooltip content="Zoom">
-                                    <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} />
+                                    <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} data-testid="catalog-scatter-zoom-button" />
                                 </Tooltip>
                             </React.Fragment>
                         }

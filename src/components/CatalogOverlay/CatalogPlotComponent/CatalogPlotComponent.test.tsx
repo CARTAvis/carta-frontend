@@ -21,6 +21,8 @@ function loadCatalog(fileId: number, filename: string) {
         catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
         catalogHeader,
         catalogControlHeader,
+        get2DPlotData: jest.fn(() => ({wcsX: [], wcsY: []})),
+        get1DPlotData: jest.fn(() => ({wcsData: new Float32Array()})),
         getColumnHeader: (columnName: string) => {
             const dataIndex = catalogControlHeader.get(columnName)?.dataIndex;
             return dataIndex !== undefined ? catalogHeader[dataIndex] : undefined;
@@ -53,6 +55,7 @@ describe("CatalogPlotComponent catalog selection", () => {
             dragMode: DragMode.Lasso,
             xColumnName: "Fmag",
             yColumnName: "Bmag",
+            setIndicator: jest.fn(),
             plotType: CatalogPlotType.D2Scatter
         };
         catalogStore.catalogProfileStores.set(7, profileStore as any);

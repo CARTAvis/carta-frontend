@@ -24,6 +24,16 @@ describe("CatalogPlotWidgetStore config", () => {
         expect(store.nBinX).toBeUndefined();
         expect(store.isLogScaleY).toBe(false);
     });
+
+    test("normalizes legacy drag modes while preserving disabled drag", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+
+        store.applyConfig({dragMode: "pan" as any});
+        expect(store.dragMode).toBe(DragMode.Select);
+
+        store.applyConfig({dragMode: false});
+        expect(store.dragMode).toBe(false);
+    });
 });
 
 describe("CatalogPlotWidgetStore restored columns", () => {

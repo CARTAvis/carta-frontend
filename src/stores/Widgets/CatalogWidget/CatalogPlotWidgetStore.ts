@@ -107,7 +107,8 @@ export class CatalogPlotWidgetStore {
             this.nBinX = config.nBinX;
         }
         if (config.dragMode !== undefined) {
-            this.dragMode = config.dragMode;
+            const dragMode = config.dragMode as DragMode | false;
+            this.dragMode = dragMode === false || Object.values(DragMode).includes(dragMode) ? dragMode : DragMode.Select;
         }
         if (config.scatterBorder) {
             this.scatterBorder = config.scatterBorder;
