@@ -86,6 +86,11 @@ jobs:
         run: |
           n exec 24 npm test
 
+      - name: Check unit test async leaks
+        shell: bash
+        run: |
+          n exec 24 npm run test:leaks
+
   node-v22:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check

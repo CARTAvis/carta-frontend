@@ -119,6 +119,15 @@ const OBS_TIME_FRAME_INFO: FrameInfo = {
 
 describe("FrameStore", () => {
     beforeEach(() => {
+        rs.useFakeTimers();
+    });
+
+    afterEach(() => {
+        rs.clearAllTimers();
+        rs.useRealTimers();
+    });
+
+    beforeEach(() => {
         rs.clearAllMocks();
     });
 

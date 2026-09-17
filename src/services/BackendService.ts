@@ -157,7 +157,9 @@ export class BackendService {
         ]);
 
         // check ping every 5 seconds
-        this.pingIntervalHandle = setInterval(this.sendPing, 5000);
+        if (process.env.NODE_ENV !== "test") {
+            this.pingIntervalHandle = setInterval(this.sendPing, 5000);
+        }
         window.addEventListener("unload", this.dispose);
     }
 

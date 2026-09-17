@@ -22,11 +22,11 @@ export default defineConfig({
         include: ["src/**/*.{js,jsx,ts,tsx}"],
         exclude: ["src/**/*.d.ts", "src/index.tsx", "src/registerServiceWorker.ts", "src/setupTests.js"]
     },
-	resolve: {
-		alias: {
-			ast_wrapper: fromRoot("src/__mocks__/ast_wrapper.js"),
-			"carta-protobuf": fromRoot("protobuf/build"),
-			carta_computation: fromRoot("src/__mocks__/carta_computation.js"),
+    resolve: {
+        alias: {
+            ast_wrapper: fromRoot("src/__mocks__/ast_wrapper.js"),
+            "carta-protobuf": fromRoot("protobuf/build"),
+            carta_computation: fromRoot("src/__mocks__/carta_computation.js"),
             gsl_wrapper: fromRoot("src/__mocks__/gsl_wrapper.js"),
             zfp_wrapper: fromRoot("src/__mocks__/ZFPWorkerMock.js"),
             "carta-schemas": fromRoot("schemas")

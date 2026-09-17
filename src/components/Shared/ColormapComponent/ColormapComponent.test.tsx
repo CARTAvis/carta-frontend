@@ -6,6 +6,15 @@ import {fireEvent, render, screen} from "@testing-library/react";
 import {ColormapComponent} from "./ColormapComponent";
 
 describe("ColormapComponent hover preview", () => {
+    beforeEach(() => {
+        rs.useFakeTimers();
+    });
+
+    afterEach(() => {
+        rs.clearAllTimers();
+        rs.useRealTimers();
+    });
+
     test("reports the colormap under the pointer", () => {
         const onColormapHover = rs.fn();
         const onDropdownOpenChange = rs.fn();

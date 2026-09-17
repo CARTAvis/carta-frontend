@@ -1,19 +1,18 @@
 import React from "react";
-import {type MockInstance, rs} from "@rstest/core";
+import {rs} from "@rstest/core";
 import {fireEvent, render, screen} from "@testing-library/react";
 
-import {AppStore} from "stores";
+const {MockExportImage} = rs.hoisted(() => ({MockExportImage: rs.fn()}));
+
+rs.mock("stores", () => ({
+    AppStore: {Instance: {exportImage: MockExportImage, modifierString: "ctrl + "}}
+}));
 
 import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
 
 describe("ExportImageMenuComponent", () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let mockModifierString: MockInstance; // Indirectly used when rendering
-    let mockExportImage: MockInstance;
-
-    beforeEach(() => {
-        mockModifierString = rs.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
-        mockExportImage = rs.spyOn(AppStore.Instance, "exportImage");
+    afterEach(() => {
+        MockExportImage.mockClear();
     });
 
     test("renders one menu divider and three menu items", () => {
@@ -31,10 +30,10 @@ describe("ExportImageMenuComponent", () => {
         render(<ExportImageMenuComponent />);
 
         fireEvent.click(screen.getByText(/Normal /));
-        expect(mockExportImage).toHaveBeenCalledWith(1);
+        expect(MockExportImage).toHaveBeenCalledWith(1);
         fireEvent.click(screen.getByText(/High /));
-        expect(mockExportImage).toHaveBeenCalledWith(2);
+        expect(MockExportImage).toHaveBeenCalledWith(2);
         fireEvent.click(screen.getByText(/Highest /));
-        expect(mockExportImage).toHaveBeenCalledWith(4);
+        expect(MockExportImage).toHaveBeenCalledWith(4);
     });
 });

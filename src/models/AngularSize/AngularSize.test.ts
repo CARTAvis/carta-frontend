@@ -24,6 +24,10 @@ describe("AngularSize", () => {
             mockConvertValueFromArcsec = rs.spyOn(AngularSize, "convertValueFromArcsec");
         });
 
+        afterAll(() => {
+            mockConvertValueFromArcsec.mockRestore();
+        });
+
         test("returns values with required unit", () => {
             mockConvertValueFromArcsec
                 .mockImplementationOnce(() => 1)

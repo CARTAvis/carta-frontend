@@ -1,5 +1,31 @@
+import {rs} from "@rstest/core";
+
 import "@testing-library/jest-dom";
 import "rstest-canvas-mock";
+
+// Keep application singletons from reaching external services while unit tests load them.
+rs.mock("axios", () => {
+    const request = rs.fn(() => Promise.resolve({data: []}));
+    const instance = {
+        defaults: {headers: {common: {}}},
+        delete: request,
+        get: request,
+        post: request,
+        put: request
+    };
+    return {
+        default: Object.assign(request, {
+            CancelToken: {source: rs.fn(() => ({cancel: rs.fn(), token: {}}))},
+            create: rs.fn(() => instance),
+            delete: request,
+            get: request,
+            isAxiosError: () => false,
+            isCancel: error => Boolean(error?.__CANCEL__),
+            post: request,
+            put: request
+        })
+    };
+});
 
 // Polyfill TextEncoder and TextDecoder for jsdom environment
 /* eslint-disable @typescript-eslint/naming-convention */

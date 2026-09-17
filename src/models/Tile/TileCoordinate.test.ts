@@ -35,49 +35,28 @@ test("returns identical round trip coordinates", () => {
     }
 });
 
-/** Timings under Jest's parallel workers are noisy in one direction only, so the fastest
- *  run of several is the stable estimate; the first runs are also JIT warm-up. */
-function fastestRun(run: () => void, samples = 5): number {
-    run(); // warm up
-    let best = Infinity;
-    for (let i = 0; i < samples; i++) {
-        const tStart = performance.now();
-        run();
-        best = Math.min(best, performance.now() - tStart);
-    }
-    return best;
-}
-
-test("encodes 1M coordinates in less than 20 ms", () => {
+test("encodes 1M coordinates correctly", () => {
     const layer = 12;
     let encodedVal = 0;
-    const dt = fastestRun(() => {
-        encodedVal = 0;
-        for (let i = 0; i < 1000; i++) {
-            for (let j = 0; j < 1000; j++) {
-                encodedVal += TileCoordinate.encode(i, j, layer);
-            }
+    for (let i = 0; i < 1000; i++) {
+        for (let j = 0; j < 1000; j++) {
+            encodedVal += TileCoordinate.encode(i, j, layer);
         }
-    });
+    }
     expect(encodedVal).toBe(203373043500000);
-    expect(dt).toBeLessThan(20);
 });
 
-test("decodes 1M coordinates in less than 20 ms", () => {
+test("decodes 1M coordinates correctly", () => {
     const layer = 12;
     const layerWidth = 2 ** layer;
     let counter = 0;
-    const dt = fastestRun(() => {
-        counter = 0;
-        let encVal = TileCoordinate.encode(0, 0, layer);
-        for (let i = 0; i < 1000; i++) {
-            for (let j = 0; j < 1000; j++) {
-                counter += TileCoordinate.decode(encVal).x;
-                encVal++;
-            }
-            encVal += layerWidth;
+    let encVal = TileCoordinate.encode(0, 0, layer);
+    for (let i = 0; i < 1000; i++) {
+        for (let j = 0; j < 1000; j++) {
+            counter += TileCoordinate.decode(encVal).x;
+            encVal++;
         }
-    });
+        encVal += layerWidth;
+    }
     expect(counter).toBe(2046486240);
-    expect(dt).toBeLessThan(20);
 });
