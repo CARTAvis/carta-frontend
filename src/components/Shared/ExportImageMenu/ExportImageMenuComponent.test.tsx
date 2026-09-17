@@ -1,4 +1,5 @@
 import React from "react";
+import {type MockInstance, rs} from "@rstest/core";
 import {fireEvent, render, screen} from "@testing-library/react";
 
 import {AppStore} from "stores";
@@ -7,12 +8,12 @@ import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
 
 describe("ExportImageMenuComponent", () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let mockModifierString: jest.SpyInstance; // Indirectly used when rendering
-    let mockExportImage: jest.SpyInstance;
+    let mockModifierString: MockInstance; // Indirectly used when rendering
+    let mockExportImage: MockInstance;
 
     beforeEach(() => {
-        mockModifierString = jest.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
-        mockExportImage = jest.spyOn(AppStore.Instance, "exportImage");
+        mockModifierString = rs.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
+        mockExportImage = rs.spyOn(AppStore.Instance, "exportImage");
     });
 
     test("renders one menu divider and three menu items", () => {
