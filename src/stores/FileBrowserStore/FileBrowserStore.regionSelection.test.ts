@@ -1,26 +1,28 @@
+import {rs} from "@rstest/core";
+
 import {BrowserMode} from "enums";
 
-const APP_STORE_MOCK = {
+const APP_STORE_MOCK = rs.hoisted(() => ({
     activeFrame: null as any,
     appendFileDisabled: false,
     backendService: {
-        getFileList: jest.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []})),
-        getRegionList: jest.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []}))
+        getFileList: rs.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []})),
+        getRegionList: rs.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []}))
     },
     openFileDisabled: false,
     preferenceStore: {
         fileFilterMode: 0
     },
-    restartTaskProgress: jest.fn()
-};
+    restartTaskProgress: rs.fn()
+}));
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: {
         Instance: APP_STORE_MOCK
     },
     DialogStore: {
         Instance: {
-            showDialog: jest.fn()
+            showDialog: rs.fn()
         }
     },
     PreferenceStore: {
@@ -28,11 +30,11 @@ jest.mock("stores", () => ({
     }
 }));
 
-jest.mock("services", () => ({
+rs.mock("services", () => ({
     BackendService: {
         Instance: {
-            getFileList: jest.fn(),
-            getRegionList: jest.fn()
+            getFileList: rs.fn(),
+            getRegionList: rs.fn()
         }
     }
 }));
@@ -43,7 +45,7 @@ describe("FileBrowserStore.showExportSelectedRegions", () => {
     let fileBrowserStore: FileBrowserStore;
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
         APP_STORE_MOCK.activeFrame = null;
         fileBrowserStore = new FileBrowserStore();
         fileBrowserStore.updateExportRegionIndexes([]);
