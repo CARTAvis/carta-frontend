@@ -106,7 +106,7 @@
         "build-protobuf": "./protobuf/build_proto.sh",
         "link-schemas": "./schemas/link_schemas.sh",
         "test": "rstest",
-        "test:leaks": "rstest --detectAsyncLeaks",
+        "test:leaks": "rstest --detectAsyncLeaks --reporter=dot --silent=passed-only",
         "test:watch": "rstest --watch",
         "test:coverage": "CARTA_TEST_COVERAGE=1 rstest --coverage",
         "check-python-api": "node scripts/check_python_api.js",
