@@ -1,9 +1,11 @@
+import {rs} from "@rstest/core";
+
 import {HipsCoord, HipsProjection} from "enums";
 
 import {HipsQueryStore} from "./HipsQueryStore";
 
-const MockLoadRemoteFile = jest.fn();
-jest.mock("stores", () => ({
+const MockLoadRemoteFile = rs.fn();
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             loadRemoteFile: x => MockLoadRemoteFile(x)
