@@ -1,3 +1,4 @@
+import {type Mock, rs} from "@rstest/core";
 import * as AST from "ast_wrapper";
 
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
@@ -75,12 +76,12 @@ describe("normalizeDateObsString", () => {
 
 describe("parseObsDateToMjdUtc", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.clearAllMocks();
     });
 
     test("parses the date string in the TIMESYS scale and converts to UTC", () => {
-        (AST.parseDateToMJD as jest.Mock).mockReturnValue(58849.5);
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+        (AST.parseDateToMJD as Mock).mockReturnValue(58849.5);
+        (AST.convertMJD as Mock).mockImplementation(mjd => mjd);
 
         expect(parseObsDateToMjdUtc("2020-01-01T12:00:00", "TAI")).toBe(58849.5);
         expect(AST.parseDateToMJD).toHaveBeenCalledWith("2020-01-01T12:00:00", "TAI");
@@ -88,7 +89,7 @@ describe("parseObsDateToMjdUtc", () => {
     });
 
     test("normalizes legacy date strings before parsing", () => {
-        (AST.parseDateToMJD as jest.Mock).mockReturnValue(51172);
+        (AST.parseDateToMJD as Mock).mockReturnValue(51172);
         parseObsDateToMjdUtc("25/12/98");
         expect(AST.parseDateToMJD).toHaveBeenCalledWith("1998-12-25", "UTC");
     });
@@ -96,16 +97,16 @@ describe("parseObsDateToMjdUtc", () => {
     test("returns NaN for unrecognized TIMESYS or unparsable dates", () => {
         expect(parseObsDateToMjdUtc("2020-01-01", "FOO")).toBeNaN();
 
-        (AST.parseDateToMJD as jest.Mock).mockReturnValue(NaN);
+        (AST.parseDateToMJD as Mock).mockReturnValue(NaN);
         expect(parseObsDateToMjdUtc("not a date")).toBeNaN();
     });
 });
 
 describe("parseIsoUtcToMjdUtc", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.5);
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+        rs.clearAllMocks();
+        (AST.parseDateToMJD as Mock).mockReturnValue(59000.5);
+        (AST.convertMJD as Mock).mockImplementation(mjd => mjd);
     });
 
     test("parses a complete ISO UTC value with microsecond precision", () => {
@@ -122,9 +123,9 @@ describe("parseIsoUtcToMjdUtc", () => {
 
 describe("parseIsoInScaleToMjdUtc", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.0004);
-        (AST.convertMJD as jest.Mock).mockReturnValue(59000);
+        rs.clearAllMocks();
+        (AST.parseDateToMJD as Mock).mockReturnValue(59000.0004);
+        (AST.convertMJD as Mock).mockReturnValue(59000);
     });
 
     test("parses a date-time in the selected scale and converts it to UTC", () => {
@@ -141,8 +142,8 @@ describe("parseIsoInScaleToMjdUtc", () => {
 
 describe("convertMjdToUtc", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+        rs.clearAllMocks();
+        (AST.convertMJD as Mock).mockImplementation(mjd => mjd);
     });
 
     test("converts an MJD in the TIMESYS scale to UTC", () => {
@@ -163,7 +164,7 @@ describe("convertMjdToUtc", () => {
 
 describe("formatMjdUtcAsIso", () => {
     test("formats an MJD in UTC via AST", () => {
-        (AST.formatMJDToDate as jest.Mock).mockReturnValue("2020-05-31T00:00:00.000");
+        (AST.formatMJDToDate as Mock).mockReturnValue("2020-05-31T00:00:00.000");
         expect(formatMjdUtcAsIso(59000)).toBe("2020-05-31T00:00:00.000");
         expect(AST.formatMJDToDate).toHaveBeenCalledWith(59000, "UTC", 3);
     });
@@ -175,12 +176,12 @@ describe("formatMjdUtcAsIso", () => {
 
 describe("formatMjdUtcAsIsoInScale", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.clearAllMocks();
     });
 
     test("converts canonical UTC MJD before formatting in the selected scale", () => {
-        (AST.convertMJD as jest.Mock).mockReturnValue(59000.0004);
-        (AST.formatMJDToDate as jest.Mock).mockReturnValue("2020-05-31T00:00:32.184000");
+        (AST.convertMJD as Mock).mockReturnValue(59000.0004);
+        (AST.formatMJDToDate as Mock).mockReturnValue("2020-05-31T00:00:32.184000");
 
         expect(formatMjdUtcAsIsoInScale(59000, TimeScale.TT, 6)).toBe("2020-05-31T00:00:32.184000");
         expect(AST.convertMJD).toHaveBeenCalledWith(59000, TimeScale.UTC, TimeScale.TT);
@@ -188,7 +189,7 @@ describe("formatMjdUtcAsIsoInScale", () => {
     });
 
     test("keeps UTC values unchanged", () => {
-        (AST.formatMJDToDate as jest.Mock).mockReturnValue("2020-05-31T00:00:00.000000");
+        (AST.formatMJDToDate as Mock).mockReturnValue("2020-05-31T00:00:00.000000");
 
         expect(formatMjdUtcAsIsoInScale(59000, TimeScale.UTC, 6)).toBe("2020-05-31T00:00:00.000000");
         expect(convertMjdUtcToScale(59000, TimeScale.UTC)).toBe(59000);
@@ -400,7 +401,7 @@ describe("formatTimeSeriesTickLabels", () => {
     });
 
     test("converts MJD and JD labels to the selected astronomical time scale", () => {
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd + 0.0004);
+        (AST.convertMJD as Mock).mockImplementation(mjd => mjd + 0.0004);
         const labels = formatTimeSeriesTickLabels(values, {
             timeLabelFormat: TimeLabelFormat.MJD,
             timeZoneMode: TimeZoneMode.UTC,
@@ -414,7 +415,7 @@ describe("formatTimeSeriesTickLabels", () => {
     });
 
     test("converts labels to the TCG time scale", () => {
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+        (AST.convertMJD as Mock).mockImplementation(mjd => mjd);
 
         formatTimeSeriesTickLabels(values, {
             timeLabelFormat: TimeLabelFormat.MJD,
@@ -453,7 +454,7 @@ describe("formatTimeSeriesTickLabels", () => {
     });
 
     test("calculates relative intervals in the selected astronomical time scale", () => {
-        (AST.convertMJD as jest.Mock).mockImplementation(mjd => (mjd === 59000.25 ? 59000.2501 : mjd));
+        (AST.convertMJD as Mock).mockImplementation(mjd => (mjd === 59000.25 ? 59000.2501 : mjd));
 
         expect(
             formatTimeSeriesTickLabels(values, {

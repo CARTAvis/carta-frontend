@@ -1,5 +1,7 @@
-jest.mock("components/Shared", () => ({ColormapComponent: jest.fn(), ColorPickerComponent: jest.fn(), SafeNumericInput: jest.fn()}));
-jest.mock("utilities", () => ({SWATCH_COLORS: []}));
+import {rs} from "@rstest/core";
+
+rs.mock("components/Shared", () => ({ColormapComponent: rs.fn(), ColorPickerComponent: rs.fn(), SafeNumericInput: rs.fn()}));
+rs.mock("utilities", () => ({SWATCH_COLORS: []}));
 
 import {type ContourConfigStore, type FrameStore} from "stores/Frame";
 
@@ -18,7 +20,7 @@ interface TestableContourStylePanelComponent {
 function createConfig(colormap: string = "inferno"): ContourConfigStore {
     const config = {
         colormap,
-        setColormap: jest.fn((newColormap: string) => (config.colormap = newColormap))
+        setColormap: rs.fn((newColormap: string) => (config.colormap = newColormap))
     };
     return config as unknown as ContourConfigStore;
 }

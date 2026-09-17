@@ -1,3 +1,4 @@
+import {type MockInstance, rs} from "@rstest/core";
 import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
@@ -32,9 +33,9 @@ describe("CatalogDisplayStore angular size axis type", () => {
     test("applies the mode to an existing mapped overlay", () => {
         const fileId = 987654;
         const profileStore = {
-            get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
+            get1DPlotData: rs.fn(() => ({wcsData: new Float32Array([2, 4])}))
         };
-        const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
+        const calculateCatalogSize = rs.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
         const widgetStore = new CatalogDisplayStore(fileId);
         const previousProfileStore = CatalogStore.Instance.catalogProfileStores.get(fileId);
         CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
@@ -87,9 +88,9 @@ describe("CatalogDisplayStore angular size axis type", () => {
     test("leaves the sources with no size to draw until an angular size column is mapped", () => {
         const fileId = 987655;
         const profileStore = {
-            get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
+            get1DPlotData: rs.fn(() => ({wcsData: new Float32Array([2, 4])}))
         };
-        const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
+        const calculateCatalogSize = rs.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
         const displayStore = new CatalogDisplayStore(fileId);
         CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
 
@@ -132,7 +133,7 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
     let columnData: Float32Array;
     let previousProfileStore: CatalogProfileStore | undefined;
     let displayStore: CatalogDisplayStore;
-    let updateDataTexture: jest.SpyInstance;
+    let updateDataTexture: MockInstance;
 
     // Rebuilding the overlay positions (Plot, a filter, streamed data) resets and refills the plotted source count
     const replot = (sourceCount: number) => {
@@ -145,15 +146,15 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
     beforeEach(() => {
         columnData = Float32Array.from([10, 20, 30, 40]);
         // the catalog data of the profile store is not observable: the accessor returns whatever data is currently loaded
-        const profileStore = {get1DPlotData: jest.fn(() => ({wcsData: columnData}))};
+        const profileStore = {get1DPlotData: rs.fn(() => ({wcsData: columnData}))};
         previousProfileStore = catalogStore.catalogProfileStores.get(fileId) as CatalogProfileStore | undefined;
         runInAction(() => {
             catalogStore.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
             catalogStore.catalogCounts.set(fileId, columnData.length);
         });
-        updateDataTexture = jest.spyOn(CatalogWebGLService.Instance, "updateDataTexture").mockImplementation(() => {});
-        jest.spyOn(CARTACompute, "CalculateCatalogColor").mockImplementation((column: Float32Array) => Float32Array.from(column));
-        jest.spyOn(CARTACompute, "CalculateCatalogSize").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        updateDataTexture = rs.spyOn(CatalogWebGLService.Instance, "updateDataTexture").mockImplementation(() => {});
+        rs.spyOn(CARTACompute, "CalculateCatalogColor").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        rs.spyOn(CARTACompute, "CalculateCatalogSize").mockImplementation((column: Float32Array) => Float32Array.from(column));
         displayStore = new CatalogDisplayStore(fileId);
     });
 
@@ -167,7 +168,7 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
             }
             catalogStore.catalogCounts.delete(fileId);
         });
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("recomputes the color texture from the current catalog data when the sources are replotted", () => {
@@ -235,7 +236,7 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
     });
 
     test("keeps the position angle range equal to the data range when the sources are replotted", () => {
-        jest.spyOn(CARTACompute, "CalculateCatalogOrientation").mockImplementation((column: Float32Array) => Float32Array.from(column));
+        rs.spyOn(CARTACompute, "CalculateCatalogOrientation").mockImplementation((column: Float32Array) => Float32Array.from(column));
         displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
         displayStore.setOrientationMapColumn("PA");
         expect([displayStore.angleMin, displayStore.angleMax]).toEqual([10, 40]);
@@ -259,7 +260,7 @@ describe("CatalogDisplayStore data-derived range cache", () => {
             get1DPlotData: () => ({wcsData: data})
         } as unknown as CatalogProfileStore;
         const columnRange = (displayStore as any).columnRange.bind(displayStore);
-        const fround = jest.spyOn(Math, "fround").mockImplementation(value => value);
+        const fround = rs.spyOn(Math, "fround").mockImplementation(value => value);
 
         try {
             expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 2});

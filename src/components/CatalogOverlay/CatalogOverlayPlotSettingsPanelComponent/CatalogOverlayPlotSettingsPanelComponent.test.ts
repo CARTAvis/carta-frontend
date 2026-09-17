@@ -1,3 +1,5 @@
+import {rs} from "@rstest/core";
+
 import {CatalogSettingsTabs, FrameScaling} from "enums";
 import {type CatalogDisplayStore, type CatalogWidgetStore} from "stores";
 
@@ -36,11 +38,11 @@ function createWidgetStore(): CatalogDisplayStore {
         colorScalingType: FrameScaling.LINEAR,
         orientationScalingType: FrameScaling.LINEAR,
         colorMap: "inferno",
-        setSizeScalingType: jest.fn((scaling: FrameScaling) => (widgetStore.sizeScalingType = scaling)),
-        setSizeMinorScalingType: jest.fn((scaling: FrameScaling) => (widgetStore.sizeMinorScalingType = scaling)),
-        setColorScalingType: jest.fn((scaling: FrameScaling) => (widgetStore.colorScalingType = scaling)),
-        setOrientationScalingType: jest.fn((scaling: FrameScaling) => (widgetStore.orientationScalingType = scaling)),
-        setColorMap: jest.fn((colormap: string) => (widgetStore.colorMap = colormap))
+        setSizeScalingType: rs.fn((scaling: FrameScaling) => (widgetStore.sizeScalingType = scaling)),
+        setSizeMinorScalingType: rs.fn((scaling: FrameScaling) => (widgetStore.sizeMinorScalingType = scaling)),
+        setColorScalingType: rs.fn((scaling: FrameScaling) => (widgetStore.colorScalingType = scaling)),
+        setOrientationScalingType: rs.fn((scaling: FrameScaling) => (widgetStore.orientationScalingType = scaling)),
+        setColorMap: rs.fn((colormap: string) => (widgetStore.colorMap = colormap))
     };
     return widgetStore as unknown as CatalogDisplayStore;
 }
@@ -54,7 +56,7 @@ function createComponent(): TestableCatalogSettingsComponent {
 
 describe("CatalogOverlayPlotSettingsPanelComponent scaling preview", () => {
     test("keeps a disabled parameter row for parameterless scalings", () => {
-        const parameterRow = createComponent().renderScalingParameter(FrameScaling.LINEAR, 1, jest.fn(), false);
+        const parameterRow = createComponent().renderScalingParameter(FrameScaling.LINEAR, 1, rs.fn(), false);
 
         expect(parameterRow.props.label).toBe("Gamma");
         expect(parameterRow.props.disabled).toBe(true);
@@ -62,7 +64,7 @@ describe("CatalogOverlayPlotSettingsPanelComponent scaling preview", () => {
     });
 
     test("keeps an enabled parameter row for parameterized scalings", () => {
-        const parameterRow = createComponent().renderScalingParameter(FrameScaling.SINH, 0.5, jest.fn(), false);
+        const parameterRow = createComponent().renderScalingParameter(FrameScaling.SINH, 0.5, rs.fn(), false);
 
         expect(parameterRow.props.label).toBe("Alpha");
         expect(parameterRow.props.disabled).toBe(false);
@@ -130,8 +132,8 @@ describe("CatalogOverlayPlotSettingsPanelComponent colormap preview", () => {
 
 describe("CatalogOverlayPlotSettingsPanelComponent settings tabs", () => {
     test("returns to the major size axis when the top-level tab changes", () => {
-        const displayStore = {setSizeAxisTab: jest.fn()} as unknown as CatalogDisplayStore;
-        const widgetStore = {setSettingsTabId: jest.fn()} as unknown as CatalogWidgetStore;
+        const displayStore = {setSizeAxisTab: rs.fn()} as unknown as CatalogDisplayStore;
+        const widgetStore = {setSettingsTabId: rs.fn()} as unknown as CatalogWidgetStore;
         const component = createComponent();
         Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
         Object.defineProperty(component, "widgetStore", {configurable: true, get: () => widgetStore});

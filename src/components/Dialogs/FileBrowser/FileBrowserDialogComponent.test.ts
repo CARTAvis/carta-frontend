@@ -1,16 +1,18 @@
+import {type Mock, rs} from "@rstest/core";
+
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
 import {FileBrowserDialogComponent} from "./FileBrowserDialogComponent";
 
 interface TestableFileBrowserDialogComponent {
-    loadSelectedFiles: jest.Mock<Promise<FrameStore[]>>;
+    loadSelectedFiles: Mock<() => Promise<FrameStore[]>>;
     loadAsTimeSeries: () => Promise<void>;
 }
 
 describe("FileBrowserDialogComponent", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("loadAsTimeSeries spatially matches only the newly loaded frames in append mode", async () => {
@@ -19,26 +21,26 @@ describe("FileBrowserDialogComponent", () => {
         const loadedFrameA = {filename: "loaded-a.fits"} as FrameStore;
         const loadedFrameB = {filename: "loaded-b.fits"} as FrameStore;
         const loadedFrames = [loadedFrameA, loadedFrameB];
-        const setSpatialMatchingEnabled = jest.fn(async (frame: FrameStore) => {
+        const setSpatialMatchingEnabled = rs.fn(async (frame: FrameStore) => {
             frame.spatialReference = spatialReference;
         });
-        const setTimeSeriesMember = jest.fn();
+        const setTimeSeriesMember = rs.fn();
 
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             frames: [spatialReference, existingFrame, ...loadedFrames],
             spatialReference,
             setSpatialMatchingEnabled,
             setTimeSeriesMember,
             timeSeriesStore: {
                 elements: [{frame: loadedFrameA}, {frame: loadedFrameB}],
-                first: jest.fn()
+                first: rs.fn()
             },
-            animatorStore: {setAnimationMode: jest.fn()},
-            widgetsStore: {selectDockedWidgetTab: jest.fn()}
+            animatorStore: {setAnimationMode: rs.fn()},
+            widgetsStore: {selectDockedWidgetTab: rs.fn()}
         } as unknown as AppStore);
 
         const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
-        component.loadSelectedFiles = jest.fn().mockResolvedValue(loadedFrames);
+        component.loadSelectedFiles = rs.fn().mockResolvedValue(loadedFrames);
 
         await component.loadAsTimeSeries();
 

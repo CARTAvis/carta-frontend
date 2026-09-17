@@ -1,12 +1,18 @@
-jest.mock("stores", () => ({
+import {rs} from "@rstest/core";
+
+import {ZoomPoint} from "models/Zoom/ZoomPoint" with {rstest: "importActual"};
+
+rs.mock("models", () => ({ZoomPoint}));
+
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             imageRatio: 1,
-            updateActiveLayer: jest.fn(),
-            updateLayerPixelRatio: jest.fn(),
+            updateActiveLayer: rs.fn(),
+            updateLayerPixelRatio: rs.fn(),
             isCursorFrozen: false,
             hoveredFrame: null,
-            setHoveredFrame: jest.fn(),
+            setHoveredFrame: rs.fn(),
             preferenceStore: {
                 isRegionCornerMode: false
             },
@@ -39,8 +45,8 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
             newRegionType: 0,
             regionsAndAnnotationsForRender: [],
             selectedRegionIds: new Set(),
-            applyRegionBoxSelection: jest.fn(),
-            clearSelection: jest.fn()
+            applyRegionBoxSelection: rs.fn(),
+            clearSelection: rs.fn()
         };
 
         mockFrame = {
@@ -61,7 +67,7 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
             height: 600,
             left: 0,
             top: 0,
-            onClickToCenter: jest.fn()
+            onClickToCenter: rs.fn()
         });
 
         (component as any).stageRef = {

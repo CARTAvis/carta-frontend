@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import type {AxiosInstance} from "axios";
 
 import {CatalogDatabase} from "enums";
@@ -5,25 +6,25 @@ import {MirrorSiteStore} from "stores";
 
 import {CatalogApiService} from "./CatalogApiService";
 
-jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()},
-    ErrorToast: jest.fn(),
-    WarningToast: jest.fn()
+rs.mock("components/Shared", () => ({
+    AppToaster: {show: rs.fn()},
+    ErrorToast: rs.fn(),
+    WarningToast: rs.fn()
 }));
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: {}},
-    CatalogOnlineQueryProfileStore: jest.fn(),
+    CatalogOnlineQueryProfileStore: rs.fn(),
     MirrorSiteStore: {
         Instance: {
-            getMirrorSites: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
-            getActiveMirror: jest.fn(() => "https://active.example/"),
-            isMirrorUnavailable: jest.fn(() => false)
+            getMirrorSites: rs.fn(() => ["https://active.example/", "https://unused.example/"]),
+            getActiveMirror: rs.fn(() => "https://active.example/"),
+            isMirrorUnavailable: rs.fn(() => false)
         }
     }
 }));
-jest.mock("utilities", () => ({CatalogApiProcessing: {}}));
-jest.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemetryEntry: jest.fn()}}}));
+rs.mock("utilities", () => ({CatalogApiProcessing: {}}));
+rs.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemetryEntry: rs.fn()}}}));
 
 interface TestableCatalogApiService {
     axiosInstanceSimbad: AxiosInstance;
@@ -35,7 +36,7 @@ interface TestableCatalogApiService {
 describe("CatalogApiService active mirror", () => {
     test("identifies the active mirror and does not try another mirror when the request fails", async () => {
         const service = new CatalogApiService() as unknown as TestableCatalogApiService;
-        const get = jest.fn().mockRejectedValue(new Error("Network Error"));
+        const get = rs.fn().mockRejectedValue(new Error("Network Error"));
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
 
         await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed. The mirror may be unavailable. Select another mirror site and retry. Details: Network Error");
@@ -47,7 +48,7 @@ describe("CatalogApiService active mirror", () => {
     test("preserves user cancellation without reporting a mirror failure", async () => {
         const service = new CatalogApiService() as unknown as TestableCatalogApiService;
         const cancellation = {__CANCEL__: true, message: "Simbad query canceled by the user."};
-        const get = jest.fn().mockRejectedValue(cancellation);
+        const get = rs.fn().mockRejectedValue(cancellation);
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
 
         await expect(service.getSimbadCatalog("test")).rejects.toBe(cancellation);
@@ -55,10 +56,10 @@ describe("CatalogApiService active mirror", () => {
 
     test("reports an actionable error when all mirrors are unavailable", async () => {
         const service = new CatalogApiService() as unknown as TestableCatalogApiService;
-        const get = jest.fn();
+        const get = rs.fn();
         service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
-        const unavailable = jest.mocked(MirrorSiteStore.Instance.isMirrorUnavailable);
-        const activeMirror = jest.mocked(MirrorSiteStore.Instance.getActiveMirror);
+        const unavailable = rs.mocked(MirrorSiteStore.Instance.isMirrorUnavailable);
+        const activeMirror = rs.mocked(MirrorSiteStore.Instance.getActiveMirror);
         unavailable.mockImplementation(() => true);
         activeMirror.mockImplementation(() => undefined);
 

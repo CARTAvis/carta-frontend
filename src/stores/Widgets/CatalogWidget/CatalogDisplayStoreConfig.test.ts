@@ -1,7 +1,9 @@
-jest.mock("services/CatalogWebGLService", () => ({
+import {rs} from "@rstest/core";
+
+rs.mock("services/CatalogWebGLService", () => ({
     CatalogWebGLService: {
         Instance: {
-            updateDataTexture: jest.fn()
+            updateDataTexture: rs.fn()
         }
     }
 }));
@@ -126,7 +128,7 @@ afterEach(() => {
     CREATED_STORES.forEach(store => store.dispose());
     CREATED_STORES.length = 0;
     runInAction(() => CatalogStore.Instance.catalogProfileStores.clear());
-    jest.restoreAllMocks();
+    rs.restoreAllMocks();
 });
 
 describe("CatalogDisplayStore display config", () => {
@@ -391,7 +393,7 @@ describe("CatalogDisplayStore display config", () => {
     test("keeps restoring a mapped column until its hidden preview data is fetched", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+        const sendCatalogFilter = rs.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
 
         runInAction(() => {
             profileStore.catalogOriginalData.delete(0);
@@ -419,7 +421,7 @@ describe("CatalogDisplayStore display config", () => {
     test("restores the profile state when the hidden-column request cannot be sent", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(false);
+        const sendCatalogFilter = rs.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(false);
 
         runInAction(() => {
             profileStore.catalogOriginalData.delete(0);
@@ -440,8 +442,8 @@ describe("CatalogDisplayStore display config", () => {
     test("reports a deferred config after one column request still has no data", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const sendCatalogFilter = rs.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
 
         runInAction(() => {
             profileStore.catalogOriginalData.delete(0);
@@ -472,8 +474,8 @@ describe("CatalogDisplayStore display config", () => {
     test("clears deferred config when its column request is superseded", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const sendCatalogFilter = rs.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
 
         runInAction(() => {
             profileStore.catalogOriginalData.delete(0);
@@ -676,7 +678,7 @@ describe("CatalogDisplayStore display config", () => {
     test("reports settings it will not restore instead of dropping them silently", () => {
         const store = createStoreWithoutData();
         const catalogFileId = store.catalogFileId;
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
 
         // Deferred until the catalog arrives, which is not yet a failure worth reporting.
         expect(store.applyConfigWhenReady({colorAxis: {mapColumn: "Missing"}}).success).toBe(false);
@@ -693,7 +695,7 @@ describe("CatalogDisplayStore display config", () => {
 
     test("reports a config rejected outright, which is not deferred for a retry", () => {
         const store = createStore();
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
 
         expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "Missing"}).success).toBe(false);
 
@@ -703,7 +705,7 @@ describe("CatalogDisplayStore display config", () => {
 
     test("says nothing when a config applies", () => {
         const store = createStore();
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
 
         expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "DEC"})).toEqual({success: true, errors: []});
 

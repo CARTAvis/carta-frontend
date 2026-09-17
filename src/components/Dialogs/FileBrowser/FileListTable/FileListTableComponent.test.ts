@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 import Long from "long";
 import type {BrowserFileList} from "stores";
@@ -47,12 +48,12 @@ const MakeComponent = (fileList: BrowserFileList, sortingString: string, fileBro
         filterType: FileFilteringType.Fuzzy,
         sortingString,
         fileBrowserMode,
-        onSortingChanged: jest.fn(),
-        onFileClicked: jest.fn(),
-        onSelectionChanged: jest.fn(),
-        onFileDoubleClicked: jest.fn(),
-        onFolderClicked: jest.fn(),
-        onListCancelled: jest.fn()
+        onSortingChanged: rs.fn(),
+        onFileClicked: rs.fn(),
+        onSelectionChanged: rs.fn(),
+        onFileDoubleClicked: rs.fn(),
+        onFolderClicked: rs.fn(),
+        onListCancelled: rs.fn()
     };
     return new FileListTableComponent(props);
 };

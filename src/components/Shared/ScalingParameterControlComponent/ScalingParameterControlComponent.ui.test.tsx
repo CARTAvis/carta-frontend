@@ -1,4 +1,5 @@
 import * as React from "react";
+import {rs} from "@rstest/core";
 import {fireEvent, render, screen} from "@testing-library/react";
 
 import {FrameScaling} from "enums";
@@ -7,7 +8,7 @@ import {ScalingParameterControlComponent} from "./ScalingParameterControlCompone
 
 describe("ScalingParameterControlComponent parameter isolation", () => {
     test("renders an empty disabled parameter", () => {
-        render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={jest.fn()} />);
+        render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={rs.fn()} />);
 
         expect(screen.getByRole("spinbutton")).toBeDisabled();
         expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe("");
@@ -19,7 +20,7 @@ describe("ScalingParameterControlComponent parameter isolation", () => {
         [FrameScaling.SINH, 0.5, 1 / 3, "0.333333"],
         [FrameScaling.GAMMA, 0.3, 0.123456789, "0.123457"]
     ])("displays scaling %s with at most six decimal places", (scaling, initialValue, value, expected) => {
-        const onValueChange = jest.fn();
+        const onValueChange = rs.fn();
         const {rerender} = render(<ScalingParameterControlComponent scaling={scaling} min={0.01} max={10} value={initialValue} onValueChange={onValueChange} />);
 
         rerender(<ScalingParameterControlComponent scaling={scaling} min={0.01} max={10} value={value} onValueChange={onValueChange} />);
@@ -28,8 +29,8 @@ describe("ScalingParameterControlComponent parameter isolation", () => {
     });
 
     test("discards the focused input draft when the scaling changes", () => {
-        const gammaChange = jest.fn();
-        const {rerender} = render(<ScalingParameterControlComponent scaling={FrameScaling.LOG} min={0.1} max={1_000_000} value={1_000} onValueChange={jest.fn()} />);
+        const gammaChange = rs.fn();
+        const {rerender} = render(<ScalingParameterControlComponent scaling={FrameScaling.LOG} min={0.1} max={1_000_000} value={1_000} onValueChange={rs.fn()} />);
         const logInput = screen.getByRole("spinbutton");
         fireEvent.focus(logInput);
         fireEvent.change(logInput, {target: {value: "25"}});

@@ -1,16 +1,18 @@
+import {rs} from "@rstest/core";
+
 import {ImagePanelMode, ImageType} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
 
-const MockUpdateActiveImage = jest.fn();
-const MockIsActiveImage = jest.fn();
-const MockSetActiveImage = jest.fn();
+const MockUpdateActiveImage = rs.fn();
+const MockIsActiveImage = rs.fn();
+const MockSetActiveImage = rs.fn();
 var mockChannelMapStore;
 var mockPreferenceStore;
 
 // Mock RenderConfigStore to handle import chain
-jest.mock("stores/Frame", () => ({
+rs.mock("stores/Frame", () => ({
     RenderConfigStore: {
         COLOR_MAPS_SELECTED: ["viridis", "plasma", "inferno", "magma"],
         COLOR_MAPS_MONO: new Map([
@@ -31,7 +33,7 @@ jest.mock("stores/Frame", () => ({
     }
 }));
 
-jest.mock("stores", () => {
+rs.mock("stores", () => {
     class MockColorBlendingStore {
         id;
         selectedFrames: any[] = [];
@@ -63,9 +65,9 @@ jest.mock("stores", () => {
         PreferenceStore: {
             Instance: mockPreferenceStore
         },
-        FrameStore: jest.fn(frameInfo => ({
+        FrameStore: rs.fn(frameInfo => ({
             id: frameInfo.fileId,
-            clearContours: jest.fn()
+            clearContours: rs.fn()
         })),
         ColorBlendingStore: MockColorBlendingStore
     };

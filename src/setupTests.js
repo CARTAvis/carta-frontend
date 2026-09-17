@@ -1,5 +1,31 @@
+import {rs} from "@rstest/core";
+
 import "@testing-library/jest-dom";
-import "jest-canvas-mock";
+import "rstest-canvas-mock";
+
+// Keep application singletons from reaching external services while unit tests load them.
+rs.mock("axios", () => {
+    const request = rs.fn(() => Promise.resolve({data: []}));
+    const instance = {
+        defaults: {headers: {common: {}}},
+        delete: request,
+        get: request,
+        post: request,
+        put: request
+    };
+    return {
+        default: Object.assign(request, {
+            CancelToken: {source: rs.fn(() => ({cancel: rs.fn(), token: {}}))},
+            create: rs.fn(() => instance),
+            delete: request,
+            get: request,
+            isAxiosError: () => false,
+            isCancel: error => Boolean(error?.__CANCEL__),
+            post: request,
+            put: request
+        })
+    };
+});
 
 // Polyfill TextEncoder and TextDecoder for jsdom environment
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -10,9 +36,17 @@ if (typeof global.TextEncoder === "undefined") {
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
-// Set up global mocks
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
+
+if (typeof global.Worker === "undefined") {
+    global.Worker = class {
+        postMessage() {}
+        terminate() {}
+        addEventListener() {}
+        removeEventListener() {}
+    };
+}
 
 // jsdom doesn't implement WebGL contexts; avoid noisy console.error logs when
 // app code probes for WebGL2 support during unit tests.
@@ -26,17 +60,26 @@ if (typeof HTMLCanvasElement !== "undefined" && HTMLCanvasElement.prototype?.get
     };
 }
 
-// Mock matchMedia for Blueprint.js components
 Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: query => ({
         matches: false,
         media: query,
         onchange: null,
-        addListener: () => {}, // deprecated
-        removeListener: () => {}, // deprecated
+        addListener: () => {},
+        removeListener: () => {},
         addEventListener: () => {},
         removeEventListener: () => {},
         dispatchEvent: () => {}
     })
 });
+
+// jsdom does not implement top-layer elements, and nwsapi recursively evaluates
+// these selectors when Floating UI checks whether a popover is in the top layer.
+const OriginalMatches = Element.prototype.matches;
+Element.prototype.matches = function (selector) {
+    if (selector === ":modal" || selector === ":popover-open" || selector === ":fullscreen") {
+        return false;
+    }
+    return OriginalMatches.call(this, selector);
+};
