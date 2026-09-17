@@ -1,14 +1,15 @@
 import * as React from "react";
 import {Classes} from "@blueprintjs/core";
+import {rs} from "@rstest/core";
 import {fireEvent, render, screen} from "@testing-library/react";
 
 import {ColormapComponent} from "./ColormapComponent";
 
 describe("ColormapComponent hover preview", () => {
     test("reports the colormap under the pointer", async () => {
-        const onColormapHover = jest.fn();
-        const onDropdownOpenChange = jest.fn();
-        render(<ColormapComponent selectedColormap="inferno" inverted={false} onColormapSelect={jest.fn()} onColormapHover={onColormapHover} onDropdownOpenChange={onDropdownOpenChange} />);
+        const onColormapHover = rs.fn();
+        const onDropdownOpenChange = rs.fn();
+        render(<ColormapComponent selectedColormap="inferno" inverted={false} onColormapSelect={rs.fn()} onColormapHover={onColormapHover} onDropdownOpenChange={onDropdownOpenChange} />);
 
         fireEvent.click(screen.getByTestId("colormap-dropdown"));
         fireEvent.mouseEnter(await screen.findByText("viridis"));
@@ -18,7 +19,7 @@ describe("ColormapComponent hover preview", () => {
     });
 
     test("does not move the keyboard active item when hovering", async () => {
-        render(<ColormapComponent selectedColormap="inferno" inverted={false} onColormapSelect={jest.fn()} onColormapHover={jest.fn()} />);
+        render(<ColormapComponent selectedColormap="inferno" inverted={false} onColormapSelect={rs.fn()} onColormapHover={rs.fn()} />);
 
         fireEvent.click(screen.getByTestId("colormap-dropdown"));
 
