@@ -1,29 +1,34 @@
-const MOCK_UTILITIES = {
-    booleanFiltering: jest.fn(),
-    getHasFilter: jest.fn(),
-    getInitIndexMap: jest.fn(() => []),
-    getSortedIndexMap: jest.fn(() => []),
-    numericFiltering: jest.fn(),
-    ProtobufProcessing: {},
-    stringFiltering: jest.fn(),
-    wavelengthToFrequency: jest.fn()
-};
+import {rs} from "@rstest/core";
 
-const MOCK_APP_STORE = {
-    widgetsStore: {
-        spectralProfilerList: [],
-        getSpectralWidgetStoreByID: jest.fn()
+import * as CosmologyUtilities from "utilities/cosmology/cosmology" with {rstest: "importActual"};
+
+const {MOCK_UTILITIES, MOCK_APP_STORE} = rs.hoisted(() => ({
+    MOCK_UTILITIES: {
+        booleanFiltering: rs.fn(),
+        getHasFilter: rs.fn(),
+        getInitIndexMap: rs.fn(() => []),
+        getSortedIndexMap: rs.fn(() => []),
+        numericFiltering: rs.fn(),
+        ProtobufProcessing: {},
+        stringFiltering: rs.fn(),
+        wavelengthToFrequency: rs.fn()
+    },
+    MOCK_APP_STORE: {
+        widgetsStore: {
+            spectralProfilerList: [],
+            getSpectralWidgetStoreByID: rs.fn()
+        }
     }
-};
+}));
 
-jest.mock("services", () => ({SplatalogueService: {Instance: {}}}));
-jest.mock("stores", () => ({
+rs.mock("services", () => ({SplatalogueService: {Instance: {}}}));
+rs.mock("stores", () => ({
     AppStore: {
         Instance: MOCK_APP_STORE
     }
 }));
-jest.mock("utilities", () => ({
-    ...jest.requireActual("utilities"),
+rs.mock("utilities", () => ({
+    ...CosmologyUtilities,
     ...MOCK_UTILITIES
 }));
 
