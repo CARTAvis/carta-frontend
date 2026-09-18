@@ -275,7 +275,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
-        const isSelectionChanged = !this.hasSameSelectedIndices(selectedIndices) || this.selectedData.length !== this.pointIndices.length;
+        const isSelectionChanged = isPositionChanged || !this.hasSameSelectedIndices(selectedIndices) || this.selectedData.length !== this.pointIndices.length;
         if (isSelectionChanged) {
             this.selectedData = new Float32Array(this.pointIndices.length);
             for (let i = 0; i < this.pointIndices.length; i++) {
