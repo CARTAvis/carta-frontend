@@ -23,6 +23,7 @@ export * from "./OverlayStore/OverlayStore";
 export * from "./PreferenceStore/PreferenceStore";
 export * from "./ProfileFittingStore/ProfileFittingStore";
 export * from "./ProfileSmoothingStore/ProfileSmoothingStore";
+export * from "./RegionGroupStore/RegionGroupStore";
 export * from "./Snippet/SnippetStore";
 export * from "./SpatialProfileStore/SpatialProfileStore";
 export * from "./SpectralProfileStore/SpectralProfileStore";

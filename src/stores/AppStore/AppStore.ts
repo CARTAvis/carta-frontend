@@ -70,6 +70,7 @@ import {
     OverlaySettings,
     PreferenceStore,
     type RegionFileType,
+    RegionGroupStore,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
@@ -217,6 +218,8 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>> = new Map();
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionHistogramData.$Properties>>> = new Map();
     @observable regionClipboard: RegionClipboardData | null = null;
+    @observable private regionGroups: ObservableMap<string, RegionGroupStore> = new ObservableMap();
+    private regionGroupIdCounter = 1;
 
     // Reference images
     @observable spatialReference: FrameStore | null = null;
@@ -459,6 +462,37 @@ export class AppStore {
     @computed get frames(): FrameStore[] {
         return this.imageViewConfigStore.frames;
     }
+
+    @computed get regionGroupStores(): RegionGroupStore[] {
+        return Array.from(this.regionGroups.values());
+    }
+
+    @action createRegionGroup = (): RegionGroupStore => {
+        const index = this.regionGroupIdCounter++;
+        const regionGroupId = `region-group-${index}`;
+
+        const regionGroup = new RegionGroupStore(regionGroupId, `Region Group ${index}`);
+        this.regionGroups.set(regionGroupId, regionGroup);
+        return regionGroup;
+    };
+
+    @action deleteRegionGroup = (regionGroupId: string): void => {
+        this.regionGroups.get(regionGroupId)?.clear();
+        this.regionGroups.delete(regionGroupId);
+    };
+
+    @action copyRegionGroup = (regionGroupId: string): RegionGroupStore => {
+        const source = this.regionGroups.get(regionGroupId);
+        if (!source) {
+            throw new Error(`Region group not found: ${regionGroupId}`);
+        }
+
+        const copy = this.createRegionGroup();
+        copy.regionGroupName = `${source.regionGroupName} Copy`;
+        copy.regionGroupType = source.regionGroupType;
+        source.entries.forEach(entry => copy.setRegion(entry.frameId, entry.region.regionId, entry.region));
+        return copy;
+    };
 
     @computed get isOpenFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.isFileLoading;
@@ -2514,6 +2548,7 @@ export class AppStore {
         }
 
         regionStatsMap.set(regionStatsData.stokes, regionStatsData);
+        this.regionGroupStores.forEach(regionGroup => regionGroup.updateRegionStats(regionStatsData));
     };
 
     handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {

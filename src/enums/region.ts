@@ -28,6 +28,12 @@ export enum RegionsType {
     LINE
 }
 
+export enum RegionGroupType {
+    TIME_SERIES = "timeSeries",
+    REGION_SERIES = "regionSeries",
+    FREQUENCY_SERIES = "frequencySeries"
+}
+
 export enum AppearanceControl {
     Color = "color",
     LineWidth = "lineWidth",
