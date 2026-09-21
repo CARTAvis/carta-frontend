@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {HelpType, Polarizations, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
@@ -39,6 +39,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore | null = null;
     private currentLinePlotProps: LinePlotComponentProps;
+    private currentHistogram: CARTA.Histogram.$Properties | null = null;
 
     get widgetStore(): HistogramWidgetStore {
         return this.cachedWidgetStore;
@@ -313,6 +314,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
             if (frame.renderConfig?.histogram?.bins?.length) {
                 const currentPlotData = this.plotData;
+                this.currentHistogram = currentPlotData ? this.histogramData : null;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;
 
@@ -347,12 +349,14 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             this.currentLinePlotProps = linePlotProps;
         }
 
+        const markers = this.widgetStore.isMeanRmsVisible ? genMeanRmsMarkers(this.currentHistogram, appStore.isDarkTheme) : [];
+
         return (
             <div className="histogram-widget">
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
-                        <LinePlotComponent {...this.currentLinePlotProps} />
+                        <LinePlotComponent {...this.currentLinePlotProps} markers={markers} />
                     </div>
                     <div>
                         <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />

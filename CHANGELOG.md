@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect color mapping in the Stokes QU scatter plot after applying data smoothing ([#2851](https://github.com/CARTAvis/carta-frontend/issues/2851)).
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
 * Fixed incorrect color, size, and orientation mapping of catalog overlay sources after replotting with a new column filter ([#2849](https://github.com/CARTAvis/carta-frontend/issues/2849)).
+* Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled ([#2963](https://github.com/CARTAvis/carta-frontend/issues/2963)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 

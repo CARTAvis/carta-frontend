@@ -6,7 +6,7 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable} fro
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
@@ -379,25 +379,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
             ];
 
-            if (this.widgetStore.isMeanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
-                linePlotProps.markers.push({
-                    value: histogram.mean,
-                    id: "marker-mean",
-                    draggable: false,
-                    horizontal: false,
-                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                    dash: [5]
-                });
-
-                linePlotProps.markers.push({
-                    value: histogram.mean,
-                    id: "marker-rms",
-                    draggable: false,
-                    horizontal: false,
-                    width: histogram.stdDev,
-                    opacity: 0.2,
-                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
-                });
+            if (this.widgetStore.isMeanRmsVisible) {
+                linePlotProps.markers.push(...genMeanRmsMarkers(histogram, appStore.isDarkTheme));
             }
 
             if (isFinite(scaleMinVal) && isFinite(scaleMaxVal) && scaleMinVal < scaleMaxVal) {

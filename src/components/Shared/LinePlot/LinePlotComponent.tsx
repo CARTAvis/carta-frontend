@@ -34,6 +34,19 @@ export interface LineMarker {
     interactionMarker?: boolean;
 }
 
+export function genMeanRmsMarkers(histogram: {mean?: number | null; stdDev?: number | null} | null | undefined, isDarkTheme: boolean): LineMarker[] {
+    const mean = histogram?.mean;
+    const stdDev = histogram?.stdDev;
+    if (mean == null || !isFinite(mean) || stdDev == null || !(stdDev > 0)) {
+        return [];
+    }
+    const color = isDarkTheme ? Colors.GREEN4 : Colors.GREEN2;
+    return [
+        {value: mean, id: "marker-mean", draggable: false, horizontal: false, color, dash: [5]},
+        {value: mean, id: "marker-rms", draggable: false, horizontal: false, width: stdDev, opacity: 0.2, color}
+    ];
+}
+
 export interface LinePlotInsideBoxMarker {
     boundary: {xMin: number; xMax: number; yMin: number; yMax: number};
     color?: string;
