@@ -1316,44 +1316,6 @@ export class AppStore {
         return requestId;
     }
 
-    /** Request catalog columns needed by a display config restored before the preview contained them. */
-    @action requestCatalogColumns = (catalogFileId: number, columnNames: string[]): number | false => {
-        const profileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-        if (!profileStore?.isFileBasedCatalog || profileStore.isLoadingOntoImage) {
-            return false;
-        }
-
-        const previousUpdateMode = profileStore.updateMode;
-        const isOriginalUpdateColumnMode = profileStore.isUpdateColumnMode;
-        const isOriginalLoadingData = profileStore.isLoadingData;
-
-        // Hidden config columns must be displayed temporarily so the backend includes their data;
-        // this intentionally changes the table's displayed-column selection during restoration.
-        columnNames.forEach(columnName => profileStore.setHeaderDisplay(true, columnName));
-        profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        profileStore.setIsUpdateColumn(true);
-
-        const filter = profileStore.updateRequestDataSize;
-        const displayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-        if (filter.imageBounds) {
-            filter.imageBounds.xColumnName = displayStore?.xAxis ?? CatalogOverlay.NONE;
-            filter.imageBounds.yColumnName = displayStore?.yAxis ?? CatalogOverlay.NONE;
-        }
-        filter.fileId = catalogFileId;
-        filter.filterConfigs = profileStore.getUserFilters();
-        filter.columnIndices = profileStore.displayedColumnHeaders.map(column => column.columnIndex);
-        const requestId = this.sendCatalogFilter(filter);
-        if (requestId === false) {
-            profileStore.setIsUpdateColumn(isOriginalUpdateColumnMode);
-            profileStore.setUpdateMode(previousUpdateMode);
-            profileStore.setLoadingDataStatus(isOriginalLoadingData);
-            return false;
-        }
-
-        profileStore.resetFilterRequest();
-        return requestId;
-    };
-
     /**
      * Reorders images in the image list.
      * @param oldIndex - The first index of the images to move.

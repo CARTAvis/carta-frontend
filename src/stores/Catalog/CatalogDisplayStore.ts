@@ -332,32 +332,13 @@ export class CatalogDisplayStore {
     /** Ranges are accumulated as file-based catalog rows arrive in chunks. */
     private readonly columnRangeCache = new Map<string, ColumnRangeCache>();
     /** Layout display settings waiting for the catalog data they validate against. */
-    private pendingConfig: WorkspaceCatalogConfig | undefined;
     /** Result from the most recent attempt to apply the pending layout config. */
-    private pendingConfigResult: CatalogConfigApplyResult | undefined;
     /** Request that is fetching the data needed by the pending layout config. */
-    private pendingConfigRequestId: number | undefined;
     /** Number of column-fetch attempts made for the current deferred config. */
-    private pendingConfigRequestCount = 0;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
-
-        this.disposers.push(
-            reaction(
-                () => {
-                    const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-                    return Boolean(profileStore && !profileStore.isLoadingOntoImage);
-                },
-                isReady => {
-                    if (isReady && this.pendingConfig) {
-                        const config = this.pendingConfig;
-                        this.applyConfigWhenReady(config);
-                    }
-                }
-            )
-        );
 
         this.disposers.push(
             // A catalog carries only its preview rows when it is first loaded, and the rest arrive
@@ -1602,101 +1583,8 @@ export class CatalogDisplayStore {
         return {success: true, errors: []};
     };
 
-    /** Apply catalog display settings now, or retry them once the catalog data is ready. */
-    @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
-        if (this.pendingConfig !== config) {
-            this.pendingConfigRequestCount = 0;
-            this.pendingConfigRequestId = undefined;
-        }
-        const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        const result = this.applyConfig(config);
-
-        // The readiness reaction retries the config once the catalog has finished loading.
-        if (!profileStore || profileStore.isLoadingOntoImage) {
-            this.pendingConfig = config;
-            this.pendingConfigResult = result;
-            return result;
-        }
-
-        // Columns a file-based catalog has not streamed yet are fetched, and the config retried when
-        // they arrive. Any other catalog already holds everything it is ever going to.
-        const columnsWithoutData = this.configColumnsWithoutData(profileStore, config);
-        if (!columnsWithoutData.length || !profileStore.isFileBasedCatalog) {
-            return this.finalizeConfig(result);
-        }
-        // One fetch per config: a column still missing after it is one the catalog does not hold.
-        if (this.pendingConfigRequestCount >= 1) {
-            return this.finalizeConfig(result);
-        }
-
-        this.pendingConfig = config;
-        this.pendingConfigResult = result;
-        const requestId = AppStore.Instance.requestCatalogColumns(this.catalogFileId, this.configColumnNames(config));
-        if (requestId === false) {
-            return this.finalizeConfig(result);
-        }
-        this.pendingConfigRequestId = requestId;
-        this.pendingConfigRequestCount += 1;
-        return result;
-    };
-
-    /** Drop a restore whose data request was superseded before it could complete. */
-    @action handleCatalogRequestSuperseded = (requestId: number) => {
-        if (this.pendingConfigRequestId !== requestId || !this.pendingConfig) {
-            return;
-        }
-
-        const result = this.pendingConfigResult;
-        this.clearPendingConfig();
-        this.reportRejectedConfig({
-            success: false,
-            errors: [...(result?.errors ?? []), "The catalog data request was superseded before the display settings could be restored"]
-        });
-    };
-
-    /** Columns referenced by a restored display config, including image-overlay coordinates. */
-    private configColumnNames(config: WorkspaceCatalogConfig): string[] {
-        const columns = [config.sizeAxis?.mapColumn, config.sizeMinorAxis?.mapColumn, config.colorAxis?.mapColumn, config.orientationAxis?.mapColumn, config.xAxis, config.yAxis];
-        return Array.from(new Set(columns.filter((column): column is string => Boolean(column) && column !== CatalogOverlay.NONE)));
-    }
-
-    /** Numeric config columns whose data is not in the catalog response received so far. */
-    private configColumnsWithoutData(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, config: WorkspaceCatalogConfig): string[] {
-        return this.configColumnNames(config).filter(column => {
-            const header = profileStore.getColumnHeader(column);
-            return Boolean(header && isCatalogNumericDataType(header.dataType)) && !profileStore.get1DPlotData(column).wcsData?.length;
-        });
-    }
-
-    /**
-     * Report settings that cannot be applied or retried, such as columns the catalog does not have,
-     * columns with an unsupported type, or columns with no data.
-     */
-    private reportRejectedConfig(result: CatalogConfigApplyResult) {
-        if (result.success) {
-            return;
-        }
-        const catalogName = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId)?.catalogInfo.fileInfo.name ?? `catalog ${this.catalogFileId}`;
-        AppStore.Instance.logStore.addWarning(`Display settings for ${catalogName} were not restored: ${result.errors.join("; ")}`, ["catalog"]);
-    }
-
-    /** Stop waiting on the catalog for a config, reporting whatever it could not apply. */
-    private finalizeConfig(result: CatalogConfigApplyResult): CatalogConfigApplyResult {
-        this.clearPendingConfig();
-        this.reportRejectedConfig(result);
-        return result;
-    }
-
-    private clearPendingConfig() {
-        this.pendingConfig = undefined;
-        this.pendingConfigResult = undefined;
-        this.pendingConfigRequestId = undefined;
-        this.pendingConfigRequestCount = 0;
-    }
-
     private clearPendingRestoreState() {
         this.pendingClipRestore.clear();
-        this.clearPendingConfig();
     }
 
     private propagateLockedSizeBounds() {
@@ -1709,9 +1597,6 @@ export class CatalogDisplayStore {
             this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
         }
     }
-
-    /** Return the config waiting for catalog validation, if any, for workspace serialization. */
-    public getConfigForSerialization = (): WorkspaceCatalogConfig => this.pendingConfig ?? this.toConfig();
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {

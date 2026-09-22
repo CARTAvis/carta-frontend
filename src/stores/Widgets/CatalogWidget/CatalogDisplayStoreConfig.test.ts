@@ -9,9 +9,9 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, CatalogUpdateMode, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -362,117 +362,6 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
-    test("clears deferred config when maps or size are reset", () => {
-        const resetMapsStore = createStoreWithoutData();
-        const resetSizeStore = createStoreWithoutData();
-
-        resetMapsStore.applyConfigWhenReady({color: "red"});
-        resetSizeStore.applyConfigWhenReady({color: "blue"});
-        resetMapsStore.resetMaps();
-        resetSizeStore.resetSize();
-
-        runInAction(() => {
-            CatalogStore.Instance.catalogProfileStores.set(resetMapsStore.catalogFileId, createProfileStore(resetMapsStore.catalogFileId));
-            CatalogStore.Instance.catalogProfileStores.set(resetSizeStore.catalogFileId, createProfileStore(resetSizeStore.catalogFileId));
-        });
-
-        expect(resetMapsStore.catalogColor).not.toBe("red");
-        expect(resetSizeStore.catalogColor).not.toBe("blue");
-    });
-
-    test("retries deferred layout config when catalog data becomes available", () => {
-        const store = createStoreWithoutData();
-        const catalogFileId = store.catalogFileId;
-
-        expect(store.applyConfigWhenReady({color: "#123456"})).toEqual({success: false, errors: ["The catalog data has not been loaded"]});
-        expect(store.catalogColor).not.toBe("#123456");
-
-        runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
-
-        expect(store.catalogColor).toBe("#123456");
-    });
-
-    test("keeps restoring a mapped column until its hidden preview data is fetched", () => {
-        const store = createStore();
-        const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
-
-        runInAction(() => {
-            profileStore.catalogOriginalData.delete(0);
-            profileStore.setHeaderDisplay(false, "Fmag");
-        });
-
-        const result = store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
-
-        expect(result.success).toBe(false);
-        expect(sendCatalogFilter).toHaveBeenCalled();
-        expect(profileStore.catalogControlHeader.get("Fmag")?.display).toBe(true);
-        expect(store.getConfigForSerialization().sizeAxis?.mapColumn).toBe("Fmag");
-
-        runInAction(() => {
-            profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([1, 4, 7, 10])});
-            profileStore.setLoadingDataStatus(false);
-            profileStore.setUpdatingDataStream(false);
-        });
-
-        expect(store.sizeMapColumn).toBe("Fmag");
-        expect(store.sizeColumnMin.clipd).toBe(2);
-        expect(store.sizeColumnMax.clipd).toBe(8);
-    });
-
-    test("restores the profile state when the hidden-column request cannot be sent", () => {
-        const store = createStore();
-        const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(false);
-
-        runInAction(() => {
-            profileStore.catalogOriginalData.delete(0);
-            profileStore.setHeaderDisplay(false, "Fmag");
-            profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-        });
-
-        const result = store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag"}});
-
-        expect(result.success).toBe(false);
-        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
-        expect(profileStore.isUpdateColumnMode).toBe(false);
-        expect(profileStore.isLoadingData).toBe(false);
-        expect(profileStore.isLoadingOntoImage).toBe(false);
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.ViewUpdate);
-    });
-
-    test("reports a deferred config after one column request still has no data", () => {
-        const store = createStore();
-        const profileStore = profileStoreOf(store);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(42);
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
-
-        runInAction(() => {
-            profileStore.catalogOriginalData.delete(0);
-            profileStore.setHeaderDisplay(false, "Fmag");
-            profileStore.setLoadingDataStatus(false);
-            profileStore.setUpdatingDataStream(false);
-        });
-
-        expect(store.applyConfigWhenReady({sizeAxis: {mapColumn: "Fmag"}}).success).toBe(false);
-        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
-
-        runInAction(() => {
-            profileStore.setLoadingDataStatus(false);
-            profileStore.setUpdatingDataStream(false);
-        });
-
-        expect(addWarning).toHaveBeenCalledTimes(1);
-        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
-        expect(store.getConfigForSerialization().sizeAxis?.mapColumn).toBe(CatalogOverlay.NONE);
-
-        runInAction(() => profileStore.setLoadingDataStatus(true));
-        runInAction(() => profileStore.setLoadingDataStatus(false));
-
-        expect(addWarning).toHaveBeenCalledTimes(1);
-        expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
-    });
-
     test("rejects a config mapped to a column the catalog does not have, without changing anything", () => {
         const store = createStore();
         const before = store.toConfig();
@@ -667,43 +556,6 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.sizeColumnMax.clipd).toBe(store.sizeColumnMax.default);
         expect(store.toConfig().sizeAxis?.columnMinClip).toBeUndefined();
         expect(store.toConfig().sizeAxis?.columnMaxClip).toBeUndefined();
-    });
-
-    test("reports settings it will not restore instead of dropping them silently", () => {
-        const store = createStoreWithoutData();
-        const catalogFileId = store.catalogFileId;
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
-
-        // Deferred until the catalog arrives, which is not yet a failure worth reporting.
-        expect(store.applyConfigWhenReady({colorAxis: {mapColumn: "Missing"}}).success).toBe(false);
-        expect(addWarning).not.toHaveBeenCalled();
-
-        // The catalog arrives, and the retry finds the column is not one it has.
-        runInAction(() => CatalogStore.Instance.catalogProfileStores.set(catalogFileId, createProfileStore(catalogFileId)));
-
-        expect(addWarning).toHaveBeenCalledTimes(1);
-        expect(addWarning.mock.calls[0][0]).toContain('The color axis is mapped to "Missing"');
-        expect(addWarning.mock.calls[0][0]).toContain("test-catalog");
-        expect(addWarning.mock.calls[0][1]).toEqual(["catalog"]);
-    });
-
-    test("reports a config rejected outright, which is not deferred for a retry", () => {
-        const store = createStore();
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
-
-        expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "Missing"}).success).toBe(false);
-
-        expect(addWarning).toHaveBeenCalledTimes(1);
-        expect(addWarning.mock.calls[0][0]).toContain('The y axis is set to "Missing"');
-    });
-
-    test("says nothing when a config applies", () => {
-        const store = createStore();
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
-
-        expect(store.applyConfigWhenReady({xAxis: "RA", yAxis: "DEC"})).toEqual({success: true, errors: []});
-
-        expect(addWarning).not.toHaveBeenCalled();
     });
 
     test("round-trips widget presentation through layout settings", () => {
