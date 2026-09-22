@@ -254,13 +254,14 @@ export class CatalogApiService {
             AppToaster.show(ErrorToast("Please load an image file"));
             return;
         }
-        const catalogComponentId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
+        const catalogComponentId = appStore.updateCatalogProfile(fileId, appStore.activeFrame, catalogInfo);
         if (catalogComponentId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
             appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
             appStore.fileBrowserStore.hideFileBrowser();
             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
             appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+            appStore.catalogStore.validateCatalogPlotColumns(fileId);
             appStore.dialogStore.hideDialog(DialogId.OnlineDataQuery);
         }
     };
