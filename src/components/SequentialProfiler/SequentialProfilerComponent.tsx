@@ -28,9 +28,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "sequential-profiler",
             type: "sequential-profiler",
-            minWidth: 400,
+            minWidth: 600,
             minHeight: 225,
-            defaultWidth: 650,
+            defaultWidth: 800,
             defaultHeight: 300,
             title: "Light curve",
             isCloseable: true
