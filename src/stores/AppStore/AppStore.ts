@@ -2103,7 +2103,7 @@ export class AppStore {
                     }
                     break;
                 case ConnectionStatus.CLOSED:
-                    this.catalogStore?.catalogRequests.failAll("The server connection was lost while restoring catalog data");
+                    this.catalogStore?.catalogRequests.reset("The server connection was lost while restoring catalog data");
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
                         this.alertStore

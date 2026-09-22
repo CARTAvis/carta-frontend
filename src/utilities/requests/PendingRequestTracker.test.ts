@@ -126,6 +126,20 @@ describe("PendingRequestTracker", () => {
         await expect(tracker.wait(1)).resolves.toEqual({success: true});
     });
 
+    test("stops holding request IDs back once the connection they belong to has gone", async () => {
+        const pending = tracker.start(1);
+        tracker.attach(1, 10);
+        tracker.finish(1, true);
+        expect(tracker.accepts(1, 10)).toBe(false);
+
+        // The next connection hands out request IDs from the beginning again, so an ID from the old
+        // one must not reject the answers to whatever gets that number next.
+        tracker.reset("connection lost");
+        await expect(pending).resolves.toEqual({success: true, message: undefined});
+
+        expect(tracker.accepts(1, 10)).toBe(true);
+    });
+
     test("forgets a subject that no longer exists", () => {
         tracker.start(1);
         tracker.attach(1, 10);

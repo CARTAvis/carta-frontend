@@ -138,11 +138,23 @@ export class PendingRequestTracker<TKey> {
         pending.resolve({success: isSuccess, message});
     }
 
-    /** End every wait, for a connection or a session that is not going to answer them. */
+    /** End every wait, for a session that is not going to answer them. */
     public failAll(message: string): void {
         for (const key of [...this.pending.keys()]) {
             this.finish(key, false, message);
         }
+    }
+
+    /**
+     * End every wait and forget every request, for a connection that has gone away.
+     *
+     * A request ID only means anything on the connection it was sent on: a closed connection has no
+     * more responses to discard, and the next one starts counting its requests from the beginning,
+     * so an ID held back as stale would otherwise reject the answers to an unrelated later request.
+     */
+    public reset(message: string): void {
+        this.failAll(message);
+        this.staleRequestIds.clear();
     }
 
     /** Forget a subject entirely, for one that no longer exists. */
