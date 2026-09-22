@@ -102,6 +102,18 @@ describe("PendingRequestTracker", () => {
         expect(tracker.accepts(1, 11)).toBe(true);
     });
 
+    test("goes on reading the request that took a wait over from an earlier one", async () => {
+        const wait = tracker.start(1);
+        tracker.attach(1, 10);
+        tracker.attach(1, 11);
+
+        // The wait ends with the request it was on, but the subject is still being answered: 11 has
+        // taken over, and throwing its rows away would leave the table on the ones it replaced.
+        await expect(wait).resolves.toEqual({success: false, message: "superseded"});
+        expect(tracker.accepts(1, 10)).toBe(false);
+        expect(tracker.accepts(1, 11)).toBe(true);
+    });
+
     test("stops accepting responses to a request that has ended", () => {
         tracker.start(1);
         tracker.attach(1, 10);

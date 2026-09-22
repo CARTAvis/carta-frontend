@@ -98,7 +98,9 @@ export class PendingRequestTracker<TKey> {
         if (pending.requestId === undefined) {
             pending.requestId = requestId;
         } else if (pending.requestId !== requestId) {
-            this.finish(key, false, this.options.supersededMessage);
+            // Only the wait ends. The subject is still being answered — by the request that has
+            // just taken over, which is the one latestRequestIds was set to above.
+            this.endPending(key, false, this.options.supersededMessage);
         }
     }
 
@@ -150,7 +152,11 @@ export class PendingRequestTracker<TKey> {
         // The subject is no longer being answered by anything, whether or not anyone was waiting:
         // a response arriving after this belongs to a request that has had its turn.
         this.latestRequestIds.delete(key);
+        this.endPending(key, isSuccess, message);
+    }
 
+    /** End the wait alone, leaving it to the caller to say what is answering the subject now. */
+    private endPending(key: TKey, isSuccess: boolean, message?: string): void {
         const pending = this.pending.get(key);
         if (!pending) {
             return;
