@@ -80,17 +80,26 @@ describe("PendingRequestTracker", () => {
         expect(tracker.isPending(1)).toBe(true);
     });
 
-    test("accepts responses to the request being waited on, and nothing else", () => {
-        tracker.start(1);
-
-        // Nothing has been sent yet, so anything about this subject is still worth reading.
-        expect(tracker.accepts(1, 10)).toBe(true);
-
+    test("accepts responses to the request being answered, and nothing else", () => {
         tracker.attach(1, 10);
+
         expect(tracker.accepts(1, 10)).toBe(true);
         expect(tracker.accepts(1, 11)).toBe(false);
         // A response that names no request cannot be told apart, so it is read.
         expect(tracker.accepts(1, undefined)).toBe(true);
+        // Nor can a stream that answers no request of ours.
+        expect(tracker.accepts(1, 0)).toBe(true);
+    });
+
+    test("checks responses against the current request whether or not anyone is waiting", () => {
+        // Only some callers wait for an answer, but every response has to be checked, or a
+        // superseded request's rows overwrite the ones that replaced them.
+        tracker.attach(1, 10);
+        tracker.attach(1, 11);
+
+        expect(tracker.isPending(1)).toBe(false);
+        expect(tracker.accepts(1, 10)).toBe(false);
+        expect(tracker.accepts(1, 11)).toBe(true);
     });
 
     test("stops accepting responses to a request that has ended", () => {
@@ -99,8 +108,22 @@ describe("PendingRequestTracker", () => {
         tracker.finish(1, false, "cancelled");
 
         expect(tracker.accepts(1, 10)).toBe(false);
-        // Nothing is being waited for, so a response about something else is left alone.
-        expect(tracker.accepts(1, 11)).toBe(true);
+        // Nothing is being answered any more, so nothing that names a request is read either.
+        expect(tracker.accepts(1, 11)).toBe(false);
+    });
+
+    test("only the request that is being answered can complete the wait", async () => {
+        const pending = tracker.start(1);
+        tracker.attach(1, 11);
+
+        // A superseded request's last message, and a stream belonging to no request, both arrive
+        // while request 11 is still going. Neither ends it.
+        tracker.complete(1, 10);
+        tracker.complete(1, 0);
+        expect(tracker.isPending(1)).toBe(true);
+
+        tracker.complete(1, 11);
+        await expect(pending).resolves.toEqual({success: true, message: undefined});
     });
 
     test("keeps subjects apart", async () => {
@@ -137,6 +160,7 @@ describe("PendingRequestTracker", () => {
         tracker.reset("connection lost");
         await expect(pending).resolves.toEqual({success: true, message: undefined});
 
+        tracker.attach(1, 10);
         expect(tracker.accepts(1, 10)).toBe(true);
     });
 
@@ -147,6 +171,7 @@ describe("PendingRequestTracker", () => {
         expect(tracker.accepts(1, 10)).toBe(false);
 
         tracker.forget(1);
+        tracker.attach(1, 10);
 
         expect(tracker.accepts(1, 10)).toBe(true);
     });

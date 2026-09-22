@@ -2584,7 +2584,7 @@ export class AppStore {
                 }
             }
             if (progress === 1) {
-                this.catalogStore.catalogRequests.finish(catalogFileId, true);
+                this.catalogStore.catalogRequests.complete(catalogFileId, requestId);
             }
         } else if (progress === 1) {
             this.catalogStore.catalogRequests.finish(catalogFileId, false, "The catalog was closed before restoration completed");

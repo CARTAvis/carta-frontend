@@ -18,6 +18,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.imageAssociatedCatalogId.clear();
         widgetsStore.catalogWidgets.clear();
         widgetsStore.catalogPlotWidgets.clear();
+        catalogStore.catalogRequests.forget(1);
+        // The responses below all answer request 1 for catalog 1, which is what sending the filter
+        // would have recorded.
+        catalogStore.catalogRequests.attach(1, 1);
     });
 
     test("updates an existing widget when loading a catalog after the widget store exists", () => {
@@ -242,6 +246,30 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Galactic}), 1, 1, 1);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.Galactic);
+    });
+
+    test("ignores a superseded request's rows even when nothing is waiting for an answer", () => {
+        // Ordinary filtering does not start a tracked wait, but its responses still have to be
+        // checked: the user changed the filter, and the first request's rows arrive afterwards.
+        const profileStore = {
+            get2DCoordinateData: jest.fn(),
+            setLoadingDataStatus: jest.fn(),
+            setProgress: jest.fn(),
+            setUpdatingDataStream: jest.fn(),
+            updateCatalogData: jest.fn(),
+            updateMode: CatalogUpdateMode.TableUpdate
+        };
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogRequests.attach(1, 2);
+        expect(catalogStore.catalogRequests.isPending(1)).toBe(false);
+
+        appStore.handleCatalogFilterStream({
+            requestId: 1,
+            message: {columns: [], fileId: 1, progress: 1, subsetDataSize: 1, subsetEndIndex: 1} as unknown as CARTA.CatalogFilterResponse
+        });
+
+        expect(profileStore.updateCatalogData).not.toHaveBeenCalled();
+        expect(profileStore.setUpdatingDataStream).not.toHaveBeenCalled();
     });
 
     test("does not replot for column-update responses", () => {

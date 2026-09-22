@@ -38,8 +38,19 @@ interface PendingRequest {
  *
  * @typeParam TKey - what a request is about, as the caller identifies it.
  */
+/** The ICD reserves this request ID for streams that answer no request of ours. */
+const UNSOLICITED_REQUEST_ID = 0;
+
 export class PendingRequestTracker<TKey> {
     private readonly pending = new Map<TKey, PendingRequest>();
+    /**
+     * The request each subject is currently being answered by, whether or not anyone is waiting.
+     *
+     * Kept apart from {@link pending} because the two questions are different: only some callers
+     * wait for an answer, but every response has to be checked against the request that is actually
+     * the current one, or a superseded request's rows overwrite the ones that replaced them.
+     */
+    private readonly latestRequestIds = new Map<TKey, number>();
     /** Requests that have ended, whose late responses are no longer wanted. */
     private readonly staleRequestIds = new Map<TKey, Set<number>>();
 
@@ -78,6 +89,8 @@ export class PendingRequestTracker<TKey> {
      * about the same subject, which the wait cannot outlive.
      */
     public attach(key: TKey, requestId: number): void {
+        this.latestRequestIds.set(key, requestId);
+
         const pending = this.pending.get(key);
         if (!pending) {
             return;
@@ -96,14 +109,30 @@ export class PendingRequestTracker<TKey> {
      * answers a request other than the one being waited on.
      */
     public accepts(key: TKey, requestId?: number): boolean {
-        if (requestId === undefined) {
+        if (requestId === undefined || requestId === UNSOLICITED_REQUEST_ID) {
             return true;
         }
         if (this.staleRequestIds.get(key)?.has(requestId)) {
             return false;
         }
-        const pending = this.pending.get(key);
-        return !pending || pending.requestId === undefined || pending.requestId === requestId;
+        return this.latestRequestIds.get(key) === requestId;
+    }
+
+    /**
+     * End the wait for a subject because the request answering it has run to completion.
+     *
+     * Told which request finished, unlike {@link finish}, so that a stream belonging to no request
+     * of ours, or to one that has already been superseded, does not end the one still going.
+     */
+    public complete(key: TKey, requestId?: number): void {
+        const latestRequestId = this.latestRequestIds.get(key);
+        if (requestId === UNSOLICITED_REQUEST_ID && latestRequestId !== undefined) {
+            return;
+        }
+        if (requestId !== undefined && requestId !== UNSOLICITED_REQUEST_ID && latestRequestId !== undefined && latestRequestId !== requestId) {
+            return;
+        }
+        this.finish(key, true);
     }
 
     /** Note that an answer is still coming, so that the wait is not given up on. */
@@ -118,6 +147,10 @@ export class PendingRequestTracker<TKey> {
 
     /** End the wait for one subject, if there is one. */
     public finish(key: TKey, isSuccess: boolean, message?: string): void {
+        // The subject is no longer being answered by anything, whether or not anyone was waiting:
+        // a response arriving after this belongs to a request that has had its turn.
+        this.latestRequestIds.delete(key);
+
         const pending = this.pending.get(key);
         if (!pending) {
             return;
@@ -154,11 +187,13 @@ export class PendingRequestTracker<TKey> {
      */
     public reset(message: string): void {
         this.failAll(message);
+        this.latestRequestIds.clear();
         this.staleRequestIds.clear();
     }
 
     /** Forget a subject entirely, for one that no longer exists. */
     public forget(key: TKey): void {
+        this.latestRequestIds.delete(key);
         this.staleRequestIds.delete(key);
     }
 
