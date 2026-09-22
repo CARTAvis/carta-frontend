@@ -36,6 +36,26 @@ describe("ScatterPlotComponent interactions", () => {
         expect(component.interactionMode).toBe(InteractionMode.NONE);
     });
 
+    test("ends an interaction when the pointer is released outside the stage", () => {
+        const component = new ScatterPlotComponent({});
+
+        component.onStageMouseDown(CreateMouseEvent() as any);
+        expect(component.interactionMode).toBe(InteractionMode.SELECTING);
+
+        window.dispatchEvent(new MouseEvent("mouseup"));
+
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+    });
+
+    test("ignores interaction starts outside the chart area", () => {
+        const component = new ScatterPlotComponent({});
+        component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
+
+        component.onStageMouseDown({evt: {offsetX: 10, offsetY: 20}} as any);
+
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+    });
+
     test("does not zoom for thin catalog zoom drags", () => {
         const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
         component.selectionBoxStart = {x: 0, y: 0};

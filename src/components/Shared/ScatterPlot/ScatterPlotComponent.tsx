@@ -106,6 +106,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private stageClickStartX: number;
     private stageClickStartY: number;
     private panPrevious: {x: number; y: number};
+    private interactionOwnerWindow: Window | null = null;
 
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
@@ -139,6 +140,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         this.pendingClickHandle = undefined;
         clearTimeout(this.forceUpdateHandle);
         this.forceUpdateHandle = undefined;
+        this.stopInteractionTracking();
     }
 
     onPlotRefUpdated = plotRef => {
@@ -176,7 +178,17 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action endInteractions() {
         this.interactionMode = InteractionMode.NONE;
+        this.stopInteractionTracking();
     }
+
+    private stopInteractionTracking = () => {
+        this.interactionOwnerWindow?.removeEventListener("mouseup", this.onWindowMouseUp);
+        this.interactionOwnerWindow = null;
+    };
+
+    private onWindowMouseUp = () => {
+        this.endInteractions();
+    };
 
     onMouseEnter = () => {
         this.showMouseEnterWidget();
@@ -525,6 +537,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     onStageMouseDown = ev => {
         const mouseEvent: MouseEvent = ev.evt;
+        const chartArea = this.chartArea;
+        if (chartArea && (mouseEvent.offsetX < chartArea.left || mouseEvent.offsetX > chartArea.right || mouseEvent.offsetY < chartArea.top || mouseEvent.offsetY > chartArea.bottom)) {
+            return;
+        }
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
         const isPanModifier = mouseEvent.shiftKey || (!this.props.dragAction && (mouseEvent.ctrlKey || mouseEvent.altKey));
@@ -538,6 +554,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         } else {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
         }
+        this.interactionOwnerWindow = this.containerRef.current?.ownerDocument.defaultView ?? window;
+        this.interactionOwnerWindow.addEventListener("mouseup", this.onWindowMouseUp);
     };
 
     private isNearestPointAtPixel = (pixel: Point2D, point: Point2D | undefined) => {
@@ -710,9 +728,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
-        if (this.props.dragAction === DragMode.Zoom && this.props.graphZoomedXY && absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD) {
-            return ZoomMode.XY;
-        }
         if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
         } else if (this.props.graphZoomedX && this.props.graphZoomedY) {

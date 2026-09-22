@@ -944,6 +944,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!xScale) {
             return;
         }
+        const chartArea = chart.chartArea;
+        if (!chartArea || event.offsetX < chartArea.left || event.offsetX > chartArea.right || event.offsetY < chartArea.top || event.offsetY > chartArea.bottom) {
+            return;
+        }
         const currentMin = xScale.min;
         const currentMax = xScale.max;
         const range = currentMax - currentMin;
@@ -1516,8 +1520,17 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         }
                     }
                 },
-                onHover: (_event, _elements, chart) => {
+                onHover: (_event, elements, chart) => {
                     const nativeEvent = _event.native as MouseEvent;
+                    if (!elements.length) {
+                        if (this.histogramHoverPixel) {
+                            this.histogramHoverPixel = undefined;
+                            this.histogramHoverBinIndex = undefined;
+                            this.histogramHoverData = undefined;
+                            chart.draw();
+                        }
+                        return;
+                    }
                     if (nativeEvent && chart.chartArea) {
                         const xScale = chart.scales["x"];
                         const yScale = chart.scales["y"];
