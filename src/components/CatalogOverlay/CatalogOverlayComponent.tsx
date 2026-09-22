@@ -58,11 +58,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return this.widgetStore.selectedCatalogId;
+        return this.widgetStore?.selectedCatalogId;
     }
 
-    @computed get widgetStore(): CatalogWidgetStore {
-        return WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId);
+    /** A plain lookup: the store is created when the component is, not when it is read. */
+    @computed get widgetStore(): CatalogWidgetStore | undefined {
+        return WidgetsStore.Instance.catalogWidgetStore(this.widgetId);
     }
 
     @computed get displayStore(): CatalogDisplayStore | undefined {
@@ -625,7 +626,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         // Ensure columnWidths array matches the number of expected columns
         const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
-        let columnWidths = this.widgetStore.headerTableColumnWidths;
+        let columnWidths = this.widgetStore?.headerTableColumnWidths;
         if (!columnWidths || columnWidths.length !== expectedColumnCount) {
             columnWidths = new Array(expectedColumnCount).fill(undefined);
         }
@@ -653,7 +654,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
-        this.widgetStore.setHeaderTableColumnWidth(index, size);
+        this.widgetStore?.setHeaderTableColumnWidth(index, size);
     };
 
     private resetSelectedPointIndices = () => {
@@ -894,7 +895,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
-            this.widgetStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            this.widgetStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
 
@@ -908,9 +909,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleHideHeader = () => {
-        const position = this.widgetStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        const position = this.widgetStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
         this.isShowHeader = position === 100 ? false : true;
-        this.widgetStore.setTableSeparatorPosition(`${position}%`);
+        this.widgetStore?.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -938,7 +939,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
-        this.widgetStore.setSettingsTabId(type);
+        this.widgetStore?.setSettingsTabId(type);
         this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
@@ -1128,7 +1129,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             className={"catalog-overlay-data-container"}
                             minSize={`${CatalogDisplayStore.MIN_TABLE_SEPARATOR_POSITION}%`}
                             maxSize={`${CatalogDisplayStore.MAX_TABLE_SEPARATOR_POSITION}%`}
-                            size={this.widgetStore.tableSeparatorPosition}
+                            size={this.widgetStore?.tableSeparatorPosition}
                         >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>

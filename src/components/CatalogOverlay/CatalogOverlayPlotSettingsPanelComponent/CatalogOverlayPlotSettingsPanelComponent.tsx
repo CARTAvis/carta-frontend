@@ -92,11 +92,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @computed get catalogFileId() {
-        return this.widgetStore.selectedCatalogId;
+        return this.widgetStore?.selectedCatalogId;
     }
 
-    @computed get widgetStore(): CatalogWidgetStore {
-        return WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId);
+    /** A plain lookup: the settings panel edits the widget's store, it does not bring one into being. */
+    @computed get widgetStore(): CatalogWidgetStore | undefined {
+        return WidgetsStore.Instance.catalogWidgetStore(this.widgetId);
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -116,6 +117,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
+        // The panel edits one catalog widget's state, and is the one place that state is brought
+        // into being if the panel is reached before the widget itself has any.
+        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId);
 
         makeObservable(this);
 
@@ -959,7 +963,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.widgetStore?.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                         <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
                         <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-color-tab-title" />
                         <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-orientation-tab-title" />
@@ -1053,7 +1057,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleSelectedTabChanged(newTabId: string | number) {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
         this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
     }
 

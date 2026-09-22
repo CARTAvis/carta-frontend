@@ -1688,6 +1688,11 @@ export class WidgetsStore {
         this.catalogWidgets.delete(componentId);
     };
 
+    /** The widget-scoped state one catalog overlay component holds, if it has been given any. */
+    public catalogWidgetStore = (componentId: string): CatalogWidgetStore | undefined => {
+        return this.catalogWidgets.get(componentId);
+    };
+
     /** Get or create the widget-scoped state for one catalog overlay component. */
     @action getCatalogWidgetStore = (componentId: string, selectedCatalogId: number = 1): CatalogWidgetStore => {
         let widgetStore = this.catalogWidgets.get(componentId);
