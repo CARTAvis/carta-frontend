@@ -64,6 +64,9 @@ describe("RegionGroupStore", () => {
         expect(store.regionGroup.get(10)).toMatchObject({regionId: 3, mjdUtc: 59000, regionSum: NaN, regionFluxDensity: 6});
         expect(store.regionGroup.get(11)).toMatchObject({regionId: undefined, mjdUtc: 59001, regionSum: NaN, regionFluxDensity: NaN});
 
+        store.setDisplayed(10, false);
+        expect(store.regionGroup.get(10)?.isDisplayed).toBe(false);
+
         store.updateRegionStats({fileId: 10, regionId: 3, stokes: 1, statistics: [{statsType: 2, value: 99}]} as any);
         expect(store.regionGroup.get(10)?.regionSum).toBeNaN();
 

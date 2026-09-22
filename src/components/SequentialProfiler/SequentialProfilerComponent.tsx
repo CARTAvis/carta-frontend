@@ -61,7 +61,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed private get data(): Point2D[] {
-        const entries = (this.regionGroup?.entries ?? []).filter(entry => entry.region.mjdUtc !== undefined);
+        const entries = (this.regionGroup?.entries ?? []).filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined);
         const firstMjdUtc = entries.length ? Math.min(...entries.map(entry => entry.region.mjdUtc!)) : 0;
         return entries.map(entry => ({x: this.convertMjd(entry.region.mjdUtc!, firstMjdUtc), y: (this.statistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : entry.region.regionSum) ?? NaN})).sort((a, b) => a.x - b.x);
     }
@@ -103,7 +103,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const yMax = yValues.length ? Math.max(...yValues) : 1;
         const xPadding = xMin === xMax ? 1 / 86400 : 0;
         const yPadding = yMin === yMax ? Math.abs(yMin) * 0.05 || 1 : (yMax - yMin) * 0.05;
-        const firstRegion = this.regionGroup?.entries.find(entry => entry.region.mjdUtc !== undefined)?.region;
+        const firstRegion = this.regionGroup?.entries.find(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined)?.region;
         const unit = this.statistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
         const statisticLabel = this.statistic === CARTA.StatsType.FluxDensity ? "Flux Density" : "Intensity Sum";
 

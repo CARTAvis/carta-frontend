@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, FormGroup, HTMLSelect, InputGroup, Tab, Tabs} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, HTMLSelect, Icon, InputGroup, Position, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -66,9 +66,28 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
     private renderFrame = (regionGroup: RegionGroupStore, frame: FrameStore) => {
         const region = regionGroup.regionGroup.get(frame.id);
         const options = frame.regionSet.editableRegionsList.filter(candidate => candidate.isClosedRegion).map(candidate => ({value: candidate.regionId, label: candidate.nameString}));
+        const isDisplayed = region?.isDisplayed !== false;
+        const displayIcon = isDisplayed ? "eye-open" : "eye-off";
 
         return (
-            <FormGroup key={frame.id} label={frame.filename} inline={true}>
+            <FormGroup
+                key={frame.id}
+                className="region-entry"
+                label={
+                    <span className="region-group-frame-label">
+                        <Tooltip content={isDisplayed ? "Hide frame" : "Show frame"} position={Position.BOTTOM}>
+                            <Icon
+                                icon={displayIcon}
+                                aria-label={isDisplayed ? "Hide frame" : "Show frame"}
+                                onClick={region ? () => regionGroup.setDisplayed(frame.id, !isDisplayed) : undefined}
+                                style={{cursor: region ? "pointer" : "default", opacity: region ? 1 : 0.3}}
+                            />
+                        </Tooltip>
+                        {frame.filename}
+                    </span>
+                }
+                inline={true}
+            >
                 <HTMLSelect
                     value={region?.regionId ?? ""}
                     options={options.length ? options : [{value: "", label: "No region"}]}

@@ -6,6 +6,7 @@ import {RegionGroupType} from "enums";
 
 export interface RegionGroupRegion {
     regionId?: number;
+    isDisplayed?: boolean;
     mjdUtc?: number;
     isoUtc?: string;
     stokes?: number;
@@ -98,6 +99,7 @@ export class RegionGroupStore {
             const statistics = regionId === undefined ? undefined : getStatistics?.(frame.frameId, regionId, frame.stokes);
             this.regionGroup.set(frame.frameId, {
                 regionId,
+                isDisplayed: current?.isDisplayed ?? true,
                 mjdUtc: frame.mjdUtc,
                 isoUtc: frame.isoUtc,
                 stokes: frame.stokes,
@@ -112,6 +114,13 @@ export class RegionGroupStore {
 
     @action removeRegion = (frameId: number) => {
         this.regionGroup.delete(frameId);
+    };
+
+    @action setDisplayed = (frameId: number, isDisplayed: boolean) => {
+        const region = this.regionGroup.get(frameId);
+        if (region) {
+            this.regionGroup.set(frameId, {...region, isDisplayed});
+        }
     };
 
     @action updateRegionStats = (stats: CARTA.RegionStatsData) => {

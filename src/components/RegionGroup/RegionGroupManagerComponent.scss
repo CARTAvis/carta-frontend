@@ -1,4 +1,20 @@
 .region-group-manager {
     margin: 12px;
     padding: 12px;
+
+    .region-entry {
+        margin-bottom: 8px;
+    }
+
+    .region-group-frame-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 30px;
+        vertical-align: middle;
+
+        .bp6-popover-target {
+            margin-top: 0;
+        }
+    }
 }
