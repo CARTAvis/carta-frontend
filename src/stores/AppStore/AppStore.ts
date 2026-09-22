@@ -22,6 +22,7 @@ import {
     ImageType,
     ImageViewLayer,
     PreferenceKeys,
+    RegionGroupType,
     RegionId as RegionIdType,
     SpectralType,
     SystemType,
@@ -90,6 +91,7 @@ import {
     mapToObject,
     markAsScriptingMap,
     offsetPointsToAvoidCollision,
+    pixelToFluxDensityUnit,
     ProtobufProcessing,
     type RegionClipboardData,
     type RegionClipboardItem
@@ -479,19 +481,6 @@ export class AppStore {
     @action deleteRegionGroup = (regionGroupId: string): void => {
         this.regionGroups.get(regionGroupId)?.clear();
         this.regionGroups.delete(regionGroupId);
-    };
-
-    @action copyRegionGroup = (regionGroupId: string): RegionGroupStore => {
-        const source = this.regionGroups.get(regionGroupId);
-        if (!source) {
-            throw new Error(`Region group not found: ${regionGroupId}`);
-        }
-
-        const copy = this.createRegionGroup();
-        copy.regionGroupName = `${source.regionGroupName} Copy`;
-        copy.regionGroupType = source.regionGroupType;
-        source.entries.forEach(entry => copy.setRegion(entry.frameId, entry.region.regionId, entry.region));
-        return copy;
     };
 
     @computed get isOpenFileDisabled(): boolean {
@@ -2106,6 +2095,30 @@ export class AppStore {
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
         this.timeSeriesStore = TimeSeriesStore.Instance;
+
+        autorun(() => {
+            const frames = this.timeSeriesStore.elements.map(({frame, mjdUtc, isoUtc}) => ({
+                frameId: frame.id,
+                mjdUtc,
+                isoUtc,
+                stokes: frame.requiredStokes,
+                regionIds: frame.regionSet.editableRegionsList.filter(region => region.isClosedRegion).map(region => region.regionId),
+                regionSumUnit: frame.headerUnit ?? "",
+                regionFluxDensityUnit: pixelToFluxDensityUnit(frame.headerUnit ?? "")
+            }));
+            this.regionGroupStores
+                .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
+                .forEach(group =>
+                    group.syncTimeSeriesFrames(frames, (frameId, regionId, stokes) => {
+                        const statistics = this.regionStats.get(frameId)?.get(regionId)?.get(stokes)?.statistics;
+                        return {
+                            regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
+                            regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
+                            regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+                        };
+                    })
+                );
+        });
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
@@ -3941,7 +3954,10 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(this.widgetsStore.statsWidgets);
+        const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(
+            this.widgetsStore.statsWidgets,
+            this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
+        );
         const diffList = StatsWidgetStore.diffStatsRequirements(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 

@@ -20,6 +20,7 @@ import {
     PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
+    SequentialProfilerComponent,
     SpatialProfilerComponent,
     SpectralLineQueryComponent,
     SpectralProfilerComponent,
@@ -140,6 +141,7 @@ export class WidgetsStore {
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore> = new Map<string, RenderConfigWidgetStore>();
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore> = new Map<string, SpatialProfileWidgetStore>();
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore> = new Map<string, SpectralProfileWidgetStore>();
+    @observable sequentialProfileWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
     @observable statsWidgets: Map<string, StatsWidgetStore> = new Map<string, StatsWidgetStore>();
     @observable histogramWidgets: Map<string, HistogramWidgetStore> = new Map<string, HistogramWidgetStore>();
     @observable layerListWidgets: Map<string, LayerListWidgetStore> = new Map<string, LayerListWidgetStore>();
@@ -192,6 +194,15 @@ export class WidgetsStore {
                 icon: "spectralProfiler",
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralProfilerWidget(),
                 widgetConfig: SpectralProfilerComponent.WidgetConfig
+            }
+        ],
+        [
+            WidgetType.SequentialProfiler,
+            {
+                isCustomIcon: false,
+                icon: "timeline-line-chart",
+                onClick: () => WidgetsStore.Instance.createFloatingSequentialProfilerWidget(),
+                widgetConfig: SequentialProfilerComponent.WidgetConfig
             }
         ],
         [
@@ -357,6 +368,7 @@ export class WidgetsStore {
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WidgetConfig.type, this.spatialProfileWidgets],
             [SpectralProfilerComponent.WidgetConfig.type, this.spectralProfileWidgets],
+            [SequentialProfilerComponent.WidgetConfig.type, this.sequentialProfileWidgets],
             [StatsComponent.WidgetConfig.type, this.statsWidgets],
             [HistogramComponent.WidgetConfig.type, this.histogramWidgets],
             [RenderConfigComponent.WidgetConfig.type, this.renderConfigWidgets],
@@ -481,6 +493,9 @@ export class WidgetsStore {
                 break;
             case SpectralProfilerComponent.WidgetConfig.type:
                 itemId = this.addSpectralProfileWidget(preAssignedId, widgetSettings);
+                break;
+            case SequentialProfilerComponent.WidgetConfig.type:
+                itemId = this.addSequentialProfileWidget(preAssignedId);
                 break;
             case StatsComponent.WidgetConfig.type:
                 itemId = this.addStatsWidget(preAssignedId);
@@ -1491,6 +1506,21 @@ export class WidgetsStore {
                 widgetStore.applyConfig(widgetSettings);
             }
             this.spatialProfileWidgets.set(id, widgetStore);
+        }
+        return id;
+    }
+
+    // endregion
+
+    // region Sequential Profile Widgets
+    createFloatingSequentialProfilerWidget = () => this.createFloatingWidgetFromStore(() => this.addSequentialProfileWidget(), SequentialProfilerComponent.WidgetConfig);
+
+    @action addSequentialProfileWidget(id: string | null = null) {
+        if (!id) {
+            id = this.getNextId(SequentialProfilerComponent.WidgetConfig.type);
+        }
+        if (id) {
+            this.sequentialProfileWidgets.set(id, new EmptyWidgetStore());
         }
         return id;
     }

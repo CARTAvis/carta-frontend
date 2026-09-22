@@ -1,39 +1,50 @@
 import * as React from "react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, InputGroup, Tab, Tabs} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionGroupType} from "enums";
-import {AppStore, type RegionGroupStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps} from "stores";
+import {type FrameStore} from "stores/Frame";
+
+import "./RegionGroupManagerComponent.scss";
 
 @observer
-export class RegionGroupManagerComponent extends React.Component {
-    @observable private selectedRegionGroupId: string | undefined;
-
-    constructor(props: {}) {
-        super(props);
-        makeObservable(this);
+export class RegionGroupManagerComponent extends React.Component<WidgetProps, {selectedRegionGroupId?: string}> {
+    public static get WidgetConfig(): DefaultWidgetConfig {
+        return {
+            id: "sequential-profiler-floating-settings",
+            type: "floating-settings",
+            minWidth: 400,
+            minHeight: 300,
+            defaultWidth: 500,
+            defaultHeight: 550,
+            title: "Light curve Settings",
+            isCloseable: true,
+            parentId: "sequential-profiler",
+            parentType: "sequential-profiler"
+        };
     }
 
-    @action private selectRegionGroup = (regionGroupId: string) => {
-        this.selectedRegionGroupId = regionGroupId;
+    constructor(props: WidgetProps) {
+        super(props);
+        this.state = {};
+    }
+
+    private selectRegionGroup = (regionGroupId: string) => {
+        this.setState({selectedRegionGroupId: regionGroupId});
     };
 
-    @action private createRegionGroup = () => {
-        this.selectedRegionGroupId = AppStore.Instance.createRegionGroup().regionGroupId;
+    private createRegionGroup = () => {
+        this.setState({selectedRegionGroupId: AppStore.Instance.createRegionGroup().regionGroupId});
     };
 
-    private copyRegionGroup = (regionGroup: RegionGroupStore) => {
-        this.selectedRegionGroupId = AppStore.Instance.copyRegionGroup(regionGroup.regionGroupId).regionGroupId;
-    };
-
-    @action private deleteRegionGroup = (regionGroup: RegionGroupStore) => {
+    private deleteRegionGroup = (regionGroup: RegionGroupStore) => {
         const appStore = AppStore.Instance;
         const groups = appStore.regionGroupStores;
         const deletedIndex = groups.findIndex(group => group.regionGroupId === regionGroup.regionGroupId);
         appStore.deleteRegionGroup(regionGroup.regionGroupId);
-        this.selectedRegionGroupId = groups[deletedIndex + 1]?.regionGroupId ?? groups[deletedIndex - 1]?.regionGroupId;
+        this.setState({selectedRegionGroupId: groups[deletedIndex + 1]?.regionGroupId ?? groups[deletedIndex - 1]?.regionGroupId});
     };
 
     private updateRegion = (regionGroup: RegionGroupStore, frameId: number, value: string) => {
@@ -43,38 +54,45 @@ export class RegionGroupManagerComponent extends React.Component {
         }
 
         const regionId = Number(value);
-        const regionStatsMap = AppStore.Instance.regionStats.get(frameId)?.get(regionId);
-        const regionStats = regionStatsMap ? Array.from(regionStatsMap.values())[0] : undefined;
+        const current = regionGroup.regionGroup.get(frameId);
+        const regionStats = current?.stokes === undefined ? undefined : AppStore.Instance.regionStats.get(frameId)?.get(regionId)?.get(current.stokes);
         regionGroup.setRegion(frameId, regionId, {
-            regionSum: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value,
-            regionMean: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value
+            regionSum: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
+            regionFluxDensity: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
+            regionMean: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
         });
     };
 
-    private renderFrame = (regionGroup: RegionGroupStore, frame: AppStore["frames"][number]) => {
+    private renderFrame = (regionGroup: RegionGroupStore, frame: FrameStore) => {
         const region = regionGroup.regionGroup.get(frame.id);
-        const options = [{value: "", label: "No region"}, ...frame.regionSet.regions.filter(candidate => !candidate.isTemporary && candidate.regionId !== 0).map(candidate => ({value: candidate.regionId, label: candidate.nameString}))];
+        const options = frame.regionSet.editableRegionsList.filter(candidate => candidate.isClosedRegion).map(candidate => ({value: candidate.regionId, label: candidate.nameString}));
 
         return (
             <FormGroup key={frame.id} label={frame.filename} inline={true}>
-                <HTMLSelect value={region?.regionId ?? ""} options={options} onChange={event => this.updateRegion(regionGroup, frame.id, event.currentTarget.value)} />
+                <HTMLSelect
+                    value={region?.regionId ?? ""}
+                    options={options.length ? options : [{value: "", label: "No region"}]}
+                    disabled={options.length <= 1}
+                    onChange={event => this.updateRegion(regionGroup, frame.id, event.currentTarget.value)}
+                />
             </FormGroup>
         );
     };
 
     private renderGroup = (regionGroup: RegionGroupStore) => {
         const appStore = AppStore.Instance;
+        const groupName = regionGroup.regionGroupType === RegionGroupType.TIME_SERIES ? regionGroup.regionGroupName.replace(/^Region Group/, "Light curve") : regionGroup.regionGroupName;
         return (
             <div className="region-group-panel">
                 <FormGroup label="Name">
-                    <InputGroup value={regionGroup.regionGroupName} onChange={event => regionGroup.setName(event.currentTarget.value)} />
+                    <InputGroup value={groupName} onChange={event => regionGroup.setName(event.currentTarget.value)} />
                 </FormGroup>
                 <FormGroup label="Type" inline={true}>
                     <HTMLSelect value={regionGroup.regionGroupType} options={Object.values(RegionGroupType)} onChange={event => regionGroup.setType(event.currentTarget.value as RegionGroupType)} />
                 </FormGroup>
-                {appStore.frames.map(frame => this.renderFrame(regionGroup, frame))}
+                {appStore.timeSeriesStore.elements.map(({frame}) => this.renderFrame(regionGroup, frame))}
                 <ButtonGroup>
-                    <Button icon="duplicate" text="Copy" onClick={() => this.copyRegionGroup(regionGroup)} />
+                    <Button icon="add" text="New light curve" onClick={this.createRegionGroup} />
                     <Button icon="trash" text="Delete" onClick={() => this.deleteRegionGroup(regionGroup)} />
                 </ButtonGroup>
             </div>
@@ -84,18 +102,23 @@ export class RegionGroupManagerComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const groups = appStore.regionGroupStores;
-        const selectedRegionGroupId = groups.some(group => group.regionGroupId === this.selectedRegionGroupId) ? this.selectedRegionGroupId : groups[0]?.regionGroupId;
+        const selectedRegionGroupId = groups.some(group => group.regionGroupId === this.state.selectedRegionGroupId) ? this.state.selectedRegionGroupId : groups[0]?.regionGroupId;
 
         return (
             <div className="region-group-manager">
-                <Button icon="add" text="New region group" onClick={this.createRegionGroup} />
                 {groups.length > 0 && (
                     <Tabs selectedTabId={selectedRegionGroupId} onChange={tabId => this.selectRegionGroup(String(tabId))}>
                         {groups.map(group => (
-                            <Tab key={group.regionGroupId} id={group.regionGroupId} title={group.regionGroupName} panel={this.renderGroup(group)} />
+                            <Tab
+                                key={group.regionGroupId}
+                                id={group.regionGroupId}
+                                title={group.regionGroupType === RegionGroupType.TIME_SERIES ? group.regionGroupName.replace(/^Region Group/, "Light curve") : group.regionGroupName}
+                                panel={this.renderGroup(group)}
+                            />
                         ))}
                     </Tabs>
                 )}
+                {!groups.length && <Button icon="add" text="New light curve" onClick={this.createRegionGroup} />}
             </div>
         );
     }

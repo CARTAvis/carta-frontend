@@ -85,7 +85,10 @@ export class RootMenuComponent extends React.Component {
         const logConfig = cartaWidgets.get(WidgetType.Log);
         const spatialProfilerConfig = cartaWidgets.get(WidgetType.SpatialProfiler);
         const spectralProfilerConfig = cartaWidgets.get(WidgetType.SpectralProfiler);
-        const restWidgets = Array.from(cartaWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
+        const sequentialProfilerConfig = cartaWidgets.get(WidgetType.SequentialProfiler);
+        const restWidgets = Array.from(cartaWidgets.keys()).filter(
+            widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler, WidgetType.SequentialProfiler].includes(widget)
+        );
 
         return (
             <Menu className="widgets-menu">
@@ -98,6 +101,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Profiles" icon={"pulse"}>
                     {spatialProfilerConfig && <MenuItem text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />} onClick={spatialProfilerConfig.onClick} />}
                     {spectralProfilerConfig && <MenuItem text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />}
+                    {sequentialProfilerConfig && <MenuItem text={WidgetType.SequentialProfiler} icon={sequentialProfilerConfig.icon as IconName} onClick={sequentialProfilerConfig.onClick} />}
                 </MenuItem>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = cartaWidgets.get(widgetType);

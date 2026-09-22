@@ -27,6 +27,7 @@ export * from "./RegionGroup/RegionGroupManagerComponent";
 export * from "./RegionList/RegionListComponent";
 export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
+export * from "./SequentialProfiler/SequentialProfilerComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
 export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 export * from "./SpectralLineQuery/SpectralLineQueryComponent";

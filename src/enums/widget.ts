@@ -3,6 +3,7 @@ export enum WidgetType {
     Log = "Log Widget",
     SpatialProfiler = "Spatial Profiler",
     SpectralProfiler = "Spectral Profiler",
+    SequentialProfiler = "Light curve",
     Statistics = "Statistics Widget",
     Histogram = "Histogram Widget",
     Animator = "Animator Widget",

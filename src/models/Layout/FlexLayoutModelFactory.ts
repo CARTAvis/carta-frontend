@@ -22,6 +22,7 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
     ["spatial-profiler", {type: "tab", component: "spatial-profiler", id: "spatial-profiler"}],
     ["spectral-profiler", {type: "tab", component: "spectral-profiler", id: "spectral-profiler", name: "Z Profile: Cursor"}],
+    ["sequential-profiler", {type: "tab", component: "sequential-profiler", id: "sequential-profiler", name: "Light curve"}],
     ["stokes", {type: "tab", component: "stokes", id: "stokes", name: "Stokes Analysis"}],
     ["histogram", {type: "tab", component: "histogram", name: "Histogram", id: "histogram"}],
     ["stats", {type: "tab", component: "stats", name: "Statistics", id: "stats"}],

@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {Polarizations, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
-import {AppStore} from "stores";
+import {AppStore, type RegionGroupStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
@@ -29,7 +29,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
         makeObservable(this);
     }
 
-    public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
+    public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>, regionGroups: readonly RegionGroupStore[] = []) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
 
         widgetsMap.forEach(widgetStore => {
@@ -63,6 +63,30 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
             }
+        });
+
+        regionGroups.forEach(group => {
+            group.entries.forEach(({frameId, region}) => {
+                if (region.regionId === undefined) {
+                    return;
+                }
+                let frameRequirements = updatedRequirements.get(frameId);
+                if (!frameRequirements) {
+                    frameRequirements = new Map();
+                    updatedRequirements.set(frameId, frameRequirements);
+                }
+                let regionRequirements = frameRequirements.get(region.regionId);
+                if (!regionRequirements) {
+                    regionRequirements = new CARTA.SetStatsRequirements({fileId: frameId, regionId: region.regionId, statsConfigs: []});
+                    frameRequirements.set(region.regionId, regionRequirements);
+                }
+                const statsConfig = regionRequirements.statsConfigs.find(config => config.coordinate === "z");
+                if (statsConfig) {
+                    statsConfig.statsTypes = Array.from(new Set([...(statsConfig.statsTypes ?? []), CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity]));
+                } else {
+                    regionRequirements.statsConfigs.push({coordinate: "z", statsTypes: [CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity]});
+                }
+            });
         });
         return updatedRequirements;
     }
@@ -124,6 +148,13 @@ export class StatsWidgetStore extends RegionWidgetStore {
                             const updatedConfig = sortedUpdatedConfigs[i];
                             const config = sortedConfigs[i];
                             if (updatedConfig.coordinate !== config.coordinate) {
+                                diffList.push(updatedRegionRequirements);
+                                return;
+                            }
+
+                            const updatedStatsTypes = [...(updatedConfig.statsTypes ?? [])].sort((a, b) => a - b);
+                            const statsTypes = [...(config.statsTypes ?? [])].sort((a, b) => a - b);
+                            if (updatedStatsTypes.length !== statsTypes.length || updatedStatsTypes.some((statsType, index) => statsType !== statsTypes[index])) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
                             }

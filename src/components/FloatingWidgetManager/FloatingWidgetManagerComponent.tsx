@@ -20,9 +20,11 @@ import {
     PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
+    RegionGroupManagerComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
+    SequentialProfilerComponent,
     SpatialProfilerComponent,
     SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
@@ -118,6 +120,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [ChannelMapControlComponent.WidgetConfig.type, RenderDocklessWidget(ChannelMapControlComponent)],
                 [SpatialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpatialProfilerComponent)],
                 [SpectralProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpectralProfilerComponent)],
+                [SequentialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SequentialProfilerComponent)],
                 [SpectralLineQueryComponent.WidgetConfig.type, RenderDocklessWidget(SpectralLineQueryComponent)],
                 [StatsComponent.WidgetConfig.type, RenderDocklessWidget(StatsComponent)],
                 [HistogramComponent.WidgetConfig.type, RenderDocklessWidget(HistogramComponent)],
@@ -143,7 +146,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [HistogramComponent.WidgetConfig.type, RenderFloatingSettingsWidget(HistogramSettingsPanelComponent)],
                 [CatalogOverlayComponent.WidgetConfig.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
                 [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)],
-                [AnimatorComponent.WidgetConfig.type, RenderFloatingSettingsWidget(AnimatorSettingsPanelComponent)]
+                [AnimatorComponent.WidgetConfig.type, RenderFloatingSettingsWidget(AnimatorSettingsPanelComponent)],
+                [SequentialProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RegionGroupManagerComponent)]
             ]);
         }
 
