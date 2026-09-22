@@ -450,6 +450,30 @@ describe("AppStore.updateCatalogProfile", () => {
     });
 });
 
+describe("AppStore.isOpenFileDisabled", () => {
+    const appStore = AppStore.Instance;
+
+    afterEach(() => {
+        appStore.isLoadingWorkspace = false;
+        appStore.isResumingSession = false;
+    });
+
+    test("turns the file actions off while a workspace is being restored", () => {
+        // The keyboard reaches past the progress dialog, so the actions themselves have to refuse:
+        // a restore does its own opening and closing and cannot have the user joining in.
+        appStore.isLoadingWorkspace = true;
+
+        expect(appStore.isOpenFileDisabled).toBe(true);
+        expect(appStore.isAppendFileDisabled).toBe(true);
+    });
+
+    test("turns them off while a session is being resumed", () => {
+        appStore.isResumingSession = true;
+
+        expect(appStore.isOpenFileDisabled).toBe(true);
+    });
+});
+
 describe("AppStore.reserveCatalogFileId", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;

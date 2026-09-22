@@ -473,8 +473,15 @@ export class AppStore {
         return this.imageViewConfigStore.frames;
     }
 
+    /**
+     * Whether the session is in no state to be asked to open a file.
+     *
+     * This gates the file browser and the close action, from the menu and from the keyboard alike,
+     * so a workspace being restored is covered here rather than at each entry point: a restore is a
+     * long run of opens and closes of its own, and the keyboard reaches past the dialog it puts up.
+     */
     @computed get isOpenFileDisabled(): boolean {
-        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.isFileLoading;
+        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.isFileLoading || this.isLoadingWorkspace || this.isResumingSession;
     }
 
     @computed get isAppendFileDisabled(): boolean {
