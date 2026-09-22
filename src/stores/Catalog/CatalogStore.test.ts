@@ -120,10 +120,12 @@ describe("CatalogStore workspace catalog IDs", () => {
     const widgetsStore = WidgetsStore.Instance;
 
     beforeEach(() => {
+        // Torn down the way the app tears them down: a widget gives its hold on a catalog ID back
+        // when it is deleted, and clearing the maps underneath it would leave the hold behind.
+        Array.from(widgetsStore.catalogPlotWidgets.keys()).forEach(widgetId => widgetsStore.deleteCatalogPlotWidget(widgetId));
+        Array.from(widgetsStore.catalogWidgets.keys()).forEach(componentId => widgetsStore.deleteCatalogWidget(componentId));
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
         CatalogStore.Instance.catalogPlots.clear();
-        widgetsStore.catalogPlotWidgets.clear();
-        widgetsStore.catalogWidgets.clear();
     });
 
     test("reuses restored IDs and allocates the next unused ID for new catalogs", () => {

@@ -131,12 +131,19 @@ export class WorkspaceIdRegistry {
         return workspaceId === undefined ? undefined : this.idsOf(kind).sessionIds.get(workspaceId);
     };
 
-    /** Forget every ID of one kind, for a session that is being emptied. */
+    /**
+     * Forget the ID of every loaded item of one kind, for a session that is being emptied.
+     *
+     * Reservations are left alone. They belong to the widgets that took them, which outlive the
+     * items being forgotten here and go on naming the ones they were left pointing at: dropping a
+     * hold its holder still has would let the next item opened be given an ID a widget is already
+     * using, which is the alias reservations exist to prevent. A reservation ends when whoever took
+     * it gives it back, or when a restore adopts the ID for an item of its own.
+     */
     @action clear = (kind: WorkspaceIdentifiedItemKind): void => {
         const ids = this.idsOf(kind);
         ids.workspaceIds.clear();
         ids.sessionIds.clear();
-        ids.reservations.clear();
     };
 
     private bind(kind: WorkspaceIdentifiedItemKind, sessionId: number, workspaceId: number): void {
