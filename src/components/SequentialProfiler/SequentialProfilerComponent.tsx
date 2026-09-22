@@ -277,7 +277,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="sequential-profiler-plot">
                     {hasTimeSeries ? <LinePlotComponent {...this.plotProps} /> : <NonIdealState icon="timeline-line-chart" title="No time series" description="Add images to the time series to create a light curve." />}
                 </div>
-                {this.selectedRegionGroups.length > 1 && (
+                {this.selectedRegionGroups.length > 0 && (
                     <div className="sequential-profiler-legend">
                         {this.selectedRegionGroups.map((group, index) => (
                             <div className="sequential-profiler-legend-item" key={group.regionGroupId}>
