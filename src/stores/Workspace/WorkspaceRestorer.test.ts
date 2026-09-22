@@ -133,7 +133,7 @@ function createPlotStore(workspaceCatalogId: number, columns: {xColumnName: stri
 
 /** Drive the restore the way a mobx flow does. */
 async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
-    const generator = new WorkspaceRestorer(workspace).restore();
+    const generator = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration()).restore();
     let step = generator.next();
     while (!step.done) {
         step = generator.next(await step.value);
@@ -226,6 +226,22 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toEqual([]);
         expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT);
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
+    });
+
+    test("stops a restore that a later workspace load has taken the session from", async () => {
+        const {appStore} = createSession();
+        const workspace = createWorkspace({files: [IMAGE, {id: 2, source: {type: "file" as const, filename: "second.fits"}}], layout: LAYOUT});
+        const generator = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration()).restore();
+
+        // Start another load, the way a second loadWorkspace would, while the first image is opening.
+        let step = generator.next();
+        WorkspaceRestorer.claimGeneration();
+        while (!step.done) {
+            step = generator.next(await step.value);
+        }
+
+        expect(appStore.appendFile).toHaveBeenCalledTimes(1);
+        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
     });
 
     test("leaves the session's arrangement alone for a workspace saved without one", async () => {

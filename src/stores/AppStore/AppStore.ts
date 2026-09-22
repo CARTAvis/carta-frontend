@@ -2822,16 +2822,25 @@ export class AppStore {
     @flow.bound
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
+        // A load started while this one is still running owns the session from here on, and this one
+        // stops rather than mixing its workspace into the other's.
+        const generation = WorkspaceRestorer.claimGeneration();
 
         try {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
             if (!workspace) {
                 this.finishLoadingWorkspace();
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
 
-            const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace).restore();
+            const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
             if (restoreIssues.length) {
                 restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
                 AppToaster.show(WarningToast(`${restoreIssues.length} item(s) in workspace "${name}" were not restored as saved. See the log for details.`));
@@ -2842,6 +2851,9 @@ export class AppStore {
             return true;
         } catch (err) {
             console.error(err);
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
             AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
             this.finishLoadingWorkspace();
             return false;

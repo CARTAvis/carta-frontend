@@ -45,6 +45,28 @@ interface CatalogConfigRequest {
  * display store for how it is drawn.
  */
 export class WorkspaceRestorer {
+    /** How many workspace loads have been started, so that a later one can take over from an earlier. */
+    private static generationCounter = 0;
+
+    /**
+     * Take the session over from whatever load is already running.
+     *
+     * A restore is a long run of asynchronous stages, and nothing stops a second load being started
+     * while the first is still in the middle of one. The two would otherwise go on interleaving
+     * their images, catalogs and layout into one session. The newest load owns the session, and an
+     * older one stops as soon as it next gets the chance.
+     *
+     * @returns which load this is, to be passed to the restorer and checked against afterwards.
+     */
+    public static claimGeneration(): number {
+        return ++WorkspaceRestorer.generationCounter;
+    }
+
+    /** Whether a load is still the one the session is following. */
+    public static isCurrentGeneration(generation: number): boolean {
+        return generation === WorkspaceRestorer.generationCounter;
+    }
+
     /** One entry per item that could not be brought back as saved. */
     private readonly issues: WorkspaceIssue[] = [];
     /** Workspace image ID to the file ID this session gave it. */
@@ -52,7 +74,15 @@ export class WorkspaceRestorer {
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
 
-    constructor(private readonly workspace: Workspace) {}
+    constructor(
+        private readonly workspace: Workspace,
+        private readonly generation: number
+    ) {}
+
+    /** Whether this restore is still the one the session is following. */
+    private get isCurrent(): boolean {
+        return WorkspaceRestorer.isCurrentGeneration(this.generation);
+    }
 
     private get appStore(): AppStore {
         return AppStore.Instance;
@@ -66,10 +96,19 @@ export class WorkspaceRestorer {
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         this.clearSession();
         yield* this.openImages();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.configureImages();
         this.restoreColorBlending();
         yield* this.openCatalogs();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         yield* this.configureCatalogs();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.restoreLayout();
         this.restoreViews();
         this.settle();
@@ -92,6 +131,9 @@ export class WorkspaceRestorer {
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */
     private *openImages(): Generator<Promise<unknown>, void, any> {
         for (const fileInfo of this.workspace.files ?? []) {
+            if (!this.isCurrent) {
+                return;
+            }
             let frame: FrameStore | undefined;
             try {
                 frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
@@ -253,6 +295,9 @@ export class WorkspaceRestorer {
     /** Stage 5: open every catalog against the image it belongs to. */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
         for (const catalogInfo of this.workspace.catalogs ?? []) {
+            if (!this.isCurrent) {
+                return;
+            }
             const description = describeCatalogSource(catalogInfo.source);
             const targetFrameId = catalogInfo.associatedImageId === undefined ? undefined : this.frameIds.get(catalogInfo.associatedImageId);
             if (catalogInfo.associatedImageId !== undefined && targetFrameId === undefined) {
@@ -324,6 +369,9 @@ export class WorkspaceRestorer {
         const requests = (this.workspace.catalogs ?? []).map(catalogInfo => this.startCatalogConfig(catalogInfo));
 
         for (const request of requests) {
+            if (!this.isCurrent) {
+                return;
+            }
             if (!request) {
                 continue;
             }
