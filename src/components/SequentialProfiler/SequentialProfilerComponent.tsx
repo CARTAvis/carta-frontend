@@ -49,8 +49,12 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         this.ensureRegionGroup();
     }
 
+    componentDidUpdate() {
+        this.ensureRegionGroup();
+    }
+
     @action private ensureRegionGroup = () => {
-        if (!this.regionGroups.length) {
+        if (AppStore.Instance.timeSeriesStore.elements.length && !this.regionGroups.length) {
             const group = AppStore.Instance.createRegionGroup();
             this.selectedRegionGroupIds = [group.regionGroupId];
         }
@@ -61,6 +65,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed private get selectedRegionGroups(): RegionGroupStore[] {
+        if (!AppStore.Instance.timeSeriesStore.elements.length) {
+            return [];
+        }
         const selectedGroups = this.regionGroups.filter(group => this.selectedRegionGroupIds.includes(group.regionGroupId));
         return selectedGroups.length ? selectedGroups : this.regionGroups.slice(0, 1);
     }
@@ -209,12 +216,13 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
 
     render() {
         const hasTimeSeries = AppStore.Instance.timeSeriesStore.elements.length > 0;
+        const isSelectionDisabled = !this.regionGroups.length || !hasTimeSeries;
         return (
             <div className="sequential-profiler">
                 <div className="sequential-profiler-controls">
                     <div className="light-curve-selection">
                         <Tooltip content={this.isMultiRegionGroupEnabled ? "Select multiple light curves" : "Select a light curve"} position={Position.TOP}>
-                            <Checkbox label="Light curve" checked={this.isMultiRegionGroupEnabled} onChange={this.toggleMultiRegionGroups} disabled={!this.regionGroups.length} />
+                            <Checkbox label="Light curve" checked={this.isMultiRegionGroupEnabled} onChange={this.toggleMultiRegionGroups} disabled={isSelectionDisabled} />
                         </Tooltip>
                         <PopoverNext
                             content={
@@ -238,7 +246,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                             arrow={false}
                             placement="bottom"
                             shouldReturnFocusOnClose={false}
-                            disabled={!this.regionGroups.length}
+                            disabled={isSelectionDisabled}
                         >
                             <AnchorButton
                                 text={

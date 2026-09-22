@@ -2106,6 +2106,13 @@ export class AppStore {
                 regionSumUnit: frame.headerUnit ?? "",
                 regionFluxDensityUnit: pixelToFluxDensityUnit(frame.headerUnit ?? "")
             }));
+            if (!frames.length) {
+                this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES).forEach(group => this.deleteRegionGroup(group.regionGroupId));
+                if (!this.regionGroups.size) {
+                    this.regionGroupIdCounter = 1;
+                }
+                return;
+            }
             this.regionGroupStores
                 .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
                 .forEach(group =>
