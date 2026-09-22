@@ -2566,6 +2566,14 @@ export class AppStore {
                         coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, catalogFilter.subsetEndIndex);
                     }
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
+                    // Rows are put where the overlay that is drawn says they go. The widget's system
+                    // control can be left somewhere else without taking the overlay down, the same
+                    // way its axis controls can, and a restored overlay keeps the system it was
+                    // drawn in rather than the one the controls were saved on.
+                    const coordinateSystem =
+                        catalogDisplayStore?.hasPlottedImageOverlay && catalogDisplayStore.plottedImageOverlaySystem !== undefined
+                            ? {...catalogProfileStore.catalogCoordinateSystem, system: catalogDisplayStore.plottedImageOverlaySystem}
+                            : catalogProfileStore.catalogCoordinateSystem;
                     if (coords.wcsX && coords.wcsY) {
                         this.catalogStore.convertToImageCoordinate(
                             catalogFileId,
@@ -2574,12 +2582,12 @@ export class AppStore {
                             wcs,
                             coords.xHeaderInfo?.units ?? "",
                             coords.yHeaderInfo?.units ?? "",
-                            catalogProfileStore.catalogCoordinateSystem,
+                            coordinateSystem,
                             isCoordinateFormatSettled ? 0 : catalogFilter.subsetEndIndex,
                             isCoordinateFormatSettled ? 0 : catalogFilter.subsetDataSize,
                             maxRows
                         );
-                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
+                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, coordinateSystem.system);
                     }
                 }
             }

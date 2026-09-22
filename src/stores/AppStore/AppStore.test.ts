@@ -244,8 +244,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         });
 
         expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
-        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Galactic}), 1, 1, 1);
-        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.Galactic);
+        // Both the axes and the system come from the overlay that is drawn, not from the controls:
+        // converting ICRS positions as Galactic would put every source somewhere else.
+        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.ICRS}), 1, 1, 1);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.ICRS);
     });
 
     test("ignores a superseded request's rows even when nothing is waiting for an answer", () => {
