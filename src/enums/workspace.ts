@@ -10,7 +10,7 @@ export enum WorkspaceItemKind {
     ColorBlending = "color-blending",
     Catalog = "catalog",
     CatalogSelection = "catalog-selection",
-    CatalogPanel = "catalog-panel",
+    CatalogWidget = "catalog-widget",
     CatalogPlot = "catalog-plot",
     Layout = "layout"
 }

@@ -1,4 +1,4 @@
-import {CatalogPlotType} from "enums";
+import {CatalogOverlay, CatalogPlotType} from "enums";
 import {CatalogPlotWidgetStore} from "stores";
 
 describe("CatalogPlotWidgetStore config", () => {
@@ -25,5 +25,29 @@ describe("CatalogPlotWidgetStore config", () => {
 
         expect(store.nBinX).toBeUndefined();
         expect(store.isLogScaleY).toBe(false);
+    });
+});
+
+describe("CatalogPlotWidgetStore restored columns", () => {
+    test("drops columns the catalog no longer has and keeps the rest", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+        store.setStatisticColumn("Vmag");
+
+        const columns = new Set(["Fmag"]);
+        const dropped = store.resetUnknownColumns(column => columns.has(column));
+
+        expect(dropped.sort()).toEqual(["Bmag", "Vmag"]);
+        expect(store.xColumnName).toBe("Fmag");
+        expect(store.yColumnName).toBe(CatalogOverlay.NONE);
+        expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
+    });
+
+    test("leaves a plot whose columns the catalog still has untouched", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+
+        expect(store.resetUnknownColumns(() => true)).toEqual([]);
+        expect(store.xColumnName).toBe("Fmag");
+        expect(store.yColumnName).toBe("Bmag");
+        expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
     });
 });

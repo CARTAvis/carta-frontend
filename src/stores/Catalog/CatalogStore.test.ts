@@ -7,6 +7,10 @@ import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogSt
 import {type CatalogPlotWidgetConfig} from "stores/Widgets";
 import {type ProcessedColumnData} from "utilities";
 
+/** A catalog that has whatever column is asked of it, so that the plot-column validation
+ * setCatalogPlots runs neither drops a column nor warns about one. */
+const CreateEmptyProfileStore = () => ({getColumnHeader: () => ({dataType: CARTA.ColumnType.Double}), catalogInfo: {fileInfo: {name: "test-catalog"}}}) as any;
+
 describe("CatalogStore.plotImageOverlay", () => {
     const catalogStore = CatalogStore.Instance;
 
@@ -57,7 +61,7 @@ describe("CatalogStore.plotImageOverlay", () => {
         expect(catalogStore.plotImageOverlay(1, {xAxis: "RA", yAxis: "DEC", system: CatalogSystemType.ICRS})).toBe(true);
 
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlaySystem).toBe(CatalogSystemType.ICRS);
-        expect(convertSpy).toHaveBeenCalledWith(1, [0, 1], [1, 2], 0, "deg", "deg", CatalogSystemType.ICRS, 0, 0, 2);
+        expect(convertSpy).toHaveBeenCalledWith(1, [0, 1], [1, 2], 0, "deg", "deg", expect.objectContaining({system: CatalogSystemType.ICRS}), 0, 0, 2);
     });
 });
 
@@ -68,7 +72,7 @@ describe("CatalogStore workspace catalog IDs", () => {
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
         CatalogStore.Instance.catalogPlots.clear();
         widgetsStore.catalogPlotWidgets.clear();
-        widgetsStore.catalogPanelWidgets.clear();
+        widgetsStore.catalogWidgets.clear();
     });
 
     test("reuses restored IDs and allocates the next unused ID for new catalogs", () => {
@@ -82,14 +86,14 @@ describe("CatalogStore workspace catalog IDs", () => {
     test("does not hand a new catalog an ID a widget still holds for an unavailable catalog", () => {
         // A plot and a panel restored for catalogs the workspace could not load keep naming them.
         widgetsStore.addCatalogPlotWidget({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 1});
-        widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(2);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(2);
 
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(3);
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 12)).toBe(4);
     });
 
     test("releases an unavailable catalog ID when its panel is removed", () => {
-        widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(1);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(1);
 
         widgetsStore.removeWidget("catalog-overlay-0", "catalog-overlay");
 
@@ -116,7 +120,7 @@ describe("Catalog plot workspace binding", () => {
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
         catalogStore.imageAssociatedCatalogId.set(7, [catalogFileId]);
-        catalogStore.catalogProfileStores.set(catalogFileId, {} as any);
+        catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
     }
 
     beforeEach(() => {
@@ -213,8 +217,8 @@ describe("Catalog plot workspace binding", () => {
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
         catalogStore.imageAssociatedCatalogId.set(7, [1, 2]);
-        catalogStore.catalogProfileStores.set(1, {} as any);
-        catalogStore.catalogProfileStores.set(2, {} as any);
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 1, 10);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 2, 20);
 
@@ -261,7 +265,7 @@ describe("Catalog plot workspace binding", () => {
 
     test("switching from A to B and back to A serializes catalog A's plot settings with catalog A's workspace ID", () => {
         showCatalog(1);
-        catalogStore.catalogProfileStores.set(2, {} as any);
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 1, 10);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 2, 20);
 
@@ -285,7 +289,7 @@ describe("Catalog plot workspace binding", () => {
     test("saves a plot against the catalog the user picked, not the unavailable one it fell back from", () => {
         // Catalog A (workspace ID 10) is not loaded, so a plot restored for it falls back to catalog B.
         showCatalog(2);
-        catalogStore.catalogProfileStores.set(3, {} as any);
+        catalogStore.catalogProfileStores.set(3, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 2, 20);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 3, 30);
 
@@ -338,7 +342,7 @@ describe("CatalogProfileStore streamed rows", () => {
     });
 });
 
-describe("WidgetsStore.setCatalogPanelSelection", () => {
+describe("WidgetsStore.setCatalogWidgetSelection", () => {
     const catalogStore = CatalogStore.Instance;
     const widgetsStore = WidgetsStore.Instance;
 
@@ -349,22 +353,22 @@ describe("WidgetsStore.setCatalogPanelSelection", () => {
         catalogStore.catalogCounts.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
-        widgetsStore.catalogPanelWidgets.clear();
+        widgetsStore.catalogWidgets.clear();
     });
 
     test("changes only the requested component when selecting by runtime ID", () => {
-        catalogStore.catalogProfileStores.set(1, {} as any);
-        catalogStore.catalogProfileStores.set(2, {} as any);
-        WidgetsStore.Instance.getCatalogPanelStore("catalog-overlay-0", 1);
-        WidgetsStore.Instance.getCatalogPanelStore("catalog-overlay-1", 1);
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 1);
 
-        expect(widgetsStore.setCatalogPanelSelection("catalog-overlay-0", 2)).toBe(true);
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(1);
+        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-0", 2)).toBe(true);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(1);
     });
 
     test("restores multiple panels that show the same catalog", () => {
-        catalogStore.catalogProfileStores.set(1, {} as any);
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
 
         widgetsStore.initWidgets(
             [
@@ -374,18 +378,18 @@ describe("WidgetsStore.setCatalogPanelSelection", () => {
             []
         );
 
-        expect(Array.from(widgetsStore.catalogPanelWidgets.keys())).toEqual(["catalog-overlay-0", "catalog-overlay-1"]);
-        expect(Array.from(widgetsStore.catalogPanelWidgets.values()).map(panelStore => panelStore.selectedCatalogId)).toEqual([1, 1]);
+        expect(Array.from(widgetsStore.catalogWidgets.keys())).toEqual(["catalog-overlay-0", "catalog-overlay-1"]);
+        expect(Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.selectedCatalogId)).toEqual([1, 1]);
     });
 
     test("recreates workspace panels that are absent from the current layout", () => {
-        const panelStore = widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1);
-        panelStore.setPanelId("catalog-panel-primary");
+        const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
+        widgetStore.setWidgetId("catalog-panel-primary");
         const initialFloatingWidgetIds = new Set(widgetsStore.floatingWidgets.map(widget => widget.id));
 
         widgetsStore.restoreCatalogPanels(["catalog-panel-primary", "catalog-panel-secondary"]);
 
-        expect(Array.from(widgetsStore.catalogPanelWidgets.values()).map(store => store.panelId)).toEqual(["catalog-panel-primary", "catalog-panel-secondary"]);
+        expect(Array.from(widgetsStore.catalogWidgets.values()).map(store => store.widgetId)).toEqual(["catalog-panel-primary", "catalog-panel-secondary"]);
         const restoredWidget = widgetsStore.floatingWidgets.find(widget => !initialFloatingWidgetIds.has(widget.id));
         expect(restoredWidget?.type).toBe("catalog-overlay");
         if (restoredWidget) {
@@ -394,39 +398,39 @@ describe("WidgetsStore.setCatalogPanelSelection", () => {
     });
 
     test("restores a catalog by the panel's stable ID after its component ID changes", () => {
-        catalogStore.catalogProfileStores.set(1, {} as any);
-        catalogStore.catalogProfileStores.set(2, {} as any);
-        const panelStore = WidgetsStore.Instance.getCatalogPanelStore("catalog-overlay-0", 1);
-        panelStore.setPanelId("catalog-panel-primary");
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
+        const widgetStore = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
+        widgetStore.setWidgetId("catalog-panel-primary");
 
-        expect(widgetsStore.setCatalogPanelSelectionByPanelId("catalog-panel-primary", 2)).toBe(true);
-        expect(panelStore.selectedCatalogId).toBe(2);
+        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-panel-primary", 2)).toBe(true);
+        expect(widgetStore.selectedCatalogId).toBe(2);
     });
 
     test("does not confuse a stable panel ID with another panel's runtime component ID", () => {
-        catalogStore.catalogProfileStores.set(1, {} as any);
-        catalogStore.catalogProfileStores.set(2, {} as any);
-        const stablePanel = widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1);
-        const runtimePanel = widgetsStore.getCatalogPanelStore("catalog-overlay-1", 1);
-        stablePanel.setPanelId("catalog-overlay-1");
-        runtimePanel.setPanelId("catalog-panel-secondary");
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
+        const stableWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
+        const runtimeWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 1);
+        stableWidget.setWidgetId("catalog-overlay-1");
+        runtimeWidget.setWidgetId("catalog-panel-secondary");
 
-        expect(widgetsStore.setCatalogPanelSelection("catalog-overlay-1", 2)).toBe(true);
-        expect(stablePanel.selectedCatalogId).toBe(1);
-        expect(runtimePanel.selectedCatalogId).toBe(2);
+        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-1", 2)).toBe(true);
+        expect(stableWidget.selectedCatalogId).toBe(1);
+        expect(runtimeWidget.selectedCatalogId).toBe(2);
 
-        expect(widgetsStore.setCatalogPanelSelectionByPanelId("catalog-overlay-1", 2)).toBe(true);
-        expect(stablePanel.selectedCatalogId).toBe(2);
+        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-overlay-1", 2)).toBe(true);
+        expect(stableWidget.selectedCatalogId).toBe(2);
     });
 
     test("replaces a removed catalog in every panel that was showing it", () => {
-        widgetsStore.getCatalogPanelStore("catalog-overlay-0", 1);
-        widgetsStore.getCatalogPanelStore("catalog-overlay-1", 1);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 1);
 
-        widgetsStore.replaceCatalogPanelSelection(1, 2);
+        widgetsStore.replaceCatalogWidgetSelection(1, 2);
 
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
     });
 
     test("keeps panel persistence IDs unique when a layout contains duplicates", () => {
@@ -438,8 +442,8 @@ describe("WidgetsStore.setCatalogPanelSelection", () => {
             []
         );
 
-        const panelIds = Array.from(widgetsStore.catalogPanelWidgets.values()).map(panelStore => panelStore.panelId);
-        expect(new Set(panelIds).size).toBe(panelIds.length);
+        const widgetIds = Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.widgetId);
+        expect(new Set(widgetIds).size).toBe(widgetIds.length);
     });
 });
 
@@ -449,18 +453,18 @@ describe("Catalog panel selection lifecycle", () => {
 
     beforeEach(() => {
         catalogStore.imageAssociatedCatalogId.clear();
-        widgetsStore.catalogPanelWidgets.clear();
+        widgetsStore.catalogWidgets.clear();
     });
 
     test("preserves a valid selection and falls back invalid panels to the active image", () => {
-        widgetsStore.getCatalogPanelStore("catalog-overlay-0", 2);
-        widgetsStore.getCatalogPanelStore("catalog-overlay-1", 99);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 2);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 99);
         catalogStore.imageAssociatedCatalogId.set(7, [2, 3]);
 
         catalogStore.resetActiveCatalogFile(7);
 
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogPanelWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
     });
 });
 
@@ -582,7 +586,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         catalogStore.addCatalog(1, 10);
         expect(catalogStore.catalogGLData.has(1)).toBe(true);
 
-        catalogStore.convertToImageCoordinate(1, [10, 11, 12], [20, 21, 22], 0 as any, "", "", CatalogSystemType.Pixel0, 2, 3, 2);
+        catalogStore.convertToImageCoordinate(1, [10, 11, 12], [20, 21, 22], 0 as any, "", "", {system: CatalogSystemType.Pixel0, equinox: undefined, epoch: undefined}, 2, 3, 2);
 
         expect(Array.from(catalogStore.catalogGLData.get(1)?.x ?? [])).toEqual([10, 11, 0, 0, 0, 0, 0, 0, 0, 0]);
         expect(updatePositionArray).toHaveBeenCalledWith(1, expect.any(Float32Array), 0);
@@ -756,8 +760,8 @@ describe("Catalog plot component selection", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
         catalogStore.setCatalogPlots("catalog-plot-component-0", 5, "catalog-plot-0");
         catalogStore.imageAssociatedCatalogId.set(7, [5, 6]);
-        catalogStore.catalogProfileStores.set(5, {} as any);
-        catalogStore.catalogProfileStores.set(6, {} as any);
+        catalogStore.catalogProfileStores.set(5, CreateEmptyProfileStore());
+        catalogStore.catalogProfileStores.set(6, CreateEmptyProfileStore());
 
         catalogStore.clearCatalogPlotsByFileId(5);
 
@@ -772,5 +776,35 @@ describe("Catalog plot component selection", () => {
         catalogStore.resetActiveCatalogFile(7);
 
         expect(catalogStore.getActiveCatalogPlotFile("catalog-plot-component-0")).toBe(8);
+    });
+});
+
+describe("CatalogStore widget selection", () => {
+    const catalogStore = CatalogStore.Instance;
+    const widgetsStore = WidgetsStore.Instance;
+
+    afterEach(() => {
+        catalogStore.imageAssociatedCatalogId.clear();
+        widgetsStore.catalogWidgets.clear();
+    });
+
+    test("resets an unavailable widget selection to the first active catalog", () => {
+        catalogStore.updateImageAssociatedCatalogId(101, [7, 8]);
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 99);
+
+        catalogStore.resetActiveCatalogFile(101);
+
+        expect(widget.selectedCatalogId).toBe(7);
+    });
+
+    test("preserves each widget selection when it remains active", () => {
+        catalogStore.updateImageAssociatedCatalogId(102, [7, 8]);
+        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-1", 8);
+
+        catalogStore.resetActiveCatalogFile(102);
+
+        expect(firstWidget.selectedCatalogId).toBe(7);
+        expect(secondWidget.selectedCatalogId).toBe(8);
     });
 });

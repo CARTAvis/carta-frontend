@@ -1,20 +1,16 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
-import type {ProcessedColumnData} from "utilities";
 
 import {CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
 import {PreferenceStore} from "stores";
+import {CatalogAxisEligibility, getAutoSelectedCatalogAxisColumn, getCatalogAxisEligibility, type ProcessedColumnData} from "utilities";
 
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
-    private readonly initialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
-    private readonly initialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
-    private initialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
-    private initialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
@@ -37,18 +33,17 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
         if (coordinateSystem) {
             const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
+            const defaults = AbstractCatalogProfileStore.getCatalogCoordinateDefaults(coordinateSystem.system);
             this.catalogCoordinateSystem = {
                 system: system,
-                equinox: coordinateSystem.equinox,
-                epoch: coordinateSystem.epoch,
-                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+                equinox: coordinateSystem.equinox || defaults.equinox,
+                epoch: coordinateSystem.epoch || defaults.epoch
             };
         } else {
             this.catalogCoordinateSystem = {
                 system: CatalogSystemType.ICRS,
                 equinox: null,
-                epoch: null,
-                coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+                epoch: null
             };
         }
         const initTableRows = CatalogProfileStore.INIT_TABLE_ROWS;
@@ -129,8 +124,10 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.subsetEndIndex = subsetEndIndex;
         }
 
-        // Reset column update mode flag after processing the filter response
-        if (this.isUpdateColumnMode) {
+        this.catalogDataVersion++;
+
+        // Keep column-update mode for every streamed chunk; the final response ends the request.
+        if (this.isUpdateColumnMode && catalogFilter.progress >= 1) {
             this.setIsUpdateColumn(false);
         }
     }
@@ -177,17 +174,46 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const catalogHeader = this.catalogHeader;
 
         if (catalogHeader.length) {
+            // Auto-select can already reach a coordinate column past the display cut, but only by
+            // enabling it and spending a round trip re-fetching. Nominating it here gets its values
+            // into the first response instead, which is what a unitless string column needs before
+            // its format can be judged at all.
+            const coordinateColumnNames = this.initialCoordinateColumnNames;
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let shouldDisplay = false;
-                if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
-                    shouldDisplay = true;
-                }
+                const shouldDisplay = index < PreferenceStore.Instance.catalogDisplayedColumnSize || coordinateColumnNames.has(header.name);
                 const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: shouldDisplay, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
         return controlHeaders;
+    }
+
+    /**
+     * The best-named candidate for each of the image overlay axes this catalog's coordinate system
+     * uses. Names only nominate here: whether a column is actually usable is still decided from its
+     * units or its values, once there are values to look at.
+     *
+     * Empty when the user has turned off automatic axis selection. Displaying these columns is only
+     * useful because auto-select is going to want them, so guessing at them anyway would be doing
+     * the very thing that preference asks us not to do.
+     */
+    @computed private get initialCoordinateColumnNames(): Set<string> {
+        if (!PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns) {
+            return new Set<string>();
+        }
+
+        const system = AbstractCatalogProfileStore.getCatalogSystem(this.catalogInfo.fileInfo.coosys?.[0]?.system);
+        const axes = this.systemCoordinateMap.get(system);
+        if (!axes) {
+            return new Set<string>();
+        }
+
+        // A column that could never hold a number is not worth a slot, however it is named.
+        const candidates = this.catalogHeader.filter(header => getCatalogAxisEligibility(header.dataType, header.units).status !== CatalogAxisEligibility.Ineligible).map(header => header.name);
+
+        const nominated = [getAutoSelectedCatalogAxisColumn(axes.x, candidates, system), getAutoSelectedCatalogAxisColumn(axes.y, candidates, system)];
+        return new Set<string>(nominated.filter((name): name is string => name !== undefined));
     }
 
     @action setMaxRows(maxRows: number) {
@@ -247,35 +273,5 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         } else {
             return this.subsetEndIndex < this.catalogInfo.dataSize && this.subsetEndIndex < this.maxRows;
         }
-    }
-
-    private findKeywords(val: string): boolean {
-        const keyWords = this.initialedColumnsKeyWords;
-        const raKeywords = this.initialedRAColumnsKeyWords;
-        const decKeywords = this.initialedDECColumnsKeyWords;
-        const excludeKeywords = this.initialedExcludeColumnsKeyWords;
-        const description = val.toUpperCase();
-        for (let index = 0; index < keyWords.length; index++) {
-            const subString = keyWords[index];
-            if (description.includes(subString)) {
-                return true;
-            }
-        }
-        if (description.includes(excludeKeywords[0]) || description.includes(excludeKeywords[1])) {
-            return false;
-        }
-        for (let index = 0; index < raKeywords.length; index++) {
-            const ra = raKeywords[index];
-            if (description.includes(ra)) {
-                return true;
-            }
-        }
-        for (let index = 0; index < decKeywords.length; index++) {
-            const dec = decKeywords[index];
-            if (description.includes(dec)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

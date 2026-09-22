@@ -16,6 +16,7 @@ export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 export interface CatalogPlotWidgetConfig {
+    /** The workspace's own ID for the catalog this plot is saved against. */
     catalogId?: number;
     plotType: CatalogPlotType;
     xColumnName: string;
@@ -49,6 +50,7 @@ export class CatalogPlotWidgetStore {
     @observable minMaxX: {minVal: number; maxVal: number} | null = null;
     @observable statisticColumnName: string = CatalogOverlay.NONE;
     @observable statistic: Statistic | null = null;
+    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
     @observable workspaceCatalogId: number | undefined = undefined;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
@@ -72,6 +74,23 @@ export class CatalogPlotWidgetStore {
         isFittingEnabled: this.isFittingEnabled,
         fittingRange: this.minMaxX ?? undefined
     });
+
+    /**
+     * Drop restored columns the catalog turns out not to have, and return their names. A plot's
+     * columns are restored before its catalog is known, and a catalog at the same path can have
+     * been rewritten since: plotting a column it no longer has throws when its header is read.
+     */
+    @action resetUnknownColumns(hasColumn: (column: string) => boolean): string[] {
+        const dropped: string[] = [];
+        for (const key of ["xColumnName", "yColumnName", "statisticColumnName"] as const) {
+            const column = this[key];
+            if (column !== undefined && column !== CatalogOverlay.NONE && !hasColumn(column)) {
+                dropped.push(column);
+                this[key] = CatalogOverlay.NONE;
+            }
+        }
+        return dropped;
+    }
 
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
         if (typeof config.catalogId === "number" && Number.isInteger(config.catalogId)) {

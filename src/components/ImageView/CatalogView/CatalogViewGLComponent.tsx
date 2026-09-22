@@ -193,6 +193,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
                 const isActive = frame === destinationFrame;
 
+                if (!catalogDisplayStore.isSourceSizeDefined) {
+                    return;
+                }
+
                 const shape = catalogDisplayStore.shapeSettings;
                 if (!shape) {
                     return;
@@ -362,6 +366,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (!frame) {
                 return;
             }
+            if (!catalogStore.getCatalogDisplayStore(fileId)?.isSourceSizeDefined) {
+                return;
+            }
             const cursorPosImageSpace = canvasToTransformedImagePos(clickEvent.offsetX, clickEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
             const closestPoint = closestCatalogIndexToCursor(cursorPosImageSpace, catalog.x, catalog.y);
             if (closestPoint.minDistanceSquared < selectedPoint.minDistanceSquared) {
@@ -373,9 +380,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
-            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
-            if (catalogProfileStore && catalogDisplayStore) {
-                WidgetsStore.Instance.updateCatalogPanelSelection(selectedPoint.fileId);
+            if (catalogProfileStore) {
+                const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
+                WidgetsStore.Instance.updateCatalogWidgetSelection(selectedPoint.fileId);
                 const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);
                 catalogDisplayStore?.setCatalogTableAutoScroll(true);

@@ -7,7 +7,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {minMaxArray, PendingRequestTracker, setAstSystem} from "utilities";
+import {type CatalogCoordinateSystem, getDegreesPerCatalogUnit, isCatalogNumericDataType, minMaxArray, PendingRequestTracker, setAstCatalogSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -39,6 +39,9 @@ export class CatalogPlotComponentState {
 }
 
 export class CatalogStore {
+    /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
+    public static readonly PENDING_CATALOG_FILE_ID = 0;
+
     private static staticInstance: CatalogStore;
 
     public static get Instance() {
@@ -48,16 +51,14 @@ export class CatalogStore {
         return CatalogStore.staticInstance;
     }
 
-    private static readonly DegreeUnits = ["deg", "degrees"];
-    private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
-    private static readonly ArcminUnits = ["arcmin", "arcminute"];
-
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
     // catalog plot component Id : what that component is showing
     @observable catalogPlots: Map<string, CatalogPlotComponentState> = new Map();
+    // Retains the component association after its catalog-specific widget store closes.
+    @observable private catalogPlotComponents: Map<string, string> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // Catalog display state is scoped to the catalog, not to an overlay panel.
@@ -108,7 +109,7 @@ export class CatalogStore {
         wcsInfo: AST.FrameSet,
         xUnit: string,
         yUnit: string,
-        catalogFrame: CatalogSystemType,
+        catalogCoordinateSystem: CatalogCoordinateSystem,
         subsetEndIndex: number,
         subsetDataSize: number,
         maxRows?: number
@@ -123,7 +124,7 @@ export class CatalogStore {
                 return;
             }
             const position = new Float32Array(plottedXData.length * 2);
-            switch (catalogFrame) {
+            switch (catalogCoordinateSystem.system) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < plottedXData.length; i++) {
                         catalog.x[startIndex + i] = plottedXData[i];
@@ -141,7 +142,7 @@ export class CatalogStore {
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.transformCatalogData(plottedXData, plottedYData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    const pixelData = CatalogStore.transformCatalogData(plottedXData, plottedYData, wcsInfo, xUnit, yUnit, catalogCoordinateSystem);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalog.x[startIndex + i] = pixelData.xImageCoords[i];
                         catalog.y[startIndex + i] = pixelData.yImageCoords[i];
@@ -166,7 +167,7 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(fileId: number) {
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         // Drop the catalog's earlier requests before ending the one still in flight, so that the
         // request being ended is left marked stale: a response arriving after this file ID has been
         // handed to the next catalog opened must not be taken for an answer about that one.
@@ -185,8 +186,8 @@ export class CatalogStore {
             this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogIds);
         }
 
-        if (associatedCatalogIds.length) {
-            WidgetsStore.Instance.replaceCatalogPanelSelection(fileId, associatedCatalogIds[0]);
+        if (catalogComponentId && associatedCatalogIds.length) {
+            WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogIds[0]);
         }
     }
 
@@ -222,7 +223,7 @@ export class CatalogStore {
         const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
         const activeCatalogFileIds = fileIds ?? [];
         if (activeCatalogFileIds.length) {
-            WidgetsStore.Instance.resetCatalogPanelSelections(activeCatalogFileIds);
+            WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
             this.resetCatalogPlotSelections(activeCatalogFileIds);
         }
     }
@@ -292,6 +293,65 @@ export class CatalogStore {
             this.catalogPlots.set(componentId, componentState);
         }
         componentState.plotWidgetIds.set(fileId, widgetId);
+        // Kept past the widget store's own lifetime, so that a tab whose catalog has closed can
+        // still be resolved back to the component it belongs to.
+        this.catalogPlotComponents.set(widgetId, componentId);
+        if (fileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
+            // A layout can be applied while its catalog is already open, binding a restored plot
+            // here rather than when the catalog arrives. Check its columns either way.
+            this.validateCatalogPlotColumns(fileId);
+        }
+    }
+
+    /**
+     * The plot store one catalog plot component is showing. A component keeps one store per catalog
+     * it has been switched to, so the widget ID it was created with is not always the plot on
+     * screen. A component that has never been mounted has settled on nothing, and the widget's own
+     * binding stands in for it.
+     */
+    public getDisplayedCatalogPlot(catalogPlotWidgetId: string): {widgetId: string; catalogFileId: number | undefined} {
+        const {catalogPlotComponentId, catalogFileId} = this.getAssociatedIdByWidgetId(catalogPlotWidgetId);
+        if (catalogPlotComponentId === undefined) {
+            return {widgetId: catalogPlotWidgetId, catalogFileId};
+        }
+        const selectedCatalogFileId = this.getActiveCatalogPlotFile(catalogPlotComponentId) ?? catalogFileId;
+        if (selectedCatalogFileId === undefined) {
+            return {widgetId: catalogPlotWidgetId, catalogFileId};
+        }
+        return {
+            widgetId: this.getCatalogPlotWidgetId(catalogPlotComponentId, selectedCatalogFileId) ?? catalogPlotWidgetId,
+            catalogFileId: selectedCatalogFileId
+        };
+    }
+
+    /**
+     * Drop restored plot columns the catalog turns out not to have, and say which. Columns are
+     * restored before the catalog is known, so they are checked once its data arrives, the way
+     * a restored display config is.
+     */
+    @action validateCatalogPlotColumns(fileId: number) {
+        const profileStore = this.catalogProfileStores.get(fileId);
+        if (!profileStore) {
+            return;
+        }
+        const dropped = new Set<string>();
+        this.catalogPlots.forEach(componentState => {
+            const widgetId = componentState.plotWidgetIds.get(fileId);
+            const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
+            plotStore
+                ?.resetUnknownColumns(column => {
+                    const header = profileStore.getColumnHeader(column);
+                    return header !== undefined && isCatalogNumericDataType(header.dataType);
+                })
+                .forEach(column => dropped.add(column));
+        });
+        if (dropped.size) {
+            const catalogName = profileStore.catalogInfo.fileInfo.name ?? `catalog ${fileId}`;
+            const columns = Array.from(dropped)
+                .map(column => `"${column}"`)
+                .join(", ");
+            AppStore.Instance.logStore.addWarning(`Plot settings for ${catalogName} were not restored: ${columns} ${dropped.size > 1 ? "are not valid numeric columns" : "is not a valid numeric column"} in this catalog`, ["catalog"]);
+        }
     }
 
     // remove catalog plot widget, keep placeholder
@@ -311,12 +371,22 @@ export class CatalogStore {
         });
     }
 
+    /** Whether a layout tab still retains this plot ID after its catalog store was removed. */
+    public isCatalogPlotWidgetIdReserved(widgetId: string): boolean {
+        return this.catalogPlotComponents.has(widgetId);
+    }
+
     @action clearCatalogPlotsByComponentId(componentId: string) {
         const componentState = this.catalogPlots.get(componentId);
         if (componentState) {
             componentState.plotWidgetIds.forEach(widgetId => WidgetsStore.Instance.deleteCatalogPlotWidget(widgetId));
             this.catalogPlots.delete(componentId);
         }
+        this.catalogPlotComponents.forEach((plotComponentId, widgetId) => {
+            if (plotComponentId === componentId) {
+                this.catalogPlotComponents.delete(widgetId);
+            }
+        });
     }
 
     @action clearCatalogPlotsByWidgetId(widgetId: string) {
@@ -397,9 +467,9 @@ export class CatalogStore {
         return frameId;
     }
 
-    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string; catalogFileId: number} {
-        let catalogPlotComponentId;
-        let catalogFileId;
+    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string | undefined; catalogFileId: number | undefined} {
+        let catalogPlotComponentId: string | undefined;
+        let catalogFileId: number | undefined;
         this.catalogPlots.forEach((componentState, componentId) => {
             componentState.plotWidgetIds.forEach((widgetId, fileId) => {
                 if (widgetId === catalogPlotWidgetId) {
@@ -408,7 +478,17 @@ export class CatalogStore {
                 }
             });
         });
-        return {catalogPlotComponentId: catalogPlotComponentId, catalogFileId: catalogFileId};
+        if (catalogPlotComponentId !== undefined) {
+            return {catalogPlotComponentId, catalogFileId};
+        }
+        // A widget loses its own binding when its catalog closes, but the layout still identifies
+        // the tab by it. The component it was created in outlives that, and is still showing a
+        // plot, so the tab resolves through it rather than becoming an orphan.
+        const retainedComponentId = this.catalogPlotComponents.get(catalogPlotWidgetId);
+        return {
+            catalogPlotComponentId: retainedComponentId,
+            catalogFileId: retainedComponentId !== undefined ? this.getActiveCatalogPlotFile(retainedComponentId) : undefined
+        };
     }
 
     getCatalogFileNames(fileIds: Array<number>) {
@@ -446,18 +526,21 @@ export class CatalogStore {
         if (xAxis === CatalogOverlay.NONE || yAxis === CatalogOverlay.NONE) {
             return false;
         }
-        const system = overlay?.system ?? profileStore.catalogCoordinateSystem.system;
+        // A restored overlay names the system it was drawn in, which the coordinate control may
+        // since have been moved on from. The equinox and epoch stay the catalog's own.
+        const coordinateSystem = overlay?.system === undefined ? profileStore.catalogCoordinateSystem : {...profileStore.catalogCoordinateSystem, system: overlay.system};
+        const system = coordinateSystem.system;
         const maxRows = this.getOverlayMaxRows(profileStore, overlay?.maxRows);
 
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(this.getFrameIdByCatalogId(catalogFileId));
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
-            const imageCoords = profileStore.get2DPlotData(xAxis, yAxis, profileStore.catalogData);
+            const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData);
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             this.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
-                this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", system, 0, 0, maxRows);
+                this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", coordinateSystem, 0, 0, maxRows);
             }
             profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
         }
@@ -575,31 +658,32 @@ export class CatalogStore {
         return displayStore;
     }
 
+    /** Radians per unit of the column's declared units, for AST. Unknown units are degrees. */
     private static getFractionFromUnit(unit: string): number {
-        if (CatalogStore.ArcminUnits.includes(unit)) {
-            return Math.PI / 10800.0;
-        } else if (CatalogStore.ArcsecUnits.includes(unit)) {
-            return Math.PI / 648000.0;
-        } else {
-            // if unit is null, using deg as default
-            return Math.PI / 180.0;
-        }
+        return (getDegreesPerCatalogUnit(unit) * Math.PI) / 180.0;
     }
 
-    private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
+    private static transformCatalogData(
+        xWcsData: Array<number>,
+        yWcsData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogCoordinateSystem: CatalogCoordinateSystem
+    ): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
-            const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
-            const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.getFractionFromUnit(xUnit);
+            const yFraction = CatalogStore.getFractionFromUnit(yUnit);
 
             const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && overlay.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
 
-            setAstSystem(wcsCopy, catalogFrame, overlay.global);
+            setAstCatalogSystem(wcsCopy, catalogCoordinateSystem);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

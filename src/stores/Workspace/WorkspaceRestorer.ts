@@ -488,21 +488,21 @@ export class WorkspaceRestorer {
     private restoreViews(): void {
         if (this.workspace.selectedCatalogIds) {
             this.appStore.widgetsStore.restoreCatalogPanels(Object.keys(this.workspace.selectedCatalogIds));
-            Object.entries(this.workspace.selectedCatalogIds).forEach(([panelId, workspaceCatalogId]) => {
+            Object.entries(this.workspace.selectedCatalogIds).forEach(([widgetId, workspaceCatalogId]) => {
                 const selectedCatalogFileId = this.catalogIds.get(workspaceCatalogId);
-                const panelStore = Array.from(this.appStore.widgetsStore.catalogPanelWidgets.values()).find(store => store.panelId === panelId);
+                const widgetStore = Array.from(this.appStore.widgetsStore.catalogWidgets.values()).find(store => store.widgetId === widgetId);
                 if (selectedCatalogFileId === undefined) {
-                    if (panelStore && !this.appStore.catalogStore.catalogProfileStores.has(panelStore.selectedCatalogId)) {
+                    if (widgetStore && !this.appStore.catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId)) {
                         const fallbackCatalogFileId = this.appStore.catalogStore.catalogProfileStores.keys().next().value;
                         if (fallbackCatalogFileId !== undefined) {
-                            panelStore.setSelectedCatalogId(fallbackCatalogFileId);
+                            widgetStore.setSelectedCatalogId(fallbackCatalogFileId);
                         }
                     }
-                    panelStore?.setUnavailableWorkspaceCatalogId(workspaceCatalogId);
-                    const fallback = panelStore && this.appStore.catalogStore.catalogProfileStores.has(panelStore.selectedCatalogId) ? `; it is showing ${this.describeCatalogFile(panelStore.selectedCatalogId)} instead` : "";
-                    this.report(WorkspaceItemKind.CatalogPanel, panelId, `Could not restore catalog panel ${panelId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
-                } else if (!this.appStore.widgetsStore.setCatalogPanelSelectionByPanelId(panelId, selectedCatalogFileId)) {
-                    this.report(WorkspaceItemKind.CatalogPanel, panelId, `Could not restore catalog panel ${panelId} to ${this.describeWorkspaceCatalog(workspaceCatalogId)}: the panel selection could not be applied`);
+                    widgetStore?.setUnavailableWorkspaceCatalogId(workspaceCatalogId);
+                    const fallback = widgetStore && this.appStore.catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId) ? `; it is showing ${this.describeCatalogFile(widgetStore.selectedCatalogId)} instead` : "";
+                    this.report(WorkspaceItemKind.CatalogWidget, widgetId, `Could not restore catalog widget ${widgetId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
+                } else if (!this.appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId(widgetId, selectedCatalogFileId)) {
+                    this.report(WorkspaceItemKind.CatalogWidget, widgetId, `Could not restore catalog widget ${widgetId} to ${this.describeWorkspaceCatalog(workspaceCatalogId)}: the widget selection could not be applied`);
                 }
             });
         }
@@ -517,7 +517,10 @@ export class WorkspaceRestorer {
             if (catalogFileId === undefined) {
                 // The plot goes on naming the catalog it was saved against, so its ID stays taken.
                 plotStore.setWorkspaceCatalogId(workspaceCatalogId);
-                const fallback = this.appStore.catalogStore.catalogProfileStores.has(association.catalogFileId) ? `; it is showing ${this.describeCatalogFile(association.catalogFileId)} instead` : "";
+                // A plot whose own catalog has closed resolves through its component, which can
+                // leave it showing nothing to name here.
+                const shownCatalogFileId = association.catalogFileId;
+                const fallback = shownCatalogFileId !== undefined && this.appStore.catalogStore.catalogProfileStores.has(shownCatalogFileId) ? `; it is showing ${this.describeCatalogFile(shownCatalogFileId)} instead` : "";
                 this.report(WorkspaceItemKind.CatalogPlot, widgetId, `Could not restore catalog plot ${widgetId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
                 continue;
             }

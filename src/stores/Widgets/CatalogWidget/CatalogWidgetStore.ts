@@ -4,41 +4,42 @@ import {CatalogSettingsTabs, WorkspaceItemKind} from "enums";
 import {PreferenceStore} from "stores";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 
-/** State owned by one catalog panel rather than by the catalog it displays. */
-export interface CatalogPanelLayoutSettings {
-    panelId?: string;
-    /** Kept for layouts written before panel state was separated from display state. */
+/** State owned by one catalog widget rather than by the catalog it displays. */
+export interface CatalogWidgetLayoutSettings {
+    /** The widget's own identity, stable across the sessions a workspace spans. */
+    widgetId?: string;
+    /** Kept for layouts written before widget state was separated from display state. */
     catalogFileId?: number;
     tableSeparatorPosition?: string;
-    /** The settings section this panel was left on, per catalog file ID. */
+    /** The settings section this widget was left on, per catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
     /** The same, for a workspace, per the workspace's own catalog ID: the file ID a session gave a
      * catalog names a different catalog once the workspace is opened again. */
     settingsTabIdByWorkspaceCatalog?: Record<string, CatalogSettingsTabs>;
-    /** Kept for layouts written while the settings section belonged to the panel alone. */
+    /** Kept for layouts written while the settings section belonged to the widget alone. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
-export class CatalogPanelStore {
-    @observable panelId: string;
+export class CatalogWidgetStore {
+    @observable widgetId: string;
     @observable selectedCatalogId: number = 1;
     @observable unavailableWorkspaceCatalogId: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
-     * The settings section for each catalog this panel has shown. The section belongs to the panel,
-     * so two panels showing one catalog keep their own, but it is remembered per catalog so that a
-     * panel returning to a catalog returns to the section that catalog was left on.
+     * The settings section for each catalog this widget has shown. The section belongs to the widget,
+     * so two widgets showing one catalog keep their own, but it is remembered per catalog so that a
+     * widget returning to a catalog returns to the section that catalog was left on.
      */
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
 
-    constructor(selectedCatalogId: number = 1, panelId: string = "") {
+    constructor(selectedCatalogId: number = 1, widgetId: string = "") {
         this.selectedCatalogId = selectedCatalogId;
-        this.panelId = panelId;
+        this.widgetId = widgetId;
         makeObservable(this);
     }
 
-    @action setPanelId = (panelId: string) => {
-        this.panelId = panelId;
+    @action setWidgetId = (widgetId: string) => {
+        this.widgetId = widgetId;
     };
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
@@ -49,8 +50,8 @@ export class CatalogPanelStore {
     /**
      * Keep naming a catalog a workspace could not bring back.
      *
-     * The ID stays spoken for while the panel holds it, so that a catalog opened afterwards is not
-     * handed the ID this panel would then be pointing at.
+     * The ID stays spoken for while the widget holds it, so that a catalog opened afterwards is not
+     * handed the ID this widget would then be pointing at.
      */
     @action setUnavailableWorkspaceCatalogId = (workspaceCatalogId: number) => {
         this.releaseUnavailableWorkspaceCatalogId();
@@ -58,7 +59,7 @@ export class CatalogPanelStore {
         WorkspaceIdRegistry.Instance.reserve(WorkspaceItemKind.Catalog, workspaceCatalogId);
     };
 
-    /** Stop holding the ID of a catalog that was unavailable, whether the panel moved on or went away. */
+    /** Stop holding the ID of a catalog that was unavailable, whether the widget moved on or went away. */
     @action releaseUnavailableWorkspaceCatalogId = () => {
         if (this.unavailableWorkspaceCatalogId === undefined) {
             return;
@@ -79,22 +80,22 @@ export class CatalogPanelStore {
         this.settingsTabIdByCatalog.set(this.selectedCatalogId, tabId);
     };
 
-    public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false): CatalogPanelLayoutSettings => ({
-        ...(this.panelId ? {panelId: this.panelId} : {}),
+    public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false): CatalogWidgetLayoutSettings => ({
+        ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
         ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings)
     });
 
     /**
-     * The settings section of each catalog the panel has shown, naming each catalog the way
+     * The settings section of each catalog the widget has shown, naming each catalog the way
      * whoever reads the settings back will know it by.
      *
      * A workspace names its catalogs by IDs of its own, since the file IDs of the session it was
      * saved in are handed out again to other catalogs when it is opened. A saved layout is reused
      * within the session that wrote it, so it goes on naming the file IDs it was written with.
      */
-    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean): Pick<CatalogPanelLayoutSettings, "settingsTabIdByCatalog" | "settingsTabIdByWorkspaceCatalog"> => {
+    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean): Pick<CatalogWidgetLayoutSettings, "settingsTabIdByCatalog" | "settingsTabIdByWorkspaceCatalog"> => {
         const settingsTabs = Array.from(this.settingsTabIdByCatalog);
         if (!shouldIncludeWorkspaceBindings) {
             return {settingsTabIdByCatalog: Object.fromEntries(settingsTabs.map(([catalogFileId, tabId]) => [String(catalogFileId), tabId]))};
@@ -111,12 +112,12 @@ export class CatalogPanelStore {
         return {settingsTabIdByWorkspaceCatalog: Object.fromEntries(workspaceSettingsTabs)};
     };
 
-    @action applyLayoutSettings = (settings: CatalogPanelLayoutSettings | null | undefined) => {
+    @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {
         if (!settings) {
             return;
         }
-        if (typeof settings.panelId === "string" && settings.panelId) {
-            this.panelId = settings.panelId;
+        if (typeof settings.widgetId === "string" && settings.widgetId) {
+            this.widgetId = settings.widgetId;
         }
         if (typeof settings.catalogFileId === "number") {
             this.selectedCatalogId = settings.catalogFileId;

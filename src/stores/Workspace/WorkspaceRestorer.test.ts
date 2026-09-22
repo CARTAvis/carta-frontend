@@ -101,10 +101,10 @@ function createSession() {
             rebindCatalogPlot: jest.fn((_catalogPlotWidgetId?: string, _catalogFileId?: number) => true)
         },
         widgetsStore: {
-            catalogPanelWidgets: new Map(),
+            catalogWidgets: new Map(),
             catalogPlotWidgets: new Map(),
             restoreCatalogPanels: jest.fn(),
-            setCatalogPanelSelectionByPanelId: jest.fn((_panelId?: string, _catalogFileId?: number) => true)
+            setCatalogWidgetSelectionByWidgetId: jest.fn((_widgetId?: string, _catalogFileId?: number) => true)
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -250,33 +250,33 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
     });
 
-    test("points each catalog panel at the catalog it was showing", async () => {
+    test("points each catalog widget at the catalog it was showing", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 1}}));
 
         expect(appStore.widgetsStore.restoreCatalogPanels).toHaveBeenCalledWith(["catalog-overlay-0"]);
-        expect(appStore.widgetsStore.setCatalogPanelSelectionByPanelId).toHaveBeenCalledWith("catalog-overlay-0", 10);
+        expect(appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId).toHaveBeenCalledWith("catalog-overlay-0", 10);
     });
 
-    test("reports a catalog panel selection that could not be applied", async () => {
+    test("reports a catalog widget selection that could not be applied", async () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.setCatalogPanelSelectionByPanelId.mockReturnValue(false);
+        appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId.mockReturnValue(false);
 
         const problems = await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 1}}));
 
-        expect(problems).toContain("Could not restore catalog panel catalog-overlay-0 to the catalog sources.vot: the panel selection could not be applied");
+        expect(problems).toContain("Could not restore catalog widget catalog-overlay-0 to the catalog sources.vot: the widget selection could not be applied");
     });
 
-    test("preserves and reports an unavailable catalog panel source while identifying its fallback", async () => {
+    test("preserves and reports an unavailable catalog widget source while identifying its fallback", async () => {
         const {appStore} = createSession();
-        const panelStore = {panelId: "catalog-overlay-0", selectedCatalogId: 10, setUnavailableWorkspaceCatalogId: jest.fn()};
-        appStore.widgetsStore.catalogPanelWidgets.set("catalog-overlay-0", panelStore);
+        const widgetStore = {widgetId: "catalog-overlay-0", selectedCatalogId: 10, setUnavailableWorkspaceCatalogId: jest.fn()};
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", widgetStore);
 
         const problems = await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 7}}));
 
-        expect(panelStore.setUnavailableWorkspaceCatalogId).toHaveBeenCalledWith(7);
-        expect(problems).toContain("Could not restore catalog panel catalog-overlay-0: workspace catalog 7 is unavailable; it is showing the catalog sources.vot instead");
+        expect(widgetStore.setUnavailableWorkspaceCatalogId).toHaveBeenCalledWith(7);
+        expect(problems).toContain("Could not restore catalog widget catalog-overlay-0: workspace catalog 7 is unavailable; it is showing the catalog sources.vot instead");
     });
 
     test("preserves and reports an unavailable catalog plot source while identifying its fallback", async () => {

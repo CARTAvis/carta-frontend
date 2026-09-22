@@ -227,7 +227,7 @@ export class LayoutConfig {
             if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
                 floatingConfig.plotType = widgetSettingsConfig.plotType;
             } else {
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+                const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(config.id);
                 if (plotWidget) {
                     floatingConfig.plotType = plotWidget.plotType;
                 }
@@ -261,7 +261,7 @@ export class LayoutConfig {
                 if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
                     child.plotType = widgetSettingsConfig.plotType;
                 } else {
-                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
+                    const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(instanceId);
                     if (plotWidget) {
                         child.plotType = plotWidget.plotType;
                     }

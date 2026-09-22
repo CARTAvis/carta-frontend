@@ -1,8 +1,9 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
+import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetsStore} from "./WidgetsStore";
@@ -27,6 +28,9 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.getNodeById.mockReset();
         layoutModelMock.doAction.mockReset();
         layoutModelMock.visitNodes.mockReset();
+        CatalogStore.Instance.catalogProfileStores.clear();
+        CatalogStore.Instance.catalogDisplayStores.clear();
+        Array.from(CatalogStore.Instance.catalogPlots.keys()).forEach(componentId => CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId));
     });
 
     afterEach(() => {
@@ -191,5 +195,36 @@ describe("WidgetsStore PV preview test ids", () => {
             relativeReferenceMjdUtc: 58000,
             relativeTimeUnit: RelativeTimeUnit.DAY
         });
+    });
+
+    test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
+        const oldWidgetId = widgetsStore.addCatalogPlotWidget(props)!;
+        const componentId = "catalog-plot-component-retained";
+
+        CatalogStore.Instance.setCatalogPlots(componentId, 7, oldWidgetId);
+        CatalogStore.Instance.clearCatalogPlotsByFileId(7);
+
+        expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
+
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        widgetsStore.catalogPlotWidgets.clear();
+    });
+
+    test("clears the catalog widget store when a docked catalog tab is closed", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
+
+        layoutModelMock.getNodeById.mockReturnValue({
+            getType: () => "tab",
+            getComponent: () => "catalog-overlay",
+            getId: () => "catalog-overlay-7"
+        });
+
+        widgetsStore.onAction({type: Actions.DELETE_TAB, data: {node: "catalog-overlay-7"}});
+
+        expect(widgetsStore.catalogWidgets.has("catalog-overlay-7")).toBe(false);
     });
 });

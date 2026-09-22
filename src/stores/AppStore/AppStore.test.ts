@@ -2,24 +2,61 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
-import {ProtobufProcessing} from "utilities";
+import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
+    const widgetsStore = appStore.widgetsStore;
 
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
+        catalogStore.catalogPlots.clear();
+        catalogStore.imageAssociatedCatalogId.clear();
+        widgetsStore.catalogWidgets.clear();
+        widgetsStore.catalogPlotWidgets.clear();
+    });
+
+    test("updates an existing widget when loading a catalog after the widget store exists", () => {
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        catalogStore.imageAssociatedCatalogId.set(100, [1]);
+
+        jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
+
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
+        expect(widget.selectedCatalogId).toBe(2);
+    });
+
+    test("creates a widget store for the first loaded catalog", () => {
+        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
+
+        expect(componentId).toBeDefined();
+        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(2);
+    });
+
+    test("updates every widget when the first catalog is loaded for a new image", () => {
+        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
+        catalogStore.imageAssociatedCatalogId.set(101, []);
+
+        const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
+
+        expect(componentId).toBe("catalog-overlay-component-0");
+        expect(firstWidget.selectedCatalogId).toBe(3);
+        expect(secondWidget.selectedCatalogId).toBe(3);
     });
 
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.ICRS},
-            get2DPlotData: jest.fn(),
+            get2DCoordinateData: jest.fn(),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
@@ -52,7 +89,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         });
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });
@@ -61,12 +98,13 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: jest.fn(() => ({
+            get2DCoordinateData: jest.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
+            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
@@ -99,31 +137,78 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.get2DPlotData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
-        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", CatalogSystemType.FK5, 1, 1);
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.FK5}), 1, 1, undefined);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
         expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
     });
 
-    test("plots streamed rows on the overlay that is drawn, not the plot controls it has been left on", () => {
+    test("updates Galactic overlays when coordinate columns have no units", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
-            get2DPlotData: jest.fn(() => ({
-                wcsX: [1.1],
-                wcsY: [2.2],
-                xHeaderInfo: {units: "deg"},
-                yHeaderInfo: {units: "deg"}
+            get2DCoordinateData: jest.fn(() => ({
+                wcsX: [150],
+                wcsY: [2.476567],
+                xHeaderInfo: {units: ""},
+                yHeaderInfo: {units: ""}
             })),
+            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
             setLoadingDataStatus: jest.fn(),
             setProgress: jest.fn(),
             setUpdatingDataStream: jest.fn(),
             updateCatalogData: jest.fn(),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
-        // The panel has been moved on to other columns and another system since the overlay was
-        // drawn, which does not take the overlay down.
+        const widgetStore = {
+            setPlottedImageOverlayState: jest.fn(),
+            xAxis: "GLON1",
+            yAxis: "GLAT1"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
+
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+
+        appStore.handleCatalogFilterStream({
+            requestId: 1,
+            message: {
+                columns: [],
+                fileId: 1,
+                progress: 1,
+                subsetDataSize: 1,
+                subsetEndIndex: 1
+            } as unknown as CARTA.CatalogFilterResponse
+        });
+
+        expect(convertSpy).toHaveBeenCalledWith(1, [150], [2.476567], "wcs", "", "", expect.objectContaining({system: CatalogSystemType.Galactic}), 1, 1, undefined);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("GLON1", "GLAT1", CatalogSystemType.Galactic);
+    });
+
+    test("plots streamed rows on the overlay that is drawn, not the plot controls it has been left on", () => {
+        const processedData = new Map<number, unknown>();
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
+            get2DCoordinateData: jest.fn(() => ({
+                wcsX: [1.1],
+                wcsY: [2.2],
+                xHeaderInfo: {units: "deg"},
+                yHeaderInfo: {units: "deg"}
+            })),
+            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
+            setLoadingDataStatus: jest.fn(),
+            setProgress: jest.fn(),
+            setUpdatingDataStream: jest.fn(),
+            updateCatalogData: jest.fn(),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        // The widget has been moved on to other columns since the overlay was drawn, which does not
+        // take the overlay down.
         const widgetStore = {
             hasPlottedImageOverlay: true,
             plottedImageOverlaySystem: CatalogSystemType.ICRS,
@@ -154,16 +239,16 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.get2DPlotData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
-        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", CatalogSystemType.ICRS, 1, 1, 1);
-        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.ICRS);
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Galactic}), 1, 1, 1);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.Galactic);
     });
 
     test("does not replot for column-update responses", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: jest.fn(() => ({
+            get2DCoordinateData: jest.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
@@ -204,9 +289,78 @@ describe("AppStore.handleCatalogFilterStream", () => {
         });
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
+    });
+
+    test("backfills the accumulated prefix when a streamed coordinate format becomes known", () => {
+        const processedData = new Map<number, unknown>();
+        let isFormatKnown = false;
+        const accumulatedData = {prefix: "all rows"};
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"},
+            catalogData: accumulatedData,
+            get2DCoordinateData: jest
+                .fn()
+                .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
+                .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),
+            getCoordinateEligibility: jest.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
+            setLoadingDataStatus: jest.fn(),
+            setProgress: jest.fn(),
+            setUpdatingDataStream: jest.fn(),
+            updateCatalogData: jest.fn(() => {
+                isFormatKnown = true;
+            }),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        const widgetStore = {
+            setPlottedImageOverlayState: jest.fn(),
+            xAxis: "elon",
+            yAxis: "elat"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
+
+        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const clearSpy = jest.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(jest.fn());
+        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+
+        appStore.handleCatalogFilterStream({
+            requestId: 1,
+            message: {
+                columns: [],
+                fileId: 1,
+                progress: 1,
+                subsetDataSize: 1,
+                subsetEndIndex: 3
+            } as unknown as CARTA.CatalogFilterResponse
+        });
+
+        expect(clearSpy).toHaveBeenCalledWith(1);
+        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, 3);
+        expect(convertSpy).toHaveBeenCalledWith(1, [1, 2, 3], [4, 5, 6], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}), 0, 0, undefined);
+    });
+
+    test("completes a request when its profile store was removed before the final response", () => {
+        catalogStore.catalogRequests.start(7);
+        catalogStore.catalogRequests.attach(7, 42);
+
+        appStore.handleCatalogFilterStream({
+            requestId: 42,
+            message: {
+                columns: [],
+                fileId: 7,
+                progress: 1,
+                subsetDataSize: 0,
+                subsetEndIndex: 0
+            } as unknown as CARTA.CatalogFilterResponse
+        });
+
+        expect(catalogStore.catalogRequests.accepts(7, 42)).toBe(false);
     });
 });
 
@@ -281,7 +435,7 @@ describe("AppStore.updateCatalogProfile", () => {
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
-        appStore.widgetsStore.catalogPanelWidgets.clear();
+        appStore.widgetsStore.catalogWidgets.clear();
         catalogStore.imageAssociatedCatalogId.clear();
     });
 

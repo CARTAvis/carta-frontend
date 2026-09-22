@@ -287,16 +287,16 @@ export class WorkspaceSnapshotter {
     /** Stage 4: which catalog each panel is showing, named by the workspace's own catalog IDs. */
     private captureViews(): void {
         const selectedCatalogIds: Record<string, number> = {};
-        this.appStore.widgetsStore.catalogPanelWidgets.forEach((panelStore, componentId) => {
-            const panelId = panelStore.panelId || componentId;
-            const catalogFileId = panelStore.selectedCatalogId;
+        this.appStore.widgetsStore.catalogWidgets.forEach((widgetStore, componentId) => {
+            const widgetId = widgetStore.widgetId || componentId;
+            const catalogFileId = widgetStore.selectedCatalogId;
             // A panel restored for a catalog that was unavailable keeps naming that catalog.
-            if (panelStore.unavailableWorkspaceCatalogId !== undefined) {
-                selectedCatalogIds[panelId] = panelStore.unavailableWorkspaceCatalogId;
+            if (widgetStore.unavailableWorkspaceCatalogId !== undefined) {
+                selectedCatalogIds[widgetId] = widgetStore.unavailableWorkspaceCatalogId;
             } else if (this.appStore.catalogStore.catalogProfileStores.has(catalogFileId)) {
                 const workspaceCatalogId = this.catalogIdOf(catalogFileId);
                 if (workspaceCatalogId !== undefined) {
-                    selectedCatalogIds[panelId] = workspaceCatalogId;
+                    selectedCatalogIds[widgetId] = workspaceCatalogId;
                 }
             }
         });

@@ -75,7 +75,7 @@ function createSession(overrides: Record<string, any> = {}) {
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore)
         },
-        widgetsStore: {catalogPanelWidgets: new Map()},
+        widgetsStore: {catalogWidgets: new Map()},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
@@ -136,7 +136,7 @@ describe("WorkspaceSnapshotter", () => {
 
     test("names the catalog each panel shows by the workspace's own catalog ID", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogPanelWidgets.set("catalog-overlay-0", {panelId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: undefined} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: undefined} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
@@ -145,7 +145,7 @@ describe("WorkspaceSnapshotter", () => {
 
     test("keeps naming the catalog a panel was restored for when it was unavailable", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogPanelWidgets.set("catalog-overlay-0", {panelId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: 7} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: 7} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
