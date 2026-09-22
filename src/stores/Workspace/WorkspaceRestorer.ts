@@ -84,6 +84,26 @@ export class WorkspaceRestorer {
         return WorkspaceRestorer.isCurrentGeneration(this.generation);
     }
 
+    /**
+     * Take back out of the session an image this restore had asked for before it was superseded.
+     *
+     * A file that is already on its way from the backend is added to whatever session exists by the
+     * time it arrives, which may be the one a later load has since cleared and started filling. The
+     * restore that asked for it is the only thing that knows it does not belong there.
+     */
+    private closeSupersededImage(frame: FrameStore | undefined): void {
+        if (frame && this.appStore.frames.includes(frame)) {
+            this.appStore.closeFile(frame, false);
+        }
+    }
+
+    /** The same, for a catalog that finished opening into a session this restore no longer owns. */
+    private closeSupersededCatalog(catalogFileId: number | undefined): void {
+        if (catalogFileId !== undefined) {
+            this.appStore.removeCatalog(catalogFileId);
+        }
+    }
+
     private get appStore(): AppStore {
         return AppStore.Instance;
     }
@@ -139,6 +159,12 @@ export class WorkspaceRestorer {
                 frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
             } catch (err) {
                 console.error(err);
+            }
+            // Checked again here rather than only at the top of the loop: the image finished opening
+            // while this restore was suspended, and a load started in the meantime owns the session.
+            if (!this.isCurrent) {
+                this.closeSupersededImage(frame);
+                return;
             }
             if (!frame) {
                 this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`);
@@ -311,6 +337,10 @@ export class WorkspaceRestorer {
             } catch (err) {
                 console.error(err);
             }
+            if (!this.isCurrent) {
+                this.closeSupersededCatalog(catalogFileId);
+                return;
+            }
             if (catalogFileId === undefined) {
                 this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}`);
                 continue;
@@ -379,6 +409,9 @@ export class WorkspaceRestorer {
             const rowFailure = isDisplayConfigApplied ? failure : `Could not restore the rows of the catalog ${description}`;
             try {
                 const restoreResult = yield* awaited(completion);
+                if (!this.isCurrent) {
+                    return;
+                }
                 if (restoreResult && !restoreResult.success) {
                     this.report(WorkspaceItemKind.Catalog, description, `${rowFailure}: ${restoreResult.message ?? "the data request failed"}`);
                 } else {

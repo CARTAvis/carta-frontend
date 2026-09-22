@@ -58,11 +58,18 @@ function createSession() {
         animatorStore: {stopAnimation: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
+        /** The images the session currently holds, in the order they were opened. */
+        frames: [] as ReturnType<typeof createFrame>[],
         appendFile: jest.fn(() => {
             const frame = createFrame(++nextFileId);
             frames.set(frame.frameInfo.fileId, frame);
+            appStore.frames.push(frame);
             return Promise.resolve(frame);
         }),
+        closeFile: jest.fn((frame: ReturnType<typeof createFrame>, _shouldConfirmClose?: boolean) => {
+            appStore.frames = appStore.frames.filter(f => f !== frame);
+        }),
+        removeCatalog: jest.fn(),
         appendConcatFile: jest.fn(),
         appendCatalog: jest.fn(() => {
             calls.push("appendCatalog");
@@ -241,6 +248,35 @@ describe("WorkspaceRestorer", () => {
         }
 
         expect(appStore.appendFile).toHaveBeenCalledTimes(1);
+        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+    });
+
+    test("takes back out an image that finished opening after a later load took the session", async () => {
+        const {appStore} = createSession();
+        let arrive!: (frame: unknown) => void;
+        const opening = new Promise<any>(resolve => {
+            arrive = resolve;
+        });
+        const frame = createFrame(99);
+        appStore.appendFile.mockImplementation(() => {
+            appStore.frames.push(frame);
+            return opening as ReturnType<typeof appStore.appendFile>;
+        });
+
+        const generator = new WorkspaceRestorer(createWorkspace({layout: LAYOUT}), WorkspaceRestorer.claimGeneration()).restore();
+        const step = generator.next();
+
+        // The second load claims the session while the first image is still on its way, and the
+        // image only arrives afterwards.
+        WorkspaceRestorer.claimGeneration();
+        arrive(frame);
+        let next = generator.next(await step.value);
+        while (!next.done) {
+            next = generator.next(await next.value);
+        }
+
+        expect(appStore.closeFile).toHaveBeenCalledWith(frame, false);
+        expect(appStore.frames).not.toContain(frame);
         expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
     });
 
