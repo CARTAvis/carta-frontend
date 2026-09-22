@@ -662,7 +662,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         // Ensure columnWidths array matches the number of expected columns
         const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
-        let columnWidths = displayStore.headerTableColumnWidths;
+        let columnWidths = this.widgetStore.headerTableColumnWidths;
         if (!columnWidths || columnWidths.length !== expectedColumnCount) {
             columnWidths = new Array(expectedColumnCount).fill(undefined);
         }
@@ -690,27 +690,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
-        const displayStore = this.displayStore;
-        if (!displayStore) {
-            return;
-        }
-
-        // Ensure the array exists and has the correct length (5 columns)
-        const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
-        if (!displayStore.headerTableColumnWidths) {
-            displayStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
-        } else if (displayStore.headerTableColumnWidths.length !== expectedColumnCount) {
-            // Resize array to match expected column count
-            const newArray = new Array(expectedColumnCount).fill(undefined);
-            for (let i = 0; i < Math.min(displayStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
-                newArray[i] = displayStore.headerTableColumnWidths[i];
-            }
-            displayStore.headerTableColumnWidths = newArray;
-        }
-
-        if (index >= 0 && index < displayStore.headerTableColumnWidths.length) {
-            displayStore.headerTableColumnWidths[index] = size;
-        }
+        this.widgetStore.setHeaderTableColumnWidth(index, size);
     };
 
     private resetSelectedPointIndices = () => {

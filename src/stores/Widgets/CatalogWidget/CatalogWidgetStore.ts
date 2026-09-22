@@ -11,6 +11,8 @@ export interface CatalogWidgetLayoutSettings {
     /** Kept for layouts written before widget state was separated from display state. */
     catalogFileId?: number;
     tableSeparatorPosition?: string;
+    /** Widths of the header table's columns, as the user left them. */
+    headerTableColumnWidths?: number[];
     /** The settings section this widget was left on, per catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
     /** The same, for a workspace, per the workspace's own catalog ID: the file ID a session gave a
@@ -21,10 +23,18 @@ export interface CatalogWidgetLayoutSettings {
 }
 
 export class CatalogWidgetStore {
+    /** Columns of the header table: name, unit, type, display, description. */
+    private static readonly HeaderTableColumnCount = 5;
+
     @observable widgetId: string;
     @observable selectedCatalogId: number = 1;
     @observable unavailableWorkspaceCatalogId: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
+    /**
+     * Widths of the header table's columns. The table lists the catalog's columns but belongs to the
+     * widget showing it, so two widgets on one catalog size their headers independently.
+     */
+    @observable headerTableColumnWidths: number[] = [150, 75, 65, 100, 230];
     /**
      * The settings section for each catalog this widget has shown. The section belongs to the widget,
      * so two widgets showing one catalog keep their own, but it is remembered per catalog so that a
@@ -72,6 +82,21 @@ export class CatalogWidgetStore {
         this.tableSeparatorPosition = position;
     };
 
+    /** Resize one header table column, growing the widths to cover every column if they do not yet. */
+    @action setHeaderTableColumnWidth = (index: number, width: number) => {
+        if (index < 0 || index >= CatalogWidgetStore.HeaderTableColumnCount) {
+            return;
+        }
+        if (this.headerTableColumnWidths.length !== CatalogWidgetStore.HeaderTableColumnCount) {
+            const resized = new Array(CatalogWidgetStore.HeaderTableColumnCount).fill(undefined);
+            for (let i = 0; i < Math.min(this.headerTableColumnWidths.length, resized.length); i++) {
+                resized[i] = this.headerTableColumnWidths[i];
+            }
+            this.headerTableColumnWidths = resized;
+        }
+        this.headerTableColumnWidths[index] = width;
+    };
+
     @computed get settingsTabId(): CatalogSettingsTabs {
         return this.settingsTabIdByCatalog.get(this.selectedCatalogId) ?? CatalogSettingsTabs.SIZE;
     }
@@ -84,6 +109,7 @@ export class CatalogWidgetStore {
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
+        ...(this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? {headerTableColumnWidths: [...this.headerTableColumnWidths]} : {}),
         ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings)
     });
 
@@ -124,6 +150,9 @@ export class CatalogWidgetStore {
         }
         if (typeof settings.tableSeparatorPosition === "string") {
             this.tableSeparatorPosition = settings.tableSeparatorPosition;
+        }
+        if (settings.headerTableColumnWidths?.length === CatalogWidgetStore.HeaderTableColumnCount && settings.headerTableColumnWidths.every(width => Number.isFinite(width))) {
+            this.headerTableColumnWidths = [...settings.headerTableColumnWidths];
         }
         if (settings.settingsTabIdByCatalog) {
             for (const [catalogFileId, tabId] of Object.entries(settings.settingsTabIdByCatalog)) {

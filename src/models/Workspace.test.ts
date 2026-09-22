@@ -138,7 +138,6 @@ describe("workspace schema 2", () => {
             color: "#112233",
             size: 10,
             displayMode: "Custom",
-            headerTableColumnWidths: [160, 80, 70, 110, 240],
             sizeAxis: {mapColumn: "Fmag", columnMinClip: 1, columnMaxClip: 10, scalingType: 1, scalingParameters: {log: 500}},
             colorAxis: {mapColumn: "Vmag", colorMap: "viridis", inverted: true},
             orientationAxis: {mapColumn: "PA", angleMin: 0, angleMax: 360},

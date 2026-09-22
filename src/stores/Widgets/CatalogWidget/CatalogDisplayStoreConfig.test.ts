@@ -562,10 +562,12 @@ describe("CatalogDisplayStore display config", () => {
         const widget = new CatalogWidgetStore(7);
         widget.setTableSeparatorPosition("40%");
         widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        widget.setHeaderTableColumnWidth(3, 180);
 
         expect(widget.toLayoutSettings()).toEqual({
             catalogFileId: 7,
             tableSeparatorPosition: "40%",
+            headerTableColumnWidths: [150, 75, 65, 180, 230],
             settingsTabIdByCatalog: {"7": CatalogSettingsTabs.COLOR}
         });
 
@@ -573,7 +575,27 @@ describe("CatalogDisplayStore display config", () => {
         restored.applyLayoutSettings(widget.toLayoutSettings());
         expect(restored.selectedCatalogId).toBe(7);
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(restored.headerTableColumnWidths).toEqual([150, 75, 65, 180, 230]);
         expect(restored.toLayoutSettings()).toEqual(widget.toLayoutSettings());
+    });
+
+    test("keeps header table widths out of the catalog's display config", () => {
+        // The header table belongs to the widget, so two widgets on one catalog size it separately.
+        const first = new CatalogWidgetStore(7);
+        const second = new CatalogWidgetStore(7);
+        first.setHeaderTableColumnWidth(0, 300);
+
+        expect(second.headerTableColumnWidths[0]).toBe(150);
+        expect(createStore().toConfig()).not.toHaveProperty("headerTableColumnWidths");
+    });
+
+    test("ignores header table widths that do not cover every column", () => {
+        const widget = new CatalogWidgetStore(7);
+        widget.applyLayoutSettings({headerTableColumnWidths: [10, 20]});
+        expect(widget.headerTableColumnWidths).toEqual([150, 75, 65, 100, 230]);
+
+        widget.applyLayoutSettings({headerTableColumnWidths: [10, 20, NaN, 40, 50]});
+        expect(widget.headerTableColumnWidths).toEqual([150, 75, 65, 100, 230]);
     });
 
     test("keeps a chosen bound that happens to equal the bound the previous column implied", () => {

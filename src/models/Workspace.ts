@@ -175,7 +175,6 @@ export interface WorkspaceCatalogConfig {
     xAxis?: string;
     yAxis?: string;
     imageOverlay?: WorkspaceCatalogImageOverlay;
-    headerTableColumnWidths?: number[];
     sizeAxis?: WorkspaceCatalogSizeAxisConfig;
     sizeMinorAxis?: WorkspaceCatalogSizeAxisConfig;
     colorAxis?: WorkspaceCatalogColorAxisConfig;

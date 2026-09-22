@@ -258,7 +258,6 @@ export class CatalogDisplayStore {
     ]);
 
     @observable catalogFileId: number = 0;
-    @observable headerTableColumnWidths: Array<number> = [150, 75, 65, 100, 230];
     @observable dataTableColumnWidths: Array<number> = [];
     @observable isShowingSelectedData: boolean = false;
     @observable isCatalogTableAutoScrollEnabled: boolean = false;
@@ -1121,10 +1120,6 @@ export class CatalogDisplayStore {
         this.setCatalogSize(this.showedCatalogSize);
     }
 
-    @action setHeaderTableColumnWidths(vals: Array<number>) {
-        this.headerTableColumnWidths = vals;
-    }
-
     @action setDataTableColumnWidths(vals: Array<number>) {
         this.dataTableColumnWidths = vals;
     }
@@ -1523,10 +1518,6 @@ export class CatalogDisplayStore {
         this.setThickness(clamp(finiteNumberOrDefault(config?.thickness, 2.0), CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS));
         this.setxAxis(typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE);
         this.setyAxis(typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE);
-        if (config?.headerTableColumnWidths?.length === this.headerTableColumnWidths.length && config.headerTableColumnWidths.every(width => Number.isFinite(width))) {
-            this.setHeaderTableColumnWidths(config.headerTableColumnWidths);
-        }
-
         const showedCatalogSize = clamp(finiteNumberOrDefault(config?.size, 10.0), this.minOverlaySize, this.maxOverlaySize);
         this.setCatalogSize(showedCatalogSize);
 
@@ -1612,7 +1603,6 @@ export class CatalogDisplayStore {
             plotType: this.catalogPlotType,
             xAxis: this.xAxis,
             yAxis: this.yAxis,
-            headerTableColumnWidths: this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? [...this.headerTableColumnWidths] : undefined,
             imageOverlay:
                 this.hasPlottedImageOverlay && this.plottedImageOverlaySystem !== undefined
                     ? {
