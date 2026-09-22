@@ -91,7 +91,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             if (!catalogDisplayStore) {
                 return;
             }
-            appStore.removeCatalog(catalogFileId);
+            appStore.removeCatalog(catalogFileId, this.widgetId);
         }
     };
 

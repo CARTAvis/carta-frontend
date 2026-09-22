@@ -1325,13 +1325,20 @@ export class AppStore {
         return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId).widgetComponentId;
     };
 
-    @action removeCatalog(fileId: number) {
+    /**
+     * Close a catalog.
+     *
+     * @param catalogComponentId - the widget the catalog is being closed from, if it is being closed
+     *     from one: that widget is moved onto a catalog the image still has rather than left
+     *     pointing at the one that has gone.
+     */
+    @action removeCatalog(fileId: number, catalogComponentId?: string) {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             const catalogStore = CatalogStore.Instance;
             // close all associated catalog plots widgets
             catalogStore.clearCatalogPlotsByFileId(fileId);
             // remove overlay
-            catalogStore.removeCatalog(fileId);
+            catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
             catalogStore.catalogProfileStores.delete(fileId);
 

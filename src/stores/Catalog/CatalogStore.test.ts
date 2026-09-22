@@ -797,6 +797,18 @@ describe("CatalogStore widget selection", () => {
         expect(widget.selectedCatalogId).toBe(7);
     });
 
+    test("moves a widget onto a catalog the image still has when the one it showed is closed", () => {
+        catalogStore.updateImageAssociatedCatalogId(103, [7, 8]);
+        jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({frameInfo: {fileId: 103}} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(103);
+        jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+
+        catalogStore.removeCatalog(7, "catalog-widget-0");
+
+        expect(widget.selectedCatalogId).toBe(8);
+    });
+
     test("preserves each widget selection when it remains active", () => {
         catalogStore.updateImageAssociatedCatalogId(102, [7, 8]);
         const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
