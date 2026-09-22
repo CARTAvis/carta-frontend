@@ -511,14 +511,35 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
+    /** Catalog IDs that have been asked for but whose catalog has not arrived yet. */
+    @observable private pendingCatalogFileIds = new Set<number>();
+
     @computed get catalogNextFileId(): number {
         let id = 1;
         const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
-        while (currentCatalogIds?.includes(id) && currentCatalogIds.length) {
+        while ((currentCatalogIds?.includes(id) && currentCatalogIds.length) || this.pendingCatalogFileIds.has(id)) {
             id += 1;
         }
         return id;
     }
+
+    /**
+     * Take the next catalog ID and hold it until the catalog it was taken for has arrived.
+     *
+     * A catalog only becomes one this counts once its profile store exists, which is not until the
+     * data comes back. Without holding the ID in the meantime, a catalog asked for while another is
+     * still on its way is handed the same one, and whichever arrives second replaces the first.
+     */
+    @action reserveCatalogFileId = (): number => {
+        const fileId = this.catalogNextFileId;
+        this.pendingCatalogFileIds.add(fileId);
+        return fileId;
+    };
+
+    /** Stop holding a catalog ID, whether the catalog arrived or the request came to nothing. */
+    @action releaseCatalogFileId = (fileId: number): void => {
+        this.pendingCatalogFileIds.delete(fileId);
+    };
 
     @computed get frameNames(): OptionProps[] {
         return this.frames?.map(frame => {
@@ -800,8 +821,10 @@ export class AppStore {
         }
 
         try {
-            const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, isImageArithmetic);
-            this.fileCounter++;
+            // Taken before the request goes out: a second load started while this one is still in
+            // flight would otherwise be handed the same ID and replace the image this one opens.
+            const fileId = this.fileCounter++;
+            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic);
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, shouldSetAsActive, shouldUpdateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
@@ -853,8 +876,8 @@ export class AppStore {
     loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         this.startFileLoading();
         try {
-            const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
-            this.fileCounter++;
+            const fileId = this.fileCounter++;
+            const ack = await this.backendService.loadStokeFiles(stokesFiles, fileId, CARTA.RenderMode.RASTER);
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, directory, false, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             } else if (ack.openFileAck?.fileId !== undefined && ack.openFileAck.fileId !== null) {
@@ -1243,7 +1266,7 @@ export class AppStore {
         }
         this.startFileLoading();
 
-        const fileId = this.catalogNextFileId;
+        const fileId = this.reserveCatalogFileId();
 
         try {
             const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
@@ -1271,6 +1294,8 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
+        } finally {
+            this.releaseCatalogFileId(fileId);
         }
     }
 

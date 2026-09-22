@@ -256,7 +256,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const fileIds: number[] = [];
         resources.forEach(element => {
-            const fileId = appStore.catalogNextFileId;
+            const fileId = appStore.reserveCatalogFileId();
             const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
             const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
@@ -277,6 +277,8 @@ export class CatalogApiService {
             if (this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER, targetFrameId)) {
                 fileIds.push(fileId);
             }
+            // Loaded or not, the catalog is no longer one that is still on its way.
+            appStore.releaseCatalogFileId(fileId);
         });
         return fileIds;
     };
@@ -323,7 +325,7 @@ export class CatalogApiService {
             throw new Error("No image file");
         }
 
-        const fileId = appStore.catalogNextFileId;
+        const fileId = appStore.reserveCatalogFileId();
         const querySource = savedQuery ?? CatalogApiService.captureQuery("simbad");
         let loadedFileId: number | undefined;
         let dataSize = 0;
@@ -363,6 +365,8 @@ export class CatalogApiService {
             } else {
                 console.log("Append Simbad Error: " + error);
             }
+        } finally {
+            appStore.releaseCatalogFileId(fileId);
         }
         return {dataSize, fileId: loadedFileId};
     };

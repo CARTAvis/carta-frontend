@@ -450,6 +450,43 @@ describe("AppStore.updateCatalogProfile", () => {
     });
 });
 
+describe("AppStore.reserveCatalogFileId", () => {
+    const appStore = AppStore.Instance;
+    const catalogStore = appStore.catalogStore;
+    const reserved: number[] = [];
+
+    beforeEach(() => {
+        catalogStore.catalogProfileStores.clear();
+        reserved.splice(0).forEach(fileId => appStore.releaseCatalogFileId(fileId));
+    });
+
+    function reserve(): number {
+        const fileId = appStore.reserveCatalogFileId();
+        reserved.push(fileId);
+        return fileId;
+    }
+
+    test("does not hand out an ID a catalog that has not arrived yet was asked for under", () => {
+        // Two catalogs asked for at once: the second must not be given the first one's ID, or
+        // whichever arrives second replaces the other.
+        expect(reserve()).toBe(1);
+        expect(reserve()).toBe(2);
+    });
+
+    test("hands the ID out again once the request it was taken for has come to nothing", () => {
+        const fileId = appStore.reserveCatalogFileId();
+        appStore.releaseCatalogFileId(fileId);
+
+        expect(reserve()).toBe(fileId);
+    });
+
+    test("skips the IDs of catalogs that have already arrived", () => {
+        catalogStore.catalogProfileStores.set(1, {} as any);
+
+        expect(reserve()).toBe(2);
+    });
+});
+
 describe("AppStore.saveWorkspace", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
