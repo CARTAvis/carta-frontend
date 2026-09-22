@@ -52,6 +52,13 @@ describe("SpectralSettingsComponent system dropdown", () => {
         expect(Array.from(systemSelect.options).map(option => option.text)).toEqual(["Unknown"]);
     });
 
+    test("shows a blank entry for an image without a spectral axis", () => {
+        const frame = {...MakeFrame("", []), spectralAxis: undefined, spectralCoordsSupported: null, spectralSystemsSupported: null} as unknown as FrameStore;
+        const systemSelect = RenderSystemSelect(frame);
+        expect(systemSelect.disabled).toBe(true);
+        expect(Array.from(systemSelect.options).map(option => option.text)).toEqual([""]);
+    });
+
     test("shows the native SPECSYS when no system conversion is available", () => {
         const systemSelect = RenderSystemSelect(MakeFrame("LSRK", []));
         expect(systemSelect.disabled).toBe(true);

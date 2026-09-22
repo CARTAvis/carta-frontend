@@ -12,7 +12,7 @@
 
     .moment-panel {
         .label-info {
-            max-width: calc(100% - 92px);
+            max-width: calc(100% - 4em);
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
@@ -23,6 +23,10 @@
         .image-region-select {
             .#{$ns}-html-select {
                 width: 100%;
+            }
+
+            .label-info {
+                max-width: calc(100% - 92px);
             }
 
             .region-help {
