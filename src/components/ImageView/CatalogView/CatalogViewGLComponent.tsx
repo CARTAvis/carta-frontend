@@ -295,12 +295,14 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
 
                 // selected source
-                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
-                if (selectedSource) {
-                    this.gl.activeTexture(GL2.TEXTURE6);
-                    this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
-                }
+                // Bound whether or not this catalog has a selection: leaving the one integer sampler
+                // on the default unit, alongside a float texture, makes the draw fail for the
+                // overlay as a whole. A catalog restored from a workspace has no selection texture
+                // until something makes one, which is how the overlay came back invisible.
+                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource) ?? this.catalogWebGLService.emptySelectedSourceTexture;
+                this.gl.activeTexture(GL2.TEXTURE6);
+                this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource ?? null);
+                this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
 
                 // size minor
                 this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 0);
