@@ -60,10 +60,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         return this.regionGroups.find(group => group.regionGroupId === this.selectedRegionGroupId) ?? this.regionGroups[0];
     }
 
-    @computed private get data(): Point2D[] {
+    @computed private get plotEntries() {
         const entries = (this.regionGroup?.entries ?? []).filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined);
         const firstMjdUtc = entries.length ? Math.min(...entries.map(entry => entry.region.mjdUtc!)) : 0;
-        return entries.map(entry => ({x: this.convertMjd(entry.region.mjdUtc!, firstMjdUtc), y: (this.statistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : entry.region.regionSum) ?? NaN})).sort((a, b) => a.x - b.x);
+        return entries.map(entry => ({entry, x: this.convertMjd(entry.region.mjdUtc!, firstMjdUtc)})).sort((a, b) => a.x - b.x);
+    }
+
+    @computed private get data(): Point2D[] {
+        return this.plotEntries.map(({entry, x}) => ({x, y: (this.statistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : entry.region.regionSum) ?? NaN}));
     }
 
     private convertMjd(mjdUtc: number, firstMjdUtc: number): number {
@@ -94,6 +98,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         return group.regionGroupType === RegionGroupType.TIME_SERIES ? group.regionGroupName.replace(/^Region Group/, "Light curve") : group.regionGroupName;
     }
 
+    private selectFrameAtX = (x: number) => {
+        const closestEntry = this.plotEntries.reduce((closest, entry) => (Math.abs(entry.x - x) < Math.abs(closest.x - x) ? entry : closest), this.plotEntries[0]);
+        const frame = AppStore.Instance.timeSeriesStore.elements.find(element => element.frame.id === closestEntry?.entry.frameId)?.frame;
+        if (frame) {
+            AppStore.Instance.updateActiveImageByFrame(frame);
+        }
+    };
+
     @computed private get plotProps(): LinePlotComponentProps {
         const xValues = this.data.map(point => point.x);
         const yValues = this.data.map(point => point.y).filter(isFinite);
@@ -123,6 +135,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             isDarkMode: AppStore.Instance.isDarkTheme,
             imageName: this.regionGroup ? this.getRegionGroupLabel(this.regionGroup) : undefined,
             plotName: "light curve",
+            graphClicked: this.selectFrameAtX,
             testId: this.widgetId
         };
     }
