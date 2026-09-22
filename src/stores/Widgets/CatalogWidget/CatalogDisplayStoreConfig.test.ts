@@ -564,16 +564,16 @@ describe("CatalogDisplayStore display config", () => {
         widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
         widget.setHeaderTableColumnWidth(3, 180);
 
+        // A saved layout is reused against whatever catalogs a later session has open, so it names
+        // none of them: no catalog file ID, and the settings section without a catalog attached.
         expect(widget.toLayoutSettings()).toEqual({
-            catalogFileId: 7,
             tableSeparatorPosition: "40%",
             headerTableColumnWidths: [150, 75, 65, 180, 230],
-            settingsTabIdByCatalog: {"7": CatalogSettingsTabs.COLOR}
+            settingsTabId: CatalogSettingsTabs.COLOR
         });
 
-        const restored = new CatalogWidgetStore();
+        const restored = new CatalogWidgetStore(7);
         restored.applyLayoutSettings(widget.toLayoutSettings());
-        expect(restored.selectedCatalogId).toBe(7);
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
         expect(restored.headerTableColumnWidths).toEqual([150, 75, 65, 180, 230]);
         expect(restored.toLayoutSettings()).toEqual(widget.toLayoutSettings());
@@ -673,6 +673,16 @@ describe("CatalogDisplayStore display config", () => {
         restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION});
 
         expect(restored.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
-        expect(restored.toLayoutSettings().settingsTabIdByCatalog).toEqual({"3": CatalogSettingsTabs.ORIENTATION});
+        expect(restored.toLayoutSettings().settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+    });
+
+    test("names no catalog in a layout that is not a workspace's", () => {
+        const widget = new CatalogWidgetStore(7);
+        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
+
+        const settings = widget.toLayoutSettings();
+
+        expect(settings.catalogFileId).toBeUndefined();
+        expect(settings.settingsTabIdByCatalog).toBeUndefined();
     });
 });

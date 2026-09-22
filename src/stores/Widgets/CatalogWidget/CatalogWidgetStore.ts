@@ -13,12 +13,12 @@ export interface CatalogWidgetLayoutSettings {
     tableSeparatorPosition?: string;
     /** Widths of the header table's columns, as the user left them. */
     headerTableColumnWidths?: number[];
-    /** The settings section this widget was left on, per catalog file ID. */
+    /** Kept for layouts written while the settings section was stored per catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
-    /** The same, for a workspace, per the workspace's own catalog ID: the file ID a session gave a
-     * catalog names a different catalog once the workspace is opened again. */
+    /** The settings section this widget was left on, for a workspace, per the workspace's own catalog
+     * ID: the file ID a session gave a catalog names a different catalog once it is opened again. */
     settingsTabIdByWorkspaceCatalog?: Record<string, CatalogSettingsTabs>;
-    /** Kept for layouts written while the settings section belonged to the widget alone. */
+    /** The settings section this widget was left on, for a saved layout, which names no catalog. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
@@ -107,7 +107,6 @@ export class CatalogWidgetStore {
 
     public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
-        catalogFileId: this.selectedCatalogId,
         tableSeparatorPosition: this.tableSeparatorPosition,
         ...(this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? {headerTableColumnWidths: [...this.headerTableColumnWidths]} : {}),
         ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings)
@@ -118,15 +117,17 @@ export class CatalogWidgetStore {
      * whoever reads the settings back will know it by.
      *
      * A workspace names its catalogs by IDs of its own, since the file IDs of the session it was
-     * saved in are handed out again to other catalogs when it is opened. A saved layout is reused
-     * within the session that wrote it, so it goes on naming the file IDs it was written with.
+     * saved in are handed out again to other catalogs when it is opened. A saved layout names no
+     * catalog at all: it is kept on a server and reused against whatever a later session has open,
+     * so it carries only the section the widget was left on, for whichever catalog that turns out
+     * to be.
      */
-    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean): Pick<CatalogWidgetLayoutSettings, "settingsTabIdByCatalog" | "settingsTabIdByWorkspaceCatalog"> => {
-        const settingsTabs = Array.from(this.settingsTabIdByCatalog);
+    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean): Pick<CatalogWidgetLayoutSettings, "settingsTabId" | "settingsTabIdByWorkspaceCatalog"> => {
         if (!shouldIncludeWorkspaceBindings) {
-            return {settingsTabIdByCatalog: Object.fromEntries(settingsTabs.map(([catalogFileId, tabId]) => [String(catalogFileId), tabId]))};
+            return {settingsTabId: this.settingsTabId};
         }
 
+        const settingsTabs = Array.from(this.settingsTabIdByCatalog);
         const workspaceSettingsTabs: [string, CatalogSettingsTabs][] = [];
         for (const [catalogFileId, tabId] of settingsTabs) {
             const workspaceCatalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);

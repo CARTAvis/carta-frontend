@@ -1050,7 +1050,6 @@ export class AppStore {
             const isRemovedFrameRasterScalingReference = frame === this.rasterScalingReference;
             const fileId = frame.frameInfo.fileId;
             const isRemovedFrameLastFrame = this.frames[this.frames.length - 1].frameInfo.fileId === fileId;
-            WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Image, fileId);
 
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets(fileId);
@@ -1078,6 +1077,10 @@ export class AppStore {
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
+                // The image is on its way out, so the workspace has no more use for its ID. A close
+                // that did not go through leaves the image loaded, and a workspace saved afterwards
+                // still has to be able to name it.
+                WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Image, fileId);
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
@@ -1157,9 +1160,6 @@ export class AppStore {
 
     /** Closes all the images in the image view widget. */
     @action removeAllFrames = () => {
-        // Nothing this session opened is left to name, so give every workspace ID back.
-        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
-        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
         this.timeSeriesStore.clearMembers();
@@ -1168,6 +1168,10 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
+            // Nothing this session opened is left to name, so give every workspace ID back. A close
+            // that did not go through leaves everything loaded, still to be named by a later save.
+            WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+            WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
