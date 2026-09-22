@@ -66,6 +66,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private pendingScatterCursor: {x: number; y: number} | undefined;
     private scatterCursorFrame: number | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
+    private histogramHoverBinIndex: number | undefined;
+    private histogramHoverData: object | undefined;
     private pendingHistogramClickHandle: ReturnType<typeof setTimeout> | undefined;
     private hasHistogramBarDoubleClickHandled = false;
     private webglOverlayRef: CatalogScatterWebGL | null = null;
@@ -171,7 +173,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
-        window.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
+        this.stopHistogramMouseTracking();
         this.onHistogramContainerRef(null);
         if (this.scatterCursorFrame !== undefined) {
             window.cancelAnimationFrame(this.scatterCursorFrame);
@@ -717,7 +719,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onScatterZoomedXY = (xMin: number, xMax: number, yMin: number, yMax: number) => {
         const widgetStore = this.widgetStore;
-        if (widgetStore) {
+        if (widgetStore && Number.isFinite(xMin) && Number.isFinite(xMax) && Number.isFinite(yMin) && Number.isFinite(yMax) && xMax > xMin && yMax > yMin) {
             widgetStore.setScatterborder({xMin, xMax, yMin, yMax});
         }
     };
@@ -915,6 +917,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @action private onHistogramMouseLeave = () => {
         this.isHistogramMouseEntered = false;
         this.histogramHoverPixel = undefined;
+        this.histogramHoverBinIndex = undefined;
+        this.histogramHoverData = undefined;
         this.histogramPlotRef?.draw();
     };
 
@@ -961,7 +965,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         for (let i = 0; i < bins.length; i++) {
             const halfBin = binSize / 2;
             if (bins[i].x + halfBin >= xMin && bins[i].x - halfBin <= xMax) {
-                selected.push(...binIndices[i]);
+                for (const index of binIndices[i]) {
+                    selected.push(index);
+                }
             }
         }
         this.selectCatalogPoints(selected);
@@ -971,6 +977,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramDragCurrentX: number | undefined;
     private histogramPanPrevX: number | undefined;
     private hasHistogramDragHandled = false;
+    private histogramOwnerWindow: Window | null = null;
 
     private stopHistogramMouseTracking = (shouldPreserveDragHandled = false) => {
         this.histogramDragStartX = undefined;
@@ -979,18 +986,22 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!shouldPreserveDragHandled) {
             this.hasHistogramDragHandled = false;
         }
-        window.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
+        this.histogramOwnerWindow?.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
+        this.histogramOwnerWindow = null;
     };
 
     private onHistogramWindowMouseUp = () => {
-        this.stopHistogramMouseTracking();
+        const shouldPreserveDragHandled = this.histogramPanPrevX !== undefined && this.hasHistogramDragHandled;
+        this.stopHistogramMouseTracking(shouldPreserveDragHandled);
         this.histogramPlotRef?.draw();
     };
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         const target = event.target as Element | null;
         if (event.button === 0 && !target?.closest(".profiler-toolbar")) {
-            window.addEventListener("mouseup", this.onHistogramWindowMouseUp);
+            this.hasHistogramDragHandled = false;
+            this.histogramOwnerWindow = event.currentTarget.ownerDocument.defaultView;
+            this.histogramOwnerWindow?.addEventListener("mouseup", this.onHistogramWindowMouseUp);
             if (event.shiftKey) {
                 this.histogramPanPrevX = event.nativeEvent.offsetX;
             } else {
@@ -1018,6 +1029,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     const currentMin = widgetStore.histogramBorder?.xMin ?? xScale.min;
                     const currentMax = widgetStore.histogramBorder?.xMax ?? xScale.max;
                     widgetStore.setHistogramXBorder({xMin: currentMin + delta, xMax: currentMax + delta});
+                    if (delta !== 0) {
+                        this.hasHistogramDragHandled = true;
+                    }
                 }
                 this.histogramPanPrevX = offsetX;
             }
@@ -1035,7 +1049,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return;
         }
         if (this.histogramPanPrevX !== undefined) {
-            this.stopHistogramMouseTracking();
+            this.stopHistogramMouseTracking(this.hasHistogramDragHandled);
             return;
         }
         const chart = this.histogramPlotRef;
@@ -1076,15 +1090,21 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!chart) {
             return;
         }
-        const composed = document.createElement("canvas") as HTMLCanvasElement;
+        const ownerDocument = chart.canvas.ownerDocument;
+        const composed = ownerDocument.createElement("canvas") as HTMLCanvasElement;
         composed.width = chart.canvas.width + EXPORT_RIGHT_PADDING;
         composed.height = chart.canvas.height;
         const ctx = composed.getContext("2d");
         if (!ctx) {
             return;
         }
+        const histogramHoverPixel = this.histogramHoverPixel;
+        this.histogramHoverPixel = undefined;
+        chart.draw();
         this.fillPlotBackground(ctx, composed.width, composed.height);
         ctx.drawImage(chart.canvas, 0, 0);
+        this.histogramHoverPixel = histogramHoverPixel;
+        chart.draw();
         const columnName = this.widgetStore?.xColumnName ?? "histogram";
         this.downloadCanvasAsPng(composed, `catalog-histogram-${columnName}`);
     };
@@ -1118,7 +1138,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     private compositeScatterCanvases(chartCanvas: HTMLCanvasElement, webglCanvas: HTMLCanvasElement, gl: WebGL2RenderingContext): HTMLCanvasElement {
-        const composed = document.createElement("canvas");
+        const ownerDocument = chartCanvas.ownerDocument;
+        const composed = ownerDocument.createElement("canvas");
         composed.width = chartCanvas.width + EXPORT_RIGHT_PADDING;
         composed.height = chartCanvas.height;
         const ctx = composed.getContext("2d")!;
@@ -1127,7 +1148,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         ctx.drawImage(chartCanvas, 0, 0);
 
         const webglImageData = this.readWebGLPixelsFlipped(gl, webglCanvas);
-        const tempCanvas = document.createElement("canvas");
+        const tempCanvas = ownerDocument.createElement("canvas");
         tempCanvas.width = webglCanvas.width;
         tempCanvas.height = webglCanvas.height;
         tempCanvas.getContext("2d")!.putImageData(webglImageData, 0, 0);
@@ -1137,12 +1158,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     private downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string) {
+        const ownerDocument = canvas.ownerDocument;
+        const ownerWindow = ownerDocument.defaultView ?? window;
         canvas.toBlob(blob => {
             if (blob) {
-                const link = document.createElement("a");
+                const link = ownerDocument.createElement("a");
                 link.download = filename.substring(0, 200) + `-${getTimestamp()}.png`;
-                link.href = URL.createObjectURL(blob);
-                link.dispatchEvent(new MouseEvent("click"));
+                link.href = ownerWindow.URL.createObjectURL(blob);
+                link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }
         }, "image/png");
     }
@@ -1503,6 +1526,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             if (xVal !== undefined) {
                                 const binIndex = histData.binSize > 0 ? Math.floor((xVal - histData.start) / histData.binSize) : 0;
                                 const clampedIndex = Math.max(0, Math.min(binIndex, histData.bins.length - 1));
+                                if (this.histogramHoverData === histData && this.histogramHoverBinIndex === clampedIndex) {
+                                    return;
+                                }
+                                this.histogramHoverData = histData;
+                                this.histogramHoverBinIndex = clampedIndex;
                                 const binCenter = histData.bins[clampedIndex].x;
                                 const binCount = histData.bins[clampedIndex].y;
                                 widgetStore.setIndicator({x: binCenter, y: binCount});
@@ -1731,10 +1759,20 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                     <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} data-testid="catalog-scatter-box-select-button" />
                                 </Tooltip>
                                 <Tooltip content="Lasso select">
-                                    <AnchorButton icon={<CustomIcon icon="lasso" />} active={widgetStore.dragMode === DragMode.Lasso} onClick={() => widgetStore.setDragMode(DragMode.Lasso)} data-testid="catalog-scatter-lasso-button" />
+                                    <AnchorButton
+                                        icon={<CustomIcon icon="lasso" />}
+                                        active={widgetStore.dragMode === DragMode.Lasso}
+                                        onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Lasso ? DragMode.Select : DragMode.Lasso)}
+                                        data-testid="catalog-scatter-lasso-button"
+                                    />
                                 </Tooltip>
                                 <Tooltip content="Zoom">
-                                    <AnchorButton icon="search" active={widgetStore.dragMode === DragMode.Zoom} onClick={() => widgetStore.setDragMode(DragMode.Zoom)} data-testid="catalog-scatter-zoom-button" />
+                                    <AnchorButton
+                                        icon="search"
+                                        active={widgetStore.dragMode === DragMode.Zoom}
+                                        onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Zoom ? DragMode.Select : DragMode.Zoom)}
+                                        data-testid="catalog-scatter-zoom-button"
+                                    />
                                 </Tooltip>
                             </React.Fragment>
                         }

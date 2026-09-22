@@ -213,11 +213,11 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             return;
         }
 
-        const dpr = window.devicePixelRatio || 1;
         const canvas = this.canvasRef.current;
         if (!canvas) {
             return;
         }
+        const dpr = canvas.ownerDocument.defaultView?.devicePixelRatio || 1;
 
         canvas.width = width * dpr;
         canvas.height = height * dpr;
@@ -320,12 +320,13 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
     render() {
         const {width, height} = this.props;
+        const dpr = this.canvasRef.current?.ownerDocument.defaultView?.devicePixelRatio || 1;
         return (
             <canvas
                 ref={this.canvasRef}
                 data-overlay="true"
-                width={width * (window.devicePixelRatio || 1)}
-                height={height * (window.devicePixelRatio || 1)}
+                width={width * dpr}
+                height={height * dpr}
                 style={{
                     position: "absolute",
                     top: 0,

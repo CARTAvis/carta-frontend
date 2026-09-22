@@ -36,10 +36,18 @@ describe("ScatterPlotComponent interactions", () => {
         expect(component.interactionMode).toBe(InteractionMode.NONE);
     });
 
-    test("uses XY zoom for thin catalog zoom drags", () => {
+    test("does not zoom for thin catalog zoom drags", () => {
         const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
         component.selectionBoxEnd = {x: 5, y: 25};
+
+        expect(component.zoomMode).toBe(ZoomMode.NONE);
+    });
+
+    test("uses XY zoom when both catalog zoom extents are meaningful", () => {
+        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
+        component.selectionBoxStart = {x: 0, y: 0};
+        component.selectionBoxEnd = {x: 25, y: 25};
 
         expect(component.zoomMode).toBe(ZoomMode.XY);
     });
