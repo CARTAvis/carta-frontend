@@ -151,7 +151,10 @@ export class CatalogStore {
                     }
                     break;
             }
-            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + plottedXData.length);
+            // The highest row written, not a running total: a batch that arrives twice, or a
+            // re-request that starts again from a row already drawn, must not inflate the count
+            // into vertices the GL layer was never given.
+            this.catalogCounts.set(fileId, Math.max(this.catalogCounts.get(fileId) ?? 0, startIndex + plottedXData.length));
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }
@@ -534,6 +537,7 @@ export class CatalogStore {
 
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+        const isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
             const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData);
@@ -551,7 +555,8 @@ export class CatalogStore {
             profileStore.setUpdatingDataStream(true);
             appStore.sendCatalogFilter(profileStore.updateRequestDataSize);
         }
-        return true;
+        // An overlay with no image left to draw on has not been drawn, however far the rest got.
+        return isPlotted;
     }
 
     /**

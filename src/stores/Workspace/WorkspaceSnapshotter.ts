@@ -247,6 +247,11 @@ export class WorkspaceSnapshotter {
                 source = {type: "file", directory: catalogInfo.directory, filename: catalogInfo.fileInfo.name ?? ""};
             }
             if (!source) {
+                this.issues.push({
+                    kind: WorkspaceItemKind.Catalog,
+                    subject: catalogInfo.fileInfo.name ?? "",
+                    message: `Could not save the catalog ${catalogInfo.fileInfo.name}: there is no record of how it was opened`
+                });
                 return;
             }
 

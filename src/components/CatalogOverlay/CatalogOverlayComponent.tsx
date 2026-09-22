@@ -520,43 +520,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    private applyImageOverlayPlot() {
-        const profileStore = this.profileStore;
-        const appStore = AppStore.Instance;
-        const catalogStore = CatalogStore.Instance;
-        const catalogDisplayStore = this.displayStore;
-        const catalogFileId = this.catalogFileId;
-
-        if (
-            !profileStore ||
-            !catalogDisplayStore ||
-            catalogFileId === undefined ||
-            catalogDisplayStore.catalogPlotType !== CatalogPlotType.ImageOverlay ||
-            catalogDisplayStore.xAxis === CatalogOverlay.NONE ||
-            catalogDisplayStore.yAxis === CatalogOverlay.NONE
-        ) {
-            return;
-        }
-
-        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
-        if (frame) {
-            catalogDisplayStore.setPlottedImageOverlayState(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogCoordinateSystem.system, profileStore.maxRows);
-            const imageCoords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData);
-            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-            catalogStore.clearImageCoordsData(catalogFileId);
-            if (imageCoords.wcsX && imageCoords.wcsY) {
-                catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", profileStore.catalogCoordinateSystem, 0, 0);
-            }
-            profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
-        }
-        if (profileStore.shouldUpdateData) {
-            profileStore.setUpdatingDataStream(true);
-            const catalogFilter = profileStore.updateRequestDataSize;
-            appStore.sendCatalogFilter(catalogFilter);
-        }
-    }
-
     @action private handleCatalogSystemChange(system: CatalogSystemType) {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.displayStore;

@@ -15,6 +15,8 @@ describe("CatalogStore.plotImageOverlay", () => {
     const catalogStore = CatalogStore.Instance;
 
     beforeEach(() => {
+        // These tests spy on the store itself, which the next suite must not inherit.
+        jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogGLData.clear();
         catalogStore.catalogCounts.clear();
@@ -62,6 +64,55 @@ describe("CatalogStore.plotImageOverlay", () => {
 
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlaySystem).toBe(CatalogSystemType.ICRS);
         expect(convertSpy).toHaveBeenCalledWith(1, [0, 1], [1, 2], 0, "deg", "deg", expect.objectContaining({system: CatalogSystemType.ICRS}), 0, 0, 2);
+    });
+});
+
+describe("CatalogStore.convertToImageCoordinate", () => {
+    const catalogStore = CatalogStore.Instance;
+
+    beforeEach(() => {
+        jest.restoreAllMocks();
+        catalogStore.catalogGLData.clear();
+        catalogStore.catalogCounts.clear();
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        jest.spyOn(CatalogWebGLService.Instance, "updatePositionArray").mockImplementation(jest.fn());
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    function plotRows(startIndex: number, count: number) {
+        const xs = Array.from({length: count}, (_unused, index) => startIndex + index);
+        catalogStore.convertToImageCoordinate(1, xs, xs, 0 as any, "", "", {system: CatalogSystemType.Pixel0} as any, startIndex + count, count);
+    }
+
+    test("counts the rows drawn rather than the batches delivered", () => {
+        catalogStore.addCatalog(1, 10);
+
+        plotRows(0, 4);
+        plotRows(4, 3);
+
+        expect(catalogStore.catalogCounts.get(1)).toBe(7);
+    });
+
+    test("does not inflate the count when a batch is drawn twice", () => {
+        catalogStore.addCatalog(1, 10);
+
+        plotRows(0, 4);
+        plotRows(0, 4);
+
+        // The GL layer is only ever given rows 0 to 3, so counting 8 would draw vertices that were
+        // never written.
+        expect(catalogStore.catalogCounts.get(1)).toBe(4);
+    });
+
+    test("stops at the row limit the overlay was drawn with", () => {
+        catalogStore.addCatalog(1, 10);
+
+        catalogStore.convertToImageCoordinate(1, [0, 1, 2, 3], [0, 1, 2, 3], 0 as any, "", "", {system: CatalogSystemType.Pixel0} as any, 4, 4, 2);
+
+        expect(catalogStore.catalogCounts.get(1)).toBe(2);
     });
 });
 

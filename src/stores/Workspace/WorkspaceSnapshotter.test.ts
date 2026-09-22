@@ -184,6 +184,19 @@ describe("WorkspaceSnapshotter", () => {
         expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 10)).toBeUndefined();
     });
 
+    test("reports an online catalog there is no record of how to open again", () => {
+        const {profileStore} = createSession();
+        // Not a file, and the query it came from was never captured: nothing names it well enough
+        // to run again, so the workspace cannot carry it.
+        profileStore.isFileBasedCatalog = false;
+        profileStore.catalogInfo.query = undefined;
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.catalogs).toEqual([]);
+        expect(issues).toEqual([{kind: WorkspaceItemKind.Catalog, subject: "sources.vot", message: "Could not save the catalog sources.vot: there is no record of how it was opened"}]);
+    });
+
     test("returns a workspace detached from the session's own state", () => {
         const {frame} = createSession();
 

@@ -898,16 +898,15 @@ describe("CatalogOverlayComponent", () => {
     });
 
     describe("handleHeaderDisplayChange reselects removed axes", () => {
-        test("reselects xAxis without auto-applying the image overlay", () => {
+        test("reselects xAxis without drawing the overlay again", () => {
             const {component, displayStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}, {name: "ycentroid"}], "x", "y");
-
-            component["applyImageOverlayPlot"] = jest.fn();
+            const plotImageOverlay = jest.spyOn(CatalogStore.Instance, "plotImageOverlay").mockImplementation(jest.fn(() => true));
 
             component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
             expect(displayStore.xAxis).toBe("xcentroid");
             expect(displayStore.yAxis).toBe("y");
-            expect(component["applyImageOverlayPlot"]).not.toHaveBeenCalled();
+            expect(plotImageOverlay).not.toHaveBeenCalled();
         });
 
         test("only reselects the removed xAxis", () => {
