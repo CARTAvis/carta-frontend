@@ -20,7 +20,19 @@ import {
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
-import {clamp, createScalingParameters, getScalingParameter, isCatalogAxisDataType, isSupportedFrameScaling, minMaxArray, sanitizeScalingParameter, scalingParametersFromConfig, scalingParametersToConfig, type TypedArray} from "utilities";
+import {
+    CatalogAxisEligibility,
+    clamp,
+    createScalingParameters,
+    getScalingParameter,
+    isCatalogNumericDataType,
+    isSupportedFrameScaling,
+    minMaxArray,
+    sanitizeScalingParameter,
+    scalingParametersFromConfig,
+    scalingParametersToConfig,
+    type TypedArray
+} from "utilities";
 
 /** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
 interface ClipRestore {
@@ -151,19 +163,36 @@ function authoredClip(bound: ClipBound): number | undefined {
 }
 
 /**
- * Why one column a config names cannot be used, or undefined when it can. The verb names how the
- * column is used, so that the message reads the way the setting does.
+ * How a config uses a column. The two roles differ in the rule a column must satisfy, in whether
+ * its data must already have arrived, and in the verb that names the setting in an error message.
  */
-function getColumnError(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: string, column: string, verb: string, shouldHaveData: boolean): string | undefined {
-    const subject = `The ${axis} axis is ${verb} "${column}", which`;
+type ColumnRole = "mapped" | "coordinate";
+
+/**
+ * Why one column a config names cannot be used, or undefined when it can.
+ *
+ * A mapped column is read as a plain number, so its declared type settles it. An image overlay
+ * coordinate is not so limited -- a string column holding a sexagesimal value is a coordinate too
+ * -- so it is judged by {@link AbstractCatalogProfileStore.getCoordinateEligibility}, the same
+ * authority the axis menu and the plotting path use. Deciding it here instead would let a workspace
+ * reject a column the user was offered and successfully plotted before saving it.
+ *
+ * `Unknown` passes: it means the column's values have not been fetched yet, not that they were read
+ * and found wanting, and a coordinate column need not hold data at restore time anyway.
+ */
+function getColumnError(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: string, column: string, role: ColumnRole): string | undefined {
+    const subject = `The ${axis} axis is ${role === "mapped" ? "mapped to" : "set to"} "${column}", which`;
     const header = profileStore.getColumnHeader(column);
     if (!header) {
         return `${subject} this catalog does not have`;
     }
-    if (!isCatalogAxisDataType(header.dataType)) {
+    if (role === "coordinate") {
+        return profileStore.getCoordinateEligibility(column).status === CatalogAxisEligibility.Ineligible ? `${subject} cannot be read as a coordinate` : undefined;
+    }
+    if (!isCatalogNumericDataType(header.dataType)) {
         return `${subject} is not a numeric column`;
     }
-    if (shouldHaveData && !profileStore.get1DPlotData(column).wcsData?.length) {
+    if (!profileStore.get1DPlotData(column).wcsData?.length) {
         return `${subject} has no data to map`;
     }
     return undefined;
@@ -582,8 +611,11 @@ export class CatalogDisplayStore {
      */
     @action setOrientationMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.orientationMax.clipd === this.orientationMax.default;
             this.orientationMax.default = val;
-            this.orientationMax.clipd = val;
+            if (shouldFollowDefault) {
+                this.orientationMax.clipd = val;
+            }
         } else {
             this.orientationMax.clipd = val;
         }
@@ -596,8 +628,11 @@ export class CatalogDisplayStore {
      */
     @action setOrientationMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.orientationMin.clipd === this.orientationMin.default;
             this.orientationMin.default = val;
-            this.orientationMin.clipd = val;
+            if (shouldFollowDefault) {
+                this.orientationMin.clipd = val;
+            }
         } else {
             this.orientationMin.clipd = val;
         }
@@ -665,8 +700,11 @@ export class CatalogDisplayStore {
      */
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.colorColumnMax.clipd === this.colorColumnMax.default;
             this.colorColumnMax.default = val;
-            this.colorColumnMax.clipd = val;
+            if (shouldFollowDefault) {
+                this.colorColumnMax.clipd = val;
+            }
         } else {
             this.colorColumnMax.clipd = val;
         }
@@ -679,8 +717,11 @@ export class CatalogDisplayStore {
      */
     @action setColorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.colorColumnMin.clipd === this.colorColumnMin.default;
             this.colorColumnMin.default = val;
-            this.colorColumnMin.clipd = val;
+            if (shouldFollowDefault) {
+                this.colorColumnMin.clipd = val;
+            }
         } else {
             this.colorColumnMin.clipd = val;
         }
@@ -787,8 +828,11 @@ export class CatalogDisplayStore {
      */
     @action setSizeColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.sizeColumnMax.clipd === this.sizeColumnMax.default;
             this.sizeColumnMax.default = val;
-            this.sizeColumnMax.clipd = val;
+            if (shouldFollowDefault) {
+                this.sizeColumnMax.clipd = val;
+            }
         } else {
             this.sizeColumnMax.clipd = val;
         }
@@ -801,8 +845,11 @@ export class CatalogDisplayStore {
      */
     @action setSizeColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.sizeColumnMin.clipd === this.sizeColumnMin.default;
             this.sizeColumnMin.default = val;
-            this.sizeColumnMin.clipd = val;
+            if (shouldFollowDefault) {
+                this.sizeColumnMin.clipd = val;
+            }
         } else {
             this.sizeColumnMin.clipd = val;
         }
@@ -907,8 +954,11 @@ export class CatalogDisplayStore {
      */
     @action setSizeMinorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.sizeMinorColumnMax.clipd === this.sizeMinorColumnMax.default;
             this.sizeMinorColumnMax.default = val;
-            this.sizeMinorColumnMax.clipd = val;
+            if (shouldFollowDefault) {
+                this.sizeMinorColumnMax.clipd = val;
+            }
         } else {
             this.sizeMinorColumnMax.clipd = val;
         }
@@ -921,8 +971,11 @@ export class CatalogDisplayStore {
      */
     @action setSizeMinorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
+            const shouldFollowDefault = this.sizeMinorColumnMin.clipd === this.sizeMinorColumnMin.default;
             this.sizeMinorColumnMin.default = val;
-            this.sizeMinorColumnMin.clipd = val;
+            if (shouldFollowDefault) {
+                this.sizeMinorColumnMin.clipd = val;
+            }
         } else {
             this.sizeMinorColumnMin.clipd = val;
         }
@@ -1428,17 +1481,17 @@ export class CatalogDisplayStore {
         // catalog does not have, or one that cannot hold a coordinate, is rejected rather than left
         // to fail when the overlay is drawn; its data alone need not have arrived yet, because the
         // overlay is plotted from whatever streams in later.
-        const columnsToValidate: ReadonlyArray<[axis: string, column: string, verb: string, shouldHaveData: boolean]> = [
-            ["size", sizeAxis.mapColumn, "mapped to", true],
-            ["minor size", sizeMinorAxis.mapColumn, "mapped to", true],
-            ["color", colorAxis.mapColumn, "mapped to", true],
-            ["orientation", orientationAxis.mapColumn, "mapped to", true],
-            ["x", typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE, "set to", false],
-            ["y", typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE, "set to", false]
+        const columnsToValidate: ReadonlyArray<[axis: string, column: string, role: ColumnRole]> = [
+            ["size", sizeAxis.mapColumn, "mapped"],
+            ["minor size", sizeMinorAxis.mapColumn, "mapped"],
+            ["color", colorAxis.mapColumn, "mapped"],
+            ["orientation", orientationAxis.mapColumn, "mapped"],
+            ["x", typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE, "coordinate"],
+            ["y", typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE, "coordinate"]
         ];
         const errors = columnsToValidate
             .filter(([, column]) => column !== CatalogOverlay.NONE)
-            .map(([axis, column, verb, shouldHaveData]) => getColumnError(profileStore, axis, column, verb, shouldHaveData))
+            .map(([axis, column, role]) => getColumnError(profileStore, axis, column, role))
             .filter((error): error is string => error !== undefined);
 
         if (errors.length) {
@@ -1584,7 +1637,7 @@ export class CatalogDisplayStore {
     private configColumnsWithoutData(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, config: WorkspaceCatalogConfig): string[] {
         return this.configColumnNames(config).filter(column => {
             const header = profileStore.getColumnHeader(column);
-            return Boolean(header && isCatalogAxisDataType(header.dataType)) && !profileStore.get1DPlotData(column).wcsData?.length;
+            return Boolean(header && isCatalogNumericDataType(header.dataType)) && !profileStore.get1DPlotData(column).wcsData?.length;
         });
     }
 
