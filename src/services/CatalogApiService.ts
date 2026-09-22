@@ -257,28 +257,32 @@ export class CatalogApiService {
         const fileIds: number[] = [];
         resources.forEach(element => {
             const fileId = appStore.reserveCatalogFileId();
-            const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
-            const configStore = CatalogOnlineQueryConfigStore.Instance;
-            const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
-            const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
-            const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
-                name: fileName,
-                type: CARTA.CatalogFileType.VOTable,
-                description: "Online VizieR Catalog",
-                coosys: [coosy]
-            };
-            const catalogInfo: CatalogInfo = {
-                fileId,
-                fileInfo: catalogFileInfo,
-                dataSize: size,
-                directory: "",
-                query: querySource ? {...querySource, system: element.coosys.system as CatalogSystemType, table: element.table.name ?? undefined} : undefined
-            };
-            if (this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER, targetFrameId)) {
-                fileIds.push(fileId);
+            try {
+                const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
+                const configStore = CatalogOnlineQueryConfigStore.Instance;
+                const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
+                const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
+                const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
+                    name: fileName,
+                    type: CARTA.CatalogFileType.VOTable,
+                    description: "Online VizieR Catalog",
+                    coosys: [coosy]
+                };
+                const catalogInfo: CatalogInfo = {
+                    fileId,
+                    fileInfo: catalogFileInfo,
+                    dataSize: size,
+                    directory: "",
+                    query: querySource ? {...querySource, system: element.coosys.system as CatalogSystemType, table: element.table.name ?? undefined} : undefined
+                };
+                if (this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER, targetFrameId)) {
+                    fileIds.push(fileId);
+                }
+            } finally {
+                // Loaded or not, and whether or not the table could be read at all, the catalog is
+                // no longer one that is still on its way.
+                appStore.releaseCatalogFileId(fileId);
             }
-            // Loaded or not, the catalog is no longer one that is still on its way.
-            appStore.releaseCatalogFileId(fileId);
         });
         return fileIds;
     };
@@ -325,10 +329,11 @@ export class CatalogApiService {
             throw new Error("No image file");
         }
 
-        const fileId = appStore.reserveCatalogFileId();
         const querySource = savedQuery ?? CatalogApiService.captureQuery("simbad");
         let loadedFileId: number | undefined;
         let dataSize = 0;
+        // Taken last, so that nothing between here and the try below can leave it held.
+        const fileId = appStore.reserveCatalogFileId();
         try {
             const response = await this.getSimbadCatalog(query);
             if (response?.status === 200 && response?.data?.data?.length) {

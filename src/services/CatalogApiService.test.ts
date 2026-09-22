@@ -1,7 +1,8 @@
 import type {AxiosInstance} from "axios";
 
 import {CatalogDatabase, CatalogSystemType, RadiusUnits} from "enums";
-import {CatalogOnlineQueryConfigStore, MirrorSiteStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore} from "stores";
+import {CatalogApiProcessing} from "utilities";
 
 import {CatalogApiService} from "./CatalogApiService";
 
@@ -124,5 +125,21 @@ describe("CatalogApiService.captureQuery", () => {
         configureDialog({x: "12.5", y: "-30.25"});
 
         expect(CatalogApiService.captureQuery("vizier")?.keywords).toBe("gaia");
+    });
+});
+
+describe("CatalogApiService.appendVizierCatalog", () => {
+    test("gives a catalog's ID back when its table cannot be read", () => {
+        const releaseCatalogFileId = jest.fn();
+        Object.assign(AppStore.Instance, {reserveCatalogFileId: jest.fn(() => 7), releaseCatalogFileId});
+        (CatalogApiProcessing as any).processVizierTableData = jest.fn(() => {
+            throw new Error("malformed VOTable");
+        });
+        const resources = new Map([["a", {table: {tableElement: {}, name: "t"}, coosys: {system: "ICRS"}} as any]]);
+
+        expect(() => CatalogApiService.Instance.appendVizierCatalog(resources)).toThrow("malformed VOTable");
+
+        // Held only while the catalog is on its way: a table that could not be read never was.
+        expect(releaseCatalogFileId).toHaveBeenCalledWith(7);
     });
 });
