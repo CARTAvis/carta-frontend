@@ -80,6 +80,8 @@ export class ScatterPlotComponentProps {
     extraPluginOptions?: ChartOptions<"scatter">["plugins"];
     customExportImage?: () => void;
     customExportData?: () => void;
+    exportFileName?: string;
+    exportRightPadding?: number;
 }
 
 // Maximum time between double clicks
@@ -102,7 +104,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private previousClickTime: number;
     private previousClickPosition: Point2D | undefined;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
-    private forceUpdateHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
     private stageClickStartY: number;
     private panPrevious: {x: number; y: number};
@@ -138,8 +139,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     componentWillUnmount() {
         clearTimeout(this.pendingClickHandle);
         this.pendingClickHandle = undefined;
-        clearTimeout(this.forceUpdateHandle);
-        this.forceUpdateHandle = undefined;
         this.stopInteractionTracking();
     }
 
@@ -149,11 +148,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action updateChart = (chartArea: ChartArea) => {
         this.chartArea = chartArea;
-        clearTimeout(this.forceUpdateHandle);
-        this.forceUpdateHandle = setTimeout(() => {
-            this.forceUpdateHandle = undefined;
-            this.forceUpdate();
-        }, 0);
         if (this.props.updateChartArea) {
             this.props.updateChartArea(chartArea);
         }
@@ -186,7 +180,20 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         this.interactionOwnerWindow = null;
     };
 
-    private onWindowMouseUp = () => {
+    private onWindowMouseUp = (event: MouseEvent) => {
+        const chartArea = this.chartArea;
+        const container = this.containerRef.current;
+        if (chartArea && container && (this.isSelecting || this.isLassoSelecting)) {
+            const rect = container.getBoundingClientRect();
+            const x = clamp(event.clientX - rect.left, chartArea.left, chartArea.right);
+            const y = clamp(event.clientY - rect.top, chartArea.top, chartArea.bottom);
+            if (this.isSelecting) {
+                this.updateSelection(x, y);
+            } else {
+                this.updateLassoSelection(x, y);
+            }
+        }
+        this.completeDragInteraction();
         this.endInteractions();
     };
 
@@ -385,9 +392,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const canvas = scatter.canvas;
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
+        const ownerDocument = canvas.ownerDocument;
+        const ownerWindow = ownerDocument.defaultView ?? window;
 
-        const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-        composedCanvas.width = canvas.width;
+        const composedCanvas = ownerDocument.createElement("canvas") as HTMLCanvasElement;
+        composedCanvas.width = canvas.width + (this.props.exportRightPadding ?? 0);
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
@@ -401,18 +410,19 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const overlayCanvases = this.containerRef.current.querySelectorAll<HTMLCanvasElement>("canvas[data-overlay]");
                 overlayCanvases.forEach(c => {
                     if (c.width > 0 && c.height > 0) {
-                        ctx.drawImage(c, 0, 0, composedCanvas.width, composedCanvas.height);
+                        ctx.drawImage(c, 0, 0);
                     }
                 });
             }
 
             composedCanvas.toBlob(blob => {
                 if (blob) {
-                    const link = document.createElement("a") as HTMLAnchorElement;
+                    const link = ownerDocument.createElement("a") as HTMLAnchorElement;
                     // Trim filename before timestamp to 200 characters to prevent browser errors
-                    link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
-                    link.href = URL.createObjectURL(blob);
-                    link.dispatchEvent(new MouseEvent("click"));
+                    const fileName = this.props.exportFileName ?? `${imageName}-${plotName.replace(" ", "-")}`;
+                    link.download = fileName.substring(0, 200) + `-${getTimestamp()}.png`;
+                    link.href = ownerWindow.URL.createObjectURL(blob);
+                    link.dispatchEvent(new ownerWindow.MouseEvent("click"));
                 }
             }, "image/png");
         }
@@ -541,6 +551,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (chartArea && (mouseEvent.offsetX < chartArea.left || mouseEvent.offsetX > chartArea.right || mouseEvent.offsetY < chartArea.top || mouseEvent.offsetY > chartArea.bottom)) {
             return;
         }
+        if (mouseEvent.button !== 0) {
+            return;
+        }
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
         const isPanModifier = mouseEvent.shiftKey || (!this.props.dragAction && (mouseEvent.ctrlKey || mouseEvent.altKey));
@@ -631,6 +644,67 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }, DOUBLE_CLICK_THRESHOLD);
     };
 
+    private completeDragInteraction = () => {
+        this.previousClickPosition = undefined;
+        if (!(this.props.data || this.props.dragAction)) {
+            return;
+        }
+        if (this.isLassoSelecting && this.props.onLassoSelected && this.lassoPoints.length >= 6) {
+            const polygonGraph: Point2D[] = [];
+            const vertexCount = this.lassoPoints.length / 2;
+            const step = Math.max(1, Math.ceil(vertexCount / MAX_LASSO_VERTICES));
+            for (let vertex = 0; vertex < vertexCount; vertex += step) {
+                const i = vertex * 2;
+                const gx = this.getValueForPixelX(this.lassoPoints[i]);
+                const gy = this.getValueForPixelY(this.lassoPoints[i + 1]);
+                if (gx !== undefined && gy !== undefined) {
+                    polygonGraph.push({x: gx, y: gy});
+                }
+            }
+            const lastIndex = this.lassoPoints.length - 2;
+            if (lastIndex >= 0 && (vertexCount - 1) % step !== 0) {
+                const gx = this.getValueForPixelX(this.lassoPoints[lastIndex]);
+                const gy = this.getValueForPixelY(this.lassoPoints[lastIndex + 1]);
+                if (gx !== undefined && gy !== undefined) {
+                    polygonGraph.push({x: gx, y: gy});
+                }
+            }
+            if (polygonGraph.length >= 3) {
+                this.props.onLassoSelected(polygonGraph);
+            }
+        } else if (this.isSelecting) {
+            const deltaX = Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x);
+            const deltaY = Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y);
+            if (deltaX < DRAG_THRESHOLD && deltaY < DRAG_THRESHOLD) {
+                return;
+            }
+            if (this.props.dragAction === DragMode.Select && this.props.onBoxSelected) {
+                const minX = this.getValueForPixelX(Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x));
+                const maxX = this.getValueForPixelX(Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x));
+                const minY = this.getValueForPixelY(Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y));
+                const maxY = this.getValueForPixelY(Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y));
+                if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
+                    this.props.onBoxSelected(minX, maxX, minY, maxY);
+                }
+            } else if (this.zoomMode !== ZoomMode.NONE) {
+                const minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                const maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                const minX = this.getValueForPixelX(minCanvasSpace);
+                const maxX = this.getValueForPixelX(maxCanvasSpace);
+                const minY = this.getValueForPixelY(Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y));
+                const maxY = this.getValueForPixelY(Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y));
+                if (this.zoomMode === ZoomMode.X && this.props.graphZoomedX && minX !== undefined && maxX !== undefined) {
+                    this.props.graphZoomedX(minX, maxX);
+                }
+                if (this.zoomMode === ZoomMode.Y && this.props.graphZoomedY && minY !== undefined && maxY !== undefined) {
+                    this.props.graphZoomedY(minY, maxY);
+                } else if (this.zoomMode === ZoomMode.XY && this.props.graphZoomedXY && minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
+                    this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                }
+            }
+        }
+    };
+
     onStageMouseUp = ev => {
         const mouseEvent: MouseEvent = ev.evt;
         // Redirect clicks
@@ -638,62 +712,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            this.previousClickPosition = undefined;
-            if (this.props.data || this.props.dragAction) {
-                if (this.isLassoSelecting && this.props.onLassoSelected && this.lassoPoints.length >= 6) {
-                    // Convert lasso pixel coords to graph coords
-                    const polygonGraph: Point2D[] = [];
-                    const vertexCount = this.lassoPoints.length / 2;
-                    const step = Math.max(1, Math.ceil(vertexCount / MAX_LASSO_VERTICES));
-                    for (let vertex = 0; vertex < vertexCount; vertex += step) {
-                        const i = vertex * 2;
-                        const gx = this.getValueForPixelX(this.lassoPoints[i]);
-                        const gy = this.getValueForPixelY(this.lassoPoints[i + 1]);
-                        if (gx !== undefined && gy !== undefined) {
-                            polygonGraph.push({x: gx, y: gy});
-                        }
-                    }
-                    const lastIndex = this.lassoPoints.length - 2;
-                    if (lastIndex >= 0 && (vertexCount - 1) % step !== 0) {
-                        const gx = this.getValueForPixelX(this.lassoPoints[lastIndex]);
-                        const gy = this.getValueForPixelY(this.lassoPoints[lastIndex + 1]);
-                        if (gx !== undefined && gy !== undefined) {
-                            polygonGraph.push({x: gx, y: gy});
-                        }
-                    }
-                    if (polygonGraph.length >= 3) {
-                        this.props.onLassoSelected(polygonGraph);
-                    }
-                } else if (this.isSelecting && this.props.dragAction === DragMode.Select && this.props.onBoxSelected) {
-                    const minX = this.getValueForPixelX(Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x));
-                    const maxX = this.getValueForPixelX(Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x));
-                    const minY = this.getValueForPixelY(Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y));
-                    const maxY = this.getValueForPixelY(Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y));
-                    if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
-                        this.props.onBoxSelected(minX, maxX, minY, maxY);
-                    }
-                } else if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
-                    let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                    let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                    const minX = this.getValueForPixelX(minCanvasSpace);
-                    const maxX = this.getValueForPixelX(maxCanvasSpace);
-
-                    minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                    maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
-                    const minY = this.getValueForPixelY(maxCanvasSpace);
-                    const maxY = this.getValueForPixelY(minCanvasSpace);
-
-                    if (this.zoomMode === ZoomMode.X && this.props.graphZoomedX && minX !== undefined && maxX !== undefined) {
-                        this.props.graphZoomedX(minX, maxX);
-                    }
-                    if (this.zoomMode === ZoomMode.Y && this.props.graphZoomedY && minY !== undefined && maxY !== undefined) {
-                        this.props.graphZoomedY(minY, maxY);
-                    } else if (this.zoomMode === ZoomMode.XY && this.props.graphZoomedXY && minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
-                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
-                    }
-                }
-            }
+            this.completeDragInteraction();
         }
         this.endInteractions();
     };

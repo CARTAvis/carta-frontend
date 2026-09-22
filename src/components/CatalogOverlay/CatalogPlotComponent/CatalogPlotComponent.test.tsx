@@ -78,6 +78,40 @@ describe("CatalogPlotComponent catalog selection", () => {
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);
     });
+
+    test("clears the selection when a plot selection contains no sources", () => {
+        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
+        const onDeselect = jest.spyOn(component as any, "onDeselect").mockImplementation(() => undefined);
+
+        component["selectCatalogPoints"]([]);
+
+        expect(onDeselect).toHaveBeenCalledTimes(1);
+        component.componentWillUnmount();
+    });
+
+    test("clears histogram pan state when released outside the plot", () => {
+        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
+        component["histogramPanPrevX"] = 10;
+        component["hasHistogramDragHandled"] = true;
+
+        component["onHistogramWindowMouseUp"]();
+
+        expect(component["hasHistogramDragHandled"]).toBe(false);
+        component.componentWillUnmount();
+    });
+
+    test("selects histogram bins when released outside the plot", () => {
+        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
+        const selectBins = jest.spyOn(component as any, "selectHistogramBinsInRange").mockImplementation(() => undefined);
+        component["histogramPlotRef"] = {scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()} as any;
+        component["histogramDragStartX"] = 10;
+        component["histogramDragCurrentX"] = 30;
+
+        component["onHistogramWindowMouseUp"]();
+
+        expect(selectBins).toHaveBeenCalledWith(10, 30);
+        component.componentWillUnmount();
+    });
 });
 
 describe("CatalogPlotComponent restored plots", () => {

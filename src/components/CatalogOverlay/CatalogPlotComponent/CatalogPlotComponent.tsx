@@ -70,7 +70,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramHoverData: object | undefined;
     private pendingHistogramClickHandle: ReturnType<typeof setTimeout> | undefined;
     private hasHistogramBarDoubleClickHandled = false;
-    private webglOverlayRef: CatalogScatterWebGL | null = null;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -709,7 +708,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private selectCatalogPoints(rawIndices: number[]) {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        if (!rawIndices.length || !profileStore || !catalogDisplayStore) {
+        if (!rawIndices.length) {
+            this.onDeselect();
+            return;
+        }
+        if (!profileStore || !catalogDisplayStore) {
             return;
         }
         WidgetsStore.Instance.updateCatalogWidgetSelection(profileStore.catalogInfo.fileId);
@@ -995,9 +998,20 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private onHistogramWindowMouseUp = () => {
-        const shouldPreserveDragHandled = this.histogramPanPrevX !== undefined && this.hasHistogramDragHandled;
-        this.stopHistogramMouseTracking(shouldPreserveDragHandled);
-        this.histogramPlotRef?.draw();
+        const chart = this.histogramPlotRef;
+        const xScale = chart?.scales["x"];
+        if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && xScale) {
+            if (Math.abs(this.histogramDragCurrentX - this.histogramDragStartX) > 3) {
+                const x1 = xScale.getValueForPixel(this.histogramDragStartX);
+                const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
+                if (x1 !== undefined && x2 !== undefined) {
+                    this.hasHistogramDragHandled = true;
+                    this.selectHistogramBinsInRange(Math.min(x1, x2), Math.max(x1, x2));
+                }
+            }
+        }
+        this.stopHistogramMouseTracking();
+        chart?.draw();
     };
 
     private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -1128,39 +1142,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         ctx.fillRect(0, 0, width, height);
     }
 
-    private readWebGLPixelsFlipped(gl: WebGL2RenderingContext, canvas: HTMLCanvasElement): ImageData {
-        const {width, height} = canvas;
-        const pixels = new Uint8Array(width * height * 4);
-        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-        const flipped = new Uint8ClampedArray(width * height * 4);
-        const rowSize = width * 4;
-        for (let row = 0; row < height; row++) {
-            flipped.set(pixels.subarray(row * rowSize, (row + 1) * rowSize), (height - 1 - row) * rowSize);
-        }
-        return new ImageData(flipped, width, height);
-    }
-
-    private compositeScatterCanvases(chartCanvas: HTMLCanvasElement, webglCanvas: HTMLCanvasElement, gl: WebGL2RenderingContext): HTMLCanvasElement {
-        const ownerDocument = chartCanvas.ownerDocument;
-        const composed = ownerDocument.createElement("canvas");
-        composed.width = chartCanvas.width + EXPORT_RIGHT_PADDING;
-        composed.height = chartCanvas.height;
-        const ctx = composed.getContext("2d")!;
-
-        this.fillPlotBackground(ctx, composed.width, composed.height);
-        ctx.drawImage(chartCanvas, 0, 0);
-
-        const webglImageData = this.readWebGLPixelsFlipped(gl, webglCanvas);
-        const tempCanvas = ownerDocument.createElement("canvas");
-        tempCanvas.width = webglCanvas.width;
-        tempCanvas.height = webglCanvas.height;
-        tempCanvas.getContext("2d")!.putImageData(webglImageData, 0, 0);
-        ctx.drawImage(tempCanvas, 0, 0);
-
-        return composed;
-    }
-
     private downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string) {
         const ownerDocument = canvas.ownerDocument;
         const ownerWindow = ownerDocument.defaultView ?? window;
@@ -1173,29 +1154,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }, "image/png");
     }
-
-    private exportScatterImage = () => {
-        const webgl = this.webglOverlayRef;
-        if (!webgl) {
-            return;
-        }
-        webgl.draw();
-        const {gl} = webgl;
-        const webglCanvas = webgl.canvasRef.current;
-        if (!gl || !webglCanvas || webglCanvas.width === 0 || webglCanvas.height === 0) {
-            return;
-        }
-
-        const chartCanvas = webglCanvas.closest<HTMLElement>(".scatter-plot-component")?.querySelector<HTMLCanvasElement>("canvas:not([data-overlay])");
-        if (!chartCanvas) {
-            return;
-        }
-
-        const xColumn = this.widgetStore?.xColumnName ?? "x";
-        const yColumn = this.widgetStore?.yColumnName ?? "y";
-        const composed = this.compositeScatterCanvases(chartCanvas, webglCanvas, gl);
-        this.downloadCanvasAsPng(composed, `catalog-scatter-${xColumn}-${yColumn}`);
-    };
 
     private exportScatterData = () => {
         const widgetStore = this.widgetStore;
@@ -1260,7 +1218,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 selectedIndices={selectedSet}
                 hasSelection={selectedSet.size > 0}
                 pointSize={5}
-                onRef={ref => (this.webglOverlayRef = ref)}
             />
         );
     };
@@ -1303,7 +1260,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const noResults = <MenuItem disabled={true} text="No results" />;
 
         const renderFileSelect = (
-            <FormGroup inline={true} label="File">
+            <FormGroup inline={true} label="File" data-testid="catalog-plot-file-select">
                 <Select
                     className={Classes.FILL}
                     filterable={false}
@@ -1313,13 +1270,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemRenderer={this.renderFilePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
-                    <Button text={this.catalogFileId} endIcon="double-caret-vertical" />
+                    <Button text={this.catalogFileId} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-file-dropdown" />
                 </Select>
             </FormGroup>
         );
 
         const renderXSelect = (
-            <FormGroup inline={true} label="X">
+            <FormGroup inline={true} label="X" data-testid="catalog-plot-x-select">
                 <Select
                     className={Classes.FILL}
                     items={xyOptions}
@@ -1339,12 +1296,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderHistogramLog = (
             <FormGroup label={"Log scale"} inline={true} disabled={isDisabled}>
-                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} />
+                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} data-testid="catalog-plot-log-scale-switch" />
             </FormGroup>
         );
 
         const renderYSelect = (
-            <FormGroup inline={true} label="Y">
+            <FormGroup inline={true} label="Y" data-testid="catalog-plot-y-select">
                 <Select
                     className={Classes.FILL}
                     items={xyOptions}
@@ -1357,7 +1314,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.yColumnName} endIcon="double-caret-vertical" />
+                    <Button text={widgetStore.yColumnName} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-y-dropdown" />
                 </Select>
             </FormGroup>
         );
@@ -1765,15 +1722,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         cursorNearestPoint={this.cursorNearestScatterPoint}
                         extraPluginOptions={scatterExtraPluginOptions}
                         customExportData={this.exportScatterData}
-                        customExportImage={this.exportScatterImage}
+                        exportFileName={`catalog-scatter-${widgetStore.xColumnName ?? "x"}-${widgetStore.yColumnName ?? "y"}`}
+                        exportRightPadding={EXPORT_RIGHT_PADDING}
                         toolbarChildren={
                             <React.Fragment>
                                 <Tooltip content="Box select">
-                                    <AnchorButton icon="widget" active={widgetStore.dragMode === DragMode.Select} onClick={() => widgetStore.setDragMode(DragMode.Select)} data-testid="catalog-scatter-box-select-button" />
+                                    <AnchorButton
+                                        aria-label="Box select"
+                                        icon="widget"
+                                        active={widgetStore.dragMode === DragMode.Select}
+                                        onClick={() => widgetStore.setDragMode(DragMode.Select)}
+                                        data-testid="catalog-scatter-box-select-button"
+                                    />
                                 </Tooltip>
                                 <Tooltip content="Lasso select">
                                     <AnchorButton
                                         icon={<CustomIcon icon="lasso" />}
+                                        aria-label="Lasso select"
                                         active={widgetStore.dragMode === DragMode.Lasso}
                                         onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Lasso ? DragMode.Select : DragMode.Lasso)}
                                         data-testid="catalog-scatter-lasso-button"
@@ -1782,6 +1747,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                 <Tooltip content="Zoom">
                                     <AnchorButton
                                         icon="search"
+                                        aria-label="Zoom"
                                         active={widgetStore.dragMode === DragMode.Zoom}
                                         onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Zoom ? DragMode.Select : DragMode.Zoom)}
                                         data-testid="catalog-scatter-zoom-button"

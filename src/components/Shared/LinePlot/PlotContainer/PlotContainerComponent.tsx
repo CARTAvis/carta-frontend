@@ -74,6 +74,17 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private plotRef: Chart;
     private chartArea: ChartArea;
 
+    // Chart.js 4.5.1 exposes no public setter for the pixel range used by scale conversion.
+    // Keep this compatibility workaround isolated so a future Chart.js upgrade has one place to revisit.
+    private setScalePixelRange = (scale: Scale, left: number, right: number) => {
+        scale.left = left;
+        scale.right = right;
+        scale.width = right - left;
+        const privateScale = scale as Scale & {_startPixel: number; _length: number};
+        privateScale._startPixel = left;
+        privateScale._length = scale.width;
+    };
+
     private afterChartLayout = (chart: Chart) => {
         if (this.props.isGroupSubPlot) {
             var xScale = chart.scales["x"];
@@ -83,11 +94,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             chart.chartArea.left = 85;
             chart.chartArea.right = currentWidth - 1;
 
-            xScale.left = 85;
-            xScale.right = currentWidth - 1;
-            xScale.width = xScale.right - xScale.left;
-            xScale["_startPixel"] = xScale.left;
-            xScale["_length"] = xScale.width;
+            this.setScalePixelRange(xScale, 85, currentWidth - 1);
 
             chart.chartArea.left = 85;
             chart.chartArea.right = currentWidth - 1;
@@ -101,9 +108,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             if (xScale) {
                 const right = chart.width - 1;
                 chart.chartArea.right = right;
-                xScale.right = right;
-                xScale.width = xScale.right - xScale.left;
-                xScale["_length"] = xScale.width;
+                this.setScalePixelRange(xScale, xScale.left, right);
             }
         }
 
@@ -328,6 +333,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         } else if (props.dataBackgroundColor !== nextProps.dataBackgroundColor) {
             return true;
         } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
+            return true;
+        } else if (props.shouldAlignChartAreaRight !== nextProps.shouldAlignChartAreaRight) {
             return true;
         } else if (props.pointRadius !== nextProps.pointRadius) {
             return true;

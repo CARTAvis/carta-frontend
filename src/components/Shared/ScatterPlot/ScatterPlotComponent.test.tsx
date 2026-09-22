@@ -2,10 +2,11 @@ import {DragMode, InteractionMode, ZoomMode} from "enums";
 
 import {ScatterPlotComponent} from "./ScatterPlotComponent";
 
-const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKey" | "shiftKey">> = {}) => ({
+const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKey" | "shiftKey" | "button">> = {}) => ({
     evt: {
         offsetX: 10,
         offsetY: 20,
+        button: 0,
         ...modifiers
     }
 });
@@ -37,13 +38,27 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("ends an interaction when the pointer is released outside the stage", () => {
-        const component = new ScatterPlotComponent({});
+        const onBoxSelected = jest.fn();
+        const component = new ScatterPlotComponent({dragAction: DragMode.Select, onBoxSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
+        component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
 
         component.onStageMouseDown(CreateMouseEvent() as any);
+        component.updateSelection(40, 50);
         expect(component.interactionMode).toBe(InteractionMode.SELECTING);
 
-        window.dispatchEvent(new MouseEvent("mouseup"));
+        window.dispatchEvent(new MouseEvent("mouseup", {clientX: 40, clientY: 50}));
 
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+        expect(onBoxSelected).toHaveBeenCalledTimes(1);
+    });
+
+    test("ignores non-primary mouse buttons", () => {
+        const component = new ScatterPlotComponent({});
+        const startSelection = jest.spyOn(component, "startSelection");
+
+        component.onStageMouseDown(CreateMouseEvent({button: 2}) as any);
+
+        expect(startSelection).not.toHaveBeenCalled();
         expect(component.interactionMode).toBe(InteractionMode.NONE);
     });
 
@@ -56,7 +71,7 @@ describe("ScatterPlotComponent interactions", () => {
         expect(component.interactionMode).toBe(InteractionMode.NONE);
     });
 
-    test("does not zoom for thin catalog zoom drags", () => {
+    test("does not zoom for thin XY drags", () => {
         const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
         component.selectionBoxEnd = {x: 5, y: 25};
@@ -64,7 +79,7 @@ describe("ScatterPlotComponent interactions", () => {
         expect(component.zoomMode).toBe(ZoomMode.NONE);
     });
 
-    test("uses XY zoom when both catalog zoom extents are meaningful", () => {
+    test("uses XY zoom for meaningful XY drags", () => {
         const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
         component.selectionBoxEnd = {x: 25, y: 25};

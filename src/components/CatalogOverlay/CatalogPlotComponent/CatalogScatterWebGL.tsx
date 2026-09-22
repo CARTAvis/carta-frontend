@@ -135,6 +135,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             if (this.shaderProgram) {
                 gl.deleteProgram(this.shaderProgram);
             }
+            gl.getExtension("WEBGL_lose_context")?.loseContext();
         }
     }
 
