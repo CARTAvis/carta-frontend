@@ -12,6 +12,24 @@
         gap: 8px;
         margin-left: 5px;
 
+        .light-curve-selection {
+            display: flex;
+            align-items: center;
+
+            .bp6-checkbox {
+                margin: 0 5px 0 0;
+                font-weight: bold;
+            }
+
+            .light-curve-selection-text {
+                max-width: 100px;
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
         .bp6-form-group {
             margin-bottom: 5px;
         }
@@ -21,5 +39,23 @@
         flex: 1 1 auto;
         min-height: 0;
         position: relative;
+    }
+
+    .sequential-profiler-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 4px 8px 0;
+
+        .sequential-profiler-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sequential-profiler-legend-color {
+            width: 12px;
+            height: 12px;
+        }
     }
 }
