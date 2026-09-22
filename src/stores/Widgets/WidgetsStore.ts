@@ -1797,7 +1797,7 @@ export class WidgetsStore {
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
-            config.title = parentType === PvGeneratorComponent.WidgetConfig.type ? title : title + " Settings";
+            config.title = parentType === PvGeneratorComponent.WidgetConfig.type || title.toLowerCase().endsWith(" management") ? title : title + " Settings";
             config.parentId = parentId;
             config.parentType = parentType;
             if (config.id) {

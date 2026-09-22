@@ -19,7 +19,7 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
             minHeight: 300,
             defaultWidth: 500,
             defaultHeight: 550,
-            title: "Light curve Settings",
+            title: "Light curve management",
             isCloseable: true,
             parentId: "sequential-profiler",
             parentType: "sequential-profiler"

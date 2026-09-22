@@ -153,7 +153,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private openRegionGroupManager = () => {
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Light curve", this.widgetId, SequentialProfilerComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Light curve management", this.widgetId, SequentialProfilerComponent.WidgetConfig.type);
     };
 
     render() {
@@ -185,7 +185,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                             onChange={this.selectStatistic}
                         />
                     </FormGroup>
-                    <Button icon="cog" aria-label="Manage region groups" title="Manage region groups" onClick={this.openRegionGroupManager} />
+                    <Button icon="series-configuration" aria-label="Light curve management" title="Light curve management" onClick={this.openRegionGroupManager} />
                 </div>
                 <div className="sequential-profiler-plot">
                     {hasTimeSeries ? <LinePlotComponent {...this.plotProps} /> : <NonIdealState icon="timeline-line-chart" title="No time series" description="Add images to the time series to create a light curve." />}
