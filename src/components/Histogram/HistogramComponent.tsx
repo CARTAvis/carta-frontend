@@ -312,6 +312,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 testId: this.widgetId
             };
 
+            // the markers must follow the plot: no cached histogram when the plot is rebuilt without data
+            this.currentHistogram = null;
             if (frame.renderConfig?.histogram?.bins?.length) {
                 const currentPlotData = this.plotData;
                 this.currentHistogram = currentPlotData ? this.histogramData : null;

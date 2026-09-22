@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed catalog overlay sources with a latitude beyond a pole being plotted at an arbitrary position instead of being dropped ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed numeric catalog coordinate columns that declare hour or radian units being plotted as though their values were degrees ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Fixed a catalog's `COOSYS` declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (`ecl_FK5`, `ecl_FK4`) were read as equatorial, and the declared equinox and epoch were ignored ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
-* Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled ([#2963](https://github.com/CARTAvis/carta-frontend/issues/2963)).
+* Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled, and the marker being drawn in the wrong orientation in the exported PNG of histogram plots ([#2963](https://github.com/CARTAvis/carta-frontend/issues/2963)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 
