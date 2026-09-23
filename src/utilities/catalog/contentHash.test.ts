@@ -44,6 +44,37 @@ describe("hashCatalogContent", () => {
         expect(requeried).not.toBe(saved);
     });
 
+    test("differs when a query returns the same values under swapped names", () => {
+        // Same column indices, same values, two names exchanged. Folding the names in on their own
+        // leaves both sides with the same sorted names and the same values, and nothing notices
+        // that RA now holds what DEC held.
+        const swapped = [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "DEC"}), new CARTA.CatalogHeader({columnIndex: 1, dataType: CARTA.ColumnType.Double, name: "RA"}), headers[2]];
+
+        const saved = hashCatalogContent(headers, catalogData([1, 2], [3, 4], ["a", "b"]));
+        const requeried = hashCatalogContent(swapped, catalogData([1, 2], [3, 4], ["a", "b"]));
+
+        expect(requeried).not.toBe(saved);
+    });
+
+    test("matches when the same columns come back at other column indices", () => {
+        // Which index a column arrived at is not part of what the catalog holds.
+        const reordered = [
+            new CARTA.CatalogHeader({columnIndex: 2, dataType: CARTA.ColumnType.Double, name: "RA"}),
+            new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "DEC"}),
+            new CARTA.CatalogHeader({columnIndex: 1, dataType: CARTA.ColumnType.String, name: "NAME"})
+        ];
+        const reorderedData = new Map<number, ProcessedColumnData>([
+            [2, {dataType: CARTA.ColumnType.Double, data: [1, 2]}],
+            [0, {dataType: CARTA.ColumnType.Double, data: [3, 4]}],
+            [1, {dataType: CARTA.ColumnType.String, data: ["a", "b"]}]
+        ]);
+
+        const saved = hashCatalogContent(headers, catalogData([1, 2], [3, 4], ["a", "b"]));
+        const requeried = hashCatalogContent(reordered, reorderedData);
+
+        expect(requeried).toBe(saved);
+    });
+
     test("tells a value apart from the next one being longer", () => {
         const first = hashCatalogContent(headers, catalogData([1, 2], [3, 4], ["ab", "c"]));
         const second = hashCatalogContent(headers, catalogData([1, 2], [3, 4], ["a", "bc"]));

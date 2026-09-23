@@ -64,14 +64,18 @@ class ContentHash {
 export function hashCatalogContent(catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>): string {
     const hash = new ContentHash();
 
-    for (const name of catalogHeader.map(header => header.name ?? "").sort()) {
-        hash.add(name);
-    }
+    // Each column goes in with its own name, and the columns are taken in name order rather than in
+    // the order the result happens to put them. A name and a set of values say nothing apart:
+    // folding the names in on their own leaves a result that swapped two names over otherwise
+    // unchanged columns looking identical, and one that returned the same columns at other column
+    // indices looking changed. Which index a column arrived at is not part of what a catalog holds,
+    // so it only breaks ties between columns of the same name.
+    const columns = catalogHeader.filter(header => !!header.name).sort((a, b) => compareColumnNames(a.name as string, b.name as string) || a.columnIndex - b.columnIndex);
 
-    for (const key of [...catalogData.keys()].sort((a, b) => a - b)) {
-        const data = catalogData.get(key)?.data as ArrayLike<string | number | boolean | null | undefined> | null | undefined;
+    for (const header of columns) {
+        const data = catalogData.get(header.columnIndex)?.data as ArrayLike<string | number | boolean | null | undefined> | null | undefined;
         const length = data?.length ?? 0;
-        hash.addNumber(key);
+        hash.add(header.name as string);
         hash.addNumber(length);
         for (let i = 0; i < length; i++) {
             const value = data?.[i];
