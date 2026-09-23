@@ -164,7 +164,6 @@ export class WorkspaceRestorer {
             // The workspace is the authority on which image its own ID names.
             WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Image, frame.frameInfo.fileId, fileInfo.id);
 
-            // Channel/Stokes
             frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
 
             // References have to be in place before any image can be matched against them.
@@ -246,7 +245,6 @@ export class WorkspaceRestorer {
                 frame.applyVectorOverlay();
             }
 
-            // Set pan/zoom parameters
             if (fileInfo.center) {
                 frame.center = fileInfo.center;
             }

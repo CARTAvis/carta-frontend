@@ -8,7 +8,7 @@ import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 export interface CatalogWidgetLayoutSettings {
     /** The widget's own identity, stable across the sessions a workspace spans. */
     widgetId?: string;
-    /** Kept for layouts written before widget state was separated from display state. */
+    /** Kept for layouts written while a widget named its catalog by the file ID of the session that saved it. */
     catalogFileId?: number;
     tableSeparatorPosition?: string;
     /** Widths of the header table's columns, as the user left them. */

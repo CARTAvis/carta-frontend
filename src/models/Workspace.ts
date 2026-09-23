@@ -125,7 +125,7 @@ export interface WorkspaceCatalogImageOverlay {
     xAxis: string;
     yAxis: string;
     system: CatalogSystemType;
-    /** Number of rows that were actually drawn when the overlay was created. */
+    /** The row limit the overlay was drawn under. Fewer rows may have reached the image, since one whose position columns cannot be read is dropped. */
     maxRows?: number;
 }
 
