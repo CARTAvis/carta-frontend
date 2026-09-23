@@ -13,8 +13,6 @@ export interface CatalogWidgetLayoutSettings {
     tableSeparatorPosition?: string;
     /** Widths of the header table's columns, as the user left them. */
     headerTableColumnWidths?: number[];
-    /** Read but never written: an unreleased revision of this work keyed the settings section by catalog file ID. */
-    settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
     /** The settings section this widget was left on, for a workspace, per the workspace's own catalog
      * ID: the file ID a session gave a catalog names a different catalog once it is opened again. */
     settingsTabIdByWorkspaceCatalog?: Record<string, CatalogSettingsTabs>;
@@ -159,13 +157,7 @@ export class CatalogWidgetStore {
         if (settings.headerTableColumnWidths?.length === CatalogWidgetStore.HeaderTableColumnCount && settings.headerTableColumnWidths.every(width => Number.isFinite(width))) {
             this.headerTableColumnWidths = [...settings.headerTableColumnWidths];
         }
-        if (settings.settingsTabIdByCatalog) {
-            for (const [catalogFileId, tabId] of Object.entries(settings.settingsTabIdByCatalog)) {
-                if (Number.isFinite(Number(catalogFileId)) && typeof tabId === "number") {
-                    this.settingsTabIdByCatalog.set(Number(catalogFileId), tabId);
-                }
-            }
-        } else if (typeof settings.settingsTabId === "number") {
+        if (typeof settings.settingsTabId === "number") {
             this.settingsTabIdByCatalog.set(this.selectedCatalogId, settings.settingsTabId);
         }
         if (settings.settingsTabIdByWorkspaceCatalog) {

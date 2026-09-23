@@ -683,6 +683,6 @@ describe("CatalogDisplayStore display config", () => {
         const settings = widget.toLayoutSettings();
 
         expect(settings.catalogFileId).toBeUndefined();
-        expect(settings.settingsTabIdByCatalog).toBeUndefined();
+        expect(settings.settingsTabIdByWorkspaceCatalog).toBeUndefined();
     });
 });
