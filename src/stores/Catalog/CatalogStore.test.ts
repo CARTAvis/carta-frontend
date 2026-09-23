@@ -548,6 +548,18 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         expect(store.ensureColumnsRequested(["Name", "RA", "DEC"])).toBe(false);
         expect(store.catalogFilterRequest.columnIndices).toEqual([0, 1, 2]);
     });
+
+    test("leaves a column the table hides hidden", () => {
+        const store = createProfileStore();
+
+        store.ensureColumnsRequested(["RA", "DEC"]);
+
+        // Asked for, so the rows carry them; still hidden, because the overlay needing a column is
+        // not a reason to put it back in the table the user arranged.
+        expect(store.catalogFilterRequest.columnIndices).toEqual([0, 1, 2]);
+        expect(store.displayedColumnHeaders.map(header => header.name)).toEqual(["Name"]);
+        expect(store.toTableConfig().displayedColumns).toEqual(["Name"]);
+    });
 });
 
 describe("CatalogStore.restoreCatalogFromWorkspace", () => {

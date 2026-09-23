@@ -451,10 +451,19 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     /** The columns the backend is asked to send. A column is only sent while it is displayed. */
+    /**
+     * Columns the backend is asked for although the table does not show them.
+     *
+     * Which columns are asked for and which are shown are two different questions, and a column can
+     * be the answer to one and not the other: an overlay maps columns that the user may have hidden
+     * from the table, and the rows have to carry them all the same.
+     */
+    private readonly requestedHiddenColumns = observable.set<string>();
+
     @computed get columnIndices(): Array<number> {
         const indices: number[] = [];
-        this.catalogControlHeader.forEach(header => {
-            if (header.display && header.columnIndex !== undefined) {
+        this.catalogControlHeader.forEach((header, columnName) => {
+            if ((header.display || this.requestedHiddenColumns.has(columnName)) && header.columnIndex !== undefined) {
                 indices.push(header.columnIndex);
             }
         });
@@ -466,14 +475,17 @@ export abstract class AbstractCatalogProfileStore {
      * later only carry the requested columns, so a column that is mapped but not displayed leaves
      * those rows unusable.
      *
+     * The table is left as it was. A column the user hid stays hidden, and a workspace that saved
+     * it hidden comes back that way: being needed by the overlay is not a reason to show it.
+     *
      * @returns whether any column had to be added.
      */
     @action ensureColumnsRequested(columnNames: string[]): boolean {
         let hasChanged = false;
         for (const columnName of columnNames) {
             const header = this.catalogControlHeader.get(columnName);
-            if (header && !header.display) {
-                header.display = true;
+            if (header && !header.display && !this.requestedHiddenColumns.has(columnName)) {
+                this.requestedHiddenColumns.add(columnName);
                 hasChanged = true;
             }
         }
