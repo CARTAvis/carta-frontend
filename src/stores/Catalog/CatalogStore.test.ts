@@ -65,6 +65,25 @@ describe("CatalogStore.plotImageOverlay", () => {
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlaySystem).toBe(CatalogSystemType.ICRS);
         expect(convertSpy).toHaveBeenCalledWith(1, [0, 1], [1, 2], 0, "deg", "deg", expect.objectContaining({system: CatalogSystemType.ICRS}), 0, 0, 2);
     });
+
+    test("reports an overlay whose columns a re-run query no longer returns as not drawn", () => {
+        // An online catalog holds every row it is ever going to, so columns that are not there now
+        // are not coming. The saved overlay named RA and DEC; this query came back with neither.
+        const names = ["main_id", "dist"];
+        const catalogHeader = names.map((name, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name, units: "deg"}));
+        const catalogData = new Map<number, ProcessedColumnData>(names.map((name, index) => [index, {dataType: CARTA.ColumnType.Double, data: [index, index + 1]}]));
+        catalogStore.catalogProfileStores.set(1, new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, catalogData, CatalogType.SIMBAD));
+
+        jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
+        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+
+        expect(catalogStore.plotImageOverlay(1, {xAxis: "RA", yAxis: "DEC", system: CatalogSystemType.ICRS})).toBe(false);
+
+        expect(convertSpy).not.toHaveBeenCalled();
+        // And the catalog is not left claiming an overlay that has no points in it.
+        expect(catalogStore.getCatalogDisplayStore(1)?.hasPlottedImageOverlay).toBe(false);
+    });
 });
 
 describe("CatalogStore.convertToImageCoordinate", () => {

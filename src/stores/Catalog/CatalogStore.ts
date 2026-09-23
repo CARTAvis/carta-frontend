@@ -543,7 +543,7 @@ export class CatalogStore {
 
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         const frame = appStore.getFrame(this.getFrameIdByCatalogId(catalogFileId));
-        const isPlotted = !!frame;
+        let isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
             const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, system);
@@ -551,6 +551,13 @@ export class CatalogStore {
             this.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {
                 this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", coordinateSystem, 0, 0, maxRows);
+            } else if (!profileStore.shouldUpdateData) {
+                // The rows this catalog holds are all the rows there are, and the columns the
+                // overlay maps hold no coordinates among them -- a saved overlay whose columns a
+                // re-run query no longer returns, for instance. Nothing later will change that, so
+                // the catalog is not left marked as carrying an overlay with no points in it.
+                displayStore.clearPlottedImageOverlayState();
+                isPlotted = false;
             }
             profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
         }
@@ -561,7 +568,8 @@ export class CatalogStore {
             profileStore.setUpdatingDataStream(true);
             appStore.sendCatalogFilter(profileStore.updateRequestDataSize);
         }
-        // An overlay with no image left to draw on has not been drawn, however far the rest got.
+        // An overlay with no image left to draw on, or nothing to draw on it, has not been drawn,
+        // however far the rest got.
         return isPlotted;
     }
 
