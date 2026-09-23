@@ -707,7 +707,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
                 filter.fileId = profileStore.catalogInfo.fileId;
                 filter.filterConfigs = profileStore.getUserFilters();
-                filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
+                // Every column that has to be asked for, not only the ones the table shows: an
+                // overlay maps columns the user may have hidden, and rows that arrive without them
+                // cannot be drawn.
+                filter.columnIndices = profileStore.columnIndices;
                 appStore.sendCatalogFilter(filter);
             } else {
                 profileStore.resetFilterRequest(profileStore.getUserFilters());
@@ -741,7 +744,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore?.isLoadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !isSelectedOnly) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = profileStore.updateRequestDataSize;
-            filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
+            filter.columnIndices = profileStore.columnIndices;
             AppStore.Instance.sendCatalogFilter(filter);
             profileStore.setLoadingDataStatus(true);
         }

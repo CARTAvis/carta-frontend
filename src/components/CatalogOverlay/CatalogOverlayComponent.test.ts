@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
+import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
@@ -1034,5 +1034,33 @@ describe("CatalogOverlayComponent", () => {
 
             expect(component.isImageOverlaySelectionDirty).toBe(false);
         });
+    });
+});
+
+describe("CatalogOverlayComponent table refreshes", () => {
+    test("goes on asking for a hidden mapped column when the table scrolls for more rows", () => {
+        // Constructed for real, because the scroll handler is an instance field rather than a
+        // prototype method.
+        const catalogFileId = 30_001;
+        // Named so that nothing auto-selects them onto an axis: these are the size and colour
+        // columns an overlay maps, which the table need never show.
+        const columns = [
+            {name: "flux", display: true},
+            {name: "aperture", display: false},
+            {name: "quality", display: false}
+        ];
+        const profileStore = CreateCatalogProfileStore(catalogFileId, CatalogSystemType.ICRS, columns, 100);
+        // Rows are still to come, which is what makes the table ask for more.
+        profileStore.setSubsetEndIndex(0);
+        // The overlay maps two columns the table does not show, the way a restored one can.
+        profileStore.ensureColumnsRequested(["aperture", "quality"]);
+        const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, columns, {catalogFileId, profileStore});
+        profileStore.setLoadingDataStatus(false);
+        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(1);
+
+        component["updateByInfiniteScroll"]();
+
+        expect(sendCatalogFilter).toHaveBeenCalled();
+        expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual(expect.arrayContaining([0, 1, 2]));
     });
 });
