@@ -388,6 +388,7 @@ describe("WorkspaceRestorer", () => {
     test("says what kind of thing each report is about, and which one", async () => {
         const {appStore} = createSession();
         appStore.appendFile = jest.fn(() => Promise.resolve(undefined));
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
 
         const issues = await restoreIssues(createWorkspace({catalogs: [CATALOG], layout: {...LAYOUT, docked: {type: "row", content: []}}}));
 
