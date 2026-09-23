@@ -96,8 +96,18 @@ export class WorkspaceSnapshotter {
         }
     }
 
-    /** The ID this workspace knows an image by: the one it was given when it was opened. */
+    /**
+     * The ID this workspace knows an image by: the one it was given when it was opened.
+     *
+     * A generated image has none, although the session registered it like any other. There is no
+     * source to open it from again, so it is not saved -- and nothing that names it can be saved
+     * either. Answering with its registration would let a colour blend be written naming an image
+     * the workspace does not carry, which comes back quietly missing one of its layers.
+     */
     private imageIdOf(frame: FrameStore | undefined | null): number | undefined {
+        if (frame?.frameInfo?.generated) {
+            return undefined;
+        }
         return this.imageIdOfFile(frame?.frameInfo.fileId);
     }
 

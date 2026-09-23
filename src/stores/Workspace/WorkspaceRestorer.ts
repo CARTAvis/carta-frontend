@@ -222,13 +222,17 @@ export class WorkspaceRestorer {
             }
 
             if (this.workspace.references && fileInfo.references) {
-                if (this.appStore.spatialReference && fileInfo.references.spatial === this.workspace.references.spatial) {
+                // An image was matched only if it named the reference it was matched to. A
+                // workspace that names no reference -- because the session's own was an image it
+                // could not save -- matches nothing, rather than every image that named none.
+                const wasMatchedTo = (imageId: number | undefined, referenceId: number | undefined): boolean => imageId !== undefined && imageId === referenceId;
+                if (this.appStore.spatialReference && wasMatchedTo(fileInfo.references.spatial, this.workspace.references.spatial)) {
                     this.appStore.setSpatialMatchingEnabled(frame, true);
                 }
-                if (this.appStore.spectralReference && fileInfo.references.spectral === this.workspace.references.spectral) {
+                if (this.appStore.spectralReference && wasMatchedTo(fileInfo.references.spectral, this.workspace.references.spectral)) {
                     this.appStore.setSpectralMatchingEnabled(frame, true);
                 }
-                if (this.appStore.rasterScalingReference && fileInfo.references.raster === this.workspace.references.raster) {
+                if (this.appStore.rasterScalingReference && wasMatchedTo(fileInfo.references.raster, this.workspace.references.raster)) {
                     this.appStore.setRasterScalingMatchingEnabled(frame, true);
                 }
             }

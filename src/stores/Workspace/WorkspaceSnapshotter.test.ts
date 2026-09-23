@@ -163,6 +163,24 @@ describe("WorkspaceSnapshotter", () => {
         expect(issues).toEqual([{kind: WorkspaceItemKind.Image, subject: "", message: "The workspace contains generated files. These will not be preserved when reloading."}]);
     });
 
+    test("reports a colour blend made from a generated image instead of saving it without that layer", () => {
+        const generatedFrame = createFrame(2, {frameInfo: {fileId: 2, directory: "", hdu: "", fileInfo: {name: "moment.fits"}, generated: true}});
+        const {appStore, frame} = createSession();
+        appStore.frames.push(generatedFrame as never);
+        // The session registers a generated image like any other, so its workspace ID resolves.
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 2);
+        appStore.imageViewConfigStore.colorBlendingImageMap = new Map([[0, {selectedFrames: [frame, generatedFrame], alpha: [1, 0.5, 0.5]}]]) as never;
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.colorBlendingImages).toEqual([]);
+        expect(issues).toContainEqual({
+            kind: WorkspaceItemKind.ColorBlending,
+            subject: "",
+            message: "Could not save a colour-blended image: one of the images it is made of was not saved"
+        });
+    });
+
     test("carries the arrangement the session was saved in", () => {
         const {appStore} = createSession();
 

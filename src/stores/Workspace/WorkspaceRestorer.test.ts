@@ -174,6 +174,18 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.removeAllFrames).toHaveBeenCalled();
     });
 
+    test("matches no image to a reference the workspace could not name", async () => {
+        // The session that saved this was matched to an image it could not save -- a generated one
+        // -- so the workspace names no reference. An image that named none was not matched either,
+        // and must not come back matched to whatever this session happens to be referencing.
+        const {appStore} = createSession();
+        appStore.spatialReference = {} as never;
+
+        await restore(createWorkspace({files: [{...IMAGE, references: {}}], references: {}}));
+
+        expect(appStore.setSpatialMatchingEnabled).not.toHaveBeenCalled();
+    });
+
     test("reports a catalog whose image was not restored, and does not open it", async () => {
         const {appStore} = createSession();
 
