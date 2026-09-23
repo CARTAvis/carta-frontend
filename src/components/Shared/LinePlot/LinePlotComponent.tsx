@@ -1169,12 +1169,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     const dash = marker.dash || [2, 2];
                     if (marker.horizontal) {
                         const canvasY = this.getCanvasSpaceY(marker.value);
-                        if (!isNaN(canvasY)) {
+                        if (!isNaN(canvasY) && canvasY >= Math.floor(chartArea.top - 1) && canvasY <= Math.ceil(chartArea.bottom + 1)) {
                             meanRMS.mean = {color, dash, x1: left, y1: canvasY * devicePixelRatio, x2: right, y2: canvasY * devicePixelRatio};
                         }
                     } else {
                         const canvasX = this.getCanvasSpaceX(marker.value);
-                        if (!isNaN(canvasX)) {
+                        if (!isNaN(canvasX) && canvasX >= Math.floor(chartArea.left - 1) && canvasX <= Math.ceil(chartArea.right + 1)) {
                             meanRMS.mean = {color, dash, x1: canvasX * devicePixelRatio, y1: top, x2: canvasX * devicePixelRatio, y2: bottom};
                         }
                     }

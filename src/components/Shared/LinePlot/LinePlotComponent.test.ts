@@ -61,6 +61,19 @@ describe("LinePlotComponent PNG export of the mean/RMS markers", () => {
         expect(rms?.width).toBeCloseTo(40);
     });
 
+    test("omits a mean outside the zoomed chart but keeps the clipped box, as on screen", () => {
+        const vertical = makeComponent(genMeanRmsMarkers({mean: 11, stdDev: 2}, true)).genMeanRMSForPngPlot(1);
+        expect(vertical.mean).toBeUndefined();
+        expect(vertical.RMS).toEqual(expect.objectContaining({y: 0, height: 100}));
+        expect((vertical.RMS?.x ?? 0) + (vertical.RMS?.width ?? 0)).toBeCloseTo(200);
+
+        const horizontal = makeComponent([{value: -1, id: "marker-mean", horizontal: true}]).genMeanRMSForPngPlot(1);
+        expect(horizontal.mean).toBeUndefined();
+
+        const atEdge = makeComponent([{value: 10, id: "marker-mean", horizontal: false}]).genMeanRMSForPngPlot(1);
+        expect(atEdge.mean?.x1).toBeCloseTo(200.5);
+    });
+
     test("scales the geometry by the device pixel ratio and clips the box to the chart", () => {
         const {mean, RMS: rms} = makeComponent(genMeanRmsMarkers({mean: 9.5, stdDev: 2}, true)).genMeanRMSForPngPlot(2);
         expect(mean?.x1).toBeCloseTo(381);
