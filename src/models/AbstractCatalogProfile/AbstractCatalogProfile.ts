@@ -305,19 +305,29 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     /**
-     * Values for the image overlay, read as coordinates of the active system: string formats are
-     * parsed, and a latitude beyond a pole is dropped. Only here, where the columns are known to
-     * be feeding a sky transform, is that interpretation warranted.
+     * Values for the image overlay, read as coordinates of the system they are to be drawn in:
+     * string formats are parsed, and a latitude beyond a pole is dropped. Only here, where the
+     * columns are known to be feeding a sky transform, is that interpretation warranted.
+     *
+     * The system is asked for rather than read off the store, because the overlay that is drawn
+     * and the widget's coordinate control can be in different systems -- a restored overlay keeps
+     * the system it was saved in, whatever the control has been left on since. The system decides
+     * what the columns mean: an unmarked sexagesimal value is hours under a right ascension and
+     * degrees under a galactic longitude, and only a latitude is checked against its pole. Reading
+     * the values in one system and transforming them as another puts the sources somewhere else
+     * entirely.
      */
     public get2DCoordinateData(
         xColumnName: string,
         yColumnName: string,
         columnsData: Map<number, ProcessedColumnData>,
+        system: CatalogSystemType,
         rowCount?: number
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
-        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
-        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
+        const axes = this.systemCoordinateMap.get(system);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, axes?.x ?? CatalogOverlay.X, rowCount);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, axes?.y ?? CatalogOverlay.Y, rowCount);
 
         return wcsX && wcsY ? {wcsX, wcsY, xHeaderInfo, yHeaderInfo} : {xHeaderInfo, yHeaderInfo};
     }

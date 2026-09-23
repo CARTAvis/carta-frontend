@@ -141,7 +141,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData, CatalogSystemType.FK5);
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.FK5}), 1, 1, undefined);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
@@ -243,7 +243,8 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        // The rows are read in the system the overlay is drawn in, not the one the control is on.
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData, CatalogSystemType.ICRS);
         // Both the axes and the system come from the overlay that is drawn, not from the controls:
         // converting ICRS positions as Galactic would put every source somewhere else.
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.ICRS}), 1, 1, 1);
@@ -371,7 +372,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         });
 
         expect(clearSpy).toHaveBeenCalledWith(1);
-        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, 3);
+        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, CatalogSystemType.Ecliptic, 3);
         expect(convertSpy).toHaveBeenCalledWith(1, [1, 2, 3], [4, 5, 6], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}), 0, 0, undefined);
     });
 

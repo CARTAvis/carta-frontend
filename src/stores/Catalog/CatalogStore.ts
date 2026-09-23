@@ -546,7 +546,7 @@ export class CatalogStore {
         const isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
-            const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData);
+            const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, system);
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             this.clearImageCoordsData(catalogFileId);
             if (imageCoords.wcsX && imageCoords.wcsY) {

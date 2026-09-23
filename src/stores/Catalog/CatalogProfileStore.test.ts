@@ -255,7 +255,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", data: new Float64Array([45, 91])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(45);
         expect(coords.wcsY?.[1]).toBeNaN();
     });
@@ -268,7 +268,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", units: "arcsec", data: new Float64Array([3600, 400000])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(3600);
         expect(coords.wcsY?.[1]).toBeNaN();
     });
@@ -281,9 +281,36 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.Int32, data: new Int32Array([45, 100])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(45);
         expect(coords.wcsY?.[1]).toBeNaN();
+    });
+
+    test("reads an unmarked sexagesimal column as the system it is drawn in, not the one the control is on", () => {
+        // 12:30:00 is 187.5 degrees read as a right ascension and 12.5 read as a galactic
+        // longitude. A restored overlay keeps the system it was drawn in while the widget's
+        // coordinate control can be left anywhere, so the reading has to follow the overlay.
+        const store = CreateProfileStore([
+            {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00", "12:30:00"]},
+            {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "-21:57:15"]}
+        ]);
+        store.setCatalogCoordinateSystem(CatalogSystemType.Galactic);
+
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX?.[0]).toBeCloseTo(187.5);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.Galactic).wcsX?.[0]).toBeCloseTo(12.5);
+    });
+
+    test("checks a latitude against its pole for the system it is drawn in", () => {
+        // Pixel axes are not a sky frame, so nothing is out of range there. An overlay drawn on a
+        // sky system still has a pole to check against, whatever the control has been left on.
+        const store = CreateProfileStore([
+            {name: "RAJ2000", data: new Float64Array([10, 20])},
+            {name: "DEJ2000", data: new Float64Array([45, 91])}
+        ]);
+        store.setCatalogCoordinateSystem(CatalogSystemType.Pixel0);
+
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsY?.[1]).toBeNaN();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.Pixel0).wcsY?.[1]).toBe(91);
     });
 
     test("keeps reading a column the same way once its format is known", () => {
@@ -294,14 +321,14 @@ describe("CatalogProfileStore plot data", () => {
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00", "13:00:00"]},
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "-22:00:00"]}
         ]);
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData).wcsX).toBeDefined();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX).toBeDefined();
 
         const blankChunk = new Map<number, ProcessedColumnData>([
             [0, {dataType: CARTA.ColumnType.String, data: ["", ""]}],
             [1, {dataType: CARTA.ColumnType.String, data: ["", ""]}]
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk, CatalogSystemType.ICRS);
         expect(coords.wcsX).toHaveLength(2);
         expect(coords.wcsY).toHaveLength(2);
         expect(coords.wcsX?.every(isNaN)).toBe(true);
@@ -319,7 +346,7 @@ describe("CatalogProfileStore plot data", () => {
 
         // The first chunk still needs two slots in the GL buffer; it must not be omitted while the
         // sniffer has no evidence yet.
-        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk);
+        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", blankChunk, CatalogSystemType.ICRS);
         expect(earlyCoords.wcsX).toEqual([NaN, NaN]);
         expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
 
@@ -332,7 +359,7 @@ describe("CatalogProfileStore plot data", () => {
             [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}],
             [1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}]
         ]);
-        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk);
+        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk, CatalogSystemType.ICRS);
         expect(laterCoords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(laterCoords.wcsY?.[0]).toBeCloseTo(-21.954166666666667, 10);
     });
@@ -359,7 +386,7 @@ describe("CatalogProfileStore plot data", () => {
 
         // One recognized value out of two inspected values is not a majority, but the rows still
         // occupy these absolute positions in the streamed overlay buffer.
-        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", earlyChunk);
+        const earlyCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", earlyChunk, CatalogSystemType.ICRS);
         expect(earlyCoords.wcsX).toEqual([NaN, NaN]);
         expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
 
@@ -372,7 +399,7 @@ describe("CatalogProfileStore plot data", () => {
             [0, {dataType: CARTA.ColumnType.String, data: ["13:00:00"]}],
             [1, {dataType: CARTA.ColumnType.String, data: ["-22:00:00"]}]
         ]);
-        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk);
+        const laterCoords = store.get2DCoordinateData("RAJ2000", "DEJ2000", laterChunk, CatalogSystemType.ICRS);
         expect(laterCoords.wcsX?.[0]).toBeCloseTo(195, 10);
         expect(laterCoords.wcsY?.[0]).toBe(-22);
     });
@@ -382,14 +409,14 @@ describe("CatalogProfileStore plot data", () => {
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
         ]);
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData).wcsX).toBeDefined();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX).toBeDefined();
 
         const chunk = new Map<number, ProcessedColumnData>([
             [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "---"]}],
             [1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "---"]}]
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", chunk);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", chunk, CatalogSystemType.ICRS);
         expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(coords.wcsX?.[1]).toBeNaN();
         expect(coords.wcsY?.[1]).toBeNaN();
@@ -401,7 +428,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15.4625"]}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
         expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(coords.wcsY?.[0]).toBeCloseTo(-21.954295, 6);
     });
@@ -412,7 +439,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15", "-22:00:00", undefined]}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, 2);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS, 2);
 
         expect(coords.wcsX).toHaveLength(2);
         expect(coords.wcsY).toHaveLength(2);

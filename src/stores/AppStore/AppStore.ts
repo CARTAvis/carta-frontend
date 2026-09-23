@@ -2563,24 +2563,25 @@ export class AppStore {
                 const maxRows = (catalogDisplayStore?.hasPlottedImageOverlay ? catalogDisplayStore.plottedImageOverlayMaxRows : undefined) ?? catalogProfileStore.maxRows;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (frame) {
-                    let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
+                    // Rows are read and put where the overlay that is drawn says they go. The
+                    // widget's system control can be left somewhere else without taking the overlay
+                    // down, the same way its axis controls can, and a restored overlay keeps the
+                    // system it was drawn in rather than the one the controls were saved on. The
+                    // reading is settled first, because what a column means depends on it.
+                    const coordinateSystem =
+                        catalogDisplayStore?.hasPlottedImageOverlay && catalogDisplayStore.plottedImageOverlaySystem !== undefined
+                            ? {...catalogProfileStore.catalogCoordinateSystem, system: catalogDisplayStore.plottedImageOverlaySystem}
+                            : catalogProfileStore.catalogCoordinateSystem;
+                    let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData, coordinateSystem.system);
                     const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && overlayColumns.every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
                     if (isCoordinateFormatSettled) {
                         // Earlier chunks were deliberately kept in the buffer as NaN while the
                         // unitless string descriptor was unresolved. Re-read the accumulated
                         // prefix now that the descriptor is known, and write it from row zero.
                         this.catalogStore.clearImageCoordsData(catalogFileId);
-                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, catalogFilter.subsetEndIndex);
+                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, coordinateSystem.system, catalogFilter.subsetEndIndex);
                     }
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-                    // Rows are put where the overlay that is drawn says they go. The widget's system
-                    // control can be left somewhere else without taking the overlay down, the same
-                    // way its axis controls can, and a restored overlay keeps the system it was
-                    // drawn in rather than the one the controls were saved on.
-                    const coordinateSystem =
-                        catalogDisplayStore?.hasPlottedImageOverlay && catalogDisplayStore.plottedImageOverlaySystem !== undefined
-                            ? {...catalogProfileStore.catalogCoordinateSystem, system: catalogDisplayStore.plottedImageOverlaySystem}
-                            : catalogProfileStore.catalogCoordinateSystem;
                     if (coords.wcsX && coords.wcsY) {
                         this.catalogStore.convertToImageCoordinate(
                             catalogFileId,
