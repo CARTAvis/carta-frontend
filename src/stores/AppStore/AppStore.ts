@@ -51,6 +51,7 @@ import {ApiService, BackendService, ScriptingService, TelemetryService, TileServ
 import {
     AlertStore,
     AnimatorStore,
+    type CatalogDisplayStore,
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
@@ -76,6 +77,7 @@ import {
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {
+    CatalogAxisEligibility,
     Distinct,
     exportScreenshot,
     getColorForTheme,
@@ -145,6 +147,16 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
+}
+
+/** The two columns currently plotted on the image overlay, or undefined when either slot is empty. */
+function getPlottedOverlayColumns(catalogDisplayStore: CatalogDisplayStore | undefined): [string, string] | undefined {
+    const xColumn = catalogDisplayStore?.xAxis;
+    const yColumn = catalogDisplayStore?.yAxis;
+    if (!xColumn || !yColumn || xColumn === CatalogOverlay.NONE || yColumn === CatalogOverlay.NONE) {
+        return undefined;
+    }
+    return [xColumn, yColumn];
 }
 
 export class AppStore {
@@ -2510,6 +2522,11 @@ export class AppStore {
         }
         if (catalogProfileStore) {
             const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
+            const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
+            const isViewUpdate = !isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate;
+            const overlayColumns = getPlottedOverlayColumns(catalogDisplayStore);
+            const getEligibilityStatus = (columnName: string) => catalogProfileStore.getCoordinateEligibility(columnName).status;
+            const didHaveUnknownCoordinateFormat = isViewUpdate && Boolean(overlayColumns?.some(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown));
             const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
             catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
             catalogProfileStore.setProgress(progress);
@@ -2518,25 +2535,31 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (!isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
-                const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-                const xColumn = catalogDisplayStore?.xAxis;
-                const yColumn = catalogDisplayStore?.yAxis;
+            if (isViewUpdate && overlayColumns) {
+                const [xColumn, yColumn] = overlayColumns;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (xColumn && yColumn && xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE && frame) {
-                    const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
+                if (frame) {
+                    let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
+                    const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && overlayColumns.every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
+                    if (isCoordinateFormatSettled) {
+                        // Earlier chunks were deliberately kept in the buffer as NaN while the
+                        // unitless string descriptor was unresolved. Re-read the accumulated
+                        // prefix now that the descriptor is known, and write it from row zero.
+                        this.catalogStore.clearImageCoordsData(catalogFileId);
+                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, catalogFilter.subsetEndIndex);
+                    }
                     const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-                    if (coords.wcsX && coords.wcsY && coords.xHeaderInfo.units && coords.yHeaderInfo.units) {
+                    if (coords.wcsX && coords.wcsY) {
                         this.catalogStore.convertToImageCoordinate(
                             catalogFileId,
                             coords.wcsX,
                             coords.wcsY,
                             wcs,
-                            coords.xHeaderInfo.units,
-                            coords.yHeaderInfo.units,
-                            catalogProfileStore.catalogCoordinateSystem.system,
-                            catalogFilter.subsetEndIndex,
-                            catalogFilter.subsetDataSize
+                            coords.xHeaderInfo?.units ?? "",
+                            coords.yHeaderInfo?.units ?? "",
+                            catalogProfileStore.catalogCoordinateSystem,
+                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetEndIndex,
+                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetDataSize
                         );
                         catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
                     }
