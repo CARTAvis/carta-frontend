@@ -10,6 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
 import {AnimationMode, BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGES} from "models";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -251,6 +252,9 @@ export class FileBrowserDialogComponent extends React.Component {
 
         if (!activeFrame) {
             throw new Error("No active frame");
+        }
+        if (activeFrame.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.saveImage);
         }
 
         const saveFilename = fileBrowserStore.saveFilename;
@@ -620,6 +624,8 @@ export class FileBrowserDialogComponent extends React.Component {
                                     <br />
                                     <small>To save color-blending images, please save as a workspace via the File menu.</small>
                                 </span>
+                            ) : appStore.activeFrame?.isSpectralAxisNonlinear ? (
+                                <span>{NONLINEAR_SPECTRAL_AXIS_MESSAGES.saveImage}</span>
                             ) : (
                                 "Save this file"
                             )
@@ -632,6 +638,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 fileBrowserStore.isLoadingInfo ||
                                 appStore.isFileSaving ||
                                 appStore.activeImage?.type !== ImageType.FRAME ||
+                                !!appStore.activeFrame?.isSpectralAxisNonlinear ||
                                 !fileBrowserStore.saveFilename ||
                                 fileBrowserStore.saveFilename.length === 0
                             }

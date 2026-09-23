@@ -1,3 +1,5 @@
+import {type CARTA} from "carta-protobuf";
+
 import {FrequencyUnit, IntensityUnitType, SpectralSystem, SpectralType, SpectralUnit} from "enums";
 
 export interface SpectralTypeSet {
@@ -32,6 +34,42 @@ export const GetSpectralTypeCode = (ctype: string | undefined): string => {
     const value = ctype?.trim().toUpperCase() ?? "";
     const match = value.match(/^([A-Z]{4})-([A-Z0-9]{3})$/);
     return match && SPECTRAL_ALGORITHM_CODES.includes(match[2]) ? match[1] : value;
+};
+
+const NONLINEAR_SPECTRAL_ALGORITHM_CODES = [...SPECTRAL_ALGORITHM_CODES, "TAB"];
+
+export const HasNonlinearSpectralAlgorithm = (ctype: string | undefined): boolean => {
+    const match = ctype
+        ?.trim()
+        .toUpperCase()
+        .match(/^([A-Z]{4})-([A-Z0-9]{3})$/);
+    return !!match && NONLINEAR_SPECTRAL_ALGORITHM_CODES.includes(match[2]);
+};
+
+export const NONLINEAR_SPECTRAL_AXIS_MESSAGES = {
+    moments: "Integrated and coordinate-dependent moments are not currently supported for nonlinear spectral axes.",
+    pv: "PV generation is not currently supported for nonlinear spectral axes because the output spectral WCS cannot be preserved correctly.",
+    saveImage: "Cube export is not currently supported for nonlinear spectral axes because the spectral WCS cannot be preserved correctly.",
+    fileInfo: "Not available for nonlinear spectral axes"
+};
+
+export const HasNonlinearSpectralAxis = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined): boolean => {
+    const spectralNumber = fileInfoExtended?.axesNumbers?.spectral ?? 0;
+    if (spectralNumber <= 0) {
+        return false;
+    }
+    const ctype = fileInfoExtended?.headerEntries?.find(entry => entry.name?.trim() === `CTYPE${spectralNumber}`)?.value;
+    return HasNonlinearSpectralAlgorithm(ctype ?? undefined);
+};
+
+const BACKEND_SPECTRAL_INFO_ENTRIES = ["Frequency", "Frequency range", "Velocity", "Velocity range"];
+
+export const GetComputedEntriesForDisplay = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined): CARTA.HeaderEntry.$Properties[] => {
+    const entries = fileInfoExtended?.computedEntries ?? [];
+    if (!HasNonlinearSpectralAxis(fileInfoExtended)) {
+        return entries;
+    }
+    return entries.map(entry => (BACKEND_SPECTRAL_INFO_ENTRIES.includes(entry.name ?? "") ? {...entry, value: NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo} : entry));
 };
 
 // Channel is not a valid standalone spectral type

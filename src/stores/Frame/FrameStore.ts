@@ -17,6 +17,7 @@ import {
     GetFreqInGHz,
     GetInitialSpectralUnit,
     GetSpectralTypeCode,
+    HasNonlinearSpectralAlgorithm,
     type IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
@@ -68,6 +69,7 @@ import {
     getValueFromArcsecString,
     isAstBadPoint,
     isRestFrameSpectralType,
+    isUniformlySpaced,
     isValidRedshift,
     isWCSStringFormatValid,
     minMax2D,
@@ -1049,6 +1051,17 @@ export class FrameStore {
             return false;
         }
         return IsSpectralSystemSupported(this.spectralAxis.specsys as string);
+    }
+
+    @computed get isSpectralAxisNonlinear(): boolean {
+        if (!this.spectralAxis) {
+            return false;
+        }
+        if (HasNonlinearSpectralAlgorithm(this.spectralAxis.ctype)) {
+            return true;
+        }
+        const channelInfo = this.channelInfo;
+        return !!channelInfo?.fromWCS && !isUniformlySpaced(channelInfo.values);
     }
 
     @computed get isRestFrameSupported(): boolean {

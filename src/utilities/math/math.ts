@@ -130,3 +130,21 @@ export function gaussian(x: number, amp: number, center: number, fwhm: number) {
 export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
     return (amp * 0.25 * Math.pow(fwhm, 2)) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
 }
+
+export function isUniformlySpaced(values: ArrayLike<number>, relativeTolerance: number = 1e-6): boolean {
+    if (!values || values.length < 3) {
+        return true;
+    }
+    const step = values[1] - values[0];
+    if (!isFinite(step)) {
+        return false;
+    }
+    for (let i = 2; i < values.length; i++) {
+        const delta = values[i] - values[i - 1];
+        const tolerance = Math.max(Math.abs(step) * relativeTolerance, Math.abs(values[i]) * 1e-12);
+        if (!isFinite(delta) || Math.abs(delta - step) > tolerance) {
+            return false;
+        }
+    }
+    return true;
+}

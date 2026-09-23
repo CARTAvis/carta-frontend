@@ -1,6 +1,72 @@
 import {IntensityUnitType, SpectralType, SpectralUnit} from "../../enums";
 
-import {FindIntensityUnitType, GetFluxDensityFromSum, GetInitialSpectralUnit, GetSpectralTypeCode, IsFrequencyDensityUnit, ShouldUseSumForFluxDensity} from "./SpectralDefinition";
+import {
+    FindIntensityUnitType,
+    GetComputedEntriesForDisplay,
+    GetFluxDensityFromSum,
+    GetInitialSpectralUnit,
+    GetSpectralTypeCode,
+    HasNonlinearSpectralAlgorithm,
+    HasNonlinearSpectralAxis,
+    IsFrequencyDensityUnit,
+    NONLINEAR_SPECTRAL_AXIS_MESSAGES,
+    ShouldUseSumForFluxDensity
+} from "./SpectralDefinition";
+
+const MakeFileInfo = (ctype3: string | undefined, spectral: number = 3) => ({
+    axesNumbers: {spatialX: 1, spatialY: 2, spectral, stokes: 0, depth: 3},
+    headerEntries: [{name: "CTYPE1", value: "RA---TAN"}, {name: "CTYPE2", value: "DEC--TAN"}, ...(ctype3 === undefined ? [] : [{name: "CTYPE3", value: ctype3}])],
+    computedEntries: [
+        {name: "Name", value: "cube.fits"},
+        {name: "Frequency range", value: "[100.0000, 200.0000] (GHz)"},
+        {name: "Velocity range", value: "[-10.0000, 10.0000] (km/s)"},
+        {name: "Pixel unit", value: "Jy/beam"}
+    ]
+});
+
+describe("nonlinear spectral axis of a file", () => {
+    test("is detected from the CTYPE of the spectral axis", () => {
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("WAVE-LOG"))).toBe(true);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("FREQ"))).toBe(false);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo(undefined))).toBe(false);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("WAVE-LOG", 0))).toBe(false);
+        expect(HasNonlinearSpectralAxis(undefined)).toBe(false);
+    });
+
+    test("replaces the backend-derived spectral ranges of the computed entries", () => {
+        const entries = GetComputedEntriesForDisplay(MakeFileInfo("WAVE-LOG"));
+        expect(entries.map(entry => [entry.name, entry.value])).toEqual([
+            ["Name", "cube.fits"],
+            ["Frequency range", NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo],
+            ["Velocity range", NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo],
+            ["Pixel unit", "Jy/beam"]
+        ]);
+    });
+
+    test("keeps the computed entries of a linear spectral axis", () => {
+        const fileInfo = MakeFileInfo("FREQ");
+        expect(GetComputedEntriesForDisplay(fileInfo)).toBe(fileInfo.computedEntries);
+        expect(GetComputedEntriesForDisplay(undefined)).toEqual([]);
+    });
+});
+
+describe("nonlinear spectral algorithm codes", () => {
+    test.each([
+        ["WAVE-LOG", true],
+        [" wave-log ", true],
+        ["FREQ-F2W", true],
+        ["WAVE-TAB", true],
+        ["AWAV-GRI", true],
+        ["FREQ", false],
+        ["WAVE", false],
+        ["VELO-LSR", false],
+        ["RA---TAN", false],
+        ["", false],
+        [undefined, false]
+    ])("classifies CTYPE %j as nonlinear: %s", (ctype, isNonlinear) => {
+        expect(HasNonlinearSpectralAlgorithm(ctype)).toBe(isNonlinear);
+    });
+});
 
 describe("initial spectral unit", () => {
     test.each([

@@ -308,6 +308,22 @@ describe("FrameStore", () => {
             expect(frame.isSpectralCoordinateConvertible).toBe(true);
         });
 
+        test("flags a WAVE-LOG axis as nonlinear and a linear FREQ axis as linear", () => {
+            expect(new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+            expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+        });
+
+        test("flags a spectral axis with non-uniform channel spacing as nonlinear", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
+            try {
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+                mockChannelInfo.mockImplementation(() => ({fromWCS: true, values: [1, 2, 3, 4], indexes: [0, 1, 2, 3]}) as any);
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
         test("opens in the header unit when it is not the standard base unit of the axis", () => {
             const logFrame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
             expect(logFrame.spectralUnit).toBe(SpectralUnit.ANGSTROM);

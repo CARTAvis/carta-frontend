@@ -3,6 +3,7 @@ import {action, makeObservable, observable, runInAction} from "mobx";
 import {Subject, throwError} from "rxjs";
 
 import {ConnectionStatus, TelemetryAction} from "enums";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGES, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "models";
 import {ApiService, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -478,6 +479,9 @@ export class BackendService {
         restFreq?: number,
         shouldOverwrite: boolean = false
     ): Promise<CARTA.SaveFileAck.$Properties> {
+        if (AppStore.Instance.getFrame(fileId)?.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.saveImage);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -750,6 +754,9 @@ export class BackendService {
     };
 
     async requestMoment(message: CARTA.MomentRequest.$Properties): Promise<CARTA.MomentResponse.$Properties> {
+        if (AppStore.Instance.getFrame(message.fileId ?? NaN)?.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.moments);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -793,6 +800,9 @@ export class BackendService {
     }
 
     async requestPV(message: CARTA.PvRequest.$Properties): Promise<CARTA.PvResponse.$Properties> {
+        if (AppStore.Instance.getFrame(message.fileId ?? NaN)?.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.pv);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {

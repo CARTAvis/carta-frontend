@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
 import {SimpleTableComponent, type SimpleTableComponentProps} from "components/Shared";
 import {FileInfoType} from "enums";
+import {GetComputedEntriesForDisplay} from "models";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 
@@ -255,7 +256,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.SELECT_REGION:
                 return <RegionSelectComponent />;
             case FileInfoType.IMAGE_FILE:
-                return this.renderImageHeaderList(this.props.fileInfoExtended?.computedEntries ?? []);
+                return this.renderImageHeaderList(GetComputedEntriesForDisplay(this.props.fileInfoExtended));
             case FileInfoType.IMAGE_HEADER:
                 return this.renderImageHeaderList(this.props.fileInfoExtended?.headerEntries ?? []);
             case FileInfoType.REGION_FILE:

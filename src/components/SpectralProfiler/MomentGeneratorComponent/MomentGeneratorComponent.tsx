@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, MomentSelectingMode} from "enums";
-import {MOMENT_TEXT} from "models";
+import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGES} from "models";
 import {AppStore, type FrameStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
@@ -80,7 +80,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : null;
+        return momentContent ? (
+            <MenuItem
+                text={`${momentContent.tag}: ${momentContent.text}`}
+                onClick={handleClick}
+                key={moment}
+                icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}
+                disabled={!this.props.widgetStore.isMomentSupported(moment)}
+            />
+        ) : null;
     };
 
     private renderRestFreqInput = (frame: FrameStore) => {
@@ -265,7 +273,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
             <React.Fragment>
-                <FormGroup label="Moments" inline={true}>
+                <FormGroup label="Moments" inline={true} helperText={frame?.isSpectralAxisNonlinear ? NONLINEAR_SPECTRAL_AXIS_MESSAGES.moments : undefined}>
                     <MomentMultiSelect
                         placeholder="Select..."
                         items={Object.values(CARTA.Moment) as CARTA.Moment[]}

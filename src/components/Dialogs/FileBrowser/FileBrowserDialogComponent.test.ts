@@ -6,11 +6,21 @@ import {FileBrowserDialogComponent} from "./FileBrowserDialogComponent";
 interface TestableFileBrowserDialogComponent {
     loadSelectedFiles: jest.Mock<Promise<FrameStore[]>>;
     loadAsTimeSeries: () => Promise<void>;
+    handleSaveFile: (shouldOverwrite?: boolean) => Promise<void>;
 }
 
 describe("FileBrowserDialogComponent", () => {
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    test("handleSaveFile refuses a cube with a nonlinear spectral axis", async () => {
+        const saveFile = jest.fn();
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: {isSpectralAxisNonlinear: true}, saveFile} as unknown as AppStore);
+
+        const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
+        await expect(component.handleSaveFile()).rejects.toThrow("Cube export is not currently supported for nonlinear spectral axes");
+        expect(saveFile).not.toHaveBeenCalled();
     });
 
     test("loadAsTimeSeries spatially matches only the newly loaded frames in append mode", async () => {
