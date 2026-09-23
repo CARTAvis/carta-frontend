@@ -6,7 +6,11 @@ import {RegionGroupType} from "enums";
 
 jest.mock("carta-protobuf", () => ({CARTA: {StatsType: {Sum: 2, FluxDensity: 3, Mean: 4}}}), {virtual: true});
 jest.mock("components/Shared", () => ({
-    LinePlotComponent: ({multiPlotPropsMap}) => <div data-testid="plot-data">{JSON.stringify(Array.from(multiPlotPropsMap, ([name, props]) => ({name, data: props.data})))}</div>
+    LinePlotComponent: ({xMin, xMax, multiPlotPropsMap}) => (
+        <div data-testid="plot-data" data-x-min={xMin} data-x-max={xMax}>
+            {JSON.stringify(Array.from(multiPlotPropsMap, ([name, props]) => ({name, data: props.data})))}
+        </div>
+    )
 }));
 jest.mock("utilities", () => ({getColorForTheme: () => "#000", SELECTABLE_COLORS: ["blue"]}));
 jest.mock("stores", () => ({
@@ -78,6 +82,26 @@ test("plots a newly created region series immediately", () => {
     expect(screen.getByTestId("plot-data")).toHaveTextContent("Region series 2");
     expect(screen.getByTestId("plot-data")).toHaveTextContent('"x":7,"y":8');
     expect(screen.getByTestId("plot-data")).not.toHaveTextContent("Light curve 1");
+    unmount();
+    GROUPS.clear();
+});
+
+test("leaves space outside the first and last time-series points", () => {
+    MOCK_APP_STORE.timeSeriesStore.elements = [{frame: {id: 1}}];
+    GROUPS.set("light-curve", {
+        regionGroupId: "light-curve",
+        regionGroupName: "Light curve 1",
+        regionGroupType: RegionGroupType.TIME_SERIES,
+        entries: [
+            {frameId: 1, region: {mjdUtc: 59000, regionFluxDensity: 3, isDisplayed: true}},
+            {frameId: 2, region: {mjdUtc: 59001, regionFluxDensity: 4, isDisplayed: true}}
+        ]
+    });
+
+    const {unmount} = render(<SequentialProfilerComponent id="sequential-profiler-0" docked={true} />);
+    const plot = screen.getByTestId("plot-data");
+    expect(Number(plot.getAttribute("data-x-min"))).toBeCloseTo(58999.95);
+    expect(Number(plot.getAttribute("data-x-max"))).toBeCloseTo(59001.05);
     unmount();
     GROUPS.clear();
 });

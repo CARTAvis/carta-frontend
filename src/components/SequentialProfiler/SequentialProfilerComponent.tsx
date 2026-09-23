@@ -202,7 +202,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const xMax = xValues.length ? Math.max(...xValues) : 1;
         const yMin = yValues.length ? Math.min(...yValues) : 0;
         const yMax = yValues.length ? Math.max(...yValues) : 1;
-        const xPadding = xMin === xMax ? (this.selectedSeriesType === RegionGroupType.REGION_SERIES ? 1 : 1 / 86400) : 0;
+        const xPadding = xMin === xMax ? (this.selectedSeriesType === RegionGroupType.REGION_SERIES ? 1 : 1 / 86400) : (xMax - xMin) * 0.05;
         const yPadding = yMin === yMax ? Math.abs(yMin) * 0.05 || 1 : (yMax - yMin) * 0.05;
         const firstRegion = this.plotGroups.find(group => group.entries.length)?.entries[0]?.entry.region;
         const unit = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
