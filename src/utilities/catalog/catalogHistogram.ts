@@ -48,16 +48,18 @@ export class CatalogHistogramInteraction {
 
     onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         const target = event.target as Element | null;
-        if (event.button !== 0 || target?.closest(".profiler-toolbar")) {
+        const chartArea = this.options.getChart()?.chartArea;
+        const {offsetX, offsetY} = event.nativeEvent;
+        if (event.button !== 0 || target?.closest(".profiler-toolbar") || !chartArea || offsetX < chartArea.left || offsetX > chartArea.right || offsetY < chartArea.top || offsetY > chartArea.bottom) {
             return;
         }
         this.hasHandledDrag = false;
         this.ownerWindow = event.currentTarget.ownerDocument.defaultView;
         this.ownerWindow?.addEventListener("mouseup", this.onWindowMouseUp);
         if (event.shiftKey) {
-            this.panPreviousX = event.nativeEvent.offsetX;
+            this.panPreviousX = offsetX;
         } else {
-            this.dragStartX = event.nativeEvent.offsetX;
+            this.dragStartX = offsetX;
             this.dragCurrentX = undefined;
         }
     };
