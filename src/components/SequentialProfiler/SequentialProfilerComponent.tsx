@@ -8,8 +8,8 @@ import {LinePlotComponent, type LinePlotComponentProps} from "components/Shared"
 import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {PlotType, RegionGroupType, TickType, TimeLabelFormat} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps} from "stores";
-import {getColorForTheme, SELECTABLE_COLORS} from "utilities";
+import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps, WidgetsStore} from "stores";
+import {getColorForTheme} from "utilities";
 
 import "./SequentialProfilerComponent.scss";
 
@@ -174,7 +174,11 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         return group.regionGroupName;
     }
 
-    private getPlotColor = (index: number) => getColorForTheme(`auto-${SELECTABLE_COLORS[index % SELECTABLE_COLORS.length]}`);
+    private getPlotColor = (group: RegionGroupStore) => {
+        const index = this.regionGroups.findIndex(candidate => candidate.regionGroupId === group.regionGroupId);
+        const color = WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.getLineColor(group.regionGroupId, index);
+        return color ? getColorForTheme(color) : "#000000";
+    };
 
     private selectFrameAtX = (x: number) => {
         const entries = this.plotGroups.flatMap(group => group.entries);
@@ -204,16 +208,17 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const unit = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
         const statisticLabel = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? "Flux Density" : this.effectiveStatistic === CARTA.StatsType.Mean ? "Intensity Mean" : "Intensity Sum";
         const multiPlotPropsMap = new Map<string, MultiPlotProps>();
-        this.plotGroups.forEach(({group, data}, index) => {
-            const plotType = group.regionGroupType === RegionGroupType.REGION_SERIES && data.length === 1 ? PlotType.POINTS : PlotType.LINES;
+        const widgetStore = WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId);
+        this.plotGroups.forEach(({group, data}) => {
+            const plotType = group.regionGroupType === RegionGroupType.REGION_SERIES && data.length === 1 ? PlotType.POINTS : (widgetStore?.plotType ?? PlotType.LINES);
             multiPlotPropsMap.set(this.getRegionGroupLabel(group), {
                 imageName: this.getRegionGroupLabel(group),
                 plotName: group.regionGroupType === RegionGroupType.REGION_SERIES ? "region series" : "light curve",
                 data,
                 type: plotType,
-                borderColor: this.getPlotColor(index),
-                pointRadius: 3,
-                borderWidth: 1
+                borderColor: this.getPlotColor(group),
+                pointRadius: widgetStore?.linePlotPointSize ?? 3,
+                borderWidth: widgetStore?.lineWidth ?? 1
             });
         });
 
@@ -226,9 +231,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             yLabel: unit ? `${statisticLabel} (${unit})` : statisticLabel,
             tickTypeX: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? TickType.Integer : TickType.Automatic,
             tickTypeY: TickType.Scientific,
-            plotType: PlotType.LINES,
-            pointRadius: 3,
-            borderWidth: 1,
+            plotType: widgetStore?.plotType ?? PlotType.LINES,
+            pointRadius: widgetStore?.linePlotPointSize ?? 3,
+            borderWidth: widgetStore?.lineWidth ?? 1,
             isDarkMode: AppStore.Instance.isDarkTheme,
             imageName: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? "Region series" : "Light curves",
             plotName: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? "region series" : "light curve",
@@ -276,7 +281,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private openRegionGroupManager = () => {
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Light curve management", this.widgetId, SequentialProfilerComponent.WidgetConfig.type);
+        AppStore.Instance.widgetsStore.createFloatingRegionGroupManagerWidget(this.widgetId);
     };
 
     render() {
@@ -356,9 +361,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                 </div>
                 {this.selectedRegionGroups.length > 0 && (
                     <div className="sequential-profiler-legend">
-                        {this.selectedRegionGroups.map((group, index) => (
+                        {this.selectedRegionGroups.map(group => (
                             <div className="sequential-profiler-legend-item" key={group.regionGroupId}>
-                                <span className="sequential-profiler-legend-color" style={{backgroundColor: this.getPlotColor(index)}} />
+                                <span className="sequential-profiler-legend-color" style={{backgroundColor: this.getPlotColor(group)}} />
                                 <span>{this.getRegionGroupLabel(group)}</span>
                             </div>
                         ))}

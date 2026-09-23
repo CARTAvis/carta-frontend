@@ -13,8 +13,8 @@ import "./RegionGroupManagerComponent.scss";
 export class RegionGroupManagerComponent extends React.Component<WidgetProps, {selectedRegionGroupId?: string}> {
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
-            id: "sequential-profiler-floating-settings",
-            type: "floating-settings",
+            id: "region-group-manager",
+            type: "region-group-manager",
             minWidth: 400,
             minHeight: 300,
             defaultWidth: 500,

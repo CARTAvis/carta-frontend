@@ -15,6 +15,12 @@ jest.mock("stores", () => ({
         get Instance() {
             return MOCK_APP_STORE;
         }
+    },
+    WidgetsStore: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        get Instance() {
+            return MOCK_WIDGETS_STORE;
+        }
     }
 }));
 
@@ -24,6 +30,7 @@ import {RegionGroupManagerComponent} from "../RegionGroup/RegionGroupManagerComp
 import {SequentialProfilerComponent} from "./SequentialProfilerComponent";
 
 const GROUPS = observable.map<string, any>();
+const MOCK_WIDGETS_STORE = {sequentialProfileWidgets: new Map([["sequential-profiler-0", {getLineColor: () => "auto-blue", plotType: "Lines", lineWidth: 1, linePlotPointSize: 3}]])};
 const FRAME = {id: 2, frameInfo: {fileId: 2}, filename: "frame.fits", requiredStokes: 0, headerUnit: "Jy/beam", regionSet: {editableRegionsList: [{regionId: 7, isClosedRegion: true, nameString: "Region 7"}]}};
 const MOCK_APP_STORE = {
     get regionGroupStores() {
@@ -35,6 +42,7 @@ const MOCK_APP_STORE = {
     frameNames: [{value: 2, label: "frame.fits"}],
     getFrame: (id: number) => (id === 1 ? {id} : id === 2 ? FRAME : undefined),
     isDarkTheme: false,
+    setRegionGroupManagerSelectedId: () => undefined,
     createRegionGroup: (type = RegionGroupType.TIME_SERIES) => {
         const group = new RegionGroupStore("region-series", "Region Group 1", type);
         runInAction(() => GROUPS.set(group.regionGroupId, group));

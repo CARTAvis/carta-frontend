@@ -7,6 +7,7 @@ export * from "./LayerListWidgetStore/LayerListWidgetStore";
 export * from "./PvGeneratorWidgetStore/PvGeneratorWidgetStore";
 export * from "./RegionWidgetStore/RegionWidgetStore";
 export * from "./RenderConfigWidgetStore/RenderConfigWidgetStore";
+export * from "./SequentialProfileWidgetStore";
 export * from "./SpatialProfileWidgetStore/SpatialProfileWidgetStore";
 export * from "./SpectralLineQueryWidgetStore/SpectralLineQueryWidgetStore";
 export * from "./SpectralProfileWidget/SpectralProfileSelectionStore";

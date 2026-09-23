@@ -172,8 +172,8 @@ export class LayoutConfig {
 
         // Handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
-            // skip saving floating settings panel
-            if (config?.type === "floating-settings") {
+            // Skip transient panels tied to another widget.
+            if (config?.type === "floating-settings" || config?.type === "region-group-manager") {
                 return;
             }
             const floatingConfig: any = {

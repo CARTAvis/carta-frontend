@@ -18,6 +18,7 @@ import {
     PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
+    RegionGroupManagerComponent,
     RegionListComponent,
     RenderConfigComponent,
     SequentialProfilerComponent,
@@ -46,6 +47,7 @@ import {
     PvGeneratorWidgetStore,
     RegionWidgetStore,
     RenderConfigWidgetStore,
+    SequentialProfileWidgetStore,
     SpatialProfileWidgetStore,
     SpectralLineQueryWidgetStore,
     SpectralProfileWidgetStore,
@@ -141,7 +143,7 @@ export class WidgetsStore {
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore> = new Map<string, RenderConfigWidgetStore>();
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore> = new Map<string, SpatialProfileWidgetStore>();
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore> = new Map<string, SpectralProfileWidgetStore>();
-    @observable sequentialProfileWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable sequentialProfileWidgets: Map<string, SequentialProfileWidgetStore> = new Map<string, SequentialProfileWidgetStore>();
     @observable statsWidgets: Map<string, StatsWidgetStore> = new Map<string, StatsWidgetStore>();
     @observable histogramWidgets: Map<string, HistogramWidgetStore> = new Map<string, HistogramWidgetStore>();
     @observable layerListWidgets: Map<string, LayerListWidgetStore> = new Map<string, LayerListWidgetStore>();
@@ -163,7 +165,7 @@ export class WidgetsStore {
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
 
-    private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list", "animator"];
+    private static readonly ShowCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "sequential-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list", "animator"];
     private static readonly ImageViewerRestoredHeightPercent = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75); // modify layoutConfig.ts as well if changing this
     private static readonly HideHelpButtonWidgets = ["pv-preview"];
 
@@ -495,7 +497,7 @@ export class WidgetsStore {
                 itemId = this.addSpectralProfileWidget(preAssignedId, widgetSettings);
                 break;
             case SequentialProfilerComponent.WidgetConfig.type:
-                itemId = this.addSequentialProfileWidget(preAssignedId);
+                itemId = this.addSequentialProfileWidget(preAssignedId, widgetSettings);
                 break;
             case StatsComponent.WidgetConfig.type:
                 itemId = this.addStatsWidget(preAssignedId);
@@ -1153,13 +1155,16 @@ export class WidgetsStore {
             };
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | SequentialProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | AnimatorWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WidgetConfig.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
                 break;
             case SpatialProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spatialProfileWidgets.get(widgetID);
+                break;
+            case SequentialProfilerComponent.WidgetConfig.type:
+                widgetStore = this.sequentialProfileWidgets.get(widgetID);
                 break;
             case SpectralProfilerComponent.WidgetConfig.type:
                 widgetStore = this.spectralProfileWidgets.get(widgetID);
@@ -1235,6 +1240,7 @@ export class WidgetsStore {
             StokesAnalysisComponent.WidgetConfig.type,
             SpectralProfilerComponent.WidgetConfig.type,
             SpatialProfilerComponent.WidgetConfig.type,
+            SequentialProfilerComponent.WidgetConfig.type,
             RenderConfigComponent.WidgetConfig.type,
             HistogramComponent.WidgetConfig.type,
             CatalogOverlayComponent.WidgetConfig.type,
@@ -1515,12 +1521,16 @@ export class WidgetsStore {
     // region Sequential Profile Widgets
     createFloatingSequentialProfilerWidget = () => this.createFloatingWidgetFromStore(() => this.addSequentialProfileWidget(), SequentialProfilerComponent.WidgetConfig);
 
-    @action addSequentialProfileWidget(id: string | null = null) {
+    @action addSequentialProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(SequentialProfilerComponent.WidgetConfig.type);
         }
         if (id) {
-            this.sequentialProfileWidgets.set(id, new EmptyWidgetStore());
+            const widgetStore = new SequentialProfileWidgetStore();
+            if (widgetSettings) {
+                widgetStore.applyConfig(widgetSettings);
+            }
+            this.sequentialProfileWidgets.set(id, widgetStore);
         }
         return id;
     }
@@ -1792,6 +1802,18 @@ export class WidgetsStore {
     // endregion
 
     // region Floating Settings
+    createFloatingRegionGroupManagerWidget = (parentId: string) => {
+        const id = `${parentId}-${RegionGroupManagerComponent.WidgetConfig.type}`;
+        if (this.floatingWidgets.some(widget => widget.id === id)) {
+            AppStore.Instance.zIndexManager.updateIndexOnSelect(id);
+            return;
+        }
+        const config = new WidgetConfig(id, RegionGroupManagerComponent.WidgetConfig);
+        config.parentId = parentId;
+        config.parentType = SequentialProfilerComponent.WidgetConfig.type;
+        this.addFloatingWidget(config);
+    };
+
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         const defaultConfig = getWidgetMap().get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
@@ -2035,6 +2057,7 @@ export class WidgetsStore {
     };
 
     private removeAssociatedFloatingSetting = (widgetId: string) => {
+        this.floatingWidgets.filter(widget => widget.type === RegionGroupManagerComponent.WidgetConfig.type && widget.parentId === widgetId).forEach(widget => this.removeFloatingWidget(widget.id));
         if (this.floatingSettingsWidgets?.size) {
             let associatedFloatingSettingsId: string | null = null;
             this.floatingSettingsWidgets.forEach((value, key) => {

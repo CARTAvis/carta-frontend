@@ -25,6 +25,7 @@ import {
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SequentialProfilerComponent,
+    SequentialProfilerSettingsPanelComponent,
     SpatialProfilerComponent,
     SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
@@ -50,7 +51,7 @@ const RenderFloatingSettingsWidget = (Component: React.ComponentType<WidgetProps
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
-    private static readonly FloatingSettingsWidgetTypes = new Set<string>(["stokes", "spectral-profiler", "spatial-profiler", "render-config", "histogram", "catalog-overlay", "layer-list", "animator"]);
+    private static readonly FloatingSettingsWidgetTypes = new Set<string>(["stokes", "spectral-profiler", "spatial-profiler", "sequential-profiler", "render-config", "histogram", "catalog-overlay", "layer-list", "animator"]);
 
     private floatingSettingType = "floating-settings";
     private floatingWidgetContentRenderers?: Map<string, FloatingWidgetRenderer>;
@@ -121,6 +122,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [SpatialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpatialProfilerComponent)],
                 [SpectralProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpectralProfilerComponent)],
                 [SequentialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SequentialProfilerComponent)],
+                [RegionGroupManagerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RegionGroupManagerComponent)],
                 [SpectralLineQueryComponent.WidgetConfig.type, RenderDocklessWidget(SpectralLineQueryComponent)],
                 [StatsComponent.WidgetConfig.type, RenderDocklessWidget(StatsComponent)],
                 [HistogramComponent.WidgetConfig.type, RenderDocklessWidget(HistogramComponent)],
@@ -147,7 +149,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [CatalogOverlayComponent.WidgetConfig.type, RenderFloatingSettingsWidget(CatalogOverlayPlotSettingsPanelComponent)],
                 [LayerListComponent.WidgetConfig.type, RenderFloatingSettingsWidget(LayerListSettingsPanelComponent)],
                 [AnimatorComponent.WidgetConfig.type, RenderFloatingSettingsWidget(AnimatorSettingsPanelComponent)],
-                [SequentialProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RegionGroupManagerComponent)]
+                [SequentialProfilerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(SequentialProfilerSettingsPanelComponent)]
             ]);
         }
 
@@ -210,7 +212,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
     }
 
     private showPin(widgetConfig: WidgetConfig) {
-        return widgetConfig.type !== this.floatingSettingType;
+        return widgetConfig.type !== this.floatingSettingType && widgetConfig.type !== RegionGroupManagerComponent.WidgetConfig.type;
     }
 
     private showFloatingSettingsButton(widgetConfig: WidgetConfig) {
@@ -250,7 +252,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 canPopout={canPopout}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
+                                {w.type === this.floatingSettingType ? this.getWidgetSettings(w) : this.getWidgetContent(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );
