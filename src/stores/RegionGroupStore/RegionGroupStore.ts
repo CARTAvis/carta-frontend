@@ -5,6 +5,7 @@ import {action, computed, makeObservable, observable, ObservableMap} from "mobx"
 import {RegionGroupType} from "enums";
 
 export interface RegionGroupRegion {
+    frameId?: number;
     regionId?: number;
     isDisplayed?: boolean;
     mjdUtc?: number;
@@ -32,12 +33,15 @@ export type RegionGroupFrame = {
     regionFluxDensityUnit: string;
 };
 
+export type RegionSeriesFrame = Omit<RegionGroupFrame, "mjdUtc" | "isoUtc">;
+
 type RegionGroupStatistics = Pick<RegionGroupRegion, "regionSum" | "regionFluxDensity" | "regionMean">;
 
 export class RegionGroupStore {
     @observable regionGroupId: string;
     @observable regionGroupName: string;
     @observable regionGroupType: RegionGroupType;
+    @observable regionSeriesFrameId: number | undefined = undefined;
     @observable regionGroup: ObservableMap<number, RegionGroupRegion> = new ObservableMap();
 
     constructor(regionGroupId = "", regionGroupName = "Region Group", regionGroupType: RegionGroupType = RegionGroupType.TIME_SERIES, entries?: Iterable<RegionGroupEntry>) {
@@ -45,13 +49,19 @@ export class RegionGroupStore {
         this.regionGroupName = regionGroupName;
         this.regionGroupType = regionGroupType;
         for (const entry of entries ?? []) {
-            this.regionGroup.set(entry.frameId, {...entry.region});
+            const entryId = regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId : entry.frameId;
+            if (entryId !== undefined) {
+                this.regionGroup.set(entryId, regionGroupType === RegionGroupType.REGION_SERIES ? {...entry.region, frameId: entry.frameId} : {...entry.region});
+                if (regionGroupType === RegionGroupType.REGION_SERIES) {
+                    this.regionSeriesFrameId = entry.frameId;
+                }
+            }
         }
         makeObservable(this);
     }
 
     @computed get entries(): RegionGroupEntry[] {
-        return Array.from(this.regionGroup, ([frameId, region]) => ({frameId, region}));
+        return Array.from(this.regionGroup, ([entryId, region]) => ({frameId: region.frameId ?? entryId, region}));
     }
 
     @action setName = (name: string) => {
@@ -59,7 +69,18 @@ export class RegionGroupStore {
     };
 
     @action setType = (type: RegionGroupType) => {
+        if (this.regionGroupType !== type) {
+            this.regionGroup.clear();
+            this.regionSeriesFrameId = undefined;
+        }
         this.regionGroupType = type;
+    };
+
+    @action setRegionSeriesFrame = (frameId?: number) => {
+        if (this.regionSeriesFrameId !== frameId) {
+            this.regionGroup.clear();
+            this.regionSeriesFrameId = frameId;
+        }
     };
 
     @action setRegion = (frameId: number, regionId: number, statistics?: Pick<RegionGroupRegion, "regionSum" | "regionFluxDensity" | "regionMean">) => {
@@ -112,6 +133,36 @@ export class RegionGroupStore {
         }
     };
 
+    @action syncRegionSeriesFrame = (frame: RegionSeriesFrame, getStatistics?: (frameId: number, regionId: number, stokes: number) => RegionGroupStatistics | undefined) => {
+        if (this.regionSeriesFrameId !== frame.frameId) {
+            return;
+        }
+
+        const regionIds = new Set(frame.regionIds);
+        for (const regionId of this.regionGroup.keys()) {
+            if (!regionIds.has(regionId)) {
+                this.regionGroup.delete(regionId);
+            }
+        }
+
+        for (const regionId of frame.regionIds) {
+            const current = this.regionGroup.get(regionId);
+            const shouldResetStatistics = current?.frameId !== frame.frameId || current?.stokes !== frame.stokes;
+            const statistics = getStatistics?.(frame.frameId, regionId, frame.stokes);
+            this.regionGroup.set(regionId, {
+                frameId: frame.frameId,
+                regionId,
+                isDisplayed: current?.isDisplayed ?? true,
+                stokes: frame.stokes,
+                regionSum: shouldResetStatistics ? (statistics?.regionSum ?? NaN) : (current?.regionSum ?? statistics?.regionSum ?? NaN),
+                regionFluxDensity: shouldResetStatistics ? (statistics?.regionFluxDensity ?? NaN) : (current?.regionFluxDensity ?? statistics?.regionFluxDensity ?? NaN),
+                regionMean: shouldResetStatistics ? (statistics?.regionMean ?? NaN) : (current?.regionMean ?? statistics?.regionMean ?? NaN),
+                regionSumUnit: frame.regionSumUnit,
+                regionFluxDensityUnit: frame.regionFluxDensityUnit
+            });
+        }
+    };
+
     @action removeRegion = (frameId: number) => {
         this.regionGroup.delete(frameId);
     };
@@ -124,15 +175,17 @@ export class RegionGroupStore {
     };
 
     @action updateRegionStats = (stats: CARTA.RegionStatsData) => {
-        const region = this.regionGroup.get(stats.fileId);
-        if (!region || region.regionId === undefined || region.regionId !== stats.regionId || region.stokes !== stats.stokes) {
+        const entryId = this.regionGroupType === RegionGroupType.REGION_SERIES ? stats.regionId : stats.fileId;
+        const region = this.regionGroup.get(entryId);
+        if (!region || (region.frameId ?? stats.fileId) !== stats.fileId || region.regionId === undefined || region.regionId !== stats.regionId || region.stokes !== stats.stokes) {
             return;
         }
 
-        this.setRegion(stats.fileId, region.regionId, {
-            regionSum: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
-            regionFluxDensity: stats.statistics?.find(value => value.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
-            regionMean: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+        this.regionGroup.set(entryId, {
+            ...region,
+            regionSum: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Sum)?.value ?? region.regionSum,
+            regionFluxDensity: stats.statistics?.find(value => value.statsType === CARTA.StatsType.FluxDensity)?.value ?? region.regionFluxDensity,
+            regionMean: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Mean)?.value ?? region.regionMean
         });
     };
 

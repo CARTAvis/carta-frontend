@@ -8,6 +8,8 @@ jest.mock(
     {virtual: true}
 );
 
+import {RegionGroupType} from "enums";
+
 import {RegionGroupStore} from "./RegionGroupStore";
 
 describe("RegionGroupStore", () => {
@@ -77,5 +79,31 @@ describe("RegionGroupStore", () => {
         store.syncTimeSeriesFrames([{frameId: 10, mjdUtc: 59000, isoUtc: "2020-05-31T00:00:00", stokes: 0, regionIds: [3, 4], regionSumUnit: "Jy/beam", regionFluxDensityUnit: "Jy"}]);
         expect(store.regionGroup.get(10)?.regionId).toBe(4);
         expect(store.regionGroup.has(11)).toBe(false);
+    });
+
+    test("synchronizes all regions from one region-series frame", () => {
+        const store = new RegionGroupStore("group-1", "Group 1", RegionGroupType.REGION_SERIES);
+        store.setRegionSeriesFrame(10);
+        store.syncRegionSeriesFrame({frameId: 10, stokes: 0, regionIds: [3, 4], regionSumUnit: "Jy/beam", regionFluxDensityUnit: "Jy"}, (frameId, regionId) => (frameId === 10 && regionId === 3 ? {regionSum: 12} : undefined));
+
+        expect(store.entries.map(({frameId, region}) => ({frameId, regionId: region.regionId, regionSum: region.regionSum}))).toEqual([
+            {frameId: 10, regionId: 3, regionSum: 12},
+            {frameId: 10, regionId: 4, regionSum: NaN}
+        ]);
+
+        store.updateRegionStats({
+            fileId: 10,
+            regionId: 4,
+            stokes: 0,
+            statistics: [
+                {statsType: 3, value: 6},
+                {statsType: 4, value: 2}
+            ]
+        } as any);
+        expect(store.regionGroup.get(4)?.regionFluxDensity).toBe(6);
+        expect(store.regionGroup.get(4)?.regionMean).toBe(2);
+
+        store.setRegionSeriesFrame(11);
+        expect(store.regionGroup.size).toBe(0);
     });
 });

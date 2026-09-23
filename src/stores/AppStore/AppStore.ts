@@ -469,13 +469,39 @@ export class AppStore {
         return Array.from(this.regionGroups.values());
     }
 
-    @action createRegionGroup = (): RegionGroupStore => {
+    @action createRegionGroup = (type: RegionGroupType = RegionGroupType.TIME_SERIES): RegionGroupStore => {
         const index = this.regionGroupIdCounter++;
         const regionGroupId = `region-group-${index}`;
 
-        const regionGroup = new RegionGroupStore(regionGroupId, `Region Group ${index}`);
+        const regionGroup = new RegionGroupStore(regionGroupId, `Region Group ${index}`, type);
         this.regionGroups.set(regionGroupId, regionGroup);
         return regionGroup;
+    };
+
+    syncRegionSeriesGroup = (group: RegionGroupStore): void => {
+        const frame = this.getFrame(group.regionSeriesFrameId ?? NaN);
+        if (!frame) {
+            group.setRegionSeriesFrame(undefined);
+            return;
+        }
+
+        group.syncRegionSeriesFrame(
+            {
+                frameId: frame.id,
+                stokes: frame.requiredStokes,
+                regionIds: frame.regionSet.editableRegionsList.filter(region => region.isClosedRegion).map(region => region.regionId),
+                regionSumUnit: frame.headerUnit ?? "",
+                regionFluxDensityUnit: pixelToFluxDensityUnit(frame.headerUnit ?? "")
+            },
+            (frameId, regionId, stokes) => {
+                const statistics = this.regionStats?.get(frameId)?.get(regionId)?.get(stokes)?.statistics;
+                return {
+                    regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
+                    regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
+                    regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+                };
+            }
+        );
     };
 
     @action deleteRegionGroup = (regionGroupId: string): void => {
@@ -1086,6 +1112,7 @@ export class AppStore {
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
+                this.cleanRegionSeriesGroupsForFrame(fileId);
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
@@ -1173,6 +1200,7 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
+            this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.REGION_SERIES).forEach(group => this.deleteRegionGroup(group.regionGroupId));
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
@@ -2108,23 +2136,26 @@ export class AppStore {
             }));
             if (!frames.length) {
                 this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES).forEach(group => this.deleteRegionGroup(group.regionGroupId));
-                if (!this.regionGroups.size) {
-                    this.regionGroupIdCounter = 1;
-                }
-                return;
+            } else {
+                this.regionGroupStores
+                    .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
+                    .forEach(group =>
+                        group.syncTimeSeriesFrames(frames, (frameId, regionId, stokes) => {
+                            const statistics = this.regionStats.get(frameId)?.get(regionId)?.get(stokes)?.statistics;
+                            return {
+                                regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
+                                regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
+                                regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+                            };
+                        })
+                    );
             }
-            this.regionGroupStores
-                .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
-                .forEach(group =>
-                    group.syncTimeSeriesFrames(frames, (frameId, regionId, stokes) => {
-                        const statistics = this.regionStats.get(frameId)?.get(regionId)?.get(stokes)?.statistics;
-                        return {
-                            regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
-                            regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
-                            regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
-                        };
-                    })
-                );
+
+            this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.REGION_SERIES).forEach(this.syncRegionSeriesGroup);
+
+            if (!this.regionGroups.size) {
+                this.regionGroupIdCounter = 1;
+            }
         });
 
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -3380,6 +3411,10 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    private cleanRegionSeriesGroupsForFrame = (fileId: number) => {
+        this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.REGION_SERIES && group.regionSeriesFrameId === fileId).forEach(group => this.deleteRegionGroup(group.regionGroupId));
+    };
+
     getFrameName(fileId: number) {
         return this.getFrame(fileId)?.filename;
     }
@@ -3963,7 +3998,7 @@ export class AppStore {
 
         const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(
             this.widgetsStore.statsWidgets,
-            this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
+            this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES)
         );
         const diffList = StatsWidgetStore.diffStatsRequirements(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;

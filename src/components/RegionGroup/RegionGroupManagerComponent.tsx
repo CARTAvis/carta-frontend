@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {RegionGroupType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps} from "stores";
-import {type FrameStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 
 import "./RegionGroupManagerComponent.scss";
 
@@ -35,8 +35,13 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         this.setState({selectedRegionGroupId: regionGroupId});
     };
 
-    private createRegionGroup = () => {
-        this.setState({selectedRegionGroupId: AppStore.Instance.createRegionGroup().regionGroupId});
+    private createRegionGroup = (type: RegionGroupType = RegionGroupType.TIME_SERIES) => {
+        const appStore = AppStore.Instance;
+        const regionGroup = appStore.createRegionGroup(type);
+        if (type === RegionGroupType.REGION_SERIES) {
+            this.selectRegionSeriesFrame(regionGroup, (appStore.activeFrame ?? appStore.frames[0])?.id);
+        }
+        this.setState({selectedRegionGroupId: regionGroup.regionGroupId});
     };
 
     private deleteRegionGroup = (regionGroup: RegionGroupStore) => {
@@ -61,6 +66,19 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
             regionFluxDensity: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
             regionMean: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
         });
+    };
+
+    private updateType = (regionGroup: RegionGroupStore, type: RegionGroupType) => {
+        regionGroup.setType(type);
+        if (type === RegionGroupType.REGION_SERIES) {
+            const appStore = AppStore.Instance;
+            this.selectRegionSeriesFrame(regionGroup, (appStore.activeFrame ?? appStore.frames[0])?.id);
+        }
+    };
+
+    private selectRegionSeriesFrame = (regionGroup: RegionGroupStore, frameId?: number) => {
+        regionGroup.setRegionSeriesFrame(frameId);
+        AppStore.Instance.syncRegionSeriesGroup(regionGroup);
     };
 
     private renderFrame = (regionGroup: RegionGroupStore, frame: FrameStore) => {
@@ -98,24 +116,70 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         );
     };
 
+    private renderRegion = (regionGroup: RegionGroupStore, region: RegionStore) => {
+        const entry = regionGroup.regionGroup.get(region.regionId);
+        const isDisplayed = entry?.isDisplayed !== false;
+        return (
+            <div key={region.regionId} className="region-entry">
+                <span className="region-group-frame-label">
+                    <Tooltip content={isDisplayed ? "Hide region" : "Show region"} position={Position.BOTTOM}>
+                        <Icon
+                            icon={isDisplayed ? "eye-open" : "eye-off"}
+                            aria-label={isDisplayed ? "Hide region" : "Show region"}
+                            onClick={entry ? () => regionGroup.setDisplayed(region.regionId, !isDisplayed) : undefined}
+                            style={{cursor: entry ? "pointer" : "default", opacity: entry ? 1 : 0.3}}
+                        />
+                    </Tooltip>
+                    {region.nameString}
+                </span>
+            </div>
+        );
+    };
+
     private renderGroup = (regionGroup: RegionGroupStore) => {
         const appStore = AppStore.Instance;
-        const groupName = regionGroup.regionGroupType === RegionGroupType.TIME_SERIES ? regionGroup.regionGroupName.replace(/^Region Group/, "Light curve") : regionGroup.regionGroupName;
+        const groupName = this.getRegionGroupLabel(regionGroup);
         return (
             <div className="region-group-panel">
                 <FormGroup label="Name">
                     <InputGroup value={groupName} onChange={event => regionGroup.setName(event.currentTarget.value)} />
                 </FormGroup>
                 <FormGroup label="Type" inline={true}>
-                    <HTMLSelect value={regionGroup.regionGroupType} options={Object.values(RegionGroupType)} onChange={event => regionGroup.setType(event.currentTarget.value as RegionGroupType)} />
+                    <HTMLSelect value={regionGroup.regionGroupType} options={Object.values(RegionGroupType)} onChange={event => this.updateType(regionGroup, event.currentTarget.value as RegionGroupType)} />
                 </FormGroup>
-                {appStore.timeSeriesStore.elements.map(({frame}) => this.renderFrame(regionGroup, frame))}
+                {regionGroup.regionGroupType === RegionGroupType.TIME_SERIES && appStore.timeSeriesStore.elements.map(({frame}) => this.renderFrame(regionGroup, frame))}
+                {regionGroup.regionGroupType === RegionGroupType.REGION_SERIES && (
+                    <>
+                        <FormGroup label="Frame" inline={true}>
+                            <HTMLSelect
+                                value={regionGroup.regionSeriesFrameId ?? ""}
+                                options={appStore.frameNames.length ? appStore.frameNames : [{value: "", label: "No frame"}]}
+                                disabled={!appStore.frames.length}
+                                onChange={event => this.selectRegionSeriesFrame(regionGroup, event.currentTarget.value ? Number(event.currentTarget.value) : undefined)}
+                            />
+                        </FormGroup>
+                        {appStore
+                            .getFrame(regionGroup.regionSeriesFrameId ?? NaN)
+                            ?.regionSet.editableRegionsList.filter(region => region.isClosedRegion)
+                            .map(region => this.renderRegion(regionGroup, region))}
+                    </>
+                )}
                 <ButtonGroup>
-                    <Button icon="add" text="New light curve" onClick={this.createRegionGroup} />
+                    <Button icon="add" text="New light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length} />
+                    <Button icon="add" text="New region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length} />
                     <Button icon="trash" text="Delete" onClick={() => this.deleteRegionGroup(regionGroup)} />
                 </ButtonGroup>
             </div>
         );
+    };
+
+    private getRegionGroupLabel = (group: RegionGroupStore) => {
+        if (group.regionGroupType === RegionGroupType.TIME_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Light curve");
+        } else if (group.regionGroupType === RegionGroupType.REGION_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Region series");
+        }
+        return group.regionGroupName;
     };
 
     render() {
@@ -128,16 +192,16 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
                 {groups.length > 0 && (
                     <Tabs selectedTabId={selectedRegionGroupId} onChange={tabId => this.selectRegionGroup(String(tabId))}>
                         {groups.map(group => (
-                            <Tab
-                                key={group.regionGroupId}
-                                id={group.regionGroupId}
-                                title={group.regionGroupType === RegionGroupType.TIME_SERIES ? group.regionGroupName.replace(/^Region Group/, "Light curve") : group.regionGroupName}
-                                panel={this.renderGroup(group)}
-                            />
+                            <Tab key={group.regionGroupId} id={group.regionGroupId} title={this.getRegionGroupLabel(group)} panel={this.renderGroup(group)} />
                         ))}
                     </Tabs>
                 )}
-                {!groups.length && <Button icon="add" text="New light curve" onClick={this.createRegionGroup} />}
+                {!groups.length && (
+                    <ButtonGroup>
+                        <Button icon="add" text="New light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length} />
+                        <Button icon="add" text="New region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length} />
+                    </ButtonGroup>
+                )}
             </div>
         );
     }

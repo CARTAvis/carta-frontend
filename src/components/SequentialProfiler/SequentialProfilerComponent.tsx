@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, Menu, MenuItem, NonIdealState, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
@@ -13,12 +13,13 @@ import {getColorForTheme, SELECTABLE_COLORS} from "utilities";
 
 import "./SequentialProfilerComponent.scss";
 
-type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity;
+type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean;
 const JULIAN_DATE_OFFSET = 2400000.5;
 
 @observer
 export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     private readonly widgetId: string;
+    private disposeGroupSelection?: IReactionDisposer;
     @observable private isMultiRegionGroupEnabled = false;
     @observable private selectedRegionGroupIds: string[] = [];
     @observable private statistic: SequentialStatistic = CARTA.StatsType.FluxDensity;
@@ -40,17 +41,30 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = props.id;
-        const firstGroup = AppStore.Instance.regionGroupStores.find(group => group.regionGroupType === RegionGroupType.TIME_SERIES);
+        const firstGroup = AppStore.Instance.regionGroupStores.find(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES);
         this.selectedRegionGroupIds = firstGroup ? [firstGroup.regionGroupId] : [];
         makeObservable(this);
     }
 
     componentDidMount() {
+        this.disposeGroupSelection = reaction(
+            () => this.regionGroups.map(group => group.regionGroupId),
+            (groupIds, previousGroupIds) => {
+                const newGroupId = groupIds.find(id => !previousGroupIds.includes(id));
+                if (newGroupId) {
+                    this.selectRegionGroup(newGroupId);
+                }
+            }
+        );
         this.ensureRegionGroup();
     }
 
     componentDidUpdate() {
         this.ensureRegionGroup();
+    }
+
+    componentWillUnmount() {
+        this.disposeGroupSelection?.();
     }
 
     @action private ensureRegionGroup = () => {
@@ -61,15 +75,28 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     @computed private get regionGroups(): RegionGroupStore[] {
-        return AppStore.Instance.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES);
+        return AppStore.Instance.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES);
+    }
+
+    @computed private get availableRegionGroups(): RegionGroupStore[] {
+        const appStore = AppStore.Instance;
+        return this.regionGroups.filter(group =>
+            group.regionGroupType === RegionGroupType.TIME_SERIES ? appStore.timeSeriesStore.elements.length > 0 : group.regionSeriesFrameId !== undefined && !!appStore.getFrame(group.regionSeriesFrameId)
+        );
     }
 
     @computed private get selectedRegionGroups(): RegionGroupStore[] {
-        if (!AppStore.Instance.timeSeriesStore.elements.length) {
-            return [];
-        }
-        const selectedGroups = this.regionGroups.filter(group => this.selectedRegionGroupIds.includes(group.regionGroupId));
-        return selectedGroups.length ? selectedGroups : this.regionGroups.slice(0, 1);
+        const selectedGroups = this.availableRegionGroups.filter(group => this.selectedRegionGroupIds.includes(group.regionGroupId));
+        const groups = selectedGroups.length ? selectedGroups : this.availableRegionGroups.slice(0, 1);
+        return groups.filter(group => group.regionGroupType === groups[0]?.regionGroupType);
+    }
+
+    @computed private get selectedSeriesType(): RegionGroupType | undefined {
+        return this.selectedRegionGroups[0]?.regionGroupType;
+    }
+
+    private get effectiveStatistic(): SequentialStatistic {
+        return this.selectedSeriesType === RegionGroupType.REGION_SERIES || this.statistic !== CARTA.StatsType.Mean ? this.statistic : CARTA.StatsType.FluxDensity;
     }
 
     @computed private get selectedRegionGroupText(): string {
@@ -77,18 +104,24 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed private get plotGroups(): Array<{group: RegionGroupStore; entries: Array<{entry: RegionGroupStore["entries"][number]; x: number}>; data: Point2D[]}> {
-        const entries = this.selectedRegionGroups.flatMap(group => group.entries).filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined);
+        const entries = this.selectedRegionGroups
+            .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
+            .flatMap(group => group.entries)
+            .filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined);
         const firstMjdUtc = entries.length ? Math.min(...entries.map(entry => entry.region.mjdUtc!)) : 0;
 
         return this.selectedRegionGroups.map(group => {
             const groupEntries = group.entries
-                .filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined)
-                .map(entry => ({entry, x: this.convertMjd(entry.region.mjdUtc!, firstMjdUtc)}))
+                .filter(entry => entry.region.isDisplayed !== false && (group.regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId !== undefined : entry.region.mjdUtc !== undefined))
+                .map(entry => ({entry, x: group.regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId! : this.convertMjd(entry.region.mjdUtc!, firstMjdUtc)}))
                 .sort((a, b) => a.x - b.x);
             return {
                 group,
                 entries: groupEntries,
-                data: groupEntries.map(({entry, x}) => ({x, y: (this.statistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : entry.region.regionSum) ?? NaN}))
+                data: groupEntries.map(({entry, x}) => ({
+                    x,
+                    y: (this.effectiveStatistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : this.effectiveStatistic === CARTA.StatsType.Mean ? entry.region.regionMean : entry.region.regionSum) ?? NaN
+                }))
             };
         });
     }
@@ -106,6 +139,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private get xAxisLabel(): string {
+        if (this.selectedSeriesType === RegionGroupType.REGION_SERIES) {
+            return "Region index";
+        }
         switch (this.xAxisFormat) {
             case TimeLabelFormat.JD:
                 return "Time (JD UTC)";
@@ -118,7 +154,12 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private getRegionGroupLabel(group: RegionGroupStore): string {
-        return group.regionGroupType === RegionGroupType.TIME_SERIES ? group.regionGroupName.replace(/^Region Group/, "Light curve") : group.regionGroupName;
+        if (group.regionGroupType === RegionGroupType.TIME_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Light curve");
+        } else if (group.regionGroupType === RegionGroupType.REGION_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Region series");
+        }
+        return group.regionGroupName;
     }
 
     private getPlotColor = (index: number) => getColorForTheme(`auto-${SELECTABLE_COLORS[index % SELECTABLE_COLORS.length]}`);
@@ -129,7 +170,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
         const closestEntry = entries.reduce((closest, entry) => (Math.abs(entry.x - x) < Math.abs(closest.x - x) ? entry : closest), entries[0]);
-        const frame = AppStore.Instance.timeSeriesStore.elements.find(element => element.frame.id === closestEntry?.entry.frameId)?.frame;
+        const frame = AppStore.Instance.getFrame(closestEntry.entry.frameId);
         if (frame) {
             AppStore.Instance.updateActiveImageByFrame(frame);
         }
@@ -145,18 +186,19 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const xMax = xValues.length ? Math.max(...xValues) : 1;
         const yMin = yValues.length ? Math.min(...yValues) : 0;
         const yMax = yValues.length ? Math.max(...yValues) : 1;
-        const xPadding = xMin === xMax ? 1 / 86400 : 0;
+        const xPadding = xMin === xMax ? (this.selectedSeriesType === RegionGroupType.REGION_SERIES ? 1 : 1 / 86400) : 0;
         const yPadding = yMin === yMax ? Math.abs(yMin) * 0.05 || 1 : (yMax - yMin) * 0.05;
         const firstRegion = this.plotGroups.find(group => group.entries.length)?.entries[0]?.entry.region;
-        const unit = this.statistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
-        const statisticLabel = this.statistic === CARTA.StatsType.FluxDensity ? "Flux Density" : "Intensity Sum";
+        const unit = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
+        const statisticLabel = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? "Flux Density" : this.effectiveStatistic === CARTA.StatsType.Mean ? "Intensity Mean" : "Intensity Sum";
         const multiPlotPropsMap = new Map<string, MultiPlotProps>();
         this.plotGroups.forEach(({group, data}, index) => {
+            const plotType = group.regionGroupType === RegionGroupType.REGION_SERIES && data.length === 1 ? PlotType.POINTS : PlotType.LINES;
             multiPlotPropsMap.set(this.getRegionGroupLabel(group), {
                 imageName: this.getRegionGroupLabel(group),
-                plotName: "light curve",
+                plotName: group.regionGroupType === RegionGroupType.REGION_SERIES ? "region series" : "light curve",
                 data,
-                type: PlotType.LINES,
+                type: plotType,
                 borderColor: this.getPlotColor(index),
                 pointRadius: 3,
                 borderWidth: 1
@@ -170,13 +212,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             yMax: yMax + yPadding,
             xLabel: this.xAxisLabel,
             yLabel: unit ? `${statisticLabel} (${unit})` : statisticLabel,
+            tickTypeX: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? TickType.Integer : TickType.Automatic,
             tickTypeY: TickType.Scientific,
             plotType: PlotType.LINES,
             pointRadius: 3,
             borderWidth: 1,
             isDarkMode: AppStore.Instance.isDarkTheme,
-            imageName: "Light curves",
-            plotName: "light curve",
+            imageName: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? "Region series" : "Light curves",
+            plotName: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? "region series" : "light curve",
             graphClicked: this.selectFrameAtX,
             multiPlotPropsMap,
             testId: this.widgetId
@@ -186,12 +229,16 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     @action private toggleMultiRegionGroups = () => {
         this.isMultiRegionGroupEnabled = !this.isMultiRegionGroupEnabled;
         if (!this.isMultiRegionGroupEnabled) {
-            this.selectedRegionGroupIds = this.selectedRegionGroupIds.slice(0, 1);
+            this.selectedRegionGroupIds = this.selectedRegionGroups.slice(0, 1).map(group => group.regionGroupId);
         }
     };
 
     @action private selectRegionGroup = (regionGroupId: string) => {
-        if (!this.isMultiRegionGroupEnabled) {
+        const group = this.regionGroups.find(candidate => candidate.regionGroupId === regionGroupId);
+        if (!group) {
+            return;
+        }
+        if (!this.isMultiRegionGroupEnabled || (this.selectedSeriesType !== undefined && group.regionGroupType !== this.selectedSeriesType)) {
             this.selectedRegionGroupIds = [regionGroupId];
         } else if (this.selectedRegionGroupIds.includes(regionGroupId)) {
             if (this.selectedRegionGroupIds.length > 1) {
@@ -215,19 +262,20 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const hasTimeSeries = AppStore.Instance.timeSeriesStore.elements.length > 0;
-        const isSelectionDisabled = !this.regionGroups.length || !hasTimeSeries;
+        const hasSelectedSeries = this.selectedRegionGroups.length > 0;
+        const isSelectionDisabled = !this.availableRegionGroups.length;
+        const selectionLabel = this.selectedSeriesType === RegionGroupType.REGION_SERIES ? "Region series" : "Light curve";
         return (
             <div className="sequential-profiler">
                 <div className="sequential-profiler-controls">
                     <div className="light-curve-selection">
-                        <Tooltip content={this.isMultiRegionGroupEnabled ? "Select multiple light curves" : "Select a light curve"} position={Position.TOP}>
-                            <Checkbox label="Light curve" checked={this.isMultiRegionGroupEnabled} onChange={this.toggleMultiRegionGroups} disabled={isSelectionDisabled} />
+                        <Tooltip content={this.isMultiRegionGroupEnabled ? `Select multiple ${selectionLabel.toLowerCase()} groups` : `Select a ${selectionLabel.toLowerCase()}`} position={Position.TOP}>
+                            <Checkbox label={selectionLabel} checked={this.isMultiRegionGroupEnabled} onChange={this.toggleMultiRegionGroups} disabled={isSelectionDisabled} />
                         </Tooltip>
                         <PopoverNext
                             content={
                                 <Menu>
-                                    {this.regionGroups.map(group => {
+                                    {this.availableRegionGroups.map(group => {
                                         const label = this.getRegionGroupLabel(group);
                                         const isSelected = this.selectedRegionGroupIds.includes(group.regionGroupId);
                                         return (
@@ -255,27 +303,30 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                                     </span>
                                 }
                                 endIcon="caret-down"
-                                aria-label="Select light curves"
+                                aria-label="Select region groups"
                             />
                         </PopoverNext>
                     </div>
-                    <FormGroup label="X axis" inline={true}>
-                        <HTMLSelect
-                            value={this.xAxisFormat}
-                            options={[
-                                {value: TimeLabelFormat.MJD, label: "MJD (UTC)"},
-                                {value: TimeLabelFormat.JD, label: "JD (UTC)"},
-                                {value: TimeLabelFormat.RELATIVE, label: "Relative days"}
-                            ]}
-                            onChange={this.selectXAxisFormat}
-                        />
-                    </FormGroup>
+                    {this.selectedSeriesType !== RegionGroupType.REGION_SERIES && (
+                        <FormGroup label="X axis" inline={true}>
+                            <HTMLSelect
+                                value={this.xAxisFormat}
+                                options={[
+                                    {value: TimeLabelFormat.MJD, label: "MJD (UTC)"},
+                                    {value: TimeLabelFormat.JD, label: "JD (UTC)"},
+                                    {value: TimeLabelFormat.RELATIVE, label: "Relative days"}
+                                ]}
+                                onChange={this.selectXAxisFormat}
+                            />
+                        </FormGroup>
+                    )}
                     <FormGroup label="Y axis" inline={true}>
                         <HTMLSelect
-                            value={this.statistic}
+                            value={this.effectiveStatistic}
                             options={[
                                 {value: CARTA.StatsType.FluxDensity, label: "Flux density"},
-                                {value: CARTA.StatsType.Sum, label: "Intensity sum"}
+                                {value: CARTA.StatsType.Sum, label: "Intensity sum"},
+                                ...(this.selectedSeriesType === RegionGroupType.REGION_SERIES ? [{value: CARTA.StatsType.Mean, label: "Intensity mean"}] : [])
                             ]}
                             onChange={this.selectStatistic}
                         />
@@ -283,7 +334,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                     <Button icon="series-configuration" aria-label="Light curve management" title="Light curve management" onClick={this.openRegionGroupManager} />
                 </div>
                 <div className="sequential-profiler-plot">
-                    {hasTimeSeries ? <LinePlotComponent {...this.plotProps} /> : <NonIdealState icon="timeline-line-chart" title="No time series" description="Add images to the time series to create a light curve." />}
+                    {hasSelectedSeries ? <LinePlotComponent {...this.plotProps} /> : <NonIdealState icon="timeline-line-chart" title="No series" description="Add time-series frames or create a region series in the management panel." />}
                 </div>
                 {this.selectedRegionGroups.length > 0 && (
                     <div className="sequential-profiler-legend">

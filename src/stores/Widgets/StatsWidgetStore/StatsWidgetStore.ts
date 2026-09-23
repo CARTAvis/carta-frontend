@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Polarizations, RegionsType} from "enums";
+import {Polarizations, RegionGroupType, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
 import {AppStore, type RegionGroupStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
@@ -66,6 +66,10 @@ export class StatsWidgetStore extends RegionWidgetStore {
         });
 
         regionGroups.forEach(group => {
+            const statsTypes = [CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity];
+            if (group.regionGroupType === RegionGroupType.REGION_SERIES) {
+                statsTypes.push(CARTA.StatsType.Mean);
+            }
             group.entries.forEach(({frameId, region}) => {
                 if (region.regionId === undefined) {
                     return;
@@ -82,9 +86,9 @@ export class StatsWidgetStore extends RegionWidgetStore {
                 }
                 const statsConfig = regionRequirements.statsConfigs.find(config => config.coordinate === "z");
                 if (statsConfig) {
-                    statsConfig.statsTypes = Array.from(new Set([...(statsConfig.statsTypes ?? []), CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity]));
+                    statsConfig.statsTypes = Array.from(new Set([...(statsConfig.statsTypes ?? []), ...statsTypes]));
                 } else {
-                    regionRequirements.statsConfigs.push({coordinate: "z", statsTypes: [CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity]});
+                    regionRequirements.statsConfigs.push({coordinate: "z", statsTypes});
                 }
             });
         });
