@@ -20,6 +20,7 @@ export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
     HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.FileInfoExtended.$Properties | null;
+    isSpectralAxisNonlinear?: boolean;
     regionFileInfo: string;
     catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null;
     selectedTab: TabId;
@@ -256,7 +257,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.SELECT_REGION:
                 return <RegionSelectComponent />;
             case FileInfoType.IMAGE_FILE:
-                return this.renderImageHeaderList(GetComputedEntriesForDisplay(this.props.fileInfoExtended));
+                return this.renderImageHeaderList(GetComputedEntriesForDisplay(this.props.fileInfoExtended, this.props.isSpectralAxisNonlinear));
             case FileInfoType.IMAGE_HEADER:
                 return this.renderImageHeaderList(this.props.fileInfoExtended?.headerEntries ?? []);
             case FileInfoType.REGION_FILE:

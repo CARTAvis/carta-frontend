@@ -1,18 +1,16 @@
 import {CARTA} from "carta-protobuf";
-import {runInAction} from "mobx";
+import {configure} from "mobx";
 
-import {ImageType} from "enums";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
+
+configure({safeDescriptors: false});
 
 describe("AppStore flows for a nonlinear spectral axis", () => {
     const appStore = AppStore.Instance;
     const nonlinearFrame = {isSpectralAxisNonlinear: true, frameInfo: {fileId: 5}} as unknown as FrameStore;
 
     afterEach(() => {
-        runInAction(() => {
-            appStore.activeImage = null;
-        });
         jest.restoreAllMocks();
     });
 
@@ -30,9 +28,7 @@ describe("AppStore flows for a nonlinear spectral axis", () => {
     });
 
     test("saveFile rejects without contacting the backend", async () => {
-        runInAction(() => {
-            appStore.activeImage = {type: ImageType.FRAME, store: nonlinearFrame};
-        });
+        jest.spyOn(appStore, "activeFrame", "get").mockReturnValue(nonlinearFrame);
         const saveFile = jest.spyOn(appStore.backendService, "saveFile").mockResolvedValue({} as CARTA.SaveFileAck.$Properties);
         await expect(appStore.saveFile("/tmp", "out.fits", CARTA.FileType.FITS)).rejects.toThrow("Cube export is not currently supported");
         expect(saveFile).not.toHaveBeenCalled();

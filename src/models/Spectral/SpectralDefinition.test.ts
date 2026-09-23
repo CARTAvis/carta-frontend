@@ -48,6 +48,16 @@ describe("nonlinear spectral axis of a file", () => {
         expect(GetComputedEntriesForDisplay(fileInfo)).toBe(fileInfo.computedEntries);
         expect(GetComputedEntriesForDisplay(undefined)).toEqual([]);
     });
+
+    test("prefers the frame's nonlinear-axis decision over the header when one is given", () => {
+        const linearHeader = MakeFileInfo("FREQ");
+        const fromFrame = GetComputedEntriesForDisplay(linearHeader, true);
+        expect(fromFrame.find(entry => entry.name === "Frequency range")?.value).toBe(NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo);
+        expect(fromFrame.find(entry => entry.name === "Pixel unit")?.value).toBe("Jy/beam");
+
+        const nonlinearHeader = MakeFileInfo("WAVE-LOG");
+        expect(GetComputedEntriesForDisplay(nonlinearHeader, false)).toBe(nonlinearHeader.computedEntries);
+    });
 });
 
 describe("nonlinear spectral algorithm codes", () => {

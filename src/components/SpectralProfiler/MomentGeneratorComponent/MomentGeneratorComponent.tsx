@@ -253,7 +253,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isAbleToGenerate =
+            frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid && widgetStore.supportedSelectedMoments.length > 0;
         const hint = (
             <span>
                 <br />
@@ -266,6 +267,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         2. Spectral profile generation is complete.
                         <br />
                         3. Point region is not selected.
+                        <br />
+                        4. At least one supported moment is selected.
                     </small>
                 </i>
             </span>

@@ -102,6 +102,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         runInAction(() => {
             widgetStore.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM];
         });
+        expect(widgetStore.supportedSelectedMoments).toEqual([CARTA.Moment.MAX_OF_THE_SPECTRUM]);
         widgetStore.requestMoment();
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
         expect(appStore.requestMoment).toHaveBeenLastCalledWith(expect.objectContaining({moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}), frame);
@@ -109,6 +110,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         runInAction(() => {
             widgetStore.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         });
+        expect(widgetStore.supportedSelectedMoments).toEqual([]);
         widgetStore.requestMoment();
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
     });

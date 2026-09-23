@@ -1,3 +1,4 @@
+import {FrequencyUnit} from "enums";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -16,7 +17,8 @@ describe("FileBrowserDialogComponent", () => {
 
     test("handleSaveFile refuses a cube with a nonlinear spectral axis", async () => {
         const saveFile = jest.fn();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: {isSpectralAxisNonlinear: true}, saveFile} as unknown as AppStore);
+        const activeFrame = {isSpectralAxisNonlinear: true, restFreqStore: {customRestFreq: {value: NaN, unit: FrequencyUnit.HZ}}};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame, saveFile} as unknown as AppStore);
 
         const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
         await expect(component.handleSaveFile()).rejects.toThrow("Cube export is not currently supported for nonlinear spectral axes");

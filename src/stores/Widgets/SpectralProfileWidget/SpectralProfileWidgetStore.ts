@@ -342,6 +342,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return !this.unsupportedMoments.includes(momentType);
     };
 
+    @computed get supportedSelectedMoments(): CARTA.Moment[] {
+        return this.selectedMoments.filter(momentType => this.isMomentSupported(momentType));
+    }
+
     @action removeUnsupportedMoments = () => {
         if (this.selectedMoments.some(momentType => !this.isMomentSupported(momentType))) {
             this.selectedMoments = this.selectedMoments.filter(momentType => this.isMomentSupported(momentType));
@@ -353,7 +357,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
      */
     @action requestMoment = () => {
         const frame = this.effectiveFrame;
-        const moments = this.selectedMoments.filter(momentType => this.isMomentSupported(momentType));
+        const moments = this.supportedSelectedMoments;
         if (frame && this.isMomentRegionValid && moments.length) {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);

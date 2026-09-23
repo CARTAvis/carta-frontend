@@ -64,9 +64,9 @@ export const HasNonlinearSpectralAxis = (fileInfoExtended: CARTA.FileInfoExtende
 
 const BACKEND_SPECTRAL_INFO_ENTRIES = ["Frequency", "Frequency range", "Velocity", "Velocity range"];
 
-export const GetComputedEntriesForDisplay = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined): CARTA.HeaderEntry.$Properties[] => {
+export const GetComputedEntriesForDisplay = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined, isSpectralAxisNonlinear?: boolean): CARTA.HeaderEntry.$Properties[] => {
     const entries = fileInfoExtended?.computedEntries ?? [];
-    if (!HasNonlinearSpectralAxis(fileInfoExtended)) {
+    if (!(isSpectralAxisNonlinear ?? HasNonlinearSpectralAxis(fileInfoExtended))) {
         return entries;
     }
     return entries.map(entry => (BACKEND_SPECTRAL_INFO_ENTRIES.includes(entry.name ?? "") ? {...entry, value: NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo} : entry));
