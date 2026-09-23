@@ -2,6 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogPlotType, DragMode} from "enums";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
+import {CatalogHistogramInteraction} from "utilities";
 
 import {CatalogPlotComponent} from "./CatalogPlotComponent";
 
@@ -90,27 +91,36 @@ describe("CatalogPlotComponent catalog selection", () => {
     });
 
     test("clears histogram pan state when released outside the plot", () => {
-        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
-        component["histogramPanPrevX"] = 10;
-        component["hasHistogramDragHandled"] = true;
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => null,
+            getData: () => ({bins: [], binSize: 0, binIndices: []}),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints: jest.fn()
+        });
+        interaction["panPreviousX"] = 10;
+        interaction["hasHandledDrag"] = true;
 
-        component["onHistogramWindowMouseUp"]();
+        interaction["onWindowMouseUp"]();
 
-        expect(component["hasHistogramDragHandled"]).toBe(false);
-        component.componentWillUnmount();
+        expect(interaction.consumeHandledDrag()).toBe(false);
     });
 
     test("selects histogram bins when released outside the plot", () => {
-        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
-        const selectBins = jest.spyOn(component as any, "selectHistogramBinsInRange").mockImplementation(() => undefined);
-        component["histogramPlotRef"] = {scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()} as any;
-        component["histogramDragStartX"] = 10;
-        component["histogramDragCurrentX"] = 30;
+        const selectPoints = jest.fn();
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => ({scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getData: () => ({bins: [{x: 20, y: 1}], binSize: 20, binIndices: [[7]]}),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints
+        });
+        interaction["dragStartX"] = 10;
+        interaction["dragCurrentX"] = 30;
 
-        component["onHistogramWindowMouseUp"]();
+        interaction["onWindowMouseUp"]();
 
-        expect(selectBins).toHaveBeenCalledWith(10, 30);
-        component.componentWillUnmount();
+        expect(selectPoints).toHaveBeenCalledWith([7]);
     });
 });
 

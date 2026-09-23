@@ -246,10 +246,13 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         const isPositionChanged = this.previousXData !== xData || this.previousYData !== yData;
         if (isPositionChanged) {
             let originIndex = -1;
+            let validPointCount = 0;
             for (let i = 0; i < numPoints; i++) {
                 if (Number.isFinite(xData[i]) && Number.isFinite(yData[i])) {
-                    originIndex = i;
-                    break;
+                    if (originIndex < 0) {
+                        originIndex = i;
+                    }
+                    validPointCount++;
                 }
             }
             this.positionOriginX = 0;
@@ -259,14 +262,16 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
                 this.positionOriginY = yData[originIndex];
             }
             this.pointIndices = [];
-            const positions: number[] = [];
+            const positions = new Float32Array(validPointCount * 2);
+            let positionIndex = 0;
             for (let i = 0; i < numPoints; i++) {
                 if (Number.isFinite(xData[i]) && Number.isFinite(yData[i])) {
                     this.pointIndices.push(i);
-                    positions.push(xData[i] - this.positionOriginX, yData[i] - this.positionOriginY);
+                    positions[positionIndex++] = xData[i] - this.positionOriginX;
+                    positions[positionIndex++] = yData[i] - this.positionOriginY;
                 }
             }
-            this.positionData = new Float32Array(positions);
+            this.positionData = positions;
             this.previousXData = xData;
             this.previousYData = yData;
         }

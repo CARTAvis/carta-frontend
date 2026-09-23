@@ -21,7 +21,20 @@ import {CustomIcon} from "icons/CustomIcons";
 import {type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
-import {clamp, computeHistogramBins, exportTsvFile, getTimestamp, isPointInPolygon, minMaxArray, toExponential, toFixed} from "utilities";
+import {
+    CatalogHistogramInteraction,
+    CatalogScatterSpatialIndex,
+    clamp,
+    computeHistogramBins,
+    exportTsvFile,
+    formatCatalogPlotTick,
+    getCatalogScatterBorder,
+    getTimestamp,
+    isPointInPolygon,
+    minMaxArray,
+    toExponential,
+    toFixed
+} from "utilities";
 
 import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
 
@@ -30,21 +43,8 @@ import "./CatalogPlotComponent.scss";
 Chart.register(BarController, BarElement, Legend, LinearScale, LogarithmicScale, PointElement);
 
 const DEFAULT_NUM_BINS = 10; // default fallback
-const SCATTER_GRID_SIZE = 64;
 const DOUBLE_CLICK_THRESHOLD = 300;
 const EXPORT_RIGHT_PADDING = 10;
-
-type ScatterSpatialIndex = {
-    xData: ArrayLike<number>;
-    yData: ArrayLike<number>;
-    xMin: number;
-    xMax: number;
-    yMin: number;
-    yMax: number;
-    chartWidth: number;
-    chartHeight: number;
-    cells: Map<number, number[]>;
-};
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
@@ -56,13 +56,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
     private readonly disposers: IReactionDisposer[] = [];
     private widgetId: string;
+    private histogramInteraction: CatalogHistogramInteraction;
     private histogramPlotRef: Chart<"bar"> | null = null;
     private scatterChartArea: ChartArea | undefined;
     private cursorNearestScatterPoint: {x: number; y: number} | undefined;
     private cursorNearestScatterPointIndex: number | undefined;
     private cursorNearestScatterXData: ArrayLike<number> | undefined;
     private cursorNearestScatterYData: ArrayLike<number> | undefined;
-    private scatterSpatialIndex: ScatterSpatialIndex | undefined;
+    private readonly scatterSpatialIndex = new CatalogScatterSpatialIndex();
     private pendingScatterCursor: {x: number; y: number} | undefined;
     private scatterCursorFrame: number | undefined;
     private histogramHoverPixel: {x: number; y: number} | undefined;
@@ -98,6 +99,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogPlot.catalogFileId);
         }
         this.catalogFileNames = new Map<number, string>();
+        this.histogramInteraction = new CatalogHistogramInteraction({
+            getChart: () => this.histogramPlotRef,
+            getData: () => this.histogramData,
+            getBorder: () => this.widgetStore?.histogramBorder,
+            setBorder: border => this.widgetStore?.setHistogramXBorder(border),
+            selectPoints: indices => this.selectCatalogPoints(indices)
+        });
 
         makeObservable(this);
 
@@ -172,7 +180,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
-        this.stopHistogramMouseTracking();
+        this.histogramInteraction.stopTracking();
         this.onHistogramContainerRef(null);
         if (this.scatterCursorFrame !== undefined) {
             window.cancelAnimationFrame(this.scatterCursorFrame);
@@ -229,7 +237,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (xColumnName && yColumnName) {
                             const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
                             if (scatterCoords?.wcsX && scatterCoords?.wcsY) {
-                                const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
+                                const scatterBorder = getCatalogScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
                                 plotWidgetStore.setScatterborder(scatterBorder);
                             }
                         }
@@ -289,19 +297,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getScatterBorder(xArray: number[], yArray: number[]): Border {
-        const xBounds = minMaxArray(xArray);
-        const yBounds = minMaxArray(yArray);
-        const xPadding = xBounds.minVal === xBounds.maxVal ? (xBounds.maxVal === 0 ? 1 : Math.abs(xBounds.maxVal * 0.05)) : 0;
-        const yPadding = yBounds.minVal === yBounds.maxVal ? (yBounds.maxVal === 0 ? 1 : Math.abs(yBounds.maxVal * 0.05)) : 0;
-        return {
-            xMin: xBounds.minVal - xPadding,
-            xMax: xBounds.maxVal + xPadding,
-            yMin: yBounds.minVal - yPadding,
-            yMax: yBounds.maxVal + yPadding
-        };
-    }
-
     @computed get initScatterBorder(): Border | undefined {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -309,7 +304,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return undefined;
         }
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        return coords.wcsX && coords.wcsY ? this.getScatterBorder(coords.wcsX, coords.wcsY) : undefined;
+        return coords.wcsX && coords.wcsY ? getCatalogScatterBorder(coords.wcsX, coords.wcsY) : undefined;
     }
 
     @computed get initHistogramXBorder(): XBorder | undefined {
@@ -344,7 +339,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!coords.wcsX || !coords.wcsY) {
             return {xData, yData, border: undefined};
         }
-        const border = this.getScatterBorder(coords.wcsX, coords.wcsY);
+        const border = getCatalogScatterBorder(coords.wcsX, coords.wcsY);
         return {xData, yData, border};
     }
     @computed get histogramData() {
@@ -510,53 +505,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.cursorNearestScatterYData = yData;
         this.cursorNearestScatterPoint = undefined;
         this.cursorNearestScatterPointIndex = undefined;
-        this.scatterSpatialIndex = undefined;
+        this.scatterSpatialIndex.clear();
         this.widgetStore?.setIndicator(undefined);
-    };
-
-    private getScatterSpatialIndex = (xData: ArrayLike<number>, yData: ArrayLike<number>, xMin: number, xMax: number, yMin: number, yMax: number, chartWidth: number, chartHeight: number) => {
-        const current = this.scatterSpatialIndex;
-        if (
-            current &&
-            current.xData === xData &&
-            current.yData === yData &&
-            current.xMin === xMin &&
-            current.xMax === xMax &&
-            current.yMin === yMin &&
-            current.yMax === yMax &&
-            current.chartWidth === chartWidth &&
-            current.chartHeight === chartHeight
-        ) {
-            return current;
-        }
-
-        const cells = new Map<number, number[]>();
-        const xRange = xMax - xMin;
-        const yRange = yMax - yMin;
-        const numPoints = Math.min(xData.length, yData.length);
-        for (let i = 0; i < numPoints; i++) {
-            const pointX = xData[i];
-            const pointY = yData[i];
-            if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) {
-                continue;
-            }
-            if (pointX < xMin || pointX > xMax || pointY < yMin || pointY > yMax) {
-                continue;
-            }
-            const cellX = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointX - xMin) / xRange) * SCATTER_GRID_SIZE)));
-            const cellY = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((pointY - yMin) / yRange) * SCATTER_GRID_SIZE)));
-            const key = cellY * SCATTER_GRID_SIZE + cellX;
-            const cell = cells.get(key);
-            if (cell) {
-                cell.push(i);
-            } else {
-                cells.set(key, [i]);
-            }
-        }
-
-        this.cursorNearestScatterPointIndex = undefined;
-        this.scatterSpatialIndex = {xData, yData, xMin, xMax, yMin, yMax, chartWidth, chartHeight, cells};
-        return this.scatterSpatialIndex;
     };
 
     private getNearestScatterPointIndex = (x: number, y: number) => {
@@ -564,73 +514,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         const widgetStore = this.widgetStore;
         const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
-        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
-        if (!border || numPoints === 0) {
-            return -1;
-        }
-
-        const xRange = border.xMax - border.xMin;
-        const yRange = border.yMax - border.yMin;
-        if (!Number.isFinite(xRange) || !Number.isFinite(yRange) || xRange <= 0 || yRange <= 0) {
+        if (!border) {
             return -1;
         }
 
         const chartArea = this.scatterChartArea;
         const chartWidth = chartArea ? chartArea.right - chartArea.left : 1;
         const chartHeight = chartArea ? chartArea.bottom - chartArea.top : 1;
-        const spatialIndex = this.getScatterSpatialIndex(scatter.xData, scatter.yData, border.xMin, border.xMax, border.yMin, border.yMax, chartWidth, chartHeight);
-        const cellWidth = chartWidth / SCATTER_GRID_SIZE;
-        const cellHeight = chartHeight / SCATTER_GRID_SIZE;
-        const cursorCellX = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((x - border.xMin) / xRange) * SCATTER_GRID_SIZE)));
-        const cursorCellY = Math.min(SCATTER_GRID_SIZE - 1, Math.max(0, Math.floor(((y - border.yMin) / yRange) * SCATTER_GRID_SIZE)));
-        const cursorPixelX = Math.min(chartWidth, Math.max(0, ((x - border.xMin) / xRange) * chartWidth));
-        const cursorPixelY = Math.min(chartHeight, Math.max(0, ((y - border.yMin) / yRange) * chartHeight));
-        let nearestIndex = -1;
-        let minDistance = Number.POSITIVE_INFINITY;
-
-        for (let radius = 0; radius < SCATTER_GRID_SIZE; radius++) {
-            const minCellX = Math.max(0, cursorCellX - radius);
-            const maxCellX = Math.min(SCATTER_GRID_SIZE - 1, cursorCellX + radius);
-            const minCellY = Math.max(0, cursorCellY - radius);
-            const maxCellY = Math.min(SCATTER_GRID_SIZE - 1, cursorCellY + radius);
-            for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
-                for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
-                    if (radius > 0 && Math.max(Math.abs(cellX - cursorCellX), Math.abs(cellY - cursorCellY)) !== radius) {
-                        continue;
-                    }
-                    const cell = spatialIndex.cells.get(cellY * SCATTER_GRID_SIZE + cellX);
-                    if (!cell) {
-                        continue;
-                    }
-                    for (const index of cell) {
-                        const pointX = scatter.xData[index];
-                        const pointY = scatter.yData[index];
-                        const deltaX = ((pointX - x) * chartWidth) / xRange;
-                        const deltaY = ((pointY - y) * chartHeight) / yRange;
-                        const distance = deltaX * deltaX + deltaY * deltaY;
-                        if (distance === 0) {
-                            return index;
-                        }
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            nearestIndex = index;
-                        }
-                    }
-                }
-            }
-
-            if (nearestIndex >= 0) {
-                const minX = minCellX * cellWidth;
-                const maxX = (maxCellX + 1) * cellWidth;
-                const minY = minCellY * cellHeight;
-                const maxY = (maxCellY + 1) * cellHeight;
-                const distanceToUnvisited = Math.min(cursorPixelX - minX, maxX - cursorPixelX, cursorPixelY - minY, maxY - cursorPixelY);
-                if (radius === SCATTER_GRID_SIZE - 1 || minDistance <= distanceToUnvisited * distanceToUnvisited) {
-                    return nearestIndex;
-                }
-            }
-        }
-        return nearestIndex;
+        return this.scatterSpatialIndex.getNearestPointIndex(scatter.xData, scatter.yData, border, chartWidth, chartHeight, x, y);
     };
 
     private updateScatterCursor = () => {
@@ -755,24 +646,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let candidateIndices: Iterable<number> | undefined;
         const chartArea = this.scatterChartArea;
         if (border && chartArea && Number.isFinite(polygonMinX) && Number.isFinite(polygonMaxX) && Number.isFinite(polygonMinY) && Number.isFinite(polygonMaxY)) {
-            const xRange = border.xMax - border.xMin;
-            const yRange = border.yMax - border.yMin;
             const chartWidth = chartArea.right - chartArea.left;
             const chartHeight = chartArea.bottom - chartArea.top;
-            if (Number.isFinite(xRange) && Number.isFinite(yRange) && xRange > 0 && yRange > 0 && chartWidth > 0 && chartHeight > 0) {
-                const spatialIndex = this.getScatterSpatialIndex(scatter.xData, scatter.yData, border.xMin, border.xMax, border.yMin, border.yMax, chartWidth, chartHeight);
-                const minCellX = clamp(Math.floor(((polygonMinX - border.xMin) / xRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
-                const maxCellX = clamp(Math.floor(((polygonMaxX - border.xMin) / xRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
-                const minCellY = clamp(Math.floor(((polygonMinY - border.yMin) / yRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
-                const maxCellY = clamp(Math.floor(((polygonMaxY - border.yMin) / yRange) * SCATTER_GRID_SIZE), 0, SCATTER_GRID_SIZE - 1);
-                const candidates = new Set<number>();
-                for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
-                    for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
-                        spatialIndex.cells.get(cellY * SCATTER_GRID_SIZE + cellX)?.forEach(index => candidates.add(index));
-                    }
-                }
-                candidateIndices = candidates;
-            }
+            candidateIndices = this.scatterSpatialIndex.getCandidatesInBounds(scatter.xData, scatter.yData, border, chartWidth, chartHeight, {
+                xMin: polygonMinX,
+                xMax: polygonMaxX,
+                yMin: polygonMinY,
+                yMax: polygonMaxY
+            });
         }
         const selected: number[] = [];
         const addIfInside = (index: number) => {
@@ -883,33 +764,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         widgetStore.setFitting(result);
     };
 
-    private getTickExponent = (value: number): number => parseFloat(value.toExponential(1).split("e")[1]);
-
-    private formatTickLabel = (value: number, decimals: number, shouldUseScientificNotation: boolean): string => {
-        return shouldUseScientificNotation ? toExponential(value, decimals) : value.toFixed(decimals);
-    };
-
-    private getMinimumTickDecimals = (tickValues: number[], shouldUseScientificNotation: boolean): number => {
-        for (let decimals = 0; decimals <= 20; decimals++) {
-            const hasDuplicateLabel = tickValues.some(
-                (tickValue, index) => index > 0 && this.formatTickLabel(tickValue, decimals, shouldUseScientificNotation) === this.formatTickLabel(tickValues[index - 1], decimals, shouldUseScientificNotation)
-            );
-            if (!hasDuplicateLabel) {
-                return decimals;
-            }
-        }
-        return 20;
-    };
-
-    private formatTickValue = (value: number, rangeMin: number, rangeMax: number, ticks: Tick[] = []): string => {
-        const power = this.getTickExponent(rangeMax - rangeMin);
-        const maxAbsoluteValue = Math.max(Math.abs(rangeMin), Math.abs(rangeMax));
-        const shouldUseScientificNotation = this.getTickExponent(maxAbsoluteValue) >= 3 || this.getTickExponent(maxAbsoluteValue) <= -3;
-        const tickValues = ticks.map(tick => Number(tick.value)).filter(Number.isFinite);
-        const decimals = this.getMinimumTickDecimals(tickValues, shouldUseScientificNotation);
-        return shouldUseScientificNotation || power <= 0 ? this.formatTickLabel(value, decimals, shouldUseScientificNotation) : String(value);
-    };
-
     private onHistogramPlotRef = (ref: Chart<"bar"> | undefined | null) => {
         this.histogramPlotRef = ref ?? null;
     };
@@ -967,126 +821,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private selectHistogramBinsInRange(xMin: number, xMax: number) {
-        const {bins, binSize, binIndices} = this.histogramData;
-        const selected: number[] = [];
-        for (let i = 0; i < bins.length; i++) {
-            const halfBin = binSize / 2;
-            if (bins[i].x + halfBin >= xMin && bins[i].x - halfBin <= xMax) {
-                for (const index of binIndices[i]) {
-                    selected.push(index);
-                }
-            }
-        }
-        this.selectCatalogPoints(selected);
-    }
-
-    private histogramDragStartX: number | undefined;
-    private histogramDragCurrentX: number | undefined;
-    private histogramPanPrevX: number | undefined;
-    private hasHistogramDragHandled = false;
-    private histogramOwnerWindow: Window | null = null;
-
-    private stopHistogramMouseTracking = (shouldPreserveDragHandled = false) => {
-        this.histogramDragStartX = undefined;
-        this.histogramDragCurrentX = undefined;
-        this.histogramPanPrevX = undefined;
-        if (!shouldPreserveDragHandled) {
-            this.hasHistogramDragHandled = false;
-        }
-        this.histogramOwnerWindow?.removeEventListener("mouseup", this.onHistogramWindowMouseUp);
-        this.histogramOwnerWindow = null;
-    };
-
-    private onHistogramWindowMouseUp = () => {
-        const chart = this.histogramPlotRef;
-        const xScale = chart?.scales["x"];
-        if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && xScale) {
-            if (Math.abs(this.histogramDragCurrentX - this.histogramDragStartX) > 3) {
-                const x1 = xScale.getValueForPixel(this.histogramDragStartX);
-                const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
-                if (x1 !== undefined && x2 !== undefined) {
-                    this.hasHistogramDragHandled = true;
-                    this.selectHistogramBinsInRange(Math.min(x1, x2), Math.max(x1, x2));
-                }
-            }
-        }
-        this.stopHistogramMouseTracking();
-        chart?.draw();
-    };
-
-    private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-        const target = event.target as Element | null;
-        if (event.button === 0 && !target?.closest(".profiler-toolbar")) {
-            this.hasHistogramDragHandled = false;
-            this.histogramOwnerWindow = event.currentTarget.ownerDocument.defaultView;
-            this.histogramOwnerWindow?.addEventListener("mouseup", this.onHistogramWindowMouseUp);
-            if (event.shiftKey) {
-                this.histogramPanPrevX = event.nativeEvent.offsetX;
-            } else {
-                this.histogramDragStartX = event.nativeEvent.offsetX;
-                this.histogramDragCurrentX = undefined;
-            }
-        }
-    };
-
-    private onHistogramMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-        const target = event.target as Element | null;
-        if (target?.closest(".profiler-toolbar")) {
-            return;
-        }
-        const offsetX = event.nativeEvent.offsetX;
-        const chart = this.histogramPlotRef;
-        const widgetStore = this.widgetStore;
-        if (this.histogramPanPrevX !== undefined && chart && widgetStore) {
-            const xScale = chart.scales["x"];
-            if (xScale) {
-                const prevVal = xScale.getValueForPixel(this.histogramPanPrevX);
-                const currentVal = xScale.getValueForPixel(offsetX);
-                if (prevVal !== undefined && currentVal !== undefined) {
-                    const delta = prevVal - currentVal;
-                    const currentMin = widgetStore.histogramBorder?.xMin ?? xScale.min;
-                    const currentMax = widgetStore.histogramBorder?.xMax ?? xScale.max;
-                    widgetStore.setHistogramXBorder({xMin: currentMin + delta, xMax: currentMax + delta});
-                    if (delta !== 0) {
-                        this.hasHistogramDragHandled = true;
-                    }
-                }
-                this.histogramPanPrevX = offsetX;
-            }
-        } else if (this.histogramDragStartX !== undefined) {
-            this.histogramDragCurrentX = offsetX;
-            this.histogramPlotRef?.draw();
-        }
-    };
-
-    private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
-        const target = event.target as Element | null;
-        if (target?.closest(".profiler-toolbar")) {
-            this.stopHistogramMouseTracking();
-            this.histogramPlotRef?.draw();
-            return;
-        }
-        const chart = this.histogramPlotRef;
-        if (this.histogramPanPrevX !== undefined) {
-            this.stopHistogramMouseTracking(this.hasHistogramDragHandled && chart?.canvas === event.target);
-            return;
-        }
-        if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart) {
-            const xScale = chart.scales["x"];
-            if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
-                this.hasHistogramDragHandled = true;
-                const x1 = xScale.getValueForPixel(this.histogramDragStartX);
-                const x2 = xScale.getValueForPixel(this.histogramDragCurrentX);
-                if (x1 !== undefined && x2 !== undefined) {
-                    const newMin = Math.min(x1, x2);
-                    const newMax = Math.max(x1, x2);
-                    this.selectHistogramBinsInRange(newMin, newMax);
-                }
-            }
-        }
-        this.stopHistogramMouseTracking(chart?.canvas === event.target);
-    };
+    private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseDown(event);
+    private onHistogramMouseMove = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseMove(event);
+    private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseUp(event);
 
     private onHistogramDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
         const target = event.target as Element | null;
@@ -1431,7 +1168,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             color: labelColor,
                             callback: (value: string | number, _index: number, ticks: Tick[]) => {
                                 if (xMin !== undefined && xMax !== undefined) {
-                                    return this.formatTickValue(Number(value), xMin, xMax, ticks);
+                                    return formatCatalogPlotTick(Number(value), xMin, xMax, ticks);
                                 }
                                 return String(value);
                             }
@@ -1455,8 +1192,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 },
                 onClick: (event, _elements, chart) => {
                     // Skip if a drag action (zoom/select) was just handled
-                    if (this.hasHistogramDragHandled) {
-                        this.hasHistogramDragHandled = false;
+                    if (this.histogramInteraction.consumeHandledDrag()) {
                         return;
                     }
                     const elements = event.native ? chart.getElementsAtEventForMode(event.native, "index", {axis: "xy", intersect: true}, false) : [];
@@ -1551,15 +1287,17 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const dragBoxPlugin: Plugin<"bar"> = {
                 id: "dragBoxPlugin",
                 afterDraw: (chart: Chart) => {
-                    if (this.histogramDragStartX === undefined || this.histogramDragCurrentX === undefined) {
+                    const dragStartX = this.histogramInteraction.selectionStartX;
+                    const dragCurrentX = this.histogramInteraction.selectionCurrentX;
+                    if (dragStartX === undefined || dragCurrentX === undefined) {
                         return;
                     }
                     const {ctx, chartArea} = chart;
                     if (!chartArea) {
                         return;
                     }
-                    const startX = Math.max(this.histogramDragStartX, chartArea.left);
-                    const endX = Math.min(this.histogramDragCurrentX, chartArea.right);
+                    const startX = Math.max(dragStartX, chartArea.left);
+                    const endX = Math.min(dragCurrentX, chartArea.right);
                     const boxWidth = endX - startX;
                     const selectionColor = AppStore.Instance.isDarkTheme ? Colors.GRAY3 : Colors.DARK_GRAY1;
                     ctx.save();
