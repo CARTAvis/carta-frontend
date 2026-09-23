@@ -1038,6 +1038,58 @@ describe("CatalogOverlayComponent", () => {
 });
 
 describe("CatalogOverlayComponent table refreshes", () => {
+    // Real stores, unlike the auto-select harness above: these methods are about what the profile
+    // and display stores actually hold, so a mock of them would only restate the expectation.
+    const createHarness = (columns: MockColumn[]) => {
+        harnessId += 1;
+        const catalogFileId = 20_000 + harnessId;
+        const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
+        const catalogData = new Map(columns.map((column, index) => [index, {dataType: column.dataType ?? CARTA.ColumnType.Double, data: column.data ?? [1, 2]}]));
+        const profileStore = new CatalogProfileStore({dataSize: 2, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData as never, CatalogType.FILE);
+        columns.forEach(column => {
+            if (column.display !== undefined) {
+                profileStore.setHeaderDisplay(column.display, column.name);
+            }
+        });
+        const displayStore = new CatalogDisplayStore(catalogFileId);
+
+        const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
+        Object.defineProperty(component, "profileStore", {configurable: true, get: () => profileStore});
+        Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
+        Object.defineProperty(component, "catalogFileId", {configurable: true, get: () => catalogFileId});
+
+        return {component, displayStore, profileStore};
+    };
+
+    test("keeps an overlay that is drawn, whatever the widget's own controls read", () => {
+        const {component, displayStore, profileStore} = createHarness([
+            {name: "RAJ2000", data: [10, 20]},
+            {name: "DEJ2000", data: [30, 40]}
+        ]);
+        profileStore.setIsUpdateColumn(true);
+        // What a restored workspace leaves behind: the overlay is drawn, and the controls were
+        // never moved onto it.
+        displayStore.setPlottedImageOverlayState("RAJ2000", "DEJ2000", CatalogSystemType.ICRS);
+        expect(displayStore.xAxis).toBe(CatalogOverlay.NONE);
+
+        expect(component["shouldPreserveImageOverlayDuringColumnUpdate"]()).toBe(true);
+        displayStore.dispose();
+    });
+
+    test("keeps nothing when no overlay has been drawn", () => {
+        const {component, displayStore, profileStore} = createHarness([
+            {name: "RAJ2000", data: [10, 20]},
+            {name: "DEJ2000", data: [30, 40]}
+        ]);
+        profileStore.setIsUpdateColumn(true);
+        // The controls name the axes, but nothing has been plotted from them yet.
+        displayStore.setxAxis("RAJ2000");
+        displayStore.setyAxis("DEJ2000");
+
+        expect(component["shouldPreserveImageOverlayDuringColumnUpdate"]()).toBe(false);
+        displayStore.dispose();
+    });
+
     test("goes on asking for a hidden mapped column when the table scrolls for more rows", () => {
         // Constructed for real, because the scroll handler is an instance field rather than a
         // prototype method.

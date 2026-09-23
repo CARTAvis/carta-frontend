@@ -664,14 +664,28 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         catalogDisplayStore?.setShowSelectedData(false);
     };
 
+    /**
+     * Whether the overlay already drawn survives a refresh that only changes which columns are
+     * asked for.
+     *
+     * The question is about the overlay that is drawn, not about the controls: a restored overlay
+     * is drawn while the plot type and the axis controls can be anywhere, and clearing it because
+     * the controls read None takes down a drawing the user is looking at. Nothing brings it back
+     * either -- a column update is answered in table mode, which redraws nothing.
+     */
     private shouldPreserveImageOverlayDuringColumnUpdate(): boolean {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.displayStore;
-        if (!profileStore?.isUpdateColumnMode || catalogDisplayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay || catalogDisplayStore.xAxis === CatalogOverlay.NONE || catalogDisplayStore.yAxis === CatalogOverlay.NONE) {
+        if (!profileStore?.isUpdateColumnMode || !catalogDisplayStore?.hasPlottedImageOverlay || catalogDisplayStore.plottedImageOverlaySystem === undefined) {
             return false;
         }
 
-        const coords = profileStore.get2DCoordinateData(catalogDisplayStore.xAxis, catalogDisplayStore.yAxis, profileStore.catalogData, profileStore.catalogCoordinateSystem.system);
+        const {plottedImageOverlayXAxis: xAxis, plottedImageOverlayYAxis: yAxis} = catalogDisplayStore;
+        if (xAxis === CatalogOverlay.NONE || yAxis === CatalogOverlay.NONE) {
+            return false;
+        }
+
+        const coords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, catalogDisplayStore.plottedImageOverlaySystem);
         return Boolean(coords.wcsX && coords.wcsY);
     }
 
