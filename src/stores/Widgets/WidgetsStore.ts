@@ -380,8 +380,8 @@ export class WidgetsStore {
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
-    private getNextId = (defaultId: string, widgetMap?: Map<string, any>) => {
-        const widgets = widgetMap ?? this.widgetsMap.get(defaultId);
+    private getNextId = (defaultId: string) => {
+        const widgets = this.widgetsMap.get(defaultId);
         if (!widgets) {
             return null;
         }
