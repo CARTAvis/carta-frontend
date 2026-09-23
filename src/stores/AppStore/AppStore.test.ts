@@ -412,7 +412,7 @@ describe("AppStore.handleErrorStream", () => {
 
     function startPendingRestore(catalogFileId: number) {
         addProfileStore(catalogFileId);
-        catalogStore.restoreCatalogFromWorkspace(catalogFileId, undefined, true);
+        catalogStore.restoreCatalogFromWorkspace(catalogFileId, {shouldWaitForCompletion: true});
         return catalogStore.catalogRequests.wait(catalogFileId);
     }
 

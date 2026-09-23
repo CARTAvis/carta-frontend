@@ -1581,15 +1581,15 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
-    private getUniqueCatalogWidgetId = (preferredPanelId: string, componentId: string): string => {
+    private getUniqueCatalogWidgetId = (preferredWidgetId: string, componentId: string): string => {
         const usedWidgetIds = new Set<string>();
         this.catalogWidgets.forEach((widgetStore, existingComponentId) => {
             if (existingComponentId !== componentId && widgetStore.widgetId) {
                 usedWidgetIds.add(widgetStore.widgetId);
             }
         });
-        if (preferredPanelId && !usedWidgetIds.has(preferredPanelId)) {
-            return preferredPanelId;
+        if (preferredWidgetId && !usedWidgetIds.has(preferredWidgetId)) {
+            return preferredWidgetId;
         }
         if (!usedWidgetIds.has(componentId)) {
             return componentId;
@@ -1631,7 +1631,7 @@ export class WidgetsStore {
         }
     };
 
-    private createFloatingCatalogPanel = (selectedCatalogId: number = 1, widgetId?: string): {widgetComponentId: string} => {
+    private createFloatingCatalogWidgetInstance = (selectedCatalogId: number = 1, widgetId?: string): string => {
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
         const widgetStore = this.getCatalogWidgetStore(widgetComponentId, selectedCatalogId);
         if (widgetId) {
@@ -1641,28 +1641,28 @@ export class WidgetsStore {
         const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
-        return {widgetComponentId};
+        return widgetComponentId;
     };
 
-    createFloatingCatalogWidget = (catalogFileId: number): {widgetComponentId: string} => {
+    createFloatingCatalogWidget = (catalogFileId: number): string => {
         CatalogStore.Instance.getOrCreateCatalogDisplayStore(catalogFileId);
-        return this.createFloatingCatalogPanel(catalogFileId);
+        return this.createFloatingCatalogWidgetInstance(catalogFileId);
     };
 
-    @action restoreCatalogPanels = (widgetIds: string[]) => {
-        const existingPanelIds = new Set<string>();
+    @action restoreCatalogWidgets = (widgetIds: string[]) => {
+        const existingWidgetIds = new Set<string>();
         this.catalogWidgets.forEach(widgetStore => {
             if (widgetStore.widgetId) {
-                existingPanelIds.add(widgetStore.widgetId);
+                existingWidgetIds.add(widgetStore.widgetId);
             }
         });
 
         for (const widgetId of widgetIds) {
-            if (widgetId && !existingPanelIds.has(widgetId)) {
-                const {widgetComponentId} = this.createFloatingCatalogPanel(1, widgetId);
-                const restoredPanelId = this.catalogWidgets.get(widgetComponentId)?.widgetId;
-                if (restoredPanelId) {
-                    existingPanelIds.add(restoredPanelId);
+            if (widgetId && !existingWidgetIds.has(widgetId)) {
+                const widgetComponentId = this.createFloatingCatalogWidgetInstance(1, widgetId);
+                const restoredWidgetId = this.catalogWidgets.get(widgetComponentId)?.widgetId;
+                if (restoredWidgetId) {
+                    existingWidgetIds.add(restoredWidgetId);
                 }
             }
         }

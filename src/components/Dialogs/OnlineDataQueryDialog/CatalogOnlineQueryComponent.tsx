@@ -417,7 +417,7 @@ export class CatalogQueryComponent extends React.Component {
             const querySource = CatalogApiService.captureQuery("vizier");
             configStore.setQueryStatus(true);
             const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-            CatalogApiService.Instance.appendVizierCatalog(resources, undefined, querySource);
+            CatalogApiService.Instance.appendVizierCatalog(resources, {querySource});
             configStore.setQueryStatus(false);
         }
     };

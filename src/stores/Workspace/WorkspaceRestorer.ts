@@ -1,17 +1,5 @@
 import {CatalogDatabase, CatalogOverlay, WorkspaceItemKind} from "enums";
-import {
-    describeCatalogSource,
-    describeImageSource,
-    LayoutConfig,
-    type Point2D,
-    type WCSPoint2D,
-    type Workspace,
-    type WorkspaceCatalog,
-    type WorkspaceCatalogSource,
-    type WorkspaceFile,
-    type WorkspaceImageSource,
-    type WorkspaceIssue
-} from "models";
+import {describeCatalogSource, describeImageSource, type Point2D, type WCSPoint2D, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogProfileStore, restoreWorkspaceZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -35,7 +23,7 @@ interface CatalogConfigRequest {
  * Brings a workspace back into the running session, one named stage at a time.
  *
  * Restoring is not a single step: images have to exist before catalogs can be attached to them, a
- * catalog's rows have to match its saved query before its overlay is drawn, and the panels and
+ * catalog's rows have to match its saved query before its overlay is drawn, and the widgets and
  * plots showing a catalog can only be bound once it is loaded. Running the stages in a fixed order
  * makes what a restored session looks like a property of the workspace, rather than of which store
  * happened to be ready first.
@@ -375,7 +363,7 @@ export class WorkspaceRestorer {
         }
 
         if (source.type === "simbad") {
-            const {fileId} = yield* awaited(CatalogApiService.Instance.appendSimbadCatalog(CatalogOnlineQueryConfigStore.simbadQuery(source.center, configStore.radiusAsDeg, source.maxObjects), targetFrameId, source));
+            const {fileId} = yield* awaited(CatalogApiService.Instance.appendSimbadCatalog(CatalogOnlineQueryConfigStore.simbadQuery(source.center, configStore.radiusAsDeg, source.maxObjects), {targetFrameId, querySource: source}));
             return fileId;
         }
 
@@ -384,7 +372,7 @@ export class WorkspaceRestorer {
         }
         const point: WCSPoint2D = {x: String(source.center.x), y: String(source.center.y)};
         const resources = yield* awaited(CatalogApiService.Instance.queryVizierSource(point, source.radius, source.radiusUnits, source.maxObjects, [{table: {name: source.table}} as VizierResource]));
-        return CatalogApiService.Instance.appendVizierCatalog(resources, targetFrameId, source)[0];
+        return CatalogApiService.Instance.appendVizierCatalog(resources, {targetFrameId, querySource: source})[0];
     }
 
     /**
@@ -462,7 +450,11 @@ export class WorkspaceRestorer {
                 }
             }
 
-            const isRestoreStarted = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, isDisplayConfigApplied ? imageOverlay : undefined, true, catalogInfo.selection);
+            const isRestoreStarted = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, {
+                overlay: isDisplayConfigApplied ? imageOverlay : undefined,
+                shouldWaitForCompletion: true,
+                selection: catalogInfo.selection
+            });
             if (!isRestoreStarted) {
                 this.report(WorkspaceItemKind.Catalog, description, isDisplayConfigApplied ? failure : `Could not restore the rows of the catalog ${description}`);
                 return undefined;
@@ -544,7 +536,7 @@ export class WorkspaceRestorer {
     /**
      * Stage 7: put back the arrangement the workspace was saved in.
      *
-     * Applied after the catalogs are loaded, so that the panels and plots a layout brings back can
+     * Applied after the catalogs are loaded, so that the widgets and plots a layout brings back can
      * be bound to their catalogs as they are created rather than having to wait for them. A
      * workspace saved before layouts were part of one leaves the session's arrangement alone.
      */
@@ -554,22 +546,16 @@ export class WorkspaceRestorer {
             return;
         }
 
-        // Validate the complete embedded layout before allowing the layout store to replace the
-        // current widgets. Preparation also upgrades legacy layouts on a copy.
-        const preparedLayout = LayoutConfig.prepareLayout(layout);
-        if (!preparedLayout) {
-            this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
-            return;
-        }
-        if (!this.appStore.layoutStore.applyLayoutConfig(preparedLayout)) {
+        // The layout store validates and upgrades a copy before replacing the current widgets.
+        if (!this.appStore.layoutStore.applyLayoutConfig(layout)) {
             this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
         }
     }
 
-    /** Stage 8: point the panels and plots that show a catalog at the catalogs just loaded. */
+    /** Stage 8: point the widgets and plots that show a catalog at the catalogs just loaded. */
     private restoreViews(): void {
         if (this.workspace.selectedCatalogIds) {
-            this.appStore.widgetsStore.restoreCatalogPanels(Object.keys(this.workspace.selectedCatalogIds));
+            this.appStore.widgetsStore.restoreCatalogWidgets(Object.keys(this.workspace.selectedCatalogIds));
             Object.entries(this.workspace.selectedCatalogIds).forEach(([widgetId, workspaceCatalogId]) => {
                 const selectedCatalogFileId = this.catalogIds.get(workspaceCatalogId);
                 const widgetStore = Array.from(this.appStore.widgetsStore.catalogWidgets.values()).find(store => store.widgetId === widgetId);

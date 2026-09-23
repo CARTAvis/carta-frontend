@@ -376,8 +376,8 @@ export interface Workspace {
         raster?: number;
     };
     selectedFile?: number;
-    /** Workspace catalog selected by each catalog panel, keyed by stable panel ID. */
-    selectedCatalogIds?: {[panelId: string]: number};
+    /** Workspace catalog selected by each catalog widget, keyed by stable widget ID. */
+    selectedCatalogIds?: {[widgetId: string]: number};
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;

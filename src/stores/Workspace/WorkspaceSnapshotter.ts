@@ -289,13 +289,13 @@ export class WorkspaceSnapshotter {
         this.workspace.catalogs = catalogs;
     }
 
-    /** Stage 4: which catalog each panel is showing, named by the workspace's own catalog IDs. */
+    /** Stage 4: which catalog each widget is showing, named by the workspace's own catalog IDs. */
     private captureViews(): void {
         const selectedCatalogIds: Record<string, number> = {};
         this.appStore.widgetsStore.catalogWidgets.forEach((widgetStore, componentId) => {
             const widgetId = widgetStore.widgetId || componentId;
             const catalogFileId = widgetStore.selectedCatalogId;
-            // A panel restored for a catalog that was unavailable keeps naming that catalog.
+            // A widget restored for a catalog that was unavailable keeps naming that catalog.
             if (widgetStore.unavailableWorkspaceCatalogId !== undefined) {
                 selectedCatalogIds[widgetId] = widgetStore.unavailableWorkspaceCatalogId;
             } else if (this.appStore.catalogStore.catalogProfileStores.has(catalogFileId)) {

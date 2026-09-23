@@ -137,7 +137,7 @@ describe("CatalogStore workspace catalog IDs", () => {
     });
 
     test("does not hand a new catalog an ID a widget still holds for an unavailable catalog", () => {
-        // A plot and a panel restored for catalogs the workspace could not load keep naming them.
+        // A plot and a widget restored for catalogs the workspace could not load keep naming them.
         widgetsStore.addCatalogPlotWidget({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 1});
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(2);
 
@@ -145,7 +145,7 @@ describe("CatalogStore workspace catalog IDs", () => {
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 12)).toBe(4);
     });
 
-    test("releases an unavailable catalog ID when its panel is removed", () => {
+    test("releases an unavailable catalog ID when its widget is removed", () => {
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(1);
 
         widgetsStore.removeWidget("catalog-overlay-0", "catalog-overlay");
@@ -420,7 +420,7 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(1);
     });
 
-    test("restores multiple panels that show the same catalog", () => {
+    test("restores multiple widgets that show the same catalog", () => {
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
 
         widgetsStore.initWidgets(
@@ -435,14 +435,14 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         expect(Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.selectedCatalogId)).toEqual([1, 1]);
     });
 
-    test("recreates workspace panels that are absent from the current layout", () => {
+    test("recreates workspace widgets that are absent from the current layout", () => {
         const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
-        widgetStore.setWidgetId("catalog-panel-primary");
+        widgetStore.setWidgetId("catalog-widget-primary");
         const initialFloatingWidgetIds = new Set(widgetsStore.floatingWidgets.map(widget => widget.id));
 
-        widgetsStore.restoreCatalogPanels(["catalog-panel-primary", "catalog-panel-secondary"]);
+        widgetsStore.restoreCatalogWidgets(["catalog-widget-primary", "catalog-widget-secondary"]);
 
-        expect(Array.from(widgetsStore.catalogWidgets.values()).map(store => store.widgetId)).toEqual(["catalog-panel-primary", "catalog-panel-secondary"]);
+        expect(Array.from(widgetsStore.catalogWidgets.values()).map(store => store.widgetId)).toEqual(["catalog-widget-primary", "catalog-widget-secondary"]);
         const restoredWidget = widgetsStore.floatingWidgets.find(widget => !initialFloatingWidgetIds.has(widget.id));
         expect(restoredWidget?.type).toBe("catalog-overlay");
         if (restoredWidget) {
@@ -450,23 +450,23 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         }
     });
 
-    test("restores a catalog by the panel's stable ID after its component ID changes", () => {
+    test("restores a catalog by the widget's stable ID after its component ID changes", () => {
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         const widgetStore = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
-        widgetStore.setWidgetId("catalog-panel-primary");
+        widgetStore.setWidgetId("catalog-widget-primary");
 
-        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-panel-primary", 2)).toBe(true);
+        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-widget-primary", 2)).toBe(true);
         expect(widgetStore.selectedCatalogId).toBe(2);
     });
 
-    test("does not confuse a stable panel ID with another panel's runtime component ID", () => {
+    test("does not confuse a stable widget ID with another widget's runtime component ID", () => {
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         const stableWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
         const runtimeWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 1);
         stableWidget.setWidgetId("catalog-overlay-1");
-        runtimeWidget.setWidgetId("catalog-panel-secondary");
+        runtimeWidget.setWidgetId("catalog-widget-secondary");
 
         expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-1", 2)).toBe(true);
         expect(stableWidget.selectedCatalogId).toBe(1);
@@ -476,7 +476,7 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         expect(stableWidget.selectedCatalogId).toBe(2);
     });
 
-    test("replaces a removed catalog in every panel that was showing it", () => {
+    test("replaces a removed catalog in every widget that was showing it", () => {
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
         widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 1);
 
@@ -486,11 +486,11 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
     });
 
-    test("keeps panel persistence IDs unique when a layout contains duplicates", () => {
+    test("keeps widget persistence IDs unique when a layout contains duplicates", () => {
         widgetsStore.initWidgets(
             [
-                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {panelId: "catalog-panel-primary"}},
-                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {panelId: "catalog-panel-primary"}}
+                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {widgetId: "catalog-widget-primary"}},
+                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {widgetId: "catalog-widget-primary"}}
             ],
             []
         );
@@ -500,7 +500,7 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
     });
 });
 
-describe("Catalog panel selection lifecycle", () => {
+describe("Catalog widget selection lifecycle", () => {
     const catalogStore = CatalogStore.Instance;
     const widgetsStore = WidgetsStore.Instance;
 
@@ -509,7 +509,7 @@ describe("Catalog panel selection lifecycle", () => {
         widgetsStore.catalogWidgets.clear();
     });
 
-    test("preserves a valid selection and falls back invalid panels to the active image", () => {
+    test("preserves a valid selection and falls back invalid widgets to the active image", () => {
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 2);
         widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 99);
         catalogStore.imageAssociatedCatalogId.set(7, [2, 3]);
@@ -594,7 +594,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     });
 
     test("does nothing for a catalog that is not loaded", () => {
-        expect(catalogStore.restoreCatalogFromWorkspace(1, overlay)).toBe(false);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(false);
         expect(sendCatalogFilter).not.toHaveBeenCalled();
     });
 
@@ -605,7 +605,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         // The rows the catalog opened with were read before those were applied.
         expect(profileStore.subsetEndIndex).toBe(50);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, overlay)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
 
         expect(profileStore.numVisibleRows).toBe(0);
         expect(profileStore.subsetEndIndex).toBe(0);
@@ -624,7 +624,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {...overlay, maxRows: 3})).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 3}})).toBe(true);
 
         expect(displayStore.plottedImageOverlayMaxRows).toBe(3);
         expect(convertSpy).not.toHaveBeenCalled();
@@ -635,7 +635,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setMaxRows(100);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {...overlay, maxRows: 200})).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 200}})).toBe(true);
 
         expect(profileStore.maxRows).toBe(100);
         expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(200);
@@ -662,7 +662,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(1);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, true)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
         let isSettled = false;
         const completion = catalogStore.catalogRequests.wait(1).then(result => {
             isSettled = result.success;
@@ -681,7 +681,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue(undefined as any);
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
         openFileCatalog(200);
-        expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, true)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
         catalogStore.catalogRequests.attach(1, 4);
 
         catalogStore.removeCatalog(1);
@@ -697,7 +697,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(1);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, true)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
         const completion = catalogStore.catalogRequests.wait(1);
         expect(profileStore.isLoadingData).toBe(true);
         expect(profileStore.isUpdatingDataStream).toBe(true);
@@ -714,7 +714,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         try {
             openFileCatalog(200);
             sendCatalogFilter.mockReturnValue(1);
-            expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, true)).toBe(true);
+            expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
             const completion = catalogStore.catalogRequests.wait(1);
 
             jest.advanceTimersByTime(29_999);
@@ -732,7 +732,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     test("asks for a column the overlay is mapped from even when the saved table hides it", () => {
         openFileCatalog(200).setDisplayedColumns(["FLUX"]);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, overlay)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
 
         expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
     });
@@ -741,7 +741,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setDisplayedColumns(["RA"]);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, undefined, false, {columns: ["FLUX"], rowHashes: ["selected-row"], searchRows: 125})).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {selection: {columns: ["FLUX"], rowHashes: ["selected-row"], searchRows: 125}})).toBe(true);
 
         expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 2]);
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
@@ -761,7 +761,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     test("draws an online catalog without asking for its rows again", () => {
         catalogStore.catalogProfileStores.set(1, new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, catalogData(), CatalogType.SIMBAD));
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, overlay)).toBe(true);
+        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
 
         expect(sendCatalogFilter).not.toHaveBeenCalled();
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlayXAxis).toBe("RA");

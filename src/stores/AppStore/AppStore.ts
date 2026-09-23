@@ -1322,7 +1322,7 @@ export class AppStore {
         catalogStore.getOrCreateCatalogDisplayStore(fileId);
         // A catalog that every existing widget is still waiting past gets a widget of its own, so
         // that it is never left displayed in none.
-        return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId).widgetComponentId;
+        return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId);
     };
 
     /**

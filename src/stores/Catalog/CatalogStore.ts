@@ -14,6 +14,12 @@ type CatalogOverlayCoords = {
     y: Float32Array;
 };
 
+export interface WorkspaceCatalogRestoreOptions {
+    overlay?: WorkspaceCatalogImageOverlay;
+    shouldWaitForCompletion?: boolean;
+    selection?: WorkspaceCatalogSelection;
+}
+
 /**
  * What one catalog plot component is showing: the catalog it is pointed at, and the plot it keeps
  * for each catalog it has been pointed at.
@@ -61,7 +67,7 @@ export class CatalogStore {
     @observable private catalogPlotComponents: Map<string, string> = new Map();
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
-    // Catalog display state is scoped to the catalog, not to an overlay panel.
+    // Catalog display state is scoped to the catalog, not to an overlay widget.
     @observable catalogDisplayStores: Map<number, CatalogDisplayStore> = new Map();
     private static readonly CatalogRestoreTimeout = 30_000;
     /**
@@ -571,8 +577,9 @@ export class CatalogStore {
      *
      * @returns whether the catalog could be restored as saved.
      */
-    @action restoreCatalogFromWorkspace(catalogFileId: number, overlay?: WorkspaceCatalogImageOverlay, isWaitingForCompletion: boolean = false, selection?: WorkspaceCatalogSelection): boolean {
-        if (isWaitingForCompletion) {
+    @action restoreCatalogFromWorkspace(catalogFileId: number, options: WorkspaceCatalogRestoreOptions = {}): boolean {
+        const {overlay, shouldWaitForCompletion = false, selection} = options;
+        if (shouldWaitForCompletion) {
             this.catalogRequests.start(catalogFileId);
         }
 

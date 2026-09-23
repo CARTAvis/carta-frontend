@@ -101,7 +101,7 @@ function createSession() {
             setWorkspaceCatalogId: jest.fn(),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),
-            restoreCatalogFromWorkspace: jest.fn((_catalogFileId?: number, _overlay?: unknown, _isWaitingForCompletion?: boolean, _selection?: unknown) => {
+            restoreCatalogFromWorkspace: jest.fn((_catalogFileId?: number, _options?: unknown) => {
                 calls.push("restoreCatalogRows");
                 return true;
             }),
@@ -111,7 +111,7 @@ function createSession() {
         widgetsStore: {
             catalogWidgets: new Map(),
             catalogPlotWidgets: new Map(),
-            restoreCatalogPanels: jest.fn(),
+            restoreCatalogWidgets: jest.fn(),
             setCatalogWidgetSelectionByWidgetId: jest.fn((_widgetId?: string, _catalogFileId?: number) => true)
         },
         layoutStore: {
@@ -222,7 +222,7 @@ describe("WorkspaceRestorer", () => {
         const problems = await restore(createWorkspace({catalogs: [{...CATALOG, displayConfig: {color: "#123456"}}]}));
 
         expect(problems).toEqual(['Could not restore how the catalog sources.vot is drawn: The size axis is mapped to "Fmag", which this catalog does not have']);
-        expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, undefined, true, undefined);
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, {overlay: undefined, shouldWaitForCompletion: true, selection: undefined});
         expect(calls).toContain("applyTableConfig");
     });
 
@@ -306,12 +306,13 @@ describe("WorkspaceRestorer", () => {
         expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
     });
 
-    test("rejects an invalid embedded layout before asking the layout store to replace widgets", async () => {
+    test("reports an invalid embedded layout the layout store could not apply", async () => {
         const {appStore} = createSession();
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
         expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
-        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout);
     });
 
     test("points each catalog widget at the catalog it was showing", async () => {
@@ -319,7 +320,7 @@ describe("WorkspaceRestorer", () => {
 
         await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 1}}));
 
-        expect(appStore.widgetsStore.restoreCatalogPanels).toHaveBeenCalledWith(["catalog-overlay-0"]);
+        expect(appStore.widgetsStore.restoreCatalogWidgets).toHaveBeenCalledWith(["catalog-overlay-0"]);
         expect(appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId).toHaveBeenCalledWith("catalog-overlay-0", 10);
     });
 

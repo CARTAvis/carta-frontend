@@ -134,22 +134,22 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.catalogs?.[0].contentHash).toBeUndefined();
     });
 
-    test("names the catalog each panel shows by the workspace's own catalog ID", () => {
+    test("names the catalog each widget shows by the workspace's own catalog ID", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: undefined} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: undefined} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(workspace.selectedCatalogIds).toEqual({"panel-a": 1});
+        expect(workspace.selectedCatalogIds).toEqual({"widget-a": 1});
     });
 
-    test("keeps naming the catalog a panel was restored for when it was unavailable", () => {
+    test("keeps naming the catalog a widget was restored for when it was unavailable", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "panel-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: 7} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: 7} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(workspace.selectedCatalogIds).toEqual({"panel-a": 7});
+        expect(workspace.selectedCatalogIds).toEqual({"widget-a": 7});
     });
 
     test("reports a generated image instead of capturing it", () => {

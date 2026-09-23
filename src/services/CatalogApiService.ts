@@ -10,6 +10,11 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 
 import {TelemetryService} from "./TelemetryService";
 
+interface AppendCatalogOptions {
+    targetFrameId?: number;
+    querySource?: WorkspaceCatalogQuerySource;
+}
+
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
@@ -269,7 +274,8 @@ export class CatalogApiService {
     };
 
     /** @returns the file id of every catalog that was loaded. */
-    public appendVizierCatalog = (resources: Map<string, VizierResource>, targetFrameId?: number, querySource?: WorkspaceCatalogQuerySource): number[] => {
+    public appendVizierCatalog = (resources: Map<string, VizierResource>, options: AppendCatalogOptions = {}): number[] => {
+        const {targetFrameId, querySource} = options;
         const appStore = AppStore.Instance;
         const fileIds: number[] = [];
         resources.forEach(element => {
@@ -338,7 +344,8 @@ export class CatalogApiService {
     }
 
     /** @returns how many rows the query returned, and the file id of the catalog it was loaded as. */
-    public appendSimbadCatalog = async (query: string, targetFrameId?: number, savedQuery?: WorkspaceCatalogQuerySource): Promise<{dataSize: number; fileId?: number}> => {
+    public appendSimbadCatalog = async (query: string, options: AppendCatalogOptions = {}): Promise<{dataSize: number; fileId?: number}> => {
+        const {targetFrameId, querySource: savedQuery} = options;
         const appStore = AppStore.Instance;
         const frame = targetFrameId === undefined ? appStore.activeFrame : appStore.getFrame(targetFrameId);
         if (!frame) {

@@ -450,7 +450,6 @@ export abstract class AbstractCatalogProfileStore {
         return this.selectedPointIndices.length;
     }
 
-    /** The columns the backend is asked to send. A column is only sent while it is displayed. */
     /**
      * Columns the backend is asked for although the table does not show them.
      *
