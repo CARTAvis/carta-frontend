@@ -106,6 +106,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
     private stageClickStartY: number;
+    private hasActiveStageInteraction = false;
     private panPrevious: {x: number; y: number};
     private interactionOwnerWindow: Window | null = null;
 
@@ -172,6 +173,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action endInteractions() {
         this.interactionMode = InteractionMode.NONE;
+        this.hasActiveStageInteraction = false;
         this.stopInteractionTracking();
     }
 
@@ -547,6 +549,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     onStageMouseDown = ev => {
         const mouseEvent: MouseEvent = ev.evt;
+        this.hasActiveStageInteraction = false;
         const chartArea = this.chartArea;
         if (chartArea && (mouseEvent.offsetX < chartArea.left || mouseEvent.offsetX > chartArea.right || mouseEvent.offsetY < chartArea.top || mouseEvent.offsetY > chartArea.bottom)) {
             return;
@@ -567,6 +570,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         } else {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
         }
+        this.hasActiveStageInteraction = true;
         this.interactionOwnerWindow = this.containerRef.current?.ownerDocument.defaultView ?? window;
         this.interactionOwnerWindow.addEventListener("mouseup", this.onWindowMouseUp);
     };
@@ -707,9 +711,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     onStageMouseUp = ev => {
         const mouseEvent: MouseEvent = ev.evt;
+        if (!this.hasActiveStageInteraction) {
+            return;
+        }
+        this.hasActiveStageInteraction = false;
         // Redirect clicks
         const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
-        if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
+        const shouldCompleteLasso = this.isLassoSelecting && this.lassoPoints.length >= 6;
+        if (!shouldCompleteLasso && mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
             this.completeDragInteraction();

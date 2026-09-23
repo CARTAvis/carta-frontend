@@ -647,6 +647,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (nearestIndex < 0) {
             this.cursorNearestScatterPoint = undefined;
             this.cursorNearestScatterPointIndex = undefined;
+            this.widgetStore?.setIndicator(undefined);
             return;
         }
         if (nearestIndex === this.cursorNearestScatterPointIndex) {
@@ -1066,11 +1067,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             this.histogramPlotRef?.draw();
             return;
         }
+        const chart = this.histogramPlotRef;
         if (this.histogramPanPrevX !== undefined) {
-            this.stopHistogramMouseTracking(this.hasHistogramDragHandled);
+            this.stopHistogramMouseTracking(this.hasHistogramDragHandled && chart?.canvas === event.target);
             return;
         }
-        const chart = this.histogramPlotRef;
         if (this.histogramDragStartX !== undefined && this.histogramDragCurrentX !== undefined && chart) {
             const xScale = chart.scales["x"];
             if (xScale && Math.abs(event.nativeEvent.offsetX - this.histogramDragStartX) > 3) {
@@ -1415,6 +1416,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: false,
+                interaction: {mode: "index", intersect: false},
                 plugins: {
                     legend: {display: false}
                 },

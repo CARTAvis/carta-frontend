@@ -59,7 +59,6 @@ interface CatalogScatterWebGLProps {
     selectedIndices: Set<number>;
     hasSelection: boolean;
     pointSize?: number;
-    onRef?: (ref: CatalogScatterWebGL | null) => void;
 }
 
 function parseColor(hex: string): [number, number, number, number] {
@@ -93,7 +92,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         }
         this.initGL();
         this.draw();
-        this.props.onRef?.(this);
     }
 
     shouldComponentUpdate(nextProps: CatalogScatterWebGLProps) {
@@ -118,7 +116,6 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     }
 
     componentWillUnmount() {
-        this.props.onRef?.(null);
         const canvas = this.canvasRef.current;
         if (canvas) {
             canvas.removeEventListener("webglcontextlost", this.onContextLost);

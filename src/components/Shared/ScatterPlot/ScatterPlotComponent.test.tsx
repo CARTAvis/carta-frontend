@@ -71,6 +71,32 @@ describe("ScatterPlotComponent interactions", () => {
         expect(component.interactionMode).toBe(InteractionMode.NONE);
     });
 
+    test("completes a lasso when it closes near its starting point", () => {
+        const onLassoSelected = jest.fn();
+        const component = new ScatterPlotComponent({dragAction: DragMode.Lasso, onLassoSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
+        component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
+
+        component.onStageMouseDown({evt: {offsetX: 10, offsetY: 10, button: 0}} as any);
+        component.updateLassoSelection(90, 10);
+        component.updateLassoSelection(90, 90);
+        component.onStageMouseUp({evt: {offsetX: 11, offsetY: 11, button: 0}} as any);
+
+        expect(onLassoSelected).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not route a mouseup after a rejected mousedown as a click", () => {
+        const graphZoomReset = jest.fn();
+        const component = new ScatterPlotComponent({graphZoomReset});
+        component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
+
+        component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+        component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+        component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+        component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+
+        expect(graphZoomReset).not.toHaveBeenCalled();
+    });
+
     test("does not zoom for thin XY drags", () => {
         const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
