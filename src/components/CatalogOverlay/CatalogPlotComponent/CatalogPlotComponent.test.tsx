@@ -101,7 +101,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         interaction["panPreviousX"] = 10;
         interaction["hasHandledDrag"] = true;
 
-        interaction["onWindowMouseUp"]();
+        interaction["onWindowMouseUp"]({clientX: 0} as MouseEvent);
 
         expect(interaction.consumeHandledDrag()).toBe(false);
     });
@@ -109,8 +109,15 @@ describe("CatalogPlotComponent catalog selection", () => {
     test("selects histogram bins when released outside the plot", () => {
         const selectPoints = jest.fn();
         const interaction = new CatalogHistogramInteraction({
-            getChart: () => ({scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
-            getData: () => ({bins: [{x: 20, y: 1}], binSize: 20, binIndices: [[7]]}),
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getData: () => ({
+                bins: [
+                    {x: 20, y: 1},
+                    {x: 60, y: 1}
+                ],
+                binSize: 20,
+                binIndices: [[7], [8]]
+            }),
             getBorder: () => undefined,
             setBorder: jest.fn(),
             selectPoints
@@ -118,7 +125,23 @@ describe("CatalogPlotComponent catalog selection", () => {
         interaction["dragStartX"] = 10;
         interaction["dragCurrentX"] = 30;
 
-        interaction["onWindowMouseUp"]();
+        interaction["onWindowMouseUp"]({clientX: 170} as MouseEvent);
+
+        expect(selectPoints).toHaveBeenCalledWith([7, 8]);
+    });
+
+    test("selects histogram bins on release when no mousemove was recorded", () => {
+        const selectPoints = jest.fn();
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getData: () => ({bins: [{x: 20, y: 1}], binSize: 20, binIndices: [[7]]}),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints
+        });
+        interaction["dragStartX"] = 10;
+
+        interaction["onWindowMouseUp"]({clientX: 130} as MouseEvent);
 
         expect(selectPoints).toHaveBeenCalledWith([7]);
     });

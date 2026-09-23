@@ -16,6 +16,12 @@
         cursor: crosshair !important;
     }
 
+    &[data-panning="true"] .annotation-stage,
+    &[data-panning="true"] .annotation-stage canvas,
+    &[data-panning="true"] > canvas {
+        cursor: move !important;
+    }
+
     > canvas:not([data-overlay]):not(.annotation-stage) {
         position: relative;
         z-index: 1;

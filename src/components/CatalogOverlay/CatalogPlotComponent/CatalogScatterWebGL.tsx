@@ -73,6 +73,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
     public canvasRef = React.createRef<HTMLCanvasElement>();
     public gl: WebGL2RenderingContext | null = null;
     private shaderProgram: WebGLProgram | null = null;
+    private positionAttributeLocation = -1;
+    private selectedAttributeLocation = -1;
     private positionBuffer: WebGLBuffer | null = null;
     private selectedBuffer: WebGLBuffer | null = null;
     private uniforms: Record<string, WebGLUniformLocation | null> = {};
@@ -143,6 +145,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.setState({isUnavailable: true});
         this.gl = null;
         this.shaderProgram = null;
+        this.positionAttributeLocation = -1;
+        this.selectedAttributeLocation = -1;
         this.positionBuffer = null;
         this.selectedBuffer = null;
     };
@@ -171,6 +175,8 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             this.setState({isUnavailable: true});
             return;
         }
+        this.positionAttributeLocation = gl.getAttribLocation(this.shaderProgram, "aPosition");
+        this.selectedAttributeLocation = gl.getAttribLocation(this.shaderProgram, "aSelected");
         this.setState({isUnavailable: false});
 
         gl.useProgram(this.shaderProgram);
@@ -280,7 +286,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         if (isPositionChanged) {
             gl.bufferData(GL2.ARRAY_BUFFER, this.positionData, GL2.DYNAMIC_DRAW);
         }
-        const posLoc = gl.getAttribLocation(shaderProgram, "aPosition");
+        const posLoc = this.positionAttributeLocation;
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, GL2.FLOAT, false, 0, 0);
 
@@ -296,7 +302,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         if (isSelectionChanged) {
             gl.bufferData(GL2.ARRAY_BUFFER, this.selectedData, GL2.DYNAMIC_DRAW);
         }
-        const selLoc = gl.getAttribLocation(shaderProgram, "aSelected");
+        const selLoc = this.selectedAttributeLocation;
         gl.enableVertexAttribArray(selLoc);
         gl.vertexAttribPointer(selLoc, 1, GL2.FLOAT, false, 0, 0);
 

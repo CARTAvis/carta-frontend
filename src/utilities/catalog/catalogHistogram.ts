@@ -48,8 +48,11 @@ export class CatalogHistogramInteraction {
 
     onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
         const target = event.target as Element | null;
-        const chartArea = this.options.getChart()?.chartArea;
-        const {offsetX, offsetY} = event.nativeEvent;
+        const chart = this.options.getChart();
+        const chartArea = chart?.chartArea;
+        const canvasRect = chart?.canvas.getBoundingClientRect();
+        const offsetX = canvasRect ? event.nativeEvent.clientX - canvasRect.left : event.nativeEvent.offsetX;
+        const offsetY = canvasRect ? event.nativeEvent.clientY - canvasRect.top : event.nativeEvent.offsetY;
         if (event.button !== 0 || target?.closest(".profiler-toolbar") || !chartArea || offsetX < chartArea.left || offsetX > chartArea.right || offsetY < chartArea.top || offsetY > chartArea.bottom) {
             return;
         }
@@ -106,34 +109,37 @@ export class CatalogHistogramInteraction {
             this.stopTracking(this.hasHandledDrag && chart?.canvas === event.target);
             return;
         }
-        if (this.dragStartX !== undefined && this.dragCurrentX !== undefined && chart) {
-            const xScale = chart.scales["x"];
-            if (xScale && Math.abs(event.nativeEvent.offsetX - this.dragStartX) > 3) {
-                this.hasHandledDrag = true;
-                const x1 = xScale.getValueForPixel(this.dragStartX);
-                const x2 = xScale.getValueForPixel(this.dragCurrentX);
-                if (x1 !== undefined && x2 !== undefined) {
-                    this.selectBinsInRange(Math.min(x1, x2), Math.max(x1, x2));
-                }
-            }
+        if (this.dragStartX !== undefined && chart) {
+            this.selectDragAt(event.nativeEvent.clientX, chart);
         }
         this.stopTracking(chart?.canvas === event.target);
     };
 
-    private onWindowMouseUp = () => {
+    private onWindowMouseUp = (event: MouseEvent) => {
         const chart = this.options.getChart();
-        const xScale = chart?.scales["x"];
-        if (this.dragStartX !== undefined && this.dragCurrentX !== undefined && xScale && Math.abs(this.dragCurrentX - this.dragStartX) > 3) {
-            const x1 = xScale.getValueForPixel(this.dragStartX);
-            const x2 = xScale.getValueForPixel(this.dragCurrentX);
-            if (x1 !== undefined && x2 !== undefined) {
-                this.hasHandledDrag = true;
-                this.selectBinsInRange(Math.min(x1, x2), Math.max(x1, x2));
-            }
+        if (this.dragStartX !== undefined && chart) {
+            this.selectDragAt(event.clientX, chart);
         }
         this.stopTracking();
         chart?.draw();
     };
+
+    private selectDragAt(clientX: number, chart: Chart<"bar">) {
+        const xScale = chart.scales["x"];
+        if (xScale && this.dragStartX !== undefined) {
+            const {left, right} = chart.chartArea;
+            const canvasLeft = chart.canvas.getBoundingClientRect().left;
+            this.dragCurrentX = Math.max(left, Math.min(right, clientX - canvasLeft));
+            if (Math.abs(this.dragCurrentX - this.dragStartX) > 3) {
+                const x1 = xScale.getValueForPixel(this.dragStartX);
+                const x2 = xScale.getValueForPixel(this.dragCurrentX);
+                if (x1 !== undefined && x2 !== undefined) {
+                    this.hasHandledDrag = true;
+                    this.selectBinsInRange(Math.min(x1, x2), Math.max(x1, x2));
+                }
+            }
+        }
+    }
 
     private selectBinsInRange(xMin: number, xMax: number) {
         const {bins, binSize, binIndices} = this.options.getData();

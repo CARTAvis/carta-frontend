@@ -356,12 +356,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         }
 
-        if (!props.multiColorSingleLineColors || !nextProps.multiColorSingleLineColors || props.multiColorSingleLineColors.length !== nextProps.multiColorSingleLineColors.length) {
+        if (props.multiColorSingleLineColors?.length !== nextProps.multiColorSingleLineColors?.length) {
             return true;
         }
-        for (let i = 0; i < props.multiColorSingleLineColors.length; i++) {
-            if (props.multiColorSingleLineColors[i] !== nextProps.multiColorSingleLineColors[i]) {
-                return true;
+        if (props.multiColorSingleLineColors && nextProps.multiColorSingleLineColors) {
+            for (let i = 0; i < props.multiColorSingleLineColors.length; i++) {
+                if (props.multiColorSingleLineColors[i] !== nextProps.multiColorSingleLineColors[i]) {
+                    return true;
+                }
             }
         }
 
