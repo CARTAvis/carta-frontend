@@ -1453,12 +1453,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         beginAtZero: !widgetStore.isLogScaleY
                     }
                 },
-                onClick: (event, elements) => {
+                onClick: (event, _elements, chart) => {
                     // Skip if a drag action (zoom/select) was just handled
                     if (this.hasHistogramDragHandled) {
                         this.hasHistogramDragHandled = false;
                         return;
                     }
+                    const elements = event.native ? chart.getElementsAtEventForMode(event.native, "index", {axis: "xy", intersect: true}, false) : [];
                     if (elements.length > 0) {
                         clearTimeout(this.pendingHistogramClickHandle);
                         this.pendingHistogramClickHandle = undefined;

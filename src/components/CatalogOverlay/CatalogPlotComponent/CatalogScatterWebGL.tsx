@@ -68,7 +68,8 @@ function parseColor(hex: string): [number, number, number, number] {
     return [r, g, b, 1.0];
 }
 
-export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProps> {
+export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProps, {isUnavailable: boolean}> {
+    state = {isUnavailable: false};
     public canvasRef = React.createRef<HTMLCanvasElement>();
     public gl: WebGL2RenderingContext | null = null;
     private shaderProgram: WebGLProgram | null = null;
@@ -94,8 +95,9 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         this.draw();
     }
 
-    shouldComponentUpdate(nextProps: CatalogScatterWebGLProps) {
+    shouldComponentUpdate(nextProps: CatalogScatterWebGLProps, nextState: {isUnavailable: boolean}) {
         return (
+            this.state.isUnavailable !== nextState.isUnavailable ||
             this.props.width !== nextProps.width ||
             this.props.height !== nextProps.height ||
             this.props.chartArea !== nextProps.chartArea ||
@@ -138,6 +140,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
 
     private onContextLost = (event: Event) => {
         event.preventDefault();
+        this.setState({isUnavailable: true});
         this.gl = null;
         this.shaderProgram = null;
         this.positionBuffer = null;
@@ -158,14 +161,17 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         const gl = canvas.getContext("webgl2", {alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true});
         if (!gl) {
             console.error("WebGL2 not available for catalog scatter");
+            this.setState({isUnavailable: true});
             return;
         }
 
         this.gl = gl;
         this.shaderProgram = getShaderProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
         if (!this.shaderProgram) {
+            this.setState({isUnavailable: true});
             return;
         }
+        this.setState({isUnavailable: false});
 
         gl.useProgram(this.shaderProgram);
 
@@ -320,21 +326,28 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         const {width, height} = this.props;
         const dpr = this.canvasRef.current?.ownerDocument.defaultView?.devicePixelRatio || 1;
         return (
-            <canvas
-                ref={this.canvasRef}
-                data-overlay="true"
-                width={width * dpr}
-                height={height * dpr}
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    zIndex: 1,
-                    width,
-                    height,
-                    pointerEvents: "none"
-                }}
-            />
+            <React.Fragment>
+                <canvas
+                    ref={this.canvasRef}
+                    data-overlay="true"
+                    width={width * dpr}
+                    height={height * dpr}
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        zIndex: 1,
+                        width,
+                        height,
+                        pointerEvents: "none"
+                    }}
+                />
+                {this.state.isUnavailable && (
+                    <div role="status" style={{position: "absolute", top: 8, left: 8, zIndex: 4, color: Colors.RED2, pointerEvents: "none"}}>
+                        WebGL2 unavailable; catalog sources cannot be rendered.
+                    </div>
+                )}
+            </React.Fragment>
         );
     }
 }
