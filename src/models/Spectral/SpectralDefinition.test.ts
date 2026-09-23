@@ -9,7 +9,7 @@ import {
     HasNonlinearSpectralAlgorithm,
     HasNonlinearSpectralAxis,
     IsFrequencyDensityUnit,
-    NONLINEAR_SPECTRAL_AXIS_MESSAGES,
+    NONLINEAR_SPECTRAL_AXIS_MESSAGE,
     ShouldUseSumForFluxDensity
 } from "./SpectralDefinition";
 
@@ -37,8 +37,8 @@ describe("nonlinear spectral axis of a file", () => {
         const entries = GetComputedEntriesForDisplay(MakeFileInfo("WAVE-LOG"));
         expect(entries.map(entry => [entry.name, entry.value])).toEqual([
             ["Name", "cube.fits"],
-            ["Frequency range", NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo],
-            ["Velocity range", NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo],
+            ["Frequency range", NONLINEAR_SPECTRAL_AXIS_MESSAGE],
+            ["Velocity range", NONLINEAR_SPECTRAL_AXIS_MESSAGE],
             ["Pixel unit", "Jy/beam"]
         ]);
     });
@@ -52,7 +52,7 @@ describe("nonlinear spectral axis of a file", () => {
     test("prefers the frame's nonlinear-axis decision over the header when one is given", () => {
         const linearHeader = MakeFileInfo("FREQ");
         const fromFrame = GetComputedEntriesForDisplay(linearHeader, true);
-        expect(fromFrame.find(entry => entry.name === "Frequency range")?.value).toBe(NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo);
+        expect(fromFrame.find(entry => entry.name === "Frequency range")?.value).toBe(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         expect(fromFrame.find(entry => entry.name === "Pixel unit")?.value).toBe("Jy/beam");
 
         const nonlinearHeader = MakeFileInfo("WAVE-LOG");

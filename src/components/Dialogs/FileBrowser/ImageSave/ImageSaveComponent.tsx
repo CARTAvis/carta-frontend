@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, ImageType, type SpectralSystem} from "enums";
-import {NONLINEAR_SPECTRAL_AXIS_MESSAGES} from "models";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, FileBrowserStore} from "stores";
 
 import "./ImageSaveComponent.scss";
@@ -152,7 +152,7 @@ export class ImageSaveComponent extends React.Component {
             );
         }
         if (AppStore.Instance.activeFrame?.isSpectralAxisNonlinear) {
-            return <NonIdealState icon="document" description={<span>{NONLINEAR_SPECTRAL_AXIS_MESSAGES.saveImage}</span>} />;
+            return <NonIdealState icon="document" description={<span>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</span>} />;
         }
 
         const fileBrowser = FileBrowserStore.Instance;

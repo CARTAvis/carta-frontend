@@ -46,12 +46,7 @@ export const HasNonlinearSpectralAlgorithm = (ctype: string | undefined): boolea
     return !!match && NONLINEAR_SPECTRAL_ALGORITHM_CODES.includes(match[2]);
 };
 
-export const NONLINEAR_SPECTRAL_AXIS_MESSAGES = {
-    moments: "Integrated and coordinate-dependent moments are not currently supported for nonlinear spectral axes.",
-    pv: "PV generation is not currently supported for nonlinear spectral axes because the output spectral WCS cannot be preserved correctly.",
-    saveImage: "Cube export is not currently supported for nonlinear spectral axes because the spectral WCS cannot be preserved correctly.",
-    fileInfo: "Not available for nonlinear spectral axes"
-};
+export const NONLINEAR_SPECTRAL_AXIS_MESSAGE = "Not available for nonlinear spectral axes";
 
 export const HasNonlinearSpectralAxis = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined): boolean => {
     const spectralNumber = fileInfoExtended?.axesNumbers?.spectral ?? 0;
@@ -69,7 +64,7 @@ export const GetComputedEntriesForDisplay = (fileInfoExtended: CARTA.FileInfoExt
     if (!(isSpectralAxisNonlinear ?? HasNonlinearSpectralAxis(fileInfoExtended))) {
         return entries;
     }
-    return entries.map(entry => (BACKEND_SPECTRAL_INFO_ENTRIES.includes(entry.name ?? "") ? {...entry, value: NONLINEAR_SPECTRAL_AXIS_MESSAGES.fileInfo} : entry));
+    return entries.map(entry => (BACKEND_SPECTRAL_INFO_ENTRIES.includes(entry.name ?? "") ? {...entry, value: NONLINEAR_SPECTRAL_AXIS_MESSAGE} : entry));
 };
 
 // Channel is not a valid standalone spectral type

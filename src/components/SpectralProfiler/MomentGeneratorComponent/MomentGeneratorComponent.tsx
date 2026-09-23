@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, MomentSelectingMode} from "enums";
-import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGES} from "models";
+import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, type FrameStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
@@ -253,8 +253,22 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
+        const isSpectralAxisNonlinear = !!frame?.isSpectralAxisNonlinear;
         const isAbleToGenerate =
-            frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid && widgetStore.supportedSelectedMoments.length > 0;
+            frame &&
+            frame.numChannels > 1 &&
+            !appStore.animatorStore.isAnimationActive &&
+            !appStore.widgetsStore.isSpectralWidgetStreamingData &&
+            widgetStore.isMomentRegionValid &&
+            widgetStore.supportedSelectedMoments.length > 0 &&
+            !isSpectralAxisNonlinear;
+        const nonlinearHint = (
+            <span>
+                <i>
+                    <small>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</small>
+                </i>
+            </span>
+        );
         const hint = (
             <span>
                 <br />
@@ -276,7 +290,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const msg = <span>Unable to generate moment images{hint}</span>;
         const momentsPanel = (
             <React.Fragment>
-                <FormGroup label="Moments" inline={true} helperText={frame?.isSpectralAxisNonlinear ? NONLINEAR_SPECTRAL_AXIS_MESSAGES.moments : undefined}>
+                <FormGroup label="Moments" inline={true}>
                     <MomentMultiSelect
                         placeholder="Select..."
                         items={Object.values(CARTA.Moment) as CARTA.Moment[]}
@@ -309,7 +323,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.shouldMatchMoment} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip disabled={!!isAbleToGenerate} content={isSpectralAxisNonlinear ? nonlinearHint : msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>

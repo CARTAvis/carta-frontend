@@ -38,7 +38,7 @@ import {
     type FrameView,
     type ImageItem,
     type ImageViewItem,
-    NONLINEAR_SPECTRAL_AXIS_MESSAGES,
+    NONLINEAR_SPECTRAL_AXIS_MESSAGE,
     NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
     PresetLayout,
@@ -918,7 +918,7 @@ export class AppStore {
             throw new Error("No active image");
         }
         if (this.activeFrame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.saveImage);
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
         this.startFileSaving();
         const fileId = this.activeFrame.frameInfo.fileId;
@@ -1584,7 +1584,7 @@ export class AppStore {
             return;
         }
         if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.moments);
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
         this.startFileLoading();
@@ -1640,7 +1640,7 @@ export class AppStore {
             return;
         }
         if (frame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.pv);
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
         this.startFileLoading();
@@ -1684,7 +1684,7 @@ export class AppStore {
             return;
         }
         if (frame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGES.pv);
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
         try {
             this.startFileLoading();

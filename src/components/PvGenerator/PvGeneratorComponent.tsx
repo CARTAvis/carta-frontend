@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
-import {NONLINEAR_SPECTRAL_AXIS_MESSAGES, type Point2D} from "models";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
@@ -285,7 +285,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const nonlinearHint = (
             <span>
                 <i>
-                    <small>{NONLINEAR_SPECTRAL_AXIS_MESSAGES.pv}</small>
+                    <small>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</small>
                 </i>
             </span>
         );

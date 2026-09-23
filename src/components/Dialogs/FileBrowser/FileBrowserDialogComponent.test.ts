@@ -21,7 +21,7 @@ describe("FileBrowserDialogComponent", () => {
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame, saveFile} as unknown as AppStore);
 
         const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
-        await expect(component.handleSaveFile()).rejects.toThrow("Cube export is not currently supported for nonlinear spectral axes");
+        await expect(component.handleSaveFile()).rejects.toThrow("Not available for nonlinear spectral axes");
         expect(saveFile).not.toHaveBeenCalled();
     });
 
