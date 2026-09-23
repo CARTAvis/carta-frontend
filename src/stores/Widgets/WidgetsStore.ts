@@ -550,12 +550,16 @@ export class WidgetsStore {
         const legacyCatalogFileId = settings?.catalogFileId;
         const selectedCatalogId = (legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0]) ?? 1;
         const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
-        widgetStore.applyLayoutSettings(settings);
-        this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
 
         // Layout V2 used a session-local catalog file ID. Keep it working when the catalog is
         // still active, but never let an obsolete ID select an unrelated catalog after reload.
+        // Settled before the rest of the settings go in, because what they carry is kept per
+        // catalog: the widget store may be one that is already on another catalog, and the layout
+        // may name one this session never opened.
         widgetStore.setSelectedCatalogId(selectedCatalogId);
+
+        widgetStore.applyLayoutSettings(settings);
+        this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
 
         // Catalog display state is catalog-scoped and may not exist yet when a layout is restored.
         // It will be created by updateCatalogProfile once the catalog is loaded.

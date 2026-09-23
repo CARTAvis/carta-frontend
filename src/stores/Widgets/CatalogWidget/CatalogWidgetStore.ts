@@ -139,15 +139,19 @@ export class CatalogWidgetStore {
         return {settingsTabIdByWorkspaceCatalog: Object.fromEntries(workspaceSettingsTabs)};
     };
 
+    /**
+     * Put back what a layout held for this widget.
+     *
+     * Which catalog the widget is on is settled before this is called, and is not read out of the
+     * settings here: a section the widget was left on is kept per catalog, and filing it under an
+     * ID that is about to be replaced files it where nothing looks for it.
+     */
     @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {
         if (!settings) {
             return;
         }
         if (typeof settings.widgetId === "string" && settings.widgetId) {
             this.widgetId = settings.widgetId;
-        }
-        if (typeof settings.catalogFileId === "number") {
-            this.selectedCatalogId = settings.catalogFileId;
         }
         if (typeof settings.tableSeparatorPosition === "string") {
             this.tableSeparatorPosition = settings.tableSeparatorPosition;

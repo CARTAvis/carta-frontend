@@ -1,7 +1,7 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {CatalogPlotType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -211,6 +211,20 @@ describe("WidgetsStore PV preview test ids", () => {
 
         CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
         widgetsStore.catalogPlotWidgets.clear();
+    });
+
+    test("restores the settings section of a layout that names a catalog this session does not have", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+
+        // Layout V2 named the catalog by the file ID of the session that saved it. Nothing is open
+        // here, so the widget falls back to catalog 1, and the section it was left on has to follow
+        // it there rather than stay filed under the ID being replaced.
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION}, "catalog-overlay-0");
+
+        const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0")!;
+        expect(widgetStore.selectedCatalogId).toBe(1);
+        expect(widgetStore.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
     });
 
     test("clears the catalog widget store when a docked catalog tab is closed", () => {
