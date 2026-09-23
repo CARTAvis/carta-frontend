@@ -570,6 +570,7 @@ describe("AppStore.saveWorkspace", () => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         CatalogOnlineQueryConfigStore.Instance.setQueryStatus(false);
+        appStore.endFileLoading();
     });
 
     function addCatalog(catalogFileId: number, name: string): CatalogProfileStore {
@@ -591,6 +592,20 @@ describe("AppStore.saveWorkspace", () => {
         expect(appStore.alertStore.alertText).toContain("streaming.vot");
         expect(appStore.alertStore.alertText).not.toContain("loaded.vot");
         appStore.alertStore.dismissAlert();
+    });
+
+    test("refuses to save while a file is still being opened", async () => {
+        // The image is not a frame yet and the catalog has no profile store yet, so nothing the
+        // other two gates look at is holding the save up -- it would just be saved without them.
+        appStore.startFileLoading();
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toContain("still loading");
+        appStore.alertStore.dismissAlert();
+        appStore.endFileLoading();
     });
 
     test("refuses to save while an online catalog query is still running", async () => {

@@ -2924,6 +2924,14 @@ export class AppStore {
             return false;
         }
 
+        // An image on its way from the backend is not a frame yet, and so would be left out of the
+        // workspace without the user being told. This covers a catalog being opened from a file
+        // too, which holds the flag for as long as it holds its reserved ID.
+        if (this.isFileLoading) {
+            this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
+            return false;
+        }
+
         // An online catalog that is still being queried is not part of the session yet, so it would
         // be left out of the workspace without the user being told.
         if (CatalogOnlineQueryConfigStore.Instance.isQuerying) {
