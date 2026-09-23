@@ -62,7 +62,10 @@ export class PendingRequestTracker<TKey> {
      * @returns how it ends, once it does.
      */
     public start(key: TKey): Promise<RequestOutcome> {
-        this.finish(key, false, this.options.supersededMessage);
+        // Only the wait that was there before ends. The subject is about to be answered by the
+        // request this wait is being started for, so whoever was waiting has nothing to put back.
+        this.latestRequestIds.delete(key);
+        this.endPending(key, false, this.options.supersededMessage);
 
         let resolve!: (outcome: RequestOutcome) => void;
         const promise = new Promise<RequestOutcome>(resolver => {
@@ -147,15 +150,30 @@ export class PendingRequestTracker<TKey> {
         pending.timeout = this.startTimeout(key);
     }
 
-    /** End the wait for one subject, if there is one. */
+    /**
+     * Give up on the request answering a subject, ending the wait for it if there is one.
+     *
+     * Whatever the caller is holding for that request is put back whether or not anyone was
+     * waiting: most requests are sent without one, and the store they were sent for is left marked
+     * as loading until something says the request is over. Nothing else will, because the subject
+     * stops being answered here — the responses that would have said so are no longer read.
+     */
     public finish(key: TKey, isSuccess: boolean, message?: string): void {
         // The subject is no longer being answered by anything, whether or not anyone was waiting:
         // a response arriving after this belongs to a request that has had its turn.
         this.latestRequestIds.delete(key);
         this.endPending(key, isSuccess, message);
+        if (!isSuccess) {
+            this.options.onFailure?.(key);
+        }
     }
 
-    /** End the wait alone, leaving it to the caller to say what is answering the subject now. */
+    /**
+     * End the wait alone, leaving it to the caller to say what is answering the subject now.
+     *
+     * Nothing is put back, because something else is taking the request over rather than giving up
+     * on it: what the caller is holding is for the subject, not for the wait.
+     */
     private endPending(key: TKey, isSuccess: boolean, message?: string): void {
         const pending = this.pending.get(key);
         if (!pending) {
@@ -170,9 +188,6 @@ export class PendingRequestTracker<TKey> {
                 this.staleRequestIds.set(key, staleRequestIds);
             }
             staleRequestIds.add(pending.requestId);
-        }
-        if (!isSuccess) {
-            this.options.onFailure?.(key);
         }
         pending.resolve({success: isSuccess, message});
     }

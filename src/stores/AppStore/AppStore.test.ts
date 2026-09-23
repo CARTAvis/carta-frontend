@@ -404,9 +404,14 @@ describe("AppStore.handleErrorStream", () => {
         jest.spyOn(appStore, "sendCatalogFilter").mockReturnValue(1);
     });
 
-    function startPendingRestore(catalogFileId: number) {
+    function addProfileStore(catalogFileId: number) {
         const profileStore = new CatalogProfileStore({dataSize: 10, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, [], new Map(), CatalogType.FILE);
         catalogStore.catalogProfileStores.set(catalogFileId, profileStore);
+        return profileStore;
+    }
+
+    function startPendingRestore(catalogFileId: number) {
+        addProfileStore(catalogFileId);
         catalogStore.restoreCatalogFromWorkspace(catalogFileId, undefined, true);
         return catalogStore.catalogRequests.wait(catalogFileId);
     }
@@ -431,6 +436,21 @@ describe("AppStore.handleErrorStream", () => {
         await expect(firstCompletion).resolves.toEqual({success: false, message: "catalog request failed"});
         expect(catalogStore.catalogRequests.isPending(8)).toBe(true);
         catalogStore.catalogRequests.failAll("test cleanup");
+    });
+
+    test("stops a catalog reading as still loading when a request nothing waited for fails", () => {
+        // A table or overlay request is sent without a wait, so an error on it used to leave the
+        // catalog marked as loading for good: the responses that would have cleared the mark are
+        // not read once the request has been given up on.
+        const profileStore = addProfileStore(3);
+        catalogStore.catalogRequests.attach(3, 12);
+        profileStore.setUpdatingDataStream(true);
+
+        appStore.handleErrorStream({severity: 3, tags: ["catalog_filter"], data: "3", message: "catalog request failed"} as any);
+
+        expect(profileStore.isLoadingOntoImage).toBe(false);
+        // Which is what saving a workspace looks at before it refuses.
+        expect(catalogStore.streamingCatalogNames).toEqual([]);
     });
 
     test("ignores a response from a restore request that has already failed", async () => {

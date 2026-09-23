@@ -138,6 +138,27 @@ describe("PendingRequestTracker", () => {
         await expect(pending).resolves.toEqual({success: true, message: undefined});
     });
 
+    test("puts back what a request was holding when nothing was waiting for it", () => {
+        // Most requests are sent without a wait. Giving up on one still has to clear what it set,
+        // because the responses that would have cleared it are not read once it has been given up
+        // on, and nothing else is coming to say it is over.
+        tracker.attach(1, 10);
+        tracker.finish(1, false, "the server reported an error");
+
+        expect(onFailure).toHaveBeenCalledWith(1);
+        expect(tracker.accepts(1, 10)).toBe(false);
+    });
+
+    test("puts nothing back when another request takes the subject over", async () => {
+        const wait = tracker.start(1);
+        tracker.attach(1, 10);
+        tracker.attach(1, 11);
+
+        // 11 is answering the subject now, so what the caller set for the subject is still in use.
+        await expect(wait).resolves.toEqual({success: false, message: "superseded"});
+        expect(onFailure).not.toHaveBeenCalled();
+    });
+
     test("keeps subjects apart", async () => {
         const first = tracker.start(1);
         tracker.start(2);
