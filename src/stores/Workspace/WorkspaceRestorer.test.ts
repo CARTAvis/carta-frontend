@@ -2,6 +2,7 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 
 import {WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceIssue} from "models";
+import {CatalogApiService} from "services";
 import {AppStore, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
@@ -233,6 +234,17 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toEqual([]);
         expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT);
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
+    });
+
+    test("gives up on an online query that is still on its way", async () => {
+        createSession();
+        const cancelPendingQueries = jest.spyOn(CatalogApiService.Instance, "cancelPendingQueries").mockImplementation(jest.fn());
+
+        await restore(createWorkspace());
+
+        // The query would otherwise land on whichever image is active when it returns, which by
+        // then is one of the images this restore has just opened.
+        expect(cancelPendingQueries).toHaveBeenCalled();
     });
 
     test("stops a restore that a later workspace load has taken the session from", async () => {

@@ -142,6 +142,7 @@ export class WorkspaceRestorer {
 
     /** Stage 1: put the session back to an empty state for the workspace to be restored into. */
     private clearSession(): void {
+        CatalogApiService.Instance.cancelPendingQueries("The online catalog query was given up on to open a workspace");
         this.appStore.catalogStore.catalogRequests.failAll("The previous workspace restore was interrupted");
         this.appStore.animatorStore.stopAnimation();
         this.appStore.tileService.clearRequestQueue();

@@ -70,11 +70,28 @@ export class CatalogApiService {
         return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
     };
 
-    public cancelQuery(type: CatalogDatabase) {
+    public cancelQuery(type: CatalogDatabase, reason?: string) {
         if (type === CatalogDatabase.SIMBAD) {
-            this.cancelTokenSourceSimbad.cancel("Simbad query canceled by the user.");
+            this.cancelTokenSourceSimbad.cancel(reason ?? "Simbad query canceled by the user.");
         } else if (type === CatalogDatabase.VIZIER) {
-            this.cancelTokenSourceVizier.cancel("VizieR query canceled by the user.");
+            this.cancelTokenSourceVizier.cancel(reason ?? "VizieR query canceled by the user.");
+        }
+    }
+
+    /**
+     * Give up on every online query in flight, for a session that is not the one that asked.
+     *
+     * An online catalog arrives over HTTP rather than from the backend, so nothing about opening a
+     * workspace stops one that is already on its way: it would be loaded onto whichever image is
+     * active by the time it lands, which by then belongs to the workspace being restored.
+     *
+     * Each database is given a fresh token as it is cancelled, so that the queries the restore runs
+     * for its own catalogs are not issued against a token that has already been cancelled.
+     */
+    public cancelPendingQueries(reason: string) {
+        for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {
+            this.cancelQuery(database, reason);
+            this.resetCancelTokenSource(database);
         }
     }
 
