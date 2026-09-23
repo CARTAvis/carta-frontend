@@ -1,5 +1,4 @@
 import {clamp, minMaxArray} from "../math/math";
-import {toExponential} from "../units/units";
 
 const SCATTER_GRID_SIZE = 64;
 
@@ -46,7 +45,7 @@ function getExponent(value: number): number {
 }
 
 function formatTickLabel(value: number, decimals: number, shouldUseScientificNotation: boolean): string {
-    return shouldUseScientificNotation ? toExponential(value, decimals) : value.toFixed(decimals);
+    return shouldUseScientificNotation ? value.toExponential(decimals) : value.toFixed(decimals);
 }
 
 function getMinimumTickDecimals(tickValues: number[], shouldUseScientificNotation: boolean): number {
