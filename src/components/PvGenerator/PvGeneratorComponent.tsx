@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
-import {type Point2D} from "models";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
@@ -279,8 +279,16 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = regionId ?? RegionId.NONE;
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.isAnimationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isSpectralAxisNonlinear = !!this.widgetStore.effectiveFrame?.isSpectralAxisNonlinear;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.isAnimationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange && !isSpectralAxisNonlinear;
         const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit && this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE;
+        const nonlinearHint = (
+            <span>
+                <i>
+                    <small>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</small>
+                </i>
+            </span>
+        );
         const hint = (
             <span>
                 <i>
@@ -425,12 +433,12 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="generate-button">
                     <div>
-                        <Tooltip disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
+                        <Tooltip disabled={isAbleToGeneratePreview} content={isSpectralAxisNonlinear ? nonlinearHint : previewHint} position={Position.BOTTOM}>
                             <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start preview" onClick={this.onPreviewButtonClicked} />
                         </Tooltip>
                     </div>
                     <div>
-                        <Tooltip disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                        <Tooltip disabled={isAbleToGenerate} content={isSpectralAxisNonlinear ? nonlinearHint : hint} position={Position.BOTTOM}>
                             <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} data-testid="pv-generator-generate-button" />
                         </Tooltip>
                     </div>
