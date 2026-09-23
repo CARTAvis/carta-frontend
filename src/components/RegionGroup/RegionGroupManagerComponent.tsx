@@ -31,8 +31,9 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         this.state = {};
     }
 
-    private selectRegionGroup = (regionGroupId: string) => {
+    private selectRegionGroup = (regionGroupId?: string) => {
         this.setState({selectedRegionGroupId: regionGroupId});
+        AppStore.Instance.setRegionGroupManagerSelectedId(regionGroupId);
     };
 
     private createRegionGroup = (type: RegionGroupType = RegionGroupType.TIME_SERIES) => {
@@ -41,7 +42,7 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         if (type === RegionGroupType.REGION_SERIES) {
             this.selectRegionSeriesFrame(regionGroup, (appStore.activeFrame ?? appStore.frames[0])?.id);
         }
-        this.setState({selectedRegionGroupId: regionGroup.regionGroupId});
+        this.selectRegionGroup(regionGroup.regionGroupId);
     };
 
     private deleteRegionGroup = (regionGroup: RegionGroupStore) => {
@@ -49,7 +50,7 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         const groups = appStore.regionGroupStores;
         const deletedIndex = groups.findIndex(group => group.regionGroupId === regionGroup.regionGroupId);
         appStore.deleteRegionGroup(regionGroup.regionGroupId);
-        this.setState({selectedRegionGroupId: groups[deletedIndex + 1]?.regionGroupId ?? groups[deletedIndex - 1]?.regionGroupId});
+        this.selectRegionGroup(groups[deletedIndex + 1]?.regionGroupId ?? groups[deletedIndex - 1]?.regionGroupId);
     };
 
     private updateRegion = (regionGroup: RegionGroupStore, frameId: number, value: string) => {

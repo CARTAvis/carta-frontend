@@ -221,6 +221,7 @@ export class AppStore {
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionHistogramData.$Properties>>> = new Map();
     @observable regionClipboard: RegionClipboardData | null = null;
     @observable private regionGroups: ObservableMap<string, RegionGroupStore> = new ObservableMap();
+    @observable regionGroupManagerSelectedId: string | undefined = undefined;
     private regionGroupIdCounter = 1;
 
     // Reference images
@@ -507,6 +508,13 @@ export class AppStore {
     @action deleteRegionGroup = (regionGroupId: string): void => {
         this.regionGroups.get(regionGroupId)?.clear();
         this.regionGroups.delete(regionGroupId);
+        if (this.regionGroupManagerSelectedId === regionGroupId) {
+            this.regionGroupManagerSelectedId = this.regionGroupStores[0]?.regionGroupId;
+        }
+    };
+
+    @action setRegionGroupManagerSelectedId = (regionGroupId?: string): void => {
+        this.regionGroupManagerSelectedId = regionGroupId;
     };
 
     @computed get isOpenFileDisabled(): boolean {

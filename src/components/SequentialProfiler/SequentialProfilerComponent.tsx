@@ -20,6 +20,7 @@ const JULIAN_DATE_OFFSET = 2400000.5;
 export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     private readonly widgetId: string;
     private disposeGroupSelection?: IReactionDisposer;
+    private disposeManagerSelection?: IReactionDisposer;
     @observable private isMultiRegionGroupEnabled = false;
     @observable private selectedRegionGroupIds: string[] = [];
     @observable private statistic: SequentialStatistic = CARTA.StatsType.FluxDensity;
@@ -41,7 +42,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = props.id;
-        const firstGroup = AppStore.Instance.regionGroupStores.find(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES);
+        const appStore = AppStore.Instance;
+        const groups = appStore.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES);
+        const firstGroup = groups.find(group => group.regionGroupId === appStore.regionGroupManagerSelectedId) ?? groups[0];
         this.selectedRegionGroupIds = firstGroup ? [firstGroup.regionGroupId] : [];
         makeObservable(this);
     }
@@ -56,6 +59,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
         );
+        this.disposeManagerSelection = reaction(
+            () => AppStore.Instance.regionGroupManagerSelectedId,
+            regionGroupId => {
+                if (regionGroupId) {
+                    this.selectSingleRegionGroup(regionGroupId);
+                }
+            }
+        );
         this.ensureRegionGroup();
     }
 
@@ -65,6 +76,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
 
     componentWillUnmount() {
         this.disposeGroupSelection?.();
+        this.disposeManagerSelection?.();
     }
 
     @action private ensureRegionGroup = () => {
@@ -246,6 +258,12 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             }
         } else {
             this.selectedRegionGroupIds = [...this.selectedRegionGroupIds, regionGroupId];
+        }
+    };
+
+    @action private selectSingleRegionGroup = (regionGroupId: string) => {
+        if (this.regionGroups.some(group => group.regionGroupId === regionGroupId)) {
+            this.selectedRegionGroupIds = [regionGroupId];
         }
     };
 
