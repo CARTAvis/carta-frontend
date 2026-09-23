@@ -13,7 +13,7 @@ export interface CatalogWidgetLayoutSettings {
     tableSeparatorPosition?: string;
     /** Widths of the header table's columns, as the user left them. */
     headerTableColumnWidths?: number[];
-    /** Kept for layouts written while the settings section was stored per catalog file ID. */
+    /** Read but never written: an unreleased revision of this work keyed the settings section by catalog file ID. */
     settingsTabIdByCatalog?: Record<string, CatalogSettingsTabs>;
     /** The settings section this widget was left on, for a workspace, per the workspace's own catalog
      * ID: the file ID a session gave a catalog names a different catalog once it is opened again. */
