@@ -130,32 +130,28 @@ export class CatalogStore {
                 return;
             }
             const position = new Float32Array(plottedXData.length * 2);
+            let xImageCoords: ArrayLike<number> = plottedXData;
+            let yImageCoords: ArrayLike<number> = plottedYData;
+            let pixelOffset = 0;
             switch (catalogCoordinateSystem.system) {
                 case CatalogSystemType.Pixel0:
-                    for (let i = 0; i < plottedXData.length; i++) {
-                        catalog.x[startIndex + i] = plottedXData[i];
-                        catalog.y[startIndex + i] = plottedYData[i];
-                        position[i * 2] = plottedXData[i];
-                        position[i * 2 + 1] = plottedYData[i];
-                    }
                     break;
                 case CatalogSystemType.Pixel1:
-                    for (let i = 0; i < plottedXData.length; i++) {
-                        catalog.x[startIndex + i] = plottedXData[i] - 1;
-                        catalog.y[startIndex + i] = plottedYData[i] - 1;
-                        position[i * 2] = plottedXData[i] - 1;
-                        position[i * 2 + 1] = plottedYData[i] - 1;
-                    }
+                    pixelOffset = -1;
                     break;
                 default:
                     const pixelData = CatalogStore.transformCatalogData(plottedXData, plottedYData, wcsInfo, xUnit, yUnit, catalogCoordinateSystem);
-                    for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        catalog.x[startIndex + i] = pixelData.xImageCoords[i];
-                        catalog.y[startIndex + i] = pixelData.yImageCoords[i];
-                        position[i * 2] = pixelData.xImageCoords[i];
-                        position[i * 2 + 1] = pixelData.yImageCoords[i];
-                    }
+                    xImageCoords = pixelData.xImageCoords;
+                    yImageCoords = pixelData.yImageCoords;
                     break;
+            }
+            for (let i = 0; i < xImageCoords.length; i++) {
+                const x = xImageCoords[i] + pixelOffset;
+                const y = yImageCoords[i] + pixelOffset;
+                catalog.x[startIndex + i] = x;
+                catalog.y[startIndex + i] = y;
+                position[i * 2] = x;
+                position[i * 2 + 1] = y;
             }
             // The highest row written, not a running total: a batch that arrives twice, or a
             // re-request that starts again from a row already drawn, must not inflate the count
