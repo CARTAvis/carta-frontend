@@ -13,9 +13,7 @@ interface CatalogConfigRequest {
     /** How the catalog is named to the user. */
     description: string;
     /** What to report if its rows do not come back. */
-    failure: string;
-    /** Whether the saved display config could be applied, which changes what a failure means. */
-    isDisplayConfigApplied: boolean;
+    rowFailure: string;
     completion: Promise<RequestOutcome>;
 }
 
@@ -396,8 +394,7 @@ export class WorkspaceRestorer {
             if (!request) {
                 continue;
             }
-            const {catalogInfo, catalogFileId, description, failure, isDisplayConfigApplied, completion} = request;
-            const rowFailure = isDisplayConfigApplied ? failure : `Could not restore the rows of the catalog ${description}`;
+            const {catalogInfo, catalogFileId, description, rowFailure, completion} = request;
             try {
                 const restoreResult = yield* awaited(completion);
                 if (!this.isCurrent) {
@@ -437,7 +434,8 @@ export class WorkspaceRestorer {
 
         const imageOverlay = catalogInfo.displayConfig?.imageOverlay;
         const failure = imageOverlay ? `Could not draw the catalog ${description} over its image` : `Could not restore the rows of the catalog ${description}`;
-        let isDisplayConfigApplied = true;
+        let shouldRestoreOverlay = true;
+        let rowFailure = failure;
         try {
             // The table/query state is independent of the display state. Apply it even when a
             // display mapping is invalid, so a bad overlay cannot prevent valid rows from
@@ -448,25 +446,26 @@ export class WorkspaceRestorer {
                 const result = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId)?.applyConfig(catalogInfo.displayConfig);
                 if (result && !result.success) {
                     this.report(WorkspaceItemKind.Catalog, description, `Could not restore how the catalog ${description} is drawn: ${result.errors.join("; ")}`);
-                    isDisplayConfigApplied = false;
+                    shouldRestoreOverlay = false;
+                    rowFailure = `Could not restore the rows of the catalog ${description}`;
                 }
             }
 
             const isRestoreStarted = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, {
-                overlay: isDisplayConfigApplied ? imageOverlay : undefined,
+                overlay: shouldRestoreOverlay ? imageOverlay : undefined,
                 shouldWaitForCompletion: true,
                 selection: catalogInfo.selection
             });
             if (!isRestoreStarted) {
-                this.report(WorkspaceItemKind.Catalog, description, isDisplayConfigApplied ? failure : `Could not restore the rows of the catalog ${description}`);
+                this.report(WorkspaceItemKind.Catalog, description, rowFailure);
                 return undefined;
             }
 
-            return {catalogInfo, catalogFileId, description, failure, isDisplayConfigApplied, completion: this.appStore.catalogStore.catalogRequests.wait(catalogFileId)};
+            return {catalogInfo, catalogFileId, description, rowFailure, completion: this.appStore.catalogStore.catalogRequests.wait(catalogFileId)};
         } catch (err) {
             console.error(err);
             this.appStore.catalogStore.catalogRequests.finish(catalogFileId, false, "The catalog restoration failed");
-            this.report(WorkspaceItemKind.Catalog, description, isDisplayConfigApplied ? failure : `Could not restore the rows of the catalog ${description}`);
+            this.report(WorkspaceItemKind.Catalog, description, rowFailure);
             return undefined;
         }
     }

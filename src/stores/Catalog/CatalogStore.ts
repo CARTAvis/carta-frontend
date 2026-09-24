@@ -606,14 +606,13 @@ export class CatalogStore {
         }
 
         const displayStore = this.getOrCreateCatalogDisplayStore(catalogFileId);
-        const hasOverlay = !!overlay && overlay.xAxis !== CatalogOverlay.NONE && overlay.yAxis !== CatalogOverlay.NONE;
         const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(catalogFileId));
-        if (overlay && (!hasOverlay || !frame)) {
+        if (overlay && (overlay.xAxis === CatalogOverlay.NONE || overlay.yAxis === CatalogOverlay.NONE || !frame)) {
             this.catalogRequests.finish(catalogFileId, false, "The saved overlay has no usable image or position axes");
             return false;
         }
 
-        if (overlay && hasOverlay) {
+        if (overlay) {
             // Rows that stream in only carry the columns that were asked for, so a column the
             // overlay is mapped from has to be requested even when the table does not show it.
             profileStore.ensureColumnsRequested([overlay.xAxis, overlay.yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
@@ -623,7 +622,7 @@ export class CatalogStore {
 
         const selectionColumnIndices = selection?.columns.map(columnName => profileStore.catalogControlHeader.get(columnName)?.columnIndex).filter((columnIndex): columnIndex is number => columnIndex !== undefined) ?? [];
         profileStore.resetFilterRequest();
-        profileStore.setUpdateMode(hasOverlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate);
+        profileStore.setUpdateMode(overlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate);
 
         const filter = profileStore.updateRequestDataSize;
         filter.filterConfigs = profileStore.getUserFilters();
@@ -634,7 +633,7 @@ export class CatalogStore {
             const searchRows = Math.min(profileStore.catalogInfo.dataSize, selection.searchRows ?? profileStore.maxRows);
             filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, searchRows);
         }
-        if (overlay && hasOverlay) {
+        if (overlay) {
             // The table limit controls the number of visible rows, but the overlay may need more
             // rows from the same filtered/sorted result. The profile's normal request-size getter
             // only knows about the table limit, so widen this one request without changing it.
