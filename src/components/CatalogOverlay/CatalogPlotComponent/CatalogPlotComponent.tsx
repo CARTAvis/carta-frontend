@@ -11,7 +11,7 @@ import {observer} from "mobx-react";
 import type * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
-import {CatalogPlotType, CatalogUpdateMode} from "enums";
+import {CatalogPlotType} from "enums";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
@@ -590,14 +590,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private handlePlotClick = () => {
-        const appStore = AppStore.Instance;
-        const profileStore = this.profileStore;
-        if (profileStore?.shouldUpdateData) {
-            profileStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-            profileStore.setUpdatingDataStream(true);
-            const catalogFilter = profileStore.updateRequestDataSize;
-            appStore.sendCatalogFilter(catalogFilter);
-        }
+        CatalogStore.Instance.requestPlotRows(this.catalogFileId);
     };
 
     // region selection

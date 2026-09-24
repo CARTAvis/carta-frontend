@@ -11,24 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {
-    AnimationMode,
-    BrowserMode,
-    CatalogOverlay,
-    CatalogType,
-    CatalogUpdateMode,
-    ConnectionStatus,
-    DialogId,
-    ImageType,
-    ImageViewLayer,
-    PreferenceKeys,
-    RegionId as RegionIdType,
-    SpectralType,
-    SystemType,
-    TelemetryAction,
-    WCSMatchingType,
-    WorkspaceItemKind
-} from "enums";
+import {AnimationMode, BrowserMode, CatalogType, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType, WorkspaceItemKind} from "enums";
 import * as Enums from "enums";
 import {
     CARTA_INFO,
@@ -53,7 +36,6 @@ import {ApiService, BackendService, ScriptingService, type StreamedMessage, Tele
 import {
     AlertStore,
     AnimatorStore,
-    type CatalogDisplayStore,
     CatalogOnlineQueryStore,
     CatalogProfileStore,
     CatalogStore,
@@ -83,7 +65,6 @@ import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 import {
-    CatalogAxisEligibility,
     Distinct,
     exportScreenshot,
     getColorForTheme,
@@ -153,19 +134,6 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
-}
-
-/** The two columns currently plotted on the image overlay, or undefined when either slot is empty. */
-function getPlottedOverlayColumns(catalogDisplayStore: CatalogDisplayStore | undefined): [string, string] | undefined {
-    // The overlay drawn over the image is what the stream updates, and the widget's own plot
-    // controls can have been changed away from it without taking it down.
-    const plottedStore = catalogDisplayStore?.hasPlottedImageOverlay ? catalogDisplayStore : undefined;
-    const xColumn = plottedStore?.plottedImageOverlayXAxis ?? catalogDisplayStore?.xAxis;
-    const yColumn = plottedStore?.plottedImageOverlayYAxis ?? catalogDisplayStore?.yAxis;
-    if (!xColumn || !yColumn || xColumn === CatalogOverlay.NONE || yColumn === CatalogOverlay.NONE) {
-        return undefined;
-    }
-    return [xColumn, yColumn];
 }
 
 export class AppStore {
@@ -1347,17 +1315,6 @@ export class AppStore {
         }
     }
 
-    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties): number | false {
-        if (!this.activeFrame) {
-            return false;
-        }
-        const requestId = this.backendService.setCatalogFilterRequest(catalogFilter);
-        if (typeof requestId === "number" && typeof catalogFilter.fileId === "number") {
-            this.catalogStore.catalogRequests.attach(catalogFilter.fileId, requestId);
-        }
-        return requestId;
-    }
-
     /**
      * Reorders images in the image list.
      * @param oldIndex - The first index of the images to move.
@@ -2145,7 +2102,7 @@ export class AppStore {
                     }
                     break;
                 case ConnectionStatus.CLOSED:
-                    this.catalogStore?.catalogRequests.reset("The server connection was lost while restoring catalog data");
+                    this.catalogStore?.resetRequests("The server connection was lost while restoring catalog data");
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
                         this.alertStore
@@ -2532,78 +2489,8 @@ export class AppStore {
         }
     };
 
-    @action handleCatalogFilterStream = ({requestId, message: catalogFilter}: StreamedMessage<CARTA.CatalogFilterResponse>) => {
-        const catalogFileId = catalogFilter.fileId;
-        if (!this.catalogStore.catalogRequests.accepts(catalogFileId, requestId)) {
-            return;
-        }
-        this.catalogStore.catalogRequests.noteProgress(catalogFileId);
-        const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-
-        const progress = catalogFilter.progress;
-        if (catalogProfileStore) {
-            const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
-            const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-            const isViewUpdate = !isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate;
-            const overlayColumns = getPlottedOverlayColumns(catalogDisplayStore);
-            const getEligibilityStatus = (columnName: string) => catalogProfileStore.getCoordinateEligibility(columnName).status;
-            const didHaveUnknownCoordinateFormat = isViewUpdate && Boolean(overlayColumns?.some(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown));
-            const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
-            catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
-            catalogProfileStore.setProgress(progress);
-            if (progress === 1) {
-                catalogProfileStore.setLoadingDataStatus(false);
-                catalogProfileStore.setUpdatingDataStream(false);
-            }
-
-            if (isViewUpdate && overlayColumns) {
-                const [xColumn, yColumn] = overlayColumns;
-                // The overlay already drawn may hold fewer rows than the catalog now has.
-                const maxRows = (catalogDisplayStore?.hasPlottedImageOverlay ? catalogDisplayStore.plottedImageOverlayMaxRows : undefined) ?? catalogProfileStore.maxRows;
-                const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (frame) {
-                    // Rows are read and put where the overlay that is drawn says they go. The
-                    // widget's system control can be left somewhere else without taking the overlay
-                    // down, the same way its axis controls can, and a restored overlay keeps the
-                    // system it was drawn in rather than the one the controls were saved on. The
-                    // reading is settled first, because what a column means depends on it.
-                    const coordinateSystem =
-                        catalogDisplayStore?.hasPlottedImageOverlay && catalogDisplayStore.plottedImageOverlaySystem !== undefined
-                            ? {...catalogProfileStore.catalogCoordinateSystem, system: catalogDisplayStore.plottedImageOverlaySystem}
-                            : catalogProfileStore.catalogCoordinateSystem;
-                    let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData, coordinateSystem.system);
-                    const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && overlayColumns.every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
-                    if (isCoordinateFormatSettled) {
-                        // Earlier chunks were deliberately kept in the buffer as NaN while the
-                        // unitless string descriptor was unresolved. Re-read the accumulated
-                        // prefix now that the descriptor is known, and write it from row zero.
-                        this.catalogStore.clearImageCoordsData(catalogFileId);
-                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, coordinateSystem.system, catalogFilter.subsetEndIndex);
-                    }
-                    const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-                    if (coords.wcsX && coords.wcsY) {
-                        this.catalogStore.convertToImageCoordinate(
-                            catalogFileId,
-                            coords.wcsX,
-                            coords.wcsY,
-                            wcs,
-                            coords.xHeaderInfo?.units ?? "",
-                            coords.yHeaderInfo?.units ?? "",
-                            coordinateSystem,
-                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetEndIndex,
-                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetDataSize,
-                            maxRows
-                        );
-                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, coordinateSystem.system);
-                    }
-                }
-            }
-            if (progress === 1) {
-                this.catalogStore.catalogRequests.complete(catalogFileId, requestId);
-            }
-        } else if (progress === 1) {
-            this.catalogStore.catalogRequests.finish(catalogFileId, false, "The catalog was closed before restoration completed");
-        }
+    @action handleCatalogFilterStream = (stream: StreamedMessage<CARTA.CatalogFilterResponse>) => {
+        this.catalogStore.handleFilterStream(stream);
     };
 
     handleMomentProgressStream = (momentProgress: CARTA.MomentProgress) => {
@@ -2674,7 +2561,7 @@ export class AppStore {
                 const errorDataId = errorData.data?.trim();
                 const catalogFileId = errorDataId ? Number(errorDataId) : NaN;
                 if (Number.isInteger(catalogFileId) && catalogFileId >= 0) {
-                    this.catalogStore.catalogRequests.finish(catalogFileId, false, errorMessage);
+                    this.catalogStore.failRequest(catalogFileId, errorMessage);
                 }
             }
             const logEntry: LogEntry = {

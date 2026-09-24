@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
@@ -741,6 +741,7 @@ describe("CatalogOverlayComponent", () => {
                 200
             );
             profileStore.setSubsetEndIndex(2);
+            jest.spyOn(CatalogStore.Instance, "requestMoreRows").mockImplementation(() => profileStore.setLoadingDataStatus(true));
             const {displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
 
             expect(displayStore.xAxis).toBe(CatalogOverlay.NONE);
@@ -1034,85 +1035,5 @@ describe("CatalogOverlayComponent", () => {
 
             expect(component.isImageOverlaySelectionDirty).toBe(false);
         });
-    });
-});
-
-describe("CatalogOverlayComponent table refreshes", () => {
-    // Real stores, unlike the auto-select harness above: these methods are about what the profile
-    // and display stores actually hold, so a mock of them would only restate the expectation.
-    const createHarness = (columns: MockColumn[]) => {
-        harnessId += 1;
-        const catalogFileId = 20_000 + harnessId;
-        const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
-        const catalogData = new Map(columns.map((column, index) => [index, {dataType: column.dataType ?? CARTA.ColumnType.Double, data: column.data ?? [1, 2]}]));
-        const profileStore = new CatalogProfileStore({dataSize: 2, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, catalogData as never, CatalogType.FILE);
-        columns.forEach(column => {
-            if (column.display !== undefined) {
-                profileStore.setHeaderDisplay(column.display, column.name);
-            }
-        });
-        const displayStore = new CatalogDisplayStore(catalogFileId);
-
-        const component = Object.create(CatalogOverlayComponent.prototype) as CatalogOverlayComponent & Record<string, any>;
-        Object.defineProperty(component, "profileStore", {configurable: true, get: () => profileStore});
-        Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
-        Object.defineProperty(component, "catalogFileId", {configurable: true, get: () => catalogFileId});
-
-        return {component, displayStore, profileStore};
-    };
-
-    test("keeps an overlay that is drawn, whatever the widget's own controls read", () => {
-        const {component, displayStore, profileStore} = createHarness([
-            {name: "RAJ2000", data: [10, 20]},
-            {name: "DEJ2000", data: [30, 40]}
-        ]);
-        profileStore.setIsUpdateColumn(true);
-        // What a restored workspace leaves behind: the overlay is drawn, and the controls were
-        // never moved onto it.
-        displayStore.setPlottedImageOverlayState("RAJ2000", "DEJ2000", CatalogSystemType.ICRS);
-        expect(displayStore.xAxis).toBe(CatalogOverlay.NONE);
-
-        expect(component["shouldPreserveImageOverlayDuringColumnUpdate"]()).toBe(true);
-        displayStore.dispose();
-    });
-
-    test("keeps nothing when no overlay has been drawn", () => {
-        const {component, displayStore, profileStore} = createHarness([
-            {name: "RAJ2000", data: [10, 20]},
-            {name: "DEJ2000", data: [30, 40]}
-        ]);
-        profileStore.setIsUpdateColumn(true);
-        // The controls name the axes, but nothing has been plotted from them yet.
-        displayStore.setxAxis("RAJ2000");
-        displayStore.setyAxis("DEJ2000");
-
-        expect(component["shouldPreserveImageOverlayDuringColumnUpdate"]()).toBe(false);
-        displayStore.dispose();
-    });
-
-    test("goes on asking for a hidden mapped column when the table scrolls for more rows", () => {
-        // Constructed for real, because the scroll handler is an instance field rather than a
-        // prototype method.
-        const catalogFileId = 30_001;
-        // Named so that nothing auto-selects them onto an axis: these are the size and colour
-        // columns an overlay maps, which the table need never show.
-        const columns = [
-            {name: "flux", display: true},
-            {name: "aperture", display: false},
-            {name: "quality", display: false}
-        ];
-        const profileStore = CreateCatalogProfileStore(catalogFileId, CatalogSystemType.ICRS, columns, 100);
-        // Rows are still to come, which is what makes the table ask for more.
-        profileStore.setSubsetEndIndex(0);
-        // The overlay maps two columns the table does not show, the way a restored one can.
-        profileStore.ensureColumnsRequested(["aperture", "quality"]);
-        const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, columns, {catalogFileId, profileStore});
-        profileStore.setLoadingDataStatus(false);
-        const sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockReturnValue(1);
-
-        component["updateByInfiniteScroll"]();
-
-        expect(sendCatalogFilter).toHaveBeenCalled();
-        expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual(expect.arrayContaining([0, 1, 2]));
     });
 });

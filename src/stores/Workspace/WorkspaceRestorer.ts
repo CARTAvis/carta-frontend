@@ -129,7 +129,7 @@ export class WorkspaceRestorer {
     /** Stage 1: put the session back to an empty state for the workspace to be restored into. */
     private clearSession(): void {
         CatalogApiService.Instance.cancelPendingQueries("The online catalog query was given up on to open a workspace");
-        this.appStore.catalogStore.catalogRequests.failAll("The previous workspace restore was interrupted");
+        this.appStore.catalogStore.interruptRequests("The previous workspace restore was interrupted");
         this.appStore.animatorStore.stopAnimation();
         this.appStore.tileService.clearRequestQueue();
         this.appStore.removeAllFrames();
@@ -407,7 +407,7 @@ export class WorkspaceRestorer {
                 }
             } catch (err) {
                 console.error(err);
-                this.appStore.catalogStore.catalogRequests.finish(catalogFileId, false, "The catalog restoration failed");
+                this.appStore.catalogStore.failRequest(catalogFileId, "The catalog restoration failed");
                 this.report(WorkspaceItemKind.Catalog, description, rowFailure);
             }
         }
@@ -461,10 +461,10 @@ export class WorkspaceRestorer {
                 return undefined;
             }
 
-            return {catalogInfo, catalogFileId, description, rowFailure, completion: this.appStore.catalogStore.catalogRequests.wait(catalogFileId)};
+            return {catalogInfo, catalogFileId, description, rowFailure, completion: this.appStore.catalogStore.waitForRequest(catalogFileId)};
         } catch (err) {
             console.error(err);
-            this.appStore.catalogStore.catalogRequests.finish(catalogFileId, false, "The catalog restoration failed");
+            this.appStore.catalogStore.failRequest(catalogFileId, "The catalog restoration failed");
             this.report(WorkspaceItemKind.Catalog, description, rowFailure);
             return undefined;
         }

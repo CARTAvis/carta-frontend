@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {autorun} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 import {type CatalogPlotWidgetConfig} from "stores/Widgets";
@@ -56,7 +56,6 @@ describe("CatalogStore.plotImageOverlay", () => {
         profileStore.setCatalogCoordinateSystem(CatalogSystemType.Galactic);
 
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
-        jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockImplementation(jest.fn());
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
@@ -606,10 +605,16 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         catalogStore.catalogCounts.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose());
         catalogStore.catalogDisplayStores.clear();
+        catalogStore.resetRequests("test setup");
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
+        AppStore.Instance.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
         jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
         jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
-        sendCatalogFilter = jest.spyOn(AppStore.Instance, "sendCatalogFilter").mockImplementation(jest.fn());
+        sendCatalogFilter = jest.spyOn(AppStore.Instance.backendService, "setCatalogFilterRequest").mockReturnValue(1);
+    });
+
+    afterEach(() => {
+        AppStore.Instance.setActiveImage(null);
     });
 
     test("does nothing for a catalog that is not loaded", () => {
@@ -683,7 +688,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
         let isSettled = false;
-        const completion = catalogStore.catalogRequests.wait(1).then(result => {
+        const completion = catalogStore.waitForRequest(1).then(result => {
             isSettled = result.success;
             return result;
         });
@@ -691,7 +696,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         await Promise.resolve();
         expect(isSettled).toBe(false);
 
-        catalogStore.catalogRequests.finish(1, true);
+        catalogStore.handleFilterStream({requestId: 1, message: new CARTA.CatalogFilterResponse({fileId: 1, progress: 1, subsetDataSize: 0, subsetEndIndex: 0})});
         await expect(completion).resolves.toEqual({success: true});
         expect(isSettled).toBe(true);
     });
@@ -700,8 +705,8 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue(undefined as any);
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
         openFileCatalog(200);
+        sendCatalogFilter.mockReturnValue(4);
         expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
-        catalogStore.catalogRequests.attach(1, 4);
 
         catalogStore.removeCatalog(1);
         // The lowest free file ID is handed to the next catalog opened, which has not yet asked for
@@ -717,11 +722,11 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         sendCatalogFilter.mockReturnValue(1);
 
         expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
-        const completion = catalogStore.catalogRequests.wait(1);
+        const completion = catalogStore.waitForRequest(1);
         expect(profileStore.isLoadingData).toBe(true);
         expect(profileStore.isUpdatingDataStream).toBe(true);
 
-        catalogStore.catalogRequests.finish(1, false, "catalog request failed");
+        catalogStore.failRequest(1, "catalog request failed");
 
         await expect(completion).resolves.toEqual({success: false, message: "catalog request failed"});
         expect(profileStore.isLoadingData).toBe(false);
@@ -734,10 +739,10 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
             openFileCatalog(200);
             sendCatalogFilter.mockReturnValue(1);
             expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
-            const completion = catalogStore.catalogRequests.wait(1);
+            const completion = catalogStore.waitForRequest(1);
 
             jest.advanceTimersByTime(29_999);
-            catalogStore.catalogRequests.noteProgress(1);
+            catalogStore.handleFilterStream({requestId: 1, message: new CARTA.CatalogFilterResponse({fileId: 1, progress: 0.5, subsetDataSize: 0, subsetEndIndex: 0})});
             jest.advanceTimersByTime(29_999);
             expect(jest.getTimerCount()).toBeGreaterThan(0);
 
@@ -784,6 +789,166 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         expect(sendCatalogFilter).not.toHaveBeenCalled();
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlayXAxis).toBe("RA");
+    });
+});
+
+describe("CatalogStore request lifecycle", () => {
+    const catalogStore = CatalogStore.Instance;
+    const catalogFileId = 30_001;
+    const names = ["RA", "DEC", "FLUX"];
+    const catalogHeader = names.map((name, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name, units: "deg"}));
+    let sendFilter: jest.SpyInstance;
+
+    function openCatalog(): CatalogProfileStore {
+        const data = new Map<number, ProcessedColumnData>(names.map((name, index) => [index, {dataType: CARTA.ColumnType.Double, data: [index, index + 1]}]));
+        const profileStore = new CatalogProfileStore({dataSize: 100, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "sources.vot"})}, catalogHeader, data, CatalogType.FILE);
+        catalogStore.catalogProfileStores.set(catalogFileId, profileStore);
+        catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+        return profileStore;
+    }
+
+    beforeEach(() => {
+        jest.restoreAllMocks();
+        catalogStore.resetRequests("test setup");
+        catalogStore.catalogProfileStores.clear();
+        catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose());
+        catalogStore.catalogDisplayStores.clear();
+        AppStore.Instance.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
+        sendFilter = jest.spyOn(AppStore.Instance.backendService, "setCatalogFilterRequest").mockReturnValue(11);
+    });
+
+    afterEach(() => {
+        AppStore.Instance.setActiveImage(null);
+        catalogStore.resetRequests("test cleanup");
+    });
+
+    test("filters with hidden overlay columns while clearing the old selection", () => {
+        const profileStore = openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        profileStore.setDisplayedColumns(["FLUX"]);
+        profileStore.ensureColumnsRequested(["RA", "DEC"]);
+        profileStore.setColumnFilter("> 1", "FLUX");
+        profileStore.setSelectedPointIndices([0], false);
+        displayStore.setShowSelectedData(true);
+
+        catalogStore.requestFilteredRows(catalogFileId);
+
+        expect(sendFilter).toHaveBeenCalledTimes(1);
+        expect(sendFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
+        expect(sendFilter.mock.calls[0][0].filterConfigs).toHaveLength(1);
+        expect(profileStore.selectedPointIndices).toEqual([]);
+        expect(displayStore.isShowingSelectedData).toBe(false);
+    });
+
+    test("preserves a drawn overlay during a column-only refresh", () => {
+        const profileStore = openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        profileStore.setIsUpdateColumn(true);
+        displayStore.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS);
+        const clearPositions = jest.spyOn(catalogStore, "clearImageCoordsData");
+
+        catalogStore.requestFilteredRows(catalogFileId);
+
+        expect(sendFilter).toHaveBeenCalledTimes(1);
+        expect(clearPositions).not.toHaveBeenCalled();
+        expect(displayStore.hasPlottedImageOverlay).toBe(true);
+    });
+
+    test("clears positions when column controls name axes but no overlay is drawn", () => {
+        const profileStore = openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        profileStore.setIsUpdateColumn(true);
+        displayStore.setxAxis("RA");
+        displayStore.setyAxis("DEC");
+        const clearPositions = jest.spyOn(catalogStore, "clearImageCoordsData");
+
+        catalogStore.requestFilteredRows(catalogFileId);
+
+        expect(clearPositions).toHaveBeenCalledWith(catalogFileId);
+        expect(displayStore.hasPlottedImageOverlay).toBe(false);
+    });
+
+    test("requests hidden mapped columns on scroll and clears loading if send fails", () => {
+        const profileStore = openCatalog();
+        profileStore.setDisplayedColumns(["FLUX"]);
+        profileStore.ensureColumnsRequested(["RA", "DEC"]);
+        profileStore.setSubsetEndIndex(2);
+        profileStore.setLoadingDataStatus(false);
+        sendFilter.mockReturnValue(false);
+
+        catalogStore.requestMoreRows(catalogFileId);
+
+        expect(sendFilter).toHaveBeenCalledTimes(1);
+        expect(sendFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
+        expect(sendFilter.mock.calls[0][0].subsetStartIndex).toBe(2);
+        expect(profileStore.isLoadingData).toBe(false);
+    });
+
+    test("keeps sort and plot update modes distinct", () => {
+        const profileStore = openCatalog();
+        sendFilter.mockReturnValueOnce(11).mockReturnValueOnce(12);
+
+        catalogStore.requestSortedRows(catalogFileId, "FLUX", CARTA.SortingType.Descending);
+        expect(sendFilter.mock.calls[0][0].sortColumn).toBe("FLUX");
+        expect(sendFilter.mock.calls[0][0].sortingType).toBe(CARTA.SortingType.Descending);
+
+        catalogStore.requestPlotRows(catalogFileId);
+        expect(sendFilter).toHaveBeenCalledTimes(2);
+        expect(profileStore.updateMode).toBe(CatalogUpdateMode.PlotsUpdate);
+    });
+
+    test("clears loading for filter and plot requests rejected by the transport", () => {
+        const profileStore = openCatalog();
+        profileStore.setColumnFilter("> 1", "FLUX");
+        sendFilter.mockReturnValue(false);
+
+        catalogStore.requestFilteredRows(catalogFileId);
+        expect(profileStore.isLoadingData).toBe(false);
+
+        catalogStore.requestPlotRows(catalogFileId);
+        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(sendFilter).toHaveBeenCalledTimes(2);
+    });
+
+    test("clears loading when the transport throws before a request is sent", () => {
+        const profileStore = openCatalog();
+        sendFilter.mockImplementation(() => {
+            throw new Error("transport unavailable");
+        });
+
+        expect(() => catalogStore.requestPlotRows(catalogFileId)).toThrow("transport unavailable");
+        expect(profileStore.isUpdatingDataStream).toBe(false);
+    });
+
+    test("keeps online catalog filtering and sorting local", () => {
+        const data = new Map<number, ProcessedColumnData>(names.map((name, index) => [index, {dataType: CARTA.ColumnType.Double, data: [index, index + 1]}]));
+        const profileStore = new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, data, CatalogType.SIMBAD);
+        catalogStore.catalogProfileStores.set(catalogFileId, profileStore);
+        catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
+        profileStore.setColumnFilter("> 1", "FLUX");
+
+        catalogStore.requestFilteredRows(catalogFileId);
+        catalogStore.requestSortedRows(catalogFileId, "FLUX", CARTA.SortingType.Descending);
+        catalogStore.requestPlotRows(catalogFileId);
+
+        expect(sendFilter).not.toHaveBeenCalled();
+        expect(profileStore.sortingInfo).toEqual({columnName: "FLUX", sortingType: CARTA.SortingType.Descending});
+    });
+
+    test("ignores a superseded stream and accepts the latest response", () => {
+        const profileStore = openCatalog();
+        sendFilter.mockReturnValueOnce(11).mockReturnValueOnce(12);
+        const updateData = jest.spyOn(profileStore, "updateCatalogData");
+        catalogStore.requestSortedRows(catalogFileId, "RA", CARTA.SortingType.Ascending);
+        catalogStore.requestSortedRows(catalogFileId, "FLUX", CARTA.SortingType.Descending);
+        const response = new CARTA.CatalogFilterResponse({fileId: catalogFileId, progress: 1, subsetDataSize: 0, subsetEndIndex: 0});
+
+        catalogStore.handleFilterStream({requestId: 11, message: response});
+        expect(updateData).not.toHaveBeenCalled();
+
+        catalogStore.handleFilterStream({requestId: 12, message: response});
+        expect(updateData).toHaveBeenCalledTimes(1);
+        expect(profileStore.isLoadingData).toBe(false);
     });
 });
 

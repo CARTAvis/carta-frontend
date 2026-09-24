@@ -657,138 +657,35 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.widgetStore?.setHeaderTableColumnWidth(index, size);
     };
 
-    private resetSelectedPointIndices = () => {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        profileStore?.setSelectedPointIndices([], false);
-        catalogDisplayStore?.setShowSelectedData(false);
-    };
-
-    /**
-     * Whether the overlay already drawn survives a refresh that only changes which columns are
-     * asked for.
-     *
-     * The question is about the overlay that is drawn, not about the controls: a restored overlay
-     * is drawn while the plot type and the axis controls can be anywhere, and clearing it because
-     * the controls read None takes down a drawing the user is looking at. Nothing brings it back
-     * either -- a column update is answered in table mode, which redraws nothing.
-     */
-    private shouldPreserveImageOverlayDuringColumnUpdate(): boolean {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        if (!profileStore?.isUpdateColumnMode || !catalogDisplayStore?.hasPlottedImageOverlay || catalogDisplayStore.plottedImageOverlaySystem === undefined) {
-            return false;
-        }
-
-        const {plottedImageOverlayXAxis: xAxis, plottedImageOverlayYAxis: yAxis} = catalogDisplayStore;
-        if (xAxis === CatalogOverlay.NONE || yAxis === CatalogOverlay.NONE) {
-            return false;
-        }
-
-        const coords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, catalogDisplayStore.plottedImageOverlaySystem);
-        return Boolean(coords.wcsX && coords.wcsY);
-    }
-
     private handleFilterRequest = () => {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        const catalogFileId = this.catalogFileId;
-
-        if (!profileStore || !catalogDisplayStore || catalogFileId === undefined) {
-            return;
-        }
-
-        // Skip if normal conditions prevent filtering AND we're not in column update mode
-        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.isLoadingOntoImage || !profileStore.shouldUpdateTableView || !profileStore.hasFilter);
-
-        if (shouldSkipRequest) {
-            return;
-        }
-
-        const appStore = AppStore.Instance;
-        if (profileStore && appStore) {
-            this.resetSelectedPointIndices();
-            if (!this.shouldPreserveImageOverlayDuringColumnUpdate()) {
-                appStore.catalogStore.clearImageCoordsData(catalogFileId);
-            }
-            if (profileStore.isFileBasedCatalog) {
-                profileStore.updateTableStatus(false);
-                profileStore.resetFilterRequest();
-                const filter = profileStore.updateRequestDataSize;
-                if (filter.imageBounds) {
-                    filter.imageBounds.xColumnName = catalogDisplayStore.xAxis;
-                    filter.imageBounds.yColumnName = catalogDisplayStore.yAxis;
-                }
-                filter.fileId = profileStore.catalogInfo.fileId;
-                filter.filterConfigs = profileStore.getUserFilters();
-                // Every column that has to be asked for, not only the ones the table shows: an
-                // overlay maps columns the user may have hidden, and rows that arrive without them
-                // cannot be drawn.
-                filter.columnIndices = profileStore.columnIndices;
-                appStore.sendCatalogFilter(filter);
-            } else {
-                profileStore.resetFilterRequest(profileStore.getUserFilters());
-            }
+        if (this.catalogFileId !== undefined) {
+            CatalogStore.Instance.requestFilteredRows(this.catalogFileId);
         }
     };
 
     private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType | null) => {
-        const profileStore = this.profileStore;
-        const catalogFileId = this.catalogFileId;
-        const appStore = AppStore.Instance;
-
-        if (profileStore && appStore && catalogFileId !== undefined) {
-            this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(catalogFileId);
-            profileStore.setSortingInfo(columnName, sortingType);
-            if (profileStore.isFileBasedCatalog) {
-                profileStore.resetFilterRequest();
-                const filter = profileStore.updateRequestDataSize;
-                filter.sortColumn = columnName;
-                filter.sortingType = sortingType;
-                appStore.sendCatalogFilter(filter);
-            }
+        if (this.catalogFileId !== undefined) {
+            CatalogStore.Instance.requestSortedRows(this.catalogFileId, columnName, sortingType);
         }
     };
 
     private updateByInfiniteScroll = () => {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        const isSelectedOnly = catalogDisplayStore?.isShowingSelectedData;
-        if (profileStore?.isLoadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !isSelectedOnly) {
-            profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-            const filter = profileStore.updateRequestDataSize;
-            filter.columnIndices = profileStore.columnIndices;
-            AppStore.Instance.sendCatalogFilter(filter);
-            profileStore.setLoadingDataStatus(true);
+        if (this.catalogFileId !== undefined) {
+            CatalogStore.Instance.requestMoreRows(this.catalogFileId);
         }
     };
 
     private handleResetClick = () => {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
         const catalogFileId = this.catalogFileId;
-        const appStore = AppStore.Instance;
-        const catalogStore = CatalogStore.Instance;
-
-        if (!profileStore || !catalogDisplayStore || catalogFileId === undefined) {
+        if (!this.profileStore || !this.displayStore || catalogFileId === undefined) {
             return;
         }
-
+        const appStore = AppStore.Instance;
+        const catalogStore = CatalogStore.Instance;
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
-
         appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
         frame?.regionSet.setMode(RegionMode.MOVING);
-
-        if (profileStore && catalogDisplayStore) {
-            profileStore.resetCatalogFilterRequest();
-            this.resetSelectedPointIndices();
-            appStore.catalogStore.clearImageCoordsData(catalogFileId);
-            if (profileStore.isFileBasedCatalog) {
-                appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
-            }
-            catalogDisplayStore.resetMaps();
-        }
+        catalogStore.resetCatalogRows(catalogFileId);
     };
 
     private handlePlotClick = () => {

@@ -93,11 +93,9 @@ function createSession() {
         preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
         imageViewConfigStore: {createColorBlending: jest.fn(), imageNum: 1},
         catalogStore: {
-            catalogRequests: {
-                failAll: jest.fn(),
-                wait: jest.fn(() => Promise.resolve({success: true})),
-                finish: jest.fn()
-            },
+            interruptRequests: jest.fn(),
+            waitForRequest: jest.fn(() => Promise.resolve({success: true})),
+            failRequest: jest.fn(),
             setWorkspaceCatalogId: jest.fn(),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),

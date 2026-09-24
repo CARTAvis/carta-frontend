@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
+import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType} from "enums";
 import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
@@ -402,7 +402,12 @@ describe("AppStore.handleErrorStream", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
-        jest.spyOn(appStore, "sendCatalogFilter").mockReturnValue(1);
+        appStore.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
+        jest.spyOn(appStore.backendService, "setCatalogFilterRequest").mockReturnValue(1);
+    });
+
+    afterEach(() => {
+        appStore.setActiveImage(null);
     });
 
     function addProfileStore(catalogFileId: number) {
