@@ -265,12 +265,6 @@ export class WorkspaceSnapshotter {
                 return;
             }
 
-            // Deliberately do not create display state while saving.
-            const displayStore = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId);
-            const selectedDataIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
-            const rowSelection = fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, selectedDataIndices);
-            const selection = rowSelection ? {...rowSelection, isShowingSelectedData: displayStore?.isShowingSelectedData || undefined} : undefined;
-
             const workspaceCatalogId = this.catalogIdOf(catalogFileId);
             if (workspaceCatalogId === undefined) {
                 this.issues.push({
@@ -280,6 +274,12 @@ export class WorkspaceSnapshotter {
                 });
                 return;
             }
+
+            // Deliberately do not create display state while saving.
+            const displayStore = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId);
+            const selectedDataIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+            const rowSelection = fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, selectedDataIndices);
+            const selection = rowSelection ? {...rowSelection, isShowingSelectedData: displayStore?.isShowingSelectedData || undefined} : undefined;
 
             catalogs.push({
                 id: workspaceCatalogId,
