@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -8,7 +8,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
 import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {type Point2D} from "models";
@@ -416,28 +416,8 @@ export class ContourDialogComponent extends React.Component {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.isMeanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
-            const mean = dataSource.renderConfig.contourHistogram.mean ?? 0;
-            const stdDev = dataSource.renderConfig.contourHistogram.stdDev;
-
-            linePlotProps.markers.push({
-                value: mean,
-                id: "marker-mean",
-                draggable: false,
-                horizontal: false,
-                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                dash: [5]
-            });
-
-            linePlotProps.markers.push({
-                value: mean,
-                id: "marker-rms",
-                draggable: false,
-                horizontal: false,
-                width: stdDev,
-                opacity: 0.2,
-                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
-            });
+        if (this.widgetStore.isMeanRmsVisible) {
+            linePlotProps.markers.push(...genMeanRmsMarkers(dataSource.renderConfig.contourHistogram, appStore.isDarkTheme));
         }
 
         const sortedLevels = this.levels
