@@ -7,9 +7,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ClearableNumericInputComponent, ErrorToast, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
-import {type Point2D, type WCSPoint2D} from "models";
+import {type Point2D} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, type VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryStore, MirrorSiteStore, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, NUMBER_FORMAT_LABEL} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
@@ -21,7 +21,6 @@ const MIRROR_BENCHMARK_TIMEOUT_MS = 10000;
 
 @observer
 export class CatalogQueryComponent extends React.Component {
-    @observable resultSize: number | undefined = undefined;
     @observable objectSize: number | undefined = undefined;
     @observable isBenchmarking: boolean = false;
     @observable mirrorBenchmarks: Map<string, MirrorBenchmark> = new Map();
@@ -31,14 +30,11 @@ export class CatalogQueryComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        CatalogOnlineQueryStore.Instance.resetResultSize();
     }
 
     componentWillUnmount() {
         this.cancelMirrorBenchmark();
-    }
-
-    @action setResultSize(resultSize: number | undefined) {
-        this.resultSize = resultSize;
     }
 
     @action setObjectSize(objectSize: number | undefined) {
@@ -47,17 +43,18 @@ export class CatalogQueryComponent extends React.Component {
 
     @computed get resultInfo(): string | undefined {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        if (configStore.isQuerying) {
+        const queryStore = CatalogOnlineQueryStore.Instance;
+        if (queryStore.isQuerying) {
             return `Querying ${configStore.catalogDB}`;
         } else if (configStore.isObjectQuerying) {
             return `Querying ${CatalogDatabase.SIMBAD}`;
-        } else if (this.resultSize === 0) {
+        } else if (queryStore.resultSize === 0) {
             return "No objects found";
-        } else if (this.resultSize && this.resultSize >= 1) {
+        } else if (queryStore.resultSize && queryStore.resultSize >= 1) {
             if (configStore.catalogDB === CatalogDatabase.VIZIER) {
-                return `Found ${this.resultSize} table(s)`;
+                return `Found ${queryStore.resultSize} table(s)`;
             } else {
-                return `Found ${this.resultSize} object(s)`;
+                return `Found ${queryStore.resultSize} object(s)`;
             }
         } else if (this.objectSize === 0) {
             return `Object ${configStore.objectName} not found`;
@@ -70,12 +67,13 @@ export class CatalogQueryComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const queryStore = CatalogOnlineQueryStore.Instance;
 
         if (!appStore || !appStore.activeFrame) {
             return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         }
 
-        const isDisabled = configStore.isQuerying || configStore.isObjectQuerying;
+        const isDisabled = queryStore.isQuerying || configStore.isObjectQuerying;
         let sourceIndicator;
         let objectSize: number | undefined = this.objectSize;
         if (configStore.isObjectSearchDisabled) {
@@ -287,9 +285,9 @@ export class CatalogQueryComponent extends React.Component {
                         {tableInfo}
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} data-testid="catalog-query-cancel-button" />
+                        <AnchorButton intent={Intent.WARNING} disabled={!queryStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} data-testid="catalog-query-cancel-button" />
                         {configStore.canLoadVizier ? (
-                            <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled || !hasAvailableMirror} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} data-testid="catalog-query-load-selected-button" />
+                            <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled || !hasAvailableMirror} onClick={queryStore.loadSelectedVizierCatalogs} text={"Load selected"} data-testid="catalog-query-load-selected-button" />
                         ) : null}
                         <Tooltip
                             content={hasAvailableMirror ? "Please select WCS coordinates" : "Enable at least one mirror site"}
@@ -300,7 +298,7 @@ export class CatalogQueryComponent extends React.Component {
                             <AnchorButton
                                 intent={Intent.SUCCESS}
                                 disabled={isDisabled || !hasAvailableMirror || appStore.overlaySettings.isImgCoordinates}
-                                onClick={() => this.query()}
+                                onClick={queryStore.queryCatalogs}
                                 text={"Query"}
                                 data-testid="catalog-query-query-button"
                             />
@@ -383,45 +381,6 @@ export class CatalogQueryComponent extends React.Component {
         );
     };
 
-    private query = async () => {
-        const configStore = CatalogOnlineQueryConfigStore.Instance;
-        if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
-            // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-            const query = CatalogOnlineQueryConfigStore.simbadQuery({x: Number(centerCoord.x), y: Number(centerCoord.y)}, configStore.radiusAsDeg, configStore.maxObject);
-            configStore.setQueryStatus(true);
-            const {dataSize} = await CatalogApiService.Instance.appendSimbadCatalog(query);
-            configStore.setQueryStatus(false);
-            this.setResultSize(dataSize);
-        } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
-            configStore.setQueryStatus(true);
-            configStore.resetVizier();
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-            if (centerCoord.x && centerCoord.y) {
-                const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
-                configStore.setQueryStatus(false);
-                configStore.setVizierQueryResult(resources);
-                this.setResultSize(resources.size);
-            } else {
-                configStore.setQueryStatus(false);
-                this.setResultSize(0);
-            }
-        }
-    };
-
-    private loadVizierCatalogs = async () => {
-        const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const sources = configStore.selectedVizierSource.filter(source => source !== undefined);
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-        if (centerCoord.x && centerCoord.y) {
-            const querySource = CatalogApiService.captureQuery("vizier");
-            configStore.setQueryStatus(true);
-            const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-            CatalogApiService.Instance.appendVizierCatalog(resources, {querySource});
-            configStore.setQueryStatus(false);
-        }
-    };
-
     private handleObjectUpdate = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const objectName = configStore.objectName.replace(/'/g, "''");
@@ -471,7 +430,7 @@ export class CatalogQueryComponent extends React.Component {
 
     private initTextInfo() {
         this.setObjectSize(undefined);
-        this.setResultSize(undefined);
+        CatalogOnlineQueryStore.Instance.resetResultSize();
     }
 
     private getMirrorSites = (database: CatalogDatabase): string[] => {

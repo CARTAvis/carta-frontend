@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
+import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -569,7 +569,7 @@ describe("AppStore.saveWorkspace", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
-        CatalogOnlineQueryConfigStore.Instance.setQueryStatus(false);
+        CatalogOnlineQueryStore.Instance.setIsQuerying(false);
         appStore.endFileLoading();
     });
 
@@ -611,7 +611,7 @@ describe("AppStore.saveWorkspace", () => {
     test("refuses to save while an online catalog query is still running", async () => {
         // The catalog is not in the session yet, so nothing is streaming: the query itself is what
         // the save has to wait for.
-        CatalogOnlineQueryConfigStore.Instance.setQueryStatus(true);
+        CatalogOnlineQueryStore.Instance.setIsQuerying(true);
         const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
 
         await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);

@@ -54,7 +54,7 @@ import {
     AlertStore,
     AnimatorStore,
     type CatalogDisplayStore,
-    CatalogOnlineQueryConfigStore,
+    CatalogOnlineQueryStore,
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
@@ -2933,7 +2933,7 @@ export class AppStore {
 
         // An online catalog that is still being queried is not part of the session yet, so it would
         // be left out of the workspace without the user being told.
-        if (CatalogOnlineQueryConfigStore.Instance.isQuerying) {
+        if (CatalogOnlineQueryStore.Instance.isQuerying) {
             this.alertStore.showAlert("Cannot save workspace while an online catalog query is still running. Please wait for it to finish.");
             return false;
         }

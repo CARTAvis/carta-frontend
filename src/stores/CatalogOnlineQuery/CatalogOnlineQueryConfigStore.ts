@@ -15,7 +15,6 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly OBJECT_SIZE = 1000;
     public static readonly QUERY_DEG_PRECISION = "10";
 
-    @observable isQuerying: boolean = false;
     @observable catalogDB: CatalogDatabase = CatalogDatabase.SIMBAD;
     @observable searchRadius: number = 1;
     @observable coordsType: CatalogSystemType = CatalogSystemType.ICRS;
@@ -105,10 +104,6 @@ export class CatalogOnlineQueryConfigStore {
     @action resetVizier() {
         this.vizierResource.clear();
         this.resetVizierSelectedTable();
-    }
-
-    @action setQueryStatus(isQuerying: boolean) {
-        this.isQuerying = isQuerying;
     }
 
     @action setCatalogDB(db: CatalogDatabase) {
