@@ -66,11 +66,6 @@ export class CatalogOnlineQueryConfigStore {
         }
     }
 
-    /** The SIMBAD query for a circle of `radiusDeg` around a centre in ICRS degrees. */
-    public static simbadQuery(center: Point2D, radiusDeg: number, maxObjects: number): string {
-        return `SELECT Top ${maxObjects} *, DISTANCE(POINT('ICRS', ${center.x},${center.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${center.x},${center.y},${radiusDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
-    }
-
     @action setVizierKeyWords(keyWords: string) {
         this.vizierKeyWords = keyWords;
     }

@@ -1,9 +1,9 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 
-import {WorkspaceItemKind} from "enums";
-import {type Workspace, type WorkspaceIssue} from "models";
+import {CatalogSystemType, RadiusUnits, WorkspaceItemKind} from "enums";
+import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, WorkspaceRestorer} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** What the restorer needs of an image it has opened. */
@@ -170,6 +170,36 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+    });
+
+    test("re-queries a saved SIMBAD source without changing the online query dialog", async () => {
+        createSession();
+        const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const setDatabase = jest.spyOn(configStore, "setCatalogDB");
+        const setRadius = jest.spyOn(configStore, "setSearchRadius");
+        const updateCenter = jest.spyOn(configStore, "updateCenterPixelCoord");
+        const load = jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockResolvedValue({fileId: 10, dataSize: 5});
+
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}))).toEqual([]);
+
+        expect(load).toHaveBeenCalledWith(source, 1);
+        expect(setDatabase).not.toHaveBeenCalled();
+        expect(setRadius).not.toHaveBeenCalled();
+        expect(updateCenter).not.toHaveBeenCalled();
+    });
+
+    test("loads a saved VizieR table through its source and reports one without a table", async () => {
+        createSession();
+        const source: WorkspaceCatalogQuerySource = {type: "vizier", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.FK5, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500, table: "I/355/gaiadr3"};
+        const load = jest.spyOn(CatalogApiService.Instance, "loadVizierCatalogs").mockResolvedValue([10]);
+
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}))).toEqual([]);
+        expect(load).toHaveBeenCalledWith(source, ["I/355/gaiadr3"], 1);
+
+        load.mockClear();
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog the vizier query");
+        expect(load).not.toHaveBeenCalled();
     });
 
     test("matches no image to a reference the workspace could not name", async () => {

@@ -1,10 +1,10 @@
-import {CatalogDatabase, CatalogOverlay, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, describeImageSource, type Point2D, type WCSPoint2D, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {CatalogOverlay, WorkspaceItemKind} from "enums";
+import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogProfileStore, restoreWorkspaceZoom} from "stores";
+import {AppStore, CatalogProfileStore, restoreWorkspaceZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {awaited, awaitedFlow, hashCatalogContent, type RequestOutcome, resolveCatalogSelection, type VizierResource} from "utilities";
+import {awaited, awaitedFlow, hashCatalogContent, type RequestOutcome, resolveCatalogSelection} from "utilities";
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
@@ -348,31 +348,15 @@ export class WorkspaceRestorer {
             return typeof fileId === "number" ? fileId : undefined;
         }
 
-        // The query centre is stored in degrees, but the config store works in pixels, so put the
-        // centre back the way the dialog would have left it before running the query again.
-        const configStore = CatalogOnlineQueryConfigStore.Instance;
-        configStore.setCatalogDB(source.type === "simbad" ? CatalogDatabase.SIMBAD : CatalogDatabase.VIZIER);
-        configStore.setCoordsType(source.system);
-        configStore.setRadiusUnits(source.radiusUnits);
-        configStore.setSearchRadius(source.radius);
-        configStore.setMaxObjects(source.maxObjects);
-        configStore.setVizierKeyWords(source.keywords ?? "");
-        const centerPixelCoord = configStore.convertToPixel(source.center);
-        if (centerPixelCoord?.x !== undefined && centerPixelCoord?.y !== undefined) {
-            configStore.updateCenterPixelCoord(centerPixelCoord as Point2D);
-        }
-
         if (source.type === "simbad") {
-            const {fileId} = yield* awaited(CatalogApiService.Instance.appendSimbadCatalog(CatalogOnlineQueryConfigStore.simbadQuery(source.center, configStore.radiusAsDeg, source.maxObjects), {targetFrameId, querySource: source}));
+            const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
             return fileId;
         }
 
         if (!source.table) {
             return undefined;
         }
-        const point: WCSPoint2D = {x: String(source.center.x), y: String(source.center.y)};
-        const resources = yield* awaited(CatalogApiService.Instance.queryVizierSource(point, source.radius, source.radiusUnits, source.maxObjects, [{table: {name: source.table}} as VizierResource]));
-        return CatalogApiService.Instance.appendVizierCatalog(resources, {targetFrameId, querySource: source})[0];
+        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0];
     }
 
     /**

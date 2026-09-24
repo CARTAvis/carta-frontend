@@ -10,11 +10,6 @@ import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} fro
 
 import {TelemetryService} from "./TelemetryService";
 
-interface AppendCatalogOptions {
-    targetFrameId?: number;
-    querySource?: WorkspaceCatalogQuerySource;
-}
-
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
@@ -69,6 +64,59 @@ export class CatalogApiService {
             keywords: type === "vizier" ? configStore.vizierKeyWords : undefined
         };
     }
+
+    /** A saved source contains degree coordinates; no dialog or current image is needed to build the query. */
+    private static hasValidSource(source: WorkspaceCatalogQuerySource, type: WorkspaceCatalogQuerySource["type"]): boolean {
+        return (
+            source?.type === type &&
+            Number.isFinite(source.center?.x) &&
+            Number.isFinite(source.center?.y) &&
+            Number.isFinite(source.radius) &&
+            source.radius >= 0 &&
+            Object.values(RadiusUnits).includes(source.radiusUnits) &&
+            Number.isInteger(source.maxObjects) &&
+            source.maxObjects > 0
+        );
+    }
+
+    private static simbadRadiusInDegrees(radius: number, units: RadiusUnits): number {
+        const degrees = units === RadiusUnits.ARCMINUTES ? radius / 60 : units === RadiusUnits.ARCSECONDS ? radius / 3600 : radius;
+        return Number(degrees.toPrecision(6));
+    }
+
+    private static simbadQuery(source: WorkspaceCatalogQuerySource): string {
+        const {center, maxObjects} = source;
+        const radius = CatalogApiService.simbadRadiusInDegrees(source.radius, source.radiusUnits);
+        return `SELECT Top ${maxObjects} *, DISTANCE(POINT('ICRS', ${center.x},${center.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${center.x},${center.y},${radius}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+    }
+
+    /** Load a SIMBAD catalog from the parameters captured when the request was made. */
+    public loadSimbadCatalog = async (source: WorkspaceCatalogQuerySource, targetFrameId?: number): Promise<{dataSize: number; fileId?: number}> => {
+        if (!CatalogApiService.hasValidSource(source, "simbad")) {
+            return {dataSize: 0};
+        }
+        const frameId = targetFrameId ?? AppStore.Instance.activeFrame?.frameInfo.fileId;
+        if (frameId === undefined) {
+            AppToaster.show(ErrorToast("Please load an image file"));
+            throw new Error("No image file");
+        }
+        return this.appendSimbadCatalog(CatalogApiService.simbadQuery(source), source, frameId);
+    };
+
+    /** Load selected VizieR tables without reading mutable query-dialog state after dispatch. */
+    public loadVizierCatalogs = async (source: WorkspaceCatalogQuerySource, tableNames: string[], targetFrameId?: number): Promise<number[]> => {
+        if (!CatalogApiService.hasValidSource(source, "vizier") || !tableNames?.length || tableNames.some(name => !name?.trim())) {
+            return [];
+        }
+        const frameId = targetFrameId ?? AppStore.Instance.activeFrame?.frameInfo.fileId;
+        if (frameId === undefined) {
+            AppToaster.show(ErrorToast("Please load an image file"));
+            throw new Error("No image file");
+        }
+        const point: WCSPoint2D = {x: String(source.center.x), y: String(source.center.y)};
+        const resources = await this.queryVizierSource(point, source.radius, source.radiusUnits, source.maxObjects, tableNames);
+        return this.appendVizierCatalog(resources, source, frameId);
+    };
 
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
         const encoded = encodeURIComponent(query);
@@ -242,12 +290,12 @@ export class CatalogApiService {
         return resources;
     };
 
-    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizierResource[]): Promise<Map<string, VizierResource>> => {
+    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, tableNames: string[]): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
         const radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
-        sources.forEach(element => {
-            sourceString += `${element.table.name},`;
+        tableNames.forEach(name => {
+            sourceString += `${name},`;
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
@@ -274,17 +322,15 @@ export class CatalogApiService {
     };
 
     /** @returns the file id of every catalog that was loaded. */
-    public appendVizierCatalog = (resources: Map<string, VizierResource>, options: AppendCatalogOptions = {}): number[] => {
-        const {targetFrameId, querySource} = options;
+    private appendVizierCatalog = (resources: Map<string, VizierResource>, source: WorkspaceCatalogQuerySource, targetFrameId: number): number[] => {
         const appStore = AppStore.Instance;
         const fileIds: number[] = [];
         resources.forEach(element => {
             const fileId = appStore.reserveCatalogFileId();
             try {
                 const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
-                const configStore = CatalogOnlineQueryConfigStore.Instance;
                 const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
-                const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
+                const fileName = `${CatalogDatabase.VIZIER}_${element.coosys.system}_${element.table.name}_${source.radius}${source.radiusUnits}`;
                 const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                     name: fileName,
                     type: CARTA.CatalogFileType.VOTable,
@@ -296,7 +342,7 @@ export class CatalogApiService {
                     fileInfo: catalogFileInfo,
                     dataSize: size,
                     directory: "",
-                    query: querySource ? {...querySource, system: element.coosys.system as CatalogSystemType, table: element.table.name ?? undefined} : undefined
+                    query: {...source, system: element.coosys.system as CatalogSystemType, table: element.table.name ?? undefined}
                 };
                 if (this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER, targetFrameId)) {
                     fileIds.push(fileId);
@@ -310,15 +356,14 @@ export class CatalogApiService {
         return fileIds;
     };
 
-    @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType, targetFrameId?: number) => {
+    @action private loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType, targetFrameId: number) => {
         const appStore = AppStore.Instance;
-        const frame = targetFrameId === undefined ? appStore.activeFrame : appStore.getFrame(targetFrameId);
+        const frame = appStore.getFrame(targetFrameId);
         if (!frame) {
             AppToaster.show(ErrorToast("Please load an image file"));
             return false;
         }
-        // The catalog is loaded onto the frame the caller named, which is the active frame unless
-        // a target was given.
+        // The target was fixed before the asynchronous query began.
         const catalogComponentId = appStore.updateCatalogProfile(fileId, frame);
         if (catalogComponentId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
@@ -344,16 +389,14 @@ export class CatalogApiService {
     }
 
     /** @returns how many rows the query returned, and the file id of the catalog it was loaded as. */
-    public appendSimbadCatalog = async (query: string, options: AppendCatalogOptions = {}): Promise<{dataSize: number; fileId?: number}> => {
-        const {targetFrameId, querySource: savedQuery} = options;
+    private appendSimbadCatalog = async (query: string, source: WorkspaceCatalogQuerySource, targetFrameId: number): Promise<{dataSize: number; fileId?: number}> => {
         const appStore = AppStore.Instance;
-        const frame = targetFrameId === undefined ? appStore.activeFrame : appStore.getFrame(targetFrameId);
+        const frame = appStore.getFrame(targetFrameId);
         if (!frame) {
             AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
         }
 
-        const querySource = savedQuery ?? CatalogApiService.captureQuery("simbad");
         let loadedFileId: number | undefined;
         let dataSize = 0;
         // Taken last, so that nothing between here and the try below can leave it held.
@@ -363,8 +406,8 @@ export class CatalogApiService {
             if (response?.status === 200 && response?.data?.data?.length) {
                 const headers = CatalogApiProcessing.processSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.processSimbadData(response.data?.data, headers);
-                const coosys: CARTA.Coosys.$Properties = {system: querySource?.system ?? CatalogOnlineQueryConfigStore.Instance.coordsType};
-                const fileName = querySource ? `${CatalogDatabase.SIMBAD}_${querySource.system}_${querySource.center.x}_${querySource.center.y}_${querySource.radius}${querySource.radiusUnits}` : `${CatalogDatabase.SIMBAD}_catalog`;
+                const coosys: CARTA.Coosys.$Properties = {system: source.system};
+                const fileName = `${CatalogDatabase.SIMBAD}_${source.system}_${source.center.x}_${source.center.y}_${source.radius}${source.radiusUnits}`;
                 const catalogFileInfo: CARTA.CatalogFileInfo.$Properties = {
                     name: fileName,
                     type: CARTA.CatalogFileType.VOTable,
@@ -376,7 +419,7 @@ export class CatalogApiService {
                     fileInfo: catalogFileInfo,
                     dataSize: response.data?.data?.length ?? 0,
                     directory: "",
-                    query: querySource
+                    query: source
                 };
                 if (this.loadCatalog(fileId, catalogInfo, headers, columnData, CatalogType.SIMBAD, targetFrameId)) {
                     loadedFileId = fileId;

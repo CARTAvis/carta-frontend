@@ -38,12 +38,14 @@ export class CatalogOnlineQueryStore {
     public queryCatalogs = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
-            // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-            const query = CatalogOnlineQueryConfigStore.simbadQuery({x: Number(centerCoord.x), y: Number(centerCoord.y)}, configStore.radiusAsDeg, configStore.maxObject);
+            const source = CatalogApiService.captureQuery("simbad");
+            if (!source) {
+                this.setResultSize(0);
+                return;
+            }
             this.setIsQuerying(true);
             try {
-                const {dataSize} = await CatalogApiService.Instance.appendSimbadCatalog(query);
+                const {dataSize} = await CatalogApiService.Instance.loadSimbadCatalog(source);
                 this.setResultSize(dataSize);
             } finally {
                 this.setIsQuerying(false);
@@ -68,14 +70,12 @@ export class CatalogOnlineQueryStore {
 
     public loadSelectedVizierCatalogs = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const sources = configStore.selectedVizierSource.filter(source => source !== undefined);
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
-        if (centerCoord.x && centerCoord.y) {
-            const querySource = CatalogApiService.captureQuery("vizier");
+        const tableNames = configStore.selectedVizierSource.map(source => source?.table.name).filter((name): name is string => typeof name === "string" && name.length > 0);
+        const source = CatalogApiService.captureQuery("vizier");
+        if (source && tableNames.length) {
             this.setIsQuerying(true);
             try {
-                const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-                CatalogApiService.Instance.appendVizierCatalog(resources, {querySource});
+                await CatalogApiService.Instance.loadVizierCatalogs(source, tableNames);
             } finally {
                 this.setIsQuerying(false);
             }
