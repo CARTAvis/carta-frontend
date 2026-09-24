@@ -523,8 +523,7 @@ export class AppStore {
 
     @computed get catalogNextFileId(): number {
         let id = 1;
-        const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
-        while ((currentCatalogIds?.includes(id) && currentCatalogIds.length) || this.pendingCatalogFileIds.has(id)) {
+        while (this.catalogStore.catalogProfileStores.has(id) || this.pendingCatalogFileIds.has(id)) {
             id += 1;
         }
         return id;
