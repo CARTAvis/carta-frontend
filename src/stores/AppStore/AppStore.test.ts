@@ -14,7 +14,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
-        catalogStore.catalogPlots.clear();
+        catalogStore.plotBindings.componentIds().forEach(id => catalogStore.plotBindings.closeComponent(id));
         catalogStore.imageAssociatedCatalogId.clear();
         widgetsStore.catalogWidgets.clear();
         widgetsStore.catalogPlotWidgets.clear();

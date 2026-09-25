@@ -30,7 +30,7 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.visitNodes.mockReset();
         CatalogStore.Instance.catalogProfileStores.clear();
         CatalogStore.Instance.catalogDisplayStores.clear();
-        Array.from(CatalogStore.Instance.catalogPlots.keys()).forEach(componentId => CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId));
+        CatalogStore.Instance.plotBindings.componentIds().forEach(componentId => CatalogStore.Instance.plotBindings.closeComponent(componentId));
     });
 
     afterEach(() => {
@@ -204,12 +204,12 @@ describe("WidgetsStore PV preview test ids", () => {
         const oldWidgetId = widgetsStore.addCatalogPlotWidget(props)!;
         const componentId = "catalog-plot-component-retained";
 
-        CatalogStore.Instance.setCatalogPlots(componentId, 7, oldWidgetId);
-        CatalogStore.Instance.clearCatalogPlotsByFileId(7);
+        CatalogStore.Instance.plotBindings.register(componentId, 7, oldWidgetId);
+        CatalogStore.Instance.plotBindings.closeCatalog(7);
 
         expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
 
-        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        CatalogStore.Instance.plotBindings.closeComponent(componentId);
         widgetsStore.catalogPlotWidgets.clear();
     });
 

@@ -96,15 +96,13 @@ function createSession() {
             interruptRequests: jest.fn(),
             waitForRequest: jest.fn(() => Promise.resolve({success: true})),
             failRequest: jest.fn(),
-            setWorkspaceCatalogId: jest.fn(),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),
             restoreCatalogFromWorkspace: jest.fn((_catalogFileId?: number, _options?: unknown) => {
                 calls.push("restoreCatalogRows");
                 return true;
             }),
-            getAssociatedIdByWidgetId: jest.fn(() => ({catalogPlotComponentId: "", catalogFileId: 10})),
-            rebindCatalogPlot: jest.fn((_catalogPlotWidgetId?: string, _catalogFileId?: number) => true)
+            plotBindings: {restoreWorkspacePlots: jest.fn(() => [])}
         },
         widgetsStore: {
             catalogWidgets: new Map(),
@@ -122,19 +120,6 @@ function createSession() {
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
     return {appStore, calls, profileStore, displayStore};
-}
-
-/** What the restorer needs of a catalog plot: the catalog it names, and a way to go on naming it. */
-function createPlotStore(workspaceCatalogId: number, columns: {xColumnName: string; yColumnName?: string}) {
-    const plotStore = {
-        workspaceCatalogId,
-        statisticColumnName: "None",
-        setWorkspaceCatalogId: jest.fn((id: number) => {
-            plotStore.workspaceCatalogId = id;
-        }),
-        ...columns
-    };
-    return plotStore;
 }
 
 /** Drive the restore the way a mobx flow does. */
@@ -408,48 +393,6 @@ describe("WorkspaceRestorer", () => {
 
         expect(widgetStore.setUnavailableWorkspaceCatalogId).toHaveBeenCalledWith(7);
         expect(problems).toContain("Could not restore catalog widget catalog-overlay-0: workspace catalog 7 is unavailable; it is showing the catalog sources.vot instead");
-    });
-
-    test("preserves and reports an unavailable catalog plot source while identifying its fallback", async () => {
-        const {appStore} = createSession();
-        const plotStore = createPlotStore(7, {xColumnName: "Name", yColumnName: undefined});
-        appStore.widgetsStore.catalogPlotWidgets.set("catalog-plot-0", plotStore);
-
-        const problems = await restore(createWorkspace({catalogs: [CATALOG]}));
-
-        expect(plotStore.workspaceCatalogId).toBe(7);
-        expect(problems).toContain("Could not restore catalog plot catalog-plot-0: workspace catalog 7 is unavailable; it is showing the catalog sources.vot instead");
-    });
-
-    test("rebinds a restored catalog plot to the catalog it was saved against after catalog switch", async () => {
-        const {appStore} = createSession();
-        const catalogB = {id: 2, source: {type: "file" as const, filename: "sources_b.vot"}, associatedImageId: 1};
-        const profileStoreB = {
-            applyTableConfig: jest.fn(() => ({success: true, errors: []})),
-            catalogHeader: [{name: "FLUX_B"}, {name: "MAG_B"}],
-            isComplete: true
-        };
-        appStore.catalogStore.catalogProfileStores.set(20, profileStoreB);
-        let catalogIndex = 0;
-        appStore.appendCatalog = jest.fn(() => Promise.resolve(catalogIndex++ === 0 ? 10 : 20));
-
-        const plotStore = createPlotStore(2, {xColumnName: "FLUX_B", yColumnName: "MAG_B"});
-        appStore.widgetsStore.catalogPlotWidgets.set("catalog-plot-0", plotStore);
-        (appStore.catalogStore.getAssociatedIdByWidgetId as jest.Mock).mockReturnValue({catalogPlotComponentId: "catalog-plot-component-0", catalogFileId: 10});
-
-        const problems = await restore(createWorkspace({catalogs: [CATALOG, catalogB]}));
-
-        expect(problems).toEqual([]);
-        expect(appStore.catalogStore.rebindCatalogPlot).toHaveBeenCalledWith("catalog-plot-0", 20);
-    });
-
-    test("reports catalog plot columns that are no longer available", async () => {
-        const {appStore} = createSession();
-        appStore.widgetsStore.catalogPlotWidgets.set("catalog-plot-0", {workspaceCatalogId: 1, xColumnName: "Name", yColumnName: "Flux", statisticColumnName: "None"});
-
-        const problems = await restore(createWorkspace({catalogs: [CATALOG]}));
-
-        expect(problems).toContain("Could not fully restore catalog plot catalog-plot-0 for the catalog sources.vot: column Flux is unavailable");
     });
 
     test("says what kind of thing each report is about, and which one", async () => {

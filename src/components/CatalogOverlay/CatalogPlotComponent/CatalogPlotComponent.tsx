@@ -55,7 +55,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         this.widgetId = props.id;
         this.histogramY = {yMin: undefined, yMax: undefined};
-        this.componentId = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId).catalogPlotComponentId ?? "";
+        this.componentId = CatalogStore.Instance.plotBindings.displayedForWidget(this.widgetId).componentId ?? "";
         this.catalogFileNames = new Map<number, string>();
 
         makeObservable(this);
@@ -159,14 +159,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     /** The catalog this component is showing, which a workspace restore can move out from under it. */
     @computed get catalogFileId(): number {
-        return CatalogStore.Instance.getActiveCatalogPlotFile(this.componentId) ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+        return CatalogStore.Instance.plotBindings.displayedForComponent(this.componentId)?.catalogFileId ?? CatalogStore.PENDING_CATALOG_FILE_ID;
     }
 
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
-        if (!CatalogStore.Instance.catalogPlots.has(this.componentId)) {
+        const displayed = CatalogStore.Instance.plotBindings.displayedForComponent(this.componentId);
+        if (!displayed) {
             return undefined;
         }
-        let widgetStoreId = CatalogStore.Instance.getCatalogPlotWidgetId(this.componentId, this.catalogFileId);
+        let widgetStoreId = displayed.widgetId;
         if (!widgetStoreId) {
             widgetStoreId = this.addNewWidgetStore();
         }
@@ -187,12 +188,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogStore = CatalogStore.Instance;
         // An explicit choice, so the plot is saved against the catalog it now shows even if it was
         // restored holding the ID of a catalog that was unavailable.
-        catalogStore.selectCatalogPlotFile(this.componentId, fileId);
-        if (!catalogStore.catalogPlots.has(this.componentId)) {
+        const plotWidgetStoreId = catalogStore.plotBindings.selectCatalog(this.componentId, fileId);
+        if (!catalogStore.plotBindings.displayedForComponent(this.componentId)) {
             this.addNewWidgetStore();
             return;
         }
-        const plotWidgetStoreId = catalogStore.getCatalogPlotWidgetId(this.componentId, fileId);
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
@@ -244,7 +244,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 };
                 const scatterPlotId = appStore.widgetsStore.addCatalogPlotWidget(scatterProps);
                 if (scatterPlotId !== null) {
-                    catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, scatterPlotId);
+                    catalogStore.plotBindings.register(this.componentId, this.catalogFileId, scatterPlotId);
                     return scatterPlotId;
                 }
                 return undefined;
@@ -255,7 +255,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 };
                 const histogramPlotId = appStore.widgetsStore.addCatalogPlotWidget(historgramProps);
                 if (histogramPlotId !== null) {
-                    catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, histogramPlotId);
+                    catalogStore.plotBindings.register(this.componentId, this.catalogFileId, histogramPlotId);
                     return histogramPlotId;
                 }
                 return undefined;

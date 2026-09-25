@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
 import {CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
@@ -51,7 +51,6 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
-import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {smoothStepOffset} from "utilities";
 
 export type {DefaultWidgetConfig} from "models";
@@ -390,7 +389,7 @@ export class WidgetsStore {
         let nextIndex = 0;
         while (true) {
             const nextId = `${defaultId}-${nextIndex}`;
-            const isRetainedCatalogPlot = defaultId === CatalogPlotComponent.WidgetConfig.type && CatalogStore.Instance.isCatalogPlotWidgetIdReserved(nextId);
+            const isRetainedCatalogPlot = defaultId === CatalogPlotComponent.WidgetConfig.type && CatalogStore.Instance.plotBindings.isWidgetIdReserved(nextId);
             if (!widgets.has(nextId) && !isRetainedCatalogPlot) {
                 return nextId;
             }
@@ -471,7 +470,7 @@ export class WidgetsStore {
         if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
             this.deleteCatalogWidget(widgetId);
         } else if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.clearCatalogPlotsByWidgetId(widgetId);
+            CatalogStore.Instance.plotBindings.closeWidget(widgetId);
         }
     };
 
@@ -573,22 +572,9 @@ export class WidgetsStore {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            CatalogStore.Instance.setCatalogPlots(componentId, this.getRestoredCatalogPlotFileId(itemId), itemId);
+            CatalogStore.Instance.plotBindings.registerRestored(componentId, itemId);
         }
         return itemId;
-    };
-
-    /**
-     * The catalog a restored plot belongs to: the one it was saved against when that catalog is already
-     * loaded, and otherwise the first catalog of the active image. A layout is usually applied before a
-     * workspace loads its catalogs, in which case CatalogPlotComponent binds the plot once they arrive.
-     */
-    private getRestoredCatalogPlotFileId = (widgetId: string): number => {
-        const catalogStore = CatalogStore.Instance;
-        const activeCatalogFileIds = catalogStore.activeCatalogFiles;
-        const workspaceCatalogId = this.catalogPlotWidgets.get(widgetId)?.workspaceCatalogId;
-        const savedCatalogFileId = WorkspaceIdRegistry.Instance.sessionIdOf(WorkspaceItemKind.Catalog, workspaceCatalogId);
-        return (savedCatalogFileId !== undefined && activeCatalogFileIds.includes(savedCatalogFileId) ? savedCatalogFileId : activeCatalogFileIds[0]) ?? 1;
     };
 
     public removeFloatingWidgets = () => {
@@ -1101,7 +1087,7 @@ export class WidgetsStore {
                             this.removeAssociatedFloatingSetting(id);
                         }
                         if (isCatalogPlot) {
-                            CatalogStore.Instance.clearCatalogPlotsByWidgetId(id);
+                            CatalogStore.Instance.plotBindings.closeWidget(id);
                         }
                         if (isPvPreview) {
                             const regexPattern = /pv-generator-(\d+)/;
@@ -1113,15 +1099,6 @@ export class WidgetsStore {
             }
         }
         return action;
-    };
-
-    /**
-     * The catalog plot store a layout tab is showing. The tab is identified by the store it was
-     * created with, which its component may since have switched away from, and which is gone
-     * altogether once that catalog closes.
-     */
-    public getDisplayedCatalogPlotWidget = (widgetID: string): CatalogPlotWidgetStore | undefined => {
-        return this.catalogPlotWidgets.get(CatalogStore.Instance.getDisplayedCatalogPlot(widgetID).widgetId);
     };
 
     /**
@@ -1156,7 +1133,7 @@ export class WidgetsStore {
                 return this.catalogWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings);
             }
             case CatalogPlotComponent.WidgetConfig.type: {
-                return this.toCatalogPlotSettingsConfig(widgetID, shouldIncludeWorkspaceBindings);
+                return CatalogStore.Instance.plotBindings.configForLayout(widgetID, shouldIncludeWorkspaceBindings);
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1166,39 +1143,6 @@ export class WidgetsStore {
         }
 
         return widgetStore?.toConfig?.();
-    };
-
-    /** A catalog plot's settings, naming its catalog by the workspace-stable ID rather than the session's
-     * catalog file ID, which is reassigned when the catalog is loaded again. */
-    private toCatalogPlotSettingsConfig = (widgetID: string, shouldIncludeWorkspaceBindings: boolean): CatalogPlotWidgetConfig | undefined => {
-        const catalogStore = CatalogStore.Instance;
-        const {catalogPlotComponentId, catalogFileId} = catalogStore.getAssociatedIdByWidgetId(widgetID);
-
-        // A component keeps a plot per catalog it has been pointed at, but only the one it is
-        // showing is what the layout should come back to. A tab whose catalog has closed resolves
-        // through the retained component, and a widget with no component at all keeps its own.
-        const shownCatalogFileId = (catalogPlotComponentId === undefined ? undefined : catalogStore.getActiveCatalogPlotFile(catalogPlotComponentId)) ?? catalogFileId;
-        const shownWidgetId = catalogPlotComponentId === undefined ? undefined : catalogStore.getCatalogPlotWidgetId(catalogPlotComponentId, shownCatalogFileId);
-        const isShownWidgetLoaded = !!shownWidgetId && this.catalogPlotWidgets.has(shownWidgetId);
-        const activeCatalogFileId = isShownWidgetLoaded ? shownCatalogFileId : catalogFileId;
-        const activeWidgetStore = isShownWidgetLoaded ? this.catalogPlotWidgets.get(shownWidgetId) : this.catalogPlotWidgets.get(widgetID);
-
-        if (!activeWidgetStore) {
-            return undefined;
-        }
-
-        const config = activeWidgetStore.toConfig();
-        if (!shouldIncludeWorkspaceBindings) {
-            // A saved layout is reused against whatever is open, so it must not name a catalog of
-            // the session it was saved in.
-            delete config.catalogId;
-            return config;
-        }
-        // A plot restored while its catalog was absent keeps the ID it was saved with.
-        if (config.catalogId === undefined && activeCatalogFileId !== undefined && catalogStore.catalogProfileStores.has(activeCatalogFileId)) {
-            config.catalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, activeCatalogFileId);
-        }
-        return config;
     };
 
     /** Selects an existing docked widget tab, preferring the canonical component id when multiple instances exist. */
@@ -1617,7 +1561,7 @@ export class WidgetsStore {
         const componentIds = new Set<string>();
 
         if (config.type === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.catalogPlots.forEach((_value, componentId) => componentIds.add(componentId));
+            CatalogStore.Instance.plotBindings.componentIds().forEach(componentId => componentIds.add(componentId));
         } else if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
             this.catalogWidgets.forEach((_value, componentId) => componentIds.add(componentId));
         }
@@ -1678,12 +1622,6 @@ export class WidgetsStore {
             this.getCatalogWidgetStore(componentId, catalogFileNum);
         }
         this.addFloatingWidget(config);
-    };
-
-    /** Drop a catalog plot's state, letting go of the catalog ID it was naming. */
-    @action deleteCatalogPlotWidget = (widgetId: string) => {
-        this.catalogPlotWidgets.get(widgetId)?.releaseWorkspaceCatalogId();
-        this.catalogPlotWidgets.delete(widgetId);
     };
 
     /** Drop a catalog widget's state, letting go of the catalog ID it was naming. */
@@ -1796,11 +1734,14 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new CatalogPlotWidgetStore(props);
-            if (widgetSettings) {
-                widgetStore.applyConfig(widgetSettings as Partial<CatalogPlotWidgetConfig>);
+            if (this.catalogPlotWidgets.has(id)) {
+                CatalogStore.Instance.plotBindings.deletePlot(id);
             }
+            const widgetStore = new CatalogPlotWidgetStore(props);
             this.catalogPlotWidgets.set(id, widgetStore);
+            if (widgetSettings) {
+                CatalogStore.Instance.plotBindings.restoreConfig(id, widgetSettings as Partial<CatalogPlotWidgetConfig>);
+            }
         }
         return id;
     }

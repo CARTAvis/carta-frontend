@@ -1,4 +1,4 @@
-import {CatalogOverlay, WorkspaceItemKind} from "enums";
+import {WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogProfileStore, restoreWorkspaceZoom} from "stores";
@@ -560,40 +560,7 @@ export class WorkspaceRestorer {
             });
         }
 
-        for (const [widgetId, plotStore] of this.appStore.widgetsStore.catalogPlotWidgets) {
-            const workspaceCatalogId = plotStore.workspaceCatalogId;
-            if (workspaceCatalogId === undefined) {
-                continue;
-            }
-            const catalogFileId = this.catalogIds.get(workspaceCatalogId);
-            const association = this.appStore.catalogStore.getAssociatedIdByWidgetId(widgetId);
-            if (catalogFileId === undefined) {
-                // The plot goes on naming the catalog it was saved against, so its ID stays taken.
-                plotStore.setWorkspaceCatalogId(workspaceCatalogId);
-                // A plot whose own catalog has closed resolves through its component, which can
-                // leave it showing nothing to name here.
-                const shownCatalogFileId = association.catalogFileId;
-                const fallback = shownCatalogFileId !== undefined && this.appStore.catalogStore.catalogProfileStores.has(shownCatalogFileId) ? `; it is showing ${this.describeCatalogFile(shownCatalogFileId)} instead` : "";
-                this.report(WorkspaceItemKind.CatalogPlot, widgetId, `Could not restore catalog plot ${widgetId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
-                continue;
-            }
-            if (association.catalogFileId !== catalogFileId && !this.appStore.catalogStore.rebindCatalogPlot(widgetId, catalogFileId)) {
-                this.report(WorkspaceItemKind.CatalogPlot, widgetId, `Could not restore catalog plot ${widgetId} to ${this.describeWorkspaceCatalog(workspaceCatalogId)}: the plot association could not be applied`);
-                continue;
-            }
-
-            const profileStore = this.appStore.catalogStore.catalogProfileStores.get(catalogFileId);
-            const availableColumns = new Set(profileStore?.catalogHeader.map(header => header.name));
-            const columns = [plotStore.xColumnName, plotStore.yColumnName, plotStore.statisticColumnName].filter((column): column is string => typeof column === "string" && column !== CatalogOverlay.NONE);
-            const missingColumns = columns.filter(column => !availableColumns.has(column));
-            if (missingColumns.length) {
-                this.report(
-                    WorkspaceItemKind.CatalogPlot,
-                    widgetId,
-                    `Could not fully restore catalog plot ${widgetId} for ${this.describeWorkspaceCatalog(workspaceCatalogId)}: ${missingColumns.map(column => `column ${column}`).join(", ")} is unavailable`
-                );
-            }
-        }
+        this.issues.push(...this.appStore.catalogStore.plotBindings.restoreWorkspacePlots(this.workspace.catalogs, this.catalogIds));
     }
 
     private describeWorkspaceCatalog(workspaceCatalogId: number): string {

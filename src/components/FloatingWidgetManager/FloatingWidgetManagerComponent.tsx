@@ -79,7 +79,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
         const widgetsStore = WidgetsStore.Instance;
         widgetsStore.removeFloatingWidgetComponent(componentId);
-        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        CatalogStore.Instance.plotBindings.closeComponent(componentId);
     };
 
     private removeLayerListSettingsWidget = (widget: WidgetConfig) => {

@@ -161,7 +161,7 @@ describe("CatalogApiService source-driven loading", () => {
             reserveCatalogFileId: jest.fn(() => 7),
             releaseCatalogFileId: jest.fn(),
             updateCatalogProfile: jest.fn(() => "catalog-overlay-0"),
-            catalogStore: {addCatalog: jest.fn(), catalogProfileStores: new Map(), validateCatalogPlotColumns: jest.fn()},
+            catalogStore: {addCatalog: jest.fn(), catalogProfileStores: new Map(), plotBindings: {validateColumns: jest.fn()}},
             fileBrowserStore: {hideFileBrowser: jest.fn()},
             dialogStore: {hideDialog: jest.fn()}
         });

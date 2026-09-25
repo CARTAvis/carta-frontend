@@ -712,7 +712,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 };
                 const scatterPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(scatterProps);
                 if (scatterPlot.widgetComponentId) {
-                    catalogStore.setCatalogPlots(scatterPlot.widgetComponentId, catalogFileId, scatterPlot.widgetStoreId ?? "");
+                    catalogStore.plotBindings.register(scatterPlot.widgetComponentId, catalogFileId, scatterPlot.widgetStoreId ?? "");
                 }
                 break;
             case CatalogPlotType.Histogram:
@@ -722,7 +722,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 };
                 const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(historgramProps);
                 if (histogramPlot.widgetComponentId) {
-                    catalogStore.setCatalogPlots(histogramPlot.widgetComponentId, catalogFileId, histogramPlot.widgetStoreId ?? "");
+                    catalogStore.plotBindings.register(histogramPlot.widgetComponentId, catalogFileId, histogramPlot.widgetStoreId ?? "");
                 }
                 break;
             default:

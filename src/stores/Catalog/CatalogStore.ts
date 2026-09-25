@@ -6,9 +6,10 @@ import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode, W
 import {type WorkspaceCatalogImageOverlay, type WorkspaceCatalogSelection} from "models";
 import {CatalogWebGLService, type StreamedMessage} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
+import {CatalogPlotBindingStore} from "stores/Catalog/CatalogPlotBindingStore";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {CatalogAxisEligibility, type CatalogCoordinateSystem, getDegreesPerCatalogUnit, isCatalogNumericDataType, minMaxArray, PendingRequestTracker, ProtobufProcessing, type RequestOutcome, setAstCatalogSystem} from "utilities";
+import {CatalogAxisEligibility, type CatalogCoordinateSystem, getDegreesPerCatalogUnit, minMaxArray, PendingRequestTracker, ProtobufProcessing, type RequestOutcome, setAstCatalogSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -32,30 +33,6 @@ function getPlottedOverlayColumns(displayStore: CatalogDisplayStore | undefined)
     return [xColumn, yColumn];
 }
 
-/**
- * What one catalog plot component is showing: the catalog it is pointed at, and the plot it keeps
- * for each catalog it has been pointed at.
- *
- * The selection lives here rather than beside the plots, so that "which catalog this component is
- * showing" has one answer. The component that draws it reads this rather than holding its own copy,
- * which is what lets a workspace restore move a plot onto its catalog after the fact.
- */
-export class CatalogPlotComponentState {
-    /** The catalog this component is showing, or 0 while it has none. */
-    @observable activeCatalogFileId: number;
-    /** Catalog file ID : the ID of the plot widget store kept for that catalog. */
-    readonly plotWidgetIds = observable.map<number, string>();
-
-    constructor(activeCatalogFileId: number) {
-        this.activeCatalogFileId = activeCatalogFileId;
-        makeObservable(this);
-    }
-
-    @action setActiveCatalogFileId = (catalogFileId: number | undefined) => {
-        this.activeCatalogFileId = catalogFileId ?? 0;
-    };
-}
-
 export class CatalogStore {
     /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
     public static readonly PENDING_CATALOG_FILE_ID = 0;
@@ -73,10 +50,12 @@ export class CatalogStore {
     @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
-    // catalog plot component Id : what that component is showing
-    @observable catalogPlots: Map<string, CatalogPlotComponentState> = new Map();
-    // Retains the component association after its catalog-specific widget store closes.
-    @observable private catalogPlotComponents: Map<string, string> = new Map();
+    /** Catalog plot binding and Workspace ID lifecycle. */
+    public readonly plotBindings = new CatalogPlotBindingStore(
+        this,
+        () => WidgetsStore.Instance,
+        message => AppStore.Instance.logStore.addWarning(message, ["catalog"])
+    );
     // catalog file Id : catalog Profile store
     @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // Catalog display state is scoped to the catalog, not to an overlay widget.
@@ -433,30 +412,6 @@ export class CatalogStore {
         }
     }
 
-    /** Move a plot widget onto another catalog, discarding whichever plot that catalog held in the same component. */
-    @action rebindCatalogPlot = (catalogPlotWidgetId: string, catalogFileId: number): boolean => {
-        for (const componentState of this.catalogPlots.values()) {
-            for (const [currentCatalogFileId, widgetId] of componentState.plotWidgetIds.entries()) {
-                if (widgetId !== catalogPlotWidgetId) {
-                    continue;
-                }
-                if (currentCatalogFileId === catalogFileId) {
-                    return false;
-                }
-
-                const replacedWidgetId = componentState.plotWidgetIds.get(catalogFileId);
-                if (replacedWidgetId && replacedWidgetId !== catalogPlotWidgetId) {
-                    WidgetsStore.Instance.deleteCatalogPlotWidget(replacedWidgetId);
-                }
-                componentState.plotWidgetIds.delete(currentCatalogFileId);
-                componentState.plotWidgetIds.set(catalogFileId, catalogPlotWidgetId);
-                componentState.setActiveCatalogFileId(catalogFileId);
-                return true;
-            }
-        }
-        return false;
-    };
-
     @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
         this.imageAssociatedCatalogId.set(activeFrameIndex, associatedCatalogFiles);
     }
@@ -466,27 +421,9 @@ export class CatalogStore {
         const activeCatalogFileIds = fileIds ?? [];
         if (activeCatalogFileIds.length) {
             WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
-            this.resetCatalogPlotSelections(activeCatalogFileIds);
+            this.plotBindings.resetSelections(activeCatalogFileIds);
         }
     }
-
-    /**
-     * Keep every plot component showing a catalog that is actually on the image now in front.
-     *
-     * A component holds its own selection, so this is the one place that moves it when the catalog
-     * it was showing is no longer one of the choices.
-     */
-    @action resetCatalogPlotSelections = (activeCatalogFileIds: number[]) => {
-        if (!activeCatalogFileIds.length) {
-            return;
-        }
-        const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
-        this.catalogPlots.forEach(componentState => {
-            if (!activeCatalogFileIdSet.has(componentState.activeCatalogFileId)) {
-                componentState.setActiveCatalogFileId(activeCatalogFileIds[0]);
-            }
-        });
-    };
 
     getImageIdByCatalog(catalogFileId: number): number | undefined {
         let imageFileId: number | undefined = undefined;
@@ -496,146 +433,6 @@ export class CatalogStore {
             }
         });
         return imageFileId;
-    }
-
-    /** The catalog a plot component is showing, if it has one. */
-    getActiveCatalogPlotFile = (componentId: string): number | undefined => {
-        return this.catalogPlots.get(componentId)?.activeCatalogFileId;
-    };
-
-    /** The plot a component keeps for one catalog, if it has been pointed at that catalog. */
-    getCatalogPlotWidgetId = (componentId: string, catalogFileId: number | undefined): string | undefined => {
-        return catalogFileId === undefined ? undefined : this.catalogPlots.get(componentId)?.plotWidgetIds.get(catalogFileId);
-    };
-
-    /**
-     * Show the catalog a user picked in a plot component.
-     *
-     * A plot restored while its catalog was absent keeps that catalog's workspace ID so a later save
-     * still names it, but a catalog the user picked replaces it: the plot now belongs to the catalog
-     * it is showing, not to the one it was restored for.
-     */
-    @action selectCatalogPlotFile = (componentId: string, catalogFileId: number) => {
-        this.catalogPlots.get(componentId)?.setActiveCatalogFileId(catalogFileId);
-        if (!this.catalogProfileStores.has(catalogFileId)) {
-            return;
-        }
-        const widgetId = this.getCatalogPlotWidgetId(componentId, catalogFileId);
-        const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
-        const workspaceCatalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
-        if (workspaceCatalogId !== undefined) {
-            plotStore?.setWorkspaceCatalogId(workspaceCatalogId);
-        }
-    };
-
-    @action setCatalogPlots(componentId: string, fileId: number, widgetId: string) {
-        let componentState = this.catalogPlots.get(componentId);
-        if (!componentState) {
-            componentState = new CatalogPlotComponentState(fileId);
-            this.catalogPlots.set(componentId, componentState);
-        }
-        componentState.plotWidgetIds.set(fileId, widgetId);
-        // Kept past the widget store's own lifetime, so that a tab whose catalog has closed can
-        // still be resolved back to the component it belongs to.
-        this.catalogPlotComponents.set(widgetId, componentId);
-        if (fileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
-            // A layout can be applied while its catalog is already open, binding a restored plot
-            // here rather than when the catalog arrives. Check its columns either way.
-            this.validateCatalogPlotColumns(fileId);
-        }
-    }
-
-    /**
-     * The plot store one catalog plot component is showing. A component keeps one store per catalog
-     * it has been switched to, so the widget ID it was created with is not always the plot on
-     * screen. A component that has never been mounted has settled on nothing, and the widget's own
-     * binding stands in for it.
-     */
-    public getDisplayedCatalogPlot(catalogPlotWidgetId: string): {widgetId: string; catalogFileId: number | undefined} {
-        const {catalogPlotComponentId, catalogFileId} = this.getAssociatedIdByWidgetId(catalogPlotWidgetId);
-        if (catalogPlotComponentId === undefined) {
-            return {widgetId: catalogPlotWidgetId, catalogFileId};
-        }
-        const selectedCatalogFileId = this.getActiveCatalogPlotFile(catalogPlotComponentId) ?? catalogFileId;
-        if (selectedCatalogFileId === undefined) {
-            return {widgetId: catalogPlotWidgetId, catalogFileId};
-        }
-        return {
-            widgetId: this.getCatalogPlotWidgetId(catalogPlotComponentId, selectedCatalogFileId) ?? catalogPlotWidgetId,
-            catalogFileId: selectedCatalogFileId
-        };
-    }
-
-    /**
-     * Drop restored plot columns the catalog turns out not to have, and say which. Columns are
-     * restored before the catalog is known, so they are checked once its data arrives, the way
-     * a restored display config is.
-     */
-    @action validateCatalogPlotColumns(fileId: number) {
-        const profileStore = this.catalogProfileStores.get(fileId);
-        if (!profileStore) {
-            return;
-        }
-        const dropped = new Set<string>();
-        this.catalogPlots.forEach(componentState => {
-            const widgetId = componentState.plotWidgetIds.get(fileId);
-            const plotStore = widgetId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetId) : undefined;
-            plotStore
-                ?.resetUnknownColumns(column => {
-                    const header = profileStore.getColumnHeader(column);
-                    return header !== undefined && isCatalogNumericDataType(header.dataType);
-                })
-                .forEach(column => dropped.add(column));
-        });
-        if (dropped.size) {
-            const catalogName = profileStore.catalogInfo.fileInfo.name ?? `catalog ${fileId}`;
-            const columns = Array.from(dropped)
-                .map(column => `"${column}"`)
-                .join(", ");
-            AppStore.Instance.logStore.addWarning(`Plot settings for ${catalogName} were not restored: ${columns} ${dropped.size > 1 ? "are not valid numeric columns" : "is not a valid numeric column"} in this catalog`, ["catalog"]);
-        }
-    }
-
-    // remove catalog plot widget, keep placeholder
-    @action clearCatalogPlotsByFileId(fileId: number) {
-        const imageFileId = this.getImageIdByCatalog(fileId);
-        const availableFileIds = (imageFileId === undefined ? [] : (this.imageAssociatedCatalogId.get(imageFileId) ?? [])).filter(candidateFileId => candidateFileId !== fileId && this.catalogProfileStores.has(candidateFileId));
-        this.catalogPlots.forEach(componentState => {
-            const widgetId = componentState.plotWidgetIds.get(fileId);
-            if (widgetId) {
-                WidgetsStore.Instance.deleteCatalogPlotWidget(widgetId);
-            }
-            componentState.plotWidgetIds.delete(fileId);
-            if (componentState.activeCatalogFileId === fileId) {
-                const remainingFile = availableFileIds.find(candidateFileId => componentState.plotWidgetIds.has(candidateFileId)) ?? availableFileIds[0] ?? componentState.plotWidgetIds.keys().next().value;
-                componentState.setActiveCatalogFileId(remainingFile ?? undefined);
-            }
-        });
-    }
-
-    /** Whether a layout tab still retains this plot ID after its catalog store was removed. */
-    public isCatalogPlotWidgetIdReserved(widgetId: string): boolean {
-        return this.catalogPlotComponents.has(widgetId);
-    }
-
-    @action clearCatalogPlotsByComponentId(componentId: string) {
-        const componentState = this.catalogPlots.get(componentId);
-        if (componentState) {
-            componentState.plotWidgetIds.forEach(widgetId => WidgetsStore.Instance.deleteCatalogPlotWidget(widgetId));
-            this.catalogPlots.delete(componentId);
-        }
-        this.catalogPlotComponents.forEach((plotComponentId, widgetId) => {
-            if (plotComponentId === componentId) {
-                this.catalogPlotComponents.delete(widgetId);
-            }
-        });
-    }
-
-    @action clearCatalogPlotsByWidgetId(widgetId: string) {
-        const catalogs = this.getAssociatedIdByWidgetId(widgetId);
-        if (catalogs.catalogPlotComponentId) {
-            this.clearCatalogPlotsByComponentId(catalogs.catalogPlotComponentId);
-        }
     }
 
     @action closeAssociatedCatalog(imageFileId: number) {
@@ -707,30 +504,6 @@ export class CatalogStore {
             }
         });
         return frameId;
-    }
-
-    getAssociatedIdByWidgetId(catalogPlotWidgetId: string): {catalogPlotComponentId: string | undefined; catalogFileId: number | undefined} {
-        let catalogPlotComponentId: string | undefined;
-        let catalogFileId: number | undefined;
-        this.catalogPlots.forEach((componentState, componentId) => {
-            componentState.plotWidgetIds.forEach((widgetId, fileId) => {
-                if (widgetId === catalogPlotWidgetId) {
-                    catalogPlotComponentId = componentId;
-                    catalogFileId = fileId;
-                }
-            });
-        });
-        if (catalogPlotComponentId !== undefined) {
-            return {catalogPlotComponentId, catalogFileId};
-        }
-        // A widget loses its own binding when its catalog closes, but the layout still identifies
-        // the tab by it. The component it was created in outlives that, and is still showing a
-        // plot, so the tab resolves through it rather than becoming an orphan.
-        const retainedComponentId = this.catalogPlotComponents.get(catalogPlotWidgetId);
-        return {
-            catalogPlotComponentId: retainedComponentId,
-            catalogFileId: retainedComponentId !== undefined ? this.getActiveCatalogPlotFile(retainedComponentId) : undefined
-        };
     }
 
     getCatalogFileNames(fileIds: Array<number>) {

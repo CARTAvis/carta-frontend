@@ -1255,7 +1255,7 @@ export class AppStore {
                     this.fileBrowserStore.hideFileBrowser();
                     const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                     this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                    this.catalogStore.validateCatalogPlotColumns(fileId);
+                    this.catalogStore.plotBindings.validateColumns(fileId);
                     return fileId;
                 } else {
                     throw new Error("No catalog widget");
@@ -1303,7 +1303,7 @@ export class AppStore {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             const catalogStore = CatalogStore.Instance;
             // close all associated catalog plots widgets
-            catalogStore.clearCatalogPlotsByFileId(fileId);
+            catalogStore.plotBindings.closeCatalog(fileId);
             // remove overlay
             catalogStore.removeCatalog(fileId, catalogComponentId);
             // remove profile store
