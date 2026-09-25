@@ -305,10 +305,8 @@ export class WorkspaceSnapshotter {
         this.appStore.widgetsStore.catalogWidgets.forEach((widgetStore, componentId) => {
             const widgetId = widgetStore.widgetId || componentId;
             const catalogFileId = widgetStore.selectedCatalogId;
-            // A widget restored for a catalog that was unavailable keeps naming that catalog.
-            if (widgetStore.unavailableWorkspaceCatalogId !== undefined) {
-                selectedCatalogIds[widgetId] = widgetStore.unavailableWorkspaceCatalogId;
-            } else if (this.appStore.catalogStore.catalogProfileStores.has(catalogFileId)) {
+            // A widget showing no loaded catalog names none: a Workspace describes only what was loaded.
+            if (this.appStore.catalogStore.catalogProfileStores.has(catalogFileId)) {
                 const workspaceCatalogId = this.catalogIdOf(catalogFileId);
                 if (workspaceCatalogId !== undefined) {
                     selectedCatalogIds[widgetId] = workspaceCatalogId;

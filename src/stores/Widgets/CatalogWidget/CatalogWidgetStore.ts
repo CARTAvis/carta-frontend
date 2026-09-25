@@ -26,7 +26,6 @@ export class CatalogWidgetStore {
 
     @observable widgetId: string;
     @observable selectedCatalogId: number = 1;
-    @observable unavailableWorkspaceCatalogId: number | undefined = undefined;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
      * Widths of the header table's columns. The table lists the catalog's columns but belongs to the
@@ -52,28 +51,6 @@ export class CatalogWidgetStore {
 
     @action setSelectedCatalogId = (catalogFileId: number) => {
         this.selectedCatalogId = catalogFileId;
-        this.releaseUnavailableWorkspaceCatalogId();
-    };
-
-    /**
-     * Keep naming a catalog a workspace could not bring back.
-     *
-     * The ID stays spoken for while the widget holds it, so that a catalog opened afterwards is not
-     * handed the ID this widget would then be pointing at.
-     */
-    @action setUnavailableWorkspaceCatalogId = (workspaceCatalogId: number) => {
-        this.releaseUnavailableWorkspaceCatalogId();
-        this.unavailableWorkspaceCatalogId = workspaceCatalogId;
-        WorkspaceIdRegistry.Instance.reserve(WorkspaceItemKind.Catalog, workspaceCatalogId);
-    };
-
-    /** Stop holding the ID of a catalog that was unavailable, whether the widget moved on or went away. */
-    @action releaseUnavailableWorkspaceCatalogId = () => {
-        if (this.unavailableWorkspaceCatalogId === undefined) {
-            return;
-        }
-        WorkspaceIdRegistry.Instance.releaseReservation(WorkspaceItemKind.Catalog, this.unavailableWorkspaceCatalogId);
-        this.unavailableWorkspaceCatalogId = undefined;
     };
 
     @action setTableSeparatorPosition = (position: string) => {

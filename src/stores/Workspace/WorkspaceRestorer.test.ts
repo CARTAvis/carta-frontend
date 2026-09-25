@@ -421,14 +421,14 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toContain("Could not restore catalog widget catalog-overlay-0 to the catalog sources.vot: the widget selection could not be applied");
     });
 
-    test("preserves and reports an unavailable catalog widget source while identifying its fallback", async () => {
+    test("reports an unavailable catalog widget source and leaves the widget on its fallback", async () => {
         const {appStore} = createSession();
-        const widgetStore = {widgetId: "catalog-overlay-0", selectedCatalogId: 10, setUnavailableWorkspaceCatalogId: jest.fn()};
+        const widgetStore = {widgetId: "catalog-overlay-0", selectedCatalogId: 10, setSelectedCatalogId: jest.fn()};
         appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", widgetStore);
 
         const problems = await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 7}}));
 
-        expect(widgetStore.setUnavailableWorkspaceCatalogId).toHaveBeenCalledWith(7);
+        expect(widgetStore.selectedCatalogId).toBe(10);
         expect(problems).toContain("Could not restore catalog widget catalog-overlay-0: workspace catalog 7 is unavailable; it is showing the catalog sources.vot instead");
     });
 

@@ -144,8 +144,6 @@ describe("CatalogStore workspace catalog IDs", () => {
     const widgetsStore = WidgetsStore.Instance;
 
     beforeEach(() => {
-        // Torn down the way the app tears them down: a widget gives its hold on a catalog ID back
-        // when it is deleted, and clearing the maps underneath it would leave the hold behind.
         Array.from(widgetsStore.catalogPlotWidgets.keys()).forEach(widgetId => CatalogStore.Instance.plotBindings.deletePlot(widgetId));
         Array.from(widgetsStore.catalogWidgets.keys()).forEach(componentId => widgetsStore.deleteCatalogWidget(componentId));
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
@@ -160,28 +158,9 @@ describe("CatalogStore workspace catalog IDs", () => {
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 13)).toBe(2);
     });
 
-    test("does not hand a new catalog an ID a widget still holds for an unavailable catalog", () => {
-        // A plot and a widget restored for catalogs the workspace could not load keep naming them.
+    test("does not hold back an ID that a restored plot names but no loaded catalog has", () => {
+        // A Workspace describes only what was loaded, so an unavailable catalog's ID is free again.
         widgetsStore.addCatalogPlotWidget({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 1});
-        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(2);
-
-        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(3);
-        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 12)).toBe(4);
-    });
-
-    test("releases an unavailable catalog ID when its widget is removed", () => {
-        widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1).setUnavailableWorkspaceCatalogId(1);
-
-        widgetsStore.removeWidget("catalog-overlay-0", "catalog-overlay");
-
-        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(1);
-    });
-
-    test("releases a catalog ID when its plot is removed", () => {
-        widgetsStore.addCatalogPlotWidget({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 1});
-        CatalogStore.Instance.plotBindings.register("catalog-plot-component-0", 5, "catalog-plot-0");
-
-        widgetsStore.removeWidget("catalog-plot-0", "catalog-plot");
 
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 11)).toBe(1);
     });
@@ -235,15 +214,14 @@ describe("Catalog plot workspace binding", () => {
         expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
     });
 
-    test("keeps an unavailable saved catalog ID instead of replacing it with the fallback catalog", () => {
+    test("saves the fallback a plot shows when the catalog it was saved against is unavailable", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
         const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {catalogId: 7});
         catalogStore.plotBindings.register("catalog-plot-component-0", 5, widgetId as string);
 
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(7);
+        catalogStore.plotBindings.restoreWorkspacePlots([{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
 
-        catalogStore.plotBindings.selectCatalog("catalog-plot-component-0", 5);
         expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
     });
 
@@ -362,7 +340,7 @@ describe("Catalog plot workspace binding", () => {
         expect(savedConfig.yColumnName).toBe("DEC_A");
     });
 
-    test("saves a plot against the catalog the user picked, not the unavailable one it fell back from", () => {
+    test("saves a plot against the catalog it shows as the user moves between catalogs", () => {
         // Catalog A (workspace ID 10) is not loaded, so a plot restored for it falls back to catalog B.
         showCatalog(2);
         catalogStore.catalogProfileStores.set(3, CreateEmptyProfileStore());
@@ -372,8 +350,8 @@ describe("Catalog plot workspace binding", () => {
         const plotStoreId = widgetsStore.addCatalogPlotWidget({xColumnName: "RA_A", yColumnName: "DEC_A", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 10});
         catalogStore.plotBindings.register("catalog-plot-component-0", 2, plotStoreId as string);
 
-        // The fallback is automatic, so catalog A's ID is still the one that would be saved.
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig)?.catalogId).toBe(10);
+        // The fallback is the plot's own catalog now, so catalog B's ID is the one that would be saved.
+        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig)?.catalogId).toBe(20);
 
         // The user picks catalog C, then picks catalog B back.
         const plotStoreCId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_C", yColumnName: "MAG_C", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
@@ -1071,9 +1049,20 @@ describe("CatalogStore widget selection", () => {
     const catalogStore = CatalogStore.Instance;
     const widgetsStore = WidgetsStore.Instance;
 
+    beforeEach(() => {
+        widgetsStore.catalogWidgets.clear();
+    });
+
     afterEach(() => {
         catalogStore.imageAssociatedCatalogId.clear();
         widgetsStore.catalogWidgets.clear();
+    });
+
+    test("moves a widget left on a Restore fallback to the catalog a user selects a source in", () => {
+        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+
+        expect(widgetsStore.updateCatalogWidgetSelection(9)).toBe("catalog-widget-0");
+        expect(widget.selectedCatalogId).toBe(9);
     });
 
     test("resets an unavailable widget selection to the first active catalog", () => {

@@ -547,7 +547,6 @@ export class WorkspaceRestorer {
                             widgetStore.setSelectedCatalogId(fallbackCatalogFileId);
                         }
                     }
-                    widgetStore?.setUnavailableWorkspaceCatalogId(workspaceCatalogId);
                     const fallback = widgetStore && this.appStore.catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId) ? `; it is showing ${this.describeCatalogFile(widgetStore.selectedCatalogId)} instead` : "";
                     this.report(WorkspaceItemKind.CatalogWidget, widgetId, `Could not restore catalog widget ${widgetId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
                 } else if (!this.appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId(widgetId, selectedCatalogFileId)) {

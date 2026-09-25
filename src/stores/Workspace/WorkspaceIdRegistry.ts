@@ -8,8 +8,6 @@ class ItemIds {
     readonly workspaceIds = observable.map<number, number>();
     /** Workspace ID to the session file ID it now refers to. */
     readonly sessionIds = observable.map<number, number>();
-    /** Workspace IDs that are spoken for without an item of their own. */
-    readonly reservations = observable.map<number, number>();
 }
 
 /**
@@ -63,7 +61,7 @@ export class WorkspaceIdRegistry {
         }
 
         let workspaceId = 1;
-        while (ids.sessionIds.has(workspaceId) || ids.reservations.has(workspaceId)) {
+        while (ids.sessionIds.has(workspaceId)) {
             workspaceId++;
         }
         this.bind(kind, sessionId, workspaceId);
@@ -81,7 +79,6 @@ export class WorkspaceIdRegistry {
         if (displacedSessionId !== undefined && displacedSessionId !== sessionId) {
             ids.workspaceIds.delete(displacedSessionId);
         }
-        ids.reservations.delete(workspaceId);
         this.bind(kind, sessionId, workspaceId);
     };
 
@@ -95,32 +92,6 @@ export class WorkspaceIdRegistry {
         ids.workspaceIds.delete(sessionId);
     };
 
-    /**
-     * Hold an ID for an item that is not loaded.
-     *
-     * A widget restored for an item a workspace could not bring back keeps naming that item, so
-     * handing the same ID to something opened afterwards would silently move the widget onto it.
-     * Reservations are counted: two widgets can be left holding the same missing item.
-     */
-    @action reserve = (kind: WorkspaceIdentifiedItemKind, workspaceId: number): void => {
-        const ids = this.idsOf(kind);
-        ids.reservations.set(workspaceId, (ids.reservations.get(workspaceId) ?? 0) + 1);
-    };
-
-    /** Let go of one hold taken by {@link reserve}. */
-    @action releaseReservation = (kind: WorkspaceIdentifiedItemKind, workspaceId: number): void => {
-        const ids = this.idsOf(kind);
-        const holds = ids.reservations.get(workspaceId);
-        if (holds === undefined) {
-            return;
-        }
-        if (holds > 1) {
-            ids.reservations.set(workspaceId, holds - 1);
-        } else {
-            ids.reservations.delete(workspaceId);
-        }
-    };
-
     /** The ID a workspace knows a loaded item by, if it has one. */
     public workspaceIdOf = (kind: WorkspaceIdentifiedItemKind, sessionId: number | undefined): number | undefined => {
         return sessionId === undefined ? undefined : this.idsOf(kind).workspaceIds.get(sessionId);
@@ -131,15 +102,7 @@ export class WorkspaceIdRegistry {
         return workspaceId === undefined ? undefined : this.idsOf(kind).sessionIds.get(workspaceId);
     };
 
-    /**
-     * Forget the ID of every loaded item of one kind, for a session that is being emptied.
-     *
-     * Reservations are left alone. They belong to the widgets that took them, which outlive the
-     * items being forgotten here and go on naming the ones they were left pointing at: dropping a
-     * hold its holder still has would let the next item opened be given an ID a widget is already
-     * using, which is the alias reservations exist to prevent. A reservation ends when whoever took
-     * it gives it back, or when a restore adopts the ID for an item of its own.
-     */
+    /** Forget the ID of every loaded item of one kind, for a session that is being emptied. */
     @action clear = (kind: WorkspaceIdentifiedItemKind): void => {
         const ids = this.idsOf(kind);
         ids.workspaceIds.clear();

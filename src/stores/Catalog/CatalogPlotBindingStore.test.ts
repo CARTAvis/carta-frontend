@@ -18,28 +18,33 @@ describe("CatalogPlotBindingStore", () => {
         jest.restoreAllMocks();
     });
 
-    test("keeps the saved Catalog ID when Restore leaves a plot showing a fallback", () => {
-        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 7}) as string;
+    test("takes the fallback as the plot's catalog when Restore cannot bring back the saved one", () => {
+        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1}) as string;
         bindings.register("catalog-plot-component-0", 5, widgetId);
         catalogs.catalogProfileStores.set(5, {catalogInfo: {fileInfo: {name: "fallback.vot"}}, catalogHeader: []} as any);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
 
-        const issues = bindings.restoreWorkspacePlots([{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
+        const issues = bindings.restoreWorkspacePlots([{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect(bindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(5);
-        expect(bindings.configForLayout(widgetId, true)?.catalogId).toBe(7);
+        expect(bindings.configForLayout(widgetId, true)?.catalogId).toBe(2);
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
             message: "Could not restore catalog plot catalog-plot-0: the catalog missing.vot is unavailable; it is showing catalog file 5 instead"
         });
+        // The unavailable catalog's ID is not held back from the next catalog opened.
+        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
     });
 
-    test("releases a saved Catalog ID when a Layout replaces the plot settings", () => {
-        widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1});
+    test("forgets the saved Catalog ID once Restore has bound the plots", () => {
+        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1}) as string;
+        bindings.restoreWorkspacePlots([], new Map());
 
-        widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+        const issues = bindings.restoreWorkspacePlots([{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
-        expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
+        expect(issues).toEqual([]);
+        expect(bindings.configForLayout(widgetId, true)?.catalogId).toBeUndefined();
     });
 
     test("rebinds to the restored Catalog and releases the plot it replaces", () => {
@@ -48,6 +53,8 @@ describe("CatalogPlotBindingStore", () => {
         bindings.register("catalog-plot-component-0", 1, restored);
         bindings.register("catalog-plot-component-0", 5, replaced);
         catalogs.catalogProfileStores.set(5, {catalogHeader: [{name: "RA"}, {name: "DEC"}]} as any);
+
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 20);
 
         const issues = bindings.restoreWorkspacePlots([{id: 20, source: {type: "file", filename: "sources.vot"}}], new Map([[20, 5]]));
 

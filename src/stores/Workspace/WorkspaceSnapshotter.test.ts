@@ -136,20 +136,20 @@ describe("WorkspaceSnapshotter", () => {
 
     test("names the catalog each widget shows by the workspace's own catalog ID", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: undefined} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.selectedCatalogIds).toEqual({"widget-a": 1});
     });
 
-    test("keeps naming the catalog a widget was restored for when it was unavailable", () => {
+    test("names no catalog for a widget that shows no loaded catalog", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10, unavailableWorkspaceCatalogId: 7} as never);
+        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 99} as never);
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(workspace.selectedCatalogIds).toEqual({"widget-a": 7});
+        expect(workspace.selectedCatalogIds).toBeUndefined();
     });
 
     test("reports a generated image instead of capturing it", () => {

@@ -1624,9 +1624,8 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    /** Drop a catalog widget's state, letting go of the catalog ID it was naming. */
+    /** Drop a catalog widget's state. */
     @action deleteCatalogWidget = (componentId: string) => {
-        this.catalogWidgets.get(componentId)?.releaseUnavailableWorkspaceCatalogId();
         this.catalogWidgets.delete(componentId);
     };
 
