@@ -1613,13 +1613,15 @@ export class WidgetsStore {
     };
 
     reloadFloatingCatalogWidget = () => {
-        const appStore = AppStore.Instance;
-        const catalogFileNum = appStore.catalogNum;
+        // Show a catalog that is loaded, preferring one on the active image: file IDs are not
+        // contiguous once a catalog has been closed, so the number of catalogs is not one of them.
+        const catalogStore = CatalogStore.Instance;
+        const catalogFileId = catalogStore.activeCatalogFiles.find(fileId => catalogStore.catalogProfileStores.has(fileId)) ?? catalogStore.catalogProfileStores.keys().next().value;
         const componentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
         const config = new WidgetConfig(componentId, CatalogOverlayComponent.WidgetConfig);
         config.componentId = componentId;
-        if (catalogFileNum) {
-            this.getCatalogWidgetStore(componentId, catalogFileNum);
+        if (catalogFileId !== undefined) {
+            this.getCatalogWidgetStore(componentId, catalogFileId);
         }
         this.addFloatingWidget(config);
     };

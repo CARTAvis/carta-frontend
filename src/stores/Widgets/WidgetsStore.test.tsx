@@ -242,3 +242,55 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(widgetsStore.catalogWidgets.has("catalog-overlay-7")).toBe(false);
     });
 });
+
+describe("WidgetsStore reloadFloatingCatalogWidget", () => {
+    const catalogStore = CatalogStore.Instance;
+
+    beforeEach(() => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, zIndexManager: {assignIndex: jest.fn()}} as any);
+        catalogStore.catalogProfileStores.clear();
+    });
+
+    afterEach(() => {
+        catalogStore.catalogProfileStores.clear();
+        catalogStore.imageAssociatedCatalogId.clear();
+        jest.restoreAllMocks();
+    });
+
+    test("shows a catalog that is still loaded after one in the middle is closed", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        // Catalogs 1, 2 and 3 were opened and catalog 2 was closed, so two catalogs remain.
+        catalogStore.catalogProfileStores.set(1, {} as any);
+        catalogStore.catalogProfileStores.set(3, {} as any);
+
+        widgetsStore.reloadFloatingCatalogWidget();
+
+        const [widgetStore] = Array.from(widgetsStore.catalogWidgets.values());
+        expect(widgetStore.selectedCatalogId).toBe(1);
+        expect(catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId)).toBe(true);
+    });
+
+    test("prefers a loaded catalog of the active image", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        catalogStore.catalogProfileStores.set(1, {} as any);
+        catalogStore.catalogProfileStores.set(3, {} as any);
+        // The active image still lists catalog 2, which has no profile store.
+        const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        catalogStore.imageAssociatedCatalogId.set(7, [2, 3]);
+
+        widgetsStore.reloadFloatingCatalogWidget();
+
+        const [widgetStore] = Array.from(widgetsStore.catalogWidgets.values());
+        expect(widgetStore.selectedCatalogId).toBe(3);
+    });
+
+    test("leaves the widget without a catalog when none is loaded", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.reloadFloatingCatalogWidget();
+
+        expect(widgetsStore.catalogWidgets.size).toBe(0);
+        expect(widgetsStore.floatingWidgets).toHaveLength(1);
+    });
+});
