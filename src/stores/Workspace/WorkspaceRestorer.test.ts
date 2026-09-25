@@ -3,7 +3,7 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {CatalogSystemType, RadiusUnits, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceRestorer} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** What the restorer needs of an image it has opened. */
@@ -329,6 +329,32 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.closeFile).toHaveBeenCalledWith(frame, false);
         expect(appStore.frames).not.toContain(frame);
+        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+    });
+
+    test("takes back out a catalog that arrives after another restore takes the session", async () => {
+        const {appStore, profileStore} = createSession();
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        let finishCatalog!: (fileId: number) => void;
+        const opening = new Promise<number>(resolve => (finishCatalog = resolve));
+        appStore.appendCatalog.mockReturnValue(opening);
+        const generator = new WorkspaceRestorer(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}), WorkspaceRestorer.claimGeneration()).restore();
+
+        let step = generator.next();
+        while (!step.done && !appStore.appendCatalog.mock.calls.length) {
+            step = generator.next(await step.value);
+        }
+        expect(appStore.appendCatalog).toHaveBeenCalledTimes(1);
+
+        WorkspaceRestorer.claimGeneration();
+        finishCatalog(10);
+        while (!step.done) {
+            step = generator.next(await step.value);
+        }
+
+        expect(appStore.removeCatalog).toHaveBeenCalledWith(10);
+        expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 10)).toBeUndefined();
+        expect(profileStore.applyTableConfig).not.toHaveBeenCalled();
         expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
     });
 
