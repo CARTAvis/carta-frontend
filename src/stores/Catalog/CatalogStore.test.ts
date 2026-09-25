@@ -620,12 +620,36 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     });
 
     afterEach(() => {
+        catalogStore.resetRequests("test cleanup");
         AppStore.Instance.setActiveImage(null);
     });
 
-    test("does nothing for a catalog that is not loaded", () => {
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(false);
+    test("does nothing for a catalog that is not loaded", async () => {
+        await expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).resolves.toEqual({success: false, didStart: false, message: "The catalog is not loaded"});
         expect(sendCatalogFilter).not.toHaveBeenCalled();
+    });
+
+    test("returns a failed completion when the backend cannot start the row request", async () => {
+        const profileStore = openFileCatalog(200);
+        sendCatalogFilter.mockReturnValue(false);
+
+        await expect(catalogStore.restoreCatalogFromWorkspace(1)).resolves.toEqual({success: false, didStart: false, message: "The catalog request could not be sent"});
+
+        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.isUpdatingDataStream).toBe(false);
+    });
+
+    test("returns a failed completion when sending the row request throws", async () => {
+        const profileStore = openFileCatalog(200);
+        sendCatalogFilter.mockImplementation(() => {
+            throw new Error("connection lost");
+        });
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+
+        await expect(catalogStore.restoreCatalogFromWorkspace(1)).resolves.toEqual({success: false, didStart: false, message: "The catalog request could not be sent"});
+
+        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.isUpdatingDataStream).toBe(false);
     });
 
     test("drops the preview rows and asks for the catalog again from its first row", () => {
@@ -635,7 +659,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         // The rows the catalog opened with were read before those were applied.
         expect(profileStore.subsetEndIndex).toBe(50);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1, {overlay});
 
         expect(profileStore.numVisibleRows).toBe(0);
         expect(profileStore.subsetEndIndex).toBe(0);
@@ -654,7 +678,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 3}})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 3}});
 
         expect(displayStore.plottedImageOverlayMaxRows).toBe(3);
         expect(convertSpy).not.toHaveBeenCalled();
@@ -665,7 +689,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setMaxRows(100);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 200}})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 200}});
 
         expect(profileStore.maxRows).toBe(100);
         expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(200);
@@ -692,9 +716,8 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(1);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
         let isSettled = false;
-        const completion = catalogStore.waitForRequest(1).then(result => {
+        const completion = catalogStore.restoreCatalogFromWorkspace(1).then(result => {
             isSettled = result.success;
             return result;
         });
@@ -703,8 +726,20 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         expect(isSettled).toBe(false);
 
         catalogStore.handleFilterStream({requestId: 1, message: new CARTA.CatalogFilterResponse({fileId: 1, progress: 1, subsetDataSize: 0, subsetEndIndex: 0})});
-        await expect(completion).resolves.toEqual({success: true});
+        await expect(completion).resolves.toEqual({success: true, didStart: true});
         expect(isSettled).toBe(true);
+    });
+
+    test("returns the superseded outcome to the first Restore when a later request takes over", async () => {
+        openFileCatalog(200);
+        sendCatalogFilter.mockReturnValueOnce(1).mockReturnValueOnce(2);
+
+        const first = catalogStore.restoreCatalogFromWorkspace(1);
+        const second = catalogStore.restoreCatalogFromWorkspace(1);
+
+        await expect(first).resolves.toEqual({success: false, didStart: true, message: "The catalog restore was superseded"});
+        catalogStore.handleFilterStream({requestId: 2, message: new CARTA.CatalogFilterResponse({fileId: 1, progress: 1, subsetDataSize: 0, subsetEndIndex: 0})});
+        await expect(second).resolves.toEqual({success: true, didStart: true});
     });
 
     test("keeps refusing a closed catalog's responses once its file ID is opened again", () => {
@@ -712,7 +747,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
         openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(4);
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1);
 
         catalogStore.removeCatalog(1);
         // The lowest free file ID is handed to the next catalog opened, which has not yet asked for
@@ -727,14 +762,13 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         sendCatalogFilter.mockReturnValue(1);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
-        const completion = catalogStore.waitForRequest(1);
+        const completion = catalogStore.restoreCatalogFromWorkspace(1);
         expect(profileStore.isLoadingData).toBe(true);
         expect(profileStore.isUpdatingDataStream).toBe(true);
 
         catalogStore.failRequest(1, "catalog request failed");
 
-        await expect(completion).resolves.toEqual({success: false, message: "catalog request failed"});
+        await expect(completion).resolves.toEqual({success: false, didStart: true, message: "catalog request failed"});
         expect(profileStore.isLoadingData).toBe(false);
         expect(profileStore.isUpdatingDataStream).toBe(false);
     });
@@ -744,8 +778,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         try {
             openFileCatalog(200);
             sendCatalogFilter.mockReturnValue(1);
-            expect(catalogStore.restoreCatalogFromWorkspace(1, {shouldWaitForCompletion: true})).toBe(true);
-            const completion = catalogStore.waitForRequest(1);
+            const completion = catalogStore.restoreCatalogFromWorkspace(1);
 
             jest.advanceTimersByTime(29_999);
             catalogStore.handleFilterStream({requestId: 1, message: new CARTA.CatalogFilterResponse({fileId: 1, progress: 0.5, subsetDataSize: 0, subsetEndIndex: 0})});
@@ -753,7 +786,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
             expect(jest.getTimerCount()).toBeGreaterThan(0);
 
             jest.advanceTimersByTime(1);
-            await expect(completion).resolves.toEqual({success: false, message: "Timed out waiting for catalog data"});
+            await expect(completion).resolves.toEqual({success: false, didStart: true, message: "Timed out waiting for catalog data"});
         } finally {
             jest.useRealTimers();
         }
@@ -762,7 +795,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     test("asks for a column the overlay is mapped from even when the saved table hides it", () => {
         openFileCatalog(200).setDisplayedColumns(["FLUX"]);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1, {overlay});
 
         expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
     });
@@ -771,7 +804,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setDisplayedColumns(["RA"]);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {selection: {columns: ["FLUX"], rowHashes: ["selected-row"], searchRows: 125}})).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1, {selection: {columns: ["FLUX"], rowHashes: ["selected-row"], searchRows: 125}});
 
         expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 2]);
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
@@ -782,16 +815,16 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
     test("restores the table alone when no overlay was saved", () => {
         const profileStore = openFileCatalog(200);
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1)).toBe(true);
+        catalogStore.restoreCatalogFromWorkspace(1);
 
         expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
     });
 
-    test("draws an online catalog without asking for its rows again", () => {
+    test("draws an online catalog without asking for its rows again", async () => {
         catalogStore.catalogProfileStores.set(1, new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, catalogData(), CatalogType.SIMBAD));
 
-        expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).toBe(true);
+        await expect(catalogStore.restoreCatalogFromWorkspace(1, {overlay})).resolves.toEqual({success: true, didStart: true});
 
         expect(sendCatalogFilter).not.toHaveBeenCalled();
         expect(catalogStore.getCatalogDisplayStore(1)?.plottedImageOverlayXAxis).toBe("RA");

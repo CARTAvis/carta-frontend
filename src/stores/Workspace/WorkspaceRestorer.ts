@@ -1,10 +1,10 @@
 import {WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogProfileStore, restoreWorkspaceZoom} from "stores";
+import {AppStore, CatalogProfileStore, type CatalogRestoreOutcome, restoreWorkspaceZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {awaited, awaitedFlow, hashCatalogContent, type RequestOutcome, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
@@ -14,7 +14,7 @@ interface CatalogConfigRequest {
     description: string;
     /** What to report if its rows do not come back. */
     rowFailure: string;
-    completion: Promise<RequestOutcome>;
+    completion: Promise<CatalogRestoreOutcome>;
 }
 
 /**
@@ -384,7 +384,9 @@ export class WorkspaceRestorer {
                 if (!this.isCurrent) {
                     return;
                 }
-                if (restoreResult && !restoreResult.success) {
+                if (!restoreResult.didStart) {
+                    this.report(WorkspaceItemKind.Catalog, description, rowFailure);
+                } else if (!restoreResult.success) {
                     this.report(WorkspaceItemKind.Catalog, description, `${rowFailure}: ${restoreResult.message ?? "the data request failed"}`);
                 } else {
                     this.restoreCatalogSelection(catalogInfo, catalogFileId, description);
@@ -435,17 +437,11 @@ export class WorkspaceRestorer {
                 }
             }
 
-            const isRestoreStarted = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, {
+            const completion = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, {
                 overlay: shouldRestoreOverlay ? imageOverlay : undefined,
-                shouldWaitForCompletion: true,
                 selection: catalogInfo.selection
             });
-            if (!isRestoreStarted) {
-                this.report(WorkspaceItemKind.Catalog, description, rowFailure);
-                return undefined;
-            }
-
-            return {catalogInfo, catalogFileId, description, rowFailure, completion: this.appStore.catalogStore.waitForRequest(catalogFileId)};
+            return {catalogInfo, catalogFileId, description, rowFailure, completion};
         } catch (err) {
             console.error(err);
             this.appStore.catalogStore.failRequest(catalogFileId, "The catalog restoration failed");

@@ -418,8 +418,7 @@ describe("AppStore.handleErrorStream", () => {
 
     function startPendingRestore(catalogFileId: number) {
         addProfileStore(catalogFileId);
-        catalogStore.restoreCatalogFromWorkspace(catalogFileId, {shouldWaitForCompletion: true});
-        return catalogStore.catalogRequests.wait(catalogFileId);
+        return catalogStore.restoreCatalogFromWorkspace(catalogFileId);
     }
 
     test("does not fail catalog restores for unrelated or non-fatal errors", async () => {
@@ -439,7 +438,7 @@ describe("AppStore.handleErrorStream", () => {
 
         appStore.handleErrorStream({severity: 3, tags: ["catalog_filter"], data: "7", message: "catalog request failed"} as any);
 
-        await expect(firstCompletion).resolves.toEqual({success: false, message: "catalog request failed"});
+        await expect(firstCompletion).resolves.toEqual({success: false, didStart: true, message: "catalog request failed"});
         expect(catalogStore.catalogRequests.isPending(8)).toBe(true);
         catalogStore.catalogRequests.failAll("test cleanup");
     });
@@ -464,7 +463,7 @@ describe("AppStore.handleErrorStream", () => {
         const profileStore = catalogStore.catalogProfileStores.get(9)!;
         catalogStore.catalogRequests.attach(9, 1);
         catalogStore.catalogRequests.finish(9, false, "restore timed out");
-        await expect(completion).resolves.toEqual({success: false, message: "restore timed out"});
+        await expect(completion).resolves.toEqual({success: false, didStart: true, message: "restore timed out"});
 
         const updateSpy = jest.spyOn(profileStore, "updateCatalogData");
         appStore.handleCatalogFilterStream({

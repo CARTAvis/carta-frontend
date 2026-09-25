@@ -18,8 +18,12 @@ type CatalogOverlayCoords = {
 
 export interface WorkspaceCatalogRestoreOptions {
     overlay?: WorkspaceCatalogImageOverlay;
-    shouldWaitForCompletion?: boolean;
     selection?: WorkspaceCatalogSelection;
+}
+
+/** Whether row restoration was accepted, and how it ended (including an online catalog). */
+export interface CatalogRestoreOutcome extends RequestOutcome {
+    didStart: boolean;
 }
 
 /** The two columns the drawn overlay uses, which may differ from the widget controls. */
@@ -309,10 +313,6 @@ export class CatalogStore {
         this.catalogRequests.reset(message);
     }
 
-    waitForRequest(catalogFileId: number): Promise<RequestOutcome> {
-        return this.catalogRequests.wait(catalogFileId);
-    }
-
     @action addCatalog(fileId: number, size: number) {
         // A catalog is given the ID a workspace will know it by as soon as it is opened, so that
         // saving only has to read it back.
@@ -589,13 +589,25 @@ export class CatalogStore {
      * saved query would not have selected. The overlay is set up before the request goes out,
      * because each batch of rows is drawn as it arrives.
      *
-     * @returns whether the catalog could be restored as saved.
+     * Starts the request before returning, so Restore can start every catalog before awaiting any
+     * result. An already-loaded online catalog completes without another backend request.
      */
-    @action restoreCatalogFromWorkspace(catalogFileId: number, options: WorkspaceCatalogRestoreOptions = {}): boolean {
-        const {overlay, shouldWaitForCompletion = false, selection} = options;
-        if (shouldWaitForCompletion) {
-            this.catalogRequests.start(catalogFileId);
+    @action restoreCatalogFromWorkspace(catalogFileId: number, options: WorkspaceCatalogRestoreOptions = {}): Promise<CatalogRestoreOutcome> {
+        const completion = this.catalogRequests.start(catalogFileId);
+        let didStart = false;
+        try {
+            didStart = this.startCatalogRestoreRows(catalogFileId, options);
+        } catch (error) {
+            console.error(error);
+            if (this.catalogRequests.isPending(catalogFileId)) {
+                this.catalogRequests.finish(catalogFileId, false, "The catalog restoration failed");
+            }
         }
+        return completion.then(outcome => ({...outcome, didStart}));
+    }
+
+    private startCatalogRestoreRows(catalogFileId: number, options: WorkspaceCatalogRestoreOptions): boolean {
+        const {overlay, selection} = options;
 
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         if (!profileStore) {

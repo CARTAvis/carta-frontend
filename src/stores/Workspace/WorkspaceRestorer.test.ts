@@ -94,13 +94,12 @@ function createSession() {
         imageViewConfigStore: {createColorBlending: jest.fn(), imageNum: 1},
         catalogStore: {
             interruptRequests: jest.fn(),
-            waitForRequest: jest.fn(() => Promise.resolve({success: true})),
             failRequest: jest.fn(),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),
-            restoreCatalogFromWorkspace: jest.fn((_catalogFileId?: number, _options?: unknown) => {
+            restoreCatalogFromWorkspace: jest.fn((_catalogFileId?: number, _options?: unknown): Promise<{success: boolean; didStart: boolean; message?: string}> => {
                 calls.push("restoreCatalogRows");
-                return true;
+                return Promise.resolve({success: true, didStart: true});
             }),
             plotBindings: {restoreWorkspacePlots: jest.fn(() => [])}
         },
@@ -217,6 +216,44 @@ describe("WorkspaceRestorer", () => {
         expect(calls).toEqual(["appendCatalog", "applyTableConfig", "applyDisplayConfig", "restoreCatalogRows"]);
     });
 
+    test("starts every catalog row request before waiting for the first stream", async () => {
+        const {appStore, profileStore} = createSession();
+        const secondCatalog = {id: 2, source: {type: "file" as const, filename: "other.vot"}, associatedImageId: 1};
+        appStore.catalogStore.catalogProfileStores.set(20, profileStore);
+        let nextCatalogFileId = 0;
+        appStore.appendCatalog.mockImplementation(() => Promise.resolve((nextCatalogFileId += 10)));
+
+        let finishFirst!: (result: {success: boolean; didStart: boolean}) => void;
+        const firstCompletion = new Promise<{success: boolean; didStart: boolean}>(resolve => {
+            finishFirst = resolve;
+        });
+        appStore.catalogStore.restoreCatalogFromWorkspace.mockImplementation((catalogFileId: number) => (catalogFileId === 10 ? firstCompletion : Promise.resolve({success: true, didStart: true})));
+
+        const generator = new WorkspaceRestorer(createWorkspace({catalogs: [CATALOG, secondCatalog]}), WorkspaceRestorer.claimGeneration()).restore();
+        let step = generator.next();
+        while (!step.done && step.value !== firstCompletion) {
+            step = generator.next(await step.value);
+        }
+
+        expect(step.done).toBe(false);
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace.mock.calls.map(([catalogFileId]) => catalogFileId)).toEqual([10, 20]);
+
+        finishFirst({success: true, didStart: true});
+        while (!step.done) {
+            step = generator.next(await step.value);
+        }
+        expect(step.value).toEqual([]);
+    });
+
+    test("keeps the original report when a catalog row request cannot start", async () => {
+        const {appStore} = createSession();
+        appStore.catalogStore.restoreCatalogFromWorkspace.mockResolvedValue({success: false, didStart: false, message: "The catalog request could not be sent"});
+
+        const problems = await restore(createWorkspace({catalogs: [CATALOG]}));
+
+        expect(problems).toEqual(["Could not restore the rows of the catalog sources.vot"]);
+    });
+
     test("restores selected catalog rows by content identity in the selection index space", async () => {
         const {profileStore, displayStore} = createSession();
         const selection = fingerprintCatalogSelection(profileStore.catalogHeader as any, profileStore.catalogData as any, [1]);
@@ -247,7 +284,7 @@ describe("WorkspaceRestorer", () => {
         const problems = await restore(createWorkspace({catalogs: [{...CATALOG, displayConfig: {color: "#123456"}}]}));
 
         expect(problems).toEqual(['Could not restore how the catalog sources.vot is drawn: The size axis is mapped to "Fmag", which this catalog does not have']);
-        expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, {overlay: undefined, shouldWaitForCompletion: true, selection: undefined});
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, {overlay: undefined, selection: undefined});
         expect(calls).toContain("applyTableConfig");
     });
 
