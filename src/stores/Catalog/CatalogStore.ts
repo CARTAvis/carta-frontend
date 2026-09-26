@@ -188,8 +188,9 @@ export class CatalogStore {
     /**
      * Ask for the next table chunk only when the previous one has finished.
      *
-     * A restore still waiting for its rows counts as unfinished: it is not marked as loading, and a
-     * second request would take over from it and leave it reported as failed.
+     * A restore still waiting for its rows counts as unfinished too. The restore marks the catalog as
+     * loading, so this is only a safeguard: the wait is what the restore itself is held open by, and
+     * a request sent while it is open would take over from it and leave it reported as failed.
      */
     @action requestMoreRows(catalogFileId: number): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);

@@ -1017,9 +1017,11 @@ describe("CatalogStore request lifecycle", () => {
         expect(profileStore.isLoadingData).toBe(false);
     });
 
-    test("does not ask for more rows while a restore is still waiting for its own", () => {
+    test("does not ask for more rows while a restore's wait is still open, even when the catalog no longer reads as loading", () => {
         const profileStore = openCatalog();
         profileStore.setSubsetEndIndex(2);
+        // A restore marks the catalog as loading; this state is built by hand, since the guard is
+        // there for a wait that outlives that flag rather than for one the flag already covers.
         profileStore.setLoadingDataStatus(false);
         const completion = catalogStore.catalogRequests.start(catalogFileId);
 
