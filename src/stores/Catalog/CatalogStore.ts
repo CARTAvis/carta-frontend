@@ -52,6 +52,8 @@ export class CatalogStore {
 
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
+    /** Catalog file IDs held for catalogs that are still loading. */
+    private readonly pendingFileIds = new Set<number>();
     /** Catalog file ID : the file ID of the image it is overlaid on, in the order catalogs were opened. */
     readonly catalogImageIds = observable.map<number, number>();
     /** Catalog plot binding and Workspace ID lifecycle. */
@@ -311,6 +313,74 @@ export class CatalogStore {
     /** A new connection can reuse request IDs from the old one. */
     resetRequests(message: string): void {
         this.catalogRequests.reset(message);
+    }
+
+    /**
+     * Open a catalog over an image.
+     *
+     * The catalog's file ID is held while `load` runs, so a catalog asked for meanwhile is not given
+     * the same one, and is let go however loading ends. `load` builds the catalog's rows for that ID,
+     * or returns undefined when there is no catalog to open; an error it throws is passed on.
+     *
+     * @returns the catalog's file ID, or undefined when there was nothing to open or the image was
+     * closed while the catalog loaded.
+     */
+    async open(frame: FrameStore, load: (fileId: number) => Promise<CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined>): Promise<number | undefined> {
+        const fileId = this.reserveFileId();
+        try {
+            const profileStore = await load(fileId);
+            if (!profileStore) {
+                return undefined;
+            }
+            if (AppStore.Instance.getFrame(frame.frameInfo.fileId) !== frame) {
+                // The backend holds a file catalog it was asked to load; nothing will show it now.
+                if (profileStore.isFileBasedCatalog) {
+                    AppStore.Instance.backendService.closeCatalogFile(fileId);
+                }
+                return undefined;
+            }
+            this.addLoadedCatalog(fileId, frame, profileStore);
+            return fileId;
+        } finally {
+            this.releaseFileId(fileId);
+        }
+    }
+
+    /** Everything that has to hold once a catalog exists, in the order it has to be set up. */
+    @action private addLoadedCatalog(fileId: number, frame: FrameStore, profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore): void {
+        const imageFileId = frame.frameInfo.fileId;
+        if (!this.catalogsOn(imageFileId).length) {
+            // The first catalog on this image
+            WidgetsStore.Instance.resetCatalogWidgetSelections([fileId]);
+        }
+        this.catalogImageIds.set(fileId, imageFileId);
+        this.addCatalog(fileId, profileStore.catalogInfo.dataSize);
+        this.getOrCreateCatalogDisplayStore(fileId);
+        this.catalogProfileStores.set(fileId, profileStore);
+        this.plotBindings.validateColumns(fileId);
+        // A catalog that every existing widget is still waiting past gets a widget of its own, so
+        // that it is never left displayed in none.
+        if (WidgetsStore.Instance.updateCatalogWidgetSelection(fileId) === undefined) {
+            WidgetsStore.Instance.createFloatingCatalogWidget(fileId);
+        }
+    }
+
+    /**
+     * A catalog only takes up its file ID once its profile store exists, which is not until its data
+     * comes back. Without holding the ID in the meantime, a catalog asked for while another is still
+     * on its way is handed the same one, and whichever arrives second replaces the first.
+     */
+    @action private reserveFileId(): number {
+        let fileId = 1;
+        while (this.catalogProfileStores.has(fileId) || this.pendingFileIds.has(fileId)) {
+            fileId += 1;
+        }
+        this.pendingFileIds.add(fileId);
+        return fileId;
+    }
+
+    @action private releaseFileId(fileId: number): void {
+        this.pendingFileIds.delete(fileId);
     }
 
     @action addCatalog(fileId: number, size: number) {

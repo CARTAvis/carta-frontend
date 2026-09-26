@@ -24,37 +24,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogRequests.attach(1, 1);
     });
 
-    test("updates an existing widget when loading a catalog after the widget store exists", () => {
-        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
-        [1].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 100));
-
-        jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
-
-        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
-
-        expect(componentId).toBe("catalog-overlay-component-0");
-        expect(widgetsStore.createFloatingCatalogWidget).not.toHaveBeenCalled();
-        expect(widget.selectedCatalogId).toBe(2);
-    });
-
-    test("creates a widget store for the first loaded catalog", () => {
-        const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
-
-        expect(componentId).toBeDefined();
-        expect(widgetsStore.catalogWidgets.get(componentId!)?.selectedCatalogId).toBe(2);
-    });
-
-    test("updates every widget when the first catalog is loaded for a new image", () => {
-        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
-        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
-
-        const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
-
-        expect(componentId).toBe("catalog-overlay-component-0");
-        expect(firstWidget.selectedCatalogId).toBe(3);
-        expect(secondWidget.selectedCatalogId).toBe(3);
-    });
-
     test("skips coordinate conversion when the selected x axis is CatalogOverlay.NONE", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
@@ -480,30 +449,6 @@ describe("AppStore.handleErrorStream", () => {
     });
 });
 
-describe("AppStore.updateCatalogProfile", () => {
-    const appStore = AppStore.Instance;
-    const catalogStore = appStore.catalogStore;
-
-    beforeEach(() => {
-        jest.restoreAllMocks();
-        catalogStore.catalogProfileStores.clear();
-        catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
-        catalogStore.catalogDisplayStores.clear();
-        appStore.widgetsStore.catalogWidgets.clear();
-        catalogStore.catalogImageIds.clear();
-    });
-
-    test("associates the catalog with the image it was given rather than the active one", () => {
-        // No image is active here, which is what restoring a workspace onto a background image
-        // looks like: the association has to come from the frame that was passed in.
-        expect(appStore.activeFrame).toBeFalsy();
-
-        appStore.updateCatalogProfile(3, {frameInfo: {fileId: 7}} as any);
-
-        expect(catalogStore.catalogsOn(7)).toContain(3);
-    });
-});
-
 describe("AppStore.isOpenFileDisabled", () => {
     const appStore = AppStore.Instance;
 
@@ -525,43 +470,6 @@ describe("AppStore.isOpenFileDisabled", () => {
         appStore.isResumingSession = true;
 
         expect(appStore.isOpenFileDisabled).toBe(true);
-    });
-});
-
-describe("AppStore.reserveCatalogFileId", () => {
-    const appStore = AppStore.Instance;
-    const catalogStore = appStore.catalogStore;
-    const reserved: number[] = [];
-
-    beforeEach(() => {
-        catalogStore.catalogProfileStores.clear();
-        reserved.splice(0).forEach(fileId => appStore.releaseCatalogFileId(fileId));
-    });
-
-    function reserve(): number {
-        const fileId = appStore.reserveCatalogFileId();
-        reserved.push(fileId);
-        return fileId;
-    }
-
-    test("does not hand out an ID a catalog that has not arrived yet was asked for under", () => {
-        // Two catalogs asked for at once: the second must not be given the first one's ID, or
-        // whichever arrives second replaces the other.
-        expect(reserve()).toBe(1);
-        expect(reserve()).toBe(2);
-    });
-
-    test("hands the ID out again once the request it was taken for has come to nothing", () => {
-        const fileId = appStore.reserveCatalogFileId();
-        appStore.releaseCatalogFileId(fileId);
-
-        expect(reserve()).toBe(fileId);
-    });
-
-    test("skips the IDs of catalogs that have already arrived", () => {
-        catalogStore.catalogProfileStores.set(1, {} as any);
-
-        expect(reserve()).toBe(2);
     });
 });
 

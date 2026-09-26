@@ -486,35 +486,6 @@ export class AppStore {
         return this.catalogStore.catalogProfileStores.size;
     }
 
-    /** Catalog IDs that have been asked for but whose catalog has not arrived yet. */
-    @observable private pendingCatalogFileIds = new Set<number>();
-
-    @computed get catalogNextFileId(): number {
-        let id = 1;
-        while (this.catalogStore.catalogProfileStores.has(id) || this.pendingCatalogFileIds.has(id)) {
-            id += 1;
-        }
-        return id;
-    }
-
-    /**
-     * Take the next catalog ID and hold it until the catalog it was taken for has arrived.
-     *
-     * A catalog only becomes one this counts once its profile store exists, which is not until the
-     * data comes back. Without holding the ID in the meantime, a catalog asked for while another is
-     * still on its way is handed the same one, and whichever arrives second replaces the first.
-     */
-    @action reserveCatalogFileId = (): number => {
-        const fileId = this.catalogNextFileId;
-        this.pendingCatalogFileIds.add(fileId);
-        return fileId;
-    };
-
-    /** Stop holding a catalog ID, whether the catalog arrived or the request came to nothing. */
-    @action releaseCatalogFileId = (fileId: number): void => {
-        this.pendingCatalogFileIds.delete(fileId);
-    };
-
     @computed get frameNames(): OptionProps[] {
         return this.frames?.map(frame => {
             const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
@@ -1238,51 +1209,29 @@ export class AppStore {
         }
         this.startFileLoading();
 
-        const fileId = this.reserveCatalogFileId();
-
         try {
-            const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
-            this.endFileLoading();
-            if (frame && ack.success && ack.dataSize) {
-                const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
-                const catalogComponentId = this.updateCatalogProfile(fileId, frame);
-                if (catalogComponentId) {
-                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                    this.catalogStore.addCatalog(fileId, ack.dataSize);
-                    this.fileBrowserStore.hideFileBrowser();
-                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
-                    this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                    this.catalogStore.plotBindings.validateColumns(fileId);
-                    return fileId;
-                } else {
-                    throw new Error("No catalog widget");
+            const fileId: number | undefined = yield this.catalogStore.open(frame, async catalogFileId => {
+                const ack = await this.backendService.loadCatalogFile(directory, file, catalogFileId, previewDataSize);
+                if (!ack.success || !ack.dataSize) {
+                    throw new Error("No catalog file loaded");
                 }
-            } else {
-                throw new Error("No catalog file loaded");
+                const catalogInfo: CatalogInfo = {fileId: catalogFileId, directory, fileInfo: ack.fileInfo ?? {}, dataSize: ack.dataSize};
+                return new CatalogProfileStore(catalogInfo, (ack.headers ?? []) as CARTA.CatalogHeader[], ProtobufProcessing.processCatalogData(ack.previewData ?? {}), CatalogType.FILE);
+            });
+            this.endFileLoading();
+            const profileStore = fileId === undefined ? undefined : this.catalogStore.catalogProfileStores.get(fileId);
+            if (profileStore) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: profileStore.catalogHeader.length, row: profileStore.catalogInfo.dataSize, remote: false});
+                this.fileBrowserStore.hideFileBrowser();
             }
+            return fileId;
         } catch (err) {
             console.error(err);
             this.alertStore.showAlert(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
-        } finally {
-            this.releaseCatalogFileId(fileId);
         }
     }
-
-    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string | undefined => {
-        const catalogStore = CatalogStore.Instance;
-        if (!catalogStore.catalogsOn(frame.frameInfo.fileId).length) {
-            // The first catalog on this image
-            this.widgetsStore.resetCatalogWidgetSelections([fileId]);
-        }
-        catalogStore.catalogImageIds.set(fileId, frame.frameInfo.fileId);
-        catalogStore.getOrCreateCatalogDisplayStore(fileId);
-        // A catalog that every existing widget is still waiting past gets a widget of its own, so
-        // that it is never left displayed in none.
-        return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId);
-    };
 
     /**
      * Close a catalog.

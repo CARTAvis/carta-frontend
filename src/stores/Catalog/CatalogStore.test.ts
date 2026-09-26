@@ -140,6 +140,130 @@ describe("CatalogStore.convertToImageCoordinate", () => {
     });
 });
 
+describe("CatalogStore.open", () => {
+    const catalogStore = CatalogStore.Instance;
+    const frame = {frameInfo: {fileId: 7}} as any;
+    const opened: number[] = [];
+    let initialFloatingWidgetIds = new Set<string>();
+
+    /** A catalog's rows, as a source would build them for the ID it was given. */
+    const rowsFor = (fileId: number) => ({...CreateEmptyProfileStore(), catalogInfo: {fileId, dataSize: 3, fileInfo: {name: "test-catalog"}}, isFileBasedCatalog: true}) as any;
+
+    async function open(load: (fileId: number) => Promise<any>): Promise<number | undefined> {
+        const fileId = await catalogStore.open(frame, load);
+        if (fileId !== undefined) {
+            opened.push(fileId);
+        }
+        return fileId;
+    }
+
+    beforeEach(() => {
+        jest.spyOn(AppStore.Instance, "getFrame").mockImplementation(fileId => (fileId === 7 ? frame : undefined));
+        catalogStore.catalogProfileStores.clear();
+        WidgetsStore.Instance.catalogWidgets.clear();
+        initialFloatingWidgetIds = new Set(WidgetsStore.Instance.floatingWidgets.map(widget => widget.id));
+    });
+
+    afterEach(() => {
+        opened.splice(0).forEach(fileId => {
+            catalogStore.removeCatalogDisplayStore(fileId);
+            catalogStore.catalogGLData.delete(fileId);
+            WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
+        });
+        catalogStore.catalogProfileStores.clear();
+        catalogStore.catalogImageIds.clear();
+        WidgetsStore.Instance.catalogWidgets.clear();
+        WidgetsStore.Instance.floatingWidgets.filter(widget => !initialFloatingWidgetIds.has(widget.id)).forEach(widget => WidgetsStore.Instance.removeFloatingWidget(widget.id));
+        jest.restoreAllMocks();
+    });
+
+    test("sets up a loaded catalog on the image it was given, not the active one", async () => {
+        const widget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 99);
+        expect(AppStore.Instance.activeFrame).toBeFalsy();
+
+        const fileId = await open(async id => rowsFor(id));
+
+        expect(fileId).toBe(1);
+        expect(catalogStore.frameOf(1)).toBe(frame);
+        expect(catalogStore.catalogProfileStores.has(1)).toBe(true);
+        expect(catalogStore.getCatalogDisplayStore(1)).toBeDefined();
+        expect(catalogStore.catalogGLData.get(1)?.x).toHaveLength(3);
+        expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 1)).toBeDefined();
+        expect(widget.selectedCatalogId).toBe(1);
+    });
+
+    test("shows a catalog in the widget already showing its image's catalogs", async () => {
+        const widget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
+        catalogStore.catalogProfileStores.set(1, rowsFor(1));
+        catalogStore.catalogImageIds.set(1, 7);
+
+        await expect(open(async id => rowsFor(id))).resolves.toBe(2);
+
+        expect(WidgetsStore.Instance.catalogWidgets.size).toBe(1);
+        expect(widget.selectedCatalogId).toBe(2);
+    });
+
+    test("gives the first catalog a widget of its own when there is none", async () => {
+        await open(async id => rowsFor(id));
+
+        const widgets = Array.from(WidgetsStore.Instance.catalogWidgets.values());
+        expect(widgets.map(widget => widget.selectedCatalogId)).toEqual([1]);
+    });
+
+    test("points every widget at the first catalog on an image", async () => {
+        const firstWidget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 5);
+        const secondWidget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 5);
+
+        await open(async id => rowsFor(id));
+
+        expect(firstWidget.selectedCatalogId).toBe(1);
+        expect(secondWidget.selectedCatalogId).toBe(1);
+    });
+
+    test("does not give a catalog the ID of one still loading", async () => {
+        let finishFirst!: () => void;
+        const first = open(id => new Promise(resolve => (finishFirst = () => resolve(rowsFor(id)))));
+
+        await expect(open(async id => rowsFor(id))).resolves.toBe(2);
+        finishFirst();
+        await expect(first).resolves.toBe(1);
+    });
+
+    test("skips the IDs of catalogs that are open", async () => {
+        catalogStore.catalogProfileStores.set(1, rowsFor(1));
+
+        await expect(open(async id => rowsFor(id))).resolves.toBe(2);
+    });
+
+    test("gives the ID back when there is no catalog to open", async () => {
+        await expect(open(async () => undefined)).resolves.toBeUndefined();
+
+        await expect(open(async id => rowsFor(id))).resolves.toBe(1);
+    });
+
+    test("gives the ID back and passes on an error from loading", async () => {
+        await expect(
+            open(async () => {
+                throw new Error("unreadable catalog");
+            })
+        ).rejects.toThrow("unreadable catalog");
+
+        await expect(open(async id => rowsFor(id))).resolves.toBe(1);
+    });
+
+    test("drops a catalog whose image was closed while it loaded", async () => {
+        const closeCatalogFile = jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(true);
+        jest.mocked(AppStore.Instance.getFrame).mockReturnValue(undefined);
+
+        await expect(open(async id => rowsFor(id))).resolves.toBeUndefined();
+
+        expect(catalogStore.catalogProfileStores.size).toBe(0);
+        expect(catalogStore.catalogImageIds.size).toBe(0);
+        // The backend was asked to load the file, so it is told the catalog will not be used.
+        expect(closeCatalogFile).toHaveBeenCalledWith(1);
+    });
+});
+
 describe("CatalogStore workspace catalog IDs", () => {
     const widgetsStore = WidgetsStore.Instance;
 

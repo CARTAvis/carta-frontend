@@ -1,12 +1,11 @@
 import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, type CatalogSystemType, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D, type WorkspaceCatalogQuerySource} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
-import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, CatalogStore, MirrorSiteStore} from "stores";
+import {CatalogApiProcessing, type VizierResource} from "utilities";
 
 import {TelemetryService} from "./TelemetryService";
 
@@ -27,7 +26,6 @@ export class CatalogApiService {
     }
 
     constructor() {
-        makeObservable(this);
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
@@ -322,12 +320,15 @@ export class CatalogApiService {
     };
 
     /** @returns the file id of every catalog that was loaded. */
-    private appendVizierCatalog = (resources: Map<string, VizierResource>, source: WorkspaceCatalogQuerySource, targetFrameId: number): number[] => {
-        const appStore = AppStore.Instance;
+    private appendVizierCatalog = async (resources: Map<string, VizierResource>, source: WorkspaceCatalogQuerySource, targetFrameId: number): Promise<number[]> => {
+        const frame = AppStore.Instance.getFrame(targetFrameId);
+        if (!frame) {
+            AppToaster.show(ErrorToast("Please load an image file"));
+            return [];
+        }
         const fileIds: number[] = [];
-        resources.forEach(element => {
-            const fileId = appStore.reserveCatalogFileId();
-            try {
+        for (const element of resources.values()) {
+            const fileId = await CatalogStore.Instance.open(frame, async catalogFileId => {
                 const {headers, dataMap, size} = CatalogApiProcessing.processVizierTableData(element.table.tableElement);
                 const coosy: CARTA.Coosys.$Properties = {system: element.coosys.system};
                 const fileName = `${CatalogDatabase.VIZIER}_${element.coosys.system}_${element.table.name}_${source.radius}${source.radiusUnits}`;
@@ -338,45 +339,28 @@ export class CatalogApiService {
                     coosys: [coosy]
                 };
                 const catalogInfo: CatalogInfo = {
-                    fileId,
+                    fileId: catalogFileId,
                     fileInfo: catalogFileInfo,
                     dataSize: size,
                     directory: "",
                     query: {...source, system: element.coosys.system as CatalogSystemType, table: element.table.name ?? undefined}
                 };
-                if (this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER, targetFrameId)) {
-                    fileIds.push(fileId);
-                }
-            } finally {
-                // Loaded or not, and whether or not the table could be read at all, the catalog is
-                // no longer one that is still on its way.
-                appStore.releaseCatalogFileId(fileId);
+                return new CatalogOnlineQueryProfileStore(catalogInfo, headers, dataMap, CatalogType.VIZIER);
+            });
+            if (fileId !== undefined) {
+                this.onCatalogLoaded(fileId);
+                fileIds.push(fileId);
             }
-        });
+        }
         return fileIds;
     };
 
-    @action private loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType, targetFrameId: number) => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.getFrame(targetFrameId);
-        if (!frame) {
-            AppToaster.show(ErrorToast("Please load an image file"));
-            return false;
-        }
-        // The target was fixed before the asynchronous query began.
-        const catalogComponentId = appStore.updateCatalogProfile(fileId, frame);
-        if (catalogComponentId) {
-            TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
-            appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
-            appStore.fileBrowserStore.hideFileBrowser();
-            const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
-            appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-            appStore.catalogStore.plotBindings.validateColumns(fileId);
-            appStore.dialogStore.hideDialog(DialogId.OnlineDataQuery);
-            return true;
-        }
-        return false;
-    };
+    /** What the online query dialog does once one of its catalogs has been opened. */
+    private onCatalogLoaded(fileId: number): void {
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(fileId);
+        TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: profileStore?.catalogHeader.length, row: profileStore?.catalogInfo.dataSize, remote: true});
+        AppStore.Instance.dialogStore.hideDialog(DialogId.OnlineDataQuery);
+    }
 
     public resetCancelTokenSource(type: CatalogDatabase) {
         if (type === CatalogDatabase.SIMBAD) {
@@ -390,8 +374,7 @@ export class CatalogApiService {
 
     /** @returns how many rows the query returned, and the file id of the catalog it was loaded as. */
     private appendSimbadCatalog = async (query: string, source: WorkspaceCatalogQuerySource, targetFrameId: number): Promise<{dataSize: number; fileId?: number}> => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.getFrame(targetFrameId);
+        const frame = AppStore.Instance.getFrame(targetFrameId);
         if (!frame) {
             AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
@@ -399,11 +382,13 @@ export class CatalogApiService {
 
         let loadedFileId: number | undefined;
         let dataSize = 0;
-        // Taken last, so that nothing between here and the try below can leave it held.
-        const fileId = appStore.reserveCatalogFileId();
         try {
-            const response = await this.getSimbadCatalog(query);
-            if (response?.status === 200 && response?.data?.data?.length) {
+            loadedFileId = await CatalogStore.Instance.open(frame, async catalogFileId => {
+                const response = await this.getSimbadCatalog(query);
+                dataSize = response?.data?.data?.length;
+                if (response?.status !== 200 || !response?.data?.data?.length) {
+                    return undefined;
+                }
                 const headers = CatalogApiProcessing.processSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.processSimbadData(response.data?.data, headers);
                 const coosys: CARTA.Coosys.$Properties = {system: source.system};
@@ -415,17 +400,17 @@ export class CatalogApiService {
                     coosys: [coosys]
                 };
                 const catalogInfo: CatalogInfo = {
-                    fileId,
+                    fileId: catalogFileId,
                     fileInfo: catalogFileInfo,
                     dataSize: response.data?.data?.length ?? 0,
                     directory: "",
                     query: source
                 };
-                if (this.loadCatalog(fileId, catalogInfo, headers, columnData, CatalogType.SIMBAD, targetFrameId)) {
-                    loadedFileId = fileId;
-                }
+                return new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
+            });
+            if (loadedFileId !== undefined) {
+                this.onCatalogLoaded(loadedFileId);
             }
-            dataSize = response?.data?.data?.length;
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
@@ -437,8 +422,6 @@ export class CatalogApiService {
             } else {
                 console.log("Append Simbad Error: " + error);
             }
-        } finally {
-            appStore.releaseCatalogFileId(fileId);
         }
         return {dataSize, fileId: loadedFileId};
     };

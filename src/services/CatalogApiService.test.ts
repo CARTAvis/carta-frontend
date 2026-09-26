@@ -2,7 +2,7 @@ import axios, {type AxiosInstance} from "axios";
 
 import {CatalogDatabase, CatalogSystemType, CatalogType, RadiusUnits} from "enums";
 import {type WorkspaceCatalogQuerySource} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, CatalogStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing} from "utilities";
 
 import {CatalogApiService} from "./CatalogApiService";
@@ -16,6 +16,7 @@ jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: {}},
     CatalogOnlineQueryProfileStore: jest.fn(),
+    CatalogStore: {Instance: {}},
     MirrorSiteStore: {
         Instance: {
             getMirrorSites: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
@@ -129,11 +130,17 @@ describe("CatalogApiService.captureQuery", () => {
     });
 });
 
+/** Open a catalog the way CatalogStore does, giving each one `fileId`. */
+function mockCatalogOpen(fileId: number) {
+    return jest.fn(async (_frame: unknown, load: (catalogFileId: number) => Promise<unknown>) => ((await load(fileId)) ? fileId : undefined));
+}
+
 describe("CatalogApiService VizieR loading", () => {
-    test("gives a catalog's ID back when its table cannot be read", async () => {
+    test("passes on a table that cannot be read", async () => {
         const service = new CatalogApiService();
-        const releaseCatalogFileId = jest.fn();
-        Object.assign(AppStore.Instance, {activeFrame: {frameInfo: {fileId: 4}}, reserveCatalogFileId: jest.fn(() => 7), releaseCatalogFileId});
+        const frame = {frameInfo: {fileId: 4}};
+        Object.assign(AppStore.Instance, {activeFrame: frame, getFrame: jest.fn(() => frame)});
+        Object.assign(CatalogStore.Instance, {open: mockCatalogOpen(7)});
         (CatalogApiProcessing as any).processVizierTableData = jest.fn(() => {
             throw new Error("malformed VOTable");
         });
@@ -142,9 +149,6 @@ describe("CatalogApiService VizieR loading", () => {
         const source: WorkspaceCatalogQuerySource = {type: "vizier", center: {x: 1, y: 2}, system: CatalogSystemType.ICRS, radius: 1, radiusUnits: RadiusUnits.DEGREES, maxObjects: 100, table: "t"};
 
         await expect(service.loadVizierCatalogs(source, ["t"])).rejects.toThrow("malformed VOTable");
-
-        // Held only while the catalog is on its way: a table that could not be read never was.
-        expect(releaseCatalogFileId).toHaveBeenCalledWith(7);
     });
 });
 
@@ -158,20 +162,17 @@ describe("CatalogApiService source-driven loading", () => {
         Object.assign(appStore, {
             activeFrame: frame,
             getFrame: jest.fn((fileId: number) => (fileId === 4 ? frame : undefined)),
-            reserveCatalogFileId: jest.fn(() => 7),
-            releaseCatalogFileId: jest.fn(),
-            updateCatalogProfile: jest.fn(() => "catalog-overlay-0"),
-            catalogStore: {addCatalog: jest.fn(), catalogProfileStores: new Map(), plotBindings: {validateColumns: jest.fn()}},
-            fileBrowserStore: {hideFileBrowser: jest.fn()},
             dialogStore: {hideDialog: jest.fn()}
         });
+        const catalogStore = CatalogStore.Instance as any;
+        Object.assign(catalogStore, {open: mockCatalogOpen(7), catalogProfileStores: new Map()});
         jest.mocked(CatalogOnlineQueryProfileStore).mockClear();
-        return {appStore, frame};
+        return {appStore, catalogStore, frame};
     }
 
     test("queries SIMBAD in ICRS degrees and pins the image selected at dispatch", async () => {
         const service = new CatalogApiService();
-        const {appStore, frame} = configureSession();
+        const {appStore, catalogStore, frame} = configureSession();
         const getSimbadCatalog = jest.spyOn(service, "getSimbadCatalog").mockResolvedValue({status: 200, data: {metadata: [], data: [["source"]]}} as any);
         (CatalogApiProcessing as any).processSimbadMetaData = jest.fn(() => []);
         (CatalogApiProcessing as any).processSimbadData = jest.fn(() => new Map());
@@ -182,20 +183,20 @@ describe("CatalogApiService source-driven loading", () => {
 
         expect(result).toEqual({dataSize: 1, fileId: 7});
         expect(getSimbadCatalog).toHaveBeenCalledWith(expect.stringContaining("CIRCLE('ICRS',12.5,-30.25,0.0333333)"));
-        expect(appStore.updateCatalogProfile).toHaveBeenCalledWith(7, frame);
+        expect(catalogStore.open).toHaveBeenCalledWith(frame, expect.any(Function));
         expect(jest.mocked(CatalogOnlineQueryProfileStore)).toHaveBeenCalledWith(
-            expect.objectContaining({fileInfo: expect.objectContaining({name: "SIMBAD_ICRS_12.5_-30.25_2arcmin"}), query: simbadSource}),
+            expect.objectContaining({fileId: 7, fileInfo: expect.objectContaining({name: "SIMBAD_ICRS_12.5_-30.25_2arcmin"}), query: simbadSource}),
             [],
             expect.any(Map),
             CatalogType.SIMBAD
         );
-        expect(appStore.releaseCatalogFileId).toHaveBeenCalledWith(7);
+        expect(appStore.dialogStore.hideDialog).toHaveBeenCalled();
     });
 
     test("keeps VizieR query, name and target image fixed while the dialog changes", async () => {
         const service = new CatalogApiService();
-        const {appStore, frame} = configureSession();
-        appStore.reserveCatalogFileId = jest.fn(() => 9);
+        const {appStore, catalogStore, frame} = configureSession();
+        catalogStore.open = mockCatalogOpen(9);
         const resource = {table: {name: "I/355/gaiadr3", tableElement: {}}, coosys: {system: CatalogSystemType.ICRS}} as any;
         let finishQuery!: (resources: Map<string, any>) => void;
         const query = jest.spyOn(service, "queryVizierSource").mockReturnValue(new Promise(resolve => (finishQuery = resolve)));
@@ -209,14 +210,13 @@ describe("CatalogApiService source-driven loading", () => {
 
         expect(fileIds).toEqual([9]);
         expect(query).toHaveBeenCalledWith({x: "12.5", y: "-30.25"}, 2, RadiusUnits.ARCMINUTES, 500, ["I/355/gaiadr3"]);
-        expect(appStore.updateCatalogProfile).toHaveBeenCalledWith(9, frame);
+        expect(catalogStore.open).toHaveBeenCalledWith(frame, expect.any(Function));
         expect(jest.mocked(CatalogOnlineQueryProfileStore)).toHaveBeenCalledWith(
-            expect.objectContaining({fileInfo: expect.objectContaining({name: "VizieR_ICRS_I/355/gaiadr3_2arcmin"}), query: expect.objectContaining({center: vizierSource.center, radius: 2, table: "I/355/gaiadr3"})}),
+            expect.objectContaining({fileId: 9, fileInfo: expect.objectContaining({name: "VizieR_ICRS_I/355/gaiadr3_2arcmin"}), query: expect.objectContaining({center: vizierSource.center, radius: 2, table: "I/355/gaiadr3"})}),
             [],
             expect.any(Map),
             CatalogType.VIZIER
         );
-        expect(appStore.releaseCatalogFileId).toHaveBeenCalledWith(9);
     });
 
     test("does not query from an invalid saved source", async () => {
@@ -229,13 +229,13 @@ describe("CatalogApiService source-driven loading", () => {
         expect(query).not.toHaveBeenCalled();
     });
 
-    test("releases a SIMBAD catalog ID when its source query is cancelled", async () => {
+    test("opens no catalog when its SIMBAD query is cancelled", async () => {
         const service = new CatalogApiService();
         const {appStore} = configureSession();
         jest.spyOn(service, "getSimbadCatalog").mockRejectedValue(new axios.CanceledError("query cancelled"));
 
         await expect(service.loadSimbadCatalog(simbadSource)).resolves.toEqual({dataSize: 0, fileId: undefined});
-        expect(appStore.releaseCatalogFileId).toHaveBeenCalledWith(7);
-        expect(appStore.updateCatalogProfile).not.toHaveBeenCalled();
+        expect(jest.mocked(CatalogOnlineQueryProfileStore)).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
     });
 });
