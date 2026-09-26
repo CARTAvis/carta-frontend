@@ -108,12 +108,7 @@ export class WorkspaceSnapshotter {
         if (frame?.frameInfo?.generated) {
             return undefined;
         }
-        return this.imageIdOfFile(frame?.frameInfo.fileId);
-    }
-
-    /** The same ID, for an image named only by the file ID this session gave it. */
-    private imageIdOfFile(imageFileId: number | undefined): number | undefined {
-        return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, imageFileId);
+        return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, frame?.frameInfo.fileId);
     }
 
     /** The ID this workspace knows a catalog by: the one it was given when it was opened. */
@@ -263,6 +258,21 @@ export class WorkspaceSnapshotter {
                 return;
             }
 
+            // A catalog names its image by the ID this workspace knows the image by, not by the
+            // session file ID, which is handed out again once the image is closed. A catalog whose
+            // image the workspace does not carry -- a generated one, or one it has lost track of --
+            // is not saved: restoring it would put it over whichever image happened to be in front.
+            const imageFileId = this.appStore.catalogStore.imageIdOf(catalogFileId);
+            const associatedImageId = this.imageIdOf(this.appStore.frames.find(frame => frame?.frameInfo.fileId === imageFileId));
+            if (associatedImageId === undefined) {
+                this.issues.push({
+                    kind: WorkspaceItemKind.Catalog,
+                    subject: catalogInfo.fileInfo.name ?? "",
+                    message: `Could not save the catalog ${catalogInfo.fileInfo.name}: the image it is overlaid on was not saved`
+                });
+                return;
+            }
+
             // Deliberately do not create display state while saving.
             const displayStore = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId);
             const selectedDataIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
@@ -273,9 +283,7 @@ export class WorkspaceSnapshotter {
                 id: workspaceCatalogId,
                 source,
                 coordinateSystem: profileStore.catalogCoordinateSystem.system,
-                // A catalog names its image by the ID this workspace knows the image by, not by the session
-                // file ID, which is handed out again once the image is closed.
-                associatedImageId: this.imageIdOfFile(this.appStore.catalogStore.imageIdOf(catalogFileId)),
+                associatedImageId,
                 rowCount: catalogInfo.dataSize,
                 tableConfig: profileStore.toTableConfig(),
                 // Only an online catalog is worth fingerprinting: it is queried again rather than

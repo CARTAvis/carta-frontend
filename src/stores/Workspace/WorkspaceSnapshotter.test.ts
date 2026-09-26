@@ -71,7 +71,7 @@ function createSession(overrides: Record<string, any> = {}) {
         timeSeriesStore: {isMember: jest.fn(() => false)},
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
-            imageIdOf: (catalogFileId: number) => (catalogFileId === 10 ? 0 : undefined),
+            imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),
             widgetBindings: {savedCatalogWidgets: jest.fn((): Record<string, unknown> => ({}))}
@@ -159,6 +159,30 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.files?.map(file => file.id)).toEqual([1]);
         expect(issues).toEqual([{kind: WorkspaceItemKind.Image, subject: "", message: "The workspace contains generated files. These will not be preserved when reloading."}]);
+    });
+
+    test("reports a catalog overlaid on a generated image instead of saving it against an image the workspace does not carry", () => {
+        const generatedFrame = createFrame(2, {frameInfo: {fileId: 2, directory: "", hdu: "", fileInfo: {name: "moment.fits"}, generated: true}});
+        const {appStore} = createSession();
+        appStore.frames.push(generatedFrame as never);
+        // The session registers a generated image like any other, so its workspace ID resolves.
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 2);
+        jest.spyOn(appStore.catalogStore, "imageIdOf").mockReturnValue(2);
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.catalogs).toEqual([]);
+        expect(issues).toContainEqual({kind: WorkspaceItemKind.Catalog, subject: "sources.vot", message: "Could not save the catalog sources.vot: the image it is overlaid on was not saved"});
+    });
+
+    test("reports a catalog that no longer names an image instead of saving it without one", () => {
+        const {appStore} = createSession();
+        jest.spyOn(appStore.catalogStore, "imageIdOf").mockReturnValue(undefined);
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.catalogs).toEqual([]);
+        expect(issues).toContainEqual({kind: WorkspaceItemKind.Catalog, subject: "sources.vot", message: "Could not save the catalog sources.vot: the image it is overlaid on was not saved"});
     });
 
     test("reports a colour blend made from a generated image instead of saving it without that layer", () => {
