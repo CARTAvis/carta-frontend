@@ -70,10 +70,3 @@ body {
 .#{$ns}-dark .#{$ns}-table-quadrant {
     background-color: $pt-dark-app-background-color !important;
 }
-
-// hide plotly tips
-body {
-    div.plotly-notifier {
-        visibility: hidden;
-    }
-}

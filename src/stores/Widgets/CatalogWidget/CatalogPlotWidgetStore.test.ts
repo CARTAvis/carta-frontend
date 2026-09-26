@@ -1,4 +1,4 @@
-import {CatalogOverlay, CatalogPlotType} from "enums";
+import {CatalogOverlay, CatalogPlotType, DragMode} from "enums";
 import {CatalogPlotWidgetStore} from "stores";
 
 describe("CatalogPlotWidgetStore config", () => {
@@ -7,7 +7,7 @@ describe("CatalogPlotWidgetStore config", () => {
         store.setStatisticColumn("Vmag");
         store.setLogScaleY(false);
         store.setNumBinsX(25);
-        store.setDragMode("zoom");
+        store.setDragMode(DragMode.Zoom);
         store.setScatterborder({xMin: 1, xMax: 10, yMin: 2, yMax: 11});
 
         const restored = new CatalogPlotWidgetStore({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter});
@@ -23,6 +23,16 @@ describe("CatalogPlotWidgetStore config", () => {
 
         expect(store.nBinX).toBeUndefined();
         expect(store.isLogScaleY).toBe(false);
+    });
+
+    test("normalizes legacy drag modes while preserving disabled drag", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+
+        store.applyConfig({dragMode: "pan" as any});
+        expect(store.dragMode).toBe(DragMode.Select);
+
+        store.applyConfig({dragMode: false});
+        expect(store.dragMode).toBe(false);
     });
 });
 
