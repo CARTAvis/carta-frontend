@@ -185,11 +185,23 @@ export class CatalogStore {
         }
     }
 
-    /** Ask for the next table chunk only when the previous one has finished. */
+    /**
+     * Ask for the next table chunk only when the previous one has finished.
+     *
+     * A restore still waiting for its rows counts as unfinished: it is not marked as loading, and a
+     * second request would take over from it and leave it reported as failed.
+     */
     @action requestMoreRows(catalogFileId: number): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         const displayStore = this.getCatalogDisplayStore(catalogFileId);
-        if (!profileStore || profileStore.isLoadingData || profileStore.updateMode !== CatalogUpdateMode.TableUpdate || !profileStore.shouldUpdateData || displayStore?.isShowingSelectedData) {
+        if (
+            !profileStore ||
+            profileStore.isLoadingData ||
+            this.catalogRequests.isPending(catalogFileId) ||
+            profileStore.updateMode !== CatalogUpdateMode.TableUpdate ||
+            !profileStore.shouldUpdateData ||
+            displayStore?.isShowingSelectedData
+        ) {
             return;
         }
         profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);

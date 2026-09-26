@@ -1017,6 +1017,20 @@ describe("CatalogStore request lifecycle", () => {
         expect(profileStore.isLoadingData).toBe(false);
     });
 
+    test("does not ask for more rows while a restore is still waiting for its own", () => {
+        const profileStore = openCatalog();
+        profileStore.setSubsetEndIndex(2);
+        profileStore.setLoadingDataStatus(false);
+        const completion = catalogStore.catalogRequests.start(catalogFileId);
+
+        catalogStore.requestMoreRows(catalogFileId);
+
+        expect(sendFilter).not.toHaveBeenCalled();
+        expect(catalogStore.catalogRequests.isPending(catalogFileId)).toBe(true);
+        catalogStore.catalogRequests.finish(catalogFileId, true);
+        return completion;
+    });
+
     test("keeps sort and plot update modes distinct", () => {
         const profileStore = openCatalog();
         sendFilter.mockReturnValueOnce(11).mockReturnValueOnce(12);
