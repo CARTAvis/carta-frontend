@@ -28,7 +28,7 @@ class CatalogPlotState {
  * Workspace knows them by. Plot settings remain in CatalogPlotWidgetStore; callers do not need to
  * coordinate its lifetime or translate between session and Workspace IDs themselves.
  */
-export class CatalogPlotBindingStore {
+export class CatalogWidgetBindingStore {
     private readonly plots = observable.map<string, CatalogPlotState>();
     /** Retained when a catalog-specific plot closes, because its Layout tab still has this ID. */
     private readonly retainedComponents = observable.map<string, string>();

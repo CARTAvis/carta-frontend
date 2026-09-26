@@ -40,7 +40,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         WidgetsStore.Instance.catalogWidgets.clear();
         // Plot widget IDs are handed out again from the start of each suite, so a component left
         // holding one here would be found by the next suite's lookups.
-        CatalogStore.Instance.plotBindings.componentIds().forEach(plotComponentId => CatalogStore.Instance.plotBindings.closeComponent(plotComponentId));
+        CatalogStore.Instance.widgetBindings.componentIds().forEach(plotComponentId => CatalogStore.Instance.widgetBindings.closeComponent(plotComponentId));
         jest.restoreAllMocks();
     });
 
@@ -61,7 +61,7 @@ describe("CatalogPlotComponent catalog selection", () => {
             plotType: CatalogPlotType.D2Scatter
         };
         catalogStore.catalogProfileStores.set(7, profileStore as any);
-        catalogStore.plotBindings.register("catalog-plot-component-0", 7, "catalog-plot-0");
+        catalogStore.widgetBindings.register("catalog-plot-component-0", 7, "catalog-plot-0");
         widgetsStore.catalogPlotWidgets.set("catalog-plot-0", widgetStore as any);
         catalogStore.catalogDisplayStores.set(7, catalogDisplayStore as any);
         const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
@@ -97,13 +97,13 @@ describe("CatalogPlotComponent restored plots", () => {
 
     /** Attach a restored plot to its catalog, the way WorkspaceRestorer does once it is loaded. */
     function bindRestoredPlot(plotId: string, catalogFileId: number) {
-        catalogStore.plotBindings.restoreWorkspacePlots([{id: FIRST_CATALOG_WORKSPACE_ID, source: {type: "file", filename: "first.xml"}}], new Map([[FIRST_CATALOG_WORKSPACE_ID, catalogFileId]]));
+        catalogStore.widgetBindings.restoreWorkspacePlots([{id: FIRST_CATALOG_WORKSPACE_ID, source: {type: "file", filename: "first.xml"}}], new Map([[FIRST_CATALOG_WORKSPACE_ID, catalogFileId]]));
     }
 
     afterEach(() => {
         // Every component, not just the first: a leftover one keeps its widget-to-component
         // mapping alive, and widget IDs are handed out again from the start of each test.
-        catalogStore.plotBindings.componentIds().forEach(plotComponentId => catalogStore.plotBindings.closeComponent(plotComponentId));
+        catalogStore.widgetBindings.componentIds().forEach(plotComponentId => catalogStore.widgetBindings.closeComponent(plotComponentId));
         catalogStore.catalogProfileStores.clear();
         widgetsStore.catalogPlotWidgets.clear();
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
@@ -124,10 +124,10 @@ describe("CatalogPlotComponent restored plots", () => {
         // A restored plot is moved onto its catalog, and its columns checked once that catalog's
         // data has arrived.
         bindRestoredPlot(plotId, 11);
-        catalogStore.plotBindings.validateColumns(11);
+        catalogStore.widgetBindings.validateColumns(11);
         const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
 
-        expect(catalogStore.plotBindings.displayedForWidget(plotId).catalogFileId).toBe(11);
+        expect(catalogStore.widgetBindings.displayedForWidget(plotId).catalogFileId).toBe(11);
         expect(store.xColumnName).toBe("Fmag");
         expect(store.yColumnName).toBe(CatalogOverlay.NONE);
         expect(store.statisticColumnName).toBe(CatalogOverlay.NONE);
@@ -147,7 +147,7 @@ describe("CatalogPlotComponent restored plots", () => {
         // A restored plot is moved onto its catalog, and its columns checked once that catalog's
         // data has arrived.
         bindRestoredPlot(plotId, 11);
-        catalogStore.plotBindings.validateColumns(11);
+        catalogStore.widgetBindings.validateColumns(11);
         const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
 
         expect(store.xColumnName).toBe("Fmag");
@@ -164,7 +164,7 @@ describe("CatalogPlotComponent restored plots", () => {
         const displayed = component.widgetStore!;
         component.componentWillUnmount();
 
-        catalogStore.plotBindings.closeCatalog(12);
+        catalogStore.widgetBindings.closeCatalog(12);
 
         const remounted = new CatalogPlotComponent({id: plotId, docked: false} as any);
         expect(remounted.componentId).toBe(componentId);
@@ -172,8 +172,8 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(remounted.widgetStore).toBe(displayed);
         remounted.componentWillUnmount();
 
-        catalogStore.plotBindings.closeWidget(plotId);
-        expect(catalogStore.plotBindings.displayedForComponent(componentId)).toBeUndefined();
+        catalogStore.widgetBindings.closeWidget(plotId);
+        expect(catalogStore.widgetBindings.displayedForComponent(componentId)).toBeUndefined();
         expect(widgetsStore.catalogPlotWidgets.size).toBe(0);
     });
 
@@ -185,10 +185,10 @@ describe("CatalogPlotComponent restored plots", () => {
         component.handleCatalogFileChange(11);
         const displayed = component.widgetStore!;
 
-        catalogStore.plotBindings.closeCatalog(12);
+        catalogStore.widgetBindings.closeCatalog(12);
         expect(widgetsStore.catalogPlotWidgets.has(plotId)).toBe(false);
 
-        expect(widgetsStore.catalogPlotWidgets.get(catalogStore.plotBindings.displayedForWidget(plotId).widgetId)).toBe(displayed);
+        expect(widgetsStore.catalogPlotWidgets.get(catalogStore.widgetBindings.displayedForWidget(plotId).widgetId)).toBe(displayed);
         // A saved layout does not name the session's catalog, so catalogId is left out of it.
         const shownConfig = {...displayed.toConfig()};
         delete shownConfig.catalogId;

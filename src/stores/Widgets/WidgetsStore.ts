@@ -389,7 +389,7 @@ export class WidgetsStore {
         let nextIndex = 0;
         while (true) {
             const nextId = `${defaultId}-${nextIndex}`;
-            const isRetainedCatalogPlot = defaultId === CatalogPlotComponent.WidgetConfig.type && CatalogStore.Instance.plotBindings.isWidgetIdReserved(nextId);
+            const isRetainedCatalogPlot = defaultId === CatalogPlotComponent.WidgetConfig.type && CatalogStore.Instance.widgetBindings.isWidgetIdReserved(nextId);
             if (!widgets.has(nextId) && !isRetainedCatalogPlot) {
                 return nextId;
             }
@@ -470,7 +470,7 @@ export class WidgetsStore {
         if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
             this.deleteCatalogWidget(widgetId);
         } else if (widgetType === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.plotBindings.closeWidget(widgetId);
+            CatalogStore.Instance.widgetBindings.closeWidget(widgetId);
         }
     };
 
@@ -572,7 +572,7 @@ export class WidgetsStore {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            CatalogStore.Instance.plotBindings.registerRestored(componentId, itemId);
+            CatalogStore.Instance.widgetBindings.registerRestored(componentId, itemId);
         }
         return itemId;
     };
@@ -1087,7 +1087,7 @@ export class WidgetsStore {
                             this.removeAssociatedFloatingSetting(id);
                         }
                         if (isCatalogPlot) {
-                            CatalogStore.Instance.plotBindings.closeWidget(id);
+                            CatalogStore.Instance.widgetBindings.closeWidget(id);
                         }
                         if (isPvPreview) {
                             const regexPattern = /pv-generator-(\d+)/;
@@ -1133,7 +1133,7 @@ export class WidgetsStore {
                 return this.catalogWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings);
             }
             case CatalogPlotComponent.WidgetConfig.type: {
-                return CatalogStore.Instance.plotBindings.configForLayout(widgetID, shouldIncludeWorkspaceBindings);
+                return CatalogStore.Instance.widgetBindings.configForLayout(widgetID, shouldIncludeWorkspaceBindings);
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1561,7 +1561,7 @@ export class WidgetsStore {
         const componentIds = new Set<string>();
 
         if (config.type === CatalogPlotComponent.WidgetConfig.type) {
-            CatalogStore.Instance.plotBindings.componentIds().forEach(componentId => componentIds.add(componentId));
+            CatalogStore.Instance.widgetBindings.componentIds().forEach(componentId => componentIds.add(componentId));
         } else if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
             this.catalogWidgets.forEach((_value, componentId) => componentIds.add(componentId));
         }
@@ -1736,12 +1736,12 @@ export class WidgetsStore {
 
         if (id) {
             if (this.catalogPlotWidgets.has(id)) {
-                CatalogStore.Instance.plotBindings.deletePlot(id);
+                CatalogStore.Instance.widgetBindings.deletePlot(id);
             }
             const widgetStore = new CatalogPlotWidgetStore(props);
             this.catalogPlotWidgets.set(id, widgetStore);
             if (widgetSettings) {
-                CatalogStore.Instance.plotBindings.restoreConfig(id, widgetSettings as Partial<CatalogPlotWidgetConfig>);
+                CatalogStore.Instance.widgetBindings.restoreConfig(id, widgetSettings as Partial<CatalogPlotWidgetConfig>);
             }
         }
         return id;

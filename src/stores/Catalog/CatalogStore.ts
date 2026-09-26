@@ -6,7 +6,7 @@ import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode, W
 import {type WorkspaceCatalogImageOverlay, type WorkspaceCatalogSelection} from "models";
 import {CatalogWebGLService, type StreamedMessage} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
-import {CatalogPlotBindingStore} from "stores/Catalog/CatalogPlotBindingStore";
+import {CatalogWidgetBindingStore} from "stores/Catalog/CatalogWidgetBindingStore";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {CatalogAxisEligibility, type CatalogCoordinateSystem, getDegreesPerCatalogUnit, minMaxArray, PendingRequestTracker, ProtobufProcessing, type RequestOutcome, setAstCatalogSystem} from "utilities";
@@ -57,7 +57,7 @@ export class CatalogStore {
     /** Catalog file ID : the file ID of the image it is overlaid on, in the order catalogs were opened. */
     readonly catalogImageIds = observable.map<number, number>();
     /** Catalog plot binding and Workspace ID lifecycle. */
-    public readonly plotBindings = new CatalogPlotBindingStore(
+    public readonly widgetBindings = new CatalogWidgetBindingStore(
         this,
         () => WidgetsStore.Instance,
         message => AppStore.Instance.logStore.addWarning(message, ["catalog"])
@@ -357,7 +357,7 @@ export class CatalogStore {
         this.addCatalog(fileId, profileStore.catalogInfo.dataSize);
         this.getOrCreateCatalogDisplayStore(fileId);
         this.catalogProfileStores.set(fileId, profileStore);
-        this.plotBindings.validateColumns(fileId);
+        this.widgetBindings.validateColumns(fileId);
         // A catalog that every existing widget is still waiting past gets a widget of its own, so
         // that it is never left displayed in none.
         if (WidgetsStore.Instance.updateCatalogWidgetSelection(fileId) === undefined) {
@@ -469,7 +469,7 @@ export class CatalogStore {
             return false;
         }
         // Plots move while the catalog still names its image.
-        this.plotBindings.closeCatalog(fileId);
+        this.widgetBindings.closeCatalog(fileId);
         // Drop the catalog's earlier requests before ending the one still in flight, so that the
         // request being ended is left marked stale: a response arriving after this file ID has been
         // handed to the next catalog opened must not be taken for an answer about that one.
@@ -493,7 +493,7 @@ export class CatalogStore {
         const activeCatalogFileIds = this.catalogsOn(imageFileId);
         if (activeCatalogFileIds.length) {
             WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
-            this.plotBindings.resetSelections(activeCatalogFileIds);
+            this.widgetBindings.resetSelections(activeCatalogFileIds);
         }
     }
 

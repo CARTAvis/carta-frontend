@@ -101,7 +101,7 @@ function createSession() {
                 calls.push("restoreCatalogRows");
                 return Promise.resolve({success: true, didStart: true});
             }),
-            plotBindings: {restoreWorkspacePlots: jest.fn(() => [])}
+            widgetBindings: {restoreWorkspacePlots: jest.fn(() => [])}
         },
         widgetsStore: {
             catalogWidgets: new Map(),

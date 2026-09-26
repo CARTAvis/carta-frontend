@@ -555,7 +555,7 @@ export class WorkspaceRestorer {
             });
         }
 
-        this.issues.push(...this.appStore.catalogStore.plotBindings.restoreWorkspacePlots(this.workspace.catalogs, this.catalogIds));
+        this.issues.push(...this.appStore.catalogStore.widgetBindings.restoreWorkspacePlots(this.workspace.catalogs, this.catalogIds));
     }
 
     private describeWorkspaceCatalog(workspaceCatalogId: number): string {

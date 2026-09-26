@@ -3,9 +3,9 @@ import {CARTA} from "carta-protobuf";
 import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
 import {AppStore, CatalogStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 
-describe("CatalogPlotBindingStore", () => {
+describe("CatalogWidgetBindingStore", () => {
     const catalogs = CatalogStore.Instance;
-    const bindings = catalogs.plotBindings;
+    const bindings = catalogs.widgetBindings;
     const widgets = WidgetsStore.Instance;
     const plot = {xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter};
 
