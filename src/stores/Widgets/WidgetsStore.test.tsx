@@ -249,7 +249,8 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
     const catalogStore = CatalogStore.Instance;
 
     beforeEach(() => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, zIndexManager: {assignIndex: jest.fn()}} as any);
+        // A new WidgetsStore titles the image view from the images on screen, of which there are none.
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
         catalogStore.catalogProfileStores.clear();
     });
 

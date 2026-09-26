@@ -1,4 +1,4 @@
-import {describe, expect, jest, test} from "@jest/globals";
+import {afterAll, beforeAll, describe, expect, jest, test} from "@jest/globals";
 
 jest.mock("services/CatalogWebGLService", () => ({
     CatalogWebGLService: {
@@ -12,9 +12,20 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType, PreferenceKeys} from "enums";
 import {CatalogWebGLService} from "services";
-import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
+
+// These tests draw catalogs, not choose their overlay axes, and their catalogs carry nothing that
+// choosing reads. Choosing is covered by CatalogDisplayStoreAxes.test.ts.
+let shouldAutoSelectOriginally: boolean;
+beforeAll(() => {
+    shouldAutoSelectOriginally = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, false);
+});
+afterAll(() => {
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, shouldAutoSelectOriginally);
+});
 
 describe("CatalogDisplayStore angular size axis type", () => {
     test("keeps axis mode per catalog and converts radius values to diameters", () => {

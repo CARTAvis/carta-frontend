@@ -1,10 +1,21 @@
 import {CARTA} from "carta-protobuf";
 import {autorun, runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, PreferenceKeys, WorkspaceItemKind} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
+
+// These tests open, draw and bind catalogs rather than choose their overlay axes, and their catalogs carry nothing that
+// choosing reads. Choosing is covered by CatalogDisplayStoreAxes.test.ts.
+let shouldAutoSelectOriginally: boolean;
+beforeAll(() => {
+    shouldAutoSelectOriginally = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, false);
+});
+afterAll(() => {
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, shouldAutoSelectOriginally);
+});
 
 /** A catalog that has whatever column is asked of it, so that the plot-column validation
  * register runs neither drops a column nor warns about one. */
