@@ -11,23 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {
-    AnimationMode,
-    BrowserMode,
-    CatalogOverlay,
-    CatalogType,
-    CatalogUpdateMode,
-    ConnectionStatus,
-    DialogId,
-    ImageType,
-    ImageViewLayer,
-    PreferenceKeys,
-    RegionId as RegionIdType,
-    SpectralType,
-    SystemType,
-    TelemetryAction,
-    WCSMatchingType
-} from "enums";
+import {AnimationMode, BrowserMode, CatalogType, ConnectionStatus, DialogId, ImageType, ImageViewLayer, PreferenceKeys, RegionId as RegionIdType, SpectralType, SystemType, TelemetryAction, WCSMatchingType, WorkspaceItemKind} from "enums";
 import * as Enums from "enums";
 import {
     CARTA_INFO,
@@ -45,13 +29,14 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
-    type WorkspaceFile
+    type WorkspaceFile,
+    type WorkspaceIssue
 } from "models";
-import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
+import {ApiService, BackendService, ScriptingService, type StreamedMessage, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimatorStore,
-    type CatalogDisplayStore,
+    CatalogOnlineQueryStore,
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
@@ -76,8 +61,10 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
+import {WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
+import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 import {
-    CatalogAxisEligibility,
     Distinct,
     exportScreenshot,
     getColorForTheme,
@@ -147,16 +134,6 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
-}
-
-/** The two columns currently plotted on the image overlay, or undefined when either slot is empty. */
-function getPlottedOverlayColumns(catalogDisplayStore: CatalogDisplayStore | undefined): [string, string] | undefined {
-    const xColumn = catalogDisplayStore?.xAxis;
-    const yColumn = catalogDisplayStore?.yAxis;
-    if (!xColumn || !yColumn || xColumn === CatalogOverlay.NONE || yColumn === CatalogOverlay.NONE) {
-        return undefined;
-    }
-    return [xColumn, yColumn];
 }
 
 export class AppStore {
@@ -319,26 +296,32 @@ export class AppStore {
         }
     };
 
+    /** The workspace this session was opened with, if any. */
+    public static startingWorkspace(): {name: string; isKey: boolean} | undefined {
+        const url = new URL(window.location.href);
+        const key = url.searchParams.get("key");
+        if (key) {
+            return {name: key, isKey: true};
+        }
+        const name = url.searchParams.get("workspace");
+        return name ? {name, isKey: false} : undefined;
+    }
+
     @flow.bound
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
-        const workspaceKeyParam = url.searchParams.get("key");
-        const workspaceNameParam = url.searchParams.get("workspace");
-        const hasWorkspaceParam = workspaceKeyParam || workspaceNameParam;
+        const startingWorkspace = AppStore.startingWorkspace();
+        const hasWorkspaceParam = !!startingWorkspace;
 
         // Load workspace first if it exists
-        if (hasWorkspaceParam) {
-            const workspaceName = workspaceKeyParam ?? workspaceNameParam;
-            if (workspaceName) {
-                try {
-                    yield this.loadWorkspace(workspaceName, !!workspaceKeyParam);
-                } catch (err) {
-                    console.error(err);
-                }
+        if (startingWorkspace) {
+            try {
+                yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey);
+            } catch (err) {
+                console.error(err);
             }
         }
-
         let fileList: string[] = [];
         if (url.searchParams.has("files")) {
             let filesString = url.searchParams.get("files") ?? "";
@@ -378,6 +361,11 @@ export class AppStore {
     @observable taskStartTime: number = 0;
     @observable taskCurrentTime: number = 0;
     @observable isFileLoading: boolean = false;
+    /**
+     * Images asked for that are not frames yet. Counted apart from isFileLoading, which every load
+     * and generator shares and the first of them to finish clears for all.
+     */
+    private openingImageCount = 0;
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
@@ -458,8 +446,15 @@ export class AppStore {
         return this.imageViewConfigStore.frames;
     }
 
+    /**
+     * Whether the session is in no state to be asked to open a file.
+     *
+     * This gates the file browser and the close action, from the menu and from the keyboard alike,
+     * so a workspace being restored is covered here rather than at each entry point: a restore is a
+     * long run of opens and closes of its own, and the keyboard reaches past the dialog it puts up.
+     */
     @computed get isOpenFileDisabled(): boolean {
-        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.isFileLoading;
+        return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.isFileLoading || this.isLoadingWorkspace || this.isResumingSession;
     }
 
     @computed get isAppendFileDisabled(): boolean {
@@ -494,15 +489,6 @@ export class AppStore {
 
     @computed get catalogNum(): number {
         return this.catalogStore.catalogProfileStores.size;
-    }
-
-    @computed get catalogNextFileId(): number {
-        let id = 1;
-        const currentCatalogIds = Array.from(this.catalogStore.catalogProfileStores.keys());
-        while (currentCatalogIds?.includes(id) && currentCatalogIds.length) {
-            id += 1;
-        }
-        return id;
     }
 
     @computed get frameNames(): OptionProps[] {
@@ -665,6 +651,8 @@ export class AppStore {
         } else {
             this.imageViewConfigStore.addFrame(newFrame);
         }
+        // Give the image the ID a workspace will know it by, so that saving only has to read it back.
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, frameInfo.fileId);
 
         // First image defaults to spatial reference and contour source
         if (this.frames.length === 1) {
@@ -681,8 +669,6 @@ export class AppStore {
         if (shouldSetAsActive) {
             this.updateActiveImageByFrame(newFrame);
         }
-        // init image associated catalog
-        this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -762,6 +748,7 @@ export class AppStore {
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, isImageArithmetic: boolean, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true) {
         this.startFileLoading();
+        this.openingImageCount++;
 
         if (isImageArithmetic) {
             hdu = "";
@@ -783,8 +770,10 @@ export class AppStore {
         }
 
         try {
-            const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, isImageArithmetic);
-            this.fileCounter++;
+            // Taken before the request goes out: a second load started while this one is still in
+            // flight would otherwise be handed the same ID and replace the image this one opens.
+            const fileId = this.fileCounter++;
+            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic);
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, shouldSetAsActive, shouldUpdateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
@@ -800,6 +789,8 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     }
 
@@ -810,6 +801,7 @@ export class AppStore {
      * @throws If there is an error loading the file.
      */
     @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest.$Properties) {
+        this.openingImageCount++;
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
@@ -830,16 +822,21 @@ export class AppStore {
         } catch (err) {
             this.alertStore.showAlert(`HiPS data query failed: ${err}`);
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     }
 
     loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         this.startFileLoading();
+        this.openingImageCount++;
         try {
-            const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
-            this.fileCounter++;
+            const fileId = this.fileCounter++;
+            const ack = await this.backendService.loadStokeFiles(stokesFiles, fileId, CARTA.RenderMode.RASTER);
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, directory, false, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            } else if (ack.openFileAck?.fileId !== undefined && ack.openFileAck.fileId !== null) {
+                this.getFrame(ack.openFileAck.fileId)?.setStokesFiles(stokesFiles as CARTA.StokesFile[]);
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -853,6 +850,8 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     };
 
@@ -1058,6 +1057,10 @@ export class AppStore {
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
+                // The image is on its way out, so the workspace has no more use for its ID. A close
+                // that did not go through leaves the image loaded, and a workspace saved afterwards
+                // still has to be able to name it.
+                WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Image, fileId);
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
@@ -1124,7 +1127,7 @@ export class AppStore {
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
-                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                    CatalogStore.Instance.closeCatalogsOn(fileId);
                     if (firstFrame) {
                         CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
@@ -1145,6 +1148,10 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
+            // Nothing this session opened is left to name, so give every workspace ID back. A close
+            // that did not go through leaves everything loaded, still to be named by a later save.
+            WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+            WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
             this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
@@ -1160,7 +1167,7 @@ export class AppStore {
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
-                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                    CatalogStore.Instance.closeCatalogsOn(fileId);
                 }
             });
             this.imageViewConfigStore.removeAllImages();
@@ -1208,37 +1215,30 @@ export class AppStore {
 
     // Open catalog file
     @flow.bound
-    *appendCatalog(directory: string, file: string, previewDataSize: number) {
-        if (!this.activeFrame) {
+    *appendCatalog(directory: string, file: string, previewDataSize: number, targetFrameId?: number) {
+        const frame = targetFrameId === undefined ? this.activeFrame : this.getFrame(targetFrameId);
+        if (!frame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
         this.startFileLoading();
 
-        const frame = this.activeFrame;
-        const fileId = this.catalogNextFileId;
-
         try {
-            const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
-            this.endFileLoading();
-            if (frame && ack.success && ack.dataSize) {
-                const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                const columnData = ProtobufProcessing.processCatalogData(ack.previewData);
-                const catalogComponentId = this.updateCatalogProfile(fileId, frame, catalogInfo);
-                if (catalogComponentId) {
-                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                    this.catalogStore.addCatalog(fileId, ack.dataSize);
-                    this.fileBrowserStore.hideFileBrowser();
-                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
-                    this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                    this.catalogStore.validateCatalogPlotColumns(fileId);
-                    return fileId;
-                } else {
-                    throw new Error("No catalog widget");
+            const fileId: number | undefined = yield this.catalogStore.open(frame, async catalogFileId => {
+                const ack = await this.backendService.loadCatalogFile(directory, file, catalogFileId, previewDataSize);
+                if (!ack.success || !ack.dataSize) {
+                    throw new Error("No catalog file loaded");
                 }
-            } else {
-                throw new Error("No catalog file loaded");
+                const catalogInfo: CatalogInfo = {fileId: catalogFileId, directory, fileInfo: ack.fileInfo ?? {}, dataSize: ack.dataSize};
+                return new CatalogProfileStore(catalogInfo, (ack.headers ?? []) as CARTA.CatalogHeader[], ProtobufProcessing.processCatalogData(ack.previewData ?? {}), CatalogType.FILE);
+            });
+            this.endFileLoading();
+            const profileStore = fileId === undefined ? undefined : this.catalogStore.catalogProfileStores.get(fileId);
+            if (profileStore) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: profileStore.catalogHeader.length, row: profileStore.catalogInfo.dataSize, remote: false});
+                this.fileBrowserStore.hideFileBrowser();
             }
+            return fileId;
         } catch (err) {
             console.error(err);
             this.alertStore.showAlert(`Error loading catalogs: ${err}`);
@@ -1246,95 +1246,6 @@ export class AppStore {
             throw err;
         }
     }
-
-    @action updateCatalogProfile = (fileId: number, frame: FrameStore, catalogInfo?: Pick<CatalogInfo, "directory" | "fileInfo">): string | undefined => {
-        // update image associated catalog file
-        let associatedCatalogFiles: number[] = [];
-        const catalogStore = CatalogStore.Instance;
-        this.widgetsStore.bindPendingCatalogWidgets(fileId, catalogInfo);
-        const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-        if (currentAssociatedCatalogFile?.length) {
-            associatedCatalogFiles = currentAssociatedCatalogFile;
-        } else {
-            // new image append
-            this.widgetsStore.resetCatalogWidgetSelections([fileId]);
-        }
-        associatedCatalogFiles.push(fileId);
-        if (AppStore.Instance.activeFrame) {
-            catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
-        }
-
-        catalogStore.getOrCreateCatalogDisplayStore(fileId);
-        catalogStore.bindPendingCatalogPlots(fileId, catalogInfo);
-        return this.widgetsStore.updateCatalogWidgetSelection(fileId) ?? this.widgetsStore.createFloatingCatalogWidget(fileId);
-    };
-
-    @action removeCatalog(fileId: number, catalogComponentId?: string) {
-        if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
-            const catalogStore = CatalogStore.Instance;
-            // close all associated catalog plots widgets
-            catalogStore.clearCatalogPlotsByFileId(fileId);
-            // remove catalog overlay display store
-            catalogStore.removeCatalogDisplayStore(fileId);
-            // remove overlay
-            catalogStore.removeCatalog(fileId, catalogComponentId);
-            // remove profile store
-            catalogStore.catalogProfileStores.delete(fileId);
-
-            if (!this.activeFrame) {
-                return;
-            }
-        }
-    }
-
-    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest.$Properties): number | false {
-        if (!this.activeFrame) {
-            return false;
-        }
-        const requestId = this.backendService.setCatalogFilterRequest(catalogFilter);
-        if (typeof requestId === "number" && catalogFilter.fileId !== null && catalogFilter.fileId !== undefined) {
-            this.catalogStore.registerCatalogRequest(catalogFilter.fileId, requestId);
-        }
-        return requestId;
-    }
-
-    /** Request catalog columns needed by a display config restored before the preview contained them. */
-    @action requestCatalogColumns = (catalogFileId: number, columnNames: string[]): number | false => {
-        const profileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-        if (!profileStore?.isFileBasedCatalog || profileStore.isLoadingOntoImage) {
-            return false;
-        }
-
-        const previousUpdateMode = profileStore.updateMode;
-        const isOriginalUpdateColumnMode = profileStore.isUpdateColumnMode;
-        const isOriginalLoadingData = profileStore.isLoadingData;
-
-        // Hidden config columns must be displayed temporarily so the backend includes their data;
-        // this intentionally changes the table's displayed-column selection during restoration.
-        columnNames.forEach(columnName => profileStore.setHeaderDisplay(true, columnName));
-        profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        profileStore.setIsUpdateColumn(true);
-
-        const filter = profileStore.updateRequestDataSize;
-        const displayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-        if (filter.imageBounds) {
-            filter.imageBounds.xColumnName = displayStore?.xAxis ?? CatalogOverlay.NONE;
-            filter.imageBounds.yColumnName = displayStore?.yAxis ?? CatalogOverlay.NONE;
-        }
-        filter.fileId = catalogFileId;
-        filter.filterConfigs = profileStore.getUserFilters();
-        filter.columnIndices = profileStore.displayedColumnHeaders.map(column => column.columnIndex);
-        const requestId = this.sendCatalogFilter(filter);
-        if (requestId === false) {
-            profileStore.setIsUpdateColumn(isOriginalUpdateColumnMode);
-            profileStore.setUpdateMode(previousUpdateMode);
-            profileStore.setLoadingDataStatus(isOriginalLoadingData);
-            return false;
-        }
-
-        profileStore.resetFilterRequest();
-        return requestId;
-    };
 
     /**
      * Reorders images in the image list.
@@ -2123,6 +2034,7 @@ export class AppStore {
                     }
                     break;
                 case ConnectionStatus.CLOSED:
+                    this.catalogStore?.resetRequests("The server connection was lost while restoring catalog data");
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
                         this.alertStore
@@ -2509,63 +2421,8 @@ export class AppStore {
         }
     };
 
-    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse & {eventId?: number}) => {
-        const catalogFileId = catalogFilter.fileId;
-        if (!this.catalogStore.acceptsCatalogResponse(catalogFileId, catalogFilter.eventId)) {
-            return;
-        }
-        const catalogProfileStore = this.catalogStore.catalogProfileStores.get(catalogFileId);
-
-        const progress = catalogFilter.progress;
-        if (progress === 1) {
-            this.catalogStore.completeCatalogRequest(catalogFileId, catalogFilter.eventId);
-        }
-        if (catalogProfileStore) {
-            const isColumnUpdateMode = catalogProfileStore.isUpdateColumnMode;
-            const catalogDisplayStore = this.catalogStore.getCatalogDisplayStore(catalogFileId);
-            const isViewUpdate = !isColumnUpdateMode && catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate;
-            const overlayColumns = getPlottedOverlayColumns(catalogDisplayStore);
-            const getEligibilityStatus = (columnName: string) => catalogProfileStore.getCoordinateEligibility(columnName).status;
-            const didHaveUnknownCoordinateFormat = isViewUpdate && Boolean(overlayColumns?.some(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown));
-            const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
-            catalogProfileStore.updateCatalogData(catalogFilter, catalogData);
-            catalogProfileStore.setProgress(progress);
-            if (progress === 1) {
-                catalogProfileStore.setLoadingDataStatus(false);
-                catalogProfileStore.setUpdatingDataStream(false);
-            }
-
-            if (isViewUpdate && overlayColumns) {
-                const [xColumn, yColumn] = overlayColumns;
-                const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
-                if (frame) {
-                    let coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogData);
-                    const isCoordinateFormatSettled = didHaveUnknownCoordinateFormat && overlayColumns.every(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Eligible);
-                    if (isCoordinateFormatSettled) {
-                        // Earlier chunks were deliberately kept in the buffer as NaN while the
-                        // unitless string descriptor was unresolved. Re-read the accumulated
-                        // prefix now that the descriptor is known, and write it from row zero.
-                        this.catalogStore.clearImageCoordsData(catalogFileId);
-                        coords = catalogProfileStore.get2DCoordinateData(xColumn, yColumn, catalogProfileStore.catalogData, catalogFilter.subsetEndIndex);
-                    }
-                    const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
-                    if (coords.wcsX && coords.wcsY) {
-                        this.catalogStore.convertToImageCoordinate(
-                            catalogFileId,
-                            coords.wcsX,
-                            coords.wcsY,
-                            wcs,
-                            coords.xHeaderInfo?.units ?? "",
-                            coords.yHeaderInfo?.units ?? "",
-                            catalogProfileStore.catalogCoordinateSystem,
-                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetEndIndex,
-                            isCoordinateFormatSettled ? 0 : catalogFilter.subsetDataSize
-                        );
-                        catalogDisplayStore?.setPlottedImageOverlayState(xColumn, yColumn, catalogProfileStore.catalogCoordinateSystem.system);
-                    }
-                }
-            }
-        }
+    @action handleCatalogFilterStream = (stream: StreamedMessage<CARTA.CatalogFilterResponse>) => {
+        this.catalogStore.handleFilterStream(stream);
     };
 
     handleMomentProgressStream = (momentProgress: CARTA.MomentProgress) => {
@@ -2629,6 +2486,16 @@ export class AppStore {
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {
+            const errorMessage = errorData.message || "The server reported an error while restoring catalog data";
+            const isFatal = errorData.severity >= CARTA.ErrorSeverity.ERROR;
+            const isCatalogError = errorData.tags?.some(tag => tag.toLowerCase().includes("catalog"));
+            if (isFatal && isCatalogError) {
+                const errorDataId = errorData.data?.trim();
+                const catalogFileId = errorDataId ? Number(errorDataId) : NaN;
+                if (Number.isInteger(catalogFileId) && catalogFileId >= 0) {
+                    this.catalogStore.failRequest(catalogFileId, errorMessage);
+                }
+            }
             const logEntry: LogEntry = {
                 level: errorData.severity,
                 message: errorData.message,
@@ -2825,172 +2692,48 @@ export class AppStore {
     @flow.bound
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
+        // A load started while this one is still running owns the session from here on, and this one
+        // stops rather than mixing its workspace into the other's.
+        const generation = WorkspaceRestorer.claimGeneration();
 
         try {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
             if (!workspace) {
-                this.isLoadingWorkspace = false;
+                this.finishLoadingWorkspace();
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
 
-            // Some things should be reset when the user reconnects
-            this.animatorStore.stopAnimation();
-            this.tileService.clearRequestQueue();
-            this.removeAllFrames();
-
-            // Maps workspace file ID to new session's file ID
-            const frameIdMap = new Map<number, number>();
-            // Maps workspace region ID to new session's region ID
-            const regionIdMap = new Map<number, number>();
-
-            if (workspace.files) {
-                for (const fileInfo of workspace.files) {
-                    const frame: FrameStore = yield this.appendFile(fileInfo.directory ?? "", fileInfo.filename ?? "", fileInfo.hdu, false, false);
-                    if (frame) {
-                        frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
-
-                        // Channel/Stokes
-                        frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
-
-                        // References
-                        if (workspace.references?.spatial === fileInfo.id) {
-                            this.setSpatialReference(frame);
-                        }
-                        if (workspace.references?.spectral === fileInfo.id) {
-                            this.setSpectralReference(frame);
-                        }
-                        if (workspace.references?.raster === fileInfo.id) {
-                            this.setRasterScalingReference(frame);
-                        }
-                        if (fileInfo.timeSeriesMember) {
-                            this.setTimeSeriesMember(frame, true);
-                        }
-                    }
-                }
-
-                for (const fileInfo of workspace.files) {
-                    if (!frameIdMap.has(fileInfo.id)) {
-                        continue;
-                    }
-
-                    const frameId = frameIdMap.get(fileInfo.id);
-                    if (frameId === undefined) {
-                        continue;
-                    }
-                    const frame = this.frameMap.get(frameId);
-                    if (!frame) {
-                        continue;
-                    }
-
-                    if (workspace.selectedFile === fileInfo.id) {
-                        this.updateActiveImageByFrame(frame);
-                    }
-
-                    if (fileInfo.renderConfig) {
-                        frame.renderConfig.applyConfig(fileInfo.renderConfig);
-                    }
-
-                    if (workspace.references && fileInfo.references) {
-                        if (this.spatialReference && fileInfo.references.spatial === workspace.references.spatial) {
-                            this.setSpatialMatchingEnabled(frame, true);
-                        }
-                        if (this.spectralReference && fileInfo.references.spectral === workspace.references.spectral) {
-                            this.setSpectralMatchingEnabled(frame, true);
-                        }
-                        if (this.rasterScalingReference && fileInfo.references.raster === workspace.references.raster) {
-                            this.setRasterScalingMatchingEnabled(frame, true);
-                        }
-                    }
-
-                    if (fileInfo.contourConfig) {
-                        frame.contourConfig.applyConfig(fileInfo.contourConfig);
-                        frame.applyContours();
-                    }
-                    if (fileInfo.vectorOverlayConfig) {
-                        frame.vectorOverlayConfig.applyConfig(fileInfo.vectorOverlayConfig);
-                        frame.applyVectorOverlay();
-                    }
-
-                    // Set pan/zoom parameters
-                    if (fileInfo.center) {
-                        frame.center = fileInfo.center;
-                    }
-                    restoreWorkspaceZoom(frame, fileInfo);
-
-                    // Apply regions if spatial matching isn't enabled
-                    if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
-                        const preferenceStore = AppStore.Instance.preferenceStore;
-                        for (const regionInfo of fileInfo.regionsSet.regions) {
-                            const region = frame.regionSet.addExistingRegion(
-                                regionInfo.points,
-                                regionInfo.rotation,
-                                regionInfo.type,
-                                regionInfo.id,
-                                regionInfo.name ?? "",
-                                regionInfo.color ?? preferenceStore.regionColor,
-                                regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                                regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                                false,
-                                regionInfo.annotationStyles
-                            );
-                            if (region) {
-                                region.setLocked(regionInfo.locked ?? false);
-                                regionIdMap.set(regionInfo.id, region.regionId);
-                                if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
-                                    frame.regionSet.selectSingleRegion(region);
-                                }
-                            }
-                        }
-                    }
-                }
+            const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
+            if (restoreIssues.length) {
+                restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
+                AppToaster.show(WarningToast(`${restoreIssues.length} item(s) in workspace "${name}" were not restored as saved. See the log for details.`));
             }
 
-            if (workspace.colorBlendingImages) {
-                workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-
-                for (const {imageListIndex, selectedFrameId, alpha} of workspace.colorBlendingImages) {
-                    const colorBlending = this.imageViewConfigStore.createColorBlending();
-                    while (colorBlending?.selectedFrames.length) {
-                        colorBlending.deleteSelectedFrame(0);
-                    }
-                    colorBlending?.setAlpha(0, alpha[0]);
-
-                    for (let i = 0; i < selectedFrameId.length; i++) {
-                        const frameId = frameIdMap.get(selectedFrameId[i]);
-                        if (frameId === undefined) {
-                            continue;
-                        }
-                        const frame = this.frameMap.get(frameId);
-                        if (frame) {
-                            colorBlending?.addSelectedFrame(frame);
-                            colorBlending?.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
-                        }
-                    }
-
-                    this.reorderFrame(this.imageViewConfigStore.imageNum - 1, imageListIndex, 1);
-                }
-            }
-
-            // A workspace replaces the session's catalogs. Keep restores that matched one of its
-            // catalogs, but discard pending widget state still waiting for a catalog from an older workspace.
-            this.widgetsStore.clearUnmatchedPendingCatalogRestores();
-
-            // Sync up raster scaling once all images are loaded and configured
-            if (this.rasterScalingReference) {
-                this.rasterScalingReference.renderConfig.updateSiblings();
-            }
-
-            this.isLoadingWorkspace = false;
+            this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
             return true;
         } catch (err) {
             console.error(err);
+            if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
+                return false;
+            }
             AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
-            this.isLoadingWorkspace = false;
+            this.finishLoadingWorkspace();
             return false;
         }
     }
+
+    /** Close a workspace load out, whether or not everything in it came back. */
+    @action private finishLoadingWorkspace = () => {
+        this.isLoadingWorkspace = false;
+    };
 
     @flow.bound
     public *saveWorkspace(name: string) {
@@ -2999,120 +2742,40 @@ export class AppStore {
             return false;
         }
 
-        const workspace: Workspace = {
-            workspaceVersion: 0,
-            frontendVersion: CARTA_INFO.version,
-            description: "Workspace exported from CARTA",
-            date: Date.now() / 1000
-        };
-        workspace.files = [];
-        workspace.colorBlendingImages = [];
-        workspace.references = {};
+        // An image or catalog on its way from the backend is not in the session yet, and so would be
+        // left out of the workspace without the user being told. isFileLoading alone cannot say so:
+        // every load and generator shares it, and the first to finish clears it for the others.
+        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
+            this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
+            return false;
+        }
+
+        // An online catalog that is still being queried is not part of the session yet, so it would
+        // be left out of the workspace without the user being told.
+        if (CatalogOnlineQueryStore.Instance.isQuerying) {
+            this.alertStore.showAlert("Cannot save workspace while an online catalog query is still running. Please wait for it to finish.");
+            return false;
+        }
+
+        // A catalog that is still streaming holds part of its rows, so what it would be saved with
+        // is neither the state it was asked for nor the one it is in.
+        const streamingCatalogs = this.catalogStore.streamingCatalogNames;
+        if (streamingCatalogs.length) {
+            this.alertStore.showAlert(`Cannot save workspace while catalog data is still loading (${streamingCatalogs.join(", ")}). Please wait for it to finish.`);
+            return false;
+        }
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+        issues.forEach(issue => {
+            this.logStore.addWarning(issue.message, ["workspace", issue.kind]);
+            AppToaster.show(WarningToast(issue.message));
+        });
 
         const thumbnail = yield exportScreenshot();
         if (thumbnail) {
             workspace.thumbnail = thumbnail;
         }
 
-        if (this.spatialReference) {
-            workspace.references.spatial = this.spatialReference.frameInfo.fileId;
-        }
-        if (this.spectralReference) {
-            workspace.references.spectral = this.spectralReference.frameInfo.fileId;
-        }
-        if (this.rasterScalingReference) {
-            workspace.references.raster = this.rasterScalingReference.frameInfo.fileId;
-        }
-
-        let hasTemporaryFiles = false;
-
-        for (const frame of this.frames) {
-            if (frame?.frameInfo?.generated) {
-                hasTemporaryFiles = true;
-                continue;
-            }
-
-            const workspaceFile: WorkspaceFile = {
-                id: frame.frameInfo.fileId,
-                directory: frame.frameInfo.directory,
-                filename: frame.frameInfo.fileInfo.name,
-                hdu: frame.frameInfo.hdu,
-                timeSeriesMember: this.timeSeriesStore.isMember(frame) || undefined
-            };
-            workspaceFile.references = {};
-
-            if (frame.spatialReference) {
-                workspaceFile.references.spatial = frame.spatialReference.frameInfo.fileId;
-            } else if (frame.regionSet?.regions.length) {
-                workspaceFile.regionsSet = {
-                    selectedRegion: frame.regionSet.focusedRegion?.regionId
-                };
-                workspaceFile.regionsSet.regions = [];
-                for (const region of frame.regionSet.regions) {
-                    // Skip cursor region
-                    if (region.regionId === CURSOR_REGION_ID) {
-                        continue;
-                    }
-                    workspaceFile.regionsSet.regions.push({
-                        id: region.regionId,
-                        type: region.regionType,
-                        rotation: region.rotation,
-                        points: region.controlPoints,
-                        name: region.name,
-                        color: region.color,
-                        lineWidth: region.lineWidth,
-                        locked: region.isLocked,
-                        dashes: region.dashLength ? [region.dashLength] : [],
-                        // Check if styles are available. If so, add them to the region
-                        annotationStyles: (region as any).getAnnotationStyles?.()
-                    });
-                }
-            }
-
-            workspaceFile.center = frame.center;
-            workspaceFile.zoomLevel = frame.zoomLevel;
-            const zoomFrame = frame.spatialReference ?? frame;
-            if (zoomFrame.isAxisZoomable) {
-                workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
-                workspaceFile.zoomAxis = zoomFrame.zoomAxis;
-            }
-            workspaceFile.channel = frame.channel;
-            workspaceFile.stokes = frame.stokes;
-
-            if (frame.spectralReference) {
-                workspaceFile.references.spectral = frame.spectralReference.frameInfo.fileId;
-            }
-            if (frame.rasterScalingReference) {
-                workspaceFile.references.raster = frame.rasterScalingReference.frameInfo.fileId;
-            }
-
-            // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            workspaceFile.renderConfig = frame.renderConfig.toConfig();
-
-            const contourConfig = frame.contourConfig.toConfig();
-            if (contourConfig) {
-                workspaceFile.contourConfig = contourConfig;
-            }
-
-            const vectorOverlayConfig = frame.vectorOverlayConfig.toConfig();
-            if (vectorOverlayConfig) {
-                workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
-            }
-
-            workspace.files.push(workspaceFile);
-        }
-
-        for (const [id, colorBlending] of this.imageViewConfigStore.colorBlendingImageMap) {
-            const index = this.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, id);
-            workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: colorBlending.selectedFrames.map(f => f.id), alpha: colorBlending.alpha});
-        }
-
-        if (hasTemporaryFiles) {
-            AppToaster.show(WarningToast("The workspace contains generated files. These will not be preserved when reloading."));
-        }
-        if (this.activeFrame) {
-            workspace.selectedFile = this.activeFrameFileId;
-        }
         const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
         if (savedWorkspace) {
             this.activeWorkspace = savedWorkspace;

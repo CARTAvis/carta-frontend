@@ -14,36 +14,53 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     CatalogTextureType,
+    CatalogUpdateMode,
     ColorMap,
     FrameScaling
 } from "enums";
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
 import {
     CatalogAxisEligibility,
+    type CatalogAxisEligibilityResult,
     clamp,
+    COORDINATE_SNIFF_SCAN_LIMIT,
     createScalingParameters,
+    getAutoSelectedCatalogAxisColumn,
     getScalingParameter,
     isCatalogNumericDataType,
     isSupportedFrameScaling,
     minMaxArray,
+    rankCatalogAxisColumns,
     sanitizeScalingParameter,
     scalingParametersFromConfig,
     scalingParametersToConfig,
     type TypedArray
 } from "utilities";
 
+/** A bound to put in place, and whether it was chosen rather than taken from the data. */
+interface ClipValue {
+    value: number | undefined;
+    isExplicit: boolean;
+}
+
 /** The clipped bounds of one mapped column, held while the data-derived defaults are recomputed. */
 interface ClipRestore {
-    min: number | undefined;
-    max: number | undefined;
+    min: ClipValue;
+    max: ClipValue;
 }
 
 type ClipGroup = "sizeMajor" | "sizeMinor" | "color" | "orientation";
 
-/** One end of a mapped column's range: the bound derived from the data, and the one in force. */
-type ClipBound = {default: number | undefined; clipd: number | undefined};
+/**
+ * One end of a mapped column's range: the bound derived from the data, and the one in force.
+ *
+ * `isExplicit` records whether the bound in force was chosen rather than taken from the data. A
+ * chosen bound is kept when the data changes; one taken from the data follows it. The two cannot be
+ * told apart by value, because a chosen bound may happen to equal the one the data implies.
+ */
+type ClipBound = {default: number | undefined; clipd: number | undefined; isExplicit: boolean};
 
 interface ColumnRangeCache {
     profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore;
@@ -159,7 +176,7 @@ function configDefinesClip(axis: NormalizedAxis): boolean {
  * differs from its data-derived default was authored by the user and belongs in a config.
  */
 function authoredClip(bound: ClipBound): number | undefined {
-    return bound.clipd === bound.default ? undefined : bound.clipd;
+    return bound.isExplicit ? bound.clipd : undefined;
 }
 
 /**
@@ -246,7 +263,6 @@ export class CatalogDisplayStore {
     ]);
 
     @observable catalogFileId: number = 0;
-    @observable headerTableColumnWidths: Array<number> = [150, 75, 65, 100, 230];
     @observable dataTableColumnWidths: Array<number> = [];
     @observable isShowingSelectedData: boolean = false;
     @observable isCatalogTableAutoScrollEnabled: boolean = false;
@@ -268,8 +284,8 @@ export class CatalogDisplayStore {
     @observable catalogDisplayMode: CatalogDisplayMode = CatalogDisplayMode.CANVAS;
     // size map
     @observable sizeMapColumn: string = CatalogOverlay.NONE;
-    @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable sizeColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable sizeColumnMax: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
+    @observable sizeColumnMin: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
     @observable sizeMax: {area: number; diameter: number} = {area: 200, diameter: 20};
     @observable sizeMin: {area: number; diameter: number} = {area: 100, diameter: 5};
     @observable isSizeAreaMode: boolean = false;
@@ -283,8 +299,8 @@ export class CatalogDisplayStore {
     @observable catalogSourceRadiusType: CatalogSourceRadiusMode = "diameter";
     // size map minor
     @observable sizeMinorMapColumn: string = CatalogOverlay.NONE;
-    @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable sizeMinorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable sizeMinorColumnMax: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
+    @observable sizeMinorColumnMin: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
     @observable sizeMinorMax: {area: number; diameter: number} = {area: 200, diameter: 20};
     @observable sizeMinorMin: {area: number; diameter: number} = {area: 100, diameter: 5};
     @observable isSizeMinorAreaMode: boolean = false;
@@ -294,16 +310,16 @@ export class CatalogDisplayStore {
     @observable isSizeMinorColumnMaxLocked: boolean = false;
     // color map
     @observable colorMapColumn: string = CatalogOverlay.NONE;
-    @observable colorColumnMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable colorColumnMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable colorColumnMax: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
+    @observable colorColumnMin: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
     @observable colorMap: string = ColorMap.Viridis;
     @observable colorScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable private colorScalingParameters = createScalingParameters();
     @observable isInvertedColorMap: boolean = false;
     // orientation
     @observable orientationMapColumn: string = CatalogOverlay.NONE;
-    @observable orientationMax: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
-    @observable orientationMin: {default: number | undefined; clipd: number | undefined} = {default: undefined, clipd: undefined};
+    @observable orientationMax: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
+    @observable orientationMin: ClipBound = {default: undefined, clipd: undefined, isExplicit: false};
     @observable orientationScalingType: FrameScaling = FrameScaling.LINEAR;
     @observable private orientationScalingParameters = createScalingParameters();
     @observable angleMax: number = CatalogDisplayStore.MAX_ANGLE;
@@ -320,32 +336,13 @@ export class CatalogDisplayStore {
     /** Ranges are accumulated as file-based catalog rows arrive in chunks. */
     private readonly columnRangeCache = new Map<string, ColumnRangeCache>();
     /** Layout display settings waiting for the catalog data they validate against. */
-    private pendingConfig: WorkspaceCatalogConfig | undefined;
     /** Result from the most recent attempt to apply the pending layout config. */
-    private pendingConfigResult: CatalogConfigApplyResult | undefined;
     /** Request that is fetching the data needed by the pending layout config. */
-    private pendingConfigRequestId: number | undefined;
     /** Number of column-fetch attempts made for the current deferred config. */
-    private pendingConfigRequestCount = 0;
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
         makeObservable(this);
-
-        this.disposers.push(
-            reaction(
-                () => {
-                    const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-                    return Boolean(profileStore && !profileStore.isLoadingOntoImage);
-                },
-                isReady => {
-                    if (isReady && this.pendingConfig) {
-                        const config = this.pendingConfig;
-                        this.applyConfigWhenReady(config);
-                    }
-                }
-            )
-        );
 
         this.disposers.push(
             // A catalog carries only its preview rows when it is first loaded, and the rest arrive
@@ -404,6 +401,7 @@ export class CatalogDisplayStore {
                 sizeColumnMin => {
                     if (this.isSizeColumnMinLocked) {
                         this.sizeMinorColumnMin.clipd = sizeColumnMin;
+                        this.sizeMinorColumnMin.isExplicit = this.sizeColumnMin.isExplicit;
                     }
                 }
             )
@@ -415,6 +413,7 @@ export class CatalogDisplayStore {
                 sizeColumnMax => {
                     if (this.isSizeColumnMaxLocked) {
                         this.sizeMinorColumnMax.clipd = sizeColumnMax;
+                        this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
                     }
                 }
             )
@@ -459,6 +458,7 @@ export class CatalogDisplayStore {
                 sizeMinorColumnMin => {
                     if (this.isSizeMinorColumnMinLocked) {
                         this.sizeColumnMin.clipd = sizeMinorColumnMin;
+                        this.sizeColumnMin.isExplicit = this.sizeMinorColumnMin.isExplicit;
                     }
                 }
             )
@@ -470,6 +470,7 @@ export class CatalogDisplayStore {
                 sizeMinorColumnMax => {
                     if (this.isSizeMinorColumnMaxLocked) {
                         this.sizeColumnMax.clipd = sizeMinorColumnMax;
+                        this.sizeColumnMax.isExplicit = this.sizeMinorColumnMax.isExplicit;
                     }
                 }
             )
@@ -533,6 +534,50 @@ export class CatalogDisplayStore {
                 }
             )
         );
+
+        this.disposers.push(
+            // Choose the image overlay's coordinate columns once per catalog, whether or not a widget
+            // is open for it. A catalog a Workspace is restoring waits for the axes it was saved
+            // with, and is only given its own once the restore is over and none were applied.
+            // While an attempt is still to be made, reading the eligibility statuses subscribes this
+            // reaction to them, so a column that is still being sniffed gets another chance once a
+            // later response provides enough values. Once it has been made, or cannot be, nothing
+            // but the conditions for making it is watched.
+            reaction(
+                () => {
+                    const profileStore = this.profileStore;
+                    const canAutoSelectAxes =
+                        profileStore !== undefined &&
+                        !this.hasAttemptedAutoSelectImageOverlayAxes &&
+                        this.catalogPlotType === CatalogPlotType.ImageOverlay &&
+                        PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns &&
+                        !AppStore.Instance.isLoadingWorkspace;
+                    if (!canAutoSelectAxes) {
+                        return undefined;
+                    }
+                    const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
+                    return [profileStore.isUpdatingDataStream, profileStore.isLoadingData, profileStore.shouldUpdateData, eligibilityStatuses];
+                },
+                autoSelectState => {
+                    if (autoSelectState === undefined) {
+                        return;
+                    }
+
+                    // Keep the attempt open while the file still has rows to stream and the
+                    // visible coordinate candidates are unresolved. This prevents a noisy first
+                    // chunk from permanently suppressing auto-selection for a later valid chunk.
+                    const isWaitingForStreamedAxes = this.autoSelectAxes();
+                    if (!isWaitingForStreamedAxes) {
+                        this.setAutoSelectImageOverlayAxesAttempted(true);
+                    }
+                },
+                {fireImmediately: true}
+            )
+        );
+    }
+
+    private get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     public dispose = () => {
@@ -554,8 +599,8 @@ export class CatalogDisplayStore {
         this.sizeScalingParameters = createScalingParameters();
         this.sizeMin = {area: 50, diameter: 5};
         this.sizeMax = {area: 200, diameter: 20};
-        this.sizeColumnMin = {default: undefined, clipd: undefined};
-        this.sizeColumnMax = {default: undefined, clipd: undefined};
+        this.sizeColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
+        this.sizeColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
         this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
         this.isSizeColumnMinLocked = false;
         this.isSizeColumnMaxLocked = false;
@@ -566,22 +611,22 @@ export class CatalogDisplayStore {
         this.sizeMinorScalingParameters = createScalingParameters();
         this.sizeMinorMin = {area: 50, diameter: 5};
         this.sizeMinorMax = {area: 200, diameter: 20};
-        this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
-        this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+        this.sizeMinorColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
+        this.sizeMinorColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
         this.isSizeMinorColumnMinLocked = false;
         this.isSizeMinorColumnMaxLocked = false;
         // color
         this.colorMapColumn = CatalogOverlay.NONE;
-        this.colorColumnMax = {default: undefined, clipd: undefined};
-        this.colorColumnMin = {default: undefined, clipd: undefined};
+        this.colorColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
+        this.colorColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
         this.colorMap = ColorMap.Jet;
         this.colorScalingType = FrameScaling.LINEAR;
         this.colorScalingParameters = createScalingParameters();
         this.isInvertedColorMap = false;
         // orientation
         this.orientationMapColumn = CatalogOverlay.NONE;
-        this.orientationMax = {default: undefined, clipd: undefined};
-        this.orientationMin = {default: undefined, clipd: undefined};
+        this.orientationMax = {default: undefined, clipd: undefined, isExplicit: false};
+        this.orientationMin = {default: undefined, clipd: undefined, isExplicit: false};
         this.orientationScalingType = FrameScaling.LINEAR;
         this.orientationScalingParameters = createScalingParameters();
         this.angleMax = CatalogDisplayStore.MAX_ANGLE;
@@ -611,13 +656,13 @@ export class CatalogDisplayStore {
      */
     @action setOrientationMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.orientationMax.clipd === this.orientationMax.default;
             this.orientationMax.default = val;
-            if (shouldFollowDefault) {
+            if (!this.orientationMax.isExplicit) {
                 this.orientationMax.clipd = val;
             }
         } else {
             this.orientationMax.clipd = val;
+            this.orientationMax.isExplicit = true;
         }
     }
 
@@ -628,13 +673,13 @@ export class CatalogDisplayStore {
      */
     @action setOrientationMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.orientationMin.clipd === this.orientationMin.default;
             this.orientationMin.default = val;
-            if (shouldFollowDefault) {
+            if (!this.orientationMin.isExplicit) {
                 this.orientationMin.clipd = val;
             }
         } else {
             this.orientationMin.clipd = val;
+            this.orientationMin.isExplicit = true;
         }
     }
 
@@ -645,8 +690,10 @@ export class CatalogDisplayStore {
     @action resetOrientationValue(type: "min" | "max") {
         if (type === "min") {
             this.orientationMin.clipd = this.orientationMin.default;
+            this.orientationMin.isExplicit = false;
         } else {
             this.orientationMax.clipd = this.orientationMax.default;
+            this.orientationMax.isExplicit = false;
         }
     }
 
@@ -658,8 +705,8 @@ export class CatalogDisplayStore {
         if (this.orientationMapColumn !== column) {
             this.columnRangeCache.clear();
             this.orientationMapColumn = column;
-            this.orientationMin = {default: undefined, clipd: undefined};
-            this.orientationMax = {default: undefined, clipd: undefined};
+            this.orientationMin = {default: undefined, clipd: undefined, isExplicit: false};
+            this.orientationMax = {default: undefined, clipd: undefined, isExplicit: false};
 
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.orientationMapData);
@@ -700,13 +747,13 @@ export class CatalogDisplayStore {
      */
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.colorColumnMax.clipd === this.colorColumnMax.default;
             this.colorColumnMax.default = val;
-            if (shouldFollowDefault) {
+            if (!this.colorColumnMax.isExplicit) {
                 this.colorColumnMax.clipd = val;
             }
         } else {
             this.colorColumnMax.clipd = val;
+            this.colorColumnMax.isExplicit = true;
         }
     }
 
@@ -717,13 +764,13 @@ export class CatalogDisplayStore {
      */
     @action setColorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.colorColumnMin.clipd === this.colorColumnMin.default;
             this.colorColumnMin.default = val;
-            if (shouldFollowDefault) {
+            if (!this.colorColumnMin.isExplicit) {
                 this.colorColumnMin.clipd = val;
             }
         } else {
             this.colorColumnMin.clipd = val;
+            this.colorColumnMin.isExplicit = true;
         }
     }
 
@@ -734,8 +781,10 @@ export class CatalogDisplayStore {
     @action resetColorColumnValue(type: "min" | "max") {
         if (type === "min") {
             this.colorColumnMin.clipd = this.colorColumnMin.default;
+            this.colorColumnMin.isExplicit = false;
         } else {
             this.colorColumnMax.clipd = this.colorColumnMax.default;
+            this.colorColumnMax.isExplicit = false;
         }
     }
 
@@ -747,8 +796,8 @@ export class CatalogDisplayStore {
         if (this.colorMapColumn !== column) {
             this.columnRangeCache.clear();
             this.colorMapColumn = column;
-            this.colorColumnMin = {default: undefined, clipd: undefined};
-            this.colorColumnMax = {default: undefined, clipd: undefined};
+            this.colorColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
+            this.colorColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
         }
     }
 
@@ -828,13 +877,13 @@ export class CatalogDisplayStore {
      */
     @action setSizeColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.sizeColumnMax.clipd === this.sizeColumnMax.default;
             this.sizeColumnMax.default = val;
-            if (shouldFollowDefault) {
+            if (!this.sizeColumnMax.isExplicit) {
                 this.sizeColumnMax.clipd = val;
             }
         } else {
             this.sizeColumnMax.clipd = val;
+            this.sizeColumnMax.isExplicit = true;
         }
     }
 
@@ -845,13 +894,13 @@ export class CatalogDisplayStore {
      */
     @action setSizeColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.sizeColumnMin.clipd === this.sizeColumnMin.default;
             this.sizeColumnMin.default = val;
-            if (shouldFollowDefault) {
+            if (!this.sizeColumnMin.isExplicit) {
                 this.sizeColumnMin.clipd = val;
             }
         } else {
             this.sizeColumnMin.clipd = val;
+            this.sizeColumnMin.isExplicit = true;
         }
     }
 
@@ -862,8 +911,10 @@ export class CatalogDisplayStore {
     @action resetSizeColumnValue(type: "min" | "max") {
         if (type === "min") {
             this.sizeColumnMin.clipd = this.sizeColumnMin.default;
+            this.sizeColumnMin.isExplicit = false;
         } else {
             this.sizeColumnMax.clipd = this.sizeColumnMax.default;
+            this.sizeColumnMax.isExplicit = false;
         }
     }
 
@@ -899,8 +950,8 @@ export class CatalogDisplayStore {
         if (this.sizeMapColumn !== column) {
             this.columnRangeCache.clear();
             this.sizeMapColumn = column;
-            this.sizeColumnMin = {default: undefined, clipd: undefined};
-            this.sizeColumnMax = {default: undefined, clipd: undefined};
+            this.sizeColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
+            this.sizeColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMapData);
                 this.setSizeMax(result.maxVal);
@@ -954,13 +1005,13 @@ export class CatalogDisplayStore {
      */
     @action setSizeMinorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.sizeMinorColumnMax.clipd === this.sizeMinorColumnMax.default;
             this.sizeMinorColumnMax.default = val;
-            if (shouldFollowDefault) {
+            if (!this.sizeMinorColumnMax.isExplicit) {
                 this.sizeMinorColumnMax.clipd = val;
             }
         } else {
             this.sizeMinorColumnMax.clipd = val;
+            this.sizeMinorColumnMax.isExplicit = true;
         }
     }
 
@@ -971,13 +1022,13 @@ export class CatalogDisplayStore {
      */
     @action setSizeMinorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
-            const shouldFollowDefault = this.sizeMinorColumnMin.clipd === this.sizeMinorColumnMin.default;
             this.sizeMinorColumnMin.default = val;
-            if (shouldFollowDefault) {
+            if (!this.sizeMinorColumnMin.isExplicit) {
                 this.sizeMinorColumnMin.clipd = val;
             }
         } else {
             this.sizeMinorColumnMin.clipd = val;
+            this.sizeMinorColumnMin.isExplicit = true;
         }
     }
 
@@ -988,8 +1039,10 @@ export class CatalogDisplayStore {
     @action resetSizeMinorColumnValue(type: "min" | "max") {
         if (type === "min") {
             this.sizeMinorColumnMin.clipd = this.sizeMinorColumnMin.default;
+            this.sizeMinorColumnMin.isExplicit = false;
         } else {
             this.sizeMinorColumnMax.clipd = this.sizeMinorColumnMax.default;
+            this.sizeMinorColumnMax.isExplicit = false;
         }
     }
 
@@ -1053,8 +1106,8 @@ export class CatalogDisplayStore {
         if (this.sizeMinorMapColumn !== column) {
             this.columnRangeCache.clear();
             this.sizeMinorMapColumn = column;
-            this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
-            this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
+            this.sizeMinorColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
+            this.sizeMinorColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMinorMapData);
                 this.setMinorSizeMax(result.maxVal);
@@ -1114,10 +1167,6 @@ export class CatalogDisplayStore {
     @action setWorldSizeUnit(unit: AngularSizeUnit) {
         this.worldSizeUnit = unit;
         this.setCatalogSize(this.showedCatalogSize);
-    }
-
-    @action setHeaderTableColumnWidths(vals: Array<number>) {
-        this.headerTableColumnWidths = vals;
     }
 
     @action setDataTableColumnWidths(vals: Array<number>) {
@@ -1191,6 +1240,295 @@ export class CatalogDisplayStore {
 
     @action setAutoSelectImageOverlayAxesAttempted(hasAttemptedAutoSelectImageOverlayAxes: boolean) {
         this.hasAttemptedAutoSelectImageOverlayAxes = hasAttemptedAutoSelectImageOverlayAxes;
+    }
+
+    /** Show or hide a column, keeping the image overlay's axes on displayed columns. */
+    @action setColumnDisplayed(columnName: string, isDisplayed: boolean) {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return;
+        }
+        const header = profileStore.catalogControlHeader.get(columnName);
+        profileStore.setHeaderDisplay(isDisplayed, columnName);
+
+        const shouldAutoSelect = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+        if (shouldAutoSelect && isDisplayed && (this.xAxis === CatalogOverlay.NONE || this.yAxis === CatalogOverlay.NONE)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        }
+
+        if ((isDisplayed || header?.filter !== "") && profileStore.isFileBasedCatalog) {
+            this.requestColumnUpdate();
+        }
+
+        const isXAxisRemoved = this.xAxis === columnName;
+        const isYAxisRemoved = this.yAxis === columnName;
+        if (isXAxisRemoved) {
+            this.setxAxis(CatalogOverlay.NONE);
+        }
+        if (isYAxisRemoved) {
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+        if (shouldAutoSelect && (isXAxisRemoved || isYAxisRemoved)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), isXAxisRemoved, isYAxisRemoved);
+        }
+    }
+
+    /** Read the catalog's coordinates in another system, choosing the overlay's axes for it again. */
+    @action changeCoordinateSystem(system: CatalogSystemType) {
+        const profileStore = this.profileStore;
+        if (!profileStore || profileStore.catalogCoordinateSystem.system === system) {
+            return;
+        }
+
+        const previousSystem = profileStore.activedSystem;
+        profileStore.setCatalogCoordinateSystem(system);
+        if (PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns) {
+            this.setAutoSelectImageOverlayAxesAttempted(false);
+            const isWaitingForStreamedAxes = this.autoSelectAxes(true);
+            if (!isWaitingForStreamedAxes) {
+                this.setAutoSelectImageOverlayAxesAttempted(true);
+            }
+            return;
+        }
+
+        const shouldClearAxes = previousSystem?.x !== profileStore.activedSystem?.x || previousSystem?.y !== profileStore.activedSystem?.y;
+        if (this.catalogPlotType === CatalogPlotType.ImageOverlay && shouldClearAxes) {
+            this.setxAxis(CatalogOverlay.NONE);
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+    }
+
+    /** Switch what the axes are chosen for, dropping axes the new plot type cannot draw. */
+    @action changePlotType(plotType: CatalogPlotType) {
+        const didLeaveImageOverlay = plotType !== CatalogPlotType.ImageOverlay && this.catalogPlotType === CatalogPlotType.ImageOverlay;
+        this.setCatalogPlotType(plotType);
+        const profileStore = this.profileStore;
+        if (!profileStore || !didLeaveImageOverlay) {
+            return;
+        }
+
+        // Image overlays accept coordinate strings, while scatter plots and histograms consume
+        // raw numeric arrays. Do not leave a string coordinate selected when leaving the overlay:
+        // the plot button would otherwise stay enabled and the new plot would be empty.
+        if (!profileStore.isNumericColumn(this.xAxis)) {
+            this.setxAxis(CatalogOverlay.NONE);
+        }
+        if (!profileStore.isNumericColumn(this.yAxis)) {
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+    }
+
+    /** What the x axis stands for: a coordinate of the catalog's system on an image overlay. */
+    @computed get xAxisLabel(): CatalogOverlay {
+        return this.catalogPlotType === CatalogPlotType.ImageOverlay ? (this.profileStore?.activedSystem?.x ?? CatalogOverlay.X) : CatalogOverlay.X;
+    }
+
+    @computed get yAxisLabel(): CatalogOverlay {
+        return this.catalogPlotType === CatalogPlotType.ImageOverlay ? (this.profileStore?.activedSystem?.y ?? CatalogOverlay.Y) : CatalogOverlay.Y;
+    }
+
+    /**
+     * Eligibility is per column, not per axis: whether a column can be read as a number has
+     * nothing to do with which slot it lands in. Only the ordering of the axis options is
+     * axis-specific.
+     */
+    @computed get axisColumnEligibility(): Map<string, CatalogAxisEligibilityResult> {
+        const eligibility = new Map<string, CatalogAxisEligibilityResult>();
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return eligibility;
+        }
+
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined || !header.display) {
+                return;
+            }
+            eligibility.set(columnName, profileStore.getCoordinateEligibility(columnName));
+        });
+        return eligibility;
+    }
+
+    @computed get xAxisOptions(): string[] {
+        return this.getAxisOptions(this.xAxisLabel);
+    }
+
+    @computed get yAxisOptions(): string[] {
+        return this.getAxisOptions(this.yAxisLabel);
+    }
+
+    private getAxisOptions(axis: CatalogOverlay): string[] {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return [CatalogOverlay.NONE];
+        }
+
+        // Scatter plots and histograms consume raw numeric arrays, so only a column that is
+        // already numeric belongs in their menus.
+        if (this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return [CatalogOverlay.NONE, ...profileStore.displayedNumericColumnNames];
+        }
+
+        // Numeric columns are selectable, and so are string columns whose values parse as a
+        // coordinate; ranking pushes the unlikely candidates down the list rather than hiding
+        // them, so a mislabelled catalog is still usable.
+        const selectableColumns: string[] = [];
+        this.axisColumnEligibility.forEach((result, columnName) => {
+            if (result.status !== CatalogAxisEligibility.Ineligible) {
+                selectableColumns.push(columnName);
+            }
+        });
+
+        return [CatalogOverlay.NONE, ...rankCatalogAxisColumns(axis, selectableColumns, profileStore.catalogCoordinateSystem.system)];
+    }
+
+    /**
+     * @param shouldIncludeUnknown - also offer columns whose values have not been fetched, so their
+     * format is still unknown. Only a last resort: the name is all there is to go on, and a wrong
+     * guess costs a round trip. It degrades safely, because a column that turns out not to be a
+     * coordinate yields no data and simply leaves the overlay unplotted.
+     */
+    private getAutoSelectableAxisOptions(shouldIncludeHidden = false, shouldIncludeUnknown = false): string[] {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return [];
+        }
+
+        const axisOptions: string[] = [];
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
+                return;
+            }
+
+            const status = profileStore.getCoordinateEligibility(columnName).status;
+            if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
+                axisOptions.push(columnName);
+            }
+        });
+        return axisOptions;
+    }
+
+    private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return false;
+        }
+
+        let didEnableColumns = false;
+        for (const columnName of columnNames) {
+            if (!columnName) {
+                continue;
+            }
+            const header = profileStore.catalogControlHeader.get(columnName);
+            if (header && !header.display) {
+                profileStore.setHeaderDisplay(true, columnName);
+                didEnableColumns = true;
+            }
+        }
+        return didEnableColumns;
+    }
+
+    private setAutoSelectedAxes(axisOptions: string[], shouldSelectXAxis = true, shouldSelectYAxis = true, shouldEnableHiddenColumns = false): {didSelectX: boolean; didSelectY: boolean; enabledHiddenColumns: boolean} {
+        if (this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
+        }
+
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        const xColumnName = shouldSelectXAxis && this.xAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.xAxisLabel, axisOptions, system) : undefined;
+        const yColumnName = shouldSelectYAxis && this.yAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.yAxisLabel, axisOptions, system) : undefined;
+
+        let areHiddenColumnsEnabled = false;
+        if (shouldEnableHiddenColumns) {
+            areHiddenColumnsEnabled = this.enableAxisColumns([xColumnName, yColumnName]);
+        }
+
+        if (xColumnName) {
+            this.setxAxis(xColumnName);
+        }
+        if (yColumnName) {
+            this.setyAxis(yColumnName);
+        }
+
+        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
+    }
+
+    /** Whether a streamed file may still settle the format of a name-matched coordinate column. */
+    private hasPendingStreamedAxisEligibility(): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
+            return false;
+        }
+
+        let loadedRowCount = 0;
+        profileStore.catalogData.forEach(columnData => {
+            loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
+        });
+        if (loadedRowCount >= COORDINATE_SNIFF_SCAN_LIMIT) {
+            return false;
+        }
+
+        for (const [columnName, result] of this.axisColumnEligibility) {
+            if (result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private isCoordinateNameCandidate(columnName: string): boolean {
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        return Boolean(getAutoSelectedCatalogAxisColumn(this.xAxisLabel, [columnName], system) || getAutoSelectedCatalogAxisColumn(this.yAxisLabel, [columnName], system));
+    }
+
+    /** Returns true when auto-selection should be retried after another streamed response. */
+    @action private autoSelectAxes(shouldForceReset = false): boolean {
+        const profileStore = this.profileStore;
+        if (!PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns || this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return false;
+        }
+
+        if (shouldForceReset) {
+            this.setxAxis(CatalogOverlay.NONE);
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+
+        // Widening passes: the columns already on screen, then the hidden ones whose units or
+        // values identify them, and only then the hidden ones nothing but their name suggests.
+        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        if (selected.didSelectX && selected.didSelectY) {
+            return false;
+        }
+
+        // Do not spend the one-shot attempt on a partial answer. In particular, a first chunk
+        // containing one coordinate and one placeholder is Unknown, not a final rejection.
+        if (this.hasPendingStreamedAxisEligibility()) {
+            // The preview is only the first chunk. Keep fetching the displayed candidates so a
+            // later response can settle a unitless string format and wake the reaction again.
+            CatalogStore.Instance.requestMoreRows(this.catalogFileId);
+            return true;
+        }
+
+        const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
+        let didEnableHiddenColumns = fallback.enabledHiddenColumns;
+
+        const isXAxisUnfilled = !selected.didSelectX && !fallback.didSelectX;
+        const isYAxisUnfilled = !selected.didSelectY && !fallback.didSelectY;
+        if (isXAxisUnfilled || isYAxisUnfilled) {
+            const unknownFallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true, true), isXAxisUnfilled, isYAxisUnfilled, true);
+            didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
+        }
+
+        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
+            this.requestColumnUpdate();
+        }
+        return false;
+    }
+
+    /** Fetch the columns just displayed, keeping the rows already in the table. */
+    private requestColumnUpdate() {
+        const profileStore = this.profileStore;
+        profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
+        profileStore?.setIsUpdateColumn(true);
+        CatalogStore.Instance.requestFilteredRows(this.catalogFileId);
     }
 
     @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
@@ -1317,9 +1655,8 @@ export class CatalogDisplayStore {
         if (!this.isAngularSize) {
             return 1;
         } else {
-            const appStore = AppStore.Instance;
             const catalogStore = CatalogStore.Instance;
-            const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+            const frame = catalogStore.frameOf(this.catalogFileId);
             const pixelAngularSize = (frame?.spatialReference?.pixelUnitSizeArcsec && frame?.spatialReference?.pixelUnitSizeArcsec.x) ?? (frame?.pixelUnitSizeArcsec && frame?.pixelUnitSizeArcsec.x) ?? 1;
             const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.worldSizeUnit : this.canvasSizeUnit;
             const radiusFactor = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? (this.catalogSourceRadiusTypes.get(this.catalogSourceRadiusType)?.value ?? 1) : 1;
@@ -1518,7 +1855,6 @@ export class CatalogDisplayStore {
         this.setThickness(clamp(finiteNumberOrDefault(config?.thickness, 2.0), CatalogDisplayStore.MIN_THICKNESS, CatalogDisplayStore.MAX_THICKNESS));
         this.setxAxis(typeof config?.xAxis === "string" ? config.xAxis : CatalogOverlay.NONE);
         this.setyAxis(typeof config?.yAxis === "string" ? config.yAxis : CatalogOverlay.NONE);
-
         const showedCatalogSize = clamp(finiteNumberOrDefault(config?.size, 10.0), this.minOverlaySize, this.maxOverlaySize);
         this.setCatalogSize(showedCatalogSize);
 
@@ -1572,117 +1908,27 @@ export class CatalogDisplayStore {
         this.isSizeMinorColumnMaxLocked = sizeMinorAxis.columnMaxLocked;
         this.propagateLockedSizeBounds();
 
+        // The axes are what the Workspace was saved with, None included; choosing them again would
+        // replace them.
+        this.setAutoSelectImageOverlayAxesAttempted(true);
+
         return {success: true, errors: []};
     };
 
-    /** Apply catalog display settings now, or retry them once the catalog data is ready. */
-    @action applyConfigWhenReady = (config: WorkspaceCatalogConfig): CatalogConfigApplyResult => {
-        if (this.pendingConfig !== config) {
-            this.pendingConfigRequestCount = 0;
-            this.pendingConfigRequestId = undefined;
-        }
-        const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-        const result = this.applyConfig(config);
-
-        // The readiness reaction retries the config once the catalog has finished loading.
-        if (!profileStore || profileStore.isLoadingOntoImage) {
-            this.pendingConfig = config;
-            this.pendingConfigResult = result;
-            return result;
-        }
-
-        // Columns a file-based catalog has not streamed yet are fetched, and the config retried when
-        // they arrive. Any other catalog already holds everything it is ever going to.
-        const columnsWithoutData = this.configColumnsWithoutData(profileStore, config);
-        if (!columnsWithoutData.length || !profileStore.isFileBasedCatalog) {
-            return this.finalizeConfig(result);
-        }
-        // One fetch per config: a column still missing after it is one the catalog does not hold.
-        if (this.pendingConfigRequestCount >= 1) {
-            return this.finalizeConfig(result);
-        }
-
-        this.pendingConfig = config;
-        this.pendingConfigResult = result;
-        const requestId = AppStore.Instance.requestCatalogColumns(this.catalogFileId, this.configColumnNames(config));
-        if (requestId === false) {
-            return this.finalizeConfig(result);
-        }
-        this.pendingConfigRequestId = requestId;
-        this.pendingConfigRequestCount += 1;
-        return result;
-    };
-
-    /** Drop a restore whose data request was superseded before it could complete. */
-    @action handleCatalogRequestSuperseded = (requestId: number) => {
-        if (this.pendingConfigRequestId !== requestId || !this.pendingConfig) {
-            return;
-        }
-
-        const result = this.pendingConfigResult;
-        this.clearPendingConfig();
-        this.reportRejectedConfig({
-            success: false,
-            errors: [...(result?.errors ?? []), "The catalog data request was superseded before the display settings could be restored"]
-        });
-    };
-
-    /** Columns referenced by a restored display config, including image-overlay coordinates. */
-    private configColumnNames(config: WorkspaceCatalogConfig): string[] {
-        const columns = [config.sizeAxis?.mapColumn, config.sizeMinorAxis?.mapColumn, config.colorAxis?.mapColumn, config.orientationAxis?.mapColumn, config.xAxis, config.yAxis];
-        return Array.from(new Set(columns.filter((column): column is string => Boolean(column) && column !== CatalogOverlay.NONE)));
-    }
-
-    /** Numeric config columns whose data is not in the catalog response received so far. */
-    private configColumnsWithoutData(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, config: WorkspaceCatalogConfig): string[] {
-        return this.configColumnNames(config).filter(column => {
-            const header = profileStore.getColumnHeader(column);
-            return Boolean(header && isCatalogNumericDataType(header.dataType)) && !profileStore.get1DPlotData(column).wcsData?.length;
-        });
-    }
-
-    /**
-     * Report settings that cannot be applied or retried, such as columns the catalog does not have,
-     * columns with an unsupported type, or columns with no data.
-     */
-    private reportRejectedConfig(result: CatalogConfigApplyResult) {
-        if (result.success) {
-            return;
-        }
-        const catalogName = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId)?.catalogInfo.fileInfo.name ?? `catalog ${this.catalogFileId}`;
-        AppStore.Instance.logStore.addWarning(`Display settings for ${catalogName} were not restored: ${result.errors.join("; ")}`, ["catalog"]);
-    }
-
-    /** Stop waiting on the catalog for a config, reporting whatever it could not apply. */
-    private finalizeConfig(result: CatalogConfigApplyResult): CatalogConfigApplyResult {
-        this.clearPendingConfig();
-        this.reportRejectedConfig(result);
-        return result;
-    }
-
-    private clearPendingConfig() {
-        this.pendingConfig = undefined;
-        this.pendingConfigResult = undefined;
-        this.pendingConfigRequestId = undefined;
-        this.pendingConfigRequestCount = 0;
-    }
-
     private clearPendingRestoreState() {
         this.pendingClipRestore.clear();
-        this.clearPendingConfig();
     }
 
     private propagateLockedSizeBounds() {
         if (this.isSizeColumnMinLocked) {
             this.sizeMinorColumnMin.clipd = this.sizeColumnMin.clipd;
+            this.sizeMinorColumnMin.isExplicit = this.sizeColumnMin.isExplicit;
         }
         if (this.isSizeColumnMaxLocked) {
             this.sizeMinorColumnMax.clipd = this.sizeColumnMax.clipd;
+            this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
         }
     }
-
-    /** Return the config waiting for catalog validation, if any, for workspace serialization. */
-    public getConfigForSerialization = (): WorkspaceCatalogConfig => this.pendingConfig ?? this.toConfig();
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {
@@ -1698,6 +1944,15 @@ export class CatalogDisplayStore {
             plotType: this.catalogPlotType,
             xAxis: this.xAxis,
             yAxis: this.yAxis,
+            imageOverlay:
+                this.hasPlottedImageOverlay && this.plottedImageOverlaySystem !== undefined
+                    ? {
+                          xAxis: this.plottedImageOverlayXAxis,
+                          yAxis: this.plottedImageOverlayYAxis,
+                          system: this.plottedImageOverlaySystem,
+                          maxRows: this.plottedImageOverlayMaxRows
+                      }
+                    : undefined,
             sizeAxis: {
                 mapColumn: this.sizeMapColumn,
                 columnMinClip: authoredClip(this.sizeColumnMin),
@@ -1750,16 +2005,16 @@ export class CatalogDisplayStore {
      */
     private resolveClip(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, axis: NormalizedAxis): ClipRestore {
         if (axis.mapColumn === CatalogOverlay.NONE) {
-            return {min: undefined, max: undefined};
+            return {min: {value: undefined, isExplicit: false}, max: {value: undefined, isExplicit: false}};
         }
         if (axis.columnMinClip !== undefined && axis.columnMaxClip !== undefined) {
-            return {min: axis.columnMinClip, max: axis.columnMaxClip};
+            return {min: {value: axis.columnMinClip, isExplicit: true}, max: {value: axis.columnMaxClip, isExplicit: true}};
         }
 
         const range = this.columnRange(profileStore, axis.mapColumn);
         return {
-            min: axis.columnMinClip ?? range.min,
-            max: axis.columnMaxClip ?? range.max
+            min: {value: axis.columnMinClip ?? range.min, isExplicit: axis.columnMinClip !== undefined},
+            max: {value: axis.columnMaxClip ?? range.max, isExplicit: axis.columnMaxClip !== undefined}
         };
     }
 
@@ -1831,11 +2086,11 @@ export class CatalogDisplayStore {
         }
 
         const range = this.columnRange(profileStore, column, dataState);
-        if (!isMinLocked && min.clipd === min.default) {
+        if (!isMinLocked && !min.isExplicit) {
             min.clipd = range.min;
         }
         min.default = range.min;
-        if (!isMaxLocked && max.clipd === max.default) {
+        if (!isMaxLocked && !max.isExplicit) {
             max.clipd = range.max;
         }
         max.default = range.max;
@@ -1865,8 +2120,10 @@ export class CatalogDisplayStore {
 
     private applyClip(group: ClipGroup, clip: ClipRestore) {
         const {min, max} = this.clipGroupState(group);
-        min.clipd = clip.min;
-        max.clipd = clip.max;
+        min.clipd = clip.min.value;
+        min.isExplicit = clip.min.isExplicit;
+        max.clipd = clip.max.value;
+        max.isExplicit = clip.max.isExplicit;
     }
 
     /** The mapped column of one clip group, together with the two bounds that follow it. */

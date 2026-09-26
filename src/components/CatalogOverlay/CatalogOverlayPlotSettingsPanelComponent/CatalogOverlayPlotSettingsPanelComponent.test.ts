@@ -131,14 +131,14 @@ describe("CatalogOverlayPlotSettingsPanelComponent colormap preview", () => {
 describe("CatalogOverlayPlotSettingsPanelComponent settings tabs", () => {
     test("returns to the major size axis when the top-level tab changes", () => {
         const displayStore = {setSizeAxisTab: jest.fn()} as unknown as CatalogDisplayStore;
-        const widgetStore = {setSettingsTabId: jest.fn()} as unknown as CatalogWidgetStore;
+        const widgetStore = {setSettingsTab: jest.fn()} as unknown as CatalogWidgetStore;
         const component = createComponent();
         Object.defineProperty(component, "displayStore", {configurable: true, get: () => displayStore});
         Object.defineProperty(component, "widgetStore", {configurable: true, get: () => widgetStore});
 
         component.handleSelectedTabChanged(CatalogSettingsTabs.COLOR);
 
-        expect(widgetStore.setSettingsTabId).toHaveBeenCalledWith(CatalogSettingsTabs.COLOR);
+        expect(widgetStore.setSettingsTab).toHaveBeenCalledWith(undefined, CatalogSettingsTabs.COLOR);
         expect(displayStore.setSizeAxisTab).toHaveBeenCalledWith(CatalogSettingsTabs.SIZE_MAJOR);
     });
 });

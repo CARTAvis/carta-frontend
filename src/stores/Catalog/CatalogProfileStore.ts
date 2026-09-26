@@ -97,7 +97,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.filterDataSize = catalogFilter.filterDataSize;
 
         if (this.subsetEndIndex <= this.filterDataSize) {
-            const numVisibleRows = this.isUpdateColumnMode ? this.numVisibleRows : this.numVisibleRows + subsetDataSize;
+            const numVisibleRows = this.isUpdateColumnMode ? this.numVisibleRows : Math.min(this.maxRows, this.numVisibleRows + subsetDataSize);
             catalogData.forEach((newData, key) => {
                 const currentData = this.catalogData.get(key);
                 if (!currentData) {
@@ -106,17 +106,17 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        currentData.data = CatalogProfileStore.fillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
+                        this.catalogData.set(key, {...currentData, data: CatalogProfileStore.fillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize)});
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        currentData.data = CatalogProfileStore.fillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
+                        this.catalogData.set(key, {...currentData, data: CatalogProfileStore.fillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize)});
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        currentData.data = CatalogProfileStore.fillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
+                        this.catalogData.set(key, {...currentData, data: CatalogProfileStore.fillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize)});
                     }
                 }
             });
@@ -273,15 +273,5 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         } else {
             return this.subsetEndIndex < this.catalogInfo.dataSize && this.subsetEndIndex < this.maxRows;
         }
-    }
-
-    @computed get columnIndices(): Array<number> {
-        const indices: number[] = [];
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.display && value.columnIndex !== undefined) {
-                indices.push(value.columnIndex);
-            }
-        });
-        return indices;
     }
 }

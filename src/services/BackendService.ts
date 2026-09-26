@@ -18,6 +18,19 @@ interface IBackendResponse {
 }
 
 // Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
+/**
+ * A streamed message together with the ID of the request it answers.
+ *
+ * A request answered by a run of messages needs each of them tied back to it, so that a response
+ * left over from a request that has been superseded can be told apart from one that is still
+ * wanted. The ID travels beside the message rather than on it, since the message is a decoded
+ * protobuf that knows nothing about it.
+ */
+export interface StreamedMessage<T> {
+    requestId: number;
+    message: T;
+}
+
 export class Deferred<T> {
     private _resolve: (value: T) => void = () => {};
     private _reject: (reason: any) => void = () => {};
@@ -80,7 +93,7 @@ export class BackendService {
     readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
-    readonly catalogStream: Subject<CARTA.CatalogFilterResponse & {eventId?: number}>;
+    readonly catalogStream: Subject<StreamedMessage<CARTA.CatalogFilterResponse>>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
@@ -108,7 +121,7 @@ export class BackendService {
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
-        this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
+        this.catalogStream = new Subject<StreamedMessage<CARTA.CatalogFilterResponse>>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.listProgressStream = new Subject<CARTA.ListProgress>();
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
@@ -1027,8 +1040,7 @@ export class BackendService {
     }
 
     private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
-        Object.defineProperty(catalogFilter, "eventId", {configurable: true, enumerable: false, value: eventId});
-        this.catalogStream.next(catalogFilter);
+        this.catalogStream.next({requestId: eventId, message: catalogFilter});
     }
 
     private onStreamedMomentProgress(_eventId: number, momentProgress: CARTA.MomentProgress) {

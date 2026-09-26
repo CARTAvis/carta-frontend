@@ -26,11 +26,14 @@ import {
     type TypedArray
 } from "utilities";
 
+import {type WorkspaceCatalogQuerySource, type WorkspaceCatalogTableConfig} from "../Workspace";
+
 export interface CatalogInfo {
     fileId: number;
     fileInfo: CARTA.CatalogFileInfo.$Properties;
     dataSize: number;
     directory: string;
+    query?: WorkspaceCatalogQuerySource;
 }
 
 /**
@@ -114,6 +117,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract get shouldUpdateData(): boolean;
     abstract resetCatalogFilterRequest(): void;
     abstract get isLoadingOntoImage(): boolean;
+    abstract get maxRows(): number;
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
@@ -136,6 +140,11 @@ export abstract class AbstractCatalogProfileStore {
     @observable filterIndexMap: number[] = [];
     @observable isUpdateColumnMode: boolean = false;
 
+    /**
+     * Shallow so that replacing a column marks the data as changed. Rows stream in a batch at a
+     * time, and anything computed from a column has to see them; the column arrays themselves stay
+     * plain, since they can hold millions of values.
+     */
     @observable.shallow private _catalogData: Map<number, ProcessedColumnData>;
     /** Changes when a column object is updated without changing the shallow map itself. */
     @observable protected catalogDataVersion = 0;
@@ -296,19 +305,29 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     /**
-     * Values for the image overlay, read as coordinates of the active system: string formats are
-     * parsed, and a latitude beyond a pole is dropped. Only here, where the columns are known to
-     * be feeding a sky transform, is that interpretation warranted.
+     * Values for the image overlay, read as coordinates of the system they are to be drawn in:
+     * string formats are parsed, and a latitude beyond a pole is dropped. Only here, where the
+     * columns are known to be feeding a sky transform, is that interpretation warranted.
+     *
+     * The system is asked for rather than read off the store, because the overlay that is drawn
+     * and the widget's coordinate control can be in different systems -- a restored overlay keeps
+     * the system it was saved in, whatever the control has been left on since. The system decides
+     * what the columns mean: an unmarked sexagesimal value is hours under a right ascension and
+     * degrees under a galactic longitude, and only a latitude is checked against its pole. Reading
+     * the values in one system and transforming them as another puts the sources somewhere else
+     * entirely.
      */
     public get2DCoordinateData(
         xColumnName: string,
         yColumnName: string,
         columnsData: Map<number, ProcessedColumnData>,
+        system: CatalogSystemType,
         rowCount?: number
     ): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.CatalogHeader.$Properties; yHeaderInfo: CARTA.CatalogHeader.$Properties} {
         const {xColumn, yColumn, xHeaderInfo, yHeaderInfo} = this.getPlotColumns(xColumnName, yColumnName, columnsData);
-        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, this.activedSystem?.x ?? CatalogOverlay.X, rowCount);
-        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, this.activedSystem?.y ?? CatalogOverlay.Y, rowCount);
+        const axes = this.systemCoordinateMap.get(system);
+        const wcsX = getCatalogCoordinateData(xColumn, this.getCoordinateEligibility(xColumnName), xHeaderInfo.units, axes?.x ?? CatalogOverlay.X, rowCount);
+        const wcsY = getCatalogCoordinateData(yColumn, this.getCoordinateEligibility(yColumnName), yHeaderInfo.units, axes?.y ?? CatalogOverlay.Y, rowCount);
 
         return wcsX && wcsY ? {wcsX, wcsY, xHeaderInfo, yHeaderInfo} : {xHeaderInfo, yHeaderInfo};
     }
@@ -367,19 +386,24 @@ export abstract class AbstractCatalogProfileStore {
         const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
         const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
 
-        return {xColumn: columnsData.get(xHeaderInfo.columnIndex), yColumn: columnsData.get(yHeaderInfo.columnIndex), xHeaderInfo, yHeaderInfo};
+        // A restored plot can name a column the catalog no longer has, which leaves its header
+        // undefined. String columns are no longer filtered out here: a coordinate column may hold
+        // sexagesimal or degree text, which the caller resolves through its header.
+        const xColumn = xHeaderInfo ? columnsData.get(xHeaderInfo.columnIndex) : undefined;
+        const yColumn = yHeaderInfo ? columnsData.get(yHeaderInfo.columnIndex) : undefined;
+        return {xColumn, yColumn, xHeaderInfo: xHeaderInfo ?? {}, yHeaderInfo: yHeaderInfo ?? {}};
     }
 
     public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.CatalogHeader.$Properties} {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
-        const xColumn = this.catalogData.get(headerInfo.columnIndex);
+        const xColumn = headerInfo ? this.catalogData.get(headerInfo.columnIndex) : undefined;
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
-            return {headerInfo};
+            return {headerInfo: headerInfo ?? {}};
         }
     }
 
@@ -434,6 +458,50 @@ export abstract class AbstractCatalogProfileStore {
 
     @computed get regionSelected(): number {
         return this.selectedPointIndices.length;
+    }
+
+    /**
+     * Columns the backend is asked for although the table does not show them.
+     *
+     * Which columns are asked for and which are shown are two different questions, and a column can
+     * be the answer to one and not the other: an overlay maps columns that the user may have hidden
+     * from the table, and the rows have to carry them all the same.
+     */
+    private readonly requestedHiddenColumns = observable.set<string>();
+
+    @computed get columnIndices(): Array<number> {
+        const indices: number[] = [];
+        this.catalogControlHeader.forEach((header, columnName) => {
+            if ((header.display || this.requestedHiddenColumns.has(columnName)) && header.columnIndex !== undefined) {
+                indices.push(header.columnIndex);
+            }
+        });
+        return indices;
+    }
+
+    /**
+     * Make sure the given columns are among the ones the backend is asked for. Rows that stream in
+     * later only carry the requested columns, so a column that is mapped but not displayed leaves
+     * those rows unusable.
+     *
+     * The table is left as it was. A column the user hid stays hidden, and a workspace that saved
+     * it hidden comes back that way: being needed by the overlay is not a reason to show it.
+     *
+     * @returns whether any column had to be added.
+     */
+    @action ensureColumnsRequested(columnNames: string[]): boolean {
+        let hasChanged = false;
+        for (const columnName of columnNames) {
+            const header = this.catalogControlHeader.get(columnName);
+            if (header && !header.display && !this.requestedHiddenColumns.has(columnName)) {
+                this.requestedHiddenColumns.add(columnName);
+                hasChanged = true;
+            }
+        }
+        if (hasChanged) {
+            this.catalogFilterRequest.columnIndices = this.columnIndices;
+        }
+        return hasChanged;
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -550,6 +618,74 @@ export abstract class AbstractCatalogProfileStore {
         }
     }
 
+    /** Restore the columns shown in the catalog table from a workspace config. */
+    @action setDisplayedColumns(columnNames: string[]) {
+        const displayedColumns = new Set(columnNames);
+        this.catalogControlHeader.forEach((header, columnName) => {
+            header.display = displayedColumns.has(columnName);
+        });
+        this.catalogFilterRequest.columnIndices = this.columnIndices;
+    }
+
+    /** The table state a workspace saves: which rows and columns the catalog holds, and how its
+     * table shows them. */
+    public toTableConfig(): WorkspaceCatalogTableConfig {
+        const columnSettings: NonNullable<WorkspaceCatalogTableConfig["columnSettings"]> = {};
+        for (const [columnName, header] of this.catalogControlHeader) {
+            if (header.filter || Number.isFinite(header.columnWidth)) {
+                columnSettings[columnName] = {
+                    filter: header.filter || undefined,
+                    width: Number.isFinite(header.columnWidth) ? (header.columnWidth as number) : undefined
+                };
+            }
+        }
+
+        return {
+            displayedColumns: this.displayedColumnHeaders.map(header => header.name),
+            maxRows: this.isFileBasedCatalog ? this.maxRows : undefined,
+            columnSettings: Object.keys(columnSettings).length ? columnSettings : undefined,
+            sorting: this.sortingInfo.columnName && this.sortingInfo.sortingType !== null ? {columnName: this.sortingInfo.columnName, sortingType: this.sortingInfo.sortingType} : undefined
+        };
+    }
+
+    /**
+     * Put a saved table state back.
+     *
+     * This records what the table and the query behind it should be. A file-based catalog's rows
+     * then have to be asked for again, which is the restore flow's job; an online catalog holds all
+     * of its rows already, so applying the query means filtering them here and now.
+     */
+    @action applyTableConfig(config: WorkspaceCatalogTableConfig | undefined | null): void {
+        if (config?.displayedColumns) {
+            this.setDisplayedColumns(config.displayedColumns);
+        }
+        if (this.isFileBasedCatalog && typeof config?.maxRows === "number" && Number.isFinite(config.maxRows)) {
+            this.setMaxRows(Math.max(0, Math.min(this.catalogInfo.dataSize, config.maxRows)));
+        }
+        if (config?.columnSettings) {
+            Object.entries(config.columnSettings).forEach(([columnName, columnConfig]) => {
+                if (typeof columnConfig?.filter === "string") {
+                    this.setColumnFilter(columnConfig.filter, columnName);
+                }
+                if (Number.isFinite(columnConfig?.width)) {
+                    this.setTableColumnWidth(columnConfig.width as number, columnName);
+                }
+            });
+        }
+        if (config?.sorting && this.catalogControlHeader.has(config.sorting.columnName)) {
+            this.setSortingInfo(config.sorting.columnName, config.sorting.sortingType);
+        }
+
+        this.catalogFilterRequest.filterConfigs = this.getUserFilters();
+        this.catalogFilterRequest.sortColumn = this.sortingInfo.columnName;
+        this.catalogFilterRequest.sortingType = this.sortingInfo.sortingType;
+        this.catalogFilterRequest.columnIndices = this.columnIndices;
+
+        if (!this.isFileBasedCatalog) {
+            this.resetFilterRequest(this.getUserFilters());
+        }
+    }
+
     @action setUpdateMode(mode: CatalogUpdateMode) {
         this.updateMode = mode;
     }
@@ -635,7 +771,7 @@ export abstract class AbstractCatalogProfileStore {
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (shouldAutoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+                const frame = catalogStore.frameOf(this.catalogFileId);
                 const activeFrame = appStore.activeFrame;
                 const selectedDataLength = selectedX.length;
                 let positionImageSpace = {x: selectedX[0], y: selectedY[0]};

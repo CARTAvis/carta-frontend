@@ -32,6 +32,7 @@ const MOCK_MIRROR_STORE = {
 jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: MOCK_CONFIG_STORE},
+    CatalogOnlineQueryStore: {Instance: {resetResultSize: jest.fn()}},
     MirrorSiteStore: {Instance: MOCK_MIRROR_STORE}
 }));
 jest.mock("utilities", () => ({
