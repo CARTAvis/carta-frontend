@@ -62,7 +62,7 @@ describe("CatalogStore.plotImageOverlay", () => {
         profileStore.setCatalogCoordinateSystem(CatalogSystemType.Galactic);
 
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         expect(catalogStore.plotImageOverlay(1, {xAxis: "RA", yAxis: "DEC", system: CatalogSystemType.ICRS})).toBe(true);
@@ -80,7 +80,7 @@ describe("CatalogStore.plotImageOverlay", () => {
         catalogStore.catalogProfileStores.set(1, new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, catalogData, CatalogType.SIMBAD));
 
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         expect(catalogStore.plotImageOverlay(1, {xAxis: "RA", yAxis: "DEC", system: CatalogSystemType.ICRS})).toBe(false);
@@ -175,7 +175,7 @@ describe("Catalog plot workspace binding", () => {
     function showCatalog(catalogFileId: number) {
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
-        catalogStore.imageAssociatedCatalogId.set(7, [catalogFileId]);
+        [catalogFileId].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
         catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
     }
 
@@ -184,7 +184,7 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.plotBindings.componentIds().forEach(id => catalogStore.plotBindings.closeComponent(id));
         catalogStore.catalogProfileStores.clear();
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         widgetsStore.catalogPlotWidgets.clear();
     });
 
@@ -270,7 +270,7 @@ describe("Catalog plot workspace binding", () => {
         // Setup Catalog A (fileId 1, workspaceId 10) and Catalog B (fileId 2, workspaceId 20)
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
-        catalogStore.imageAssociatedCatalogId.set(7, [1, 2]);
+        [1, 2].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 1, 10);
@@ -507,14 +507,14 @@ describe("Catalog widget selection lifecycle", () => {
     const widgetsStore = WidgetsStore.Instance;
 
     beforeEach(() => {
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         widgetsStore.catalogWidgets.clear();
     });
 
     test("preserves a valid selection and falls back invalid widgets to the active image", () => {
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 2);
         widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 99);
-        catalogStore.imageAssociatedCatalogId.set(7, [2, 3]);
+        [2, 3].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         catalogStore.resetActiveCatalogFile(7);
 
@@ -592,7 +592,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         catalogStore.resetRequests("test setup");
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({isValidWcs: false, wcsInfo: 0} as any);
         AppStore.Instance.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
         sendCatalogFilter = jest.spyOn(AppStore.Instance.backendService, "setCatalogFilterRequest").mockReturnValue(1);
     });
@@ -978,7 +978,7 @@ describe("Catalog plot component selection", () => {
         jest.restoreAllMocks();
         catalogStore.plotBindings.componentIds().forEach(id => catalogStore.plotBindings.closeComponent(id));
         catalogStore.catalogProfileStores.clear();
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         widgetsStore.catalogPlotWidgets.clear();
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
     });
@@ -1025,7 +1025,7 @@ describe("Catalog plot component selection", () => {
     test("moves onto another loaded catalog even when it does not have a plot store yet", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
         catalogStore.plotBindings.register("catalog-plot-component-0", 5, "catalog-plot-0");
-        catalogStore.imageAssociatedCatalogId.set(7, [5, 6]);
+        [5, 6].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
         catalogStore.catalogProfileStores.set(5, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(6, CreateEmptyProfileStore());
 
@@ -1037,7 +1037,7 @@ describe("Catalog plot component selection", () => {
     test("moves onto a catalog of the image now in front", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
         catalogStore.plotBindings.register("catalog-plot-component-0", 5, "catalog-plot-0");
-        catalogStore.imageAssociatedCatalogId.set(7, [8, 9]);
+        [8, 9].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         catalogStore.resetActiveCatalogFile(7);
 
@@ -1054,7 +1054,7 @@ describe("CatalogStore widget selection", () => {
     });
 
     afterEach(() => {
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         widgetsStore.catalogWidgets.clear();
     });
 
@@ -1066,7 +1066,7 @@ describe("CatalogStore widget selection", () => {
     });
 
     test("resets an unavailable widget selection to the first active catalog", () => {
-        catalogStore.updateImageAssociatedCatalogId(101, [7, 8]);
+        [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 101));
         const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 99);
 
         catalogStore.resetActiveCatalogFile(101);
@@ -1075,9 +1075,9 @@ describe("CatalogStore widget selection", () => {
     });
 
     test("moves a widget onto a catalog the image still has when the one it showed is closed", () => {
-        catalogStore.updateImageAssociatedCatalogId(103, [7, 8]);
+        [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 103));
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({frameInfo: {fileId: 103}} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(103);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(103);
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
         const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
 
@@ -1087,7 +1087,7 @@ describe("CatalogStore widget selection", () => {
     });
 
     test("preserves each widget selection when it remains active", () => {
-        catalogStore.updateImageAssociatedCatalogId(102, [7, 8]);
+        [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 102));
         const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
         const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-1", 8);
 

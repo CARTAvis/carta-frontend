@@ -15,7 +15,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
         catalogStore.plotBindings.componentIds().forEach(id => catalogStore.plotBindings.closeComponent(id));
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         widgetsStore.catalogWidgets.clear();
         widgetsStore.catalogPlotWidgets.clear();
         catalogStore.catalogRequests.forget(1);
@@ -26,7 +26,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
     test("updates an existing widget when loading a catalog after the widget store exists", () => {
         const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
-        catalogStore.imageAssociatedCatalogId.set(100, [1]);
+        [1].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 100));
 
         jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
 
@@ -47,7 +47,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
     test("updates every widget when the first catalog is loaded for a new image", () => {
         const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-1", 1);
-        catalogStore.imageAssociatedCatalogId.set(101, []);
 
         const componentId = appStore.updateCatalogProfile(3, {frameInfo: {fileId: 101}} as any);
 
@@ -78,7 +77,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         appStore.handleCatalogFilterStream({
@@ -127,7 +126,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         appStore.handleCatalogFilterStream({
@@ -176,7 +175,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         appStore.handleCatalogFilterStream({
@@ -229,7 +228,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         appStore.handleCatalogFilterStream({
@@ -305,7 +304,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
         appStore.handleCatalogFilterStream({
@@ -356,7 +355,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
 
         jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const clearSpy = jest.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(jest.fn());
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
 
@@ -491,7 +490,7 @@ describe("AppStore.updateCatalogProfile", () => {
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
         appStore.widgetsStore.catalogWidgets.clear();
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
     });
 
     test("associates the catalog with the image it was given rather than the active one", () => {
@@ -501,7 +500,7 @@ describe("AppStore.updateCatalogProfile", () => {
 
         appStore.updateCatalogProfile(3, {frameInfo: {fileId: 7}} as any);
 
-        expect(catalogStore.imageAssociatedCatalogId.get(7)).toContain(3);
+        expect(catalogStore.catalogsOn(7)).toContain(3);
     });
 });
 

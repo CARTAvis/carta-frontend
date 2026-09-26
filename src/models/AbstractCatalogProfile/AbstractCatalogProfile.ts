@@ -771,7 +771,7 @@ export abstract class AbstractCatalogProfileStore {
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (shouldAutoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+                const frame = catalogStore.frameOf(this.catalogFileId);
                 const activeFrame = appStore.activeFrame;
                 const selectedDataLength = selectedX.length;
                 let positionImageSpace = {x: selectedX[0], y: selectedY[0]};

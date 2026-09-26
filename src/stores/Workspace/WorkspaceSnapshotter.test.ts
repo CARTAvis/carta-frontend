@@ -71,7 +71,7 @@ function createSession(overrides: Record<string, any> = {}) {
         timeSeriesStore: {isMember: jest.fn(() => false)},
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
-            imageAssociatedCatalogId: new Map([[0, [10]]]),
+            imageIdOf: (catalogFileId: number) => (catalogFileId === 10 ? 0 : undefined),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore)
         },

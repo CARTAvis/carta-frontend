@@ -693,8 +693,6 @@ export class AppStore {
         if (shouldSetAsActive) {
             this.updateActiveImageByFrame(newFrame);
         }
-        // init image associated catalog
-        this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -1274,18 +1272,12 @@ export class AppStore {
     }
 
     @action updateCatalogProfile = (fileId: number, frame: FrameStore): string | undefined => {
-        // update image associated catalog file
-        let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
-        const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-        if (currentAssociatedCatalogFile?.length) {
-            associatedCatalogFiles = currentAssociatedCatalogFile;
-        } else {
-            // new image append
+        if (!catalogStore.catalogsOn(frame.frameInfo.fileId).length) {
+            // The first catalog on this image
             this.widgetsStore.resetCatalogWidgetSelections([fileId]);
         }
-        associatedCatalogFiles.push(fileId);
-        catalogStore.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogFiles);
+        catalogStore.catalogImageIds.set(fileId, frame.frameInfo.fileId);
         catalogStore.getOrCreateCatalogDisplayStore(fileId);
         // A catalog that every existing widget is still waiting past gets a widget of its own, so
         // that it is never left displayed in none.

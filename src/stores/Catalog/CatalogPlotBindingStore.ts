@@ -138,8 +138,8 @@ export class CatalogPlotBindingStore {
 
     /** A closed catalog drops its own plot, then leaves each tab on an available catalog. */
     @action closeCatalog = (catalogFileId: number): void => {
-        const imageFileId = this.catalogs.getImageIdByCatalog(catalogFileId);
-        const available = (imageFileId === undefined ? [] : (this.catalogs.imageAssociatedCatalogId.get(imageFileId) ?? [])).filter(fileId => fileId !== catalogFileId && this.catalogs.catalogProfileStores.has(fileId));
+        const imageFileId = this.catalogs.imageIdOf(catalogFileId);
+        const available = (imageFileId === undefined ? [] : this.catalogs.catalogsOn(imageFileId)).filter(fileId => fileId !== catalogFileId && this.catalogs.catalogProfileStores.has(fileId));
         this.plots.forEach(state => {
             const widgetId = state.plotWidgetIds.get(catalogFileId);
             if (widgetId) {

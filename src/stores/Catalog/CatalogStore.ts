@@ -52,8 +52,8 @@ export class CatalogStore {
 
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
-    // image file id : catalog file Id
-    @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
+    /** Catalog file ID : the file ID of the image it is overlaid on, in the order catalogs were opened. */
+    readonly catalogImageIds = observable.map<number, number>();
     /** Catalog plot binding and Workspace ID lifecycle. */
     public readonly plotBindings = new CatalogPlotBindingStore(
         this,
@@ -259,7 +259,7 @@ export class CatalogStore {
             const [xColumn, yColumn] = overlayColumns;
             // The overlay already drawn may hold fewer rows than the catalog now has.
             const maxRows = (displayStore?.hasPlottedImageOverlay ? displayStore.plottedImageOverlayMaxRows : undefined) ?? profileStore.maxRows;
-            const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+            const frame = this.frameOf(catalogFileId);
             if (frame) {
                 // The drawn overlay, not the current widget controls, determines the coordinate
                 // system used for incoming rows and for a restored drawing.
@@ -398,54 +398,54 @@ export class CatalogStore {
         WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
-        // update associated image
-        const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(fileId));
-        const fileIds = frame ? this.imageAssociatedCatalogId.get(frame.frameInfo.fileId) : undefined;
-        let associatedCatalogIds: number[] = [];
-        if (frame && fileIds) {
-            associatedCatalogIds = fileIds.filter(catalogFileId => catalogFileId !== fileId);
-            this.updateImageAssociatedCatalogId(frame.frameInfo.fileId, associatedCatalogIds);
-        }
+        const imageFileId = this.imageIdOf(fileId);
+        this.catalogImageIds.delete(fileId);
+        const associatedCatalogIds = imageFileId === undefined ? [] : this.catalogsOn(imageFileId);
 
         if (catalogComponentId && associatedCatalogIds.length) {
             WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogIds[0]);
         }
     }
 
-    @action updateImageAssociatedCatalogId(activeFrameIndex: number, associatedCatalogFiles: number[]) {
-        this.imageAssociatedCatalogId.set(activeFrameIndex, associatedCatalogFiles);
-    }
-
     @action resetActiveCatalogFile(imageFileId: number) {
-        const fileIds = this.imageAssociatedCatalogId.get(imageFileId);
-        const activeCatalogFileIds = fileIds ?? [];
+        const activeCatalogFileIds = this.catalogsOn(imageFileId);
         if (activeCatalogFileIds.length) {
             WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
             this.plotBindings.resetSelections(activeCatalogFileIds);
         }
     }
 
-    getImageIdByCatalog(catalogFileId: number): number | undefined {
-        let imageFileId: number | undefined = undefined;
-        this.imageAssociatedCatalogId.forEach((catalogFileList, imageId) => {
-            if (catalogFileList.includes(catalogFileId)) {
-                imageFileId = imageId;
+    /** The file ID of the image a catalog is overlaid on. */
+    imageIdOf(catalogFileId: number): number | undefined {
+        return this.catalogImageIds.get(catalogFileId);
+    }
+
+    /** The image a catalog is overlaid on, while that image is open. */
+    frameOf(catalogFileId: number): FrameStore | undefined {
+        const imageFileId = this.imageIdOf(catalogFileId);
+        return imageFileId === undefined ? undefined : (AppStore.Instance.getFrame(imageFileId) ?? undefined);
+    }
+
+    /** The catalogs overlaid on one image, in the order they were opened. */
+    catalogsOn(imageFileId: number): number[] {
+        const catalogFileIds: number[] = [];
+        this.catalogImageIds.forEach((catalogImageFileId, catalogFileId) => {
+            if (catalogImageFileId === imageFileId) {
+                catalogFileIds.push(catalogFileId);
             }
         });
-        return imageFileId;
+        return catalogFileIds;
     }
 
     @action closeAssociatedCatalog(imageFileId: number) {
         const appStore = AppStore.Instance;
-        const catalogFileIds = this.imageAssociatedCatalogId.get(imageFileId);
-        if (catalogFileIds?.length) {
-            catalogFileIds.forEach(catalogFileId => {
-                if (this.catalogDisplayStores.has(catalogFileId)) {
-                    appStore.removeCatalog(catalogFileId);
-                }
-            });
-            this.imageAssociatedCatalogId.delete(imageFileId);
-        }
+        this.catalogsOn(imageFileId).forEach(catalogFileId => {
+            if (this.catalogDisplayStores.has(catalogFileId)) {
+                appStore.removeCatalog(catalogFileId);
+            }
+        });
+        // A catalog the backend could not close must not be taken for one on the next image given this file ID.
+        this.catalogsOn(imageFileId).forEach(catalogFileId => this.catalogImageIds.delete(catalogFileId));
     }
 
     @computed get activeCatalogFiles() {
@@ -464,9 +464,9 @@ export class CatalogStore {
         /// TODO: this should be cleaned up a bit
         for (const frame of appStore.imageViewConfigStore.visibleFrames) {
             const imageId = frame.frameInfo.fileId;
-            let associatedCatalogIds = [...(this.imageAssociatedCatalogId.get(imageId) ?? [])];
+            let associatedCatalogIds = this.catalogsOn(imageId);
             frame.spatialSiblings?.forEach(frame => {
-                const catalogs = [...(this.imageAssociatedCatalogId.get(frame.frameInfo.fileId) ?? [])];
+                const catalogs = this.catalogsOn(frame.frameInfo.fileId);
                 associatedCatalogIds = [...new Set(([] as number[]).concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.has(catalogFileId);
                 });
@@ -496,16 +496,6 @@ export class CatalogStore {
         return names;
     }
 
-    getFrameIdByCatalogId(catalogId: number): number {
-        let frameId = -1;
-        this.imageAssociatedCatalogId.forEach((catalogIds, imageId) => {
-            if (catalogIds.includes(catalogId)) {
-                frameId = imageId;
-            }
-        });
-        return frameId;
-    }
-
     getCatalogFileNames(fileIds: Array<number>) {
         const fileList = new Map<number, string>();
         fileIds.forEach(catalogFileId => {
@@ -527,7 +517,6 @@ export class CatalogStore {
      * @returns whether the overlay could be drawn.
      */
     @action plotImageOverlay(catalogFileId: number, overlay?: WorkspaceCatalogImageOverlay): boolean {
-        const appStore = AppStore.Instance;
         const profileStore = this.catalogProfileStores.get(catalogFileId);
 
         if (!profileStore) {
@@ -548,7 +537,7 @@ export class CatalogStore {
         const maxRows = this.getOverlayMaxRows(profileStore, overlay?.maxRows);
 
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-        const frame = appStore.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+        const frame = this.frameOf(catalogFileId);
         let isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
@@ -624,7 +613,7 @@ export class CatalogStore {
         }
 
         const displayStore = this.getOrCreateCatalogDisplayStore(catalogFileId);
-        const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(catalogFileId));
+        const frame = this.frameOf(catalogFileId);
         if (overlay && (overlay.xAxis === CatalogOverlay.NONE || overlay.yAxis === CatalogOverlay.NONE || !frame)) {
             this.catalogRequests.finish(catalogFileId, false, "The saved overlay has no usable image or position axes");
             return false;
@@ -735,7 +724,7 @@ export class CatalogStore {
 
     getFrameMinMaxPoints(frameId: number): {minX: number; maxX: number; minY: number; maxY: number} {
         const minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
-        this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
+        this.catalogsOn(frameId).forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
             const count = this.catalogCounts.get(catalogId);
             if (coords?.x && coords?.y) {

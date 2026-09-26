@@ -13,7 +13,7 @@ describe("CatalogPlotBindingStore", () => {
         bindings.componentIds().forEach(componentId => bindings.closeComponent(componentId));
         Array.from(widgets.catalogPlotWidgets.keys()).forEach(widgetId => bindings.deletePlot(widgetId));
         catalogs.catalogProfileStores.clear();
-        catalogs.imageAssociatedCatalogId.clear();
+        catalogs.catalogImageIds.clear();
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
         jest.restoreAllMocks();
     });

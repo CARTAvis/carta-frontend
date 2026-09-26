@@ -19,7 +19,7 @@ import {
 } from "enums";
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
-import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
+import {type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
 import {
     CatalogAxisEligibility,
     clamp,
@@ -1317,9 +1317,8 @@ export class CatalogDisplayStore {
         if (!this.isAngularSize) {
             return 1;
         } else {
-            const appStore = AppStore.Instance;
             const catalogStore = CatalogStore.Instance;
-            const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+            const frame = catalogStore.frameOf(this.catalogFileId);
             const pixelAngularSize = (frame?.spatialReference?.pixelUnitSizeArcsec && frame?.spatialReference?.pixelUnitSizeArcsec.x) ?? (frame?.pixelUnitSizeArcsec && frame?.pixelUnitSizeArcsec.x) ?? 1;
             const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.worldSizeUnit : this.canvasSizeUnit;
             const radiusFactor = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? (this.catalogSourceRadiusTypes.get(this.catalogSourceRadiusType)?.value ?? 1) : 1;

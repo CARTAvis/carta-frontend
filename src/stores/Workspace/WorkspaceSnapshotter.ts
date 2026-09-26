@@ -238,18 +238,6 @@ export class WorkspaceSnapshotter {
     /** Stage 3: every loaded catalog, with the image it is overlaid on and how it is drawn. */
     private captureCatalogs(): void {
         const catalogs: WorkspaceCatalog[] = [];
-        // A catalog names its image by the ID this workspace knows the image by. The association is
-        // held under the session file ID of the image, which is handed out again to another file
-        // once this one is closed, and is not what the restorer looks an image up by.
-        const imageOfCatalog = new Map<number, number>();
-        this.appStore.catalogStore.imageAssociatedCatalogId.forEach((catalogFileIds, imageFileId) => {
-            const workspaceImageId = this.imageIdOfFile(imageFileId);
-            if (workspaceImageId === undefined) {
-                return;
-            }
-            catalogFileIds.forEach(catalogFileId => imageOfCatalog.set(catalogFileId, workspaceImageId));
-        });
-
         this.appStore.catalogStore.catalogProfileStores.forEach((profileStore, catalogFileId) => {
             const catalogInfo = profileStore.catalogInfo;
             let source: WorkspaceCatalogSource | undefined = catalogInfo.query;
@@ -285,7 +273,9 @@ export class WorkspaceSnapshotter {
                 id: workspaceCatalogId,
                 source,
                 coordinateSystem: profileStore.catalogCoordinateSystem.system,
-                associatedImageId: imageOfCatalog.get(catalogFileId),
+                // A catalog names its image by the ID this workspace knows the image by, not by the session
+                // file ID, which is handed out again once the image is closed.
+                associatedImageId: this.imageIdOfFile(this.appStore.catalogStore.imageIdOf(catalogFileId)),
                 rowCount: catalogInfo.dataSize,
                 tableConfig: profileStore.toTableConfig(),
                 // Only an online catalog is worth fingerprinting: it is queried again rather than

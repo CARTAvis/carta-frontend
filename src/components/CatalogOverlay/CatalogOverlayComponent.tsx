@@ -682,7 +682,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
-        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(catalogFileId));
+        const frame = catalogStore.frameOf(catalogFileId);
         appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
         frame?.regionSet.setMode(RegionMode.MOVING);
         catalogStore.resetCatalogRows(catalogFileId);

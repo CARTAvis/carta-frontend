@@ -253,7 +253,7 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
     afterEach(() => {
         catalogStore.catalogProfileStores.clear();
-        catalogStore.imageAssociatedCatalogId.clear();
+        catalogStore.catalogImageIds.clear();
         jest.restoreAllMocks();
     });
 
@@ -277,7 +277,7 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
         // The active image still lists catalog 2, which has no profile store.
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}, zIndexManager: {assignIndex: jest.fn()}} as any);
-        catalogStore.imageAssociatedCatalogId.set(7, [2, 3]);
+        [2, 3].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         widgetsStore.reloadFloatingCatalogWidget();
 

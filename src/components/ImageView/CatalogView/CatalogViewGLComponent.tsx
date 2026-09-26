@@ -170,7 +170,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     };
 
     private renderCatalog() {
-        const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
@@ -190,7 +189,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
             const count = catalogStore.catalogCounts.get(fileId);
             if (catalog && catalogDisplayStore && count && count > 0) {
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
+                const frame = catalogStore.frameOf(fileId);
                 const isActive = frame === destinationFrame;
 
                 if (!catalogDisplayStore.isSourceSizeDefined) {
@@ -364,7 +363,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         const selectedPoint: {fileId: number | undefined; minIndex: number | undefined; minDistanceSquared: number} = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData?.forEach((catalog, fileId) => {
-            const frame = AppStore.Instance.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
+            const frame = catalogStore.frameOf(fileId);
             if (!frame) {
                 return;
             }
