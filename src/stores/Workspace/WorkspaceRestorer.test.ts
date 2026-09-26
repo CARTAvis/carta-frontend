@@ -70,7 +70,6 @@ function createSession() {
         closeFile: jest.fn((frame: ReturnType<typeof createFrame>, _shouldConfirmClose?: boolean) => {
             appStore.frames = appStore.frames.filter(f => f !== frame);
         }),
-        removeCatalog: jest.fn(),
         appendConcatFile: jest.fn(),
         appendCatalog: jest.fn(() => {
             calls.push("appendCatalog");
@@ -93,6 +92,7 @@ function createSession() {
         preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
         imageViewConfigStore: {createColorBlending: jest.fn(), imageNum: 1},
         catalogStore: {
+            close: jest.fn(),
             interruptRequests: jest.fn(),
             failRequest: jest.fn(),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
@@ -374,7 +374,7 @@ describe("WorkspaceRestorer", () => {
             step = generator.next(await step.value);
         }
 
-        expect(appStore.removeCatalog).toHaveBeenCalledWith(10);
+        expect(appStore.catalogStore.close).toHaveBeenCalledWith(10);
         expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 10)).toBeUndefined();
         expect(profileStore.applyTableConfig).not.toHaveBeenCalled();
         expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();

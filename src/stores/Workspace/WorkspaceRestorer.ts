@@ -86,7 +86,7 @@ export class WorkspaceRestorer {
     /** The same, for a catalog that finished opening into a session this restore no longer owns. */
     private closeSupersededCatalog(catalogFileId: number | undefined): void {
         if (catalogFileId !== undefined) {
-            this.appStore.removeCatalog(catalogFileId);
+            this.appStore.catalogStore.close(catalogFileId);
         }
     }
 

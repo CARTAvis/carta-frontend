@@ -458,7 +458,18 @@ export class CatalogStore {
         }
     }
 
-    @action removeCatalog(fileId: number, catalogComponentId?: string) {
+    /**
+     * Close a catalog, and move every plot and table widget showing it onto a catalog its image still
+     * has. Nothing is closed when the backend cannot be told.
+     *
+     * @returns whether the catalog was closed.
+     */
+    @action close(fileId: number): boolean {
+        if (fileId < 0 || !AppStore.Instance.backendService.closeCatalogFile(fileId)) {
+            return false;
+        }
+        // Plots move while the catalog still names its image.
+        this.plotBindings.closeCatalog(fileId);
         // Drop the catalog's earlier requests before ending the one still in flight, so that the
         // request being ended is left marked stale: a response arriving after this file ID has been
         // handed to the next catalog opened must not be taken for an answer about that one.
@@ -471,10 +482,11 @@ export class CatalogStore {
         const imageFileId = this.imageIdOf(fileId);
         this.catalogImageIds.delete(fileId);
         const associatedCatalogIds = imageFileId === undefined ? [] : this.catalogsOn(imageFileId);
-
-        if (catalogComponentId && associatedCatalogIds.length) {
+        if (associatedCatalogIds.length) {
             WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogIds[0]);
         }
+        this.catalogProfileStores.delete(fileId);
+        return true;
     }
 
     @action resetActiveCatalogFile(imageFileId: number) {
@@ -507,13 +519,9 @@ export class CatalogStore {
         return catalogFileIds;
     }
 
-    @action closeAssociatedCatalog(imageFileId: number) {
-        const appStore = AppStore.Instance;
-        this.catalogsOn(imageFileId).forEach(catalogFileId => {
-            if (this.catalogDisplayStores.has(catalogFileId)) {
-                appStore.removeCatalog(catalogFileId);
-            }
-        });
+    /** Close every catalog overlaid on an image that is being closed. */
+    @action closeCatalogsOn(imageFileId: number) {
+        this.catalogsOn(imageFileId).forEach(catalogFileId => this.close(catalogFileId));
         // A catalog the backend could not close must not be taken for one on the next image given this file ID.
         this.catalogsOn(imageFileId).forEach(catalogFileId => this.catalogImageIds.delete(catalogFileId));
     }

@@ -1113,7 +1113,7 @@ export class AppStore {
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
-                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                    CatalogStore.Instance.closeCatalogsOn(fileId);
                     if (firstFrame) {
                         CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
@@ -1153,7 +1153,7 @@ export class AppStore {
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
-                    CatalogStore.Instance.closeAssociatedCatalog(fileId);
+                    CatalogStore.Instance.closeCatalogsOn(fileId);
                 }
             });
             this.imageViewConfigStore.removeAllImages();
@@ -1230,29 +1230,6 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
-        }
-    }
-
-    /**
-     * Close a catalog.
-     *
-     * @param catalogComponentId - the widget the catalog is being closed from, if it is being closed
-     *     from one: that widget is moved onto a catalog the image still has rather than left
-     *     pointing at the one that has gone.
-     */
-    @action removeCatalog(fileId: number, catalogComponentId?: string) {
-        if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
-            const catalogStore = CatalogStore.Instance;
-            // close all associated catalog plots widgets
-            catalogStore.plotBindings.closeCatalog(fileId);
-            // remove overlay
-            catalogStore.removeCatalog(fileId, catalogComponentId);
-            // remove profile store
-            catalogStore.catalogProfileStores.delete(fileId);
-
-            if (!this.activeFrame) {
-                return;
-            }
         }
     }
 

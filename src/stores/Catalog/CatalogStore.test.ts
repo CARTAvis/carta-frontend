@@ -851,7 +851,8 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         sendCatalogFilter.mockReturnValue(4);
         catalogStore.restoreCatalogFromWorkspace(1);
 
-        catalogStore.removeCatalog(1);
+        jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(true);
+        catalogStore.close(1);
         // The lowest free file ID is handed to the next catalog opened, which has not yet asked for
         // anything of its own.
         openFileCatalog(200);
@@ -1203,11 +1204,35 @@ describe("CatalogStore widget selection", () => {
         jest.spyOn(AppStore.Instance, "getFrame").mockReturnValue({frameInfo: {fileId: 103}} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(103);
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
+        jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(true);
         const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
 
-        catalogStore.removeCatalog(7, "catalog-widget-0");
+        // Whether it is closed from this widget, another one, or by a Restore.
+        catalogStore.close(7);
 
         expect(widget.selectedCatalogId).toBe(8);
+    });
+
+    test("closes nothing when the backend cannot be told", () => {
+        catalogStore.catalogImageIds.set(7, 103);
+        catalogStore.catalogProfileStores.set(7, CreateEmptyProfileStore());
+        jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(false);
+
+        expect(catalogStore.close(7)).toBe(false);
+
+        expect(catalogStore.catalogProfileStores.has(7)).toBe(true);
+        expect(catalogStore.imageIdOf(7)).toBe(103);
+        catalogStore.catalogProfileStores.delete(7);
+    });
+
+    test("forgets the catalogs of a closed image that the backend could not close", () => {
+        [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 103));
+        jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(false);
+
+        catalogStore.closeCatalogsOn(103);
+
+        // The next image given file ID 103 does not inherit them.
+        expect(catalogStore.catalogsOn(103)).toEqual([]);
     });
 
     test("preserves each widget selection when it remains active", () => {
