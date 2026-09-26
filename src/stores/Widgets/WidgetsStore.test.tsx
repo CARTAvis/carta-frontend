@@ -207,7 +207,9 @@ describe("WidgetsStore PV preview test ids", () => {
         CatalogStore.Instance.widgetBindings.register(componentId, 7, oldWidgetId);
         CatalogStore.Instance.widgetBindings.catalogClosed(7);
 
-        expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
+        // The tab keeps a plot of its own type, bound to no catalog, in place of the closed one's.
+        expect(CatalogStore.Instance.widgetBindings.displayedForComponent(componentId)?.widgetId).toBe("catalog-plot-1");
+        expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-2");
 
         CatalogStore.Instance.widgetBindings.closeComponent(componentId);
         widgetsStore.catalogPlotWidgets.clear();

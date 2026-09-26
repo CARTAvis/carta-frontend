@@ -170,6 +170,25 @@ describe("CatalogWidgetBindingStore", () => {
             expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.D2Scatter);
         });
 
+        test("keeps a plot tab's type when its last catalog closes, for the next catalog it shows", () => {
+            openCatalogs({7: [1]}, 7);
+            widgets.addCatalogPlotWidget({xColumnName: "RA", plotType: CatalogPlotType.Histogram}, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            bindings.catalogClosed(1);
+            catalogs.catalogProfileStores.delete(1);
+            const unbound = bindings.displayedForComponent("catalog-plot-component-0");
+            expect(unbound?.catalogFileId).toBeUndefined();
+            expect(widgets.catalogPlotWidgets.get(unbound?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.Histogram);
+
+            openCatalogs({7: [3]}, 7);
+            bindings.show("catalog-plot-component-0", 3);
+
+            const shown = bindings.displayedForComponent("catalog-plot-component-0");
+            expect(shown?.catalogFileId).toBe(3);
+            expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.Histogram);
+        });
+
         test("moves a table onto the first catalog left on the same image", () => {
             openCatalogs({7: [1, 2, 3], 8: [4]}, 8);
             widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
