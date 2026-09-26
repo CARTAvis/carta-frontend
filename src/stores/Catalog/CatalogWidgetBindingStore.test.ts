@@ -14,20 +14,21 @@ describe("CatalogWidgetBindingStore", () => {
         Array.from(widgets.catalogPlotWidgets.keys()).forEach(widgetId => bindings.deletePlot(widgetId));
         catalogs.catalogProfileStores.clear();
         catalogs.catalogImageIds.clear();
+        widgets.catalogWidgets.clear();
         WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
         jest.restoreAllMocks();
     });
 
     test("takes the fallback as the plot's catalog when Restore cannot bring back the saved one", () => {
-        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1}) as string;
+        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
         bindings.register("catalog-plot-component-0", 5, widgetId);
         catalogs.catalogProfileStores.set(5, {catalogInfo: {fileInfo: {name: "fallback.vot"}}, catalogHeader: []} as any);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
 
-        const issues = bindings.restore(undefined, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
+        const issues = bindings.restore({"catalog-plot-0": {type: "catalog-plot", catalogId: 1}}, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect(bindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(5);
-        expect(bindings.configForLayout(widgetId, true)?.catalogId).toBe(2);
+        expect(bindings.savedCatalogWidgets()["catalog-plot-0"]?.catalogId).toBe(2);
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
@@ -37,31 +38,36 @@ describe("CatalogWidgetBindingStore", () => {
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
     });
 
-    test("forgets the saved Catalog ID once Restore has bound the plots", () => {
-        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1}) as string;
-        bindings.restore(undefined, [], new Map());
+    test("gives each new plot tab a stable ID no other catalog widget has", () => {
+        // A table widget already has the ID the first plot would take.
+        widgets.getCatalogWidgetStore("catalog-overlay-0").setWidgetId("catalog-plot-0");
+        ["catalog-plot-0", "catalog-plot-1", "catalog-plot-2"].forEach(id => widgets.addCatalogPlotWidget(plot, id));
 
-        const issues = bindings.restore(undefined, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
+        bindings.register("catalog-plot-component-0", undefined, "catalog-plot-0");
+        // A layout names the ID a plot was saved with, twice when it was edited by hand.
+        bindings.registerRestored("catalog-plot-component-1", "catalog-plot-1", "plot-b");
+        bindings.registerRestored("catalog-plot-component-2", "catalog-plot-2", "plot-b");
 
-        expect(issues).toEqual([]);
-        expect(bindings.configForLayout(widgetId, true)?.catalogId).toBeUndefined();
+        expect(bindings.layoutSettingsFor("catalog-plot-0")?.widgetId).toBe("catalog-plot-0-1");
+        expect(bindings.layoutSettingsFor("catalog-plot-1")?.widgetId).toBe("plot-b");
+        expect(bindings.layoutSettingsFor("catalog-plot-2")?.widgetId).toBe("plot-b-1");
     });
 
     test("rebinds to the restored Catalog and releases the plot it replaces", () => {
-        const restored = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 20}) as string;
+        const restored = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
         const replaced = widgets.addCatalogPlotWidget(plot, "catalog-plot-1") as string;
         bindings.register("catalog-plot-component-0", 1, restored);
         bindings.register("catalog-plot-component-0", 5, replaced);
-        catalogs.catalogProfileStores.set(5, {catalogHeader: [{name: "RA"}, {name: "DEC"}]} as any);
+        catalogs.catalogProfileStores.set(5, {getColumnHeader: () => ({dataType: CARTA.ColumnType.Double})} as any);
 
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 20);
 
-        const issues = bindings.restore(undefined, [{id: 20, source: {type: "file", filename: "sources.vot"}}], new Map([[20, 5]]));
+        const issues = bindings.restore({"catalog-plot-0": {type: "catalog-plot", catalogId: 20}}, [{id: 20, source: {type: "file", filename: "sources.vot"}}], new Map([[20, 5]]));
 
         expect(issues).toEqual([]);
         expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 5, widgetId: restored});
         expect(widgets.catalogPlotWidgets.has(replaced)).toBe(false);
-        expect(bindings.configForLayout(restored, true)?.catalogId).toBe(20);
+        expect(bindings.savedCatalogWidgets()["catalog-plot-0"]?.catalogId).toBe(20);
     });
 
     test("validates numeric columns when their Catalog arrives", () => {
@@ -81,11 +87,11 @@ describe("CatalogWidgetBindingStore", () => {
     });
 
     test("reports missing column names after a restored binding is resolved", () => {
-        const widgetId = widgets.addCatalogPlotWidget({...plot, yColumnName: "Gone"}, "catalog-plot-0", {catalogId: 8}) as string;
+        const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
         bindings.register("catalog-plot-component-0", 1, widgetId);
-        catalogs.catalogProfileStores.set(5, {catalogHeader: [{name: "RA"}]} as any);
+        catalogs.catalogProfileStores.set(5, {getColumnHeader: (name: string) => (name === "RA" ? {dataType: CARTA.ColumnType.Double} : undefined)} as any);
 
-        const issues = bindings.restore(undefined, [{id: 8, source: {type: "file", filename: "sources.vot"}}], new Map([[8, 5]]));
+        const issues = bindings.restore({"catalog-plot-0": {type: "catalog-plot", catalogId: 8, xColumnName: "RA", yColumnName: "Gone"}}, [{id: 8, source: {type: "file", filename: "sources.vot"}}], new Map([[8, 5]]));
 
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
@@ -163,7 +169,7 @@ describe("CatalogWidgetBindingStore", () => {
             widgets.getCatalogWidgetStore("catalog-overlay-0", 99).setWidgetId("widget-a");
             catalogs.catalogImageIds.set(6, 7);
 
-            const issues = bindings.restore({"widget-a": 20}, [{id: 30, source: {type: "file", filename: "shown.vot"}}], new Map([[30, 6]]));
+            const issues = bindings.restore({"widget-a": {type: "catalog-overlay", catalogId: 20}}, [{id: 30, source: {type: "file", filename: "shown.vot"}}], new Map([[30, 6]]));
 
             expect(bindings.catalogOf("catalog-overlay-0")).toBe(6);
             expect(issues).toContainEqual({
@@ -177,7 +183,7 @@ describe("CatalogWidgetBindingStore", () => {
             openCatalogs({8: [4]});
             widgets.getCatalogWidgetStore("catalog-overlay-0", 99).setWidgetId("widget-a");
 
-            const issues = bindings.restore({"widget-a": 20}, [], new Map());
+            const issues = bindings.restore({"widget-a": {type: "catalog-overlay", catalogId: 20}}, [], new Map());
 
             expect(bindings.catalogOf("catalog-overlay-0")).toBeUndefined();
             expect(issues.map(issue => issue.message)).toEqual(["Could not restore catalog widget widget-a: workspace catalog 20 is unavailable"]);

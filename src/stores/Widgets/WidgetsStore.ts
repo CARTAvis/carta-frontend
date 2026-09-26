@@ -34,7 +34,7 @@ import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "s
 import {
     ACTIVE_FILE_ID,
     AnimatorWidgetStore,
-    type CatalogPlotWidgetConfig,
+    type CatalogPlotLayoutSettings,
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
     type CatalogWidgetLayoutSettings,
@@ -572,7 +572,7 @@ export class WidgetsStore {
         const itemId = this.addCatalogPlotWidget(props, preAssignedId, widgetSettings);
         if (itemId) {
             const componentId = this.getNextComponentId(CatalogPlotComponent.WidgetConfig);
-            CatalogStore.Instance.widgetBindings.registerRestored(componentId, itemId);
+            CatalogStore.Instance.widgetBindings.registerRestored(componentId, itemId, (widgetSettings as Partial<CatalogPlotLayoutSettings> | null)?.widgetId);
         }
         return itemId;
     };
@@ -1101,13 +1101,8 @@ export class WidgetsStore {
         return action;
     };
 
-    /**
-     * A widget's saved settings.
-     *
-     * @param shouldIncludeWorkspaceBindings - whether the settings may name the session's catalogs. Only
-     *        the layout a workspace carries alongside them can; see {@link LayoutConfig.createConfigToSave}.
-     */
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined, shouldIncludeWorkspaceBindings: boolean = false) => {
+    /** A widget's saved settings: what a Layout keeps, which names none of the session's data. */
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
         if (!widgetType || !widgetID) {
             return null;
         }
@@ -1130,10 +1125,10 @@ export class WidgetsStore {
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             case CatalogOverlayComponent.WidgetConfig.type: {
-                return this.catalogWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings, CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
+                return this.catalogWidgets.get(widgetID)?.toLayoutSettings(CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
             }
             case CatalogPlotComponent.WidgetConfig.type: {
-                return CatalogStore.Instance.widgetBindings.configForLayout(widgetID, shouldIncludeWorkspaceBindings);
+                return CatalogStore.Instance.widgetBindings.layoutSettingsFor(widgetID);
             }
             case AnimatorComponent.WidgetConfig.type:
                 widgetStore = this.animatorWidgets.get(widgetID);
@@ -1678,7 +1673,7 @@ export class WidgetsStore {
             const widgetStore = new CatalogPlotWidgetStore(props);
             this.catalogPlotWidgets.set(id, widgetStore);
             if (widgetSettings) {
-                CatalogStore.Instance.widgetBindings.restoreConfig(id, widgetSettings as Partial<CatalogPlotWidgetConfig>);
+                widgetStore.applyLayoutSettings(widgetSettings as Partial<CatalogPlotLayoutSettings>);
             }
         }
         return id;

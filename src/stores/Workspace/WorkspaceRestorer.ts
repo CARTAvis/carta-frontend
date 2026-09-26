@@ -535,7 +535,7 @@ export class WorkspaceRestorer {
 
     /** Stage 8: point the widgets and plots that show a catalog at the catalogs just loaded. */
     private restoreViews(): void {
-        this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.selectedCatalogIds, this.workspace.catalogs, this.catalogIds));
+        this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */

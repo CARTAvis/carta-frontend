@@ -4,17 +4,19 @@ import {autorun} from "mobx";
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
-import {type CatalogPlotWidgetConfig} from "stores/Widgets";
 import {type ProcessedColumnData} from "utilities";
 
 /** A catalog that has whatever column is asked of it, so that the plot-column validation
  * register runs neither drops a column nor warns about one. */
 const CreateEmptyProfileStore = () => ({getColumnHeader: () => ({dataType: CARTA.ColumnType.Double}), catalogInfo: {fileInfo: {name: "test-catalog"}}}) as any;
 
+/** Restore what a Workspace saved for one plot, by the plot's stable ID. */
 function restorePlotBinding(widgetId: string, workspaceCatalogId: number, catalogFileId: number) {
-    const bindings = CatalogStore.Instance.widgetBindings;
-    bindings.restoreConfig(widgetId, {catalogId: workspaceCatalogId});
-    return bindings.restore(undefined, [{id: workspaceCatalogId, source: {type: "file", filename: "test-catalog"}}], new Map([[workspaceCatalogId, catalogFileId]]));
+    return CatalogStore.Instance.widgetBindings.restore(
+        {[widgetId]: {type: "catalog-plot", catalogId: workspaceCatalogId}},
+        [{id: workspaceCatalogId, source: {type: "file", filename: "test-catalog"}}],
+        new Map([[workspaceCatalogId, catalogFileId]])
+    );
 }
 
 describe("CatalogStore.plotImageOverlay", () => {
@@ -303,6 +305,9 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
     }
 
+    /** What a Workspace would keep for a plot. */
+    const saved = (widgetId: string) => catalogStore.widgetBindings.savedCatalogWidgets()[widgetId];
+
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.widgetBindings.componentIds().forEach(id => catalogStore.widgetBindings.closeComponent(id));
@@ -315,58 +320,55 @@ describe("Catalog plot workspace binding", () => {
     test("saves the catalog a plot shows by its workspace ID, not by the session's catalog file ID", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
-        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
-        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId as string);
+        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0") as string;
+        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId);
 
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
+        expect(saved("catalog-plot-0")).toMatchObject({type: "catalog-plot", catalogId: 2, xColumnName: "RA", yColumnName: "DEC"});
     });
 
-    test("leaves the session's catalogs out of a layout saved on its own", () => {
+    test("keeps a plot's identity in its layout settings, and nothing that names its catalog", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
-        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
-        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId as string);
+        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0") as string;
+        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId);
 
-        // A saved layout is reused against whatever is open, so an ID from this session would name
-        // something unrelated there.
-        const layoutConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string) as CatalogPlotWidgetConfig;
-        expect(layoutConfig).toBeDefined();
-        expect(layoutConfig.catalogId).toBeUndefined();
-        expect(layoutConfig.xColumnName).toBe("RA");
+        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId);
 
-        // The layout a workspace carries travels with those catalogs, so it may name them.
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
+        expect(layoutSettings).toEqual({widgetId: "catalog-plot-0", ...widgetsStore.catalogPlotWidgets.get(widgetId)!.toLayoutSettings()});
+        expect(layoutSettings).not.toHaveProperty("catalogId");
+        expect(layoutSettings).not.toHaveProperty("xColumnName");
     });
 
-    test("saves the fallback a plot shows when the catalog it was saved against is unavailable", () => {
-        showCatalog(5);
-        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
-        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {catalogId: 7});
-        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId as string);
+    test("ignores what an older layout kept about the columns a plot is drawn from", () => {
+        widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {widgetId: "plot-a", xColumnName: "LEGACY", dragMode: "pan"});
 
-        catalogStore.widgetBindings.restore(undefined, [{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
-
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
+        const plotStore = widgetsStore.catalogPlotWidgets.get("catalog-plot-0");
+        expect(plotStore?.xColumnName).toBe("RA");
+        expect(plotStore?.dragMode).toBe("pan");
     });
 
-    test("restores a plot onto the catalog it was saved against rather than catalog file 1", () => {
+    test("saves the fallback a plot shows, without what it was drawn from, when its catalog is unavailable", () => {
+        showCatalog(5);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
+        const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0") as string;
+        catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId);
+
+        catalogStore.widgetBindings.restore({"catalog-plot-0": {type: "catalog-plot", catalogId: 7, xColumnName: "FLUX"}}, [{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
+
+        expect(saved("catalog-plot-0")).toMatchObject({catalogId: 2, xColumnName: "RA"});
+    });
+
+    test("restores a plot onto the catalog it was saved against by its stable ID", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
 
-        widgetsStore.initWidgets(
-            [
-                {
-                    id: "catalog-plot",
-                    plotType: CatalogPlotType.D2Scatter,
-                    props: {id: "catalog-plot-0"},
-                    widgetSettings: {catalogId: 2, xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter}
-                }
-            ],
-            []
-        );
+        widgetsStore.initWidgets([{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-3"}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.D2Scatter}}], []);
+        const issues = catalogStore.widgetBindings.restore({"plot-a": {type: "catalog-plot", catalogId: 2, xColumnName: "RA", yColumnName: "DEC"}}, [{id: 2, source: {type: "file", filename: "sources.vot"}}], new Map([[2, 5]]));
 
-        expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-0").catalogFileId).toBe(5);
-        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.xColumnName).toBe("RA");
+        expect(issues).toEqual([]);
+        expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-3").catalogFileId).toBe(5);
+        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-3")?.xColumnName).toBe("RA");
+        expect(saved("plot-a")?.catalogId).toBe(2);
     });
 
     test("moves a plot onto its catalog, discarding the plot that catalog already held", () => {
@@ -374,6 +376,7 @@ describe("Catalog plot workspace binding", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 5, "catalog-plot-1");
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 1);
 
         restorePlotBinding("catalog-plot-0", 7, 5);
 
@@ -390,8 +393,8 @@ describe("Catalog plot workspace binding", () => {
         expect(catalogStore.widgetBindings.displayedForComponent("catalog-plot-component-0")?.widgetId).toBe("catalog-plot-0");
     });
 
-    test("serializes the currently active plot store after switching from catalog A to catalog B and restores it correctly", () => {
-        // Setup Catalog A (fileId 1, workspaceId 10) and Catalog B (fileId 2, workspaceId 20)
+    test("saves and restores the plot store the tab shows after switching from catalog A to catalog B", () => {
+        // Catalog A (fileId 1, workspaceId 10) and Catalog B (fileId 2, workspaceId 20)
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
         [1, 2].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
@@ -400,48 +403,28 @@ describe("Catalog plot workspace binding", () => {
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 1, 10);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 2, 20);
 
-        // Component catalog-plot-component-0 initially shows Catalog A with "catalog-plot-0"
         const plotStoreAId = widgetsStore.addCatalogPlotWidget({xColumnName: "RA_A", yColumnName: "DEC_A", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 1, plotStoreAId as string);
-
-        // User switches component to Catalog B and configures a new plot store "catalog-plot-1"
         const plotStoreBId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_B", yColumnName: "MAG_B", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 2, plotStoreBId as string);
         catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
 
-        // Verify that saving the layout widget (referenced by original tab instance id "catalog-plot-0")
-        // serializes Catalog B's workspace ID and Catalog B's settings together
-        const savedConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig;
-        expect(savedConfig).toBeDefined();
-        expect(savedConfig.catalogId).toBe(20);
-        expect(savedConfig.xColumnName).toBe("FLUX_B");
-        expect(savedConfig.yColumnName).toBe("MAG_B");
+        // The tab is known by its first plot's ID, and saves catalog B with catalog B's settings.
+        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0");
+        const savedConfig = saved("catalog-plot-0");
+        expect(savedConfig).toMatchObject({catalogId: 20, xColumnName: "FLUX_B", yColumnName: "MAG_B"});
 
-        // Now verify restore: restoring the saved config applies Catalog B's ID and settings
         widgetsStore.catalogPlotWidgets.clear();
         catalogStore.widgetBindings.componentIds().forEach(id => catalogStore.widgetBindings.closeComponent(id));
+        widgetsStore.initWidgets([{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-0"}, widgetSettings: layoutSettings}], []);
+        catalogStore.widgetBindings.restore({"catalog-plot-0": savedConfig}, [], new Map([[20, 2]]));
 
-        widgetsStore.initWidgets(
-            [
-                {
-                    id: "catalog-plot",
-                    plotType: CatalogPlotType.D2Scatter,
-                    props: {id: "catalog-plot-0"},
-                    widgetSettings: savedConfig
-                }
-            ],
-            []
-        );
-
-        // Restored plot is bound to Catalog B (fileId 2) with Catalog B's settings
         expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-0").catalogFileId).toBe(2);
-        const restoredStore = widgetsStore.catalogPlotWidgets.get("catalog-plot-0");
-        expect(restoredStore?.xColumnName).toBe("FLUX_B");
-        expect(restoredStore?.yColumnName).toBe("MAG_B");
-        expect(catalogStore.widgetBindings.configForLayout("catalog-plot-0", true)?.catalogId).toBe(20);
+        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.xColumnName).toBe("FLUX_B");
+        expect(saved("catalog-plot-0")?.catalogId).toBe(20);
     });
 
-    test("switching from A to B and back to A serializes catalog A's plot settings with catalog A's workspace ID", () => {
+    test("switching from A to B and back to A saves catalog A's plot settings with catalog A's workspace ID", () => {
         showCatalog(1);
         catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 1, 10);
@@ -449,33 +432,24 @@ describe("Catalog plot workspace binding", () => {
 
         const plotStoreAId = widgetsStore.addCatalogPlotWidget({xColumnName: "RA_A", yColumnName: "DEC_A", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 1, plotStoreAId as string);
-
         const plotStoreBId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_B", yColumnName: "MAG_B", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 2, plotStoreBId as string);
 
-        // Switch to B then back to A
         catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
         catalogStore.widgetBindings.show("catalog-plot-component-0", 1);
 
-        const savedConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig;
-        expect(savedConfig).toBeDefined();
-        expect(savedConfig.catalogId).toBe(10);
-        expect(savedConfig.xColumnName).toBe("RA_A");
-        expect(savedConfig.yColumnName).toBe("DEC_A");
+        expect(saved("catalog-plot-0")).toMatchObject({catalogId: 10, xColumnName: "RA_A", yColumnName: "DEC_A"});
     });
 
     test("saves a plot against the catalog it shows as the user moves between catalogs", () => {
-        // Catalog A (workspace ID 10) is not loaded, so a plot restored for it falls back to catalog B.
         showCatalog(2);
         catalogStore.catalogProfileStores.set(3, CreateEmptyProfileStore());
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 2, 20);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 3, 30);
 
-        const plotStoreId = widgetsStore.addCatalogPlotWidget({xColumnName: "RA_A", yColumnName: "DEC_A", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", {catalogId: 10});
+        const plotStoreId = widgetsStore.addCatalogPlotWidget({xColumnName: "RA_A", yColumnName: "DEC_A", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 2, plotStoreId as string);
-
-        // The fallback is the plot's own catalog now, so catalog B's ID is the one that would be saved.
-        expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig)?.catalogId).toBe(20);
+        expect(saved("catalog-plot-0")?.catalogId).toBe(20);
 
         // The user picks catalog C, then picks catalog B back.
         const plotStoreCId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_C", yColumnName: "MAG_C", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
@@ -483,15 +457,11 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.widgetBindings.show("catalog-plot-component-0", 3);
         catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
 
-        const savedConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig;
-        expect(savedConfig).toBeDefined();
-        expect(savedConfig.catalogId).toBe(20);
-        expect(savedConfig.xColumnName).toBe("RA_A");
-        expect(savedConfig.yColumnName).toBe("DEC_A");
+        expect(saved("catalog-plot-0")).toMatchObject({catalogId: 20, xColumnName: "RA_A", yColumnName: "DEC_A"});
 
         // The plot the user visited on the way belongs to catalog C.
         catalogStore.widgetBindings.show("catalog-plot-component-0", 3);
-        expect(catalogStore.widgetBindings.configForLayout("catalog-plot-0", true)?.catalogId).toBe(30);
+        expect(saved("catalog-plot-0")).toMatchObject({catalogId: 30, xColumnName: "FLUX_C"});
     });
 });
 
@@ -526,7 +496,8 @@ describe("Catalog table widget selection", () => {
     const widgetsStore = WidgetsStore.Instance;
 
     function restoreTables(selectedCatalogIds: Record<string, number>, catalogIds: Map<number, number>) {
-        return catalogStore.widgetBindings.restore(selectedCatalogIds, [{id: 20, source: {type: "file", filename: "sources.vot"}}], catalogIds);
+        const catalogWidgets = Object.fromEntries(Object.entries(selectedCatalogIds).map(([widgetId, catalogId]) => [widgetId, {type: "catalog-overlay" as const, catalogId}]));
+        return catalogStore.widgetBindings.restore(catalogWidgets, [{id: 20, source: {type: "file", filename: "sources.vot"}}], catalogIds);
     }
 
     beforeEach(() => {

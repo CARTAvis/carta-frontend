@@ -1,9 +1,9 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {CatalogOverlay, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, type WorkspaceCatalog, type WorkspaceIssue} from "models";
+import {WorkspaceItemKind} from "enums";
+import {describeCatalogSource, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
-import type {CatalogPlotWidgetConfig} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
+import type {CatalogPlotLayoutSettings} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
 import type {WidgetsStore} from "stores/Widgets/WidgetsStore";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {isCatalogNumericDataType} from "utilities";
@@ -13,11 +13,14 @@ const UNBOUND_PLOT_KEY = 0;
 
 /** A plot tab's current catalog and the plot it keeps for each catalog it has shown. */
 class CatalogPlotState {
+    /** The tab's own identity, stable across the sessions a workspace spans, unlike its component ID. */
+    readonly widgetId: string;
     /** The catalog the tab shows, or undefined when it has none. */
     @observable activeCatalogFileId: number | undefined;
     readonly plotWidgetIds = observable.map<number, string>();
 
-    constructor(catalogFileId: number | undefined) {
+    constructor(widgetId: string, catalogFileId: number | undefined) {
+        this.widgetId = widgetId;
         this.activeCatalogFileId = catalogFileId;
         makeObservable(this);
     }
@@ -44,8 +47,6 @@ export class CatalogWidgetBindingStore {
     private readonly plots = observable.map<string, CatalogPlotState>();
     /** Retained when a catalog-specific plot closes, because its Layout tab still has this ID. */
     private readonly retainedComponents = observable.map<string, string>();
-    /** The Workspace catalog each restored plot was saved against, held only until Restore binds it. */
-    private readonly restoredCatalogIds = observable.map<string, number>();
 
     constructor(
         private readonly catalogs: CatalogStore,
@@ -178,21 +179,44 @@ export class CatalogWidgetBindingStore {
         return Array.from(this.widgets().catalogWidgets.keys());
     }
 
-    /** The Workspace catalog each table widget shows, keyed by the widget's own stable ID. */
-    public savedTableCatalogIds(): Record<string, number> {
-        const saved: Record<string, number> = {};
+    /**
+     * What each table and plot widget shows, keyed by the widget's own stable ID. A widget showing no
+     * loaded catalog names none: a Workspace describes only what was loaded (ADR-0006).
+     */
+    public savedCatalogWidgets(): Record<string, WorkspaceCatalogWidgetConfig> {
+        const saved: Record<string, WorkspaceCatalogWidgetConfig> = {};
         this.widgets().catalogWidgets.forEach((widgetStore, componentId) => {
-            const catalogFileId = this.tableCatalogs.get(componentId);
-            // A widget showing no loaded catalog names none: a Workspace describes only what was loaded.
-            if (catalogFileId === undefined || !this.catalogs.catalogProfileStores.has(catalogFileId)) {
-                return;
+            const catalogId = this.workspaceIdOfLoaded(this.tableCatalogs.get(componentId));
+            const settingsTabs = widgetStore.workspaceSettingsTabs();
+            const hasSettingsTabs = Object.keys(settingsTabs).length > 0;
+            if (catalogId !== undefined || hasSettingsTabs) {
+                saved[widgetStore.widgetId || componentId] = {type: "catalog-overlay", ...(catalogId !== undefined ? {catalogId} : {}), ...(hasSettingsTabs ? {settingsTabs} : {})};
             }
-            const workspaceCatalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
-            if (workspaceCatalogId !== undefined) {
-                saved[widgetStore.widgetId || componentId] = workspaceCatalogId;
+        });
+        this.plots.forEach(state => {
+            const catalogId = this.workspaceIdOfLoaded(state.activeCatalogFileId);
+            const plotWidgetId = state.plotFor(state.activeCatalogFileId);
+            const plotStore = plotWidgetId === undefined ? undefined : this.widgets().catalogPlotWidgets.get(plotWidgetId);
+            // What a plot is drawn from means nothing without the catalog it is drawn from.
+            if (catalogId !== undefined && plotStore) {
+                saved[state.widgetId] = {type: "catalog-plot", catalogId, ...plotStore.toConfig()};
             }
         });
         return saved;
+    }
+
+    private workspaceIdOfLoaded(catalogFileId: number | undefined): number | undefined {
+        return catalogFileId !== undefined && this.catalogs.catalogProfileStores.has(catalogFileId) ? WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId) : undefined;
+    }
+
+    /** A stable ID no other table or plot widget has, starting from the one preferred. */
+    private uniqueWidgetId(preferredId: string): string {
+        const taken = new Set<string>([...Array.from(this.plots.values(), state => state.widgetId), ...Array.from(this.widgets().catalogWidgets.values(), widgetStore => widgetStore.widgetId)]);
+        let widgetId = preferredId;
+        for (let index = 1; taken.has(widgetId); index++) {
+            widgetId = `${preferredId}-${index}`;
+        }
+        return widgetId;
     }
 
     public isWidgetIdReserved(widgetId: string): boolean {
@@ -220,19 +244,26 @@ export class CatalogWidgetBindingStore {
         };
     }
 
-    /** Register a restored Layout tab while its saved catalog is being resolved. */
-    public registerRestored(componentId: string, widgetId: string): void {
-        const activeCatalogFileIds = this.catalogs.activeCatalogFiles;
-        const savedCatalogFileId = WorkspaceIdRegistry.Instance.sessionIdOf(WorkspaceItemKind.Catalog, this.restoredCatalogIds.get(widgetId));
-        const catalogFileId = savedCatalogFileId !== undefined && activeCatalogFileIds.includes(savedCatalogFileId) ? savedCatalogFileId : activeCatalogFileIds[0];
-        this.register(componentId, catalogFileId, widgetId);
+    /**
+     * Register a tab a Layout brought back, on the active image's first catalog until a Workspace
+     * restore points it at the catalog it was saved against.
+     *
+     * @param stableWidgetId - the tab's own ID, as the Layout kept it.
+     */
+    public registerRestored(componentId: string, widgetId: string, stableWidgetId?: string): void {
+        this.register(componentId, this.catalogs.activeCatalogFiles[0], widgetId, stableWidgetId);
     }
 
-    /** Register the plot kept for one catalog; keep its tab association after that catalog closes. */
-    @action register = (componentId: string, catalogFileId: number | undefined, widgetId: string): void => {
+    /**
+     * Register the plot kept for one catalog; keep its tab association after that catalog closes.
+     *
+     * @param stableWidgetId - for a new tab, the ID it is known by across sessions; by default the
+     *     ID of its first plot.
+     */
+    @action register = (componentId: string, catalogFileId: number | undefined, widgetId: string, stableWidgetId?: string): void => {
         let state = this.plots.get(componentId);
         if (!state) {
-            state = new CatalogPlotState(catalogFileId);
+            state = new CatalogPlotState(this.uniqueWidgetId(stableWidgetId || widgetId), catalogFileId);
             this.plots.set(componentId, state);
         }
         state.plotWidgetIds.set(catalogFileId ?? UNBOUND_PLOT_KEY, widgetId);
@@ -285,117 +316,107 @@ export class CatalogWidgetBindingStore {
         }
     };
 
-    /** Apply plot settings, holding the Workspace catalog they name until Restore binds it. */
-    @action restoreConfig = (widgetId: string, config: Partial<CatalogPlotWidgetConfig>): void => {
-        this.widgets().catalogPlotWidgets.get(widgetId)?.applyConfig(config);
-        if (typeof config.catalogId === "number" && Number.isInteger(config.catalogId)) {
-            this.restoredCatalogIds.set(widgetId, config.catalogId);
-        } else {
-            this.restoredCatalogIds.delete(widgetId);
-        }
-    };
-
     /** Drop plot settings, including an unmounted plot. */
     @action deletePlot = (widgetId: string): void => {
-        this.restoredCatalogIds.delete(widgetId);
         this.widgets().catalogPlotWidgets.delete(widgetId);
     };
 
-    /** Saved Layouts omit catalog binding; the Layout carried by a Workspace keeps it. */
-    public configForLayout(widgetId: string, shouldIncludeWorkspaceBindings: boolean): CatalogPlotWidgetConfig | undefined {
+    /** What a Layout keeps for a plot tab: its identity and what survives any catalog, naming none. */
+    public layoutSettingsFor(widgetId: string): CatalogPlotLayoutSettings | undefined {
         const association = this.associationForWidget(widgetId);
         const state = association.componentId === undefined ? undefined : this.plots.get(association.componentId);
-        const shownFileId = state ? state.activeCatalogFileId : association.catalogFileId;
-        const shownWidgetId = state?.plotFor(shownFileId);
+        const shownWidgetId = state?.plotFor(state.activeCatalogFileId);
         const shownStore = shownWidgetId === undefined ? undefined : this.widgets().catalogPlotWidgets.get(shownWidgetId);
         const plotStore = shownStore ?? this.widgets().catalogPlotWidgets.get(widgetId);
         if (!plotStore) {
             return undefined;
         }
-        const config = plotStore.toConfig();
-        if (shouldIncludeWorkspaceBindings) {
-            // A plot showing no loaded catalog names none: a Workspace describes only what was loaded.
-            const activeFileId = shownStore ? shownFileId : association.catalogFileId;
-            config.catalogId = activeFileId !== undefined && this.catalogs.catalogProfileStores.has(activeFileId) ? WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, activeFileId) : undefined;
-        }
-        return config;
+        return {...(state ? {widgetId: state.widgetId} : {}), ...plotStore.toLayoutSettings()};
     }
 
     /**
      * Point the table and plot widgets at the catalogs they were saved against, once the Workspace's
-     * catalogs and Layout have been restored. A widget whose catalog is unavailable takes the catalog
-     * it falls back to as its own.
+     * catalogs and Layout have been restored, and put back what each of them showed. A widget whose
+     * catalog is unavailable takes the catalog it falls back to as its own, with nothing it was
+     * drawn from: that means nothing against another catalog.
      *
-     * @param selectedCatalogIds - the Workspace catalog each table widget showed, by stable widget ID.
+     * @param catalogWidgets - what each widget showed, by stable widget ID.
      * @param catalogIds - Workspace catalog ID : the file ID it was restored as.
      */
-    @action restore = (selectedCatalogIds: Record<string, number> | undefined, catalogs: WorkspaceCatalog[] | undefined, catalogIds: Map<number, number>): WorkspaceIssue[] => {
+    @action restore = (catalogWidgets: Record<string, WorkspaceCatalogWidgetConfig> | undefined, catalogs: WorkspaceCatalog[] | undefined, catalogIds: Map<number, number>): WorkspaceIssue[] => {
         const issues: WorkspaceIssue[] = [];
         const describe = (id: number) => {
             const catalog = catalogs?.find(candidate => candidate.id === id);
             return catalog ? `the catalog ${describeCatalogSource(catalog.source)}` : `workspace catalog ${id}`;
         };
-        const describeFile = (fileId: number) => {
+        const describeFallback = (fileId: number | undefined) => {
+            if (fileId === undefined || !this.catalogs.catalogProfileStores.has(fileId)) {
+                return "";
+            }
             for (const [workspaceId, restoredFileId] of catalogIds) {
                 if (restoredFileId === fileId) {
-                    return describe(workspaceId);
+                    return `; it is showing ${describe(workspaceId)} instead`;
                 }
             }
-            return `catalog file ${fileId}`;
+            return `; it is showing catalog file ${fileId} instead`;
         };
+        const entries = Object.entries(catalogWidgets ?? {});
 
-        if (selectedCatalogIds) {
-            this.widgets().restoreCatalogWidgets(Object.keys(selectedCatalogIds));
-            for (const [widgetId, workspaceCatalogId] of Object.entries(selectedCatalogIds)) {
-                const componentIds = Array.from(this.widgets().catalogWidgets.entries())
-                    .filter(([, widgetStore]) => widgetStore.widgetId === widgetId)
-                    .map(([componentId]) => componentId);
-                const catalogFileId = catalogIds.get(workspaceCatalogId);
-                if (catalogFileId === undefined) {
-                    const componentId = componentIds[0];
-                    const shown = componentId === undefined ? undefined : this.tableCatalogs.get(componentId);
-                    if (componentId !== undefined && (shown === undefined || !this.catalogs.catalogProfileStores.has(shown))) {
-                        this.initTable(componentId, this.fallbackCatalog(undefined, undefined));
-                    }
-                    const fallbackFileId = componentId === undefined ? undefined : this.tableCatalogs.get(componentId);
-                    const fallback = fallbackFileId !== undefined && this.catalogs.catalogProfileStores.has(fallbackFileId) ? `; it is showing ${describeFile(fallbackFileId)} instead` : "";
-                    issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId}: ${describe(workspaceCatalogId)} is unavailable${fallback}`});
-                } else if (componentIds.length !== 1 || !this.show(componentIds[0], catalogFileId)) {
-                    issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId} to ${describe(workspaceCatalogId)}: the widget selection could not be applied`});
+        const tables = entries.filter(([, config]) => config.type === "catalog-overlay");
+        if (tables.length) {
+            this.widgets().restoreCatalogWidgets(tables.map(([widgetId]) => widgetId));
+        }
+        for (const [widgetId, config] of tables) {
+            const matching = Array.from(this.widgets().catalogWidgets.entries()).filter(([, widgetStore]) => widgetStore.widgetId === widgetId);
+            matching.forEach(([, widgetStore]) => widgetStore.applyWorkspaceSettingsTabs(config.settingsTabs ?? {}));
+            if (config.catalogId === undefined) {
+                continue;
+            }
+            const catalogFileId = catalogIds.get(config.catalogId);
+            if (catalogFileId === undefined) {
+                const componentId = matching[0]?.[0];
+                const shown = componentId === undefined ? undefined : this.tableCatalogs.get(componentId);
+                if (componentId !== undefined && (shown === undefined || !this.catalogs.catalogProfileStores.has(shown))) {
+                    this.initTable(componentId, this.fallbackCatalog(undefined, undefined));
                 }
+                const fallback = componentId === undefined ? "" : describeFallback(this.tableCatalogs.get(componentId));
+                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId}: ${describe(config.catalogId)} is unavailable${fallback}`});
+            } else if (matching.length !== 1 || !this.show(matching[0][0], catalogFileId)) {
+                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId} to ${describe(config.catalogId)}: the widget selection could not be applied`});
             }
         }
 
-        for (const [widgetId, plotStore] of this.widgets().catalogPlotWidgets) {
-            const workspaceCatalogId = this.restoredCatalogIds.get(widgetId);
-            if (workspaceCatalogId === undefined) {
+        for (const [widgetId, config] of entries.filter(([, entry]) => entry.type === "catalog-plot")) {
+            const state = Array.from(this.plots.values()).find(candidate => candidate.widgetId === widgetId);
+            if (!state || config.catalogId === undefined) {
                 continue;
             }
-            const catalogFileId = catalogIds.get(workspaceCatalogId);
-            const association = this.associationForWidget(widgetId);
+            const catalogFileId = catalogIds.get(config.catalogId);
             if (catalogFileId === undefined) {
-                const shownFileId = association.catalogFileId;
-                const fallback = shownFileId !== undefined && this.catalogs.catalogProfileStores.has(shownFileId) ? `; it is showing ${describeFile(shownFileId)} instead` : "";
-                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId}: ${describe(workspaceCatalogId)} is unavailable${fallback}`});
+                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId}: ${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`});
                 continue;
             }
-            if (association.catalogFileId !== catalogFileId && !this.rebind(widgetId, catalogFileId)) {
-                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId} to ${describe(workspaceCatalogId)}: the plot association could not be applied`});
+            const plotWidgetId = state.plotFor(state.activeCatalogFileId);
+            if (plotWidgetId === undefined || (state.activeCatalogFileId !== catalogFileId && !this.rebind(plotWidgetId, catalogFileId))) {
+                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId} to ${describe(config.catalogId)}: the plot association could not be applied`});
                 continue;
             }
+            const plotStore = this.widgets().catalogPlotWidgets.get(plotWidgetId);
             const profileStore = this.catalogs.catalogProfileStores.get(catalogFileId);
-            const availableColumns = new Set(profileStore?.catalogHeader.map(header => header.name));
-            const columns = [plotStore.xColumnName, plotStore.yColumnName, plotStore.statisticColumnName].filter((column): column is string => typeof column === "string" && column !== CatalogOverlay.NONE);
-            const missing = columns.filter(column => !availableColumns.has(column));
-            if (missing.length) {
+            plotStore?.applyConfig(config);
+            const unavailable =
+                plotStore?.resetUnknownColumns(column => {
+                    const header = profileStore?.getColumnHeader(column);
+                    return header !== undefined && isCatalogNumericDataType(header.dataType);
+                }) ?? [];
+            if (unavailable.length) {
                 issues.push({
                     kind: WorkspaceItemKind.CatalogPlot,
                     subject: widgetId,
-                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(workspaceCatalogId)}: ${missing.map(column => `column ${column}`).join(", ")} is unavailable`
+                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(config.catalogId)}: ${unavailable.map(column => `column ${column}`).join(", ")} is unavailable`
                 });
             }
         }
-        this.restoredCatalogIds.clear();
         return issues;
     };
 

@@ -13,10 +13,8 @@ export interface CatalogWidgetLayoutSettings {
     tableSeparatorPosition?: string;
     /** Widths of the header table's columns, as the user left them. */
     headerTableColumnWidths?: number[];
-    /** The settings section this widget was left on, for a workspace, per the workspace's own catalog
-     * ID: the file ID a session gave a catalog names a different catalog once it is opened again. */
-    settingsTabIdByWorkspaceCatalog?: Record<string, CatalogSettingsTabs>;
-    /** The settings section this widget was left on, for a saved layout, which names no catalog. */
+    /** The settings section this widget was left on, for whichever catalog it shows. A Workspace keeps
+     * the section of each catalog itself, since a Layout names no catalog. */
     settingsTabId?: CatalogSettingsTabs;
 }
 
@@ -81,39 +79,38 @@ export class CatalogWidgetStore {
         }
     };
 
-    /** @param shownCatalogFileId - the catalog the widget shows, whose section a saved layout keeps. */
-    public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false, shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
+    /** @param shownCatalogFileId - the catalog the widget shows, whose section the layout keeps. */
+    public toLayoutSettings = (shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         tableSeparatorPosition: this.tableSeparatorPosition,
         ...(this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? {headerTableColumnWidths: [...this.headerTableColumnWidths]} : {}),
-        ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings, shownCatalogFileId)
+        settingsTabId: this.settingsTabFor(shownCatalogFileId)
     });
 
     /**
-     * The settings section of each catalog the widget has shown, naming each catalog the way
-     * whoever reads the settings back will know it by.
-     *
-     * A workspace names its catalogs by IDs of its own, since the file IDs of the session it was
-     * saved in are handed out again to other catalogs when it is opened. A saved layout names no
-     * catalog at all: it is kept on a server and reused against whatever a later session has open,
-     * so it carries only the section the widget was left on, for whichever catalog that turns out
-     * to be.
+     * The settings section of each catalog the widget has shown, by the Workspace's own ID for that
+     * catalog: the file IDs of a session are handed out again to other catalogs when it is reopened.
      */
-    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean, shownCatalogFileId: number | undefined): Pick<CatalogWidgetLayoutSettings, "settingsTabId" | "settingsTabIdByWorkspaceCatalog"> => {
-        if (!shouldIncludeWorkspaceBindings) {
-            return {settingsTabId: this.settingsTabFor(shownCatalogFileId)};
-        }
-
-        const settingsTabs = Array.from(this.settingsTabIdByCatalog);
-        const workspaceSettingsTabs: [string, CatalogSettingsTabs][] = [];
-        for (const [catalogFileId, tabId] of settingsTabs) {
+    public workspaceSettingsTabs = (): Record<string, CatalogSettingsTabs> => {
+        const workspaceSettingsTabs: Record<string, CatalogSettingsTabs> = {};
+        this.settingsTabIdByCatalog.forEach((tabId, catalogFileId) => {
             const workspaceCatalogId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
-            // A catalog this session never opened is not one the workspace can name.
+            // A catalog this session no longer has is not one the workspace can name.
             if (workspaceCatalogId !== undefined) {
-                workspaceSettingsTabs.push([String(workspaceCatalogId), tabId]);
+                workspaceSettingsTabs[String(workspaceCatalogId)] = tabId;
+            }
+        });
+        return workspaceSettingsTabs;
+    };
+
+    /** Put back the section of each catalog a Workspace kept, for the catalogs it brought back. */
+    @action applyWorkspaceSettingsTabs = (settingsTabs: Record<string, number>) => {
+        for (const [workspaceCatalogId, tabId] of Object.entries(settingsTabs)) {
+            const catalogFileId = Number.isFinite(Number(workspaceCatalogId)) ? WorkspaceIdRegistry.Instance.sessionIdOf(WorkspaceItemKind.Catalog, Number(workspaceCatalogId)) : undefined;
+            if (catalogFileId !== undefined && typeof tabId === "number") {
+                this.settingsTabIdByCatalog.set(catalogFileId, tabId);
             }
         }
-        return {settingsTabIdByWorkspaceCatalog: Object.fromEntries(workspaceSettingsTabs)};
     };
 
     /**
@@ -138,16 +135,6 @@ export class CatalogWidgetStore {
         }
         if (typeof settings.settingsTabId === "number") {
             this.setSettingsTab(shownCatalogFileId, settings.settingsTabId);
-        }
-        if (settings.settingsTabIdByWorkspaceCatalog) {
-            for (const [workspaceCatalogId, tabId] of Object.entries(settings.settingsTabIdByWorkspaceCatalog)) {
-                // The workspace's own ID for a catalog, put back as the file ID this session opened
-                // it as. A catalog the workspace could not bring back has none, and is left out.
-                const catalogFileId = Number.isFinite(Number(workspaceCatalogId)) ? WorkspaceIdRegistry.Instance.sessionIdOf(WorkspaceItemKind.Catalog, Number(workspaceCatalogId)) : undefined;
-                if (catalogFileId !== undefined && typeof tabId === "number") {
-                    this.settingsTabIdByCatalog.set(catalogFileId, tabId);
-                }
-            }
         }
     };
 }

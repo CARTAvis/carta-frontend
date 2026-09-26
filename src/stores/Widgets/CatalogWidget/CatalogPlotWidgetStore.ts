@@ -14,18 +14,23 @@ export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
-export interface CatalogPlotWidgetConfig {
-    /** The workspace's own ID for the catalog this plot is saved against. */
-    catalogId?: number;
+/** What a Layout keeps for a plot: what would still make sense against any catalog. */
+export interface CatalogPlotLayoutSettings {
+    /** The plot's own identity, stable across the sessions a workspace spans. */
+    widgetId?: string;
     plotType: CatalogPlotType;
+    dragMode?: DragMode;
+    scatterBorder?: Border;
+    histogramBorder?: XBorder;
+}
+
+/** What a Workspace keeps for a plot: what it is drawn from, which means nothing against another catalog. */
+export interface CatalogPlotWidgetConfig {
     xColumnName: string;
     yColumnName?: string;
     statisticColumnName?: string;
     isLogScaleY?: boolean;
     nBinX?: number;
-    dragMode?: DragMode;
-    scatterBorder?: Border;
-    histogramBorder?: XBorder;
     isFittingEnabled?: boolean;
     fittingRange?: {minVal: number; maxVal: number};
 }
@@ -57,16 +62,19 @@ export class CatalogPlotWidgetStore {
         makeObservable(this);
     }
 
-    public toConfig = (): CatalogPlotWidgetConfig => ({
+    public toLayoutSettings = (): CatalogPlotLayoutSettings => ({
         plotType: this.plotType,
+        dragMode: this.dragMode,
+        scatterBorder: this.scatterBorder,
+        histogramBorder: this.histogramBorder
+    });
+
+    public toConfig = (): CatalogPlotWidgetConfig => ({
         xColumnName: this.xColumnName,
         yColumnName: this.yColumnName,
         statisticColumnName: this.statisticColumnName,
         isLogScaleY: this.isLogScaleY,
         nBinX: this.nBinX,
-        dragMode: this.dragMode,
-        scatterBorder: this.scatterBorder,
-        histogramBorder: this.histogramBorder,
         isFittingEnabled: this.isFittingEnabled,
         fittingRange: this.minMaxX ?? undefined
     });
@@ -88,6 +96,19 @@ export class CatalogPlotWidgetStore {
         return dropped;
     }
 
+    /** Put back what a Layout kept. Anything else an older Layout carries is not read. */
+    @action applyLayoutSettings(settings: Partial<CatalogPlotLayoutSettings>) {
+        if (settings.dragMode !== undefined) {
+            this.dragMode = settings.dragMode;
+        }
+        if (settings.scatterBorder) {
+            this.scatterBorder = settings.scatterBorder;
+        }
+        if (settings.histogramBorder) {
+            this.histogramBorder = settings.histogramBorder;
+        }
+    }
+
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
         if (typeof config.xColumnName === "string") {
             this.xColumnName = config.xColumnName;
@@ -103,15 +124,6 @@ export class CatalogPlotWidgetStore {
         }
         if (Number.isInteger(config.nBinX) && (config.nBinX as number) > 0) {
             this.nBinX = config.nBinX;
-        }
-        if (config.dragMode !== undefined) {
-            this.dragMode = config.dragMode;
-        }
-        if (config.scatterBorder) {
-            this.scatterBorder = config.scatterBorder;
-        }
-        if (config.histogramBorder) {
-            this.histogramBorder = config.histogramBorder;
         }
         if (typeof config.isFittingEnabled === "boolean") {
             this.isFittingEnabled = config.isFittingEnabled;

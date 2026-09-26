@@ -348,6 +348,27 @@ export interface WorkspaceCatalog {
 }
 
 /**
+ * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
+ * and so is kept by the Workspace rather than the Layout (ADR-0005).
+ */
+export interface WorkspaceCatalogWidgetConfig {
+    /** The kind of widget, which a restore needs to recreate one the layout does not have. */
+    type: "catalog-overlay" | "catalog-plot";
+    /** Workspace ID of the catalog the widget shows. */
+    catalogId?: number;
+    /** Table widgets: the settings section each catalog was left on, by Workspace catalog ID. */
+    settingsTabs?: {[workspaceCatalogId: string]: number};
+    /** Plot widgets: what the plot is drawn from. */
+    xColumnName?: string;
+    yColumnName?: string;
+    statisticColumnName?: string;
+    isLogScaleY?: boolean;
+    nBinX?: number;
+    isFittingEnabled?: boolean;
+    fittingRange?: {minVal: number; maxVal: number};
+}
+
+/**
  * The arrangement a workspace was saved in, in the same form a saved layout takes.
  *
  * A workspace keeps its own copy rather than naming a layout, so that reopening it restores the
@@ -376,8 +397,8 @@ export interface Workspace {
         raster?: number;
     };
     selectedFile?: number;
-    /** Workspace catalog selected by each catalog widget, keyed by stable widget ID. */
-    selectedCatalogIds?: {[widgetId: string]: number};
+    /** What each catalog table and plot widget shows, keyed by the widget's stable ID. */
+    catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;

@@ -158,7 +158,7 @@ export class LayoutStore {
         if (!modelJson?.layout) {
             return undefined;
         }
-        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson, true) ?? undefined;
+        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson) ?? undefined;
     };
 
     @flow.bound *saveLayout() {

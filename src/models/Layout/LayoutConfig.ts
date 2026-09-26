@@ -180,14 +180,10 @@ export class LayoutConfig {
     };
 
     /**
-     * Creates the abstract config from the current FlexLayout model for saving.
-     *
-     * @param shouldIncludeWorkspaceBindings - whether the arrangement may name the session's images and
-     *        catalogs. A workspace carries its own copy of the layout alongside those items, so it
-     *        can; a saved layout is meant to be reused against whatever happens to be open, where
-     *        an ID from the session it was saved in would name something unrelated.
+     * Creates the abstract config from the current FlexLayout model for saving. It names none of the
+     * session's images or catalogs, so a saved layout and the copy a workspace carries take one form.
      */
-    public static createConfigToSave = (appStore: AppStore, modelJson: any, shouldIncludeWorkspaceBindings: boolean = false) => {
+    public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
         if (!appStore || !modelJson) {
             return null;
         }
@@ -202,7 +198,7 @@ export class LayoutConfig {
         };
 
         // Enrich docked widgets with widget settings
-        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked, shouldIncludeWorkspaceBindings);
+        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
 
         // Handle floating widgets
         appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
@@ -219,7 +215,7 @@ export class LayoutConfig {
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id, shouldIncludeWorkspaceBindings);
+            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
@@ -242,20 +238,20 @@ export class LayoutConfig {
     /**
      * Recursively enriches the abstract config with widget settings from current widget stores.
      */
-    private static enrichSaveConfig = (appStore: AppStore, node: any, shouldIncludeWorkspaceBindings: boolean) => {
+    private static enrichSaveConfig = (appStore: AppStore, node: any) => {
         if (!node || !node.content) {
             return;
         }
 
         for (const child of node.content) {
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                LayoutConfig.enrichSaveConfig(appStore, child, shouldIncludeWorkspaceBindings);
+                LayoutConfig.enrichSaveConfig(appStore, child);
             } else if (child.type === "component" && child.id) {
                 // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
                 // since child.id is the collapsed base type (e.g. "catalog-plot")
                 const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId, shouldIncludeWorkspaceBindings);
+                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
                 }

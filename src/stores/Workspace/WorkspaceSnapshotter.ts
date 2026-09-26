@@ -289,11 +289,11 @@ export class WorkspaceSnapshotter {
         this.workspace.catalogs = catalogs;
     }
 
-    /** Stage 4: which catalog each widget is showing, named by the workspace's own catalog IDs. */
+    /** Stage 4: what each catalog table and plot widget shows, naming catalogs by the workspace's own IDs. */
     private captureViews(): void {
-        const selectedCatalogIds = this.appStore.catalogStore.widgetBindings.savedTableCatalogIds();
-        if (Object.keys(selectedCatalogIds).length > 0) {
-            this.workspace.selectedCatalogIds = selectedCatalogIds;
+        const catalogWidgets = this.appStore.catalogStore.widgetBindings.savedCatalogWidgets();
+        if (Object.keys(catalogWidgets).length > 0) {
+            this.workspace.catalogWidgets = catalogWidgets;
         }
     }
 

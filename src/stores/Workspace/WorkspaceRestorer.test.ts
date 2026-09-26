@@ -101,7 +101,7 @@ function createSession() {
                 calls.push("restoreCatalogRows");
                 return Promise.resolve({success: true, didStart: true});
             }),
-            widgetBindings: {restore: jest.fn((_selectedCatalogIds?: unknown, _catalogs?: unknown, _catalogIds?: Map<number, number>): unknown[] => [])}
+            widgetBindings: {restore: jest.fn((_catalogWidgets?: unknown, _catalogs?: unknown, _catalogIds?: Map<number, number>): unknown[] => [])}
         },
         widgetsStore: {
             catalogWidgets: new Map(),
@@ -404,9 +404,10 @@ describe("WorkspaceRestorer", () => {
     test("points the catalog widgets at the catalogs just loaded", async () => {
         const {appStore} = createSession();
 
-        await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 1}}));
+        const catalogWidgets = {"catalog-overlay-0": {type: "catalog-overlay" as const, catalogId: 1}};
+        await restore(createWorkspace({catalogs: [CATALOG], catalogWidgets}));
 
-        expect(appStore.catalogStore.widgetBindings.restore).toHaveBeenCalledWith({"catalog-overlay-0": 1}, [CATALOG], new Map([[1, 10]]));
+        expect(appStore.catalogStore.widgetBindings.restore).toHaveBeenCalledWith(catalogWidgets, [CATALOG], new Map([[1, 10]]));
     });
 
     test("reports what the catalog widgets could not be pointed at", async () => {
@@ -414,7 +415,7 @@ describe("WorkspaceRestorer", () => {
         const issue = {kind: WorkspaceItemKind.CatalogWidget, subject: "catalog-overlay-0", message: "Could not restore catalog widget catalog-overlay-0"};
         appStore.catalogStore.widgetBindings.restore.mockReturnValue([issue]);
 
-        const problems = await restore(createWorkspace({catalogs: [CATALOG], selectedCatalogIds: {"catalog-overlay-0": 7}}));
+        const problems = await restore(createWorkspace({catalogs: [CATALOG], catalogWidgets: {"catalog-overlay-0": {type: "catalog-overlay", catalogId: 7}}}));
 
         expect(problems).toContain(issue.message);
     });

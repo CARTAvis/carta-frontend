@@ -184,10 +184,19 @@ describe("workspace schema 2", () => {
                 {id: 3, source: {type: "vizier", center: {x: 12.3, y: -45.6}, system: "FK5", radius: 1, radiusUnits: "deg", maxObjects: 1000, table: "I/345/gaia2", keywords: "gaia"}}
             ],
             selectedCatalogId: 2,
-            selectedCatalogIds: {"catalog-overlay-0": 2, "catalog-overlay-1": 3}
+            catalogWidgets: {
+                "catalog-overlay-0": {type: "catalog-overlay", catalogId: 2, settingsTabs: {"2": 1}},
+                "catalog-plot-0": {type: "catalog-plot", catalogId: 3, xColumnName: "RA", yColumnName: "DEC", nBinX: 10, fittingRange: {minVal: 0, maxVal: 1}}
+            }
         });
 
         expect(validate(workspace)).toBe(true);
+    });
+
+    test("rejects a catalog widget entry that does not say what kind of widget it is", () => {
+        const workspace = createWorkspace({catalogs: [catalog], catalogWidgets: {"catalog-overlay-0": {catalogId: 1}}});
+
+        expect(validate(workspace)).toBe(false);
     });
 
     test("accepts the catalog display mode values written by the frontend", () => {

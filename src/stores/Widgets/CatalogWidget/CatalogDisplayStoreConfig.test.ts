@@ -9,9 +9,9 @@ jest.mock("services/CatalogWebGLService", () => ({
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling, WorkspaceItemKind} from "enums";
 import {type WorkspaceCatalogConfig} from "models/Workspace";
-import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore} from "stores";
+import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
 /** Column data every catalog in these tests carries, so that mapped columns resolve to a range. */
@@ -566,17 +566,17 @@ describe("CatalogDisplayStore display config", () => {
 
         // A saved layout is reused against whatever catalogs a later session has open, so it names
         // none of them: no catalog file ID, and the settings section without a catalog attached.
-        expect(widget.toLayoutSettings(false, 7)).toEqual({
+        expect(widget.toLayoutSettings(7)).toEqual({
             tableSeparatorPosition: "40%",
             headerTableColumnWidths: [150, 75, 65, 180, 230],
             settingsTabId: CatalogSettingsTabs.COLOR
         });
 
         const restored = new CatalogWidgetStore();
-        restored.applyLayoutSettings(widget.toLayoutSettings(false, 7), 7);
+        restored.applyLayoutSettings(widget.toLayoutSettings(7), 7);
         expect(restored.settingsTabFor(7)).toBe(CatalogSettingsTabs.COLOR);
         expect(restored.headerTableColumnWidths).toEqual([150, 75, 65, 180, 230]);
-        expect(restored.toLayoutSettings(false, 7)).toEqual(widget.toLayoutSettings(false, 7));
+        expect(restored.toLayoutSettings(7)).toEqual(widget.toLayoutSettings(7));
     });
 
     test("keeps header table widths out of the catalog's display config", () => {
@@ -670,16 +670,37 @@ describe("CatalogDisplayStore display config", () => {
         restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION}, 1);
 
         expect(restored.settingsTabFor(1)).toBe(CatalogSettingsTabs.ORIENTATION);
-        expect(restored.toLayoutSettings(false, 1).settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(restored.toLayoutSettings(1).settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
     });
 
-    test("names no catalog in a layout that is not a workspace's", () => {
+    test("names no catalog in its layout settings", () => {
         const widget = new CatalogWidgetStore();
         widget.setSettingsTab(7, CatalogSettingsTabs.COLOR);
 
-        const settings = widget.toLayoutSettings(false, 7);
+        const settings = widget.toLayoutSettings(7);
 
         expect(settings.catalogFileId).toBeUndefined();
-        expect(settings.settingsTabIdByWorkspaceCatalog).toBeUndefined();
+        expect(Object.keys(settings)).toEqual(["tableSeparatorPosition", "headerTableColumnWidths", "settingsTabId"]);
+    });
+
+    test("keeps the section of each catalog by the workspace's own catalog IDs", () => {
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 7, 70);
+        const widget = new CatalogWidgetStore();
+        widget.setSettingsTab(7, CatalogSettingsTabs.COLOR);
+        // A catalog this session no longer has is not one the workspace can name.
+        widget.setSettingsTab(8, CatalogSettingsTabs.ORIENTATION);
+
+        const settingsTabs = widget.workspaceSettingsTabs();
+        expect(settingsTabs).toEqual({"70": CatalogSettingsTabs.COLOR});
+
+        // Reopened, the catalog is file 3 in the new session.
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 3, 70);
+        const restored = new CatalogWidgetStore();
+        restored.applyWorkspaceSettingsTabs(settingsTabs);
+
+        expect(restored.settingsTabFor(3)).toBe(CatalogSettingsTabs.COLOR);
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
     });
 });
