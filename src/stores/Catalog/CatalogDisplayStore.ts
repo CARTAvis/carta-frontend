@@ -539,18 +539,27 @@ export class CatalogDisplayStore {
             // Choose the image overlay's coordinate columns once per catalog, whether or not a widget
             // is open for it. A catalog a Workspace is restoring waits for the axes it was saved
             // with, and is only given its own once the restore is over and none were applied.
-            // Reading the eligibility statuses subscribes this reaction to them, so a column that is
-            // still being sniffed gets another chance once a later response provides enough values.
+            // While an attempt is still to be made, reading the eligibility statuses subscribes this
+            // reaction to them, so a column that is still being sniffed gets another chance once a
+            // later response provides enough values. Once it has been made, or cannot be, nothing
+            // but the conditions for making it is watched.
             reaction(
                 () => {
                     const profileStore = this.profileStore;
                     const canAutoSelectAxes =
-                        profileStore !== undefined && this.catalogPlotType === CatalogPlotType.ImageOverlay && PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns && !AppStore.Instance.isLoadingWorkspace;
+                        profileStore !== undefined &&
+                        !this.hasAttemptedAutoSelectImageOverlayAxes &&
+                        this.catalogPlotType === CatalogPlotType.ImageOverlay &&
+                        PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns &&
+                        !AppStore.Instance.isLoadingWorkspace;
+                    if (!canAutoSelectAxes) {
+                        return undefined;
+                    }
                     const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
-                    return [canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityStatuses] as const;
+                    return [profileStore.isUpdatingDataStream, profileStore.isLoadingData, profileStore.shouldUpdateData, eligibilityStatuses];
                 },
-                ([canAutoSelectAxes]) => {
-                    if (!canAutoSelectAxes || this.hasAttemptedAutoSelectImageOverlayAxes) {
+                autoSelectState => {
+                    if (autoSelectState === undefined) {
                         return;
                     }
 
