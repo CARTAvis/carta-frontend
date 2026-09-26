@@ -299,7 +299,9 @@ export class WorkspaceSnapshotter {
 
     /** Stage 4: what each catalog table and plot widget shows, naming catalogs by the workspace's own IDs. */
     private captureViews(): void {
-        const catalogWidgets = this.appStore.catalogStore.widgetBindings.savedCatalogWidgets();
+        // Only the catalogs stage 3 saved: a widget must not name one this workspace does not carry.
+        const savedCatalogIds = new Set((this.workspace.catalogs ?? []).map(catalog => catalog.id));
+        const catalogWidgets = this.appStore.catalogStore.widgetBindings.savedCatalogWidgets(savedCatalogIds);
         if (Object.keys(catalogWidgets).length > 0) {
             this.workspace.catalogWidgets = catalogWidgets;
         }

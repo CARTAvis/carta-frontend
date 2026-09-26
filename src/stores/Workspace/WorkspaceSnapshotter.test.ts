@@ -74,7 +74,7 @@ function createSession(overrides: Record<string, any> = {}) {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
             getCatalogDisplayStore: jest.fn(() => displayStore),
-            widgetBindings: {savedCatalogWidgets: jest.fn((): Record<string, unknown> => ({}))}
+            widgetBindings: {savedCatalogWidgets: jest.fn((_savedCatalogIds: ReadonlySet<number>): Record<string, unknown> => ({}))}
         },
         widgetsStore: {catalogWidgets: new Map()},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
@@ -142,6 +142,7 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.catalogWidgets).toEqual({"widget-a": {type: "catalog-overlay", catalogId: 1}});
+        expect(appStore.catalogStore.widgetBindings.savedCatalogWidgets).toHaveBeenCalledWith(new Set(workspace.catalogs?.map(catalog => catalog.id)));
     });
 
     test("saves no catalog widgets when no widget shows a loaded catalog", () => {
@@ -173,6 +174,8 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.catalogs).toEqual([]);
         expect(issues).toContainEqual({kind: WorkspaceItemKind.Catalog, subject: "sources.vot", message: "Could not save the catalog sources.vot: the image it is overlaid on was not saved"});
+        // Nor may a widget showing it name it.
+        expect(appStore.catalogStore.widgetBindings.savedCatalogWidgets).toHaveBeenCalledWith(new Set());
     });
 
     test("reports a catalog that no longer names an image instead of saving it without one", () => {

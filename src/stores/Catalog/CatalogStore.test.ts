@@ -305,8 +305,11 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
     }
 
-    /** What a Workspace would keep for a plot. */
-    const saved = (widgetId: string) => catalogStore.widgetBindings.savedCatalogWidgets()[widgetId];
+    /** What a Workspace saving every loaded catalog would keep for a plot. */
+    const saved = (widgetId: string) => {
+        const catalogIds = Array.from(catalogStore.catalogProfileStores.keys(), fileId => WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, fileId));
+        return catalogStore.widgetBindings.savedCatalogWidgets(new Set(catalogIds.filter((id): id is number => id !== undefined)))[widgetId];
+    };
 
     beforeEach(() => {
         jest.restoreAllMocks();

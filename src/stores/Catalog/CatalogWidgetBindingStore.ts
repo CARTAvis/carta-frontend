@@ -182,13 +182,16 @@ export class CatalogWidgetBindingStore {
     }
 
     /**
-     * What each table and plot widget shows, keyed by the widget's own stable ID. A widget showing no
-     * loaded catalog names none: a Workspace describes only what was loaded (ADR-0006).
+     * What each table and plot widget shows, keyed by the widget's own stable ID. A widget showing a
+     * catalog the Workspace does not carry names none: a Workspace describes only what was loaded
+     * (ADR-0006), and a loaded catalog can still be left out of it, such as one on a generated image.
+     *
+     * @param savedCatalogIds - the Workspace IDs of the catalogs being saved.
      */
-    public savedCatalogWidgets(): Record<string, WorkspaceCatalogWidgetConfig> {
+    public savedCatalogWidgets(savedCatalogIds: ReadonlySet<number>): Record<string, WorkspaceCatalogWidgetConfig> {
         const saved: Record<string, WorkspaceCatalogWidgetConfig> = {};
         this.widgets().catalogWidgets.forEach((widgetStore, componentId) => {
-            const catalogId = this.workspaceIdOfLoaded(this.tableCatalogs.get(componentId));
+            const catalogId = this.savedIdOf(this.tableCatalogs.get(componentId), savedCatalogIds);
             const settingsTabs = widgetStore.workspaceSettingsTabs();
             const hasSettingsTabs = Object.keys(settingsTabs).length > 0;
             if (catalogId !== undefined || hasSettingsTabs) {
@@ -196,7 +199,7 @@ export class CatalogWidgetBindingStore {
             }
         });
         this.plots.forEach(state => {
-            const catalogId = this.workspaceIdOfLoaded(state.activeCatalogFileId);
+            const catalogId = this.savedIdOf(state.activeCatalogFileId, savedCatalogIds);
             const plotWidgetId = state.plotFor(state.activeCatalogFileId);
             const plotStore = plotWidgetId === undefined ? undefined : this.widgets().catalogPlotWidgets.get(plotWidgetId);
             // What a plot is drawn from means nothing without the catalog it is drawn from.
@@ -207,8 +210,9 @@ export class CatalogWidgetBindingStore {
         return saved;
     }
 
-    private workspaceIdOfLoaded(catalogFileId: number | undefined): number | undefined {
-        return catalogFileId !== undefined && this.catalogs.catalogProfileStores.has(catalogFileId) ? WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId) : undefined;
+    private savedIdOf(catalogFileId: number | undefined, savedCatalogIds: ReadonlySet<number>): number | undefined {
+        const catalogId = catalogFileId !== undefined && this.catalogs.catalogProfileStores.has(catalogFileId) ? WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId) : undefined;
+        return catalogId !== undefined && savedCatalogIds.has(catalogId) ? catalogId : undefined;
     }
 
     /** A stable ID no other table or plot widget has, starting from the one preferred. */

@@ -28,7 +28,7 @@ describe("CatalogWidgetBindingStore", () => {
         const issues = bindings.restore({"catalog-plot-0": {type: "catalog-plot", catalogId: 1}}, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect(bindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(5);
-        expect(bindings.savedCatalogWidgets()["catalog-plot-0"]?.catalogId).toBe(2);
+        expect(bindings.savedCatalogWidgets(new Set([2]))["catalog-plot-0"]?.catalogId).toBe(2);
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
@@ -36,6 +36,17 @@ describe("CatalogWidgetBindingStore", () => {
         });
         // The unavailable catalog's ID is not held back from the next catalog opened.
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
+    });
+
+    test("names no catalog the workspace is not saving, though it is still loaded", () => {
+        catalogs.catalogProfileStores.set(5, {getColumnHeader: () => ({dataType: CARTA.ColumnType.Double})} as any);
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
+        widgets.getCatalogWidgetStore("catalog-overlay-0", 5).setWidgetId("table-a");
+        bindings.register("catalog-plot-component-0", 5, widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string);
+
+        expect(Object.keys(bindings.savedCatalogWidgets(new Set([2])))).toEqual(["table-a", "catalog-plot-0"]);
+        // A catalog left out of the save, such as one on a generated image, is not named by a widget.
+        expect(bindings.savedCatalogWidgets(new Set())).toEqual({});
     });
 
     test("gives each new plot tab a stable ID no other catalog widget has", () => {
@@ -67,7 +78,7 @@ describe("CatalogWidgetBindingStore", () => {
         expect(issues).toEqual([]);
         expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 5, widgetId: restored});
         expect(widgets.catalogPlotWidgets.has(replaced)).toBe(false);
-        expect(bindings.savedCatalogWidgets()["catalog-plot-0"]?.catalogId).toBe(20);
+        expect(bindings.savedCatalogWidgets(new Set([20]))["catalog-plot-0"]?.catalogId).toBe(20);
     });
 
     test("opens a floating plot tab on the catalog, drawn from the given columns", () => {
