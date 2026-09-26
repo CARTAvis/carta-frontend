@@ -6,25 +6,15 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {type CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
-import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, type CatalogWidgetStore} from "stores/Widgets";
-import {
-    CatalogAxisEligibility,
-    type CatalogAxisEligibilityResult,
-    clamp,
-    COORDINATE_SNIFF_SCAN_LIMIT,
-    getAutoSelectedCatalogAxisColumn,
-    getCatalogDataTypeDisplayName,
-    type ProcessedColumnData,
-    rankCatalogAxisColumns,
-    toFixed
-} from "utilities";
+import {clamp, getCatalogDataTypeDisplayName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -74,10 +64,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
         return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
-    }
-
-    @computed get shouldAutoSelectImageOverlayColumns(): boolean {
-        return PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -177,36 +163,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
             })
         );
-
-        this.disposers.push(
-            // Auto-select coordinate columns by common prefixes when axes are None (attempt at most once per catalog)
-            reaction(
-                () => {
-                    const catalogDisplayStore = this.displayStore;
-                    const profileStore = this.profileStore;
-                    const canAutoSelectAxes = this.catalogFileId !== undefined && profileStore !== undefined && catalogDisplayStore?.catalogPlotType === CatalogPlotType.ImageOverlay && this.shouldAutoSelectImageOverlayColumns;
-                    // Reading the eligibility statuses subscribes this reaction to them, so a
-                    // column that is still being sniffed gets another chance once a later response
-                    // provides enough values.
-                    const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
-                    return [catalogDisplayStore, canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityStatuses] as const;
-                },
-                ([catalogDisplayStore, canAutoSelectAxes]) => {
-                    if (!catalogDisplayStore || !canAutoSelectAxes || catalogDisplayStore.hasAttemptedAutoSelectImageOverlayAxes) {
-                        return;
-                    }
-
-                    // Keep the attempt open while the file still has rows to stream and the
-                    // visible coordinate candidates are unresolved. This prevents a noisy first
-                    // chunk from permanently suppressing auto-selection for a later valid chunk.
-                    const isWaitingForStreamedAxes = this.autoSelectAxes();
-                    if (!isWaitingForStreamedAxes) {
-                        catalogDisplayStore.setAutoSelectImageOverlayAxesAttempted(true);
-                    }
-                },
-                {fireImmediately: true}
-            )
-        );
     }
 
     componentWillUnmount() {
@@ -251,37 +207,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        const val = changeEvent.target.checked;
-        const header = profileStore?.catalogControlHeader.get(columnName);
-        profileStore?.setHeaderDisplay(val, columnName);
-
-        if (this.shouldAutoSelectImageOverlayColumns && val === true && (catalogDisplayStore?.xAxis === CatalogOverlay.NONE || catalogDisplayStore?.yAxis === CatalogOverlay.NONE)) {
-            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
-        }
-
-        const shouldUpdateFilter = (val === true || (header?.filter !== "" && val === false)) && profileStore?.isFileBasedCatalog;
-
-        if (shouldUpdateFilter) {
-            profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
-            profileStore?.setIsUpdateColumn(true);
-            this.handleFilterRequest();
-        }
-
-        const isXAxisRemoved = catalogDisplayStore?.xAxis === columnName;
-        const isYAxisRemoved = catalogDisplayStore?.yAxis === columnName;
-
-        if (isXAxisRemoved) {
-            catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
-        }
-        if (isYAxisRemoved) {
-            catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
-        }
-
-        if (this.shouldAutoSelectImageOverlayColumns && (isXAxisRemoved || isYAxisRemoved)) {
-            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), isXAxisRemoved, isYAxisRemoved);
-        }
+        this.displayStore?.setColumnDisplayed(columnName, changeEvent.target.checked);
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -321,232 +247,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    /**
-     * Eligibility is per column, not per axis: whether a column can be read as a number has
-     * nothing to do with which slot it lands in. Only the ordering below is axis-specific.
-     */
-    @computed get axisColumnEligibility(): Map<string, CatalogAxisEligibilityResult> {
-        const eligibility = new Map<string, CatalogAxisEligibilityResult>();
-        const profileStore = this.profileStore;
-        if (!profileStore) {
-            return eligibility;
-        }
-
-        profileStore.catalogControlHeader.forEach((header, columnName) => {
-            if (header?.dataIndex === undefined || !header.display) {
-                return;
-            }
-            eligibility.set(columnName, profileStore.getCoordinateEligibility(columnName));
-        });
-        return eligibility;
-    }
-
-    @computed get xAxisOption(): string[] {
-        return this.getAxisOptions(this.xAxisLabel);
-    }
-
-    @computed get yAxisOption(): string[] {
-        return this.getAxisOptions(this.yAxisLabel);
-    }
-
-    private getAxisOptions(axis: CatalogOverlay): string[] {
-        const profileStore = this.profileStore;
-        if (!profileStore) {
-            return [CatalogOverlay.NONE];
-        }
-
-        // Scatter plots and histograms consume raw numeric arrays, so only a column that is
-        // already numeric belongs in their menus.
-        if (this.displayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return [CatalogOverlay.NONE, ...profileStore.displayedNumericColumnNames];
-        }
-
-        // Numeric columns are selectable, and so are string columns whose values parse as a
-        // coordinate; ranking pushes the unlikely candidates down the list rather than hiding
-        // them, so a mislabelled catalog is still usable.
-        const selectableColumns: string[] = [];
-        this.axisColumnEligibility.forEach((result, columnName) => {
-            if (result.status !== CatalogAxisEligibility.Ineligible) {
-                selectableColumns.push(columnName);
-            }
-        });
-
-        return [CatalogOverlay.NONE, ...rankCatalogAxisColumns(axis, selectableColumns, profileStore.catalogCoordinateSystem.system)];
-    }
-
-    /**
-     * @param shouldIncludeUnknown - also offer columns whose values have not been fetched, so their
-     * format is still unknown. Only a last resort: the name is all there is to go on, and a wrong
-     * guess costs a round trip. It degrades safely, because a column that turns out not to be a
-     * coordinate yields no data and simply leaves the overlay unplotted.
-     */
-    private getAutoSelectableAxisOptions(shouldIncludeHidden = false, shouldIncludeUnknown = false): string[] {
-        const profileStore = this.profileStore;
-        if (!profileStore) {
-            return [];
-        }
-
-        const axisOptions: string[] = [];
-        profileStore.catalogControlHeader.forEach((header, columnName) => {
-            if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
-                return;
-            }
-
-            const status = profileStore.getCoordinateEligibility(columnName).status;
-            if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
-                axisOptions.push(columnName);
-            }
-        });
-        return axisOptions;
-    }
-
-    private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
-        const profileStore = this.profileStore;
-        if (!profileStore) {
-            return false;
-        }
-
-        let didEnableColumns = false;
-        for (const columnName of columnNames) {
-            if (!columnName) {
-                continue;
-            }
-            const header = profileStore.catalogControlHeader.get(columnName);
-            if (header && !header.display) {
-                profileStore.setHeaderDisplay(true, columnName);
-                didEnableColumns = true;
-            }
-        }
-        return didEnableColumns;
-    }
-
-    private setAutoSelectedAxes(axisOptions: string[], shouldSelectXAxis = true, shouldSelectYAxis = true, shouldEnableHiddenColumns = false): {didSelectX: boolean; didSelectY: boolean; enabledHiddenColumns: boolean} {
-        const catalogDisplayStore = this.displayStore;
-        if (catalogDisplayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
-        }
-
-        const system = this.profileStore?.catalogCoordinateSystem.system;
-        const xColumnName = shouldSelectXAxis && catalogDisplayStore.xAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.xAxisLabel, axisOptions, system) : undefined;
-        const yColumnName = shouldSelectYAxis && catalogDisplayStore.yAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.yAxisLabel, axisOptions, system) : undefined;
-
-        let areHiddenColumnsEnabled = false;
-        if (shouldEnableHiddenColumns) {
-            areHiddenColumnsEnabled = this.enableAxisColumns([xColumnName, yColumnName]);
-        }
-
-        if (xColumnName) {
-            catalogDisplayStore.setxAxis(xColumnName);
-        }
-        if (yColumnName) {
-            catalogDisplayStore.setyAxis(yColumnName);
-        }
-
-        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
-    }
-
-    /** Whether a streamed file may still settle the format of a name-matched coordinate column. */
-    private hasPendingStreamedAxisEligibility(): boolean {
-        const profileStore = this.profileStore;
-        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
-            return false;
-        }
-
-        let loadedRowCount = 0;
-        profileStore.catalogData.forEach(columnData => {
-            loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
-        });
-        if (loadedRowCount >= COORDINATE_SNIFF_SCAN_LIMIT) {
-            return false;
-        }
-
-        for (const [columnName, result] of this.axisColumnEligibility) {
-            if (result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private isCoordinateNameCandidate(columnName: string): boolean {
-        const system = this.profileStore?.catalogCoordinateSystem.system;
-        return Boolean(getAutoSelectedCatalogAxisColumn(this.xAxisLabel, [columnName], system) || getAutoSelectedCatalogAxisColumn(this.yAxisLabel, [columnName], system));
-    }
-
-    /** Returns true when auto-selection should be retried after another streamed response. */
-    private autoSelectAxes(shouldForceReset = false): boolean {
-        const catalogDisplayStore = this.displayStore;
-        const profileStore = this.profileStore;
-        if (!this.shouldAutoSelectImageOverlayColumns || catalogDisplayStore?.catalogPlotType !== CatalogPlotType.ImageOverlay) {
-            return false;
-        }
-
-        if (shouldForceReset) {
-            catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
-            catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
-        }
-
-        // Widening passes: the columns already on screen, then the hidden ones whose units or
-        // values identify them, and only then the hidden ones nothing but their name suggests.
-        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
-        if (selected.didSelectX && selected.didSelectY) {
-            return false;
-        }
-
-        // Do not spend the one-shot attempt on a partial answer. In particular, a first chunk
-        // containing one coordinate and one placeholder is Unknown, not a final rejection.
-        if (this.hasPendingStreamedAxisEligibility()) {
-            // The preview is only the first chunk. Keep fetching the displayed candidates so a
-            // later response can settle a unitless string format and wake this reaction again.
-            this.updateByInfiniteScroll();
-            return true;
-        }
-
-        const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
-        let didEnableHiddenColumns = fallback.enabledHiddenColumns;
-
-        const isXAxisUnfilled = !selected.didSelectX && !fallback.didSelectX;
-        const isYAxisUnfilled = !selected.didSelectY && !fallback.didSelectY;
-        if (isXAxisUnfilled || isYAxisUnfilled) {
-            const unknownFallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true, true), isXAxisUnfilled, isYAxisUnfilled, true);
-            didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
-        }
-
-        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
-            profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-            profileStore.setIsUpdateColumn(true);
-            this.handleFilterRequest();
-        }
-        return false;
-    }
-
-    @action private handleCatalogSystemChange(system: CatalogSystemType) {
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.displayStore;
-        if (!profileStore || profileStore.catalogCoordinateSystem.system === system) {
-            return;
-        }
-
-        const previousSystem = profileStore.activedSystem;
-        profileStore.setCatalogCoordinateSystem(system);
-        if (this.shouldAutoSelectImageOverlayColumns) {
-            catalogDisplayStore?.setAutoSelectImageOverlayAxesAttempted(false);
-            const isWaitingForStreamedAxes = this.autoSelectAxes(true);
-            if (!isWaitingForStreamedAxes) {
-                catalogDisplayStore?.setAutoSelectImageOverlayAxesAttempted(true);
-            }
-            return;
-        }
-
-        const shouldClearAxes = previousSystem?.x !== profileStore.activedSystem?.x || previousSystem?.y !== profileStore.activedSystem?.y;
-        if (catalogDisplayStore?.catalogPlotType === CatalogPlotType.ImageOverlay && shouldClearAxes) {
-            catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
-            catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
-        }
+    private handleCatalogSystemChange(system: CatalogSystemType) {
+        this.displayStore?.changeCoordinateSystem(system);
     }
 
     private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
-        const reason = this.axisColumnEligibility.get(catalogName)?.reason;
+        const reason = this.displayStore?.axisColumnEligibility.get(catalogName)?.reason;
         return <MenuItem key={catalogName} text={catalogName} label={reason ? "?" : undefined} title={reason} onClick={itemProps.handleClick} />;
     };
 
@@ -554,30 +260,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const fileSearcher = new FuzzySearch([columnName]);
         return fileSearcher.search(query).length > 0;
     };
-
-    @computed get xAxisLabel(): CatalogOverlay {
-        const catalogDisplayStore = this.displayStore;
-        const plotType = catalogDisplayStore?.catalogPlotType;
-        switch (plotType) {
-            case CatalogPlotType.ImageOverlay:
-                const profileStore = this.profileStore;
-                return profileStore?.activedSystem?.x ?? CatalogOverlay.X;
-            default:
-                return CatalogOverlay.X;
-        }
-    }
-
-    @computed get yAxisLabel(): CatalogOverlay {
-        const catalogDisplayStore = this.displayStore;
-        const plotType = catalogDisplayStore?.catalogPlotType;
-        switch (plotType) {
-            case CatalogPlotType.ImageOverlay:
-                const profileStore = this.profileStore;
-                return profileStore?.activedSystem?.y ?? CatalogOverlay.Y;
-            default:
-                return CatalogOverlay.Y;
-        }
-    }
 
     private renderButtonColumns(columnName: HeaderTableColumnName, headerNames: Array<string>) {
         switch (columnName) {
@@ -730,27 +412,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private handlePlotTypeChange = (plotType: CatalogPlotType) => {
-        const catalogDisplayStore = this.displayStore;
-        if (!catalogDisplayStore) {
-            return;
-        }
-
-        const profileStore = this.profileStore;
-        const didLeaveImageOverlay = plotType !== CatalogPlotType.ImageOverlay && catalogDisplayStore.catalogPlotType === CatalogPlotType.ImageOverlay;
-        catalogDisplayStore.setCatalogPlotType(plotType);
-        if (!profileStore || !didLeaveImageOverlay) {
-            return;
-        }
-
-        // Image overlays accept coordinate strings, while scatter plots and histograms consume
-        // raw numeric arrays. Do not leave a string coordinate selected when leaving the overlay:
-        // the plot button would otherwise stay enabled and the new plot would be empty.
-        if (!profileStore.isNumericColumn(catalogDisplayStore.xAxis)) {
-            catalogDisplayStore.setxAxis(CatalogOverlay.NONE);
-        }
-        if (!profileStore.isNumericColumn(catalogDisplayStore.yAxis)) {
-            catalogDisplayStore.setyAxis(CatalogOverlay.NONE);
-        }
+        this.displayStore?.changePlotType(plotType);
     };
 
     // source selected in table
@@ -1067,10 +729,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     <Button className="bp3" text={catalogDisplayStore.catalogPlotType} endIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                                 </Select>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLabel} disabled={isOverlayDisabled}>
+                                <FormGroup className="catalog-axis" inline={true} label={catalogDisplayStore.xAxisLabel} disabled={isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.xAxisOption}
+                                        items={catalogDisplayStore.xAxisOptions}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogDisplayStore.setxAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}
@@ -1085,10 +747,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     </Select>
                                 </FormGroup>
 
-                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
+                                <FormGroup className="catalog-axis" inline={true} label={catalogDisplayStore.yAxisLabel} disabled={isHistogram || isOverlayDisabled}>
                                     <Select
                                         className="catalog-axis-select"
-                                        items={this.yAxisOption}
+                                        items={catalogDisplayStore.yAxisOptions}
                                         activeItem={null}
                                         onItemSelect={columnName => catalogDisplayStore.setyAxis(columnName)}
                                         itemRenderer={this.renderColumnNamePopOver}

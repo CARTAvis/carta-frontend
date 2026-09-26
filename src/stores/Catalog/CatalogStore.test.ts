@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {autorun} from "mobx";
+import {autorun, runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
 import {CatalogWebGLService} from "services";
@@ -707,11 +707,14 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
         sendCatalogFilter = jest.spyOn(AppStore.Instance.backendService, "setCatalogFilterRequest").mockReturnValue(1);
+        // Restore runs while a workspace is loading, which keeps axis auto-selection out of its requests.
+        runInAction(() => (AppStore.Instance.isLoadingWorkspace = true));
     });
 
     afterEach(() => {
         catalogStore.resetRequests("test cleanup");
         AppStore.Instance.setActiveImage(null);
+        runInAction(() => (AppStore.Instance.isLoadingWorkspace = false));
     });
 
     test("does nothing for a catalog that is not loaded", async () => {

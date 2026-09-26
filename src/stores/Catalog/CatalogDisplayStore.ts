@@ -14,20 +14,25 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     CatalogTextureType,
+    CatalogUpdateMode,
     ColorMap,
     FrameScaling
 } from "enums";
 import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
 import {CatalogWebGLService} from "services";
-import {type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore} from "stores";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
 import {
     CatalogAxisEligibility,
+    type CatalogAxisEligibilityResult,
     clamp,
+    COORDINATE_SNIFF_SCAN_LIMIT,
     createScalingParameters,
+    getAutoSelectedCatalogAxisColumn,
     getScalingParameter,
     isCatalogNumericDataType,
     isSupportedFrameScaling,
     minMaxArray,
+    rankCatalogAxisColumns,
     sanitizeScalingParameter,
     scalingParametersFromConfig,
     scalingParametersToConfig,
@@ -529,6 +534,41 @@ export class CatalogDisplayStore {
                 }
             )
         );
+
+        this.disposers.push(
+            // Choose the image overlay's coordinate columns once per catalog, whether or not a widget
+            // is open for it. A catalog a Workspace is restoring waits for the axes it was saved
+            // with, and is only given its own once the restore is over and none were applied.
+            // Reading the eligibility statuses subscribes this reaction to them, so a column that is
+            // still being sniffed gets another chance once a later response provides enough values.
+            reaction(
+                () => {
+                    const profileStore = this.profileStore;
+                    const canAutoSelectAxes =
+                        profileStore !== undefined && this.catalogPlotType === CatalogPlotType.ImageOverlay && PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns && !AppStore.Instance.isLoadingWorkspace;
+                    const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
+                    return [canAutoSelectAxes, profileStore?.isUpdatingDataStream, profileStore?.isLoadingData, profileStore?.shouldUpdateData, eligibilityStatuses] as const;
+                },
+                ([canAutoSelectAxes]) => {
+                    if (!canAutoSelectAxes || this.hasAttemptedAutoSelectImageOverlayAxes) {
+                        return;
+                    }
+
+                    // Keep the attempt open while the file still has rows to stream and the
+                    // visible coordinate candidates are unresolved. This prevents a noisy first
+                    // chunk from permanently suppressing auto-selection for a later valid chunk.
+                    const isWaitingForStreamedAxes = this.autoSelectAxes();
+                    if (!isWaitingForStreamedAxes) {
+                        this.setAutoSelectImageOverlayAxesAttempted(true);
+                    }
+                },
+                {fireImmediately: true}
+            )
+        );
+    }
+
+    private get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     public dispose = () => {
@@ -1193,6 +1233,295 @@ export class CatalogDisplayStore {
         this.hasAttemptedAutoSelectImageOverlayAxes = hasAttemptedAutoSelectImageOverlayAxes;
     }
 
+    /** Show or hide a column, keeping the image overlay's axes on displayed columns. */
+    @action setColumnDisplayed(columnName: string, isDisplayed: boolean) {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return;
+        }
+        const header = profileStore.catalogControlHeader.get(columnName);
+        profileStore.setHeaderDisplay(isDisplayed, columnName);
+
+        const shouldAutoSelect = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+        if (shouldAutoSelect && isDisplayed && (this.xAxis === CatalogOverlay.NONE || this.yAxis === CatalogOverlay.NONE)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        }
+
+        if ((isDisplayed || header?.filter !== "") && profileStore.isFileBasedCatalog) {
+            this.requestColumnUpdate();
+        }
+
+        const isXAxisRemoved = this.xAxis === columnName;
+        const isYAxisRemoved = this.yAxis === columnName;
+        if (isXAxisRemoved) {
+            this.setxAxis(CatalogOverlay.NONE);
+        }
+        if (isYAxisRemoved) {
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+        if (shouldAutoSelect && (isXAxisRemoved || isYAxisRemoved)) {
+            this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(), isXAxisRemoved, isYAxisRemoved);
+        }
+    }
+
+    /** Read the catalog's coordinates in another system, choosing the overlay's axes for it again. */
+    @action changeCoordinateSystem(system: CatalogSystemType) {
+        const profileStore = this.profileStore;
+        if (!profileStore || profileStore.catalogCoordinateSystem.system === system) {
+            return;
+        }
+
+        const previousSystem = profileStore.activedSystem;
+        profileStore.setCatalogCoordinateSystem(system);
+        if (PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns) {
+            this.setAutoSelectImageOverlayAxesAttempted(false);
+            const isWaitingForStreamedAxes = this.autoSelectAxes(true);
+            if (!isWaitingForStreamedAxes) {
+                this.setAutoSelectImageOverlayAxesAttempted(true);
+            }
+            return;
+        }
+
+        const shouldClearAxes = previousSystem?.x !== profileStore.activedSystem?.x || previousSystem?.y !== profileStore.activedSystem?.y;
+        if (this.catalogPlotType === CatalogPlotType.ImageOverlay && shouldClearAxes) {
+            this.setxAxis(CatalogOverlay.NONE);
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+    }
+
+    /** Switch what the axes are chosen for, dropping axes the new plot type cannot draw. */
+    @action changePlotType(plotType: CatalogPlotType) {
+        const didLeaveImageOverlay = plotType !== CatalogPlotType.ImageOverlay && this.catalogPlotType === CatalogPlotType.ImageOverlay;
+        this.setCatalogPlotType(plotType);
+        const profileStore = this.profileStore;
+        if (!profileStore || !didLeaveImageOverlay) {
+            return;
+        }
+
+        // Image overlays accept coordinate strings, while scatter plots and histograms consume
+        // raw numeric arrays. Do not leave a string coordinate selected when leaving the overlay:
+        // the plot button would otherwise stay enabled and the new plot would be empty.
+        if (!profileStore.isNumericColumn(this.xAxis)) {
+            this.setxAxis(CatalogOverlay.NONE);
+        }
+        if (!profileStore.isNumericColumn(this.yAxis)) {
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+    }
+
+    /** What the x axis stands for: a coordinate of the catalog's system on an image overlay. */
+    @computed get xAxisLabel(): CatalogOverlay {
+        return this.catalogPlotType === CatalogPlotType.ImageOverlay ? (this.profileStore?.activedSystem?.x ?? CatalogOverlay.X) : CatalogOverlay.X;
+    }
+
+    @computed get yAxisLabel(): CatalogOverlay {
+        return this.catalogPlotType === CatalogPlotType.ImageOverlay ? (this.profileStore?.activedSystem?.y ?? CatalogOverlay.Y) : CatalogOverlay.Y;
+    }
+
+    /**
+     * Eligibility is per column, not per axis: whether a column can be read as a number has
+     * nothing to do with which slot it lands in. Only the ordering of the axis options is
+     * axis-specific.
+     */
+    @computed get axisColumnEligibility(): Map<string, CatalogAxisEligibilityResult> {
+        const eligibility = new Map<string, CatalogAxisEligibilityResult>();
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return eligibility;
+        }
+
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined || !header.display) {
+                return;
+            }
+            eligibility.set(columnName, profileStore.getCoordinateEligibility(columnName));
+        });
+        return eligibility;
+    }
+
+    @computed get xAxisOptions(): string[] {
+        return this.getAxisOptions(this.xAxisLabel);
+    }
+
+    @computed get yAxisOptions(): string[] {
+        return this.getAxisOptions(this.yAxisLabel);
+    }
+
+    private getAxisOptions(axis: CatalogOverlay): string[] {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return [CatalogOverlay.NONE];
+        }
+
+        // Scatter plots and histograms consume raw numeric arrays, so only a column that is
+        // already numeric belongs in their menus.
+        if (this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return [CatalogOverlay.NONE, ...profileStore.displayedNumericColumnNames];
+        }
+
+        // Numeric columns are selectable, and so are string columns whose values parse as a
+        // coordinate; ranking pushes the unlikely candidates down the list rather than hiding
+        // them, so a mislabelled catalog is still usable.
+        const selectableColumns: string[] = [];
+        this.axisColumnEligibility.forEach((result, columnName) => {
+            if (result.status !== CatalogAxisEligibility.Ineligible) {
+                selectableColumns.push(columnName);
+            }
+        });
+
+        return [CatalogOverlay.NONE, ...rankCatalogAxisColumns(axis, selectableColumns, profileStore.catalogCoordinateSystem.system)];
+    }
+
+    /**
+     * @param shouldIncludeUnknown - also offer columns whose values have not been fetched, so their
+     * format is still unknown. Only a last resort: the name is all there is to go on, and a wrong
+     * guess costs a round trip. It degrades safely, because a column that turns out not to be a
+     * coordinate yields no data and simply leaves the overlay unplotted.
+     */
+    private getAutoSelectableAxisOptions(shouldIncludeHidden = false, shouldIncludeUnknown = false): string[] {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return [];
+        }
+
+        const axisOptions: string[] = [];
+        profileStore.catalogControlHeader.forEach((header, columnName) => {
+            if (header?.dataIndex === undefined || (!shouldIncludeHidden && !header.display)) {
+                return;
+            }
+
+            const status = profileStore.getCoordinateEligibility(columnName).status;
+            if (status === CatalogAxisEligibility.Eligible || (shouldIncludeUnknown && status === CatalogAxisEligibility.Unknown)) {
+                axisOptions.push(columnName);
+            }
+        });
+        return axisOptions;
+    }
+
+    private enableAxisColumns(columnNames: Array<string | undefined>): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore) {
+            return false;
+        }
+
+        let didEnableColumns = false;
+        for (const columnName of columnNames) {
+            if (!columnName) {
+                continue;
+            }
+            const header = profileStore.catalogControlHeader.get(columnName);
+            if (header && !header.display) {
+                profileStore.setHeaderDisplay(true, columnName);
+                didEnableColumns = true;
+            }
+        }
+        return didEnableColumns;
+    }
+
+    private setAutoSelectedAxes(axisOptions: string[], shouldSelectXAxis = true, shouldSelectYAxis = true, shouldEnableHiddenColumns = false): {didSelectX: boolean; didSelectY: boolean; enabledHiddenColumns: boolean} {
+        if (this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return {didSelectX: false, didSelectY: false, enabledHiddenColumns: false};
+        }
+
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        const xColumnName = shouldSelectXAxis && this.xAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.xAxisLabel, axisOptions, system) : undefined;
+        const yColumnName = shouldSelectYAxis && this.yAxis === CatalogOverlay.NONE ? getAutoSelectedCatalogAxisColumn(this.yAxisLabel, axisOptions, system) : undefined;
+
+        let areHiddenColumnsEnabled = false;
+        if (shouldEnableHiddenColumns) {
+            areHiddenColumnsEnabled = this.enableAxisColumns([xColumnName, yColumnName]);
+        }
+
+        if (xColumnName) {
+            this.setxAxis(xColumnName);
+        }
+        if (yColumnName) {
+            this.setyAxis(yColumnName);
+        }
+
+        return {didSelectX: Boolean(xColumnName), didSelectY: Boolean(yColumnName), enabledHiddenColumns: areHiddenColumnsEnabled};
+    }
+
+    /** Whether a streamed file may still settle the format of a name-matched coordinate column. */
+    private hasPendingStreamedAxisEligibility(): boolean {
+        const profileStore = this.profileStore;
+        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
+            return false;
+        }
+
+        let loadedRowCount = 0;
+        profileStore.catalogData.forEach(columnData => {
+            loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
+        });
+        if (loadedRowCount >= COORDINATE_SNIFF_SCAN_LIMIT) {
+            return false;
+        }
+
+        for (const [columnName, result] of this.axisColumnEligibility) {
+            if (result.status === CatalogAxisEligibility.Unknown && this.isCoordinateNameCandidate(columnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private isCoordinateNameCandidate(columnName: string): boolean {
+        const system = this.profileStore?.catalogCoordinateSystem.system;
+        return Boolean(getAutoSelectedCatalogAxisColumn(this.xAxisLabel, [columnName], system) || getAutoSelectedCatalogAxisColumn(this.yAxisLabel, [columnName], system));
+    }
+
+    /** Returns true when auto-selection should be retried after another streamed response. */
+    @action private autoSelectAxes(shouldForceReset = false): boolean {
+        const profileStore = this.profileStore;
+        if (!PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns || this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+            return false;
+        }
+
+        if (shouldForceReset) {
+            this.setxAxis(CatalogOverlay.NONE);
+            this.setyAxis(CatalogOverlay.NONE);
+        }
+
+        // Widening passes: the columns already on screen, then the hidden ones whose units or
+        // values identify them, and only then the hidden ones nothing but their name suggests.
+        const selected = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
+        if (selected.didSelectX && selected.didSelectY) {
+            return false;
+        }
+
+        // Do not spend the one-shot attempt on a partial answer. In particular, a first chunk
+        // containing one coordinate and one placeholder is Unknown, not a final rejection.
+        if (this.hasPendingStreamedAxisEligibility()) {
+            // The preview is only the first chunk. Keep fetching the displayed candidates so a
+            // later response can settle a unitless string format and wake the reaction again.
+            CatalogStore.Instance.requestMoreRows(this.catalogFileId);
+            return true;
+        }
+
+        const fallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true), !selected.didSelectX, !selected.didSelectY, true);
+        let didEnableHiddenColumns = fallback.enabledHiddenColumns;
+
+        const isXAxisUnfilled = !selected.didSelectX && !fallback.didSelectX;
+        const isYAxisUnfilled = !selected.didSelectY && !fallback.didSelectY;
+        if (isXAxisUnfilled || isYAxisUnfilled) {
+            const unknownFallback = this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions(true, true), isXAxisUnfilled, isYAxisUnfilled, true);
+            didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
+        }
+
+        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
+            this.requestColumnUpdate();
+        }
+        return false;
+    }
+
+    /** Fetch the columns just displayed, keeping the rows already in the table. */
+    private requestColumnUpdate() {
+        const profileStore = this.profileStore;
+        profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
+        profileStore?.setIsUpdateColumn(true);
+        CatalogStore.Instance.requestFilteredRows(this.catalogFileId);
+    }
+
     @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
         this.hasPlottedImageOverlay = true;
         this.plottedImageOverlayXAxis = xColumnName;
@@ -1569,6 +1898,10 @@ export class CatalogDisplayStore {
         this.isSizeMinorColumnMinLocked = sizeMinorAxis.columnMinLocked;
         this.isSizeMinorColumnMaxLocked = sizeMinorAxis.columnMaxLocked;
         this.propagateLockedSizeBounds();
+
+        // The axes are what the Workspace was saved with, None included; choosing them again would
+        // replace them.
+        this.setAutoSelectImageOverlayAxesAttempted(true);
 
         return {success: true, errors: []};
     };
