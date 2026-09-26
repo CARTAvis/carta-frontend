@@ -1,9 +1,9 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
-import type {CatalogPlotLayoutSettings} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
+import type {CatalogPlotLayoutSettings, CatalogPlotWidgetStoreProps} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
 import type {WidgetsStore} from "stores/Widgets/WidgetsStore";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {isCatalogNumericDataType} from "utilities";
@@ -73,7 +73,7 @@ export class CatalogWidgetBindingStore {
         }
         const state = this.plots.get(componentId);
         if (state) {
-            state.setActiveCatalogFileId(catalogFileId);
+            this.showOnPlot(componentId, state, catalogFileId);
             return true;
         }
         if (!this.widgets().catalogWidgets.has(componentId)) {
@@ -134,9 +134,9 @@ export class CatalogWidgetBindingStore {
                 this.tableCatalogs.set(id, catalogFileIds[0]);
             }
         });
-        this.plots.forEach(state => {
+        this.plots.forEach((state, componentId) => {
             if (state.activeCatalogFileId === undefined || !onImage.has(state.activeCatalogFileId)) {
-                state.setActiveCatalogFileId(catalogFileIds[0]);
+                this.showOnPlot(componentId, state, catalogFileIds[0]);
             }
         });
     };
@@ -152,14 +152,14 @@ export class CatalogWidgetBindingStore {
                 this.initTable(id, this.fallbackCatalog(imageFileId, catalogFileId));
             }
         });
-        this.plots.forEach(state => {
+        this.plots.forEach((state, componentId) => {
             const widgetId = state.plotWidgetIds.get(catalogFileId);
             if (widgetId) {
                 this.deletePlot(widgetId);
             }
             state.plotWidgetIds.delete(catalogFileId);
             if (state.activeCatalogFileId === catalogFileId) {
-                state.setActiveCatalogFileId(this.fallbackCatalog(imageFileId, catalogFileId, state));
+                this.showOnPlot(componentId, state, this.fallbackCatalog(imageFileId, catalogFileId, state));
             }
         });
     };
@@ -272,6 +272,33 @@ export class CatalogWidgetBindingStore {
             this.validateColumns(catalogFileId);
         }
     };
+
+    /** Open a floating plot tab on a catalog, drawn from the given columns. */
+    @action openPlot = (catalogFileId: number, props: CatalogPlotWidgetStoreProps): void => {
+        const {widgetStoreId, widgetComponentId} = this.widgets().createFloatingCatalogPlotWidget(props);
+        if (widgetStoreId !== null) {
+            this.register(widgetComponentId, catalogFileId, widgetStoreId);
+        }
+    };
+
+    /**
+     * Point a plot tab at a catalog, giving it a plot of its own type for that catalog if it has
+     * none yet, so that a tab showing a catalog always has a plot to show.
+     */
+    @action private showOnPlot(componentId: string, state: CatalogPlotState, catalogFileId: number | undefined) {
+        state.setActiveCatalogFileId(catalogFileId);
+        if (state.plotFor(catalogFileId) !== undefined) {
+            return;
+        }
+        const plotType = Array.from(state.plotWidgetIds.values(), widgetId => this.widgets().catalogPlotWidgets.get(widgetId)?.plotType).find(type => type !== undefined);
+        if (plotType === undefined) {
+            return;
+        }
+        const widgetId = this.widgets().addCatalogPlotWidget({xColumnName: CatalogOverlay.NONE, yColumnName: plotType === CatalogPlotType.Histogram ? undefined : CatalogOverlay.NONE, plotType});
+        if (widgetId !== null) {
+            this.register(componentId, catalogFileId, widgetId);
+        }
+    }
 
     /** Rebind a saved plot after its catalog has acquired a new session file ID. */
     @action private rebind = (widgetId: string, catalogFileId: number): boolean => {

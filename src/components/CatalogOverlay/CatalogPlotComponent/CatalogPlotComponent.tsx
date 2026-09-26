@@ -13,7 +13,7 @@ import type * as Plotly from "plotly.js";
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {CatalogPlotType} from "enums";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type DragMode, type XBorder} from "stores/Widgets";
+import {type Border, type CatalogPlotWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
@@ -163,16 +163,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
-        const displayed = CatalogStore.Instance.widgetBindings.displayedForComponent(this.componentId);
-        if (!displayed) {
-            return undefined;
-        }
-        let widgetStoreId = displayed.widgetId;
-        if (!widgetStoreId) {
-            widgetStoreId = this.addNewWidgetStore();
-        }
-        const widgetStore = widgetStoreId !== undefined ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId) : undefined;
-        return widgetStore;
+        const widgetStoreId = CatalogStore.Instance.widgetBindings.displayedForComponent(this.componentId)?.widgetId;
+        return widgetStoreId !== undefined ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId) : undefined;
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -190,10 +182,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // restored holding the ID of a catalog that was unavailable.
         catalogStore.widgetBindings.show(this.componentId, fileId);
         const plotWidgetStoreId = catalogStore.widgetBindings.displayedForComponent(this.componentId)?.widgetId;
-        if (!catalogStore.widgetBindings.displayedForComponent(this.componentId)) {
-            this.addNewWidgetStore();
-            return;
-        }
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(fileId);
@@ -228,40 +216,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 default:
                     break;
             }
-        } else {
-            this.addNewWidgetStore();
-        }
-    };
-
-    private addNewWidgetStore = (): string | undefined => {
-        const appStore = AppStore.Instance;
-        const catalogStore = CatalogStore.Instance;
-        switch (this.plotType) {
-            case CatalogPlotType.D2Scatter:
-                const scatterProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: CatalogPlotComponent.emptyColumn,
-                    yColumnName: CatalogPlotComponent.emptyColumn,
-                    plotType: this.plotType
-                };
-                const scatterPlotId = appStore.widgetsStore.addCatalogPlotWidget(scatterProps);
-                if (scatterPlotId !== null) {
-                    catalogStore.widgetBindings.register(this.componentId, this.catalogFileId, scatterPlotId);
-                    return scatterPlotId;
-                }
-                return undefined;
-            case CatalogPlotType.Histogram:
-                const historgramProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: CatalogPlotComponent.emptyColumn,
-                    plotType: this.plotType
-                };
-                const histogramPlotId = appStore.widgetsStore.addCatalogPlotWidget(historgramProps);
-                if (histogramPlotId !== null) {
-                    catalogStore.widgetBindings.register(this.componentId, this.catalogFileId, histogramPlotId);
-                    return histogramPlotId;
-                }
-                return undefined;
-            default:
-                return undefined;
         }
     };
 

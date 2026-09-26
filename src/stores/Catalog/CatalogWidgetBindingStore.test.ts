@@ -70,6 +70,33 @@ describe("CatalogWidgetBindingStore", () => {
         expect(bindings.savedCatalogWidgets()["catalog-plot-0"]?.catalogId).toBe(20);
     });
 
+    test("opens a floating plot tab on the catalog, drawn from the given columns", () => {
+        catalogs.catalogProfileStores.set(5, {getColumnHeader: () => ({dataType: CARTA.ColumnType.Double})} as any);
+
+        bindings.openPlot(5, {xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter});
+
+        const componentId = bindings.componentIds()[0];
+        const shown = bindings.displayedForComponent(componentId);
+        expect(shown?.catalogFileId).toBe(5);
+        expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")).toMatchObject({xColumnName: "RA", yColumnName: "DEC", plotType: CatalogPlotType.D2Scatter});
+        widgets.removeFloatingWidgets();
+    });
+
+    test("gives a plot tab a plot of its own type for a catalog it has not shown before", () => {
+        const widgetId = widgets.addCatalogPlotWidget({xColumnName: "RA", plotType: CatalogPlotType.Histogram}, "catalog-plot-0") as string;
+        bindings.register("catalog-plot-component-0", 5, widgetId);
+        catalogs.catalogProfileStores.set(6, {getColumnHeader: () => undefined} as any);
+
+        bindings.show("catalog-plot-component-0", 6);
+
+        const shown = bindings.displayedForComponent("catalog-plot-component-0");
+        expect(shown?.catalogFileId).toBe(6);
+        expect(shown?.widgetId).not.toBe(widgetId);
+        expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")).toMatchObject({xColumnName: CatalogOverlay.NONE, plotType: CatalogPlotType.Histogram});
+        // The plot kept for the catalog it showed before is still there to go back to.
+        expect(widgets.catalogPlotWidgets.get(widgetId)?.xColumnName).toBe("RA");
+    });
+
     test("validates numeric columns when their Catalog arrives", () => {
         const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
         const widgetId = widgets.addCatalogPlotWidget({...plot, yColumnName: "Text"}, "catalog-plot-0") as string;

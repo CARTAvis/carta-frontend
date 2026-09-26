@@ -13,7 +13,7 @@ import {ClearableNumericInputComponent, FilterableTableComponent, type Filterabl
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
-import {type CatalogPlotWidgetStoreProps, type CatalogWidgetStore} from "stores/Widgets";
+import {type CatalogWidgetStore} from "stores/Widgets";
 import {clamp, getCatalogDataTypeDisplayName, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
@@ -371,7 +371,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handlePlotClick = () => {
         const profileStore = this.profileStore;
-        const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const catalogDisplayStore = this.displayStore;
         const catalogFileId = this.catalogFileId;
@@ -383,28 +382,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // init plot data
         switch (catalogDisplayStore.catalogPlotType) {
             case CatalogPlotType.ImageOverlay:
-                CatalogStore.Instance.plotImageOverlay(catalogFileId);
+                catalogStore.plotImageOverlay(catalogFileId);
                 break;
             case CatalogPlotType.D2Scatter:
-                const scatterProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: catalogDisplayStore.xAxis,
-                    yColumnName: catalogDisplayStore.yAxis,
-                    plotType: catalogDisplayStore.catalogPlotType
-                };
-                const scatterPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(scatterProps);
-                if (scatterPlot.widgetComponentId) {
-                    catalogStore.widgetBindings.register(scatterPlot.widgetComponentId, catalogFileId, scatterPlot.widgetStoreId ?? "");
-                }
+                catalogStore.widgetBindings.openPlot(catalogFileId, {xColumnName: catalogDisplayStore.xAxis, yColumnName: catalogDisplayStore.yAxis, plotType: catalogDisplayStore.catalogPlotType});
                 break;
             case CatalogPlotType.Histogram:
-                const historgramProps: CatalogPlotWidgetStoreProps = {
-                    xColumnName: catalogDisplayStore.xAxis,
-                    plotType: catalogDisplayStore.catalogPlotType
-                };
-                const histogramPlot = appStore.widgetsStore.createFloatingCatalogPlotWidget(historgramProps);
-                if (histogramPlot.widgetComponentId) {
-                    catalogStore.widgetBindings.register(histogramPlot.widgetComponentId, catalogFileId, histogramPlot.widgetStoreId ?? "");
-                }
+                catalogStore.widgetBindings.openPlot(catalogFileId, {xColumnName: catalogDisplayStore.xAxis, plotType: catalogDisplayStore.catalogPlotType});
                 break;
             default:
                 break;
