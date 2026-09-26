@@ -361,6 +361,11 @@ export class AppStore {
     @observable taskStartTime: number = 0;
     @observable taskCurrentTime: number = 0;
     @observable isFileLoading: boolean = false;
+    /**
+     * Images asked for that are not frames yet. Counted apart from isFileLoading, which every load
+     * and generator shares and the first of them to finish clears for all.
+     */
+    private openingImageCount = 0;
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
@@ -743,6 +748,7 @@ export class AppStore {
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, isImageArithmetic: boolean, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true) {
         this.startFileLoading();
+        this.openingImageCount++;
 
         if (isImageArithmetic) {
             hdu = "";
@@ -783,6 +789,8 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     }
 
@@ -793,6 +801,7 @@ export class AppStore {
      * @throws If there is an error loading the file.
      */
     @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest.$Properties) {
+        this.openingImageCount++;
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
@@ -813,11 +822,14 @@ export class AppStore {
         } catch (err) {
             this.alertStore.showAlert(`HiPS data query failed: ${err}`);
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     }
 
     loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
         this.startFileLoading();
+        this.openingImageCount++;
         try {
             const fileId = this.fileCounter++;
             const ack = await this.backendService.loadStokeFiles(stokesFiles, fileId, CARTA.RenderMode.RASTER);
@@ -838,6 +850,8 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
+        } finally {
+            this.openingImageCount--;
         }
     };
 
@@ -2728,10 +2742,10 @@ export class AppStore {
             return false;
         }
 
-        // An image on its way from the backend is not a frame yet, and so would be left out of the
-        // workspace without the user being told. This covers a catalog being opened from a file
-        // too, which holds the flag for as long as it holds its reserved ID.
-        if (this.isFileLoading) {
+        // An image or catalog on its way from the backend is not in the session yet, and so would be
+        // left out of the workspace without the user being told. isFileLoading alone cannot say so:
+        // every load and generator shares it, and the first to finish clears it for the others.
+        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
             this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
             return false;
         }

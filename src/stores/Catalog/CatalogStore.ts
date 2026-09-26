@@ -388,6 +388,11 @@ export class CatalogStore {
         this.pendingFileIds.delete(fileId);
     }
 
+    /** Whether a catalog is being opened: its file ID is held, but it is not in the session yet. */
+    get isOpeningCatalog(): boolean {
+        return this.pendingFileIds.size > 0;
+    }
+
     @action addCatalog(fileId: number, size: number) {
         // A catalog is given the ID a workspace will know it by as soon as it is opened, so that
         // saving only has to read it back.

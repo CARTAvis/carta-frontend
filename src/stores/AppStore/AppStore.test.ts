@@ -519,6 +519,40 @@ describe("AppStore.saveWorkspace", () => {
         appStore.endFileLoading();
     });
 
+    test("refuses to save while a catalog is still being opened, after another load has cleared the shared loading flag", async () => {
+        let finishOpening!: (profileStore: undefined) => void;
+        const opening = catalogStore.open({} as any, () => new Promise(resolve => (finishOpening = resolve)));
+        // Some other load or generator, finishing first, clears the flag for everything.
+        appStore.endFileLoading();
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toContain("still loading");
+        appStore.alertStore.dismissAlert();
+        finishOpening(undefined);
+        await expect(opening).resolves.toBeUndefined();
+        expect(catalogStore.isOpeningCatalog).toBe(false);
+    });
+
+    test("refuses to save while an image is still being opened, after another load has cleared the shared loading flag", async () => {
+        let failOpening!: (error: Error) => void;
+        jest.spyOn(appStore.backendService, "loadFile").mockReturnValue(new Promise((_resolve, reject) => (failOpening = reject)) as any);
+        const opening = appStore.loadFile("", "image.fits", "", false);
+        appStore.endFileLoading();
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toContain("still loading");
+        appStore.alertStore.dismissAlert();
+        failOpening(new Error("unreadable image"));
+        await expect(opening).rejects.toThrow("unreadable image");
+        appStore.alertStore.dismissAlert();
+    });
+
     test("refuses to save while an online catalog query is still running", async () => {
         // The catalog is not in the session yet, so nothing is streaming: the query itself is what
         // the save has to wait for.
