@@ -158,6 +158,18 @@ describe("CatalogWidgetBindingStore", () => {
             expect(bindings.catalogOf("catalog-plot-component-0")).toBe(3);
         });
 
+        test("gives a plot a plot of its own type on the catalog it moves to when the closed one had its only plot", () => {
+            openCatalogs({7: [1, 2]}, 7);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            bindings.catalogClosed(1);
+
+            const shown = bindings.displayedForComponent("catalog-plot-component-0");
+            expect(shown?.catalogFileId).toBe(2);
+            expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.D2Scatter);
+        });
+
         test("moves a table onto the first catalog left on the same image", () => {
             openCatalogs({7: [1, 2, 3], 8: [4]}, 8);
             widgets.getCatalogWidgetStore("catalog-overlay-0", 1);

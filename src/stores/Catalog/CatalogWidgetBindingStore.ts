@@ -153,13 +153,15 @@ export class CatalogWidgetBindingStore {
             }
         });
         this.plots.forEach((state, componentId) => {
+            // Read before the closing catalog's plot goes: it may be the only one the tab has.
+            const plotType = this.plotTypeOf(state);
             const widgetId = state.plotWidgetIds.get(catalogFileId);
             if (widgetId) {
                 this.deletePlot(widgetId);
             }
             state.plotWidgetIds.delete(catalogFileId);
             if (state.activeCatalogFileId === catalogFileId) {
-                this.showOnPlot(componentId, state, this.fallbackCatalog(imageFileId, catalogFileId, state));
+                this.showOnPlot(componentId, state, this.fallbackCatalog(imageFileId, catalogFileId, state), plotType);
             }
         });
     };
@@ -285,12 +287,11 @@ export class CatalogWidgetBindingStore {
      * Point a plot tab at a catalog, giving it a plot of its own type for that catalog if it has
      * none yet, so that a tab showing a catalog always has a plot to show.
      */
-    @action private showOnPlot(componentId: string, state: CatalogPlotState, catalogFileId: number | undefined) {
+    @action private showOnPlot(componentId: string, state: CatalogPlotState, catalogFileId: number | undefined, plotType = this.plotTypeOf(state)) {
         state.setActiveCatalogFileId(catalogFileId);
         if (state.plotFor(catalogFileId) !== undefined) {
             return;
         }
-        const plotType = Array.from(state.plotWidgetIds.values(), widgetId => this.widgets().catalogPlotWidgets.get(widgetId)?.plotType).find(type => type !== undefined);
         if (plotType === undefined) {
             return;
         }
@@ -298,6 +299,11 @@ export class CatalogWidgetBindingStore {
         if (widgetId !== null) {
             this.register(componentId, catalogFileId, widgetId);
         }
+    }
+
+    /** The kind of plot a tab draws, taken from any plot it keeps. */
+    private plotTypeOf(state: CatalogPlotState): CatalogPlotType | undefined {
+        return Array.from(state.plotWidgetIds.values(), widgetId => this.widgets().catalogPlotWidgets.get(widgetId)?.plotType).find(type => type !== undefined);
     }
 
     /** Rebind a saved plot after its catalog has acquired a new session file ID. */
