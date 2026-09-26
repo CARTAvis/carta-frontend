@@ -24,7 +24,7 @@ describe("CatalogWidgetBindingStore", () => {
         catalogs.catalogProfileStores.set(5, {catalogInfo: {fileInfo: {name: "fallback.vot"}}, catalogHeader: []} as any);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
 
-        const issues = bindings.restoreWorkspacePlots([{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
+        const issues = bindings.restore(undefined, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect(bindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(5);
         expect(bindings.configForLayout(widgetId, true)?.catalogId).toBe(2);
@@ -39,9 +39,9 @@ describe("CatalogWidgetBindingStore", () => {
 
     test("forgets the saved Catalog ID once Restore has bound the plots", () => {
         const widgetId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0", {catalogId: 1}) as string;
-        bindings.restoreWorkspacePlots([], new Map());
+        bindings.restore(undefined, [], new Map());
 
-        const issues = bindings.restoreWorkspacePlots([{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
+        const issues = bindings.restore(undefined, [{id: 1, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect(issues).toEqual([]);
         expect(bindings.configForLayout(widgetId, true)?.catalogId).toBeUndefined();
@@ -56,7 +56,7 @@ describe("CatalogWidgetBindingStore", () => {
 
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 20);
 
-        const issues = bindings.restoreWorkspacePlots([{id: 20, source: {type: "file", filename: "sources.vot"}}], new Map([[20, 5]]));
+        const issues = bindings.restore(undefined, [{id: 20, source: {type: "file", filename: "sources.vot"}}], new Map([[20, 5]]));
 
         expect(issues).toEqual([]);
         expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 5, widgetId: restored});
@@ -85,12 +85,102 @@ describe("CatalogWidgetBindingStore", () => {
         bindings.register("catalog-plot-component-0", 1, widgetId);
         catalogs.catalogProfileStores.set(5, {catalogHeader: [{name: "RA"}]} as any);
 
-        const issues = bindings.restoreWorkspacePlots([{id: 8, source: {type: "file", filename: "sources.vot"}}], new Map([[8, 5]]));
+        const issues = bindings.restore(undefined, [{id: 8, source: {type: "file", filename: "sources.vot"}}], new Map([[8, 5]]));
 
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
             message: "Could not fully restore catalog plot catalog-plot-0 for the catalog sources.vot: column Gone is unavailable"
+        });
+    });
+
+    describe("falling back when a widget's catalog is gone", () => {
+        const loaded = {catalogInfo: {fileInfo: {name: "loaded.vot"}}, catalogHeader: [], getColumnHeader: () => ({dataType: CARTA.ColumnType.Double})} as any;
+
+        /** Catalogs by image, all loaded, with image 7 in front. */
+        function openCatalogs(catalogsByImage: Record<number, number[]>, activeImageFileId?: number) {
+            Object.entries(catalogsByImage).forEach(([imageFileId, catalogFileIds]) =>
+                catalogFileIds.forEach(catalogFileId => {
+                    catalogs.catalogProfileStores.set(catalogFileId, loaded);
+                    catalogs.catalogImageIds.set(catalogFileId, Number(imageFileId));
+                })
+            );
+            const frame = activeImageFileId === undefined ? null : {frameInfo: {fileId: activeImageFileId}, spatialSiblings: []};
+            jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: frame ? [frame] : []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        }
+
+        afterEach(() => {
+            widgets.catalogWidgets.clear();
+        });
+
+        test("moves a plot onto a catalog on the same image it already has settings for", () => {
+            openCatalogs({7: [1, 2, 3]}, 7);
+            ["catalog-plot-0", "catalog-plot-1"].forEach(id => widgets.addCatalogPlotWidget(plot, id));
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 3, "catalog-plot-1");
+            bindings.show("catalog-plot-component-0", 1);
+
+            bindings.catalogClosed(1);
+
+            expect(bindings.catalogOf("catalog-plot-component-0")).toBe(3);
+        });
+
+        test("moves a table onto the first catalog left on the same image", () => {
+            openCatalogs({7: [1, 2, 3], 8: [4]}, 8);
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
+
+            bindings.catalogClosed(1);
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBe(2);
+        });
+
+        test("moves a table and a plot onto the active image when their own image has nothing left", () => {
+            openCatalogs({7: [1], 8: [4, 5]}, 8);
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            bindings.catalogClosed(1);
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBe(4);
+            expect(bindings.catalogOf("catalog-plot-component-0")).toBe(4);
+        });
+
+        test("leaves a table and a plot showing no catalog rather than one on an image not in front", () => {
+            openCatalogs({7: [1], 8: [4]});
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            bindings.catalogClosed(1);
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+            expect(bindings.catalogOf("catalog-plot-component-0")).toBeUndefined();
+        });
+
+        test("restores a table whose catalog is unavailable onto the active image, not onto any loaded catalog", () => {
+            openCatalogs({8: [4], 7: [6]}, 7);
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 99).setWidgetId("widget-a");
+            catalogs.catalogImageIds.set(6, 7);
+
+            const issues = bindings.restore({"widget-a": 20}, [{id: 30, source: {type: "file", filename: "shown.vot"}}], new Map([[30, 6]]));
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBe(6);
+            expect(issues).toContainEqual({
+                kind: WorkspaceItemKind.CatalogWidget,
+                subject: "widget-a",
+                message: "Could not restore catalog widget widget-a: workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead"
+            });
+        });
+
+        test("restores a table whose catalog is unavailable onto no catalog when none can be shown", () => {
+            openCatalogs({8: [4]});
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 99).setWidgetId("widget-a");
+
+            const issues = bindings.restore({"widget-a": 20}, [], new Map());
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+            expect(issues.map(issue => issue.message)).toEqual(["Could not restore catalog widget widget-a: workspace catalog 20 is unavailable"]);
         });
     });
 });

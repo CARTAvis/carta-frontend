@@ -57,8 +57,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get catalogFileId() {
-        return this.widgetStore?.selectedCatalogId;
+    @computed get catalogFileId(): number | undefined {
+        return CatalogStore.Instance.widgetBindings.catalogOf(this.widgetId);
     }
 
     /** A plain lookup: the store is created when the component is, not when it is read. */
@@ -81,7 +81,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        WidgetsStore.Instance.setCatalogWidgetSelection(this.widgetId, fileId);
+        CatalogStore.Instance.widgetBindings.show(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
@@ -149,7 +149,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         makeObservable(this);
         this.widgetId = props.id;
 
-        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, CatalogStore.Instance.activeCatalogFiles[0] ?? CatalogStore.PENDING_CATALOG_FILE_ID);
+        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, CatalogStore.Instance.activeCatalogFiles[0]);
         this.catalogFileNames = new Map<number, string>();
 
         this.disposers.push(
@@ -852,7 +852,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
-        this.widgetStore?.setSettingsTabId(type);
+        this.widgetStore?.setSettingsTab(this.catalogFileId, type);
         this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };

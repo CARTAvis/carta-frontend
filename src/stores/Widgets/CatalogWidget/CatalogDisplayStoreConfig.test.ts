@@ -559,30 +559,30 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("round-trips widget presentation through layout settings", () => {
-        const widget = new CatalogWidgetStore(7);
+        const widget = new CatalogWidgetStore();
         widget.setTableSeparatorPosition("40%");
-        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        widget.setSettingsTab(7, CatalogSettingsTabs.COLOR);
         widget.setHeaderTableColumnWidth(3, 180);
 
         // A saved layout is reused against whatever catalogs a later session has open, so it names
         // none of them: no catalog file ID, and the settings section without a catalog attached.
-        expect(widget.toLayoutSettings()).toEqual({
+        expect(widget.toLayoutSettings(false, 7)).toEqual({
             tableSeparatorPosition: "40%",
             headerTableColumnWidths: [150, 75, 65, 180, 230],
             settingsTabId: CatalogSettingsTabs.COLOR
         });
 
-        const restored = new CatalogWidgetStore(7);
-        restored.applyLayoutSettings(widget.toLayoutSettings());
-        expect(restored.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        const restored = new CatalogWidgetStore();
+        restored.applyLayoutSettings(widget.toLayoutSettings(false, 7), 7);
+        expect(restored.settingsTabFor(7)).toBe(CatalogSettingsTabs.COLOR);
         expect(restored.headerTableColumnWidths).toEqual([150, 75, 65, 180, 230]);
-        expect(restored.toLayoutSettings()).toEqual(widget.toLayoutSettings());
+        expect(restored.toLayoutSettings(false, 7)).toEqual(widget.toLayoutSettings(false, 7));
     });
 
     test("keeps header table widths out of the catalog's display config", () => {
         // The header table belongs to the widget, so two widgets on one catalog size it separately.
-        const first = new CatalogWidgetStore(7);
-        const second = new CatalogWidgetStore(7);
+        const first = new CatalogWidgetStore();
+        const second = new CatalogWidgetStore();
         first.setHeaderTableColumnWidth(0, 300);
 
         expect(second.headerTableColumnWidths[0]).toBe(150);
@@ -590,7 +590,7 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("ignores header table widths that do not cover every column", () => {
-        const widget = new CatalogWidgetStore(7);
+        const widget = new CatalogWidgetStore();
         widget.applyLayoutSettings({headerTableColumnWidths: [10, 20]});
         expect(widget.headerTableColumnWidths).toEqual([150, 75, 65, 100, 230]);
 
@@ -646,41 +646,38 @@ describe("CatalogDisplayStore display config", () => {
     });
 
     test("remembers the settings section of each catalog the widget has shown", () => {
-        const widget = new CatalogWidgetStore(1);
-        widget.setSettingsTabId(CatalogSettingsTabs.ORIENTATION);
+        const widget = new CatalogWidgetStore();
+        widget.setSettingsTab(1, CatalogSettingsTabs.ORIENTATION);
 
-        widget.setSelectedCatalogId(2);
-        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
-        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        expect(widget.settingsTabFor(2)).toBe(CatalogSettingsTabs.SIZE);
+        widget.setSettingsTab(2, CatalogSettingsTabs.COLOR);
 
-        widget.setSelectedCatalogId(1);
-        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
-        widget.setSelectedCatalogId(2);
-        expect(widget.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widget.settingsTabFor(1)).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(widget.settingsTabFor(2)).toBe(CatalogSettingsTabs.COLOR);
     });
 
     test("keeps the settings section of each widget separate", () => {
-        const first = new CatalogWidgetStore(7);
-        const second = new CatalogWidgetStore(7);
+        const first = new CatalogWidgetStore();
+        const second = new CatalogWidgetStore();
 
-        first.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        first.setSettingsTab(7, CatalogSettingsTabs.COLOR);
 
-        expect(second.settingsTabId).toBe(CatalogSettingsTabs.SIZE);
+        expect(second.settingsTabFor(7)).toBe(CatalogSettingsTabs.SIZE);
     });
 
     test("restores the settings section from a layout written before it was kept per catalog", () => {
         const restored = new CatalogWidgetStore();
-        restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION});
+        restored.applyLayoutSettings({catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION}, 1);
 
-        expect(restored.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
-        expect(restored.toLayoutSettings().settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(restored.settingsTabFor(1)).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(restored.toLayoutSettings(false, 1).settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
     });
 
     test("names no catalog in a layout that is not a workspace's", () => {
-        const widget = new CatalogWidgetStore(7);
-        widget.setSettingsTabId(CatalogSettingsTabs.COLOR);
+        const widget = new CatalogWidgetStore();
+        widget.setSettingsTab(7, CatalogSettingsTabs.COLOR);
 
-        const settings = widget.toLayoutSettings();
+        const settings = widget.toLayoutSettings(false, 7);
 
         expect(settings.catalogFileId).toBeUndefined();
         expect(settings.settingsTabIdByWorkspaceCatalog).toBeUndefined();

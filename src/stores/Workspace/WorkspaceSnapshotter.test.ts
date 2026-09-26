@@ -73,7 +73,8 @@ function createSession(overrides: Record<string, any> = {}) {
         catalogStore: {
             imageIdOf: (catalogFileId: number) => (catalogFileId === 10 ? 0 : undefined),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
-            getCatalogDisplayStore: jest.fn(() => displayStore)
+            getCatalogDisplayStore: jest.fn(() => displayStore),
+            widgetBindings: {savedTableCatalogIds: jest.fn((): Record<string, number> => ({}))}
         },
         widgetsStore: {catalogWidgets: new Map()},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
@@ -134,19 +135,16 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.catalogs?.[0].contentHash).toBeUndefined();
     });
 
-    test("names the catalog each widget shows by the workspace's own catalog ID", () => {
+    test("saves the catalog each table widget shows", () => {
         const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 10} as never);
+        appStore.catalogStore.widgetBindings.savedTableCatalogIds.mockReturnValue({"widget-a": 1});
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.selectedCatalogIds).toEqual({"widget-a": 1});
     });
 
-    test("names no catalog for a widget that shows no loaded catalog", () => {
-        const {appStore} = createSession();
-        appStore.widgetsStore.catalogWidgets.set("catalog-overlay-0", {widgetId: "widget-a", selectedCatalogId: 99} as never);
-
+    test("saves no table widget selections when no widget shows a loaded catalog", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.selectedCatalogIds).toBeUndefined();

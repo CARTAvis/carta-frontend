@@ -291,18 +291,7 @@ export class WorkspaceSnapshotter {
 
     /** Stage 4: which catalog each widget is showing, named by the workspace's own catalog IDs. */
     private captureViews(): void {
-        const selectedCatalogIds: Record<string, number> = {};
-        this.appStore.widgetsStore.catalogWidgets.forEach((widgetStore, componentId) => {
-            const widgetId = widgetStore.widgetId || componentId;
-            const catalogFileId = widgetStore.selectedCatalogId;
-            // A widget showing no loaded catalog names none: a Workspace describes only what was loaded.
-            if (this.appStore.catalogStore.catalogProfileStores.has(catalogFileId)) {
-                const workspaceCatalogId = this.catalogIdOf(catalogFileId);
-                if (workspaceCatalogId !== undefined) {
-                    selectedCatalogIds[widgetId] = workspaceCatalogId;
-                }
-            }
-        });
+        const selectedCatalogIds = this.appStore.catalogStore.widgetBindings.savedTableCatalogIds();
         if (Object.keys(selectedCatalogIds).length > 0) {
             this.workspace.selectedCatalogIds = selectedCatalogIds;
         }

@@ -39,7 +39,6 @@ function getPlottedOverlayColumns(displayStore: CatalogDisplayStore | undefined)
 
 export class CatalogStore {
     /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
-    public static readonly PENDING_CATALOG_FILE_ID = 0;
 
     private static staticInstance: CatalogStore;
 
@@ -349,20 +348,13 @@ export class CatalogStore {
     /** Everything that has to hold once a catalog exists, in the order it has to be set up. */
     @action private addLoadedCatalog(fileId: number, frame: FrameStore, profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore): void {
         const imageFileId = frame.frameInfo.fileId;
-        if (!this.catalogsOn(imageFileId).length) {
-            // The first catalog on this image
-            WidgetsStore.Instance.resetCatalogWidgetSelections([fileId]);
-        }
+        const isFirstOnImage = !this.catalogsOn(imageFileId).length;
         this.catalogImageIds.set(fileId, imageFileId);
         this.addCatalog(fileId, profileStore.catalogInfo.dataSize);
         this.getOrCreateCatalogDisplayStore(fileId);
         this.catalogProfileStores.set(fileId, profileStore);
         this.widgetBindings.validateColumns(fileId);
-        // A catalog that every existing widget is still waiting past gets a widget of its own, so
-        // that it is never left displayed in none.
-        if (WidgetsStore.Instance.updateCatalogWidgetSelection(fileId) === undefined) {
-            WidgetsStore.Instance.createFloatingCatalogWidget(fileId);
-        }
+        this.widgetBindings.catalogOpened(fileId, isFirstOnImage);
     }
 
     /**
@@ -468,8 +460,8 @@ export class CatalogStore {
         if (fileId < 0 || !AppStore.Instance.backendService.closeCatalogFile(fileId)) {
             return false;
         }
-        // Plots move while the catalog still names its image.
-        this.widgetBindings.closeCatalog(fileId);
+        // Widgets move while the catalog still names its image.
+        this.widgetBindings.catalogClosed(fileId);
         // Drop the catalog's earlier requests before ending the one still in flight, so that the
         // request being ended is left marked stale: a response arriving after this file ID has been
         // handed to the next catalog opened must not be taken for an answer about that one.
@@ -479,22 +471,13 @@ export class CatalogStore {
         WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
         this.catalogGLData.delete(fileId);
         CatalogWebGLService.Instance.clearTexture(fileId);
-        const imageFileId = this.imageIdOf(fileId);
         this.catalogImageIds.delete(fileId);
-        const associatedCatalogIds = imageFileId === undefined ? [] : this.catalogsOn(imageFileId);
-        if (associatedCatalogIds.length) {
-            WidgetsStore.Instance.replaceCatalogWidgetSelection(fileId, associatedCatalogIds[0]);
-        }
         this.catalogProfileStores.delete(fileId);
         return true;
     }
 
     @action resetActiveCatalogFile(imageFileId: number) {
-        const activeCatalogFileIds = this.catalogsOn(imageFileId);
-        if (activeCatalogFileIds.length) {
-            WidgetsStore.Instance.resetCatalogWidgetSelections(activeCatalogFileIds);
-            this.widgetBindings.resetSelections(activeCatalogFileIds);
-        }
+        this.widgetBindings.activeImageChanged(imageFileId);
     }
 
     /** The file ID of the image a catalog is overlaid on. */

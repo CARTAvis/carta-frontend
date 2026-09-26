@@ -535,41 +535,7 @@ export class WorkspaceRestorer {
 
     /** Stage 8: point the widgets and plots that show a catalog at the catalogs just loaded. */
     private restoreViews(): void {
-        if (this.workspace.selectedCatalogIds) {
-            this.appStore.widgetsStore.restoreCatalogWidgets(Object.keys(this.workspace.selectedCatalogIds));
-            Object.entries(this.workspace.selectedCatalogIds).forEach(([widgetId, workspaceCatalogId]) => {
-                const selectedCatalogFileId = this.catalogIds.get(workspaceCatalogId);
-                const widgetStore = Array.from(this.appStore.widgetsStore.catalogWidgets.values()).find(store => store.widgetId === widgetId);
-                if (selectedCatalogFileId === undefined) {
-                    if (widgetStore && !this.appStore.catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId)) {
-                        const fallbackCatalogFileId = this.appStore.catalogStore.catalogProfileStores.keys().next().value;
-                        if (fallbackCatalogFileId !== undefined) {
-                            widgetStore.setSelectedCatalogId(fallbackCatalogFileId);
-                        }
-                    }
-                    const fallback = widgetStore && this.appStore.catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId) ? `; it is showing ${this.describeCatalogFile(widgetStore.selectedCatalogId)} instead` : "";
-                    this.report(WorkspaceItemKind.CatalogWidget, widgetId, `Could not restore catalog widget ${widgetId}: ${this.describeWorkspaceCatalog(workspaceCatalogId)} is unavailable${fallback}`);
-                } else if (!this.appStore.widgetsStore.setCatalogWidgetSelectionByWidgetId(widgetId, selectedCatalogFileId)) {
-                    this.report(WorkspaceItemKind.CatalogWidget, widgetId, `Could not restore catalog widget ${widgetId} to ${this.describeWorkspaceCatalog(workspaceCatalogId)}: the widget selection could not be applied`);
-                }
-            });
-        }
-
-        this.issues.push(...this.appStore.catalogStore.widgetBindings.restoreWorkspacePlots(this.workspace.catalogs, this.catalogIds));
-    }
-
-    private describeWorkspaceCatalog(workspaceCatalogId: number): string {
-        const catalog = this.workspace.catalogs?.find(candidate => candidate.id === workspaceCatalogId);
-        return catalog ? `the catalog ${describeCatalogSource(catalog.source)}` : `workspace catalog ${workspaceCatalogId}`;
-    }
-
-    private describeCatalogFile(catalogFileId: number): string {
-        for (const [workspaceCatalogId, restoredFileId] of this.catalogIds) {
-            if (restoredFileId === catalogFileId) {
-                return this.describeWorkspaceCatalog(workspaceCatalogId);
-            }
-        }
-        return `catalog file ${catalogFileId}`;
+        this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.selectedCatalogIds, this.workspace.catalogs, this.catalogIds));
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */

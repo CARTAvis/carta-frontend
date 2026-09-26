@@ -972,7 +972,7 @@ describe("CatalogOverlayComponent", () => {
 
         component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
 
-        expect(widgetStore?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widgetStore?.settingsTabFor(component.catalogFileId)).toBe(CatalogSettingsTabs.COLOR);
         expect(displayStore.sizeAxisTabId).toBe(CatalogSettingsTabs.SIZE_MAJOR);
     });
 

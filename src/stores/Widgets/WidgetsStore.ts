@@ -547,7 +547,7 @@ export class WidgetsStore {
         const settings = widgetSettings as CatalogWidgetLayoutSettings | null;
         const activeCatalogFileIds = CatalogStore.Instance.activeCatalogFiles;
         const legacyCatalogFileId = settings?.catalogFileId;
-        const selectedCatalogId = (legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0]) ?? 1;
+        const selectedCatalogId = legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0];
         const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
 
         // Layout V2 used a session-local catalog file ID. Keep it working when the catalog is
@@ -555,15 +555,15 @@ export class WidgetsStore {
         // Settled before the rest of the settings go in, because what they carry is kept per
         // catalog: the widget store may be one that is already on another catalog, and the layout
         // may name one this session never opened.
-        widgetStore.setSelectedCatalogId(selectedCatalogId);
+        CatalogStore.Instance.widgetBindings.initTable(componentId, selectedCatalogId);
 
-        widgetStore.applyLayoutSettings(settings);
+        widgetStore.applyLayoutSettings(settings, selectedCatalogId);
         this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
 
         // Catalog display state is catalog-scoped and may not exist yet when a layout is restored.
         // It will be created by updateCatalogProfile once the catalog is loaded.
-        if (widgetStore.selectedCatalogId > 0 && CatalogStore.Instance.catalogProfileStores.has(widgetStore.selectedCatalogId)) {
-            CatalogStore.Instance.getOrCreateCatalogDisplayStore(widgetStore.selectedCatalogId);
+        if (selectedCatalogId !== undefined && CatalogStore.Instance.catalogProfileStores.has(selectedCatalogId)) {
+            CatalogStore.Instance.getOrCreateCatalogDisplayStore(selectedCatalogId);
         }
         return componentId;
     };
@@ -1130,7 +1130,7 @@ export class WidgetsStore {
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             case CatalogOverlayComponent.WidgetConfig.type: {
-                return this.catalogWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings);
+                return this.catalogWidgets.get(widgetID)?.toLayoutSettings(shouldIncludeWorkspaceBindings, CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
             }
             case CatalogPlotComponent.WidgetConfig.type: {
                 return CatalogStore.Instance.widgetBindings.configForLayout(widgetID, shouldIncludeWorkspaceBindings);
@@ -1575,7 +1575,7 @@ export class WidgetsStore {
         }
     };
 
-    private createFloatingCatalogWidgetInstance = (selectedCatalogId: number = 1, widgetId?: string): string => {
+    private createFloatingCatalogWidgetInstance = (selectedCatalogId: number | undefined, widgetId?: string): string => {
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
         const widgetStore = this.getCatalogWidgetStore(widgetComponentId, selectedCatalogId);
         if (widgetId) {
@@ -1603,7 +1603,7 @@ export class WidgetsStore {
 
         for (const widgetId of widgetIds) {
             if (widgetId && !existingWidgetIds.has(widgetId)) {
-                const widgetComponentId = this.createFloatingCatalogWidgetInstance(1, widgetId);
+                const widgetComponentId = this.createFloatingCatalogWidgetInstance(undefined, widgetId);
                 const restoredWidgetId = this.catalogWidgets.get(widgetComponentId)?.widgetId;
                 if (restoredWidgetId) {
                     existingWidgetIds.add(restoredWidgetId);
@@ -1628,6 +1628,7 @@ export class WidgetsStore {
 
     /** Drop a catalog widget's state. */
     @action deleteCatalogWidget = (componentId: string) => {
+        CatalogStore.Instance.widgetBindings.removeTable(componentId);
         this.catalogWidgets.delete(componentId);
     };
 
@@ -1637,78 +1638,14 @@ export class WidgetsStore {
     };
 
     /** Get or create the widget-scoped state for one catalog overlay component. */
-    @action getCatalogWidgetStore = (componentId: string, selectedCatalogId: number = 1): CatalogWidgetStore => {
+    @action getCatalogWidgetStore = (componentId: string, selectedCatalogId?: number): CatalogWidgetStore => {
         let widgetStore = this.catalogWidgets.get(componentId);
         if (!widgetStore) {
-            widgetStore = new CatalogWidgetStore(selectedCatalogId, this.getUniqueCatalogWidgetId(componentId, componentId));
+            widgetStore = new CatalogWidgetStore(this.getUniqueCatalogWidgetId(componentId, componentId));
             this.catalogWidgets.set(componentId, widgetStore);
+            CatalogStore.Instance.widgetBindings.initTable(componentId, selectedCatalogId);
         }
         return widgetStore;
-    };
-
-    /** Select a loaded catalog in one widget by its runtime component ID. */
-    @action setCatalogWidgetSelection = (componentId: string, catalogFileId: number): boolean => {
-        if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
-            return false;
-        }
-
-        const widgetStore = this.catalogWidgets.get(componentId);
-        if (!widgetStore) {
-            return false;
-        }
-        widgetStore.setSelectedCatalogId(catalogFileId);
-        return true;
-    };
-
-    /** Restore a loaded catalog in one widget by its stable persistence ID. */
-    @action setCatalogWidgetSelectionByWidgetId = (widgetId: string, catalogFileId: number): boolean => {
-        if (!CatalogStore.Instance.catalogProfileStores.has(catalogFileId)) {
-            return false;
-        }
-
-        const matching = Array.from(this.catalogWidgets.values()).filter(widgetStore => widgetStore.widgetId === widgetId);
-        if (matching.length !== 1) {
-            return false;
-        }
-        matching[0].setSelectedCatalogId(catalogFileId);
-        return true;
-    };
-
-    /** Keep a widget selection valid when the active image changes. */
-    @action resetCatalogWidgetSelections = (activeCatalogFileIds: number[]) => {
-        if (activeCatalogFileIds.length === 0) {
-            return;
-        }
-        const activeCatalogFileIdSet = new Set(activeCatalogFileIds);
-        this.catalogWidgets.forEach(widgetStore => {
-            if (!activeCatalogFileIdSet.has(widgetStore.selectedCatalogId)) {
-                widgetStore.setSelectedCatalogId(activeCatalogFileIds[0]);
-            }
-        });
-    };
-
-    /**
-     * Select a catalog in the first widget that can show it, and return that widget's ID. With no
-     * widget to show it in, undefined is returned so that the caller gives it one of its own.
-     */
-    @action updateCatalogWidgetSelection = (catalogFileId: number): string | undefined => {
-        const widgets = Array.from(this.catalogWidgets.entries());
-        const widget = widgets.find(([, widgetStore]) => widgetStore.selectedCatalogId === catalogFileId) ?? widgets[0];
-        if (!widget) {
-            return undefined;
-        }
-        const [componentId, widgetStore] = widget;
-        widgetStore.setSelectedCatalogId(catalogFileId);
-        return componentId;
-    };
-
-    /** Replace a removed catalog only in widgets that were showing it. */
-    @action replaceCatalogWidgetSelection = (catalogFileId: number, replacementCatalogFileId: number) => {
-        this.catalogWidgets.forEach(widgetStore => {
-            if (widgetStore.selectedCatalogId === catalogFileId) {
-                widgetStore.setSelectedCatalogId(replacementCatalogFileId);
-            }
-        });
     };
 
     // endregion

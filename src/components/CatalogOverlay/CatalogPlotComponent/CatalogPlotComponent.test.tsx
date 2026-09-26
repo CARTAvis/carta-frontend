@@ -64,13 +64,13 @@ describe("CatalogPlotComponent catalog selection", () => {
         catalogStore.widgetBindings.register("catalog-plot-component-0", 7, "catalog-plot-0");
         widgetsStore.catalogPlotWidgets.set("catalog-plot-0", widgetStore as any);
         catalogStore.catalogDisplayStores.set(7, catalogDisplayStore as any);
-        const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
 
         component["onLassoSelected"]({points: [{pointIndex: 3}]} as any);
         component.componentWillUnmount();
 
-        expect(widget.selectedCatalogId).toBe(7);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-component-0")).toBe(7);
         expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);
@@ -97,7 +97,7 @@ describe("CatalogPlotComponent restored plots", () => {
 
     /** Attach a restored plot to its catalog, the way WorkspaceRestorer does once it is loaded. */
     function bindRestoredPlot(plotId: string, catalogFileId: number) {
-        catalogStore.widgetBindings.restoreWorkspacePlots([{id: FIRST_CATALOG_WORKSPACE_ID, source: {type: "file", filename: "first.xml"}}], new Map([[FIRST_CATALOG_WORKSPACE_ID, catalogFileId]]));
+        catalogStore.widgetBindings.restore(undefined, [{id: FIRST_CATALOG_WORKSPACE_ID, source: {type: "file", filename: "first.xml"}}], new Map([[FIRST_CATALOG_WORKSPACE_ID, catalogFileId]]));
     }
 
     afterEach(() => {
@@ -164,7 +164,7 @@ describe("CatalogPlotComponent restored plots", () => {
         const displayed = component.widgetStore!;
         component.componentWillUnmount();
 
-        catalogStore.widgetBindings.closeCatalog(12);
+        catalogStore.widgetBindings.catalogClosed(12);
 
         const remounted = new CatalogPlotComponent({id: plotId, docked: false} as any);
         expect(remounted.componentId).toBe(componentId);
@@ -185,7 +185,7 @@ describe("CatalogPlotComponent restored plots", () => {
         component.handleCatalogFileChange(11);
         const displayed = component.widgetStore!;
 
-        catalogStore.widgetBindings.closeCatalog(12);
+        catalogStore.widgetBindings.catalogClosed(12);
         expect(widgetsStore.catalogPlotWidgets.has(plotId)).toBe(false);
 
         expect(widgetsStore.catalogPlotWidgets.get(catalogStore.widgetBindings.displayedForWidget(plotId).widgetId)).toBe(displayed);

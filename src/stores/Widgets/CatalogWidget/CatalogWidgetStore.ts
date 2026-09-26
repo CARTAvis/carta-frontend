@@ -1,4 +1,4 @@
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {CatalogSettingsTabs, WorkspaceItemKind} from "enums";
 import {PreferenceStore} from "stores";
@@ -25,7 +25,6 @@ export class CatalogWidgetStore {
     private static readonly HeaderTableColumnCount = 5;
 
     @observable widgetId: string;
-    @observable selectedCatalogId: number = 1;
     @observable tableSeparatorPosition: string = PreferenceStore.Instance.catalogTableSeparatorPosition;
     /**
      * Widths of the header table's columns. The table lists the catalog's columns but belongs to the
@@ -38,19 +37,16 @@ export class CatalogWidgetStore {
      * widget returning to a catalog returns to the section that catalog was left on.
      */
     @observable private settingsTabIdByCatalog = new Map<number, CatalogSettingsTabs>();
+    /** The section left on while the widget showed no catalog, for whichever catalog it shows next. */
+    @observable private defaultSettingsTabId: CatalogSettingsTabs | undefined = undefined;
 
-    constructor(selectedCatalogId: number = 1, widgetId: string = "") {
-        this.selectedCatalogId = selectedCatalogId;
+    constructor(widgetId: string = "") {
         this.widgetId = widgetId;
         makeObservable(this);
     }
 
     @action setWidgetId = (widgetId: string) => {
         this.widgetId = widgetId;
-    };
-
-    @action setSelectedCatalogId = (catalogFileId: number) => {
-        this.selectedCatalogId = catalogFileId;
     };
 
     @action setTableSeparatorPosition = (position: string) => {
@@ -72,19 +68,25 @@ export class CatalogWidgetStore {
         this.headerTableColumnWidths[index] = width;
     };
 
-    @computed get settingsTabId(): CatalogSettingsTabs {
-        return this.settingsTabIdByCatalog.get(this.selectedCatalogId) ?? CatalogSettingsTabs.SIZE;
+    /** The settings section this widget was left on for one catalog. */
+    settingsTabFor(catalogFileId: number | undefined): CatalogSettingsTabs {
+        return (catalogFileId === undefined ? undefined : this.settingsTabIdByCatalog.get(catalogFileId)) ?? this.defaultSettingsTabId ?? CatalogSettingsTabs.SIZE;
     }
 
-    @action setSettingsTabId = (tabId: CatalogSettingsTabs) => {
-        this.settingsTabIdByCatalog.set(this.selectedCatalogId, tabId);
+    @action setSettingsTab = (catalogFileId: number | undefined, tabId: CatalogSettingsTabs) => {
+        if (catalogFileId === undefined) {
+            this.defaultSettingsTabId = tabId;
+        } else {
+            this.settingsTabIdByCatalog.set(catalogFileId, tabId);
+        }
     };
 
-    public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false): CatalogWidgetLayoutSettings => ({
+    /** @param shownCatalogFileId - the catalog the widget shows, whose section a saved layout keeps. */
+    public toLayoutSettings = (shouldIncludeWorkspaceBindings: boolean = false, shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
         tableSeparatorPosition: this.tableSeparatorPosition,
         ...(this.headerTableColumnWidths.every(width => Number.isFinite(width)) ? {headerTableColumnWidths: [...this.headerTableColumnWidths]} : {}),
-        ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings)
+        ...this.settingsTabsByCatalog(shouldIncludeWorkspaceBindings, shownCatalogFileId)
     });
 
     /**
@@ -97,9 +99,9 @@ export class CatalogWidgetStore {
      * so it carries only the section the widget was left on, for whichever catalog that turns out
      * to be.
      */
-    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean): Pick<CatalogWidgetLayoutSettings, "settingsTabId" | "settingsTabIdByWorkspaceCatalog"> => {
+    private settingsTabsByCatalog = (shouldIncludeWorkspaceBindings: boolean, shownCatalogFileId: number | undefined): Pick<CatalogWidgetLayoutSettings, "settingsTabId" | "settingsTabIdByWorkspaceCatalog"> => {
         if (!shouldIncludeWorkspaceBindings) {
-            return {settingsTabId: this.settingsTabId};
+            return {settingsTabId: this.settingsTabFor(shownCatalogFileId)};
         }
 
         const settingsTabs = Array.from(this.settingsTabIdByCatalog);
@@ -121,7 +123,7 @@ export class CatalogWidgetStore {
      * settings here: a section the widget was left on is kept per catalog, and filing it under an
      * ID that is about to be replaced files it where nothing looks for it.
      */
-    @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined) => {
+    @action applyLayoutSettings = (settings: CatalogWidgetLayoutSettings | null | undefined, shownCatalogFileId?: number) => {
         if (!settings) {
             return;
         }
@@ -135,7 +137,7 @@ export class CatalogWidgetStore {
             this.headerTableColumnWidths = [...settings.headerTableColumnWidths];
         }
         if (typeof settings.settingsTabId === "number") {
-            this.settingsTabIdByCatalog.set(this.selectedCatalogId, settings.settingsTabId);
+            this.setSettingsTab(shownCatalogFileId, settings.settingsTabId);
         }
         if (settings.settingsTabIdByWorkspaceCatalog) {
             for (const [workspaceCatalogId, tabId] of Object.entries(settings.settingsTabIdByWorkspaceCatalog)) {

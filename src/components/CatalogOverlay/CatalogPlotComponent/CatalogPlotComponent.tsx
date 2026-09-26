@@ -158,8 +158,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     /** The catalog this component is showing, which a workspace restore can move out from under it. */
-    @computed get catalogFileId(): number {
-        return CatalogStore.Instance.widgetBindings.displayedForComponent(this.componentId)?.catalogFileId ?? CatalogStore.PENDING_CATALOG_FILE_ID;
+    @computed get catalogFileId(): number | undefined {
+        return CatalogStore.Instance.widgetBindings.displayedForComponent(this.componentId)?.catalogFileId;
     }
 
     @computed get widgetStore(): CatalogPlotWidgetStore | undefined {
@@ -176,11 +176,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
-        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+        return this.catalogFileId === undefined ? undefined : CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
     @computed get catalogDisplayStore(): CatalogDisplayStore | undefined {
-        return CatalogStore.Instance.getCatalogDisplayStore(this.catalogFileId);
+        return this.catalogFileId === undefined ? undefined : CatalogStore.Instance.getCatalogDisplayStore(this.catalogFileId);
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -188,14 +188,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogStore = CatalogStore.Instance;
         // An explicit choice, so the plot is saved against the catalog it now shows even if it was
         // restored holding the ID of a catalog that was unavailable.
-        const plotWidgetStoreId = catalogStore.widgetBindings.selectCatalog(this.componentId, fileId);
+        catalogStore.widgetBindings.show(this.componentId, fileId);
+        const plotWidgetStoreId = catalogStore.widgetBindings.displayedForComponent(this.componentId)?.widgetId;
         if (!catalogStore.widgetBindings.displayedForComponent(this.componentId)) {
             this.addNewWidgetStore();
             return;
         }
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
-            const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
+            const profileStore = catalogStore.catalogProfileStores.get(fileId);
             const isXColumnEmpty = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
             const isYColumnEmpty = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
             switch (plotWidgetStore?.plotType) {
@@ -590,7 +591,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private handlePlotClick = () => {
-        CatalogStore.Instance.requestPlotRows(this.catalogFileId);
+        if (this.catalogFileId !== undefined) {
+            CatalogStore.Instance.requestPlotRows(this.catalogFileId);
+        }
     };
 
     // region selection
@@ -603,7 +606,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return;
             }
             const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
+            CatalogStore.Instance.widgetBindings.showInTable(catalogFileId);
 
             let selectedPointIndices;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
@@ -643,7 +646,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
-        WidgetsStore.Instance.updateCatalogWidgetSelection(this.catalogFileId);
+        if (this.catalogFileId !== undefined) {
+            CatalogStore.Instance.widgetBindings.showInTable(this.catalogFileId);
+        }
         profileStore?.setSelectedPointIndices([], false);
         catalogDisplayStore?.setShowSelectedData(false);
         widgetsStore?.initLinearFitting();
@@ -660,7 +665,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogDisplayStore = this.catalogDisplayStore;
         if (event?.points?.length > 0 && isInDragMode && profileStore && catalogDisplayStore) {
             const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
+            CatalogStore.Instance.widgetBindings.showInTable(catalogFileId);
             let selectedPointIndex: number[] = [];
             const selectedPoint = event.points[0] as any;
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {

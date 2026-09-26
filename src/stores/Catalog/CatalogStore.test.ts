@@ -14,7 +14,7 @@ const CreateEmptyProfileStore = () => ({getColumnHeader: () => ({dataType: CARTA
 function restorePlotBinding(widgetId: string, workspaceCatalogId: number, catalogFileId: number) {
     const bindings = CatalogStore.Instance.widgetBindings;
     bindings.restoreConfig(widgetId, {catalogId: workspaceCatalogId});
-    return bindings.restoreWorkspacePlots([{id: workspaceCatalogId, source: {type: "file", filename: "test-catalog"}}], new Map([[workspaceCatalogId, catalogFileId]]));
+    return bindings.restore(undefined, [{id: workspaceCatalogId, source: {type: "file", filename: "test-catalog"}}], new Map([[workspaceCatalogId, catalogFileId]]));
 }
 
 describe("CatalogStore.plotImageOverlay", () => {
@@ -178,7 +178,7 @@ describe("CatalogStore.open", () => {
     });
 
     test("sets up a loaded catalog on the image it was given, not the active one", async () => {
-        const widget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 99);
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 99);
         expect(AppStore.Instance.activeFrame).toBeFalsy();
 
         const fileId = await open(async id => rowsFor(id));
@@ -189,35 +189,35 @@ describe("CatalogStore.open", () => {
         expect(catalogStore.getCatalogDisplayStore(1)).toBeDefined();
         expect(catalogStore.catalogGLData.get(1)?.x).toHaveLength(3);
         expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 1)).toBeDefined();
-        expect(widget.selectedCatalogId).toBe(1);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
     });
 
     test("shows a catalog in the widget already showing its image's catalogs", async () => {
-        const widget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
         catalogStore.catalogProfileStores.set(1, rowsFor(1));
         catalogStore.catalogImageIds.set(1, 7);
 
         await expect(open(async id => rowsFor(id))).resolves.toBe(2);
 
         expect(WidgetsStore.Instance.catalogWidgets.size).toBe(1);
-        expect(widget.selectedCatalogId).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
     });
 
     test("gives the first catalog a widget of its own when there is none", async () => {
         await open(async id => rowsFor(id));
 
-        const widgets = Array.from(WidgetsStore.Instance.catalogWidgets.values());
-        expect(widgets.map(widget => widget.selectedCatalogId)).toEqual([1]);
+        const componentIds = Array.from(WidgetsStore.Instance.catalogWidgets.keys());
+        expect(componentIds.map(id => catalogStore.widgetBindings.catalogOf(id))).toEqual([1]);
     });
 
     test("points every widget at the first catalog on an image", async () => {
-        const firstWidget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 5);
-        const secondWidget = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 5);
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 5);
+        WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 5);
 
         await open(async id => rowsFor(id));
 
-        expect(firstWidget.selectedCatalogId).toBe(1);
-        expect(secondWidget.selectedCatalogId).toBe(1);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(1);
     });
 
     test("does not give a catalog the ID of one still loading", async () => {
@@ -344,7 +344,7 @@ describe("Catalog plot workspace binding", () => {
         const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {catalogId: 7});
         catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId as string);
 
-        catalogStore.widgetBindings.restoreWorkspacePlots([{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
+        catalogStore.widgetBindings.restore(undefined, [{id: 7, source: {type: "file", filename: "missing.vot"}}], new Map());
 
         expect((widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId as string, true) as CatalogPlotWidgetConfig)?.catalogId).toBe(2);
     });
@@ -407,7 +407,7 @@ describe("Catalog plot workspace binding", () => {
         // User switches component to Catalog B and configures a new plot store "catalog-plot-1"
         const plotStoreBId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_B", yColumnName: "MAG_B", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 2, plotStoreBId as string);
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 2);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
 
         // Verify that saving the layout widget (referenced by original tab instance id "catalog-plot-0")
         // serializes Catalog B's workspace ID and Catalog B's settings together
@@ -454,8 +454,8 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.widgetBindings.register("catalog-plot-component-0", 2, plotStoreBId as string);
 
         // Switch to B then back to A
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 2);
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 1);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 1);
 
         const savedConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig;
         expect(savedConfig).toBeDefined();
@@ -480,8 +480,8 @@ describe("Catalog plot workspace binding", () => {
         // The user picks catalog C, then picks catalog B back.
         const plotStoreCId = widgetsStore.addCatalogPlotWidget({xColumnName: "FLUX_C", yColumnName: "MAG_C", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 3, plotStoreCId as string);
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 3);
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 2);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 3);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
 
         const savedConfig = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", true) as CatalogPlotWidgetConfig;
         expect(savedConfig).toBeDefined();
@@ -490,7 +490,7 @@ describe("Catalog plot workspace binding", () => {
         expect(savedConfig.yColumnName).toBe("DEC_A");
 
         // The plot the user visited on the way belongs to catalog C.
-        catalogStore.widgetBindings.selectCatalog("catalog-plot-component-0", 3);
+        catalogStore.widgetBindings.show("catalog-plot-component-0", 3);
         expect(catalogStore.widgetBindings.configForLayout("catalog-plot-0", true)?.catalogId).toBe(30);
     });
 });
@@ -521,9 +521,13 @@ describe("CatalogProfileStore streamed rows", () => {
     });
 });
 
-describe("WidgetsStore.setCatalogWidgetSelection", () => {
+describe("Catalog table widget selection", () => {
     const catalogStore = CatalogStore.Instance;
     const widgetsStore = WidgetsStore.Instance;
+
+    function restoreTables(selectedCatalogIds: Record<string, number>, catalogIds: Map<number, number>) {
+        return catalogStore.widgetBindings.restore(selectedCatalogIds, [{id: 20, source: {type: "file", filename: "sources.vot"}}], catalogIds);
+    }
 
     beforeEach(() => {
         jest.restoreAllMocks();
@@ -533,6 +537,8 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
         widgetsStore.catalogWidgets.clear();
+        catalogStore.widgetBindings.componentIds().forEach(id => catalogStore.widgetBindings.closeComponent(id));
+        Array.from(widgetsStore.catalogPlotWidgets.keys()).forEach(id => catalogStore.widgetBindings.deletePlot(id));
     });
 
     test("changes only the requested component when selecting by runtime ID", () => {
@@ -541,13 +547,18 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
         WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 1);
 
-        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-0", 2)).toBe(true);
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(1);
+        expect(catalogStore.widgetBindings.show("catalog-overlay-0", 2)).toBe(true);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(1);
     });
 
     test("restores multiple widgets that show the same catalog", () => {
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        // Catalog 1 is on the active image, which is what a widget can show.
+        const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}} as any);
+        catalogStore.catalogImageIds.set(1, 7);
+        catalogStore.catalogGLData.set(1, {x: new Float32Array(0), y: new Float32Array(0)});
 
         widgetsStore.initWidgets(
             [
@@ -558,7 +569,8 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         );
 
         expect(Array.from(widgetsStore.catalogWidgets.keys())).toEqual(["catalog-overlay-0", "catalog-overlay-1"]);
-        expect(Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.selectedCatalogId)).toEqual([1, 1]);
+        expect(Array.from(widgetsStore.catalogWidgets.keys()).map(id => catalogStore.widgetBindings.catalogOf(id))).toEqual([1, 1]);
+        catalogStore.catalogImageIds.clear();
     });
 
     test("recreates workspace widgets that are absent from the current layout", () => {
@@ -582,8 +594,8 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         const widgetStore = WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
         widgetStore.setWidgetId("catalog-widget-primary");
 
-        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-widget-primary", 2)).toBe(true);
-        expect(widgetStore.selectedCatalogId).toBe(2);
+        expect(restoreTables({"catalog-widget-primary": 20}, new Map([[20, 2]]))).toEqual([]);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
     });
 
     test("does not confuse a stable widget ID with another widget's runtime component ID", () => {
@@ -594,22 +606,27 @@ describe("WidgetsStore.setCatalogWidgetSelection", () => {
         stableWidget.setWidgetId("catalog-overlay-1");
         runtimeWidget.setWidgetId("catalog-widget-secondary");
 
-        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-1", 2)).toBe(true);
-        expect(stableWidget.selectedCatalogId).toBe(1);
-        expect(runtimeWidget.selectedCatalogId).toBe(2);
+        expect(catalogStore.widgetBindings.show("catalog-overlay-1", 2)).toBe(true);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(2);
 
-        expect(widgetsStore.setCatalogWidgetSelectionByWidgetId("catalog-overlay-1", 2)).toBe(true);
-        expect(stableWidget.selectedCatalogId).toBe(2);
+        expect(restoreTables({"catalog-overlay-1": 20}, new Map([[20, 2]]))).toEqual([]);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
     });
 
-    test("replaces a removed catalog in every widget that was showing it", () => {
+    test("replaces a closed catalog in every widget that was showing it", () => {
+        [1, 2].forEach(catalogFileId => {
+            catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
+            catalogStore.catalogImageIds.set(catalogFileId, 7);
+        });
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
         widgetsStore.getCatalogWidgetStore("catalog-overlay-1", 1);
 
-        widgetsStore.replaceCatalogWidgetSelection(1, 2);
+        catalogStore.widgetBindings.catalogClosed(1);
 
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(2);
+        catalogStore.catalogImageIds.clear();
     });
 
     test("keeps widget persistence IDs unique when a layout contains duplicates", () => {
@@ -642,8 +659,8 @@ describe("Catalog widget selection lifecycle", () => {
 
         catalogStore.resetActiveCatalogFile(7);
 
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(2);
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(2);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(2);
     });
 });
 
@@ -1136,15 +1153,16 @@ describe("Catalog plot component selection", () => {
         expect(catalogStore.widgetBindings.displayedForComponent("catalog-plot-component-0")?.widgetId).toBe("catalog-plot-0");
     });
 
-    test("moves onto whatever is left when the catalog it was showing is closed", () => {
+    test("shows no catalog when neither its image nor the active image has one left", () => {
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0");
         widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-1");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 5, "catalog-plot-0");
         catalogStore.widgetBindings.register("catalog-plot-component-0", 6, "catalog-plot-1");
 
-        catalogStore.widgetBindings.closeCatalog(5);
+        // Catalog 6 is on no image this plot could show, so it is not fallen back to.
+        catalogStore.widgetBindings.catalogClosed(5);
 
-        expect(catalogStore.widgetBindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(6);
+        expect(catalogStore.widgetBindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBeUndefined();
     });
 
     test("moves onto another loaded catalog even when it does not have a plot store yet", () => {
@@ -1154,7 +1172,7 @@ describe("Catalog plot component selection", () => {
         catalogStore.catalogProfileStores.set(5, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(6, CreateEmptyProfileStore());
 
-        catalogStore.widgetBindings.closeCatalog(5);
+        catalogStore.widgetBindings.catalogClosed(5);
 
         expect(catalogStore.widgetBindings.displayedForComponent("catalog-plot-component-0")?.catalogFileId).toBe(6);
     });
@@ -1184,19 +1202,19 @@ describe("CatalogStore widget selection", () => {
     });
 
     test("moves a widget left on a Restore fallback to the catalog a user selects a source in", () => {
-        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+        widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
 
-        expect(widgetsStore.updateCatalogWidgetSelection(9)).toBe("catalog-widget-0");
-        expect(widget.selectedCatalogId).toBe(9);
+        expect(catalogStore.widgetBindings.showInTable(9)).toBe("catalog-widget-0");
+        expect(catalogStore.widgetBindings.catalogOf("catalog-widget-0")).toBe(9);
     });
 
     test("resets an unavailable widget selection to the first active catalog", () => {
         [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 101));
-        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 99);
+        widgetsStore.getCatalogWidgetStore("catalog-widget-0", 99);
 
         catalogStore.resetActiveCatalogFile(101);
 
-        expect(widget.selectedCatalogId).toBe(7);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-widget-0")).toBe(7);
     });
 
     test("moves a widget onto a catalog the image still has when the one it showed is closed", () => {
@@ -1205,12 +1223,14 @@ describe("CatalogStore widget selection", () => {
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(103);
         jest.spyOn(CatalogWebGLService.Instance, "clearTexture").mockImplementation(jest.fn());
         jest.spyOn(AppStore.Instance.backendService, "closeCatalogFile").mockReturnValue(true);
-        const widget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+        catalogStore.catalogProfileStores.set(8, CreateEmptyProfileStore());
+        widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
 
         // Whether it is closed from this widget, another one, or by a Restore.
         catalogStore.close(7);
 
-        expect(widget.selectedCatalogId).toBe(8);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-widget-0")).toBe(8);
+        catalogStore.catalogProfileStores.delete(8);
     });
 
     test("closes nothing when the backend cannot be told", () => {
@@ -1237,12 +1257,12 @@ describe("CatalogStore widget selection", () => {
 
     test("preserves each widget selection when it remains active", () => {
         [7, 8].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 102));
-        const firstWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
-        const secondWidget = widgetsStore.getCatalogWidgetStore("catalog-widget-1", 8);
+        widgetsStore.getCatalogWidgetStore("catalog-widget-0", 7);
+        widgetsStore.getCatalogWidgetStore("catalog-widget-1", 8);
 
         catalogStore.resetActiveCatalogFile(102);
 
-        expect(firstWidget.selectedCatalogId).toBe(7);
-        expect(secondWidget.selectedCatalogId).toBe(8);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-widget-0")).toBe(7);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-widget-1")).toBe(8);
     });
 });

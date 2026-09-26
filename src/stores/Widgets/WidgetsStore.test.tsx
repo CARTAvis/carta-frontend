@@ -205,7 +205,7 @@ describe("WidgetsStore PV preview test ids", () => {
         const componentId = "catalog-plot-component-retained";
 
         CatalogStore.Instance.widgetBindings.register(componentId, 7, oldWidgetId);
-        CatalogStore.Instance.widgetBindings.closeCatalog(7);
+        CatalogStore.Instance.widgetBindings.catalogClosed(7);
 
         expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
 
@@ -218,13 +218,13 @@ describe("WidgetsStore PV preview test ids", () => {
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
 
         // Layout V2 named the catalog by the file ID of the session that saved it. Nothing is open
-        // here, so the widget falls back to catalog 1, and the section it was left on has to follow
-        // it there rather than stay filed under the ID being replaced.
+        // here, so the widget shows no catalog, and the section it was left on waits for whichever
+        // catalog it shows next rather than stay filed under the ID being replaced.
         (widgetsStore as any).addWidgetByType("catalog-overlay", {catalogFileId: 3, settingsTabId: CatalogSettingsTabs.ORIENTATION}, "catalog-overlay-0");
 
         const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0")!;
-        expect(widgetStore.selectedCatalogId).toBe(1);
-        expect(widgetStore.settingsTabId).toBe(CatalogSettingsTabs.ORIENTATION);
+        expect(CatalogStore.Instance.widgetBindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+        expect(widgetStore.settingsTabFor(5)).toBe(CatalogSettingsTabs.ORIENTATION);
     });
 
     test("clears the catalog widget store when a docked catalog tab is closed", () => {
@@ -265,9 +265,8 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
         widgetsStore.reloadFloatingCatalogWidget();
 
-        const [widgetStore] = Array.from(widgetsStore.catalogWidgets.values());
-        expect(widgetStore.selectedCatalogId).toBe(1);
-        expect(catalogStore.catalogProfileStores.has(widgetStore.selectedCatalogId)).toBe(true);
+        const [componentId] = Array.from(widgetsStore.catalogWidgets.keys());
+        expect(catalogStore.widgetBindings.catalogOf(componentId)).toBe(1);
     });
 
     test("prefers a loaded catalog of the active image", () => {
@@ -281,8 +280,8 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
         widgetsStore.reloadFloatingCatalogWidget();
 
-        const [widgetStore] = Array.from(widgetsStore.catalogWidgets.values());
-        expect(widgetStore.selectedCatalogId).toBe(3);
+        const [componentId] = Array.from(widgetsStore.catalogWidgets.keys());
+        expect(catalogStore.widgetBindings.catalogOf(componentId)).toBe(3);
     });
 
     test("leaves the widget without a catalog when none is loaded", () => {
