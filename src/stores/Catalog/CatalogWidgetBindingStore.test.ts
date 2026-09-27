@@ -195,9 +195,46 @@ describe("CatalogWidgetBindingStore", () => {
             openCatalogs({7: [3]}, 7);
             bindings.show("catalog-plot-component-0", 3);
 
+            // The plot kept for no catalog becomes the new catalog's, rather than a second one.
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 3, widgetId: unbound?.widgetId});
+        });
+
+        test("shows a catalog opened on the image in front on a plot tab a layout brought back before any catalog was open", () => {
+            openCatalogs({}, 7);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.registerRestored("catalog-plot-component-0", "catalog-plot-0");
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: undefined, widgetId: "catalog-plot-0"});
+
+            openCatalogs({7: [1]}, 7);
+            bindings.catalogOpened(1, true);
+
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 1, widgetId: "catalog-plot-0"});
+        });
+
+        test("moves a plot tab off another image's catalog onto one opened on the image in front", () => {
+            openCatalogs({7: [1]}, 8);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            openCatalogs({8: [2]}, 8);
+            bindings.catalogOpened(2, true);
+
             const shown = bindings.displayedForComponent("catalog-plot-component-0");
-            expect(shown?.catalogFileId).toBe(3);
-            expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.Histogram);
+            expect(shown?.catalogFileId).toBe(2);
+            expect(widgets.catalogPlotWidgets.get(shown?.widgetId ?? "")?.plotType).toBe(CatalogPlotType.D2Scatter);
+            // What it was drawing from catalog 1 is kept for when it goes back to it.
+            expect(widgets.catalogPlotWidgets.has("catalog-plot-0")).toBe(true);
+        });
+
+        test("leaves a plot tab alone for a catalog opened on an image not in front", () => {
+            openCatalogs({7: [1]}, 7);
+            widgets.addCatalogPlotWidget(plot, "catalog-plot-0");
+            bindings.register("catalog-plot-component-0", 1, "catalog-plot-0");
+
+            openCatalogs({8: [2]}, 7);
+            bindings.catalogOpened(2, true);
+
+            expect(bindings.catalogOf("catalog-plot-component-0")).toBe(1);
         });
 
         test("moves a table onto the first catalog left on the same image", () => {

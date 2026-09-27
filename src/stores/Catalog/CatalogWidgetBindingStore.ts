@@ -110,7 +110,11 @@ export class CatalogWidgetBindingStore {
         return componentId;
     };
 
-    /** A newly opened catalog is shown in a table widget, giving it one of its own if none exists. */
+    /**
+     * A newly opened catalog is shown in a table widget, giving it one of its own if none exists. One
+     * opened on the image in front is also shown by every plot tab showing no catalog of that image,
+     * as it would be on changing to that image.
+     */
     @action catalogOpened = (catalogFileId: number, isFirstOnImage: boolean): void => {
         if (isFirstOnImage) {
             // Every table moves to a new image's first catalog.
@@ -118,6 +122,15 @@ export class CatalogWidgetBindingStore {
         }
         if (this.showInTable(catalogFileId) === undefined) {
             this.widgets().createFloatingCatalogWidget(catalogFileId);
+        }
+
+        const inFront = new Set(this.catalogs.activeCatalogFiles);
+        if (inFront.has(catalogFileId)) {
+            this.plots.forEach((state, componentId) => {
+                if (state.activeCatalogFileId === undefined || !inFront.has(state.activeCatalogFileId)) {
+                    this.showOnPlot(componentId, state, catalogFileId);
+                }
+            });
         }
     };
 
@@ -294,6 +307,15 @@ export class CatalogWidgetBindingStore {
     @action private showOnPlot(componentId: string, state: CatalogPlotState, catalogFileId: number | undefined, plotType = this.plotTypeOf(state)) {
         state.setActiveCatalogFileId(catalogFileId);
         if (state.plotFor(catalogFileId) !== undefined) {
+            return;
+        }
+        // A plot the tab keeps for no catalog -- one a Layout brought back before any catalog was
+        // open, or one left behind when its last catalog closed -- becomes this catalog's own, so
+        // that what it keeps for the tab is not stranded behind a new, empty one.
+        const unboundWidgetId = state.plotFor(undefined);
+        if (catalogFileId !== undefined && unboundWidgetId !== undefined) {
+            state.plotWidgetIds.delete(UNBOUND_PLOT_KEY);
+            this.register(componentId, catalogFileId, unboundWidgetId);
             return;
         }
         if (plotType === undefined) {
