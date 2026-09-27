@@ -1039,6 +1039,34 @@ describe("CatalogStore request lifecycle", () => {
         expect(displayStore.hasPlottedImageOverlay).toBe(true);
     });
 
+    test("takes a drawn overlay off the image, and out of what a workspace saves, when a filter is applied", () => {
+        const profileStore = openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        displayStore.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS);
+        profileStore.setColumnFilter("> 1", "FLUX");
+        const clearPositions = jest.spyOn(catalogStore, "clearImageCoordsData");
+
+        catalogStore.requestFilteredRows(catalogFileId);
+
+        // The filtered rows are asked for as a table update, which draws nothing.
+        expect(sendFilter).toHaveBeenCalledTimes(1);
+        expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
+        expect(clearPositions).toHaveBeenCalledWith(catalogFileId);
+        expect(displayStore.hasPlottedImageOverlay).toBe(false);
+        expect(displayStore.toConfig().imageOverlay).toBeUndefined();
+    });
+
+    test("takes a drawn overlay off the image, and out of what a workspace saves, when the sort order changes", () => {
+        openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        displayStore.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS);
+
+        catalogStore.requestSortedRows(catalogFileId, "FLUX", CARTA.SortingType.Descending);
+
+        expect(displayStore.hasPlottedImageOverlay).toBe(false);
+        expect(displayStore.toConfig().imageOverlay).toBeUndefined();
+    });
+
     test("clears positions when column controls name axes but no overlay is drawn", () => {
         const profileStore = openCatalog();
         const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;

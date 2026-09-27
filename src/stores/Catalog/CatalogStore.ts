@@ -150,7 +150,7 @@ export class CatalogStore {
 
         this.clearSelectedRows(profileStore, displayStore);
         if (!this.shouldPreserveImageOverlayDuringColumnUpdate(profileStore, displayStore)) {
-            this.clearImageCoordsData(catalogFileId);
+            this.removeImageOverlay(catalogFileId);
         }
         if (!profileStore.isFileBasedCatalog) {
             profileStore.resetFilterRequest(profileStore.getUserFilters());
@@ -176,7 +176,7 @@ export class CatalogStore {
             return;
         }
         this.clearSelectedRows(profileStore, this.getCatalogDisplayStore(catalogFileId));
-        this.clearImageCoordsData(catalogFileId);
+        this.removeImageOverlay(catalogFileId);
         profileStore.setSortingInfo(columnName, sortingType);
         if (profileStore.isFileBasedCatalog) {
             profileStore.resetFilterRequest();
@@ -457,6 +457,16 @@ export class CatalogStore {
             this.catalogCounts.set(fileId, Math.max(this.catalogCounts.get(fileId) ?? 0, startIndex + plottedXData.length));
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
+    }
+
+    /**
+     * Take a catalog's overlay off its image until it is plotted again. Unlike clearing its positions
+     * to redraw them, this also stops it being recorded as drawn, which a Workspace would otherwise
+     * save and a restore draw again.
+     */
+    @action private removeImageOverlay(catalogFileId: number): void {
+        this.clearImageCoordsData(catalogFileId);
+        this.getCatalogDisplayStore(catalogFileId)?.clearPlottedImageOverlayState();
     }
 
     @action clearImageCoordsData(fileId: number) {
