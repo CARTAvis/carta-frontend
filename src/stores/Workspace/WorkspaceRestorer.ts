@@ -439,7 +439,8 @@ export class WorkspaceRestorer {
 
             const completion = this.appStore.catalogStore.restoreCatalogFromWorkspace(catalogFileId, {
                 overlay: shouldRestoreOverlay ? imageOverlay : undefined,
-                selection: catalogInfo.selection
+                selection: catalogInfo.selection,
+                loadedRows: catalogInfo.tableConfig?.loadedRows
             });
             return {catalogInfo, catalogFileId, description, rowFailure, completion};
         } catch (err) {

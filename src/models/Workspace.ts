@@ -149,6 +149,11 @@ export interface WorkspaceCatalogTableConfig {
     displayedColumns?: string[];
     /** Maximum number of rows requested for the catalog table and image overlay. */
     maxRows?: number;
+    /**
+     * How many rows of the table's query a file catalog had loaded, by scrolling its table or
+     * plotting it, which its plots are drawn from. An online catalog holds all of its rows.
+     */
+    loadedRows?: number;
     /** User-entered filters and widths, keyed by catalog column name. */
     columnSettings?: {[columnName: string]: WorkspaceCatalogColumnConfig};
     sorting?: WorkspaceCatalogSortingConfig;

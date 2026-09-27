@@ -688,6 +688,20 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         expect(store.displayedColumnHeaders.map(header => header.name)).toEqual(["Name"]);
         expect(store.toTableConfig().displayedColumns).toEqual(["Name"]);
     });
+
+    test("saves how many rows a file catalog has loaded, which its plots are drawn from", () => {
+        const store = createProfileStore();
+        store.setNumVisibleRows(150);
+
+        expect(store.toTableConfig().loadedRows).toBe(150);
+    });
+
+    test("saves no loaded row count for an online catalog, which holds all of its rows", () => {
+        const catalogHeader = [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "RA"})];
+        const store = new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, new Map(), CatalogType.SIMBAD);
+
+        expect(store.toTableConfig().loadedRows).toBeUndefined();
+    });
 });
 
 describe("CatalogStore.restoreCatalogFromWorkspace", () => {
@@ -918,6 +932,30 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
         expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(125);
         expect(profileStore.displayedColumnHeaders.map(header => header.name)).toEqual(["RA"]);
+    });
+
+    test("asks again for the rows a catalog was scrolled or plotted to, not only the table's first chunk", () => {
+        const profileStore = openFileCatalog(200);
+
+        catalogStore.restoreCatalogFromWorkspace(1, {loadedRows: 150});
+
+        expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
+        expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
+        expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(150);
+        profileStore.updateCatalogData(new CARTA.CatalogFilterResponse({subsetDataSize: 150, subsetEndIndex: 150, requestEndIndex: 150, filterDataSize: 200, progress: 1}), new Map());
+        expect(profileStore.numVisibleRows).toBe(150);
+    });
+
+    test("asks for no more loaded rows than the table limit, and no fewer than its first chunk", () => {
+        const profileStore = openFileCatalog(200);
+        profileStore.setMaxRows(100);
+
+        catalogStore.restoreCatalogFromWorkspace(1, {loadedRows: 180});
+        // Read before the next restore: the profile sends the one request object it keeps.
+        expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(100);
+
+        catalogStore.restoreCatalogFromWorkspace(1, {loadedRows: 10});
+        expect(sendCatalogFilter.mock.calls[1][0].subsetDataSize).toBe(50);
     });
 
     test("restores the table alone when no overlay was saved", () => {

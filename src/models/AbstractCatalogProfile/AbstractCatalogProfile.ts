@@ -643,6 +643,7 @@ export abstract class AbstractCatalogProfileStore {
         return {
             displayedColumns: this.displayedColumnHeaders.map(header => header.name),
             maxRows: this.isFileBasedCatalog ? this.maxRows : undefined,
+            loadedRows: this.isFileBasedCatalog ? this.numVisibleRows : undefined,
             columnSettings: Object.keys(columnSettings).length ? columnSettings : undefined,
             sorting: this.sortingInfo.columnName && this.sortingInfo.sortingType !== null ? {columnName: this.sortingInfo.columnName, sortingType: this.sortingInfo.sortingType} : undefined
         };

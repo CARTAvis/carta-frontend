@@ -214,6 +214,14 @@ describe("WorkspaceRestorer", () => {
         expect(calls).toEqual(["appendCatalog", "applyTableConfig", "applyDisplayConfig", "restoreCatalogRows"]);
     });
 
+    test("asks for as many of a catalog's rows as it had loaded when it was saved", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({catalogs: [{...CATALOG, tableConfig: {maxRows: 400, loadedRows: 300}}]}));
+
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, expect.objectContaining({loadedRows: 300}));
+    });
+
     test("starts every catalog row request before waiting for the first stream", async () => {
         const {appStore, profileStore} = createSession();
         const secondCatalog = {id: 2, source: {type: "file" as const, filename: "other.vot"}, associatedImageId: 1};

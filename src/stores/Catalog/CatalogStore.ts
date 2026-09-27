@@ -19,6 +19,8 @@ type CatalogOverlayCoords = {
 export interface WorkspaceCatalogRestoreOptions {
     overlay?: WorkspaceCatalogImageOverlay;
     selection?: WorkspaceCatalogSelection;
+    /** How many rows of the table's query the catalog had loaded when it was saved. */
+    loadedRows?: number;
 }
 
 /** Whether row restoration was accepted, and how it ended (including an online catalog). */
@@ -675,7 +677,7 @@ export class CatalogStore {
     }
 
     private startCatalogRestoreRows(catalogFileId: number, options: WorkspaceCatalogRestoreOptions): boolean {
-        const {overlay, selection} = options;
+        const {overlay, selection, loadedRows} = options;
 
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         if (!profileStore) {
@@ -718,6 +720,11 @@ export class CatalogStore {
         if (selection) {
             const searchRows = Math.min(profileStore.catalogInfo.dataSize, selection.searchRows ?? profileStore.maxRows);
             filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, searchRows);
+        }
+        if (typeof loadedRows === "number" && Number.isFinite(loadedRows)) {
+            // The rows it was scrolled or plotted to, which its plots were drawn from, not only the
+            // table's first chunk. The table limit still bounds them.
+            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, Math.min(profileStore.maxRows, profileStore.catalogInfo.dataSize, Math.max(0, Math.floor(loadedRows))));
         }
         if (overlay) {
             // The table limit controls the number of visible rows, but the overlay may need more
