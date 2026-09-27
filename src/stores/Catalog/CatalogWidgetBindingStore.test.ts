@@ -1,7 +1,19 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
-import {AppStore, CatalogStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
+import {CatalogOverlay, CatalogPlotType, PreferenceKeys, WorkspaceItemKind} from "enums";
+import {AppStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
+
+// Opening a catalog with no table widget gives it one, and with it the display state that chooses
+// its overlay axes, which these tests' catalogs carry nothing to choose from. Choosing is covered by
+// CatalogDisplayStoreAxes.test.ts.
+let shouldAutoSelectOriginally: boolean;
+beforeAll(() => {
+    shouldAutoSelectOriginally = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, false);
+});
+afterAll(() => {
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, shouldAutoSelectOriginally);
+});
 
 describe("CatalogWidgetBindingStore", () => {
     const catalogs = CatalogStore.Instance;
