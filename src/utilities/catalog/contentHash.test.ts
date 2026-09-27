@@ -104,6 +104,24 @@ describe("hashCatalogContent", () => {
         expect(resolveCatalogSelection(mixedCaseHeaders, mixedCaseData, selection!)).toEqual([0]);
     });
 
+    test("keeps a selected row that a column the table stopped showing never loaded", () => {
+        // NAME was hidden after the first two rows arrived, so it holds only those.
+        const partlyLoaded = catalogData([1, 2, 3, 4], [5, 6, 7, 8], ["a", "b"]);
+
+        const selection = fingerprintCatalogSelection(headers, partlyLoaded, [0, 3]);
+
+        expect(selection?.columns).toEqual(["DEC", "RA"]);
+        expect(selection?.rowHashes).toHaveLength(2);
+        expect(selection?.searchRows).toBe(4);
+        expect(resolveCatalogSelection(headers, catalogData([1, 2, 3, 4], [5, 6, 7, 8], ["a", "b", "c", "d"]), selection!)).toEqual([0, 3]);
+    });
+
+    test("still names rows by every column when each holds all the selected rows", () => {
+        const selection = fingerprintCatalogSelection(headers, catalogData([1, 2, 3, 4], [5, 6, 7, 8], ["a", "b"]), [1]);
+
+        expect(selection?.columns).toEqual(["DEC", "NAME", "RA"]);
+    });
+
     test("cannot resolve a selection when an identifying column is absent", () => {
         const selection = fingerprintCatalogSelection(headers, catalogData([1, 2], [3, 4], ["a", "b"]), [0]);
         const missingNameColumn = catalogData([1, 2], [3, 4], ["a", "b"]);

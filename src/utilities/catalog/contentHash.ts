@@ -122,12 +122,20 @@ function hashCatalogRow(headers: Array<CARTA.CatalogHeader>, catalogData: Map<nu
 }
 
 export function fingerprintCatalogSelection(catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, rowIndices: number[]): CatalogRowSelectionFingerprint | undefined {
-    const headers = catalogColumns(catalogHeader, catalogData);
+    const rowsHeld = (header: CARTA.CatalogHeader) => catalogData.get(header.columnIndex)?.data?.length ?? 0;
+    const allHeaders = catalogColumns(catalogHeader, catalogData);
+    const mostRowsHeld = allHeaders.reduce((most, header) => Math.max(most, rowsHeld(header)), 0);
+    const validIndices = rowIndices.filter(index => Number.isInteger(index) && index >= 0 && index < mostRowsHeld);
+    const rowsNeeded = validIndices.reduce((most, index) => Math.max(most, index + 1), 0);
+
+    // A column only tells rows apart as far as it holds them. One the table has stopped showing
+    // keeps only the rows it held then, however many the others have gone on to load, so a row is
+    // named by the columns that hold every selected one.
+    const headers = allHeaders.filter(header => rowsHeld(header) >= rowsNeeded);
     if (!headers.length) {
         return undefined;
     }
-    const rowCount = Math.min(...headers.map(header => catalogData.get(header.columnIndex)?.data?.length ?? 0));
-    const validIndices = rowIndices.filter(index => Number.isInteger(index) && index >= 0 && index < rowCount);
+    const rowCount = Math.min(...headers.map(rowsHeld));
     return {columns: headers.map(header => header.name as string), rowHashes: validIndices.map(index => hashCatalogRow(headers, catalogData, index)), searchRows: rowCount};
 }
 
