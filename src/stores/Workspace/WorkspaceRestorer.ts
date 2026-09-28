@@ -399,6 +399,14 @@ export class WorkspaceRestorer {
         }
     }
 
+    /** The columns the saved plots of one catalog are drawn from. */
+    private plotColumnsOf(workspaceCatalogId: number): string[] {
+        return Object.values(this.workspace.catalogWidgets ?? {})
+            .filter(config => config.type === "catalog-plot" && config.catalogId === workspaceCatalogId)
+            .flatMap(config => [config.xColumnName, config.yColumnName, config.statisticColumnName])
+            .filter((columnName): columnName is string => typeof columnName === "string");
+    }
+
     /**
      * Put one catalog's saved state back and ask the backend for the rows it names.
      *
@@ -427,6 +435,9 @@ export class WorkspaceRestorer {
             // display mapping is invalid, so a bad overlay cannot prevent valid rows from
             // being restored.
             profileStore?.applyTableConfig(catalogInfo.tableConfig);
+            // A saved plot can be drawn from a column the table has since hidden. Its rows are asked
+            // for with the table's, or the plot comes back empty; the column stays hidden.
+            profileStore?.ensureColumnsRequested(this.plotColumnsOf(catalogInfo.id));
 
             if (catalogInfo.displayConfig) {
                 const result = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId)?.applyConfig(catalogInfo.displayConfig);

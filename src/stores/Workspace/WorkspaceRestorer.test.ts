@@ -45,7 +45,8 @@ function createSession() {
         getOriginIndices: jest.fn((indices: number[]) => indices),
         setSelectedPointIndices: jest.fn(),
         setCatalogCoordinateSystem: jest.fn(),
-        applyTableConfig: jest.fn(() => calls.push("applyTableConfig"))
+        applyTableConfig: jest.fn(() => calls.push("applyTableConfig")),
+        ensureColumnsRequested: jest.fn()
     };
     const displayStore = {
         applyConfig: jest.fn((): {success: boolean; errors: string[]} => {
@@ -212,6 +213,25 @@ describe("WorkspaceRestorer", () => {
 
         expect(problems).toEqual([]);
         expect(calls).toEqual(["appendCatalog", "applyTableConfig", "applyDisplayConfig", "restoreCatalogRows"]);
+    });
+
+    test("asks for the columns its saved plots are drawn from, though the table hides them", async () => {
+        const {appStore, profileStore} = createSession();
+
+        await restore(
+            createWorkspace({
+                catalogs: [CATALOG, {...CATALOG, id: 2}],
+                catalogWidgets: {
+                    "plot-a": {type: "catalog-plot", catalogId: 1, xColumnName: "Fmag", yColumnName: "Bmag", statisticColumnName: "Vmag"},
+                    "plot-b": {type: "catalog-plot", catalogId: 2, xColumnName: "Other"},
+                    "table-a": {type: "catalog-overlay", catalogId: 1}
+                }
+            })
+        );
+
+        expect(profileStore.ensureColumnsRequested).toHaveBeenCalledWith(["Fmag", "Bmag", "Vmag"]);
+        // Asked for before the rows are, so that the rows carry them.
+        expect(profileStore.ensureColumnsRequested.mock.invocationCallOrder[0]).toBeLessThan(appStore.catalogStore.restoreCatalogFromWorkspace.mock.invocationCallOrder[0]);
     });
 
     test("asks for as many of a catalog's rows as it had loaded when it was saved", async () => {
