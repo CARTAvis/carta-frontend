@@ -71,12 +71,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action handleFileCloseClick = () => {
-        const catalogDisplayStore = this.displayStore;
         const catalogFileId = this.catalogFileId;
         if (catalogFileId !== undefined) {
-            if (!catalogDisplayStore) {
-                return;
-            }
             CatalogStore.Instance.close(catalogFileId);
         }
     };
