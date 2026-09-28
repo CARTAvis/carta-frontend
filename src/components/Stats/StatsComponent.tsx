@@ -101,7 +101,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
-    private static readonly NameColumnWidth = 90;
+    private static readonly NameColumnWidth = 110;
 
     constructor(props: WidgetProps) {
         super(props);
