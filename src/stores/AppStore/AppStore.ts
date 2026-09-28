@@ -2490,6 +2490,8 @@ export class AppStore {
             const isFatal = errorData.severity >= CARTA.ErrorSeverity.ERROR;
             const isCatalogError = errorData.tags?.some(tag => tag.toLowerCase().includes("catalog"));
             if (isFatal && isCatalogError) {
+                // By convention with the backend, an error tagged as a catalog's carries that
+                // catalog's file ID in its data field, which is how the failing restore is found.
                 const errorDataId = errorData.data?.trim();
                 const catalogFileId = errorDataId ? Number(errorDataId) : NaN;
                 if (Number.isInteger(catalogFileId) && catalogFileId >= 0) {
