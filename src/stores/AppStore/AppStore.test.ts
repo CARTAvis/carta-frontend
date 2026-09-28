@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType} from "enums";
 import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
@@ -510,6 +511,20 @@ describe("AppStore.saveWorkspace", () => {
         expect(appStore.alertStore.alertText).toContain("streaming.vot");
         expect(appStore.alertStore.alertText).not.toContain("loaded.vot");
         appStore.alertStore.dismissAlert();
+    });
+
+    test("refuses to save while a workspace is still being restored", async () => {
+        // A restore opens its images and catalogs one after another, so part of it may already be
+        // in the session while the rest is still on its way.
+        runInAction(() => (appStore.isLoadingWorkspace = true));
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toContain("workspace is still loading");
+        appStore.alertStore.dismissAlert();
+        runInAction(() => (appStore.isLoadingWorkspace = false));
     });
 
     test("refuses to save while a file is still being opened", async () => {

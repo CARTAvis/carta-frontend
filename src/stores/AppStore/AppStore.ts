@@ -2744,6 +2744,13 @@ export class AppStore {
             return false;
         }
 
+        // A workspace still being restored is only partly in the session: saving it now would write
+        // back less than was opened, without the user being told.
+        if (this.isLoadingWorkspace) {
+            this.alertStore.showAlert("Cannot save workspace while a workspace is still loading. Please wait for it to finish.");
+            return false;
+        }
+
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
