@@ -709,6 +709,35 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         expect(store.toTableConfig().loadedRows).toBe(150);
     });
 
+    test("saves the filter its rows were asked for with, not text still being edited", () => {
+        const store = createProfileStore();
+        store.setColumnFilter("> 2", "Name");
+        store.markFiltersApplied();
+
+        store.setColumnFilter("> 5", "Name");
+        store.setColumnFilter("> 1", "RA");
+
+        expect(store.toTableConfig().columnSettings).toEqual({Name: {filter: "> 2", width: undefined}});
+    });
+
+    test("saves a filter it was given back as the one its rows are asked for with", () => {
+        const store = createProfileStore();
+
+        store.applyTableConfig({columnSettings: {Name: {filter: "> 2"}}});
+
+        expect(store.toTableConfig().columnSettings).toEqual({Name: {filter: "> 2", width: undefined}});
+    });
+
+    test("saves no filter once its filters are reset", () => {
+        const store = createProfileStore();
+        store.setColumnFilter("> 2", "Name");
+        store.markFiltersApplied();
+
+        store.resetCatalogFilterRequest();
+
+        expect(store.toTableConfig().columnSettings).toBeUndefined();
+    });
+
     test("saves no loaded row count for an online catalog, which holds all of its rows", () => {
         const catalogHeader = [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "RA"})];
         const store = new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, new Map(), CatalogType.SIMBAD);
@@ -1066,6 +1095,8 @@ describe("CatalogStore request lifecycle", () => {
         expect(sendFilter.mock.calls[0][0].filterConfigs).toHaveLength(1);
         expect(profileStore.selectedPointIndices).toEqual([]);
         expect(displayStore.isShowingSelectedData).toBe(false);
+        // What a workspace saves is now the filter the rows were asked for with.
+        expect(profileStore.toTableConfig().columnSettings?.FLUX?.filter).toBe("> 1");
     });
 
     test("preserves a drawn overlay during a column-only refresh", () => {

@@ -152,6 +152,7 @@ export class CatalogStore {
         if (!this.shouldPreserveImageOverlayDuringColumnUpdate(profileStore, displayStore)) {
             this.removeImageOverlay(catalogFileId);
         }
+        profileStore.markFiltersApplied();
         if (!profileStore.isFileBasedCatalog) {
             profileStore.resetFilterRequest(profileStore.getUserFilters());
             return;

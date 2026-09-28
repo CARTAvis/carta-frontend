@@ -139,6 +139,11 @@ export abstract class AbstractCatalogProfileStore {
     @observable sortedIndexMap: number[] = [];
     @observable filterIndexMap: number[] = [];
     @observable isUpdateColumnMode: boolean = false;
+    /**
+     * Each column's filter text as the rows were last asked for with it. The text in the table is
+     * edited freely and only takes effect when the rows are asked for again, so the two can differ.
+     */
+    private appliedFilters = new Map<string, string>();
 
     /**
      * Shallow so that replacing a column marks the data as changed. Rows stream in a batch at a
@@ -632,9 +637,11 @@ export abstract class AbstractCatalogProfileStore {
     public toTableConfig(): WorkspaceCatalogTableConfig {
         const columnSettings: NonNullable<WorkspaceCatalogTableConfig["columnSettings"]> = {};
         for (const [columnName, header] of this.catalogControlHeader) {
-            if (header.filter || Number.isFinite(header.columnWidth)) {
+            // The filter the rows were asked for with, not text still being edited.
+            const filter = this.appliedFilters.get(columnName);
+            if (filter || Number.isFinite(header.columnWidth)) {
                 columnSettings[columnName] = {
-                    filter: header.filter || undefined,
+                    filter,
                     width: Number.isFinite(header.columnWidth) ? (header.columnWidth as number) : undefined
                 };
             }
@@ -678,6 +685,7 @@ export abstract class AbstractCatalogProfileStore {
         }
 
         this.catalogFilterRequest.filterConfigs = this.getUserFilters();
+        this.markFiltersApplied();
         this.catalogFilterRequest.sortColumn = this.sortingInfo.columnName;
         this.catalogFilterRequest.sortingType = this.sortingInfo.sortingType;
         this.catalogFilterRequest.columnIndices = this.columnIndices;
@@ -806,7 +814,18 @@ export abstract class AbstractCatalogProfileStore {
         controlHeaders.forEach((value, key) => {
             value.filter = "";
         });
+        this.appliedFilters.clear();
         this.filterDataSize = undefined;
+    }
+
+    /** Take the filter text in the table as what the rows are now being asked for with. */
+    @action markFiltersApplied() {
+        this.appliedFilters.clear();
+        this.catalogControlHeader.forEach((header, columnName) => {
+            if (header.filter) {
+                this.appliedFilters.set(columnName, header.filter);
+            }
+        });
     }
 
     private isInfinite(value: number) {
