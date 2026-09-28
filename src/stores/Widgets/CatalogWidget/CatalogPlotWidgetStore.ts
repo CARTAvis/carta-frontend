@@ -32,7 +32,6 @@ export interface CatalogPlotWidgetConfig {
     isLogScaleY?: boolean;
     nBinX?: number;
     isFittingEnabled?: boolean;
-    fittingRange?: {minVal: number; maxVal: number};
 }
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
@@ -75,8 +74,7 @@ export class CatalogPlotWidgetStore {
         statisticColumnName: this.statisticColumnName,
         isLogScaleY: this.isLogScaleY,
         nBinX: this.nBinX,
-        isFittingEnabled: this.isFittingEnabled,
-        fittingRange: this.minMaxX ?? undefined
+        isFittingEnabled: this.isFittingEnabled
     });
 
     /**
@@ -127,9 +125,6 @@ export class CatalogPlotWidgetStore {
         }
         if (typeof config.isFittingEnabled === "boolean") {
             this.isFittingEnabled = config.isFittingEnabled;
-        }
-        if (Number.isFinite(config.fittingRange?.minVal) && Number.isFinite(config.fittingRange?.maxVal)) {
-            this.minMaxX = config.fittingRange as {minVal: number; maxVal: number};
         }
     }
 

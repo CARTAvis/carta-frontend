@@ -369,8 +369,8 @@ export interface WorkspaceCatalogWidgetConfig {
     statisticColumnName?: string;
     isLogScaleY?: boolean;
     nBinX?: number;
+    /** Whether a linear fit is drawn. The fit itself is recomputed from the rows the plot shows. */
     isFittingEnabled?: boolean;
-    fittingRange?: {minVal: number; maxVal: number};
 }
 
 /**
@@ -460,19 +460,41 @@ export class WorkspaceConfig {
         return {...catalog, tableConfig: {displayedColumns, maxRows, columnSettings, sorting}, displayConfig};
     }
 
+    /**
+     * Workspaces written before a plot's linear fit was recomputed on showing it keep the range it
+     * was drawn over, which nothing reads any more.
+     */
+    private static upgradeCatalogWidgets(catalogWidgets: Workspace["catalogWidgets"]): Workspace["catalogWidgets"] {
+        if (!catalogWidgets || typeof catalogWidgets !== "object" || Array.isArray(catalogWidgets)) {
+            return catalogWidgets;
+        }
+        return Object.fromEntries(
+            Object.entries(catalogWidgets).map(([widgetId, config]) => {
+                if (!config || typeof config !== "object" || !("fittingRange" in config)) {
+                    return [widgetId, config];
+                }
+                const upgraded: WorkspaceCatalogWidgetConfig & {fittingRange?: unknown} = {...config};
+                delete upgraded.fittingRange;
+                return [widgetId, upgraded];
+            })
+        );
+    }
+
     /** Upgrade legacy fields on a runtime copy without modifying or persisting the stored workspace. */
     public static upgradeForRuntime(workspace: Workspace): Workspace {
         const catalogs = Array.isArray(workspace.catalogs)
             ? workspace.catalogs.map(catalog => (catalog && typeof catalog === "object" && !Array.isArray(catalog) ? WorkspaceConfig.upgradeCatalogTableConfig(catalog) : catalog))
             : workspace.catalogs;
+        const catalogWidgets = WorkspaceConfig.upgradeCatalogWidgets(workspace.catalogWidgets);
 
         if (!Array.isArray(workspace.files)) {
-            return {...workspace, catalogs};
+            return {...workspace, catalogs, catalogWidgets};
         }
 
         return {
             ...workspace,
             catalogs,
+            catalogWidgets,
             files: workspace.files.map(file => {
                 if (!file || typeof file !== "object" || Array.isArray(file)) {
                     return file;

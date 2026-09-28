@@ -186,7 +186,7 @@ describe("workspace schema 2", () => {
             selectedCatalogId: 2,
             catalogWidgets: {
                 "catalog-overlay-0": {type: "catalog-overlay", catalogId: 2, settingsTabs: {"2": 1}},
-                "catalog-plot-0": {type: "catalog-plot", catalogId: 3, xColumnName: "RA", yColumnName: "DEC", nBinX: 10, fittingRange: {minVal: 0, maxVal: 1}}
+                "catalog-plot-0": {type: "catalog-plot", catalogId: 3, xColumnName: "RA", yColumnName: "DEC", nBinX: 10, isFittingEnabled: true}
             }
         });
 
@@ -233,6 +233,19 @@ describe("workspace schema 2", () => {
 
         expect(validate(storedWorkspace)).toBe(false);
         expect(validate(WorkspaceConfig.upgradeForRuntime(storedWorkspace))).toBe(true);
+    });
+
+    test("accepts a plot that kept the range its fit was drawn over once it has been upgraded", () => {
+        const plot = {type: "catalog-plot", catalogId: 1, xColumnName: "RA", yColumnName: "DEC", isFittingEnabled: true};
+        const storedWorkspace = createWorkspace({catalogs: [catalog], catalogWidgets: {"catalog-plot-0": {...plot, fittingRange: {minVal: 0, maxVal: 1}}}}) as unknown as Workspace;
+
+        const runtimeWorkspace = WorkspaceConfig.upgradeForRuntime(storedWorkspace);
+
+        expect(validate(storedWorkspace)).toBe(false);
+        expect(validate(runtimeWorkspace)).toBe(true);
+        expect(runtimeWorkspace.catalogWidgets).toEqual({"catalog-plot-0": plot});
+        // The stored workspace is left as it was.
+        expect(storedWorkspace.catalogWidgets?.["catalog-plot-0"]).toHaveProperty("fittingRange");
     });
 });
 
