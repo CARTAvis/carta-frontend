@@ -252,3 +252,16 @@ describe("CatalogQueryComponent object resolution error", () => {
         expect(MOCK_CONFIG_STORE.setObjectQueryStatus).toHaveBeenNthCalledWith(2, false);
     });
 });
+
+describe("CatalogQueryComponent result size", () => {
+    test("clears the last query's result size when it is mounted, not when it is constructed", () => {
+        const resetResultSize: jest.Mock = jest.requireMock("stores").CatalogOnlineQueryStore.Instance.resetResultSize;
+        resetResultSize.mockClear();
+
+        const component = new CatalogQueryComponent({});
+        expect(resetResultSize).not.toHaveBeenCalled();
+
+        component.componentDidMount();
+        expect(resetResultSize).toHaveBeenCalledTimes(1);
+    });
+});

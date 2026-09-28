@@ -30,6 +30,10 @@ export class CatalogQueryComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentDidMount() {
+        // The result of a query made the last time the dialog was open is not this one's.
         CatalogOnlineQueryStore.Instance.resetResultSize();
     }
 
