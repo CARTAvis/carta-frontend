@@ -988,23 +988,53 @@ describe("CatalogStore request lifecycle", () => {
         const data = new Map<number, ProcessedColumnData>(names.map((name, index) => [index, {dataType: CARTA.ColumnType.Double, data: [index, index + 1]}]));
         const profileStore = new CatalogProfileStore({dataSize: 100, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "sources.vot"})}, catalogHeader, data, CatalogType.FILE);
         catalogStore.catalogProfileStores.set(catalogFileId, profileStore);
+        // Rows are only asked for a catalog on an image.
+        catalogStore.catalogImageIds.set(catalogFileId, image.frameInfo.fileId);
         catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
         return profileStore;
     }
+
+    const image = {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}, isValidWcs: false, wcsInfo: 0};
 
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.resetRequests("test setup");
         catalogStore.catalogProfileStores.clear();
+        catalogStore.catalogImageIds.clear();
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose());
         catalogStore.catalogDisplayStores.clear();
-        AppStore.Instance.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
+        AppStore.Instance.setActiveImage({type: ImageType.FRAME, store: image} as any);
+        jest.spyOn(AppStore.Instance, "getFrame").mockImplementation(fileId => (fileId === image.frameInfo.fileId ? image : undefined) as any);
         sendFilter = jest.spyOn(AppStore.Instance.backendService, "setCatalogFilterRequest").mockReturnValue(11);
     });
 
     afterEach(() => {
         AppStore.Instance.setActiveImage(null);
+        catalogStore.catalogImageIds.clear();
         catalogStore.resetRequests("test cleanup");
+    });
+
+    test("asks for a catalog's rows while no image is in front, as a restore can", () => {
+        const profileStore = openCatalog();
+        profileStore.setSubsetEndIndex(2);
+        profileStore.setLoadingDataStatus(false);
+        AppStore.Instance.setActiveImage(null);
+
+        catalogStore.requestMoreRows(catalogFileId);
+
+        expect(sendFilter).toHaveBeenCalledTimes(1);
+    });
+
+    test("asks for no rows of a catalog whose image is gone", () => {
+        const profileStore = openCatalog();
+        profileStore.setSubsetEndIndex(2);
+        profileStore.setLoadingDataStatus(false);
+        catalogStore.catalogImageIds.delete(catalogFileId);
+
+        catalogStore.requestMoreRows(catalogFileId);
+
+        expect(sendFilter).not.toHaveBeenCalled();
+        expect(profileStore.isLoadingData).toBe(false);
     });
 
     test("filters with hidden overlay columns while clearing the old selection", () => {

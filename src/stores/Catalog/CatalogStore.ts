@@ -98,7 +98,9 @@ export class CatalogStore {
     /** Send one catalog request and account for a send that could not start a stream. */
     private sendFilterRequest(catalogFileId: number, filter: CARTA.CatalogFilterRequest.$Properties): number | false {
         const appStore = AppStore.Instance;
-        if (!appStore.activeFrame) {
+        // The catalog's own image, not the one in front: a restore can ask for rows before any
+        // image is in front, and a catalog's rows are asked for whichever image is.
+        if (!this.frameOf(catalogFileId)) {
             this.catalogRequests.finish(catalogFileId, false, "The catalog request could not be sent");
             return false;
         }

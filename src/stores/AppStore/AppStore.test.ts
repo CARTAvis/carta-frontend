@@ -367,20 +367,27 @@ describe("AppStore.handleErrorStream", () => {
     const appStore = AppStore.Instance;
     const catalogStore = appStore.catalogStore;
 
+    const image = {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}, isValidWcs: false, wcsInfo: 0};
+
     beforeEach(() => {
         jest.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
-        appStore.setActiveImage({type: ImageType.FRAME, store: {frameInfo: {fileId: 10, fileInfo: {}}, restFreqStore: {customRestFreq: {}}}} as any);
+        catalogStore.catalogImageIds.clear();
+        appStore.setActiveImage({type: ImageType.FRAME, store: image} as any);
+        jest.spyOn(appStore, "getFrame").mockImplementation(fileId => (fileId === image.frameInfo.fileId ? image : undefined) as any);
         jest.spyOn(appStore.backendService, "setCatalogFilterRequest").mockReturnValue(1);
     });
 
     afterEach(() => {
         appStore.setActiveImage(null);
+        catalogStore.catalogImageIds.clear();
     });
 
     function addProfileStore(catalogFileId: number) {
         const profileStore = new CatalogProfileStore({dataSize: 10, directory: "", fileId: catalogFileId, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, [], new Map(), CatalogType.FILE);
         catalogStore.catalogProfileStores.set(catalogFileId, profileStore);
+        // Rows are only asked for a catalog on an image.
+        catalogStore.catalogImageIds.set(catalogFileId, image.frameInfo.fileId);
         return profileStore;
     }
 
