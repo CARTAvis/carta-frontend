@@ -255,16 +255,28 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
     });
 
-    test("keeps the first restored image in front after loading a catalog", async () => {
+    test("puts the image in front back before the catalogs open, so that it does not undo the restored widgets", async () => {
         const {appStore} = createSession();
-        appStore.appendCatalog.mockImplementation(() => {
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => {
             appStore.activeFrame = appStore.frames[1];
-            return Promise.resolve(10);
+            return null;
         });
 
-        await restore(createWorkspace({files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}], selectedFile: undefined, catalogs: [CATALOG]}));
+        await restore(
+            createWorkspace({
+                files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}],
+                selectedFile: 1,
+                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1]}],
+                catalogs: [CATALOG]
+            })
+        );
 
-        expect(appStore.appendCatalog).toHaveBeenCalled();
+        // A change of the image in front moves the catalog widgets onto its catalogs, and it takes
+        // effect when the restore next waits; after the widgets are restored it would undo them.
+        const lastFrontChange = Math.max(...appStore.updateActiveImageByFrame.mock.invocationCallOrder);
+        expect(lastFrontChange).toBeGreaterThan(appStore.imageViewConfigStore.createColorBlending.mock.invocationCallOrder[0]);
+        expect(lastFrontChange).toBeLessThan(appStore.appendCatalog.mock.invocationCallOrder[0]);
+        expect(appStore.catalogStore.widgetBindings.restore).toHaveBeenCalled();
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
     });
 

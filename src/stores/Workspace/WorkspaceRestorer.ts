@@ -109,6 +109,7 @@ export class WorkspaceRestorer {
         }
         this.configureImages();
         this.restoreColorBlending();
+        this.putFrontImageBack();
         yield* this.openCatalogs();
         if (!this.isCurrent) {
             return this.issues;
@@ -314,6 +315,18 @@ export class WorkspaceRestorer {
             }
 
             this.appStore.reorderFrame(this.appStore.imageViewConfigStore.imageNum - 1, imageListIndex, 1);
+        }
+    }
+
+    /**
+     * Rebuilding a colour-blended image puts it in front, so put the image chosen for the front back
+     * there. This has to happen before the catalogs open: a change of the image in front moves the
+     * catalog widgets onto that image's catalogs, and done after the widgets are restored it would
+     * undo them.
+     */
+    private putFrontImageBack(): void {
+        if (this.frontFrame) {
+            this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
     }
 
@@ -565,12 +578,6 @@ export class WorkspaceRestorer {
         // Sync up raster scaling once all images are loaded and configured
         if (this.appStore.rasterScalingReference) {
             this.appStore.rasterScalingReference.renderConfig.updateSiblings();
-        }
-
-        // Rebuilding colour-blended images and loading catalogs move the active image around, so put
-        // the one chosen for the front back there.
-        if (this.frontFrame) {
-            this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
     }
 
