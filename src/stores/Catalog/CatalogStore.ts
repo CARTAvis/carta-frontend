@@ -54,7 +54,7 @@ export class CatalogStore {
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
     /** Catalog file IDs held for catalogs that are still loading. */
-    private readonly pendingFileIds = new Set<number>();
+    private readonly pendingFileIds = observable.set<number>();
     /** Catalog file ID : the file ID of the image it is overlaid on, in the order catalogs were opened. */
     readonly catalogImageIds = observable.map<number, number>();
     /** Catalog plot binding and Workspace ID lifecycle. */
@@ -393,7 +393,7 @@ export class CatalogStore {
     }
 
     /** Whether a catalog is being opened: its file ID is held, but it is not in the session yet. */
-    get isOpeningCatalog(): boolean {
+    @computed get isOpeningCatalog(): boolean {
         return this.pendingFileIds.size > 0;
     }
 

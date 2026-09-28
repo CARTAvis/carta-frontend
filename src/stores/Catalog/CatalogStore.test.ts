@@ -242,6 +242,19 @@ describe("CatalogStore.open", () => {
         await expect(first).resolves.toBe(1);
     });
 
+    test("tells whatever is watching when a catalog starts and stops being opened", async () => {
+        const seen: boolean[] = [];
+        const dispose = autorun(() => seen.push(catalogStore.isOpeningCatalog));
+        let finish!: () => void;
+        const opening = open(id => new Promise(resolve => (finish = () => resolve(rowsFor(id)))));
+
+        finish();
+        await opening;
+        dispose();
+
+        expect(seen).toEqual([false, true, false]);
+    });
+
     test("skips the IDs of catalogs that are open", async () => {
         catalogStore.catalogProfileStores.set(1, rowsFor(1));
 
