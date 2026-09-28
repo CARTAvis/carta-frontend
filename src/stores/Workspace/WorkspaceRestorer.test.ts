@@ -85,7 +85,10 @@ function createSession() {
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
         setTimeSeriesMember: jest.fn(),
-        updateActiveImageByFrame: jest.fn(),
+        activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
+        updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
+            appStore.activeFrame = frame;
+        }),
         reorderFrame: jest.fn(),
         spatialReference: undefined,
         spectralReference: undefined,
@@ -213,6 +216,23 @@ describe("WorkspaceRestorer", () => {
 
         expect(problems).toEqual([]);
         expect(calls).toEqual(["appendCatalog", "applyTableConfig", "applyDisplayConfig", "restoreCatalogRows"]);
+    });
+
+    test("puts the image the workspace was saved with in front", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}], selectedFile: 2}));
+
+        expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[1].frameInfo.fileId);
+    });
+
+    test("puts the first restored image in front when the one saved in front is not back", async () => {
+        const {appStore} = createSession();
+
+        // A generated image was in front when it was saved, so the workspace names none.
+        await restore(createWorkspace({files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}], selectedFile: undefined}));
+
+        expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
     });
 
     test("asks for the columns its saved plots are drawn from, though the table hides them", async () => {

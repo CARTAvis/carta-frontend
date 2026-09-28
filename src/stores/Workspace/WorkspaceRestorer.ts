@@ -250,6 +250,15 @@ export class WorkspaceRestorer {
 
             this.restoreRegions(frame, fileInfo);
         }
+
+        // The image saved in front may not be back: it could not be opened, or it was a generated
+        // image the workspace does not carry. A session with images open has one in front.
+        if (!this.appStore.activeFrame) {
+            const firstFrame = (this.workspace.files ?? []).map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
+            if (firstFrame) {
+                this.appStore.updateActiveImageByFrame(firstFrame);
+            }
+        }
     }
 
     /** Regions are only the image's own while it is not matched to another one. */
