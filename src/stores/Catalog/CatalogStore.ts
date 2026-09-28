@@ -40,8 +40,6 @@ function getPlottedOverlayColumns(displayStore: CatalogDisplayStore | undefined)
 }
 
 export class CatalogStore {
-    /** Sentinel used while a restored plot is waiting for a catalog from the current session. */
-
     private static staticInstance: CatalogStore;
 
     public static get Instance() {

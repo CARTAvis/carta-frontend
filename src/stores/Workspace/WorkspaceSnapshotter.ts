@@ -311,9 +311,8 @@ export class WorkspaceSnapshotter {
      * Stage 5: the arrangement the session is showing.
      *
      * A workspace carries its own copy, so that reopening it brings back the widgets showing its
-     * images and catalogs without depending on a separately saved layout. Captured after the
-     * catalogs, the way the restorer applies it after loading them, so that the widget settings a
-     * layout holds name catalogs this workspace has already captured.
+     * images and catalogs without depending on a separately saved layout. The layout names no
+     * catalog: which catalog a table or plot widget shows is kept in `catalogWidgets` instead.
      */
     private captureLayout(): void {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();

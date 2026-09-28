@@ -335,10 +335,6 @@ export class CatalogDisplayStore {
     private readonly pendingClipRestore = new Map<ClipGroup, ClipRestore>();
     /** Ranges are accumulated as file-based catalog rows arrive in chunks. */
     private readonly columnRangeCache = new Map<string, ColumnRangeCache>();
-    /** Layout display settings waiting for the catalog data they validate against. */
-    /** Result from the most recent attempt to apply the pending layout config. */
-    /** Request that is fetching the data needed by the pending layout config. */
-    /** Number of column-fetch attempts made for the current deferred config. */
 
     constructor(catalogFileId: number) {
         this.catalogFileId = catalogFileId;
