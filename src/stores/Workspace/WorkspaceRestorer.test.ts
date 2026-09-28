@@ -235,6 +235,39 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
     });
 
+    test("keeps the first restored image in front after rebuilding a colour-blended image", async () => {
+        const {appStore} = createSession();
+        // A new colour-blended image is put in front, and the image in front is then its base.
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => {
+            appStore.activeFrame = appStore.frames[1];
+            return null;
+        });
+
+        await restore(
+            createWorkspace({
+                files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}],
+                selectedFile: undefined,
+                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1]}]
+            })
+        );
+
+        expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalled();
+        expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
+    test("keeps the first restored image in front after loading a catalog", async () => {
+        const {appStore} = createSession();
+        appStore.appendCatalog.mockImplementation(() => {
+            appStore.activeFrame = appStore.frames[1];
+            return Promise.resolve(10);
+        });
+
+        await restore(createWorkspace({files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}], selectedFile: undefined, catalogs: [CATALOG]}));
+
+        expect(appStore.appendCatalog).toHaveBeenCalled();
+        expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
     test("asks for the columns its saved plots are drawn from, though the table hides them", async () => {
         const {appStore, profileStore} = createSession();
 

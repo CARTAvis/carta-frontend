@@ -59,6 +59,8 @@ export class WorkspaceRestorer {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
+    /** The image the session is left with in front once the restore is done. */
+    private frontFrame: FrameStore | undefined;
 
     constructor(
         private readonly workspace: Workspace,
@@ -253,11 +255,10 @@ export class WorkspaceRestorer {
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
         // image the workspace does not carry. A session with images open has one in front.
-        if (!this.appStore.activeFrame) {
-            const firstFrame = (this.workspace.files ?? []).map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
-            if (firstFrame) {
-                this.appStore.updateActiveImageByFrame(firstFrame);
-            }
+        const savedFrontFrame = this.workspace.selectedFile === undefined ? undefined : this.frameOf(this.workspace.selectedFile);
+        this.frontFrame = savedFrontFrame ?? (this.workspace.files ?? []).map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
+        if (!savedFrontFrame && this.frontFrame) {
+            this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
     }
 
@@ -566,10 +567,10 @@ export class WorkspaceRestorer {
             this.appStore.rasterScalingReference.renderConfig.updateSiblings();
         }
 
-        // Loading catalogs moves the active image around, so put the saved one back in front.
-        const selectedFrame = this.workspace.selectedFile === undefined ? undefined : this.frameOf(this.workspace.selectedFile);
-        if (selectedFrame) {
-            this.appStore.updateActiveImageByFrame(selectedFrame);
+        // Rebuilding colour-blended images and loading catalogs move the active image around, so put
+        // the one chosen for the front back there.
+        if (this.frontFrame) {
+            this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
     }
 
