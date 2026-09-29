@@ -220,6 +220,10 @@ describe("workspace schema 2", () => {
         expect(validate(createWorkspace({files: [{id: 0, filename: "image.fits"}]}))).toBe(false);
     });
 
+    test("rejects a catalog ID no catalog widget could name", () => {
+        expect(validate(createWorkspace({catalogs: [{...catalog, id: 0}]}))).toBe(false);
+    });
+
     test("rejects a catalog source that names neither a file nor a query", () => {
         expect(validate(createWorkspace({catalogs: [{id: 1, source: {type: "file"}}]}))).toBe(false);
     });
