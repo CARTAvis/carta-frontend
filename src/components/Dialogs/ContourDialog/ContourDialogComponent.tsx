@@ -11,11 +11,10 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
 import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {getColorForTheme, getHistogramPlotData, type HistogramPlotData, toExponential, toFixed} from "utilities";
 
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
@@ -150,42 +149,10 @@ export class ContourDialogComponent extends React.Component {
         );
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
-        const dataSource = AppStore.Instance.contourDataSource;
-        const histogram = dataSource?.renderConfig.contourHistogram;
-
-        if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
-            return null;
-        }
-
-        let minIndex = 0;
-        let maxIndex = histogram.bins.length - 1;
-
-        // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-        if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
-            minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-            minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-            maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-            maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
-        }
-
-        const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-        const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-        let yMin = histogram.bins[minIndex];
-        let yMax = yMin;
-
-        let values: Array<{x: number; y: number}> = [];
-        const N = maxIndex - minIndex;
-        if (N > 0 && !isNaN(N)) {
-            values = new Array(maxIndex - minIndex);
-
-            for (let i = minIndex; i <= maxIndex; i++) {
-                values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                yMin = Math.min(yMin, histogram.bins[i]);
-                yMax = Math.max(yMax, histogram.bins[i]);
-            }
-        }
-        return {values, xMin, xMax, yMin, yMax};
+    @computed get plotData(): HistogramPlotData | null {
+        const histogram = AppStore.Instance.contourDataSource?.renderConfig.contourHistogram;
+        const {isAutoScaledX, minX, maxX} = this.widgetStore;
+        return getHistogramPlotData(histogram, !isAutoScaledX && minX != null && maxX != null ? {min: minX, max: maxX} : undefined);
     }
 
     private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {

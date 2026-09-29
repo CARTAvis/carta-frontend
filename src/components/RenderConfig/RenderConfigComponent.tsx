@@ -8,11 +8,10 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
-import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
+import {getColorForTheme, getHistogramPlotData, type HistogramPlotData, scaleValue, toExponential, toFixed} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -54,51 +53,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return this.cachedWidgetStore;
     }
 
-    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            const histogram = frame.renderConfig.histogram;
-            if (!histogram) {
-                return null;
-            }
-            const bins = histogram.bins;
-            const firstBinCenter = histogram.firstBinCenter;
-            const binWidth = histogram.binWidth;
-
-            if (!bins || bins.length === 0 || !firstBinCenter || !binWidth) {
-                return null;
-            }
-
-            let minIndex = 0;
-            let maxIndex = bins.length - 1;
-
-            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
-                minIndex = Math.floor((this.widgetStore.minX - firstBinCenter) / binWidth);
-                minIndex = clamp(minIndex, 0, bins.length - 1);
-                maxIndex = Math.ceil((this.widgetStore.maxX - firstBinCenter) / binWidth);
-                maxIndex = clamp(maxIndex, 0, bins.length - 1);
-            }
-
-            const xMin = firstBinCenter + binWidth * minIndex;
-            const xMax = firstBinCenter + binWidth * maxIndex;
-            let yMin = bins[minIndex];
-            let yMax = yMin;
-
-            let values: Array<{x: number; y: number}> = [];
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
-                values = new Array(maxIndex - minIndex);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                    values[i - minIndex] = {x: firstBinCenter + binWidth * i, y: bins[i]};
-                    yMin = Math.min(yMin, bins[i]);
-                    yMax = Math.max(yMax, bins[i]);
-                }
-            }
-            return {values, xMin, xMax, yMin, yMax};
-        }
-        return null;
+    get plotData(): HistogramPlotData | null {
+        const histogram = AppStore.Instance.activeFrame?.renderConfig.histogram;
+        const {isAutoScaledX, minX, maxX} = this.widgetStore;
+        return getHistogramPlotData(histogram, !isAutoScaledX && minX != null && maxX != null ? {min: minX, max: maxX} : undefined);
     }
 
     constructor(props: WidgetProps) {
