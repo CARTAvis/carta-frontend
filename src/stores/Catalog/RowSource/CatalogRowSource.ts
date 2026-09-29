@@ -69,6 +69,16 @@ export interface CatalogRowSource {
     /** Whether the rows on their way are to be drawn over an image. */
     readonly isLoadingForOverlay: boolean;
     readonly activeQuery: CatalogActiveQuery;
+    /**
+     * The order the table shows rows in, as indices into {@link data}, when the rows are sorted
+     * here. Undefined when they arrive in the order they are shown.
+     */
+    readonly tableOrder: number[] | undefined;
+
+    /** The rows of {@link data} that these table rows show. */
+    getSortedIndices(tableRows: number[]): number[];
+    /** The table rows that show these rows of {@link data}. */
+    getOriginIndices(dataRows: number[]): number[];
 
     setRowLimit(rowLimit: number): void;
     /** Set the columns later requests ask for, until one is given its own. */

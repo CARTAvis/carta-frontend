@@ -68,6 +68,18 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.loadedRowCount < available && this.loadedRowCount < this.rowLimit;
     }
 
+    get tableOrder(): undefined {
+        return undefined;
+    }
+
+    getSortedIndices(tableRows: number[]): number[] {
+        return tableRows;
+    }
+
+    getOriginIndices(dataRows: number[]): number[] {
+        return dataRows;
+    }
+
     @computed get isLoadingForOverlay(): boolean {
         return !this.isFetchingColumns && this.mode === CatalogUpdateMode.ViewUpdate;
     }
