@@ -192,9 +192,14 @@ export class PendingRequestTracker<TKey> {
         pending.resolve({success: isSuccess, message});
     }
 
-    /** End every wait, for a session that is not going to answer them. */
+    /**
+     * Give up on every request, for a session that is not going to answer them.
+     *
+     * That is every subject still being answered, not only those someone is waiting for: most
+     * requests are sent without a wait, and nothing else will put back what they are holding.
+     */
     public failAll(message: string): void {
-        for (const key of [...this.pending.keys()]) {
+        for (const key of new Set([...this.pending.keys(), ...this.latestRequestIds.keys()])) {
             this.finish(key, false, message);
         }
     }

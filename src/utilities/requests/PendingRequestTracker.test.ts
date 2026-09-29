@@ -178,6 +178,19 @@ describe("PendingRequestTracker", () => {
         await expect(second).resolves.toEqual({success: false, message: "connection lost"});
     });
 
+    test("gives up on requests nothing was waiting for too, putting back what they were holding", () => {
+        // A request sent without a wait, as a scroll or a filter is.
+        tracker.attach(1, 10);
+        const waited = tracker.start(2);
+        tracker.attach(2, 11);
+
+        tracker.reset("connection lost");
+
+        expect(onFailure.mock.calls.map(([key]) => key).sort()).toEqual([1, 2]);
+        expect(tracker.accepts(1, 10)).toBe(false);
+        return expect(waited).resolves.toEqual({success: false, message: "connection lost"});
+    });
+
     test("has nothing to wait for when no request is in flight", async () => {
         await expect(tracker.wait(1)).resolves.toEqual({success: true});
     });

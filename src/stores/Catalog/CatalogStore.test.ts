@@ -1075,6 +1075,20 @@ describe("CatalogStore request lifecycle", () => {
         catalogStore.resetRequests("test cleanup");
     });
 
+    test("stops loading a catalog whose rows were being scrolled in when the connection is lost", () => {
+        const profileStore = openCatalog();
+        profileStore.setSubsetEndIndex(2);
+        profileStore.setLoadingDataStatus(false);
+        catalogStore.requestMoreRows(catalogFileId);
+        expect(profileStore.isLoadingData).toBe(true);
+
+        // Nothing waits for a scroll's rows, and the responses that would end it will never come.
+        catalogStore.resetRequests("The server connection was lost");
+
+        expect(profileStore.isLoadingData).toBe(false);
+        expect(catalogStore.streamingCatalogNames).toEqual([]);
+    });
+
     test("asks for a catalog's rows while no image is in front, as a restore can", () => {
         const profileStore = openCatalog();
         profileStore.setSubsetEndIndex(2);
