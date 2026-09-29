@@ -1,10 +1,10 @@
-import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {type CARTA} from "carta-protobuf";
+import {computed, makeObservable, observable} from "mobx";
 
 import {CatalogType} from "enums";
 import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
-import {type ControlHeader, PreferenceStore} from "stores";
-import {getInitIndexMap, getSortedIndexMap, type ProcessedColumnData} from "utilities";
+import {type ControlHeader, InMemoryRowSource, PreferenceStore} from "stores";
+import {type ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -13,14 +13,14 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.CatalogHeader>;
     @observable catalogControlHeader: Map<string, ControlHeader>;
-    @observable numVisibleRows: number;
+    readonly rows: InMemoryRowSource;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType) {
-        super(catalogType, catalogData);
+        super(catalogType);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
-        this.numVisibleRows = catalogInfo.dataSize;
+        this.rows = new InMemoryRowSource(catalogInfo.dataSize, catalogData, this);
 
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
         const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem?.system);
@@ -30,26 +30,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             equinox: coordinateSystem?.equinox || defaults.equinox,
             epoch: coordinateSystem?.epoch || defaults.epoch
         };
-        this.initSortedIndexMap();
-        this.initFilterIndexMap();
         makeObservable(this);
-    }
-
-    get updateRequestDataSize() {
-        return this.catalogFilterRequest;
-    }
-
-    // do not need infinite scroll for API data
-    get shouldUpdateData() {
-        return false;
-    }
-
-    get isLoadingOntoImage() {
-        return this.isLoadingData;
-    }
-
-    get maxRows() {
-        return this.numVisibleRows;
     }
 
     @computed get initCatalogControlHeader() {
@@ -72,106 +53,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return controlHeaders;
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
-        this.sortingInfo = {columnName, sortingType};
-        this.updateSortedIndexMap();
-    }
-
-    @action updateSortedIndexMap() {
-        this.sortedIndexMap = getSortedIndexMap(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
-    }
-
-    @action initSortedIndexMap() {
-        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
-    }
-
-    @action initFilterIndexMap() {
-        this.filterIndexMap = getInitIndexMap(this.catalogInfo.dataSize);
-    }
-
-    @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {
-        this.initFilterIndexMap();
-        filterConfigs?.forEach(filterConfig => {
-            const header = this.catalogControlHeader.get(filterConfig.columnName);
-            const dataIndex = header?.dataIndex;
-            if (dataIndex !== undefined && dataIndex > -1 && header?.display) {
-                const catalogColumn = this.catalogOriginalData.get(dataIndex);
-                switch (catalogColumn?.dataType) {
-                    case CARTA.ColumnType.String:
-                        const columnDataString = catalogColumn.data as string[];
-                        if (filterConfig.subString !== "") {
-                            this.filterIndexMap = this.filterIndexMap.filter(i => {
-                                return columnDataString[i]?.includes(filterConfig.subString);
-                            });
-                        }
-                        break;
-
-                    default:
-                        const columnDataNumber = catalogColumn?.data as [];
-                        this.filterIndexMap = this.filterColumnData(columnDataNumber, filterConfig);
-                        break;
-                }
-            }
-        });
-        this.numVisibleRows = this.filterIndexMap.length;
-        if (this.sortingInfo.columnName !== null && this.sortingInfo.sortingType !== null) {
-            this.updateSortedIndexMap();
-        }
-    }
-
-    @action filterColumnData = (catalogColumn: [], filterConfig: CARTA.FilterConfig): number[] => {
-        switch (filterConfig.comparisonOperator) {
-            case CARTA.ComparisonOperator.Equal:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] === filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.NotEqual:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] !== filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.Lesser:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] < filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.LessorOrEqual:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] <= filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.Greater:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] > filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.GreaterOrEqual:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] >= filterConfig.value;
-                });
-            case CARTA.ComparisonOperator.RangeOpen:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] > filterConfig.value && catalogColumn[i] < filterConfig.secondaryValue;
-                });
-            case CARTA.ComparisonOperator.RangeClosed:
-                return this.filterIndexMap.filter(i => {
-                    return catalogColumn[i] >= filterConfig.value && catalogColumn[i] <= filterConfig.secondaryValue;
-                });
-            default:
-                return [];
-        }
-    };
-
-    @action resetCatalogFilterRequest = () => {
-        this.numVisibleRows = this.catalogInfo.dataSize;
-        this.initSortedIndexMap();
-        this.initFilterIndexMap();
-        this.resetUserFilters();
-        this.sortingInfo.columnName = null;
-        this.sortingInfo.sortingType = null;
-    };
-
-    @action setMaxRows(maxRows: number) {
-        this.numVisibleRows = maxRows;
-    }
-
-    updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
-        console.log(catalogFilter, catalogData);
+    /** Every row is held, so the table only changes how many it shows. */
+    setMaxRows(maxRows: number) {
+        this.rows.setRowLimit(maxRows);
     }
 }
