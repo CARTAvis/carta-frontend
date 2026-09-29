@@ -26,6 +26,7 @@ export class StreamingRowSource implements CatalogRowSource {
     @observable.shallow private rows: Map<number, ProcessedColumnData>;
     /** Changes when a column object is updated without changing the shallow map itself. */
     @observable private dataVersion = 0;
+    @observable dataGeneration = 0;
     @observable visibleRowCount: number;
     /** How many rows of the Active Query's result have been loaded, which the next chunk starts from. */
     @observable loadedRowCount: number;
@@ -61,6 +62,10 @@ export class StreamingRowSource implements CatalogRowSource {
 
     get originalData(): Map<number, ProcessedColumnData> {
         return this.data;
+    }
+
+    get matchingRowCount(): number {
+        return this.filteredRowCount ?? this.dataSize;
     }
 
     @computed get canLoadMore(): boolean {
@@ -135,11 +140,15 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.buildRequest(this.nextRange());
     }
 
-    @action loadForOverlay(): CARTA.CatalogFilterRequest | undefined {
-        this.mode = CatalogUpdateMode.ViewUpdate;
+    @action loadForOverlay(shouldStartFromFirstRow = false): CARTA.CatalogFilterRequest | undefined {
         if (!this.canLoadMore) {
+            this.mode = CatalogUpdateMode.ViewUpdate;
             return undefined;
         }
+        if (shouldStartFromFirstRow) {
+            this.dropRows();
+        }
+        this.mode = CatalogUpdateMode.ViewUpdate;
         this.isStreaming = true;
         return this.buildRequest(this.nextRange());
     }
@@ -211,6 +220,7 @@ export class StreamingRowSource implements CatalogRowSource {
         if (!this.isFetchingColumns) {
             this.mode = CatalogUpdateMode.TableUpdate;
             this.rows.clear();
+            this.dataGeneration++;
             this.visibleRowCount = 0;
             this.loadedRowCount = 0;
         }

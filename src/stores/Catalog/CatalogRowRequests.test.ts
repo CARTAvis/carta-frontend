@@ -143,27 +143,27 @@ function rowRanges(data: ArrayLike<unknown> | undefined, column: number, length:
 function tableOf(profileStore: CatalogProfileStore) {
     const columns: {[name: string]: string} = {};
     COLUMN_NAMES.forEach((name, column) => {
-        const data = profileStore.catalogData.get(column)?.data;
-        columns[name] = rowRanges(data, column, profileStore.numVisibleRows);
+        const data = profileStore.rows.data.get(column)?.data as ArrayLike<unknown> | undefined;
+        columns[name] = rowRanges(data, column, profileStore.rows.visibleRowCount);
     });
     return {
-        visibleRows: profileStore.numVisibleRows,
-        loadedRows: profileStore.subsetEndIndex,
-        filteredRows: profileStore.filterDataSize,
-        progress: profileStore.progress,
-        isLoading: profileStore.isLoadingData,
-        isStreaming: profileStore.isUpdatingDataStream,
+        visibleRows: profileStore.rows.visibleRowCount,
+        loadedRows: profileStore.rows.loadedRowCount,
+        filteredRows: profileStore.rows.filteredRowCount,
+        progress: profileStore.rows.progress,
+        isLoading: profileStore.rows.isLoading,
+        isStreaming: profileStore.rows.isStreaming,
         columns
     };
 }
 
 /** Which of an online catalog's rows pass its filter, and the FLUX its table shows, row by row. */
 function onlineTableOf(profileStore: CatalogOnlineQueryProfileStore) {
-    const flux = profileStore.catalogData.get(2)?.data as number[];
+    const flux = profileStore.rows.data.get(2)?.data as number[];
     return {
-        visibleRows: profileStore.numVisibleRows,
-        rows: [...profileStore.filterIndexMap],
-        fluxShown: profileStore.sortedIndexMap.slice(0, profileStore.numVisibleRows).map(i => flux[i])
+        visibleRows: profileStore.rows.visibleRowCount,
+        rows: [...profileStore.rows.filterIndexMap],
+        fluxShown: profileStore.rows.tableOrder.slice(0, profileStore.rows.visibleRowCount).map(i => flux[i])
     };
 }
 
@@ -251,7 +251,7 @@ describe("file catalog rows", () => {
             {...INITIAL_REQUEST, columnIndices: [0, 1, 2, 3], subsetDataSize: 100, filterConfigs: [FLUX_ABOVE_ONE], imageBounds: NO_OVERLAY_AXES}
         ]);
         expect(tableOf(profileStore)).toEqual({visibleRows: 100, loadedRows: 100, filteredRows: 200, progress: 1, isLoading: false, isStreaming: false, columns: {RA: "0-99", DEC: "0-99", FLUX: "0-99", MAG: "0-99"}});
-        expect(profileStore.isUpdateColumnMode).toBe(false);
+        expect(profileStore.rows.isFetchingColumns).toBe(false);
     });
 
     test("a plot asks for every row it does not hold yet, and no chunk is asked for after it", () => {
@@ -280,7 +280,7 @@ describe("file catalog rows", () => {
 
         expect(sent[sent.length - 1].payload).toEqual(INITIAL_REQUEST);
         expect(tableOf(profileStore)).toEqual({visibleRows: 50, loadedRows: 50, filteredRows: 200, progress: 1, isLoading: false, isStreaming: false, columns: {RA: "0-49", DEC: "0-49", FLUX: "0-49", MAG: "-"}});
-        expect(profileStore.maxRows).toBe(DATA_SIZE);
+        expect(profileStore.rows.rowLimit).toBe(DATA_SIZE);
     });
 
     test("drawing an overlay asks for every row not yet loaded, and no chunk is asked for after it", () => {

@@ -281,7 +281,7 @@ export class WorkspaceSnapshotter {
 
             // Deliberately do not create display state while saving.
             const displayStore = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId);
-            const selectedDataIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+            const selectedDataIndices = profileStore.rows.getSortedIndices(profileStore.selectedPointIndices);
             // Too large a selection is left out whole, along with showing only the selected rows,
             // which would show nothing without it.
             const isSelectionTooLarge = selectedDataIndices.length > WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS;
@@ -292,7 +292,7 @@ export class WorkspaceSnapshotter {
                     message: `Could not save the selected rows of the catalog ${catalogInfo.fileInfo.name}: ${selectedDataIndices.length} rows are selected, more than the ${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS} a workspace keeps`
                 });
             }
-            const rowSelection = isSelectionTooLarge ? undefined : fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, selectedDataIndices);
+            const rowSelection = isSelectionTooLarge ? undefined : fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.rows.data, selectedDataIndices);
             const selection = rowSelection ? {...rowSelection, isShowingSelectedData: displayStore?.isShowingSelectedData || undefined} : undefined;
 
             catalogs.push({
@@ -304,7 +304,7 @@ export class WorkspaceSnapshotter {
                 tableConfig: profileStore.toTableConfig(),
                 // Only an online catalog is worth fingerprinting: it is queried again rather than
                 // stored, and it is the only kind that holds all of its rows in the session.
-                contentHash: profileStore.isFileBasedCatalog ? undefined : hashCatalogContent(profileStore.catalogHeader, profileStore.catalogOriginalData),
+                contentHash: profileStore.isFileBasedCatalog ? undefined : hashCatalogContent(profileStore.catalogHeader, profileStore.rows.originalData),
                 displayConfig: displayStore?.toConfig(),
                 selection: selection && (selection.rowHashes.length || selection.isShowingSelectedData) ? selection : undefined
             });

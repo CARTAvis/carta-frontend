@@ -2,14 +2,14 @@ import * as AST from "ast_wrapper";
 import type {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, WorkspaceItemKind} from "enums";
 import {type WorkspaceCatalogImageOverlay, type WorkspaceCatalogSelection} from "models";
 import {CatalogWebGLService, type StreamedMessage} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {CatalogWidgetBindingStore} from "stores/Catalog/CatalogWidgetBindingStore";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {CatalogAxisEligibility, type CatalogCoordinateSystem, getDegreesPerCatalogUnit, minMaxArray, PendingRequestTracker, ProtobufProcessing, type RequestOutcome, setAstCatalogSystem} from "utilities";
+import {CatalogAxisEligibility, type CatalogCoordinateSystem, getDegreesPerCatalogUnit, minMaxArray, PendingRequestTracker, type RequestOutcome, setAstCatalogSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -79,9 +79,7 @@ export class CatalogStore {
         timeoutMessage: "Timed out waiting for catalog data",
         supersededMessage: "The catalog restore was superseded",
         onFailure: catalogFileId => {
-            const profileStore = this.catalogProfileStores.get(catalogFileId);
-            profileStore?.setLoadingDataStatus(false);
-            profileStore?.setUpdatingDataStream(false);
+            this.catalogProfileStores.get(catalogFileId)?.rows.abandon();
         }
     });
 
@@ -125,14 +123,14 @@ export class CatalogStore {
 
     /** A column-only refresh must not erase the overlay that is already drawn. */
     private shouldPreserveImageOverlayDuringColumnUpdate(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, displayStore: CatalogDisplayStore): boolean {
-        if (!profileStore.isUpdateColumnMode || !displayStore.hasPlottedImageOverlay || displayStore.plottedImageOverlaySystem === undefined) {
+        if (!profileStore.rows.isFetchingColumns || !displayStore.hasPlottedImageOverlay || displayStore.plottedImageOverlaySystem === undefined) {
             return false;
         }
         const {plottedImageOverlayXAxis: xAxis, plottedImageOverlayYAxis: yAxis} = displayStore;
         if (xAxis === CatalogOverlay.NONE || yAxis === CatalogOverlay.NONE) {
             return false;
         }
-        const coords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, displayStore.plottedImageOverlaySystem);
+        const coords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.rows.data, displayStore.plottedImageOverlaySystem);
         return Boolean(coords.wcsX && coords.wcsY);
     }
 
@@ -143,7 +141,7 @@ export class CatalogStore {
         if (!profileStore || !displayStore) {
             return;
         }
-        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.isLoadingOntoImage || !profileStore.shouldUpdateTableView || !profileStore.hasFilter);
+        const shouldSkipRequest = !profileStore.rows.isFetchingColumns && (profileStore.isLoadingOntoImage || !profileStore.shouldUpdateTableView || !profileStore.hasFilter);
         if (shouldSkipRequest) {
             return;
         }
@@ -152,25 +150,35 @@ export class CatalogStore {
         if (!this.shouldPreserveImageOverlayDuringColumnUpdate(profileStore, displayStore)) {
             this.removeImageOverlay(catalogFileId);
         }
-        profileStore.markFiltersApplied();
-        if (!profileStore.isFileBasedCatalog) {
-            profileStore.resetFilterRequest(profileStore.getUserFilters());
-            return;
+        const request = profileStore.rows.applyFilters(profileStore.getTableFilters(), {xColumnName: displayStore.xAxis, yColumnName: displayStore.yAxis}, profileStore.columnIndices);
+        // Rows held here have been filtered already.
+        if (request) {
+            profileStore.updateTableStatus(false);
+            this.sendFilterRequest(catalogFileId, request);
         }
-
-        profileStore.updateTableStatus(false);
-        profileStore.resetFilterRequest();
-        const filter = profileStore.updateRequestDataSize;
-        if (filter.imageBounds) {
-            filter.imageBounds.xColumnName = displayStore.xAxis;
-            filter.imageBounds.yColumnName = displayStore.yAxis;
-        }
-        filter.filterConfigs = profileStore.getUserFilters();
-        filter.columnIndices = profileStore.columnIndices;
-        this.sendFilterRequest(catalogFileId, filter);
     }
 
-    /** Re-read a file catalog after the user changes the table's sort order. */
+    /** Ask again for the rows the table shows, with the columns it now shows, keeping the rows and the overlay. */
+    @action requestColumns(catalogFileId: number): void {
+        const profileStore = this.catalogProfileStores.get(catalogFileId);
+        const displayStore = this.getCatalogDisplayStore(catalogFileId);
+        if (!profileStore || !displayStore) {
+            return;
+        }
+        // Rows held here have every column already.
+        const request = profileStore.rows.fetchColumns(profileStore.getTableFilters(), {xColumnName: displayStore.xAxis, yColumnName: displayStore.yAxis}, profileStore.columnIndices);
+        if (!request) {
+            return;
+        }
+        this.clearSelectedRows(profileStore, displayStore);
+        if (!this.shouldPreserveImageOverlayDuringColumnUpdate(profileStore, displayStore)) {
+            this.removeImageOverlay(catalogFileId);
+        }
+        profileStore.updateTableStatus(false);
+        this.sendFilterRequest(catalogFileId, request);
+    }
+
+    /** Re-read a catalog after the user changes the table's sort order. */
     @action requestSortedRows(catalogFileId: number, columnName: string, sortingType: CARTA.SortingType | null): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         if (!profileStore) {
@@ -178,13 +186,9 @@ export class CatalogStore {
         }
         this.clearSelectedRows(profileStore, this.getCatalogDisplayStore(catalogFileId));
         this.removeImageOverlay(catalogFileId);
-        profileStore.setSortingInfo(columnName, sortingType);
-        if (profileStore.isFileBasedCatalog) {
-            profileStore.resetFilterRequest();
-            const filter = profileStore.updateRequestDataSize;
-            filter.sortColumn = columnName;
-            filter.sortingType = sortingType;
-            this.sendFilterRequest(catalogFileId, filter);
+        const request = profileStore.rows.sortBy(columnName, sortingType);
+        if (request) {
+            this.sendFilterRequest(catalogFileId, request);
         }
     }
 
@@ -198,32 +202,21 @@ export class CatalogStore {
     @action requestMoreRows(catalogFileId: number): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         const displayStore = this.getCatalogDisplayStore(catalogFileId);
-        if (
-            !profileStore ||
-            profileStore.isLoadingData ||
-            this.catalogRequests.isPending(catalogFileId) ||
-            profileStore.updateMode !== CatalogUpdateMode.TableUpdate ||
-            !profileStore.shouldUpdateData ||
-            displayStore?.isShowingSelectedData
-        ) {
+        if (!profileStore || this.catalogRequests.isPending(catalogFileId) || displayStore?.isShowingSelectedData) {
             return;
         }
-        profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        const filter = profileStore.updateRequestDataSize;
-        filter.columnIndices = profileStore.columnIndices;
-        profileStore.setLoadingDataStatus(true);
-        this.sendFilterRequest(catalogFileId, filter);
+        const request = profileStore.rows.loadMore(profileStore.columnIndices);
+        if (request) {
+            this.sendFilterRequest(catalogFileId, request);
+        }
     }
 
     /** Ask for rows that a catalog plot does not yet hold. */
     @action requestPlotRows(catalogFileId: number): void {
-        const profileStore = this.catalogProfileStores.get(catalogFileId);
-        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
-            return;
+        const request = this.catalogProfileStores.get(catalogFileId)?.rows.loadForPlot();
+        if (request) {
+            this.sendFilterRequest(catalogFileId, request);
         }
-        profileStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
-        profileStore.setUpdatingDataStream(true);
-        this.sendFilterRequest(catalogFileId, profileStore.updateRequestDataSize);
     }
 
     /** Restore the table's default request while clearing its selection and display mappings. */
@@ -233,11 +226,12 @@ export class CatalogStore {
         if (!profileStore || !displayStore) {
             return;
         }
-        profileStore.resetCatalogFilterRequest();
+        profileStore.resetUserFilters();
+        const request = profileStore.rows.reset(profileStore.columnIndices);
         this.clearSelectedRows(profileStore, displayStore);
         this.clearImageCoordsData(catalogFileId);
-        if (profileStore.isFileBasedCatalog) {
-            this.sendFilterRequest(catalogFileId, profileStore.catalogFilterRequest);
+        if (request) {
+            this.sendFilterRequest(catalogFileId, request);
         }
         displayStore.resetMaps();
     }
@@ -258,24 +252,17 @@ export class CatalogStore {
             return;
         }
 
-        const isColumnUpdateMode = profileStore.isUpdateColumnMode;
         const displayStore = this.getCatalogDisplayStore(catalogFileId);
-        const isViewUpdate = !isColumnUpdateMode && profileStore.updateMode === CatalogUpdateMode.ViewUpdate;
+        const isViewUpdate = profileStore.rows.isLoadingForOverlay;
         const overlayColumns = getPlottedOverlayColumns(displayStore);
         const getEligibilityStatus = (columnName: string) => profileStore.getCoordinateEligibility(columnName).status;
         const didHaveUnknownCoordinateFormat = isViewUpdate && Boolean(overlayColumns?.some(columnName => getEligibilityStatus(columnName) === CatalogAxisEligibility.Unknown));
-        const catalogData = ProtobufProcessing.processCatalogData(catalogFilter.columns);
-        profileStore.updateCatalogData(catalogFilter, catalogData);
-        profileStore.setProgress(progress);
-        if (progress === 1) {
-            profileStore.setLoadingDataStatus(false);
-            profileStore.setUpdatingDataStream(false);
-        }
+        const catalogData = profileStore.rows.accept(catalogFilter);
 
         if (isViewUpdate && overlayColumns) {
             const [xColumn, yColumn] = overlayColumns;
             // The overlay already drawn may hold fewer rows than the catalog now has.
-            const maxRows = (displayStore?.hasPlottedImageOverlay ? displayStore.plottedImageOverlayMaxRows : undefined) ?? profileStore.maxRows;
+            const maxRows = (displayStore?.hasPlottedImageOverlay ? displayStore.plottedImageOverlayMaxRows : undefined) ?? profileStore.rows.rowLimit;
             const frame = this.frameOf(catalogFileId);
             if (frame) {
                 // The drawn overlay, not the current widget controls, determines the coordinate
@@ -290,7 +277,7 @@ export class CatalogStore {
                     // Re-read the accumulated prefix now that the format of a unitless string
                     // column is known; earlier chunks were held as NaN.
                     this.clearImageCoordsData(catalogFileId);
-                    coords = profileStore.get2DCoordinateData(xColumn, yColumn, profileStore.catalogData, coordinateSystem.system, catalogFilter.subsetEndIndex);
+                    coords = profileStore.get2DCoordinateData(xColumn, yColumn, profileStore.rows.data, coordinateSystem.system, catalogFilter.subsetEndIndex);
                 }
                 const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
                 if (coords.wcsX && coords.wcsY) {
@@ -628,26 +615,25 @@ export class CatalogStore {
         const system = coordinateSystem.system;
         const maxRows = this.getOverlayMaxRows(profileStore, overlay?.maxRows);
 
-        profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
         // A saved config can map columns that this catalog does not display by default, and the
         // rows still to be streamed would arrive without them. A column the rows already held were
         // read without would start at the next row asked for, against the wrong sources, so those
         // rows are asked for again from the first.
         const shouldReloadRows =
-            profileStore.shouldUpdateData &&
+            profileStore.rows.canLoadMore &&
             profileStore.ensureColumnsRequested([xAxis, yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]) &&
-            profileStore.numVisibleRows > 0;
+            profileStore.rows.visibleRowCount > 0;
         const frame = this.frameOf(catalogFileId);
         let isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
             this.clearImageCoordsData(catalogFileId);
             // Rows asked for again are drawn as they arrive.
-            const imageCoords = shouldReloadRows ? undefined : profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, system);
+            const imageCoords = shouldReloadRows ? undefined : profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.rows.data, system);
             const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             if (imageCoords?.wcsX && imageCoords.wcsY) {
                 this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", coordinateSystem, 0, 0, maxRows);
-            } else if (!profileStore.shouldUpdateData) {
+            } else if (!profileStore.rows.canLoadMore) {
                 // The rows this catalog holds are all the rows there are, and the columns the
                 // overlay maps hold no coordinates among them -- a saved overlay whose columns a
                 // re-run query no longer returns, for instance. Nothing later will change that, so
@@ -657,13 +643,9 @@ export class CatalogStore {
             }
             profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
         }
-        if (profileStore.shouldUpdateData) {
-            if (shouldReloadRows) {
-                profileStore.resetFilterRequest();
-                profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-            }
-            profileStore.setUpdatingDataStream(true);
-            this.sendFilterRequest(catalogFileId, profileStore.updateRequestDataSize);
+        const request = profileStore.rows.loadForOverlay(shouldReloadRows);
+        if (request) {
+            this.sendFilterRequest(catalogFileId, request);
         }
         // An overlay with no image left to draw on, or nothing to draw on it, has not been drawn,
         // however far the rest got.
@@ -733,31 +715,32 @@ export class CatalogStore {
         }
 
         const selectionColumnIndices = selection?.columns.map(columnName => profileStore.catalogControlHeader.get(columnName)?.columnIndex).filter((columnIndex): columnIndex is number => columnIndex !== undefined) ?? [];
-        profileStore.resetFilterRequest();
-        profileStore.setUpdateMode(overlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate);
-
-        const filter = profileStore.updateRequestDataSize;
-        filter.filterConfigs = profileStore.getUserFilters();
-        filter.sortColumn = profileStore.sortingInfo.columnName;
-        filter.sortingType = profileStore.sortingInfo.sortingType;
-        filter.columnIndices = [...new Set([...profileStore.columnIndices, ...selectionColumnIndices])];
+        const rowLimit = profileStore.rows.rowLimit;
+        let minRows = 0;
         if (selection) {
-            const searchRows = Math.min(profileStore.catalogInfo.dataSize, selection.searchRows ?? profileStore.maxRows);
-            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, searchRows);
+            minRows = Math.max(minRows, Math.min(profileStore.catalogInfo.dataSize, selection.searchRows ?? rowLimit));
         }
         if (typeof loadedRows === "number" && Number.isFinite(loadedRows)) {
             // The rows it was scrolled or plotted to, which its plots were drawn from, not only the
             // table's first chunk. The table limit still bounds them.
-            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, Math.min(profileStore.maxRows, profileStore.catalogInfo.dataSize, Math.max(0, Math.floor(loadedRows))));
+            minRows = Math.max(minRows, Math.min(rowLimit, profileStore.catalogInfo.dataSize, Math.max(0, Math.floor(loadedRows))));
         }
         if (overlay) {
             // The table limit controls the number of visible rows, but the overlay may need more
-            // rows from the same filtered/sorted result. The profile's normal request-size getter
-            // only knows about the table limit, so widen this one request without changing it.
-            filter.subsetDataSize = Math.max(filter.subsetDataSize ?? 0, this.getOverlayMaxRows(profileStore, overlay.maxRows));
+            // rows from the same filtered/sorted result.
+            minRows = Math.max(minRows, this.getOverlayMaxRows(profileStore, overlay.maxRows));
         }
-        profileStore.setUpdatingDataStream(true);
-        const requestId = this.sendFilterRequest(catalogFileId, filter);
+        const request = profileStore.rows.restore({
+            filterConfigs: profileStore.getUserFilters(),
+            columnIndices: [...new Set([...profileStore.columnIndices, ...selectionColumnIndices])],
+            minRows,
+            isForOverlay: !!overlay
+        });
+        if (!request) {
+            this.catalogRequests.finish(catalogFileId, false, "The catalog rows could not be asked for");
+            return false;
+        }
+        const requestId = this.sendFilterRequest(catalogFileId, request);
         if (requestId === false) {
             return false;
         }
@@ -765,7 +748,7 @@ export class CatalogStore {
     }
 
     private getOverlayMaxRows(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, maxRows: number | undefined): number {
-        const requestedRows = maxRows ?? profileStore.maxRows;
+        const requestedRows = maxRows ?? profileStore.rows.rowLimit;
         return Number.isFinite(requestedRows) ? Math.max(0, Math.min(profileStore.catalogInfo.dataSize, requestedRows)) : 0;
     }
 
