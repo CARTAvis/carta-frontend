@@ -29,6 +29,12 @@ type WorkspaceUnderConstruction = Workspace & Required<Pick<Workspace, "files" |
  * can go on changing while the workspace is being written out.
  */
 export class WorkspaceSnapshotter {
+    /**
+     * The most selected rows of one catalog a workspace keeps. Each is saved as a fingerprint of its
+     * own, so a selection of a million rows would make the workspace tens of megabytes.
+     */
+    public static readonly MAX_SAVED_SELECTED_ROWS = 100_000;
+
     /** One entry per item that could not be captured as it stands. */
     private readonly issues: WorkspaceIssue[] = [];
     private readonly workspace: WorkspaceUnderConstruction = {
@@ -276,7 +282,17 @@ export class WorkspaceSnapshotter {
             // Deliberately do not create display state while saving.
             const displayStore = this.appStore.catalogStore.getCatalogDisplayStore(catalogFileId);
             const selectedDataIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
-            const rowSelection = fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, selectedDataIndices);
+            // Too large a selection is left out whole, along with showing only the selected rows,
+            // which would show nothing without it.
+            const isSelectionTooLarge = selectedDataIndices.length > WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS;
+            if (isSelectionTooLarge) {
+                this.issues.push({
+                    kind: WorkspaceItemKind.CatalogSelection,
+                    subject: catalogInfo.fileInfo.name ?? "",
+                    message: `Could not save the selected rows of the catalog ${catalogInfo.fileInfo.name}: ${selectedDataIndices.length} rows are selected, more than the ${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS} a workspace keeps`
+                });
+            }
+            const rowSelection = isSelectionTooLarge ? undefined : fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, selectedDataIndices);
             const selection = rowSelection ? {...rowSelection, isShowingSelectedData: displayStore?.isShowingSelectedData || undefined} : undefined;
 
             catalogs.push({

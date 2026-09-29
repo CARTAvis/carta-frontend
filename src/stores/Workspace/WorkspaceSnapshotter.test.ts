@@ -135,6 +135,29 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.catalogs?.[0].contentHash).toBeUndefined();
     });
 
+    test("saves the rows selected in a catalog, and whether only they are shown", () => {
+        const {profileStore, displayStore} = createSession();
+        profileStore.selectedPointIndices = [1];
+        displayStore.isShowingSelectedData = true;
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(issues).toEqual([]);
+        expect(workspace.catalogs?.[0].selection).toMatchObject({columns: ["Name"], isShowingSelectedData: true});
+        expect(workspace.catalogs?.[0].selection?.rowHashes).toHaveLength(1);
+    });
+
+    test("leaves out a selection of more rows than a workspace keeps, and says so", () => {
+        const {profileStore, displayStore} = createSession();
+        profileStore.selectedPointIndices = Array.from({length: WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS + 1}, (_, index) => index);
+        displayStore.isShowingSelectedData = true;
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.catalogs?.[0].selection).toBeUndefined();
+        expect(issues).toEqual([expect.objectContaining({kind: WorkspaceItemKind.CatalogSelection, message: expect.stringContaining(`${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS + 1} rows are selected`)})]);
+    });
+
     test("saves what each catalog widget shows", () => {
         const {appStore} = createSession();
         appStore.catalogStore.widgetBindings.savedCatalogWidgets.mockReturnValue({"widget-a": {type: "catalog-overlay", catalogId: 1}});
