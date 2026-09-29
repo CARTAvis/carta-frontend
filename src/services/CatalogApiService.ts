@@ -5,7 +5,7 @@ import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, type CatalogSystemType, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D, type WorkspaceCatalogQuerySource} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, CatalogStore, MirrorSiteStore} from "stores";
-import {CatalogApiProcessing, type VizierResource} from "utilities";
+import {CatalogApiProcessing, convertRadius, type VizierResource} from "utilities";
 
 import {TelemetryService} from "./TelemetryService";
 
@@ -77,14 +77,9 @@ export class CatalogApiService {
         );
     }
 
-    private static simbadRadiusInDegrees(radius: number, units: RadiusUnits): number {
-        const degrees = units === RadiusUnits.ARCMINUTES ? radius / 60 : units === RadiusUnits.ARCSECONDS ? radius / 3600 : radius;
-        return Number(degrees.toPrecision(6));
-    }
-
     private static simbadQuery(source: WorkspaceCatalogQuerySource): string {
         const {center, maxObjects} = source;
-        const radius = CatalogApiService.simbadRadiusInDegrees(source.radius, source.radiusUnits);
+        const radius = convertRadius(source.radius, source.radiusUnits, RadiusUnits.DEGREES);
         return `SELECT Top ${maxObjects} *, DISTANCE(POINT('ICRS', ${center.x},${center.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${center.x},${center.y},${radius}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
     }
 
