@@ -897,14 +897,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness1 = this.getPixelForValueX(marker.value + marker.width / 2.0);
-                const thickness2 = this.getPixelForValueX(marker.value - marker.width / 2.0);
-                if (thickness1 !== undefined && thickness2 !== undefined) {
-                    const thickness = thickness1 - thickness2;
-                    const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
-                    const upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
-                    const croppedThickness = upperBound - lowerBound;
-                    lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
+                const box = this.calcVerticalMarkerBox(marker);
+                if (box) {
+                    lineSegments = [<Rect listening={false} key={0} x={box.left - valueCanvasSpace} y={chartArea.top} width={box.width} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
                 }
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];

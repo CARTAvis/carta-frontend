@@ -1,3 +1,4 @@
+import type * as React from "react";
 import {Colors} from "@blueprintjs/core";
 
 import {genMeanRmsMarkers, type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "./LinePlotComponent";
@@ -33,6 +34,14 @@ describe("LinePlotComponent PNG export of the mean/RMS markers", () => {
         const component = new LinePlotComponent({data: [], xMin: 0, xMax: 10, yMin: 0, yMax: 10, markers} as unknown as LinePlotComponentProps) as unknown as {
             chartArea: {left: number; right: number; top: number; bottom: number};
             genMeanRMSForPngPlot: (devicePixelRatio: number) => {mean?: {x1: number; y1: number; x2: number; y2: number}; RMS?: {x: number; y: number; width: number; height: number}};
+            genVerticalLine: (
+                marker: LineMarker,
+                isHovering: boolean,
+                markerColor: string,
+                markerOpacity: number,
+                valueCanvasSpace: number
+            ) => React.ReactElement<{x: number; children: React.ReactElement<{x: number; width: number}>[]}> | undefined;
+            getCanvasSpaceX: (value: number) => number;
         };
         component.chartArea = {left: 0, right: 200, top: 0, bottom: 100};
         return component;
@@ -72,6 +81,19 @@ describe("LinePlotComponent PNG export of the mean/RMS markers", () => {
 
         const atEdge = makeComponent([{value: 10, id: "marker-mean", horizontal: false}]).genMeanRMSForPngPlot(1);
         expect(atEdge.mean?.x1).toBeCloseTo(200.5);
+    });
+
+    test("draws the same vertical box on screen as in the PNG export", () => {
+        for (const mean of [5, 9.5, 0.2]) {
+            const markers = genMeanRmsMarkers({mean, stdDev: 2}, true);
+            const component = makeComponent(markers);
+            const rmsMarker = markers.find(marker => marker.id === "marker-rms")!;
+            const group = component.genVerticalLine(rmsMarker, false, "green", 0.2, component.getCanvasSpaceX(rmsMarker.value));
+            const rect = group?.props.children[0];
+            const {RMS: rms} = component.genMeanRMSForPngPlot(1);
+            expect((group?.props.x ?? NaN) + (rect?.props.x ?? NaN)).toBeCloseTo(rms?.x ?? NaN);
+            expect(rect?.props.width).toBeCloseTo(rms?.width ?? NaN);
+        }
     });
 
     test("scales the geometry by the device pixel ratio and clips the box to the chart", () => {
