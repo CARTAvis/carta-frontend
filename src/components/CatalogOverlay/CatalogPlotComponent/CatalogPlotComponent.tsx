@@ -689,6 +689,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
         }
+        // A line needs two points. With fewer, as when a refit follows a selection down to one point,
+        // no line is drawn rather than one from coefficients that mean nothing; fitting stays on, so
+        // the next selection that can be fitted is.
+        if (x.length < 2) {
+            widgetStore.setMinMaxX(null);
+            widgetStore.setFitting(null);
+            return;
+        }
         const result = GSL.getFittingParameters(new Float64Array(x), new Float64Array(y));
         const minMaxX = minMaxArray(x);
         widgetStore.setMinMaxX(minMaxX);

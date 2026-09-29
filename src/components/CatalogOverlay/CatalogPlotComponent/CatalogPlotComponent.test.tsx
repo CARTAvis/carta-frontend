@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import * as GSL from "gsl_wrapper";
 
 import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
 import {type WorkspaceCatalogWidgetConfig} from "models";
@@ -191,5 +192,63 @@ describe("CatalogPlotComponent restored plots", () => {
 
         expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toEqual({widgetId: "plot-a", ...displayed!.toLayoutSettings()});
         component.componentWillUnmount();
+    });
+});
+
+describe("CatalogPlotComponent linear fit", () => {
+    afterEach(() => {
+        CatalogStore.Instance.widgetBindings.componentIds().forEach(plotComponentId => CatalogStore.Instance.widgetBindings.closeComponent(plotComponentId));
+        CatalogStore.Instance.catalogProfileStores.delete(7);
+        WidgetsStore.Instance.catalogPlotWidgets.delete("catalog-plot-0");
+        jest.clearAllMocks();
+    });
+
+    function createPlot() {
+        const profileStore = {
+            catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
+            selectedPointIndices: [],
+            catalogData: new Map(),
+            get2DPlotData: jest.fn(() => ({wcsX: [1, 2, 3], wcsY: [2, 4, NaN]})),
+            getSortedIndices: jest.fn((indices: number[]) => indices)
+        };
+        const widgetStore = {
+            plotType: CatalogPlotType.D2Scatter,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag",
+            isFittingEnabled: true,
+            setFitting: jest.fn(),
+            setMinMaxX: jest.fn()
+        };
+        CatalogStore.Instance.catalogProfileStores.set(7, profileStore as any);
+        CatalogStore.Instance.widgetBindings.register("catalog-plot-component-0", 7, "catalog-plot-0");
+        WidgetsStore.Instance.catalogPlotWidgets.set("catalog-plot-0", widgetStore as any);
+        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
+        // With fitting on, the plot fits what is shown as soon as it is created.
+        jest.clearAllMocks();
+        return {component, widgetStore};
+    }
+
+    test("draws no line through fewer than two points, and keeps fitting on for the next selection", () => {
+        const {component, widgetStore} = createPlot();
+
+        // One point selected, and a second whose value is missing.
+        component["handleFittingClick"]([0]);
+        component["handleFittingClick"]([1, 2]);
+        component.componentWillUnmount();
+
+        expect(GSL.getFittingParameters).not.toHaveBeenCalled();
+        expect(widgetStore.setFitting).toHaveBeenCalledTimes(2);
+        expect(widgetStore.setFitting).toHaveBeenCalledWith(null);
+        expect(widgetStore.setMinMaxX).toHaveBeenCalledWith(null);
+    });
+
+    test("fits a line through two points", () => {
+        const {component, widgetStore} = createPlot();
+
+        component["handleFittingClick"]([0, 1]);
+        component.componentWillUnmount();
+
+        expect(GSL.getFittingParameters).toHaveBeenCalledWith(new Float64Array([1, 2]), new Float64Array([2, 4]));
+        expect(widgetStore.setFitting).toHaveBeenCalledWith(expect.objectContaining({slope: 1}));
     });
 });
