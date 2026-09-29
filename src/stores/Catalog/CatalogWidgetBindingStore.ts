@@ -168,6 +168,7 @@ export class CatalogWidgetBindingStore {
                 this.initTable(id, this.fallbackCatalog(imageFileId, catalogFileId));
             }
         });
+        this.widgets().catalogWidgets.forEach(widgetStore => widgetStore.forgetCatalog(catalogFileId));
         this.plots.forEach((state, componentId) => {
             // Read before the closing catalog's plot goes: it may be the only one the tab has.
             const plotType = this.plotTypeOf(state);

@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType, PreferenceKeys, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, PreferenceKeys, WorkspaceItemKind} from "enums";
 import {AppStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 
 // Opening a catalog with no table widget gives it one, and with it the display state that chooses
@@ -261,6 +261,16 @@ describe("CatalogWidgetBindingStore", () => {
             expect(bindings.catalogOf("catalog-overlay-0")).toBe(1);
             expect(bindings.catalogOf("catalog-overlay-1")).toBe(1);
             expect(widgets.catalogWidgets.size).toBe(2);
+        });
+
+        test("does not hand the settings section of a closed catalog to the next one given its file ID", () => {
+            openCatalogs({7: [1, 2]}, 7);
+            const widgetStore = widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
+            widgetStore.setSettingsTab(2, CatalogSettingsTabs.ORIENTATION);
+
+            bindings.catalogClosed(2);
+
+            expect(widgetStore.settingsTabFor(2)).toBe(CatalogSettingsTabs.SIZE);
         });
 
         test("moves a table onto the first catalog left on the same image", () => {

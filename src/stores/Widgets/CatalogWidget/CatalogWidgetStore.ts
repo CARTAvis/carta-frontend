@@ -79,6 +79,11 @@ export class CatalogWidgetStore {
         }
     };
 
+    /** Drop the section kept for a catalog that has closed: its file ID goes to the next one opened. */
+    @action forgetCatalog = (catalogFileId: number) => {
+        this.settingsTabIdByCatalog.delete(catalogFileId);
+    };
+
     /** @param shownCatalogFileId - the catalog the widget shows, whose section the layout keeps. */
     public toLayoutSettings = (shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
         ...(this.widgetId ? {widgetId: this.widgetId} : {}),
