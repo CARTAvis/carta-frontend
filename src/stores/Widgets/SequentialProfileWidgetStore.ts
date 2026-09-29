@@ -7,6 +7,7 @@ export class SequentialProfileWidgetStore {
     @observable plotType = PlotType.LINES;
     @observable lineWidth = 1;
     @observable linePlotPointSize = 3;
+    @observable settingsTabId: "styling" | "management" = "styling";
     @observable lineColors = observable.map<string, string>();
 
     constructor() {
@@ -28,6 +29,10 @@ export class SequentialProfileWidgetStore {
     };
     @action setPlotType = (plotType: PlotType) => {
         this.plotType = plotType;
+    };
+
+    @action setSettingsTabId = (tabId: "styling" | "management") => {
+        this.settingsTabId = tabId;
     };
 
     @action applyConfig = (config: Record<string, any>) => {

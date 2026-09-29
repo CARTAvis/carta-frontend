@@ -20,7 +20,6 @@ import {
     PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
-    RegionGroupManagerComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
@@ -122,7 +121,6 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 [SpatialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpatialProfilerComponent)],
                 [SpectralProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SpectralProfilerComponent)],
                 [SequentialProfilerComponent.WidgetConfig.type, RenderDocklessWidget(SequentialProfilerComponent)],
-                [RegionGroupManagerComponent.WidgetConfig.type, RenderFloatingSettingsWidget(RegionGroupManagerComponent)],
                 [SpectralLineQueryComponent.WidgetConfig.type, RenderDocklessWidget(SpectralLineQueryComponent)],
                 [StatsComponent.WidgetConfig.type, RenderDocklessWidget(StatsComponent)],
                 [HistogramComponent.WidgetConfig.type, RenderDocklessWidget(HistogramComponent)],
@@ -212,7 +210,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
     }
 
     private showPin(widgetConfig: WidgetConfig) {
-        return widgetConfig.type !== this.floatingSettingType && widgetConfig.type !== RegionGroupManagerComponent.WidgetConfig.type;
+        return widgetConfig.type !== this.floatingSettingType;
     }
 
     private showFloatingSettingsButton(widgetConfig: WidgetConfig) {
@@ -252,7 +250,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 canPopout={canPopout}
                                 floatingWidgets={widgetConfigs.length}
                             >
-                                {w.type === this.floatingSettingType ? this.getWidgetSettings(w) : this.getWidgetContent(w)}
+                                {shouldShowPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}
                             </FloatingWidgetComponent>
                         </div>
                     );

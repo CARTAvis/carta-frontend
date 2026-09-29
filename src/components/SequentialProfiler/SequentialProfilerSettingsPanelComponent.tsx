@@ -2,6 +2,7 @@ import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
+import {RegionGroupManagerComponent} from "components/RegionGroup/RegionGroupManagerComponent";
 import {LinePlotSettingsPanelComponent, ScrollShadow} from "components/Shared";
 import {RegionGroupType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
@@ -14,10 +15,10 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
         return {
             id: "sequential-profiler-floating-settings",
             type: "floating-settings",
-            minWidth: 280,
-            minHeight: 225,
-            defaultWidth: 400,
-            defaultHeight: 450,
+            minWidth: 400,
+            minHeight: 300,
+            defaultWidth: 500,
+            defaultHeight: 550,
             title: "Light curve Settings",
             isCloseable: true,
             parentId: "sequential-profiler",
@@ -35,7 +36,7 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
         return (
             <ScrollShadow>
                 <div className="sequential-profiler-settings">
-                    <Tabs id="sequentialProfilerSettingsTabs" selectedTabId="styling">
+                    <Tabs id="sequentialProfilerSettingsTabs" selectedTabId={widgetStore.settingsTabId} onChange={tabId => widgetStore.setSettingsTabId(tabId as "styling" | "management")}>
                         <Tab
                             id="styling"
                             title="Styling"
@@ -53,6 +54,7 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
                                 />
                             }
                         />
+                        <Tab id="management" title="Management" panel={<RegionGroupManagerComponent id={this.props.id} docked={false} />} />
                     </Tabs>
                 </div>
             </ScrollShadow>

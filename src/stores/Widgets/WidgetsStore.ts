@@ -18,7 +18,6 @@ import {
     PlaceholderComponent,
     PvGeneratorComponent,
     PvPreviewComponent,
-    RegionGroupManagerComponent,
     RegionListComponent,
     RenderConfigComponent,
     SequentialProfilerComponent,
@@ -1802,18 +1801,6 @@ export class WidgetsStore {
     // endregion
 
     // region Floating Settings
-    createFloatingRegionGroupManagerWidget = (parentId: string) => {
-        const id = `${parentId}-${RegionGroupManagerComponent.WidgetConfig.type}`;
-        if (this.floatingWidgets.some(widget => widget.id === id)) {
-            AppStore.Instance.zIndexManager.updateIndexOnSelect(id);
-            return;
-        }
-        const config = new WidgetConfig(id, RegionGroupManagerComponent.WidgetConfig);
-        config.parentId = parentId;
-        config.parentType = SequentialProfilerComponent.WidgetConfig.type;
-        this.addFloatingWidget(config);
-    };
-
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         const defaultConfig = getWidgetMap().get(parentType)?.settingsConfig ?? PlaceholderComponent.WidgetConfig;
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
@@ -2057,7 +2044,6 @@ export class WidgetsStore {
     };
 
     private removeAssociatedFloatingSetting = (widgetId: string) => {
-        this.floatingWidgets.filter(widget => widget.type === RegionGroupManagerComponent.WidgetConfig.type && widget.parentId === widgetId).forEach(widget => this.removeFloatingWidget(widget.id));
         if (this.floatingSettingsWidgets?.size) {
             let associatedFloatingSettingsId: string | null = null;
             this.floatingSettingsWidgets.forEach((value, key) => {

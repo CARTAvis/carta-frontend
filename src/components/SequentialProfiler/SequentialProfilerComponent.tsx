@@ -281,7 +281,8 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private openRegionGroupManager = () => {
-        AppStore.Instance.widgetsStore.createFloatingRegionGroupManagerWidget(this.widgetId);
+        WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.setSettingsTabId("management");
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Light curve", this.widgetId, SequentialProfilerComponent.WidgetConfig.type);
     };
 
     render() {

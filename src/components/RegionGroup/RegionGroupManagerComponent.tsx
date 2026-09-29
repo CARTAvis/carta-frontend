@@ -4,28 +4,13 @@ import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 import {RegionGroupType} from "enums";
-import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps} from "stores";
+import {AppStore, type RegionGroupStore, type WidgetProps} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 
 import "./RegionGroupManagerComponent.scss";
 
 @observer
 export class RegionGroupManagerComponent extends React.Component<WidgetProps, {selectedRegionGroupId?: string}> {
-    public static get WidgetConfig(): DefaultWidgetConfig {
-        return {
-            id: "region-group-manager",
-            type: "region-group-manager",
-            minWidth: 400,
-            minHeight: 300,
-            defaultWidth: 500,
-            defaultHeight: 550,
-            title: "Light curve management",
-            isCloseable: true,
-            parentId: "sequential-profiler",
-            parentType: "sequential-profiler"
-        };
-    }
-
     constructor(props: WidgetProps) {
         super(props);
         this.state = {};
