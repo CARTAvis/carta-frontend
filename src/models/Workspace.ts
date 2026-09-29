@@ -303,8 +303,10 @@ export function describeCatalogSource(source: WorkspaceCatalogSource): string {
     if (source.type === "file") {
         return source.filename;
     }
+    // Read after "the catalog", as every message naming a catalog does.
+    const service = source.type === "simbad" ? "SIMBAD" : "VizieR";
     const tableDescription = source.table ? ` for ${source.table}` : "";
-    return `the ${source.type} query${tableDescription}`;
+    return `from the ${service} query${tableDescription}`;
 }
 
 export interface WorkspaceCatalogFileSource {

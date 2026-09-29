@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {describeImageSource, type Workspace, WORKSPACE_VERSION, WorkspaceConfig} from "./Workspace";
+import {describeCatalogSource, describeImageSource, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
@@ -246,6 +246,15 @@ describe("workspace schema 2", () => {
         expect(runtimeWorkspace.catalogWidgets).toEqual({"catalog-plot-0": plot});
         // The stored workspace is left as it was.
         expect(storedWorkspace.catalogWidgets?.["catalog-plot-0"]).toHaveProperty("fittingRange");
+    });
+});
+
+describe("describeCatalogSource", () => {
+    test("names a file, and an online query as where the catalog came from", () => {
+        const query = {center: {x: 12.3, y: -45.6}, system: "ICRS", radius: 1, radiusUnits: "deg", maxObjects: 1000} as Omit<WorkspaceCatalogQuerySource, "type">;
+        expect(describeCatalogSource({type: "file", filename: "sources.vot"})).toBe("sources.vot");
+        expect(describeCatalogSource({type: "simbad", ...query})).toBe("from the SIMBAD query");
+        expect(describeCatalogSource({type: "vizier", ...query, table: "I/345/gaia2"})).toBe("from the VizieR query for I/345/gaia2");
     });
 });
 

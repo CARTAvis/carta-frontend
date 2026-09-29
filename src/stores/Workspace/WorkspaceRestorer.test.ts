@@ -184,7 +184,7 @@ describe("WorkspaceRestorer", () => {
         expect(load).toHaveBeenCalledWith(source, ["I/355/gaiadr3"], 1);
 
         load.mockClear();
-        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog the vizier query");
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query");
         expect(load).not.toHaveBeenCalled();
     });
 
