@@ -5,6 +5,7 @@ export * from "./catalog/columnTypeLabel";
 export * from "./catalog/constants";
 export * from "./catalog/contentHash";
 export * from "./catalog/coordinateFormat";
+export * from "./catalog/radius";
 export * from "./catalog/types";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
 export * from "./color/color";

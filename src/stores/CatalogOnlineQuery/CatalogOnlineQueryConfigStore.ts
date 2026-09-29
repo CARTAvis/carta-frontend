@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
+import {ASTSettingsString, clamp, convertRadius, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
 
@@ -131,17 +131,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action setRadiusUnits(units: RadiusUnits) {
-        switch (units) {
-            case RadiusUnits.ARCMINUTES:
-                this.setSearchRadius(this.radiusAsArcm);
-                break;
-            case RadiusUnits.ARCSECONDS:
-                this.setSearchRadius(this.radiusAsArcs);
-                break;
-            default:
-                this.setSearchRadius(this.radiusAsDeg);
-                break;
-        }
+        this.setSearchRadius(convertRadius(this.searchRadius, this.radiusUnits, units));
         this.radiusUnits = units;
     }
 
@@ -175,51 +165,6 @@ export class CatalogOnlineQueryConfigStore {
         }
         this.setSearchRadius(radius);
         this.setFrameCenter();
-    }
-
-    @computed get radiusAsDeg(): number {
-        let radius = this.searchRadius;
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                radius = radius * (1 / 60);
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radius = radius * (1 / 3600);
-                break;
-            default:
-                break;
-        }
-        return Number(radius.toPrecision(6));
-    }
-
-    @computed get radiusAsArcm(): number {
-        let radius = this.searchRadius;
-        switch (this.radiusUnits) {
-            case RadiusUnits.DEGREES:
-                radius = radius * 60;
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radius = radius * (1 / 60);
-                break;
-            default:
-                break;
-        }
-        return Number(radius.toPrecision(6));
-    }
-
-    @computed get radiusAsArcs(): number {
-        let radius = this.searchRadius;
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                radius = radius * 60;
-                break;
-            case RadiusUnits.DEGREES:
-                radius = radius * 3600;
-                break;
-            default:
-                break;
-        }
-        return Number(radius.toPrecision(6));
     }
 
     // SIMBAD radius range 0 - 90 degrees
