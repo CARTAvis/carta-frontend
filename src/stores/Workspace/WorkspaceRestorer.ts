@@ -8,7 +8,6 @@ import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from 
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
-    catalogInfo: WorkspaceCatalog;
     catalogFileId: number;
     /** How the catalog is named to the user. */
     description: string;
@@ -385,23 +384,20 @@ export class WorkspaceRestorer {
     /**
      * Stage 6: apply what each catalog was saved with, and bring its rows in line with it.
      *
-     * Every catalog is asked for before any of them is waited on: a catalog's rows come from the
-     * backend, so waiting for one at a time would make restoring a workspace of many catalogs take
-     * as long as all of them put together. What comes back is still dealt with in the order the
-     * workspace lists them, so what a restore reports does not depend on which answer arrived first.
+     * One catalog is asked for at a time, in the order the workspace lists them. The backend answers
+     * catalog requests one after another anyway, so sending them all at once would save nothing,
+     * and a request left waiting behind the others could be given up on before its turn came.
      */
     private *configureCatalogs(): Generator<Promise<unknown>, void, any> {
-        // Every request goes out first, so the waits below overlap rather than queue.
-        const requests = (this.workspace.catalogs ?? []).map(catalogInfo => this.startCatalogConfig(catalogInfo));
-
-        for (const request of requests) {
+        for (const catalogInfo of this.workspace.catalogs ?? []) {
             if (!this.isCurrent) {
                 return;
             }
+            const request = this.startCatalogConfig(catalogInfo);
             if (!request) {
                 continue;
             }
-            const {catalogInfo, catalogFileId, description, rowFailure, completion} = request;
+            const {catalogFileId, description, rowFailure, completion} = request;
             try {
                 const restoreResult = yield* awaited(completion);
                 if (!this.isCurrent) {
@@ -476,7 +472,7 @@ export class WorkspaceRestorer {
                 selection: catalogInfo.selection,
                 loadedRows: catalogInfo.tableConfig?.loadedRows
             });
-            return {catalogInfo, catalogFileId, description, rowFailure, completion};
+            return {catalogFileId, description, rowFailure, completion};
         } catch (err) {
             console.error(err);
             this.appStore.catalogStore.failRequest(catalogFileId, "The catalog restoration failed");

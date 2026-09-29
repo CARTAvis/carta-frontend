@@ -307,7 +307,7 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.catalogStore.restoreCatalogFromWorkspace).toHaveBeenCalledWith(10, expect.objectContaining({loadedRows: 300}));
     });
 
-    test("starts every catalog row request before waiting for the first stream", async () => {
+    test("asks for a catalog's rows only once the one before it has come back", async () => {
         const {appStore, profileStore} = createSession();
         const secondCatalog = {id: 2, source: {type: "file" as const, filename: "other.vot"}, associatedImageId: 1};
         appStore.catalogStore.catalogProfileStores.set(20, profileStore);
@@ -326,13 +326,16 @@ describe("WorkspaceRestorer", () => {
             step = generator.next(await step.value);
         }
 
+        // The backend answers one catalog request at a time, so a second one sent now would only wait
+        // behind the first, and could time out doing so.
         expect(step.done).toBe(false);
-        expect(appStore.catalogStore.restoreCatalogFromWorkspace.mock.calls.map(([catalogFileId]) => catalogFileId)).toEqual([10, 20]);
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace.mock.calls.map(([catalogFileId]) => catalogFileId)).toEqual([10]);
 
         finishFirst({success: true, didStart: true});
         while (!step.done) {
             step = generator.next(await step.value);
         }
+        expect(appStore.catalogStore.restoreCatalogFromWorkspace.mock.calls.map(([catalogFileId]) => catalogFileId)).toEqual([10, 20]);
         expect(step.value).toEqual([]);
     });
 
