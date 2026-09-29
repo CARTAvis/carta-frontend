@@ -155,7 +155,7 @@ describe("CatalogStore.convertToImageCoordinate", () => {
 
 describe("CatalogStore.open", () => {
     const catalogStore = CatalogStore.Instance;
-    const frame = {frameInfo: {fileId: 7}} as any;
+    const frame = {id: 7, frameInfo: {fileId: 7}} as any;
     const opened: number[] = [];
     let initialFloatingWidgetIds = new Set<string>();
 
@@ -168,6 +168,12 @@ describe("CatalogStore.open", () => {
             opened.push(fileId);
         }
         return fileId;
+    }
+
+    /** Put the image the catalogs are opened on in front, as it is when one is loaded onto it. */
+    function putImageInFront() {
+        AppStore.Instance.imageViewConfigStore.addFrame(frame);
+        AppStore.Instance.setActiveImageById(ImageType.FRAME, frame.id);
     }
 
     beforeEach(() => {
@@ -187,6 +193,8 @@ describe("CatalogStore.open", () => {
         catalogStore.catalogImageIds.clear();
         WidgetsStore.Instance.catalogWidgets.clear();
         WidgetsStore.Instance.floatingWidgets.filter(widget => !initialFloatingWidgetIds.has(widget.id)).forEach(widget => WidgetsStore.Instance.removeFloatingWidget(widget.id));
+        AppStore.Instance.imageViewConfigStore.removeFrame(frame.id);
+        AppStore.Instance.setActiveImage(null);
         jest.restoreAllMocks();
     });
 
@@ -202,10 +210,19 @@ describe("CatalogStore.open", () => {
         expect(catalogStore.getCatalogDisplayStore(1)).toBeDefined();
         expect(catalogStore.catalogGLData.get(1)?.x).toHaveLength(3);
         expect(WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, 1)).toBeDefined();
-        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
+        // Its image is not in front, so the table showing the image in front's catalogs stays on them.
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(99);
+        expect(WidgetsStore.Instance.catalogWidgets.size).toBe(1);
+    });
+
+    test("gives a catalog opened on an image not in front no widget of its own", async () => {
+        await open(async id => rowsFor(id));
+
+        expect(WidgetsStore.Instance.catalogWidgets.size).toBe(0);
     });
 
     test("shows a catalog in the widget already showing its image's catalogs", async () => {
+        putImageInFront();
         WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 1);
         catalogStore.catalogProfileStores.set(1, rowsFor(1));
         catalogStore.catalogImageIds.set(1, 7);
@@ -217,6 +234,7 @@ describe("CatalogStore.open", () => {
     });
 
     test("gives the first catalog a widget of its own when there is none", async () => {
+        putImageInFront();
         await open(async id => rowsFor(id));
 
         const componentIds = Array.from(WidgetsStore.Instance.catalogWidgets.keys());
@@ -224,6 +242,7 @@ describe("CatalogStore.open", () => {
     });
 
     test("points every widget at the first catalog on an image", async () => {
+        putImageInFront();
         WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-0", 5);
         WidgetsStore.Instance.getCatalogWidgetStore("catalog-overlay-1", 5);
 

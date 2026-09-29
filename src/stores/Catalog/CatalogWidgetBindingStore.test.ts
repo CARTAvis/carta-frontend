@@ -249,6 +249,20 @@ describe("CatalogWidgetBindingStore", () => {
             expect(bindings.catalogOf("catalog-plot-component-0")).toBe(1);
         });
 
+        test("leaves every table alone for a catalog opened on an image not in front, even its first", () => {
+            openCatalogs({7: [1]}, 7);
+            widgets.getCatalogWidgetStore("catalog-overlay-0", 1);
+            widgets.getCatalogWidgetStore("catalog-overlay-1", 1);
+
+            // An online query sent before the image in front changed lands on the image it was sent for.
+            openCatalogs({8: [2]}, 7);
+            bindings.catalogOpened(2, true);
+
+            expect(bindings.catalogOf("catalog-overlay-0")).toBe(1);
+            expect(bindings.catalogOf("catalog-overlay-1")).toBe(1);
+            expect(widgets.catalogWidgets.size).toBe(2);
+        });
+
         test("moves a table onto the first catalog left on the same image", () => {
             openCatalogs({7: [1, 2, 3], 8: [4]}, 8);
             widgets.getCatalogWidgetStore("catalog-overlay-0", 1);

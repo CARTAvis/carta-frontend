@@ -111,11 +111,17 @@ export class CatalogWidgetBindingStore {
     };
 
     /**
-     * A newly opened catalog is shown in a table widget, giving it one of its own if none exists. One
-     * opened on the image in front is also shown by every plot tab showing no catalog of that image,
-     * as it would be on changing to that image.
+     * A newly opened catalog on the image in front is shown in a table widget, giving it one of its
+     * own if none exists, and by every plot tab showing no catalog of that image, as it would be on
+     * changing to that image. One that lands on another image, as a query sent before the image in
+     * front changed can, is left for when that image comes to the front.
      */
     @action catalogOpened = (catalogFileId: number, isFirstOnImage: boolean): void => {
+        const inFront = new Set(this.catalogs.activeCatalogFiles);
+        if (!inFront.has(catalogFileId)) {
+            return;
+        }
+
         if (isFirstOnImage) {
             // Every table moves to a new image's first catalog.
             this.tableIds().forEach(id => this.tableCatalogs.set(id, catalogFileId));
@@ -124,14 +130,11 @@ export class CatalogWidgetBindingStore {
             this.widgets().createFloatingCatalogWidget(catalogFileId);
         }
 
-        const inFront = new Set(this.catalogs.activeCatalogFiles);
-        if (inFront.has(catalogFileId)) {
-            this.plots.forEach((state, componentId) => {
-                if (state.activeCatalogFileId === undefined || !inFront.has(state.activeCatalogFileId)) {
-                    this.showOnPlot(componentId, state, catalogFileId);
-                }
-            });
-        }
+        this.plots.forEach((state, componentId) => {
+            if (state.activeCatalogFileId === undefined || !inFront.has(state.activeCatalogFileId)) {
+                this.showOnPlot(componentId, state, catalogFileId);
+            }
+        });
     };
 
     /** Keep every widget on a catalog of the image now in front; one with none left keeps its own. */
