@@ -1,8 +1,9 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType} from "enums";
-import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio} from "stores";
+import {AppToaster} from "components/Shared";
+import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
+import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio, WorkspaceSnapshotter} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -586,6 +587,23 @@ describe("AppStore.saveWorkspace", () => {
         expect(saveSpy).not.toHaveBeenCalled();
         expect(appStore.alertStore.alertText).toContain("online catalog query");
         appStore.alertStore.dismissAlert();
+    });
+
+    test("shows one toast for everything the workspace could not be saved with, and logs each", async () => {
+        const issues = [
+            {kind: WorkspaceItemKind.Catalog, subject: "a.vot", message: "Could not save the catalog a.vot"},
+            {kind: WorkspaceItemKind.Catalog, subject: "b.vot", message: "Could not save the catalog b.vot"}
+        ];
+        jest.spyOn(WorkspaceSnapshotter.prototype, "capture").mockReturnValue({workspace: {workspaceVersion: 2, frontendVersion: "5.0.0"} as any, issues});
+        const addWarning = jest.spyOn(appStore.logStore, "addWarning");
+        const showToast = jest.spyOn(AppToaster, "show").mockResolvedValue();
+        jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await appStore.saveWorkspace("test-workspace");
+
+        expect(addWarning.mock.calls.map(([message]) => message)).toEqual(issues.map(issue => issue.message));
+        expect(showToast).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(showToast.mock.calls[0][0])).toContain("2 item(s) could not be saved");
     });
 
     test("does not report a catalog whose rows have all arrived", () => {

@@ -2775,10 +2775,11 @@ export class AppStore {
         }
 
         const {workspace, issues} = new WorkspaceSnapshotter().capture();
-        issues.forEach(issue => {
-            this.logStore.addWarning(issue.message, ["workspace", issue.kind]);
-            AppToaster.show(WarningToast(issue.message));
-        });
+        issues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
+        // One toast however many there are, as for a restore: a toast each would bury the screen.
+        if (issues.length) {
+            AppToaster.show(WarningToast(`${issues.length} item(s) could not be saved in workspace "${name}". See the log for details.`));
+        }
 
         const thumbnail = yield exportScreenshot();
         if (thumbnail) {
