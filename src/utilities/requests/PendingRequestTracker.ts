@@ -24,6 +24,9 @@ interface PendingRequest {
     timeout: ReturnType<typeof setTimeout>;
 }
 
+/** The ICD reserves this request ID for streams that answer no request of ours. */
+const UNSOLICITED_REQUEST_ID = 0;
+
 /**
  * Keeps track of requests whose answer arrives as a stream rather than as a reply.
  *
@@ -38,9 +41,6 @@ interface PendingRequest {
  *
  * @typeParam TKey - what a request is about, as the caller identifies it.
  */
-/** The ICD reserves this request ID for streams that answer no request of ours. */
-const UNSOLICITED_REQUEST_ID = 0;
-
 export class PendingRequestTracker<TKey> {
     private readonly pending = new Map<TKey, PendingRequest>();
     /**
@@ -51,8 +51,6 @@ export class PendingRequestTracker<TKey> {
      * the current one, or a superseded request's rows overwrite the ones that replaced them.
      */
     private readonly latestRequestIds = new Map<TKey, number>();
-    /** Requests that have ended, whose late responses are no longer wanted. */
-    private readonly staleRequestIds = new Map<TKey, Set<number>>();
 
     constructor(private readonly options: PendingRequestTrackerOptions<TKey>) {}
 
@@ -117,9 +115,9 @@ export class PendingRequestTracker<TKey> {
         if (requestId === undefined || requestId === UNSOLICITED_REQUEST_ID) {
             return true;
         }
-        if (this.staleRequestIds.get(key)?.has(requestId)) {
-            return false;
-        }
+        // A request that has ended is no longer the latest: ending one either forgets the subject's
+        // request or hands it to the one taking over, and request IDs are never handed out twice
+        // on a connection.
         return this.latestRequestIds.get(key) === requestId;
     }
 
@@ -181,14 +179,6 @@ export class PendingRequestTracker<TKey> {
         }
         clearTimeout(pending.timeout);
         this.pending.delete(key);
-        if (pending.requestId !== undefined) {
-            let staleRequestIds = this.staleRequestIds.get(key);
-            if (!staleRequestIds) {
-                staleRequestIds = new Set<number>();
-                this.staleRequestIds.set(key, staleRequestIds);
-            }
-            staleRequestIds.add(pending.requestId);
-        }
         pending.resolve({success: isSuccess, message});
     }
 
@@ -209,18 +199,16 @@ export class PendingRequestTracker<TKey> {
      *
      * A request ID only means anything on the connection it was sent on: a closed connection has no
      * more responses to discard, and the next one starts counting its requests from the beginning,
-     * so an ID held back as stale would otherwise reject the answers to an unrelated later request.
+     * so an ID kept from the old one would be taken for the answer to an unrelated later request.
      */
     public reset(message: string): void {
         this.failAll(message);
         this.latestRequestIds.clear();
-        this.staleRequestIds.clear();
     }
 
     /** Forget a subject entirely, for one that no longer exists. */
     public forget(key: TKey): void {
         this.latestRequestIds.delete(key);
-        this.staleRequestIds.delete(key);
     }
 
     private startTimeout(key: TKey): ReturnType<typeof setTimeout> {

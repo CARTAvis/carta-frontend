@@ -1,15 +1,15 @@
 import {type CARTA} from "carta-protobuf";
 import type {ProcessedColumnData} from "utilities";
 
-/**
- * A running digest, kept as two 32-bit halves so that folding a value in stays integer arithmetic.
- * Adapted from cyrb53.
- */
 /** Scratch space for reading the raw bits of a number, shared because folding one in never yields. */
 const NUMBER_BUFFER = new ArrayBuffer(8);
 const NUMBER_AS_FLOAT = new Float64Array(NUMBER_BUFFER);
 const NUMBER_AS_INTS = new Uint32Array(NUMBER_BUFFER);
 
+/**
+ * A running digest, kept as two 32-bit halves so that folding a value in stays integer arithmetic.
+ * Adapted from cyrb53.
+ */
 class ContentHash {
     private static readonly Separator = 0x1f;
 
