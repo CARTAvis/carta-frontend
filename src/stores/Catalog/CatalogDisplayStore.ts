@@ -14,7 +14,6 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     CatalogTextureType,
-    CatalogUpdateMode,
     ColorMap,
     FrameScaling
 } from "enums";
@@ -349,7 +348,7 @@ export class CatalogDisplayStore {
             reaction(
                 () => {
                     const profileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
-                    return profileStore && !profileStore.isLoadingOntoImage ? profileStore.numVisibleRows : undefined;
+                    return profileStore && !profileStore.isLoadingOntoImage ? profileStore.rows.visibleRowCount : undefined;
                 },
                 numVisibleRows => {
                     if (numVisibleRows !== undefined) {
@@ -552,7 +551,7 @@ export class CatalogDisplayStore {
                         return undefined;
                     }
                     const eligibilityStatuses = Array.from(this.axisColumnEligibility.values(), result => result.status);
-                    return [profileStore.isUpdatingDataStream, profileStore.isLoadingData, profileStore.shouldUpdateData, eligibilityStatuses];
+                    return [profileStore.rows.isStreaming, profileStore.rows.isLoading, profileStore.rows.canLoadMore, eligibilityStatuses];
                 },
                 autoSelectState => {
                     if (autoSelectState === undefined) {
@@ -1252,8 +1251,8 @@ export class CatalogDisplayStore {
             this.setAutoSelectedAxes(this.getAutoSelectableAxisOptions());
         }
 
-        if ((isDisplayed || header?.filter !== "") && profileStore.isFileBasedCatalog) {
-            this.requestColumnUpdate();
+        if (isDisplayed || header?.filter !== "") {
+            CatalogStore.Instance.requestColumns(this.catalogFileId);
         }
 
         const isXAxisRemoved = this.xAxis === columnName;
@@ -1450,12 +1449,12 @@ export class CatalogDisplayStore {
     /** Whether a streamed file may still settle the format of a name-matched coordinate column. */
     private hasPendingStreamedAxisEligibility(): boolean {
         const profileStore = this.profileStore;
-        if (!profileStore?.isFileBasedCatalog || !profileStore.shouldUpdateData) {
+        if (!profileStore?.rows.canLoadMore) {
             return false;
         }
 
         let loadedRowCount = 0;
-        profileStore.catalogData.forEach(columnData => {
+        profileStore.rows.data.forEach(columnData => {
             loadedRowCount = Math.max(loadedRowCount, columnData.data?.length ?? 0);
         });
         if (loadedRowCount >= COORDINATE_SNIFF_SCAN_LIMIT) {
@@ -1477,7 +1476,6 @@ export class CatalogDisplayStore {
 
     /** Returns true when auto-selection should be retried after another streamed response. */
     @action private autoSelectAxes(shouldForceReset = false): boolean {
-        const profileStore = this.profileStore;
         if (!PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns || this.catalogPlotType !== CatalogPlotType.ImageOverlay) {
             return false;
         }
@@ -1513,18 +1511,10 @@ export class CatalogDisplayStore {
             didEnableHiddenColumns = didEnableHiddenColumns || unknownFallback.enabledHiddenColumns;
         }
 
-        if (didEnableHiddenColumns && profileStore?.isFileBasedCatalog) {
-            this.requestColumnUpdate();
+        if (didEnableHiddenColumns) {
+            CatalogStore.Instance.requestColumns(this.catalogFileId);
         }
         return false;
-    }
-
-    /** Fetch the columns just displayed, keeping the rows already in the table. */
-    private requestColumnUpdate() {
-        const profileStore = this.profileStore;
-        profileStore?.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        profileStore?.setIsUpdateColumn(true);
-        CatalogStore.Instance.requestFilteredRows(this.catalogFileId);
     }
 
     @action setPlottedImageOverlayState(xColumnName: string, yColumnName: string, system: CatalogSystemType, maxRows?: number) {
@@ -1580,7 +1570,7 @@ export class CatalogDisplayStore {
      */
     private getMapColumnData(column: string, isDisabled: boolean): Float32Array {
         const catalogStore = CatalogStore.Instance;
-        // dummy value to trigger update when the overlay positions are rebuilt, since profileStore.catalogData is not observable
+        // dummy value to trigger update when the overlay positions are rebuilt, since profileStore.rows.data is not observable
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const plottedSourceCount = catalogStore.catalogCounts.get(this.catalogFileId);
         const catalogProfileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
@@ -2022,7 +2012,7 @@ export class CatalogDisplayStore {
      */
     private columnRange(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore, column: string, dataState = this.catalogDataState(profileStore)): {min: number; max: number} {
         const data = profileStore.catalogControlHeader.has(column) ? profileStore.get1DPlotData(column).wcsData : undefined;
-        const visibleRows = Math.min(data?.length ?? 0, profileStore.numVisibleRows);
+        const visibleRows = Math.min(data?.length ?? 0, profileStore.rows.visibleRowCount);
         const cached = this.columnRangeCache.get(column);
         const canExtend = cached?.profileStore === profileStore && cached.dataState === dataState && cached.rowsScanned <= visibleRows && (cached.rowsScanned < visibleRows || cached.data === data);
         let min = canExtend ? cached.min : Number.MAX_VALUE;
@@ -2045,8 +2035,8 @@ export class CatalogDisplayStore {
     }
 
     private catalogDataState(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore): string {
-        const sortingInfo = profileStore.sortingInfo;
-        return JSON.stringify([sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
+        const {sortColumn, sortingType} = profileStore.rows.activeQuery;
+        return JSON.stringify([sortColumn, sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
     }
 
     /**

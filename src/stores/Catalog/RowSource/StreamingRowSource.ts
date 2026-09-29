@@ -63,6 +63,10 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.data;
     }
 
+    get matchingRowCount(): number {
+        return this.filteredRowCount ?? this.dataSize;
+    }
+
     @computed get canLoadMore(): boolean {
         const available = this.filteredRowCount !== undefined && isFinite(this.filteredRowCount) ? this.filteredRowCount : this.dataSize;
         return this.loadedRowCount < available && this.loadedRowCount < this.rowLimit;
@@ -135,11 +139,15 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.buildRequest(this.nextRange());
     }
 
-    @action loadForOverlay(): CARTA.CatalogFilterRequest | undefined {
-        this.mode = CatalogUpdateMode.ViewUpdate;
+    @action loadForOverlay(shouldStartFromFirstRow = false): CARTA.CatalogFilterRequest | undefined {
         if (!this.canLoadMore) {
+            this.mode = CatalogUpdateMode.ViewUpdate;
             return undefined;
         }
+        if (shouldStartFromFirstRow) {
+            this.dropRows();
+        }
+        this.mode = CatalogUpdateMode.ViewUpdate;
         this.isStreaming = true;
         return this.buildRequest(this.nextRange());
     }

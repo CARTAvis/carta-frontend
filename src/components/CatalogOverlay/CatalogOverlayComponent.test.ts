@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, type CatalogUpdateMode} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType} from "enums";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
 import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
@@ -36,18 +36,14 @@ type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
-    catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
+    rows: {data: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>; rowLimit: number; canLoadMore: boolean};
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string; units?: string}>;
     displayedNumericColumnNames: string[];
     isNumericColumn: (columnName: string) => boolean;
     isFileBasedCatalog: boolean;
-    maxRows: number;
-    shouldUpdateData?: boolean;
     getCoordinateEligibility: jest.Mock<CatalogAxisEligibilityResult, [string]>;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
-    setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
-    setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
 };
 
 const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
@@ -120,7 +116,7 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
-        catalogData,
+        rows: {data: catalogData, rowLimit: 100, canLoadMore: false},
         catalogHeader,
         get displayedNumericColumnNames(): string[] {
             return Array.from(catalogControlHeader)
@@ -129,22 +125,19 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         },
         isNumericColumn,
         isFileBasedCatalog: false,
-        maxRows: 100,
         getCoordinateEligibility: jest.fn(),
         setCatalogCoordinateSystem: jest.fn(),
-        setIsUpdateColumn: jest.fn(),
-        setHeaderDisplay: jest.fn(),
-        setUpdateMode: jest.fn()
+        setHeaderDisplay: jest.fn()
     } as MockProfileStore;
 
     profileStore.getCoordinateEligibility.mockImplementation((columnName: string) => {
         const controlHeader = profileStore.catalogControlHeader.get(columnName);
         const headerInfo = controlHeader ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
-        const column = profileStore.catalogData.get(headerInfo?.columnIndex ?? NaN);
+        const column = profileStore.rows.data.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
         const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
-        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.isFileBasedCatalog && profileStore.shouldUpdateData) {
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.rows.canLoadMore) {
             return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
         }
         return eligibility;
@@ -276,7 +269,7 @@ describe("CatalogOverlayComponent", () => {
             const {component, profileStore, displayStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "ra_alt"}], "ra_alt", "dec");
 
             displayStore.hasPlottedImageOverlay = true;
-            displayStore.plottedImageOverlayMaxRows = profileStore.maxRows;
+            displayStore.plottedImageOverlayMaxRows = profileStore.rows.rowLimit;
             displayStore.plottedImageOverlayXAxis = "ra";
             displayStore.plottedImageOverlayYAxis = "dec";
             displayStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
@@ -291,7 +284,7 @@ describe("CatalogOverlayComponent", () => {
             const {component, profileStore, displayStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000");
 
             displayStore.hasPlottedImageOverlay = true;
-            displayStore.plottedImageOverlayMaxRows = profileStore.maxRows;
+            displayStore.plottedImageOverlayMaxRows = profileStore.rows.rowLimit;
             displayStore.plottedImageOverlayXAxis = "_RAJ2000";
             displayStore.plottedImageOverlayYAxis = "_DEJ2000";
             displayStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
@@ -310,11 +303,11 @@ describe("CatalogOverlayComponent", () => {
             displayStore.plottedImageOverlayXAxis = "ra";
             displayStore.plottedImageOverlayYAxis = "dec";
             displayStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
-            profileStore.maxRows = 200;
+            profileStore.rows.rowLimit = 200;
 
             expect(component.isImageOverlaySelectionDirty).toBe(true);
 
-            profileStore.maxRows = 100;
+            profileStore.rows.rowLimit = 100;
             expect(component.isImageOverlaySelectionDirty).toBe(false);
         });
 
@@ -326,7 +319,7 @@ describe("CatalogOverlayComponent", () => {
             displayStore.plottedImageOverlayXAxis = "ra";
             displayStore.plottedImageOverlayYAxis = "dec";
             displayStore.plottedImageOverlaySystem = CatalogSystemType.ICRS;
-            profileStore.maxRows = 200;
+            profileStore.rows.rowLimit = 200;
 
             expect(component.isImageOverlaySelectionDirty).toBe(false);
         });

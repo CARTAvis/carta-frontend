@@ -54,6 +54,12 @@ export interface CatalogRowSource {
     readonly originalData: Map<number, ProcessedColumnData>;
     /** How many rows the table shows. */
     readonly visibleRowCount: number;
+    /** How many rows pass the Active Query, once the backend has said. */
+    readonly filteredRowCount: number | undefined;
+    /** How many rows there are to look among: those known to pass the Active Query, or every row until that is known. */
+    readonly matchingRowCount: number;
+    /** How far the rows on their way have got, from 0 to 1, once any have arrived. */
+    readonly progress: number | undefined;
     /** The most rows the table is to show. */
     readonly rowLimit: number;
     /** Whether rows that pass the Active Query are still to be loaded. */
@@ -96,8 +102,11 @@ export interface CatalogRowSource {
     loadMore(columnIndices: number[]): CARTA.CatalogFilterRequest | undefined;
     /** Ask for every row up to the row limit, for a plot. */
     loadForPlot(): CARTA.CatalogFilterRequest | undefined;
-    /** Ask for every row up to the row limit, to draw over an image. */
-    loadForOverlay(): CARTA.CatalogFilterRequest | undefined;
+    /**
+     * Ask for every row up to the row limit, to draw over an image: those not held yet, or, from
+     * the first row, every one when the rows held lack a column the overlay maps.
+     */
+    loadForOverlay(shouldStartFromFirstRow?: boolean): CARTA.CatalogFilterRequest | undefined;
     /** Drop the rows held and ask again for the rows a saved catalog had. */
     restore(restore: CatalogRowRestore): CARTA.CatalogFilterRequest | undefined;
     /** Drop the Active Query and the row limit, and ask for the first rows. */

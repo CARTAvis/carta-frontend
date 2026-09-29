@@ -30,6 +30,8 @@ export class InMemoryRowSource implements CatalogRowSource {
     @observable mode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
     @observable.ref activeQuery: CatalogActiveQuery = {filters: NO_FILTERS, sortColumn: null, sortingType: null, overlayAxes: undefined};
 
+    readonly filteredRowCount = undefined;
+    readonly progress = undefined;
     readonly isLoading = false;
     readonly isStreaming = false;
     readonly isFetchingColumns = false;
@@ -65,6 +67,10 @@ export class InMemoryRowSource implements CatalogRowSource {
 
     /** Every row is held, so the table can show as many as it is told to. */
     get rowLimit(): number {
+        return this.visibleRowCount;
+    }
+
+    get matchingRowCount(): number {
         return this.visibleRowCount;
     }
 
@@ -116,8 +122,9 @@ export class InMemoryRowSource implements CatalogRowSource {
         return undefined;
     }
 
-    @action fetchColumns(filters: CatalogRowFilters): undefined {
-        return this.applyFilters(filters);
+    fetchColumns(): undefined {
+        // Every column is held already.
+        return undefined;
     }
 
     @action sortBy(columnName: string | null, sortingType: CARTA.SortingType | null): undefined {

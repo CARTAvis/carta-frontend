@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogStore, type ControlHeader} from "stores";
+import {AppStore, type CatalogRowFilters, type CatalogRowSource, CatalogStore, type ControlHeader} from "stores";
 import {
     CatalogAxisEligibility,
     type CatalogAxisEligibilityResult,
@@ -109,50 +109,22 @@ export abstract class AbstractCatalogProfileStore {
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.CatalogHeader>;
     abstract catalogControlHeader: Map<string, ControlHeader>;
-    abstract numVisibleRows: number;
+    /** The catalog's rows, and the requests that bring them in. */
+    abstract readonly rows: CatalogRowSource;
 
     abstract get initCatalogControlHeader(): Map<string, ControlHeader>;
-    abstract resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]): void;
-    abstract get updateRequestDataSize(): any;
-    abstract get shouldUpdateData(): boolean;
-    abstract resetCatalogFilterRequest(): void;
-    abstract get isLoadingOntoImage(): boolean;
-    abstract get maxRows(): number;
+    /** Set the most rows the table is to show. */
     abstract setMaxRows(maxRows: number): void;
-    abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
-    @observable isLoadingData: boolean = false;
     @observable catalogType: CatalogType = CatalogType.SIMBAD;
-    @observable catalogFilterRequest: CARTA.CatalogFilterRequest.$Properties = {};
     @observable catalogCoordinateSystem: CatalogCoordinateSystem = {
         system: CatalogSystemType.ICRS,
         equinox: null,
         epoch: null
     };
-    @observable filterDataSize: number | undefined = undefined;
-    @observable progress: number;
-    @observable isUpdatingDataStream: boolean = false;
+    /** Whether the table has filter text or a row limit not yet applied. */
     @observable shouldUpdateTableView: boolean = false;
-    @observable updateMode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
     @observable selectedPointIndices: number[] = [];
-    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
-    @observable sortedIndexMap: number[] = [];
-    @observable filterIndexMap: number[] = [];
-    @observable isUpdateColumnMode: boolean = false;
-    /**
-     * Each column's filter text as the rows were last asked for with it. The text in the table is
-     * edited freely and only takes effect when the rows are asked for again, so the two can differ.
-     */
-    private appliedFilters = new Map<string, string>();
-
-    /**
-     * Shallow so that replacing a column marks the data as changed. Rows stream in a batch at a
-     * time, and anything computed from a column has to see them; the column arrays themselves stay
-     * plain, since they can hold millions of values.
-     */
-    @observable.shallow private _catalogData: Map<number, ProcessedColumnData>;
-    /** Changes when a column object is updated without changing the shallow map itself. */
-    @observable protected catalogDataVersion = 0;
     /** Backing store for {@link getCoordinateEligibility}, by column name. */
     private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
@@ -174,35 +146,13 @@ export abstract class AbstractCatalogProfileStore {
         [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}]
     ]);
 
-    constructor(catalogType: CatalogType, catalogData: Map<number, ProcessedColumnData>) {
-        this._catalogData = catalogData;
+    constructor(catalogType: CatalogType) {
         this.catalogType = catalogType;
         makeObservable(this);
     }
 
-    get catalogData(): Map<number, ProcessedColumnData> {
-        void this.catalogDataVersion;
-        if (!this.isFileBasedCatalog && this.filterIndexMap.length !== this.catalogInfo.dataSize) {
-            const filteredData = new Map<number, ProcessedColumnData>();
-            this._catalogData.forEach((columnData, i) => {
-                filteredData.set(i, filterProcessedColumnData(columnData, this.filterIndexMap));
-            });
-            return filteredData;
-        }
-        return this._catalogData;
-    }
-
-    get catalogOriginalData(): Map<number, ProcessedColumnData> {
-        void this.catalogDataVersion;
-        return this._catalogData;
-    }
-
     get systemCoordinateMap(): Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}> {
         return this._systemCoordinateMap;
-    }
-
-    clearData() {
-        this.catalogData.clear();
     }
 
     /**
@@ -361,7 +311,7 @@ export abstract class AbstractCatalogProfileStore {
 
         const controlHeader = this.catalogControlHeader.get(columnName);
         const headerInfo = controlHeader?.dataIndex === undefined ? undefined : this.catalogHeader[controlHeader.dataIndex];
-        const column = this.catalogData.get(headerInfo?.columnIndex ?? NaN);
+        const column = this.rows.data.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
         const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo.units);
@@ -369,7 +319,7 @@ export abstract class AbstractCatalogProfileStore {
         // the majority threshold. Keep that result Unknown until the requested rows are exhausted;
         // unlike a settled Ineligible result, it must reserve its absolute row slots in the GL
         // buffer because a later chunk can still establish the column's format.
-        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && this.isFileBasedCatalog && this.shouldUpdateData) {
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && this.rows.canLoadMore) {
             return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
         }
         // Only an answer counts as settled: a column with nothing readable in it yet is a question
@@ -403,13 +353,24 @@ export abstract class AbstractCatalogProfileStore {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
-        const xColumn = headerInfo ? this.catalogData.get(headerInfo.columnIndex) : undefined;
+        const xColumn = headerInfo ? this.rows.data.get(headerInfo.columnIndex) : undefined;
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
             return {headerInfo: headerInfo ?? {}};
         }
+    }
+
+    /** The filters in the table as it stands: their text, and what is sent for them. */
+    public getTableFilters(): CatalogRowFilters {
+        const texts = new Map<string, string>();
+        this.catalogControlHeader.forEach((header, columnName) => {
+            if (header.filter) {
+                texts.set(columnName, header.filter);
+            }
+        });
+        return {texts, configs: this.getUserFilters()};
     }
 
     public getUserFilters(): CARTA.FilterConfig[] {
@@ -504,7 +465,7 @@ export abstract class AbstractCatalogProfileStore {
             }
         }
         if (hasChanged) {
-            this.catalogFilterRequest.columnIndices = this.columnIndices;
+            this.rows.setColumns(this.columnIndices);
         }
         return hasChanged;
     }
@@ -547,7 +508,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get selectedData(): Map<number, ProcessedColumnData> {
-        const catalogColumnsData = this.catalogData;
+        const catalogColumnsData = this.rows.data;
         const selectedPointIndices = this.selectedPointIndices;
         const displayed = this.displayedColumnHeaders.map(catalogHeader => {
             return catalogHeader.columnIndex;
@@ -555,7 +516,7 @@ export abstract class AbstractCatalogProfileStore {
 
         if (selectedPointIndices.length > 0) {
             const selectedData = new Map<number, ProcessedColumnData>();
-            this.catalogData.forEach((data, i) => {
+            catalogColumnsData.forEach((data, i) => {
                 if (displayed.includes(i)) {
                     selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));
                 }
@@ -589,7 +550,12 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get hasFilter(): boolean {
-        return getHasFilter(this.catalogControlHeader, this.catalogData);
+        return getHasFilter(this.catalogControlHeader, this.rows.data);
+    }
+
+    /** Whether rows are on their way, for the table or to be drawn. */
+    @computed get isLoadingOntoImage(): boolean {
+        return this.rows.isLoading || this.rows.isStreaming;
     }
 
     @action updateTableStatus(isEnabled: boolean) {
@@ -629,16 +595,17 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogControlHeader.forEach((header, columnName) => {
             header.display = displayedColumns.has(columnName);
         });
-        this.catalogFilterRequest.columnIndices = this.columnIndices;
+        this.rows.setColumns(this.columnIndices);
     }
 
     /** The table state a workspace saves: which rows and columns the catalog holds, and how its
      * table shows them. */
     public toTableConfig(): WorkspaceCatalogTableConfig {
+        const {sortColumn, sortingType} = this.rows.activeQuery;
         const columnSettings: NonNullable<WorkspaceCatalogTableConfig["columnSettings"]> = {};
         for (const [columnName, header] of this.catalogControlHeader) {
             // The filter the rows were asked for with, not text still being edited.
-            const filter = this.appliedFilters.get(columnName);
+            const filter = this.rows.activeQuery.filters.texts.get(columnName);
             if (filter || Number.isFinite(header.columnWidth)) {
                 columnSettings[columnName] = {
                     filter,
@@ -649,10 +616,10 @@ export abstract class AbstractCatalogProfileStore {
 
         return {
             displayedColumns: this.displayedColumnHeaders.map(header => header.name),
-            maxRows: this.isFileBasedCatalog ? this.maxRows : undefined,
-            loadedRows: this.isFileBasedCatalog ? this.numVisibleRows : undefined,
+            maxRows: this.isFileBasedCatalog ? this.rows.rowLimit : undefined,
+            loadedRows: this.isFileBasedCatalog ? this.rows.visibleRowCount : undefined,
             columnSettings: Object.keys(columnSettings).length ? columnSettings : undefined,
-            sorting: this.sortingInfo.columnName && this.sortingInfo.sortingType !== null ? {columnName: this.sortingInfo.columnName, sortingType: this.sortingInfo.sortingType} : undefined
+            sorting: sortColumn && sortingType !== null ? {columnName: sortColumn, sortingType} : undefined
         };
     }
 
@@ -680,31 +647,11 @@ export abstract class AbstractCatalogProfileStore {
                 }
             });
         }
+        let {sortColumn, sortingType} = this.rows.activeQuery;
         if (config?.sorting && this.catalogControlHeader.has(config.sorting.columnName)) {
-            this.setSortingInfo(config.sorting.columnName, config.sorting.sortingType);
+            ({columnName: sortColumn, sortingType} = config.sorting);
         }
-
-        this.catalogFilterRequest.filterConfigs = this.getUserFilters();
-        this.markFiltersApplied();
-        this.catalogFilterRequest.sortColumn = this.sortingInfo.columnName;
-        this.catalogFilterRequest.sortingType = this.sortingInfo.sortingType;
-        this.catalogFilterRequest.columnIndices = this.columnIndices;
-
-        if (!this.isFileBasedCatalog) {
-            this.resetFilterRequest(this.getUserFilters());
-        }
-    }
-
-    @action setUpdateMode(mode: CatalogUpdateMode) {
-        this.updateMode = mode;
-    }
-
-    @action setLoadingDataStatus(isLoading: boolean) {
-        this.isLoadingData = isLoading;
-    }
-
-    @action setUpdatingDataStream(isUpdating: boolean) {
-        this.isUpdatingDataStream = isUpdating;
+        this.rows.setActiveQuery(this.getTableFilters(), sortColumn, sortingType, this.columnIndices);
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
@@ -720,43 +667,6 @@ export abstract class AbstractCatalogProfileStore {
         };
     }
 
-    @action setProgress(val: number) {
-        this.progress = val;
-    }
-
-    @action setIsUpdateColumn(isUpdateColumn: boolean) {
-        this.isUpdateColumnMode = isUpdateColumn;
-    }
-
-    getSortedIndices(selectedPointIndices: number[]): number[] {
-        const indices = new Array(selectedPointIndices.length);
-        if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
-            for (let index = 0; index < selectedPointIndices.length; index++) {
-                const i = selectedPointIndices[index];
-                indices[index] = this.sortedIndexMap[i];
-            }
-        } else {
-            return selectedPointIndices;
-        }
-        return indices;
-    }
-
-    getOriginIndices(selectedPointIndices: number[]): number[] {
-        const indices = new Array(selectedPointIndices.length);
-        if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
-            for (let index = 0; index < selectedPointIndices.length; index++) {
-                const i = selectedPointIndices[index];
-                const j = this.sortedIndexMap.indexOf(i);
-                if (j > -1) {
-                    indices[index] = j;
-                }
-            }
-        } else {
-            return selectedPointIndices;
-        }
-        return indices;
-    }
-
     @action setSelectedPointIndices = (pointIndices: Array<number>, shouldAutoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
         const catalogStore = CatalogStore.Instance;
@@ -765,7 +675,7 @@ export abstract class AbstractCatalogProfileStore {
             const selectedX: number[] = [];
             const selectedY: number[] = [];
             const selectedData = new Uint8Array(coordsArray.x.length);
-            const matchedIndices = this.getSortedIndices(pointIndices);
+            const matchedIndices = this.rows.getSortedIndices(pointIndices);
             for (let index = 0; index < matchedIndices.length; index++) {
                 const i = matchedIndices[index];
                 const x = coordsArray.x[i];
@@ -778,7 +688,7 @@ export abstract class AbstractCatalogProfileStore {
                 selectedData[i] = 1.0;
             }
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
-            if (shouldAutoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
+            if (shouldAutoPanZoom && this.rows.mode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
                 const frame = catalogStore.frameOf(this.catalogFileId);
                 const activeFrame = appStore.activeFrame;
@@ -809,22 +719,11 @@ export abstract class AbstractCatalogProfileStore {
         }
     };
 
+    /** Clear the filter text in the table. */
     @action resetUserFilters() {
         const controlHeaders = this.catalogControlHeader;
         controlHeaders.forEach((value, key) => {
             value.filter = "";
-        });
-        this.appliedFilters.clear();
-        this.filterDataSize = undefined;
-    }
-
-    /** Take the filter text in the table as what the rows are now being asked for with. */
-    @action markFiltersApplied() {
-        this.appliedFilters.clear();
-        this.catalogControlHeader.forEach((header, columnName) => {
-            if (header.filter) {
-                this.appliedFilters.set(columnName, header.filter);
-            }
         });
     }
 

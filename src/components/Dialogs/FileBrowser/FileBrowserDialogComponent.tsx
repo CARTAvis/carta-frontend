@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
 import {AnimationMode, BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
-import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
+import {AppStore, FileBrowserStore, type ISelectedFile, PreferenceStore, StreamingRowSource} from "stores";
 import {type FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -225,7 +225,7 @@ export class FileBrowserDialogComponent extends React.Component {
             if (!directory) {
                 throw new Error("No catalog directory selected");
             }
-            yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS);
+            yield appStore.appendCatalog(directory, file.fileInfo.name, StreamingRowSource.INIT_TABLE_ROWS);
         } else {
             const directory = fileBrowserStore.fileList?.directory;
             if (!directory) {

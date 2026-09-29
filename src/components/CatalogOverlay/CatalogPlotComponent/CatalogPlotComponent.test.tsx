@@ -52,7 +52,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
             selectedPointIndices: [],
-            getOriginIndices: jest.fn(() => [12]),
+            rows: {getOriginIndices: jest.fn(() => [12])},
             setSelectedPointIndices: jest.fn()
         };
         const catalogDisplayStore = {
@@ -73,7 +73,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         component.componentWillUnmount();
 
         expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-component-0")).toBe(7);
-        expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
+        expect(profileStore.rows.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);
     });
@@ -207,9 +207,8 @@ describe("CatalogPlotComponent linear fit", () => {
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
             selectedPointIndices: [],
-            catalogData: new Map(),
-            get2DPlotData: jest.fn(() => ({wcsX: [1, 2, 3], wcsY: [2, 4, NaN]})),
-            getSortedIndices: jest.fn((indices: number[]) => indices)
+            rows: {data: new Map(), getSortedIndices: jest.fn((indices: number[]) => indices)},
+            get2DPlotData: jest.fn(() => ({wcsX: [1, 2, 3], wcsY: [2, 4, NaN]}))
         };
         const widgetStore = {
             plotType: CatalogPlotType.D2Scatter,

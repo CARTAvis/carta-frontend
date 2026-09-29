@@ -39,10 +39,16 @@ function createSession() {
         catalogInfo: {dataSize: 5},
         isFileBasedCatalog: true,
         catalogHeader,
-        catalogData,
-        catalogOriginalData: catalogData,
+        rows: {
+            data: catalogData,
+            originalData: catalogData,
+            // Nothing says how many pass the filter, so every row is looked among.
+            get matchingRowCount() {
+                return profileStore.catalogInfo.dataSize;
+            },
+            getOriginIndices: jest.fn((indices: number[]) => indices)
+        },
         selectedPointIndices: [] as number[],
-        getOriginIndices: jest.fn((indices: number[]) => indices),
         setSelectedPointIndices: jest.fn(),
         setCatalogCoordinateSystem: jest.fn(),
         applyTableConfig: jest.fn(() => calls.push("applyTableConfig")),
@@ -350,18 +356,18 @@ describe("WorkspaceRestorer", () => {
 
     test("restores selected catalog rows by content identity in the selection index space", async () => {
         const {profileStore, displayStore} = createSession();
-        const selection = fingerprintCatalogSelection(profileStore.catalogHeader as any, profileStore.catalogData as any, [1]);
-        profileStore.getOriginIndices.mockReturnValue([3]);
+        const selection = fingerprintCatalogSelection(profileStore.catalogHeader as any, profileStore.rows.data as any, [1]);
+        profileStore.rows.getOriginIndices.mockReturnValue([3]);
 
         expect(await restore(createWorkspace({catalogs: [{...CATALOG, selection: {...selection!, isShowingSelectedData: true}}]}))).toEqual([]);
-        expect(profileStore.getOriginIndices).toHaveBeenCalledWith([1]);
+        expect(profileStore.rows.getOriginIndices).toHaveBeenCalledWith([1]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([3], false);
         expect(displayStore.setShowSelectedData).toHaveBeenCalledWith(true);
     });
 
     test("reports selection identity data that did not finish loading separately from missing rows", async () => {
         const {profileStore, displayStore} = createSession();
-        const selection = fingerprintCatalogSelection(profileStore.catalogHeader as any, profileStore.catalogData as any, [1]);
+        const selection = fingerprintCatalogSelection(profileStore.catalogHeader as any, profileStore.rows.data as any, [1]);
         profileStore.catalogInfo.dataSize = 10;
 
         expect(await restore(createWorkspace({catalogs: [{...CATALOG, selection: {...selection!, searchRows: 10, isShowingSelectedData: true}}]}))).toEqual([

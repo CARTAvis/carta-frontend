@@ -121,8 +121,8 @@ function profileStoreOf(store: CatalogDisplayStore): CatalogProfileStore {
 /** Replace the rows loaded for the first column, the way a streamed catalog batch does. */
 function loadRows(profileStore: CatalogProfileStore, values: number[]) {
     runInAction(() => {
-        profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(values)});
-        profileStore.setNumVisibleRows(values.length);
+        profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(values)});
+        profileStore.rows.visibleRowCount = values.length;
     });
 }
 
@@ -445,7 +445,8 @@ describe("CatalogDisplayStore display config", () => {
 
         // A filter change clears the rows and puts the catalog back into loading; the headers stay,
         // so the columns a config names still look resolvable.
-        CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId)?.resetFilterRequest();
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId);
+        profileStore?.rows.applyFilters(profileStore.getTableFilters(), {xColumnName: "", yColumnName: ""}, profileStore.columnIndices);
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
 
@@ -458,10 +459,10 @@ describe("CatalogDisplayStore display config", () => {
         const store = createStore();
         const before = store.toConfig();
 
-        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId);
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId) as CatalogProfileStore;
         runInAction(() => {
-            profileStore?.clearData();
-            profileStore?.setLoadingDataStatus(false);
+            profileStore.rows.data.clear();
+            profileStore.rows.isLoading = false;
         });
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag"}});

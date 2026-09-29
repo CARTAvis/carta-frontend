@@ -1,7 +1,7 @@
 import {WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogProfileStore, type CatalogRestoreOutcome, restoreWorkspaceZoom} from "stores";
+import {AppStore, type CatalogRestoreOutcome, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
@@ -366,7 +366,7 @@ export class WorkspaceRestorer {
     /** Open one catalog the way the workspace says it was opened, re-running a query if that is what it was. */
     private *openCatalogSource(source: WorkspaceCatalogSource, targetFrameId: number | undefined): Generator<Promise<unknown>, number | undefined, any> {
         if (source.type === "file") {
-            const fileId = yield* awaitedFlow<number | undefined>(this.appStore.appendCatalog(source.directory ?? "", source.filename, CatalogProfileStore.INIT_TABLE_ROWS, targetFrameId));
+            const fileId = yield* awaitedFlow<number | undefined>(this.appStore.appendCatalog(source.directory ?? "", source.filename, StreamingRowSource.INIT_TABLE_ROWS, targetFrameId));
             return typeof fileId === "number" ? fileId : undefined;
         }
 
@@ -496,22 +496,22 @@ export class WorkspaceRestorer {
             displayStore?.setShowSelectedData(false);
             return;
         }
-        const selectionData = selectionHeaders.map(header => profileStore.catalogData.get(header?.columnIndex ?? NaN)?.data);
+        const selectionData = selectionHeaders.map(header => profileStore.rows.data.get(header?.columnIndex ?? NaN)?.data);
         const loadedRows = selectionData.length ? Math.min(...selectionData.map(data => data?.length ?? 0)) : 0;
-        const availableRows = profileStore.isFileBasedCatalog ? (profileStore.filterDataSize ?? profileStore.catalogInfo.dataSize) : profileStore.numVisibleRows;
+        const availableRows = profileStore.rows.matchingRowCount;
         const requiredRows = Math.min(catalogInfo.selection.searchRows ?? loadedRows, availableRows);
         if (selectionData.some(data => !data) || loadedRows < requiredRows) {
             this.report(WorkspaceItemKind.CatalogSelection, description, `Could not restore the selected rows of the catalog ${description}: the identifying data was not fully loaded`);
             displayStore?.setShowSelectedData(false);
             return;
         }
-        const selectedDataIndices = resolveCatalogSelection(profileStore.catalogHeader, profileStore.catalogData, catalogInfo.selection);
+        const selectedDataIndices = resolveCatalogSelection(profileStore.catalogHeader, profileStore.rows.data, catalogInfo.selection);
         if (!selectedDataIndices) {
             this.report(WorkspaceItemKind.CatalogSelection, description, `Could not restore the selected rows of the catalog ${description}: the identifying data was not fully loaded`);
             displayStore?.setShowSelectedData(false);
             return;
         }
-        const selectedPointIndices = profileStore.getOriginIndices(selectedDataIndices).filter(Number.isInteger);
+        const selectedPointIndices = profileStore.rows.getOriginIndices(selectedDataIndices).filter(Number.isInteger);
         profileStore.setSelectedPointIndices(selectedPointIndices, false);
         displayStore?.setShowSelectedData(!!catalogInfo.selection.isShowingSelectedData && selectedPointIndices.length > 0);
         if (selectedPointIndices.length !== catalogInfo.selection.rowHashes.length) {
@@ -539,7 +539,7 @@ export class WorkspaceRestorer {
         // The same number of rows does not make them the same rows, so compare what the query
         // returned against the fingerprint taken when it was saved.
         if (catalogInfo.contentHash !== undefined && profileStore && !profileStore.isFileBasedCatalog) {
-            if (hashCatalogContent(profileStore.catalogHeader, profileStore.catalogOriginalData) !== catalogInfo.contentHash) {
+            if (hashCatalogContent(profileStore.catalogHeader, profileStore.rows.originalData) !== catalogInfo.contentHash) {
                 this.report(WorkspaceItemKind.Catalog, description, `The catalog ${description} returned different data from the one that was saved`);
             }
         }

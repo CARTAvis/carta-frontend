@@ -21,6 +21,9 @@ afterAll(() => {
  * register runs neither drops a column nor warns about one. */
 const CreateEmptyProfileStore = () => ({getColumnHeader: () => ({dataType: CARTA.ColumnType.Double}), catalogInfo: {fileInfo: {name: "test-catalog"}}}) as any;
 
+/** A column of doubles as the backend sends it. */
+const DoubleColumn = (values: number[]): CARTA.ColumnData.$Properties => ({dataType: CARTA.ColumnType.Double, binaryData: new Uint8Array(new Float64Array(values).buffer)});
+
 /** Restore what a Workspace saved for one plot, by the plot's stable ID. */
 function restorePlotBinding(widgetId: string, workspaceCatalogId: number, catalogFileId: number) {
     return CatalogStore.Instance.widgetBindings.restore(
@@ -524,12 +527,15 @@ describe("CatalogProfileStore streamed rows", () => {
         const dispose = autorun(() => observedLengths.push(store.get1DPlotData("RA").wcsData?.length ?? 0));
         expect(observedLengths).toEqual([2]);
 
-        store.updateCatalogData(
-            new CARTA.CatalogFilterResponse({fileId: 1, subsetDataSize: 2, subsetEndIndex: 4, requestEndIndex: 4, filterDataSize: 4}),
-            new Map<number, ProcessedColumnData>([
-                [0, {dataType: CARTA.ColumnType.Double, data: [2, 3]}],
-                [1, {dataType: CARTA.ColumnType.Double, data: [3, 4]}]
-            ])
+        store.rows.accept(
+            new CARTA.CatalogFilterResponse({
+                fileId: 1,
+                subsetDataSize: 2,
+                subsetEndIndex: 4,
+                requestEndIndex: 4,
+                filterDataSize: 4,
+                columns: {0: DoubleColumn([2, 3]), 1: DoubleColumn([3, 4])}
+            })
         );
 
         expect(observedLengths).toEqual([2, 4]);
@@ -688,17 +694,22 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         const catalogHeader = names.map((name, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name}));
         const store = new CatalogProfileStore({dataSize: 200, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})}, catalogHeader, new Map(), CatalogType.FILE);
         names.forEach(name => store.setHeaderDisplay(name === "Name", name));
-        store.setUserFilter(new CARTA.CatalogFilterRequest({columnIndices: store.columnIndices}));
+        store.rows.setColumns(store.columnIndices);
         return store;
     }
 
+    /** The columns the next request that is not given its own asks for. */
+    function requestedColumns(store: CatalogProfileStore) {
+        return store.rows.loadForPlot()?.columnIndices;
+    }
+
     test("adds mapped columns that are not displayed to the request", () => {
+        expect(requestedColumns(createProfileStore())).toEqual([0]);
         const store = createProfileStore();
-        expect(store.catalogFilterRequest.columnIndices).toEqual([0]);
 
         expect(store.ensureColumnsRequested(["RA", "DEC"])).toBe(true);
 
-        expect(store.catalogFilterRequest.columnIndices).toEqual([0, 1, 2]);
+        expect(requestedColumns(store)).toEqual([0, 1, 2]);
     });
 
     test("leaves the request alone when every column is already asked for", () => {
@@ -706,7 +717,7 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         store.ensureColumnsRequested(["RA", "DEC"]);
 
         expect(store.ensureColumnsRequested(["Name", "RA", "DEC"])).toBe(false);
-        expect(store.catalogFilterRequest.columnIndices).toEqual([0, 1, 2]);
+        expect(requestedColumns(store)).toEqual([0, 1, 2]);
     });
 
     test("leaves a column the table hides hidden", () => {
@@ -716,14 +727,14 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
 
         // Asked for, so the rows carry them; still hidden, because the overlay needing a column is
         // not a reason to put it back in the table the user arranged.
-        expect(store.catalogFilterRequest.columnIndices).toEqual([0, 1, 2]);
+        expect(requestedColumns(store)).toEqual([0, 1, 2]);
         expect(store.displayedColumnHeaders.map(header => header.name)).toEqual(["Name"]);
         expect(store.toTableConfig().displayedColumns).toEqual(["Name"]);
     });
 
     test("saves how many rows a file catalog has loaded, which its plots are drawn from", () => {
         const store = createProfileStore();
-        store.setNumVisibleRows(150);
+        runInAction(() => (store.rows.visibleRowCount = 150));
 
         expect(store.toTableConfig().loadedRows).toBe(150);
     });
@@ -731,7 +742,7 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
     test("saves the filter its rows were asked for with, not text still being edited", () => {
         const store = createProfileStore();
         store.setColumnFilter("> 2", "Name");
-        store.markFiltersApplied();
+        store.rows.applyFilters(store.getTableFilters(), {xColumnName: "", yColumnName: ""}, store.columnIndices);
 
         store.setColumnFilter("> 5", "Name");
         store.setColumnFilter("> 1", "RA");
@@ -750,9 +761,10 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
     test("saves no filter once its filters are reset", () => {
         const store = createProfileStore();
         store.setColumnFilter("> 2", "Name");
-        store.markFiltersApplied();
+        store.rows.applyFilters(store.getTableFilters(), {xColumnName: "", yColumnName: ""}, store.columnIndices);
 
-        store.resetCatalogFilterRequest();
+        store.resetUserFilters();
+        store.rows.reset(store.columnIndices);
 
         expect(store.toTableConfig().columnSettings).toBeUndefined();
     });
@@ -817,8 +829,8 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         await expect(catalogStore.restoreCatalogFromWorkspace(1)).resolves.toEqual({success: false, didStart: false, message: "The catalog request could not be sent"});
 
-        expect(profileStore.isLoadingData).toBe(false);
-        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
+        expect(profileStore.rows.isStreaming).toBe(false);
     });
 
     test("returns a failed completion when sending the row request throws", async () => {
@@ -830,22 +842,22 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         await expect(catalogStore.restoreCatalogFromWorkspace(1)).resolves.toEqual({success: false, didStart: false, message: "The catalog request could not be sent"});
 
-        expect(profileStore.isLoadingData).toBe(false);
-        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
+        expect(profileStore.rows.isStreaming).toBe(false);
     });
 
     test("drops the preview rows and asks for the catalog again from its first row", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setColumnFilter("> 1", "FLUX");
-        profileStore.setSortingInfo("RA", CARTA.SortingType.Ascending);
+        profileStore.rows.setActiveQuery(profileStore.getTableFilters(), "RA", CARTA.SortingType.Ascending, profileStore.columnIndices);
         // The rows the catalog opened with were read before those were applied.
-        expect(profileStore.subsetEndIndex).toBe(50);
+        expect(profileStore.rows.loadedRowCount).toBe(50);
 
         catalogStore.restoreCatalogFromWorkspace(1, {overlay});
 
-        expect(profileStore.numVisibleRows).toBe(0);
-        expect(profileStore.subsetEndIndex).toBe(0);
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.ViewUpdate);
+        expect(profileStore.rows.visibleRowCount).toBe(0);
+        expect(profileStore.rows.loadedRowCount).toBe(0);
+        expect(profileStore.rows.mode).toBe(CatalogUpdateMode.ViewUpdate);
         expect(sendCatalogFilter).toHaveBeenCalledTimes(1);
         const filter = sendCatalogFilter.mock.calls[0][0];
         expect(filter.subsetStartIndex).toBe(0);
@@ -873,12 +885,12 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         catalogStore.restoreCatalogFromWorkspace(1, {overlay: {...overlay, maxRows: 200}});
 
-        expect(profileStore.maxRows).toBe(100);
+        expect(profileStore.rows.rowLimit).toBe(100);
         expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(200);
 
-        profileStore.updateCatalogData(new CARTA.CatalogFilterResponse({subsetDataSize: 200, subsetEndIndex: 200, requestEndIndex: 200, filterDataSize: 200}), new Map());
-        expect(profileStore.numVisibleRows).toBe(100);
-        expect(profileStore.subsetEndIndex).toBe(200);
+        profileStore.rows.accept(new CARTA.CatalogFilterResponse({subsetDataSize: 200, subsetEndIndex: 200, requestEndIndex: 200, filterDataSize: 200}));
+        expect(profileStore.rows.visibleRowCount).toBe(100);
+        expect(profileStore.rows.loadedRowCount).toBe(200);
     });
 
     test("limits every streamed overlay batch to the saved overlay row limit", () => {
@@ -946,14 +958,14 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         sendCatalogFilter.mockReturnValue(1);
 
         const completion = catalogStore.restoreCatalogFromWorkspace(1);
-        expect(profileStore.isLoadingData).toBe(true);
-        expect(profileStore.isUpdatingDataStream).toBe(true);
+        expect(profileStore.rows.isLoading).toBe(true);
+        expect(profileStore.rows.isStreaming).toBe(true);
 
         catalogStore.failRequest(1, "catalog request failed");
 
         await expect(completion).resolves.toEqual({success: false, didStart: true, message: "catalog request failed"});
-        expect(profileStore.isLoadingData).toBe(false);
-        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
+        expect(profileStore.rows.isStreaming).toBe(false);
     });
 
     test("uses an idle timeout that is refreshed by catalog responses", async () => {
@@ -1010,11 +1022,11 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         catalogStore.restoreCatalogFromWorkspace(1, {loadedRows: 150});
 
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
+        expect(profileStore.rows.mode).toBe(CatalogUpdateMode.TableUpdate);
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
         expect(sendCatalogFilter.mock.calls[0][0].subsetDataSize).toBe(150);
-        profileStore.updateCatalogData(new CARTA.CatalogFilterResponse({subsetDataSize: 150, subsetEndIndex: 150, requestEndIndex: 150, filterDataSize: 200, progress: 1}), new Map());
-        expect(profileStore.numVisibleRows).toBe(150);
+        profileStore.rows.accept(new CARTA.CatalogFilterResponse({subsetDataSize: 150, subsetEndIndex: 150, requestEndIndex: 150, filterDataSize: 200, progress: 1}));
+        expect(profileStore.rows.visibleRowCount).toBe(150);
     });
 
     test("asks for no more loaded rows than the table limit, and no fewer than its first chunk", () => {
@@ -1034,7 +1046,7 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
 
         catalogStore.restoreCatalogFromWorkspace(1);
 
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
+        expect(profileStore.rows.mode).toBe(CatalogUpdateMode.TableUpdate);
         expect(sendCatalogFilter.mock.calls[0][0].subsetStartIndex).toBe(0);
     });
 
@@ -1087,22 +1099,22 @@ describe("CatalogStore request lifecycle", () => {
 
     test("stops loading a catalog whose rows were being scrolled in when the connection is lost", () => {
         const profileStore = openCatalog();
-        profileStore.setSubsetEndIndex(2);
-        profileStore.setLoadingDataStatus(false);
+        runInAction(() => (profileStore.rows.loadedRowCount = 2));
+        runInAction(() => (profileStore.rows.isLoading = false));
         catalogStore.requestMoreRows(catalogFileId);
-        expect(profileStore.isLoadingData).toBe(true);
+        expect(profileStore.rows.isLoading).toBe(true);
 
         // Nothing waits for a scroll's rows, and the responses that would end it will never come.
         catalogStore.resetRequests("The server connection was lost");
 
-        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
         expect(catalogStore.streamingCatalogNames).toEqual([]);
     });
 
     test("asks for a catalog's rows while no image is in front, as a restore can", () => {
         const profileStore = openCatalog();
-        profileStore.setSubsetEndIndex(2);
-        profileStore.setLoadingDataStatus(false);
+        runInAction(() => (profileStore.rows.loadedRowCount = 2));
+        runInAction(() => (profileStore.rows.isLoading = false));
         AppStore.Instance.setActiveImage(null);
 
         catalogStore.requestMoreRows(catalogFileId);
@@ -1112,14 +1124,14 @@ describe("CatalogStore request lifecycle", () => {
 
     test("asks for no rows of a catalog whose image is gone", () => {
         const profileStore = openCatalog();
-        profileStore.setSubsetEndIndex(2);
-        profileStore.setLoadingDataStatus(false);
+        runInAction(() => (profileStore.rows.loadedRowCount = 2));
+        runInAction(() => (profileStore.rows.isLoading = false));
         catalogStore.catalogImageIds.delete(catalogFileId);
 
         catalogStore.requestMoreRows(catalogFileId);
 
         expect(sendFilter).not.toHaveBeenCalled();
-        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
     });
 
     test("filters with hidden overlay columns while clearing the old selection", () => {
@@ -1145,7 +1157,7 @@ describe("CatalogStore request lifecycle", () => {
     test("preserves a drawn overlay during a column-only refresh", () => {
         const profileStore = openCatalog();
         const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
-        profileStore.setIsUpdateColumn(true);
+        runInAction(() => (profileStore.rows.isFetchingColumns = true));
         displayStore.setPlottedImageOverlayState("RA", "DEC", CatalogSystemType.ICRS);
         const clearPositions = jest.spyOn(catalogStore, "clearImageCoordsData");
 
@@ -1167,7 +1179,7 @@ describe("CatalogStore request lifecycle", () => {
 
         // The filtered rows are asked for as a table update, which draws nothing.
         expect(sendFilter).toHaveBeenCalledTimes(1);
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.TableUpdate);
+        expect(profileStore.rows.mode).toBe(CatalogUpdateMode.TableUpdate);
         expect(clearPositions).toHaveBeenCalledWith(catalogFileId);
         expect(displayStore.hasPlottedImageOverlay).toBe(false);
         expect(displayStore.toConfig().imageOverlay).toBeUndefined();
@@ -1187,7 +1199,7 @@ describe("CatalogStore request lifecycle", () => {
     test("clears positions when column controls name axes but no overlay is drawn", () => {
         const profileStore = openCatalog();
         const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
-        profileStore.setIsUpdateColumn(true);
+        runInAction(() => (profileStore.rows.isFetchingColumns = true));
         displayStore.setxAxis("RA");
         displayStore.setyAxis("DEC");
         const clearPositions = jest.spyOn(catalogStore, "clearImageCoordsData");
@@ -1221,7 +1233,7 @@ describe("CatalogStore request lifecycle", () => {
         profileStore.setColumnFilter("> 0", "RA");
         catalogStore.requestFilteredRows(catalogFileId);
         respond();
-        expect(profileStore.catalogData.has(2)).toBe(false);
+        expect(profileStore.rows.data.has(2)).toBe(false);
         displayStore.setColorMapColumn("FLUX");
         displayStore.setxAxis("RA");
         displayStore.setyAxis("DEC");
@@ -1230,16 +1242,16 @@ describe("CatalogStore request lifecycle", () => {
 
         expect(sendFilter.mock.calls[1][0]).toMatchObject({subsetStartIndex: 0, subsetDataSize: 100, columnIndices: [0, 1, 2]});
         respond();
-        expect(Array.from(profileStore.catalogData.get(2)?.data as ArrayLike<number>).slice(0, 3)).toEqual([2, 12, 22]);
-        expect(Array.from(profileStore.catalogData.get(0)?.data as ArrayLike<number>).slice(0, 3)).toEqual([0, 10, 20]);
+        expect(Array.from(profileStore.rows.data.get(2)?.data as ArrayLike<number>).slice(0, 3)).toEqual([2, 12, 22]);
+        expect(Array.from(profileStore.rows.data.get(0)?.data as ArrayLike<number>).slice(0, 3)).toEqual([0, 10, 20]);
     });
 
     test("requests hidden mapped columns on scroll and clears loading if send fails", () => {
         const profileStore = openCatalog();
         profileStore.setDisplayedColumns(["FLUX"]);
         profileStore.ensureColumnsRequested(["RA", "DEC"]);
-        profileStore.setSubsetEndIndex(2);
-        profileStore.setLoadingDataStatus(false);
+        runInAction(() => (profileStore.rows.loadedRowCount = 2));
+        runInAction(() => (profileStore.rows.isLoading = false));
         sendFilter.mockReturnValue(false);
 
         catalogStore.requestMoreRows(catalogFileId);
@@ -1247,15 +1259,15 @@ describe("CatalogStore request lifecycle", () => {
         expect(sendFilter).toHaveBeenCalledTimes(1);
         expect(sendFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
         expect(sendFilter.mock.calls[0][0].subsetStartIndex).toBe(2);
-        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
     });
 
     test("does not ask for more rows while a restore's wait is still open, even when the catalog no longer reads as loading", () => {
         const profileStore = openCatalog();
-        profileStore.setSubsetEndIndex(2);
+        runInAction(() => (profileStore.rows.loadedRowCount = 2));
         // A restore marks the catalog as loading; this state is built by hand, since the guard is
         // there for a wait that outlives that flag rather than for one the flag already covers.
-        profileStore.setLoadingDataStatus(false);
+        runInAction(() => (profileStore.rows.isLoading = false));
         const completion = catalogStore.catalogRequests.start(catalogFileId);
 
         catalogStore.requestMoreRows(catalogFileId);
@@ -1276,7 +1288,7 @@ describe("CatalogStore request lifecycle", () => {
 
         catalogStore.requestPlotRows(catalogFileId);
         expect(sendFilter).toHaveBeenCalledTimes(2);
-        expect(profileStore.updateMode).toBe(CatalogUpdateMode.PlotsUpdate);
+        expect(profileStore.rows.mode).toBe(CatalogUpdateMode.PlotsUpdate);
     });
 
     test("clears loading for filter and plot requests rejected by the transport", () => {
@@ -1285,10 +1297,10 @@ describe("CatalogStore request lifecycle", () => {
         sendFilter.mockReturnValue(false);
 
         catalogStore.requestFilteredRows(catalogFileId);
-        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
 
         catalogStore.requestPlotRows(catalogFileId);
-        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(profileStore.rows.isStreaming).toBe(false);
         expect(sendFilter).toHaveBeenCalledTimes(2);
     });
 
@@ -1299,7 +1311,7 @@ describe("CatalogStore request lifecycle", () => {
         });
 
         expect(() => catalogStore.requestPlotRows(catalogFileId)).toThrow("transport unavailable");
-        expect(profileStore.isUpdatingDataStream).toBe(false);
+        expect(profileStore.rows.isStreaming).toBe(false);
     });
 
     test("keeps online catalog filtering and sorting local", () => {
@@ -1314,13 +1326,13 @@ describe("CatalogStore request lifecycle", () => {
         catalogStore.requestPlotRows(catalogFileId);
 
         expect(sendFilter).not.toHaveBeenCalled();
-        expect(profileStore.sortingInfo).toEqual({columnName: "FLUX", sortingType: CARTA.SortingType.Descending});
+        expect(profileStore.rows.activeQuery).toMatchObject({sortColumn: "FLUX", sortingType: CARTA.SortingType.Descending});
     });
 
     test("ignores a superseded stream and accepts the latest response", () => {
         const profileStore = openCatalog();
         sendFilter.mockReturnValueOnce(11).mockReturnValueOnce(12);
-        const updateData = jest.spyOn(profileStore, "updateCatalogData");
+        const updateData = jest.spyOn(profileStore.rows, "accept");
         catalogStore.requestSortedRows(catalogFileId, "RA", CARTA.SortingType.Ascending);
         catalogStore.requestSortedRows(catalogFileId, "FLUX", CARTA.SortingType.Descending);
         const response = new CARTA.CatalogFilterResponse({fileId: catalogFileId, progress: 1, subsetDataSize: 0, subsetEndIndex: 0});
@@ -1330,7 +1342,7 @@ describe("CatalogStore request lifecycle", () => {
 
         catalogStore.handleFilterStream({requestId: 12, message: response});
         expect(updateData).toHaveBeenCalledTimes(1);
-        expect(profileStore.isLoadingData).toBe(false);
+        expect(profileStore.rows.isLoading).toBe(false);
     });
 });
 

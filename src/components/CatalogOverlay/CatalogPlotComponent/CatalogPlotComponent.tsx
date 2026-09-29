@@ -74,7 +74,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     const fileName = catalogFile.fileInfo.name || "";
                     const appStore = AppStore.Instance;
                     const frame = appStore.activeFrame;
-                    const progress = profileStore.progress;
+                    const progress = profileStore.rows.progress;
                     if (progress && isFinite(progress) && progress < 1) {
                         progressString = `[${toFixed(progress * 100)}% complete]`;
                     }
@@ -120,7 +120,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }),
                 ({enabled: isEnabled, profileStore, selectedPointIndices}) => {
                     if (isEnabled) {
-                        this.handleFittingClick(profileStore?.getSortedIndices(selectedPointIndices ?? []) ?? []);
+                        this.handleFittingClick(profileStore?.rows.getSortedIndices(selectedPointIndices ?? []) ?? []);
                     }
                 },
                 {fireImmediately: true}
@@ -193,7 +193,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
-                            const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
+                            const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.rows.data);
                             if (scatterCoords?.wcsX && scatterCoords?.wcsY) {
                                 const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
                                 plotWidgetStore.setScatterborder(scatterBorder);
@@ -244,7 +244,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName || !widgetStore.yColumnName) {
             return undefined;
         }
-        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
+        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.rows.data);
         return coords.wcsX && coords.wcsY ? this.getScatterBorder(coords.wcsX, coords.wcsY) : undefined;
     }
 
@@ -264,11 +264,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName || !widgetStore.yColumnName) {
             return {data: [], border: undefined};
         }
-        // dummy values to trigger update, since profileStore.catalogData is not observable
+        // dummy values to trigger update, since profileStore.rows.data is not observable
 
-        const numVisibleRows = profileStore.numVisibleRows;
+        const numVisibleRows = profileStore.rows.visibleRowCount;
 
-        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
+        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.rows.data);
         const scatterDatasets: Plotly.Data[] = [];
         const data: Partial<Plotly.PlotData> = {};
         data.type = "scattergl";
@@ -296,9 +296,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
             return {data: [], border: undefined};
         }
-        // dummy values to trigger update, since profileStore.catalogData is not observable
+        // dummy values to trigger update, since profileStore.rows.data is not observable
 
-        const numVisibleRows = profileStore.numVisibleRows;
+        const numVisibleRows = profileStore.rows.visibleRowCount;
 
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         const histogramDatasets: Plotly.Data[] = [];
@@ -337,9 +337,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
-            return widgetStore.xColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && !profileStore.rows.isLoading && !profileStore.rows.isStreaming;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
-            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.isLoadingData && !profileStore.isUpdatingDataStream;
+            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.rows.isLoading && !profileStore.rows.isStreaming;
         } else {
             return false;
         }
@@ -376,7 +376,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore?.isStatisticEnabled || !profileStore || !widgetStore.statisticColumnName) {
             return;
         }
-        const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+        const selectedPointIndices = profileStore.rows.getSortedIndices(profileStore.selectedPointIndices);
         const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
         if (!coords.wcsData) {
             return;
@@ -589,7 +589,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
 
             if (selectedPointIndices?.length) {
-                const matched = profileStore.getOriginIndices(selectedPointIndices);
+                const matched = profileStore.rows.getOriginIndices(selectedPointIndices);
                 profileStore.setSelectedPointIndices(matched, true);
                 catalogDisplayStore.setCatalogTableAutoScroll(true);
             }
@@ -627,7 +627,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             } else if (widgetStore.plotType === CatalogPlotType.Histogram && selectedPoint.pointIndices.length) {
                 selectedPointIndex = selectedPoint.pointIndices;
             }
-            const matched = profileStore.getOriginIndices(selectedPointIndex);
+            const matched = profileStore.rows.getOriginIndices(selectedPointIndex);
             profileStore.setSelectedPointIndices(matched, true);
             catalogDisplayStore.setCatalogTableAutoScroll(true);
         }
@@ -667,7 +667,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName || !widgetStore.yColumnName) {
             return;
         }
-        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
+        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.rows.data);
         if (!coords.wcsX || !coords.wcsY) {
             return;
         }
@@ -1030,7 +1030,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+        const selectedPointIndices = profileStore.rows.getSortedIndices(profileStore.selectedPointIndices);
         const scatterDataMarker = data[catalogDataIndex].marker;
         if (selectedPointIndices.length > 0) {
             data[catalogDataIndex]["selectedpoints"] = selectedPointIndices;

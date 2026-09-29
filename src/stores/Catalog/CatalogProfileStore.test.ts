@@ -190,7 +190,7 @@ describe("CatalogProfileStore coordinate system", () => {
     test("keeps catalog column arrays shallow", () => {
         const store = CreateProfileStore([{name: "label", dataType: CARTA.ColumnType.String, data: ["value"]}]);
 
-        expect(isObservableArray(store.catalogOriginalData.get(0)?.data)).toBe(false);
+        expect(isObservableArray(store.rows.originalData.get(0)?.data)).toBe(false);
     });
 
     test("uses the filtered data view for online coordinate eligibility", () => {
@@ -212,13 +212,13 @@ describe("CatalogProfileStore coordinate system", () => {
         );
 
         runInAction(() => {
-            store.filterIndexMap = [0];
-            store.numVisibleRows = 1;
+            store.rows.filterIndexMap = [0];
+            store.rows.visibleRowCount = 1;
         });
         expect(store.getCoordinateEligibility("ra").status).toBe("ineligible");
 
         runInAction(() => {
-            store.filterIndexMap = [1];
+            store.rows.filterIndexMap = [1];
         });
         expect(store.getCoordinateEligibility("ra").status).toBe("eligible");
     });
@@ -233,7 +233,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "flux", data: new Float64Array([1500, 91])}
         ]);
 
-        const coords = store.get2DPlotData("velocity", "flux", store.catalogData);
+        const coords = store.get2DPlotData("velocity", "flux", store.rows.data);
         expect(Array.from(coords.wcsX ?? [])).toEqual([120, -430]);
         expect(Array.from(coords.wcsY ?? [])).toEqual([1500, 91]);
     });
@@ -244,7 +244,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00", "13:00:00"]}
         ]);
 
-        const coords = store.get2DPlotData("flux", "RAJ2000", store.catalogData);
+        const coords = store.get2DPlotData("flux", "RAJ2000", store.rows.data);
         expect(coords.wcsX).toBeUndefined();
         expect(coords.wcsY).toBeUndefined();
     });
@@ -255,7 +255,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", data: new Float64Array([45, 91])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(45);
         expect(coords.wcsY?.[1]).toBeNaN();
     });
@@ -268,7 +268,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", units: "arcsec", data: new Float64Array([3600, 400000])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(3600);
         expect(coords.wcsY?.[1]).toBeNaN();
     });
@@ -281,7 +281,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.Int32, data: new Int32Array([45, 100])}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS);
         expect(coords.wcsY?.[0]).toBe(45);
         expect(coords.wcsY?.[1]).toBeNaN();
     });
@@ -296,8 +296,8 @@ describe("CatalogProfileStore plot data", () => {
         ]);
         store.setCatalogCoordinateSystem(CatalogSystemType.Galactic);
 
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX?.[0]).toBeCloseTo(187.5);
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.Galactic).wcsX?.[0]).toBeCloseTo(12.5);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS).wcsX?.[0]).toBeCloseTo(187.5);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.Galactic).wcsX?.[0]).toBeCloseTo(12.5);
     });
 
     test("checks a latitude against its pole for the system it is drawn in", () => {
@@ -309,8 +309,8 @@ describe("CatalogProfileStore plot data", () => {
         ]);
         store.setCatalogCoordinateSystem(CatalogSystemType.Pixel0);
 
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsY?.[1]).toBeNaN();
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.Pixel0).wcsY?.[1]).toBe(91);
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS).wcsY?.[1]).toBeNaN();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.Pixel0).wcsY?.[1]).toBe(91);
     });
 
     test("keeps reading a column the same way once its format is known", () => {
@@ -321,7 +321,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00", "13:00:00"]},
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "-22:00:00"]}
         ]);
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX).toBeDefined();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS).wcsX).toBeDefined();
 
         const blankChunk = new Map<number, ProcessedColumnData>([
             [0, {dataType: CARTA.ColumnType.String, data: ["", ""]}],
@@ -351,8 +351,8 @@ describe("CatalogProfileStore plot data", () => {
         expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
 
         runInAction(() => {
-            store.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", "12:30:00"]});
-            store.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["", "-21:57:15"]});
+            store.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", "12:30:00"]});
+            store.rows.originalData.set(1, {dataType: CARTA.ColumnType.String, data: ["", "-21:57:15"]});
         });
 
         const laterChunk = new Map<number, ProcessedColumnData>([
@@ -379,10 +379,10 @@ describe("CatalogProfileStore plot data", () => {
         ]);
 
         runInAction(() => {
-            store.catalogOriginalData.set(0, earlyChunk.get(0)!);
-            store.catalogOriginalData.set(1, earlyChunk.get(1)!);
+            store.rows.originalData.set(0, earlyChunk.get(0)!);
+            store.rows.originalData.set(1, earlyChunk.get(1)!);
         });
-        store.setSubsetEndIndex(2);
+        runInAction(() => (store.rows.loadedRowCount = 2));
 
         // One recognized value out of two inspected values is not a majority, but the rows still
         // occupy these absolute positions in the streamed overlay buffer.
@@ -391,8 +391,8 @@ describe("CatalogProfileStore plot data", () => {
         expect(earlyCoords.wcsY).toEqual([NaN, NaN]);
 
         runInAction(() => {
-            store.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00"]});
-            store.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00"]});
+            store.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00"]});
+            store.rows.originalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00"]});
         });
 
         const laterChunk = new Map<number, ProcessedColumnData>([
@@ -409,7 +409,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "RAJ2000", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
         ]);
-        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS).wcsX).toBeDefined();
+        expect(store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS).wcsX).toBeDefined();
 
         const chunk = new Map<number, ProcessedColumnData>([
             [0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "---"]}],
@@ -428,7 +428,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15.4625"]}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS);
         expect(coords.wcsX?.[0]).toBeCloseTo(187.5, 10);
         expect(coords.wcsY?.[0]).toBeCloseTo(-21.954295, 6);
     });
@@ -439,7 +439,7 @@ describe("CatalogProfileStore plot data", () => {
             {name: "DEJ2000", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15", "-22:00:00", undefined]}
         ]);
 
-        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.catalogData, CatalogSystemType.ICRS, 2);
+        const coords = store.get2DCoordinateData("RAJ2000", "DEJ2000", store.rows.data, CatalogSystemType.ICRS, 2);
 
         expect(coords.wcsX).toHaveLength(2);
         expect(coords.wcsY).toHaveLength(2);
@@ -454,34 +454,34 @@ describe("CatalogProfileStore column update streams", () => {
             new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([1, 2, 3, 4])}]]),
             CatalogType.FILE
         );
-        profileStore.setIsUpdateColumn(true);
+        runInAction(() => (profileStore.rows.isFetchingColumns = true));
 
-        profileStore.updateCatalogData(
-            {
+        profileStore.rows.accept(
+            new CARTA.CatalogFilterResponse({
                 fileId: 1,
                 filterDataSize: 4,
                 progress: 0,
                 requestEndIndex: 4,
                 subsetDataSize: 1,
-                subsetEndIndex: 1
-            } as CARTA.CatalogFilterResponse,
-            new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([5])}]])
+                subsetEndIndex: 1,
+                columns: {0: {dataType: CARTA.ColumnType.Double, binaryData: new Uint8Array(Float64Array.from([5]).buffer)}}
+            })
         );
 
-        expect(profileStore.isUpdateColumnMode).toBe(true);
+        expect(profileStore.rows.isFetchingColumns).toBe(true);
 
-        profileStore.updateCatalogData(
-            {
+        profileStore.rows.accept(
+            new CARTA.CatalogFilterResponse({
                 fileId: 1,
                 filterDataSize: 4,
                 progress: 1,
                 requestEndIndex: 4,
                 subsetDataSize: 3,
-                subsetEndIndex: 4
-            } as CARTA.CatalogFilterResponse,
-            new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([6, 7, 8])}]])
+                subsetEndIndex: 4,
+                columns: {0: {dataType: CARTA.ColumnType.Double, binaryData: new Uint8Array(Float64Array.from([6, 7, 8]).buffer)}}
+            })
         );
 
-        expect(profileStore.isUpdateColumnMode).toBe(false);
+        expect(profileStore.rows.isFetchingColumns).toBe(false);
     });
 });

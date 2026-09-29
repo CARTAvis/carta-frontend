@@ -384,7 +384,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (catalogProfileStore) {
                 const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
                 catalogStore.widgetBindings.showInTable(selectedPoint.fileId);
-                const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
+                const matched = catalogProfileStore.rows.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);
                 catalogDisplayStore?.setCatalogTableAutoScroll(true);
             }
