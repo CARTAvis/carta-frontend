@@ -26,6 +26,7 @@ function loadCatalog(fileId: number, filename: string, workspaceCatalogId?: numb
         selectedPointIndices: [],
         catalogHeader,
         catalogControlHeader,
+        rows: {data: new Map(), visibleRowCount: 0, getSortedIndices: (indices: number[]) => indices},
         get2DPlotData: jest.fn(() => ({wcsX: [], wcsY: []})),
         get1DPlotData: jest.fn(() => ({wcsData: new Float32Array()})),
         getColumnHeader: (columnName: string) => {
@@ -56,10 +57,8 @@ describe("CatalogPlotComponent catalog selection", () => {
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
             selectedPointIndices: [],
-            catalogData: [],
-            numVisibleRows: 4,
+            rows: {data: new Map(), visibleRowCount: 4, getOriginIndices: jest.fn(() => [12])},
             get2DPlotData: jest.fn(() => ({wcsX: [0, 10, 20, 30], wcsY: [0, 10, 20, 30]})),
-            getOriginIndices: jest.fn(() => [12]),
             setSelectedPointIndices: jest.fn()
         };
         const catalogDisplayStore = {
@@ -88,7 +87,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         component.componentWillUnmount();
 
         expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-component-0")).toBe(7);
-        expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
+        expect(profileStore.rows.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.requestCatalogTableAutoScroll).toHaveBeenCalledTimes(1);
     });
@@ -224,7 +223,6 @@ describe("CatalogPlotComponent restored plots", () => {
         loadCatalog(11, "first.xml", FIRST_CATALOG_WORKSPACE_ID);
         const rows = observable.box<Float32Array>(new Float32Array(), {deep: false});
         (catalogStore.catalogProfileStores.get(11) as any).get1DPlotData = () => ({wcsData: rows.get()});
-        (catalogStore.catalogProfileStores.get(11) as any).getSortedIndices = (indices: number[]) => indices;
         const {component, plotId} = restorePlot();
 
         bindRestoredPlot(plotId, 11, {statisticColumnName: "Bmag"});
@@ -319,9 +317,8 @@ describe("CatalogPlotComponent linear fit", () => {
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
             selectedPointIndices: [],
-            catalogData: new Map(),
-            get2DPlotData: jest.fn(() => ({wcsX: [1, 2, 3], wcsY: [2, 4, NaN]})),
-            getSortedIndices: jest.fn((indices: number[]) => indices)
+            rows: {data: new Map(), getSortedIndices: jest.fn((indices: number[]) => indices)},
+            get2DPlotData: jest.fn(() => ({wcsX: [1, 2, 3], wcsY: [2, 4, NaN]}))
         };
         const widgetStore = {
             plotType: CatalogPlotType.D2Scatter,

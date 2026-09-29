@@ -138,6 +138,17 @@ describe("StreamingRowSource", () => {
         expect(source.visibleRowCount).toBe(200);
     });
 
+    test("asks again from the first row for an overlay when told to", () => {
+        const source = openSource();
+
+        const request = source.loadForOverlay(true);
+
+        expect(request).toMatchObject({subsetStartIndex: 0, subsetDataSize: DATA_SIZE});
+        expect(source.visibleRowCount).toBe(0);
+        expect(source.mode).toBe(CatalogUpdateMode.ViewUpdate);
+        expect(source.isLoading && source.isStreaming).toBe(true);
+    });
+
     test("marks rows as wanted for an overlay even when it holds them all", () => {
         const source = openSource(30);
 
