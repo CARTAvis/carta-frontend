@@ -17,7 +17,6 @@ interface IBackendResponse {
     message?: string | null;
 }
 
-// Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
 /**
  * A streamed message together with the ID of the request it answers.
  *
@@ -31,6 +30,7 @@ export interface StreamedMessage<T> {
     message: T;
 }
 
+// Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
 export class Deferred<T> {
     private _resolve: (value: T) => void = () => {};
     private _reject: (reason: any) => void = () => {};
