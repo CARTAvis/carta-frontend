@@ -165,6 +165,7 @@ function getPlottedOverlayColumns(catalogDisplayStore: CatalogDisplayStore | und
 }
 
 export class AppStore {
+    public static readonly MAX_CURVES = 10;
     private static staticInstance: AppStore;
 
     public static get Instance() {
@@ -470,7 +471,15 @@ export class AppStore {
         return Array.from(this.regionGroups.values());
     }
 
-    @action createRegionGroup = (type: RegionGroupType = RegionGroupType.TIME_SERIES): RegionGroupStore => {
+    @computed get isCurveLimitReached(): boolean {
+        return this.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES).length >= AppStore.MAX_CURVES;
+    }
+
+    @action createRegionGroup = (type: RegionGroupType = RegionGroupType.TIME_SERIES): RegionGroupStore | undefined => {
+        if ((type === RegionGroupType.TIME_SERIES || type === RegionGroupType.REGION_SERIES) && this.isCurveLimitReached) {
+            return undefined;
+        }
+
         const index = this.regionGroupIdCounter++;
         const regionGroupId = `region-group-${index}`;
 

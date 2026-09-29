@@ -82,7 +82,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     @action private ensureRegionGroup = () => {
         if (AppStore.Instance.timeSeriesStore.elements.length && !this.regionGroups.length) {
             const group = AppStore.Instance.createRegionGroup();
-            this.selectedRegionGroupIds = [group.regionGroupId];
+            if (group) {
+                this.selectedRegionGroupIds = [group.regionGroupId];
+            }
         }
     };
 
