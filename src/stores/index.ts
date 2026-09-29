@@ -4,6 +4,7 @@ export * from "./AppStore/AppStore";
 export * from "./Catalog/CatalogDisplayStore";
 export * from "./Catalog/CatalogProfileStore";
 export * from "./Catalog/CatalogStore";
+export * from "./Catalog/RowSource";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryConfigStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryProfileStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryStore";
