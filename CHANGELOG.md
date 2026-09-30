@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a catalog's `COOSYS` declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (`ecl_FK5`, `ecl_FK4`) were read as equatorial, and the declared equinox and epoch were ignored ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
+* Renamed the Stokes Analysis TSV exports to the {image}-{content}-{timestamp} pattern (e.g. `Q-profile`, `fractional-QU-scatter`), named the exported profile in their first header line (e.g. `Q/I profile`), and removed the redundant `Qz`/`Uz` lines ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
 
 ## [6.0.0]
 
