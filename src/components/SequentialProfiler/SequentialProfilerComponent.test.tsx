@@ -4,7 +4,7 @@ import {observable, runInAction} from "mobx";
 
 import {RegionGroupType} from "enums";
 
-jest.mock("carta-protobuf", () => ({CARTA: {StatsType: {Sum: 2, FluxDensity: 3, Mean: 4}}}), {virtual: true});
+jest.mock("carta-protobuf", () => ({CARTA: {StatsType: {Sum: 2, FluxDensity: 3, Mean: 4, Max: 5}}}), {virtual: true});
 jest.mock("components/Shared", () => ({
     LinePlotComponent: ({xMin, xMax, multiPlotPropsMap}) => (
         <div data-testid="plot-data" data-x-min={xMin} data-x-max={xMax}>
@@ -25,7 +25,8 @@ jest.mock("stores", () => ({
         get Instance() {
             return MOCK_WIDGETS_STORE;
         }
-    }
+    },
+    SEQUENTIAL_X_AXIS_OPTIONS: [{value: "index", label: "Index"}]
 }));
 
 import {RegionGroupStore} from "../../stores/RegionGroupStore/RegionGroupStore";
@@ -34,7 +35,9 @@ import {RegionGroupManagerComponent} from "../RegionGroup/RegionGroupManagerComp
 import {SequentialProfilerComponent} from "./SequentialProfilerComponent";
 
 const GROUPS = observable.map<string, any>();
-const MOCK_WIDGETS_STORE = {sequentialProfileWidgets: new Map([["sequential-profiler-0", {getLineColor: () => "auto-blue", plotType: "Lines", lineWidth: 1, linePlotPointSize: 3}]])};
+const MOCK_WIDGETS_STORE = {
+    sequentialProfileWidgets: new Map([["sequential-profiler-0", {getLineColor: () => "auto-blue", plotType: "Lines", lineWidth: 1, linePlotPointSize: 3, visibleXAxisFormats: ["index"]}]])
+};
 const FRAME = {id: 2, frameInfo: {fileId: 2}, filename: "frame.fits", requiredStokes: 0, headerUnit: "Jy/beam", regionSet: {editableRegionsList: [{regionId: 7, isClosedRegion: true, nameString: "Region 7"}]}};
 const MOCK_APP_STORE = {
     get regionGroupStores() {
@@ -82,6 +85,31 @@ test("plots a newly created region series immediately", () => {
     expect(screen.getByTestId("plot-data")).toHaveTextContent("Region series 2");
     expect(screen.getByTestId("plot-data")).toHaveTextContent('"x":7,"y":8');
     expect(screen.getByTestId("plot-data")).not.toHaveTextContent("Light curve 1");
+    unmount();
+    GROUPS.clear();
+});
+
+test("plots intensity mean and max for time-series groups", () => {
+    MOCK_APP_STORE.timeSeriesStore.elements = [{frame: {id: 1}}];
+    runInAction(() => {
+        GROUPS.set("light-curve", {
+            regionGroupId: "light-curve",
+            regionGroupName: "Light curve 1",
+            regionGroupType: RegionGroupType.TIME_SERIES,
+            entries: [{frameId: 1, region: {mjdUtc: 59000, regionFluxDensity: 3, regionMean: 4, regionMax: 8, regionSum: 12, isDisplayed: true}}]
+        });
+    });
+
+    const {unmount} = render(<SequentialProfilerComponent id="sequential-profiler-0" docked={true} />);
+    const statisticSelect = screen.getAllByRole("combobox")[1];
+    expect(screen.getByRole("option", {name: "Intensity mean"})).toBeInTheDocument();
+    expect(screen.getByRole("option", {name: "Intensity max"})).toBeInTheDocument();
+
+    fireEvent.change(statisticSelect, {target: {value: "4"}});
+    expect(screen.getByTestId("plot-data")).toHaveTextContent('"y":4');
+    fireEvent.change(statisticSelect, {target: {value: "5"}});
+    expect(screen.getByTestId("plot-data")).toHaveTextContent('"y":8');
+
     unmount();
     GROUPS.clear();
 });

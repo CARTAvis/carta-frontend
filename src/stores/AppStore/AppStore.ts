@@ -508,7 +508,8 @@ export class AppStore {
                 return {
                     regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
                     regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
-                    regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+                    regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined,
+                    regionMax: statistics?.find(stat => stat.statsType === CARTA.StatsType.Max)?.value ?? undefined
                 };
             }
         );
@@ -2162,7 +2163,8 @@ export class AppStore {
                             return {
                                 regionSum: statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
                                 regionFluxDensity: statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
-                                regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+                                regionMean: statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined,
+                                regionMax: statistics?.find(stat => stat.statsType === CARTA.StatsType.Max)?.value ?? undefined
                             };
                         })
                     );

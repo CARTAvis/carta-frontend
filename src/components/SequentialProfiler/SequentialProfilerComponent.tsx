@@ -14,7 +14,7 @@ import {formatMjdUtcAsIso, formatTimeSeriesTickLabels, getColorForTheme, toFixed
 
 import "./SequentialProfilerComponent.scss";
 
-type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean;
+type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean | CARTA.StatsType.Max;
 const JULIAN_DATE_OFFSET = 2400000.5;
 const SECONDS_PER_DAY = 86400;
 const DAYS_PER_JULIAN_YEAR = 365.25;
@@ -116,7 +116,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private get effectiveStatistic(): SequentialStatistic {
-        return this.selectedSeriesType === RegionGroupType.REGION_SERIES || this.statistic !== CARTA.StatsType.Mean ? this.statistic : CARTA.StatsType.FluxDensity;
+        return this.statistic;
     }
 
     @computed private get selectedRegionGroupText(): string {
@@ -153,7 +153,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                 entries: groupEntries,
                 data: groupEntries.map(({entry, x}) => ({
                     x,
-                    y: (this.effectiveStatistic === CARTA.StatsType.FluxDensity ? entry.region.regionFluxDensity : this.effectiveStatistic === CARTA.StatsType.Mean ? entry.region.regionMean : entry.region.regionSum) ?? NaN
+                    y:
+                        (this.effectiveStatistic === CARTA.StatsType.FluxDensity
+                            ? entry.region.regionFluxDensity
+                            : this.effectiveStatistic === CARTA.StatsType.Mean
+                              ? entry.region.regionMean
+                              : this.effectiveStatistic === CARTA.StatsType.Max
+                                ? entry.region.regionMax
+                                : entry.region.regionSum) ?? NaN
                 }))
             };
         });
@@ -317,7 +324,14 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const yPadding = yMin === yMax ? Math.abs(yMin) * 0.05 || 1 : (yMax - yMin) * 0.05;
         const firstRegion = this.plotGroups.find(group => group.entries.length)?.entries[0]?.entry.region;
         const unit = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
-        const statisticLabel = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? "Flux Density" : this.effectiveStatistic === CARTA.StatsType.Mean ? "Intensity Mean" : "Intensity Sum";
+        const statisticLabel =
+            this.effectiveStatistic === CARTA.StatsType.FluxDensity
+                ? "Flux Density"
+                : this.effectiveStatistic === CARTA.StatsType.Mean
+                  ? "Intensity Mean"
+                  : this.effectiveStatistic === CARTA.StatsType.Max
+                    ? "Intensity Max"
+                    : "Intensity Sum";
         const multiPlotPropsMap = new Map<string, MultiPlotProps>();
         const widgetStore = WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId);
         this.plotGroups.forEach(({group, data}) => {
@@ -459,7 +473,8 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                             options={[
                                 {value: CARTA.StatsType.FluxDensity, label: "Flux density"},
                                 {value: CARTA.StatsType.Sum, label: "Intensity sum"},
-                                ...(this.selectedSeriesType === RegionGroupType.REGION_SERIES ? [{value: CARTA.StatsType.Mean, label: "Intensity mean"}] : [])
+                                {value: CARTA.StatsType.Mean, label: "Intensity mean"},
+                                {value: CARTA.StatsType.Max, label: "Intensity max"}
                             ]}
                             onChange={this.selectStatistic}
                         />

@@ -14,6 +14,7 @@ export interface RegionGroupRegion {
     regionSum?: number;
     regionFluxDensity?: number;
     regionMean?: number;
+    regionMax?: number;
     regionSumUnit?: string;
     regionFluxDensityUnit?: string;
 }
@@ -35,7 +36,7 @@ export type RegionGroupFrame = {
 
 export type RegionSeriesFrame = Omit<RegionGroupFrame, "mjdUtc" | "isoUtc">;
 
-type RegionGroupStatistics = Pick<RegionGroupRegion, "regionSum" | "regionFluxDensity" | "regionMean">;
+type RegionGroupStatistics = Pick<RegionGroupRegion, "regionSum" | "regionFluxDensity" | "regionMean" | "regionMax">;
 
 export class RegionGroupStore {
     @observable regionGroupId: string;
@@ -83,7 +84,7 @@ export class RegionGroupStore {
         }
     };
 
-    @action setRegion = (frameId: number, regionId: number, statistics?: Pick<RegionGroupRegion, "regionSum" | "regionFluxDensity" | "regionMean">) => {
+    @action setRegion = (frameId: number, regionId: number, statistics?: RegionGroupStatistics) => {
         const current = this.regionGroup.get(frameId);
         const isSameRegion = current?.regionId === regionId;
         const region: RegionGroupRegion = {
@@ -91,7 +92,8 @@ export class RegionGroupStore {
             regionId,
             regionSum: isSameRegion ? (current.regionSum ?? NaN) : NaN,
             regionFluxDensity: isSameRegion ? (current.regionFluxDensity ?? NaN) : NaN,
-            regionMean: isSameRegion ? (current.regionMean ?? NaN) : NaN
+            regionMean: isSameRegion ? (current.regionMean ?? NaN) : NaN,
+            regionMax: isSameRegion ? (current.regionMax ?? NaN) : NaN
         };
         if (statistics?.regionSum !== undefined) {
             region.regionSum = statistics.regionSum;
@@ -101,6 +103,9 @@ export class RegionGroupStore {
         }
         if (statistics?.regionMean !== undefined) {
             region.regionMean = statistics.regionMean;
+        }
+        if (statistics?.regionMax !== undefined) {
+            region.regionMax = statistics.regionMax;
         }
         this.regionGroup.set(frameId, region);
     };
@@ -127,6 +132,7 @@ export class RegionGroupStore {
                 regionSum: shouldResetStatistics ? (statistics?.regionSum ?? NaN) : (current?.regionSum ?? statistics?.regionSum ?? NaN),
                 regionFluxDensity: shouldResetStatistics ? (statistics?.regionFluxDensity ?? NaN) : (current?.regionFluxDensity ?? statistics?.regionFluxDensity ?? NaN),
                 regionMean: shouldResetStatistics ? (statistics?.regionMean ?? NaN) : (current?.regionMean ?? statistics?.regionMean ?? NaN),
+                regionMax: shouldResetStatistics ? (statistics?.regionMax ?? NaN) : (current?.regionMax ?? statistics?.regionMax ?? NaN),
                 regionSumUnit: frame.regionSumUnit,
                 regionFluxDensityUnit: frame.regionFluxDensityUnit
             });
@@ -157,6 +163,7 @@ export class RegionGroupStore {
                 regionSum: shouldResetStatistics ? (statistics?.regionSum ?? NaN) : (current?.regionSum ?? statistics?.regionSum ?? NaN),
                 regionFluxDensity: shouldResetStatistics ? (statistics?.regionFluxDensity ?? NaN) : (current?.regionFluxDensity ?? statistics?.regionFluxDensity ?? NaN),
                 regionMean: shouldResetStatistics ? (statistics?.regionMean ?? NaN) : (current?.regionMean ?? statistics?.regionMean ?? NaN),
+                regionMax: shouldResetStatistics ? (statistics?.regionMax ?? NaN) : (current?.regionMax ?? statistics?.regionMax ?? NaN),
                 regionSumUnit: frame.regionSumUnit,
                 regionFluxDensityUnit: frame.regionFluxDensityUnit
             });
@@ -185,7 +192,8 @@ export class RegionGroupStore {
             ...region,
             regionSum: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Sum)?.value ?? region.regionSum,
             regionFluxDensity: stats.statistics?.find(value => value.statsType === CARTA.StatsType.FluxDensity)?.value ?? region.regionFluxDensity,
-            regionMean: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Mean)?.value ?? region.regionMean
+            regionMean: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Mean)?.value ?? region.regionMean,
+            regionMax: stats.statistics?.find(value => value.statsType === CARTA.StatsType.Max)?.value ?? region.regionMax
         });
     };
 

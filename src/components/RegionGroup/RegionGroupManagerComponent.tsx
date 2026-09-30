@@ -53,7 +53,8 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         regionGroup.setRegion(frameId, regionId, {
             regionSum: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Sum)?.value ?? undefined,
             regionFluxDensity: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.FluxDensity)?.value ?? undefined,
-            regionMean: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined
+            regionMean: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Mean)?.value ?? undefined,
+            regionMax: regionStats?.statistics?.find(stat => stat.statsType === CARTA.StatsType.Max)?.value ?? undefined
         });
     };
 

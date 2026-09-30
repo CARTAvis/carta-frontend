@@ -2,7 +2,7 @@ jest.mock(
     "carta-protobuf",
     () => ({
         CARTA: {
-            StatsType: {Sum: 2, FluxDensity: 3, Mean: 4}
+            StatsType: {Sum: 2, FluxDensity: 3, Mean: 4, Max: 5}
         }
     }),
     {virtual: true}
@@ -16,11 +16,11 @@ describe("RegionGroupStore", () => {
     test("updates and removes frame-region associations", () => {
         const store = new RegionGroupStore("group-1", "Group 1");
 
-        store.setRegion(10, 3, {regionSum: 12, regionMean: 4});
-        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: 12, regionFluxDensity: NaN, regionMean: 4});
+        store.setRegion(10, 3, {regionSum: 12, regionMean: 4, regionMax: 9});
+        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: 12, regionFluxDensity: NaN, regionMean: 4, regionMax: 9});
 
         store.setRegion(10, 4);
-        expect(store.regionGroup.get(10)).toEqual({regionId: 4, regionSum: NaN, regionFluxDensity: NaN, regionMean: NaN});
+        expect(store.regionGroup.get(10)).toEqual({regionId: 4, regionSum: NaN, regionFluxDensity: NaN, regionMean: NaN, regionMax: NaN});
 
         store.removeRegion(10);
         expect(store.regionGroup.has(10)).toBe(false);
@@ -35,10 +35,11 @@ describe("RegionGroupStore", () => {
             regionId: 99,
             statistics: [
                 {statsType: 2, value: 1},
-                {statsType: 4, value: 2}
+                {statsType: 4, value: 2},
+                {statsType: 5, value: 3}
             ]
         } as any);
-        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: NaN, regionFluxDensity: NaN, regionMean: NaN});
+        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: NaN, regionFluxDensity: NaN, regionMean: NaN, regionMax: NaN});
 
         store.updateRegionStats({
             fileId: 10,
@@ -46,10 +47,11 @@ describe("RegionGroupStore", () => {
             statistics: [
                 {statsType: 2, value: 12},
                 {statsType: 3, value: 6},
-                {statsType: 4, value: 4}
+                {statsType: 4, value: 4},
+                {statsType: 5, value: 9}
             ]
         } as any);
-        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: 12, regionFluxDensity: 6, regionMean: 4});
+        expect(store.regionGroup.get(10)).toEqual({regionId: 3, regionSum: 12, regionFluxDensity: 6, regionMean: 4, regionMax: 9});
     });
 
     test("synchronizes time-series frames and automatically selects the first region", () => {
