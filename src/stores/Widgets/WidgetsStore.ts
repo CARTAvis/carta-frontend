@@ -1525,7 +1525,10 @@ export class WidgetsStore {
             id = this.getNextId(SequentialProfilerComponent.WidgetConfig.type);
         }
         if (id) {
-            const widgetStore = new SequentialProfileWidgetStore();
+            const widgetStore = new SequentialProfileWidgetStore({
+                getVisibleXAxisFormats: () => PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_LIGHT_CURVE_VISIBLE_X_AXIS_FORMATS),
+                setVisibleXAxisFormats: formats => PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_LIGHT_CURVE_VISIBLE_X_AXIS_FORMATS, formats)
+            });
             if (widgetSettings) {
                 widgetStore.applyConfig(widgetSettings);
             }

@@ -6,6 +6,7 @@ export enum PreferenceKeys {
     SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION = "imageViewRestFrameVelocityConvention",
     SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE = "spectralProfilerRestFrameShiftMode",
     SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION = "spectralProfilerRestFrameVelocityConvention",
+    SILENT_LIGHT_CURVE_VISIBLE_X_AXIS_FORMATS = "lightCurveVisibleXAxisFormats",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",

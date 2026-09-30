@@ -88,6 +88,7 @@ export class LinePlotComponentProps {
     markers?: LineMarker[];
     shouldShowTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
+    xTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;

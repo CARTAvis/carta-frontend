@@ -29,6 +29,7 @@ export class PlotContainerProps {
     tickTypeY?: TickType;
     shouldShowTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
+    xTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Chart) => void;
     shouldShowXAxisTicks?: boolean;
@@ -317,6 +318,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
+        } else if (props.xTickFormatter !== nextProps.xTickFormatter) {
+            return true;
         } else if (props.shouldShowXAxisTicks !== nextProps.shouldShowXAxisTicks) {
             return true;
         } else if (props.shouldShowXAxisLabel !== nextProps.shouldShowXAxisLabel) {
@@ -415,7 +418,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: this.props.shouldShowXAxisTicks === undefined ? true : this.props.shouldShowXAxisTicks,
                         maxRotation: 0,
                         color: labelColor,
-                        callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
+                        callback: this.props.xTickFormatter ?? PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
                         z: -1,

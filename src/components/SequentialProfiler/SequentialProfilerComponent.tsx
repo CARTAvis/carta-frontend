@@ -1,20 +1,23 @@
 import * as React from "react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, Menu, MenuItem, NonIdealState, PopoverNext, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {type Tick} from "chart.js";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
 import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {PlotType, RegionGroupType, TickType, TimeLabelFormat} from "enums";
+import {IsoTimePrecision, PlotType, RegionGroupType, RelativeTimeReference, RelativeTimeUnit, TickType, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps, WidgetsStore} from "stores";
-import {getColorForTheme} from "utilities";
+import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, SEQUENTIAL_X_AXIS_OPTIONS, type SequentialXAxisFormat, type WidgetProps, WidgetsStore} from "stores";
+import {formatMjdUtcAsIso, formatTimeSeriesTickLabels, getColorForTheme, toFixed} from "utilities";
 
 import "./SequentialProfilerComponent.scss";
 
 type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean;
 const JULIAN_DATE_OFFSET = 2400000.5;
+const SECONDS_PER_DAY = 86400;
+const DAYS_PER_JULIAN_YEAR = 365.25;
 
 @observer
 export class SequentialProfilerComponent extends React.Component<WidgetProps> {
@@ -24,7 +27,6 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     @observable private isMultiRegionGroupEnabled = false;
     @observable private selectedRegionGroupIds: string[] = [];
     @observable private statistic: SequentialStatistic = CARTA.StatsType.FluxDensity;
-    @observable private xAxisFormat: TimeLabelFormat = TimeLabelFormat.MJD;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -92,6 +94,10 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         return AppStore.Instance.regionGroupStores.filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES || group.regionGroupType === RegionGroupType.REGION_SERIES);
     }
 
+    private get xAxisFormat(): SequentialXAxisFormat {
+        return WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.xAxisFormat ?? TimeLabelFormat.AUTO;
+    }
+
     @computed private get availableRegionGroups(): RegionGroupStore[] {
         const appStore = AppStore.Instance;
         return this.regionGroups.filter(group =>
@@ -118,16 +124,29 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed private get plotGroups(): Array<{group: RegionGroupStore; entries: Array<{entry: RegionGroupStore["entries"][number]; x: number}>; data: Point2D[]}> {
+        const timeSeriesIndexByFrameId = new Map(AppStore.Instance.timeSeriesStore.elements.map(({frame}, index) => [frame.id, index + 1]));
         const entries = this.selectedRegionGroups
             .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
             .flatMap(group => group.entries)
             .filter(entry => entry.region.isDisplayed !== false && entry.region.mjdUtc !== undefined);
-        const firstMjdUtc = entries.length ? Math.min(...entries.map(entry => entry.region.mjdUtc!)) : 0;
+        const firstMjdUtc = AppStore.Instance.timeSeriesStore.elements[0]?.mjdUtc ?? (entries.length ? Math.min(...entries.map(entry => entry.region.mjdUtc!)) : 0);
 
         return this.selectedRegionGroups.map(group => {
             const groupEntries = group.entries
-                .filter(entry => entry.region.isDisplayed !== false && (group.regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId !== undefined : entry.region.mjdUtc !== undefined))
-                .map(entry => ({entry, x: group.regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId! : this.convertMjd(entry.region.mjdUtc!, firstMjdUtc)}))
+                .filter(
+                    entry =>
+                        entry.region.isDisplayed !== false &&
+                        (group.regionGroupType === RegionGroupType.REGION_SERIES ? entry.region.regionId !== undefined : entry.region.mjdUtc !== undefined && (this.xAxisFormat !== "index" || timeSeriesIndexByFrameId.has(entry.frameId)))
+                )
+                .map(entry => ({
+                    entry,
+                    x:
+                        group.regionGroupType === RegionGroupType.REGION_SERIES
+                            ? entry.region.regionId!
+                            : this.xAxisFormat === "index"
+                              ? (timeSeriesIndexByFrameId.get(entry.frameId) ?? NaN)
+                              : this.convertMjd(entry.region.mjdUtc!, firstMjdUtc)
+                }))
                 .sort((a, b) => a.x - b.x);
             return {
                 group,
@@ -141,11 +160,21 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private convertMjd(mjdUtc: number, firstMjdUtc: number): number {
+        const relativeDays = mjdUtc - firstMjdUtc;
         switch (this.xAxisFormat) {
             case TimeLabelFormat.JD:
                 return mjdUtc + JULIAN_DATE_OFFSET;
             case TimeLabelFormat.RELATIVE:
-                return mjdUtc - firstMjdUtc;
+            case RelativeTimeUnit.DAY:
+                return relativeDays;
+            case RelativeTimeUnit.SECOND:
+                return relativeDays * SECONDS_PER_DAY;
+            case RelativeTimeUnit.MINUTE:
+                return (relativeDays * SECONDS_PER_DAY) / 60;
+            case RelativeTimeUnit.HOUR:
+                return (relativeDays * SECONDS_PER_DAY) / 3600;
+            case RelativeTimeUnit.YEAR:
+                return relativeDays / DAYS_PER_JULIAN_YEAR;
             case TimeLabelFormat.MJD:
             default:
                 return mjdUtc;
@@ -157,15 +186,95 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             return "Region index";
         }
         switch (this.xAxisFormat) {
+            case "index":
+                return "Time-series index";
+            case TimeLabelFormat.AUTO:
+                return "Time (UTC)";
+            case TimeLabelFormat.ISO:
+                return "Time (ISO 8601 UTC)";
             case TimeLabelFormat.JD:
                 return "Time (JD UTC)";
             case TimeLabelFormat.RELATIVE:
+            case RelativeTimeUnit.DAY:
                 return "Time (days since first observation)";
+            case RelativeTimeUnit.SECOND:
+                return "Time (seconds since first observation)";
+            case RelativeTimeUnit.MINUTE:
+                return "Time (minutes since first observation)";
+            case RelativeTimeUnit.HOUR:
+                return "Time (hours since first observation)";
+            case RelativeTimeUnit.YEAR:
+                return "Time (Julian years since first observation)";
             case TimeLabelFormat.MJD:
             default:
                 return "Time (MJD UTC)";
         }
     }
+
+    private get singletonXPadding(): number {
+        if (this.selectedSeriesType === RegionGroupType.REGION_SERIES || this.xAxisFormat === "index") {
+            return 1;
+        }
+        switch (this.xAxisFormat) {
+            case RelativeTimeUnit.SECOND:
+                return 1;
+            case RelativeTimeUnit.MINUTE:
+                return 1 / 60;
+            case RelativeTimeUnit.HOUR:
+                return 1 / 3600;
+            case RelativeTimeUnit.YEAR:
+                return 1 / (DAYS_PER_JULIAN_YEAR * SECONDS_PER_DAY);
+            case RelativeTimeUnit.DAY:
+            case TimeLabelFormat.JD:
+            case TimeLabelFormat.MJD:
+            case TimeLabelFormat.RELATIVE:
+            default:
+                return 1 / SECONDS_PER_DAY;
+        }
+    }
+
+    private formatTimeTick = (value: number, index: number, ticks: Tick[]): string => {
+        if (this.xAxisFormat === "index") {
+            return toFixed(value);
+        }
+        const relativeUnit = Object.values(RelativeTimeUnit).includes(this.xAxisFormat as RelativeTimeUnit) ? (this.xAxisFormat as RelativeTimeUnit) : RelativeTimeUnit.AUTO;
+        const timeLabelFormat = relativeUnit !== RelativeTimeUnit.AUTO ? TimeLabelFormat.RELATIVE : (this.xAxisFormat as TimeLabelFormat);
+        const firstMjdUtc = AppStore.Instance.timeSeriesStore.elements[0]?.mjdUtc ?? 0;
+        const toMjdUtc = (x: number) => {
+            if (this.xAxisFormat === TimeLabelFormat.JD) {
+                return x - JULIAN_DATE_OFFSET;
+            }
+            if (timeLabelFormat === TimeLabelFormat.RELATIVE) {
+                const days =
+                    relativeUnit === RelativeTimeUnit.SECOND
+                        ? x / SECONDS_PER_DAY
+                        : relativeUnit === RelativeTimeUnit.MINUTE
+                          ? (x * 60) / SECONDS_PER_DAY
+                          : relativeUnit === RelativeTimeUnit.HOUR
+                            ? (x * 3600) / SECONDS_PER_DAY
+                            : relativeUnit === RelativeTimeUnit.YEAR
+                              ? x * DAYS_PER_JULIAN_YEAR
+                              : x;
+                return firstMjdUtc + days;
+            }
+            return x;
+        };
+        const values = ticks.map(tick => {
+            const mjdUtc = toMjdUtc(tick.value);
+            return {mjdUtc, isoUtc: formatMjdUtcAsIso(mjdUtc, 6)};
+        });
+        const labels = formatTimeSeriesTickLabels(values, {
+            timeLabelFormat,
+            timeZoneMode: TimeZoneMode.UTC,
+            timeScale: TimeScale.UTC,
+            isoTimePrecision: IsoTimePrecision.AUTO,
+            numericTimePrecision: null,
+            relativeTimeReference: RelativeTimeReference.CUSTOM,
+            relativeReferenceMjdUtc: firstMjdUtc,
+            relativeTimeUnit: relativeUnit
+        });
+        return labels[index] ?? toFixed(value);
+    };
 
     private getRegionGroupLabel(group: RegionGroupStore): string {
         if (group.regionGroupType === RegionGroupType.TIME_SERIES) {
@@ -204,7 +313,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const xMax = xValues.length ? Math.max(...xValues) : 1;
         const yMin = yValues.length ? Math.min(...yValues) : 0;
         const yMax = yValues.length ? Math.max(...yValues) : 1;
-        const xPadding = xMin === xMax ? (this.selectedSeriesType === RegionGroupType.REGION_SERIES ? 1 : 1 / 86400) : (xMax - xMin) * 0.05;
+        const xPadding = xMin === xMax ? this.singletonXPadding : (xMax - xMin) * 0.05;
         const yPadding = yMin === yMax ? Math.abs(yMin) * 0.05 || 1 : (yMax - yMin) * 0.05;
         const firstRegion = this.plotGroups.find(group => group.entries.length)?.entries[0]?.entry.region;
         const unit = this.effectiveStatistic === CARTA.StatsType.FluxDensity ? firstRegion?.regionFluxDensityUnit : firstRegion?.regionSumUnit;
@@ -230,8 +339,9 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             yMin: yMin - yPadding,
             yMax: yMax + yPadding,
             xLabel: this.xAxisLabel,
+            xTickFormatter: this.selectedSeriesType === RegionGroupType.TIME_SERIES ? this.formatTimeTick : undefined,
             yLabel: unit ? `${statisticLabel} (${unit})` : statisticLabel,
-            tickTypeX: this.selectedSeriesType === RegionGroupType.REGION_SERIES ? TickType.Integer : TickType.Automatic,
+            tickTypeX: this.selectedSeriesType === RegionGroupType.REGION_SERIES || this.xAxisFormat === "index" ? TickType.Integer : TickType.Automatic,
             tickTypeY: TickType.Scientific,
             plotType: widgetStore?.plotType ?? PlotType.LINES,
             pointRadius: widgetStore?.linePlotPointSize ?? 3,
@@ -279,7 +389,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     @action private selectXAxisFormat = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.xAxisFormat = event.currentTarget.value as TimeLabelFormat;
+        WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.setXAxisFormat(event.currentTarget.value as SequentialXAxisFormat);
     };
 
     private openRegionGroupManager = () => {
@@ -337,11 +447,8 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                         <FormGroup label="X axis" inline={true}>
                             <HTMLSelect
                                 value={this.xAxisFormat}
-                                options={[
-                                    {value: TimeLabelFormat.MJD, label: "MJD (UTC)"},
-                                    {value: TimeLabelFormat.JD, label: "JD (UTC)"},
-                                    {value: TimeLabelFormat.RELATIVE, label: "Relative days"}
-                                ]}
+                                options={SEQUENTIAL_X_AXIS_OPTIONS.filter(option => WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.visibleXAxisFormats.includes(option.value))}
+                                disabled={!WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.visibleXAxisFormats.length}
                                 onChange={this.selectXAxisFormat}
                             />
                         </FormGroup>
