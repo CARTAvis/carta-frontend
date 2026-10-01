@@ -1,6 +1,7 @@
 import {RadiusUnits} from "enums";
 
-const UNITS_PER_DEGREE: Record<RadiusUnits, number> = {
+/** How many of each radius unit make up one degree. */
+export const RADIUS_UNITS_PER_DEGREE: Record<RadiusUnits, number> = {
     [RadiusUnits.DEGREES]: 1,
     [RadiusUnits.ARCMINUTES]: 60,
     [RadiusUnits.ARCSECONDS]: 3600
@@ -14,8 +15,8 @@ const UNITS_PER_DEGREE: Record<RadiusUnits, number> = {
  * the result carries no rounding from a reciprocal such as 1/60.
  */
 export function convertRadius(radius: number, from: RadiusUnits, to: RadiusUnits): number {
-    const fromPerDegree = UNITS_PER_DEGREE[from];
-    const toPerDegree = UNITS_PER_DEGREE[to];
+    const fromPerDegree = RADIUS_UNITS_PER_DEGREE[from];
+    const toPerDegree = RADIUS_UNITS_PER_DEGREE[to];
     const converted = toPerDegree >= fromPerDegree ? radius * (toPerDegree / fromPerDegree) : radius / (fromPerDegree / toPerDegree);
     return Number(converted.toPrecision(6));
 }
