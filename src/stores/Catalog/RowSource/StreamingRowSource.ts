@@ -150,6 +150,10 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.buildRequest(this.nextRange());
     }
 
+    /**
+     * Drop the rows held and ask again, with the Active Query, for the rows a saved catalog had. An
+     * online catalog holds every row, so only a streaming source is restored this way.
+     */
     @action restore({columnIndices, minRows, isForOverlay}: CatalogRowRestore): CARTA.CatalogFilterRequest {
         this.dropRows();
         this.mode = isForOverlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate;

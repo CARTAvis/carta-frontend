@@ -144,10 +144,6 @@ export class InMemoryRowSource implements CatalogRowSource {
         return undefined;
     }
 
-    restore(): undefined {
-        return undefined;
-    }
-
     @action reset(): undefined {
         this.visibleRowCount = this.dataSize;
         this.sortedIndexMap = getInitIndexMap(this.visibleRowCount);
