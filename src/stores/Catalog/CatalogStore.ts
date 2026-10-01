@@ -629,14 +629,23 @@ export class CatalogStore {
         const maxRows = this.getOverlayMaxRows(profileStore, overlay?.maxRows);
 
         profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+        // A saved config can map columns that this catalog does not display by default, and the
+        // rows still to be streamed would arrive without them. A column the rows already held were
+        // read without would start at the next row asked for, against the wrong sources, so those
+        // rows are asked for again from the first.
+        const shouldReloadRows =
+            profileStore.shouldUpdateData &&
+            profileStore.ensureColumnsRequested([xAxis, yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]) &&
+            profileStore.numVisibleRows > 0;
         const frame = this.frameOf(catalogFileId);
         let isPlotted = !!frame;
         if (frame) {
             displayStore.setPlottedImageOverlayState(xAxis, yAxis, system, maxRows);
-            const imageCoords = profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, system);
-            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
             this.clearImageCoordsData(catalogFileId);
-            if (imageCoords.wcsX && imageCoords.wcsY) {
+            // Rows asked for again are drawn as they arrive.
+            const imageCoords = shouldReloadRows ? undefined : profileStore.get2DCoordinateData(xAxis, yAxis, profileStore.catalogData, system);
+            const wcs = frame.isValidWcs ? frame.wcsInfo : 0;
+            if (imageCoords?.wcsX && imageCoords.wcsY) {
                 this.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo?.units ?? "", imageCoords.yHeaderInfo?.units ?? "", coordinateSystem, 0, 0, maxRows);
             } else if (!profileStore.shouldUpdateData) {
                 // The rows this catalog holds are all the rows there are, and the columns the
@@ -649,9 +658,10 @@ export class CatalogStore {
             profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
         }
         if (profileStore.shouldUpdateData) {
-            // A saved config can map columns that this catalog does not display by default, and the
-            // rows still to be streamed would arrive without them.
-            profileStore.ensureColumnsRequested([xAxis, yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
+            if (shouldReloadRows) {
+                profileStore.resetFilterRequest();
+                profileStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+            }
             profileStore.setUpdatingDataStream(true);
             this.sendFilterRequest(catalogFileId, profileStore.updateRequestDataSize);
         }
@@ -711,10 +721,13 @@ export class CatalogStore {
             return false;
         }
 
+        // Rows that stream in only carry the columns that were asked for, so a column the overlay is
+        // drawn from, or the display config maps, has to be requested even when the table does not
+        // show it. Mapped columns are asked for without a saved overlay too, since the rows restored
+        // here would otherwise lack them when an overlay is drawn later.
+        const overlayAxes = overlay ? [overlay.xAxis, overlay.yAxis] : [];
+        profileStore.ensureColumnsRequested([...overlayAxes, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
         if (overlay) {
-            // Rows that stream in only carry the columns that were asked for, so a column the
-            // overlay is mapped from has to be requested even when the table does not show it.
-            profileStore.ensureColumnsRequested([overlay.xAxis, overlay.yAxis, displayStore.sizeMapColumn, displayStore.sizeMinorMapColumn, displayStore.colorMapColumn, displayStore.orientationMapColumn]);
             displayStore.setPlottedImageOverlayState(overlay.xAxis, overlay.yAxis, overlay.system, this.getOverlayMaxRows(profileStore, overlay.maxRows));
             this.clearImageCoordsData(catalogFileId);
         }

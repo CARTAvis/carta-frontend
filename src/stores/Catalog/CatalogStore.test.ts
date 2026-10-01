@@ -983,6 +983,16 @@ describe("CatalogStore.restoreCatalogFromWorkspace", () => {
         expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
     });
 
+    test("asks for a column the display config maps even when no overlay was saved", () => {
+        openFileCatalog(200).setDisplayedColumns(["RA", "DEC"]);
+        catalogStore.getOrCreateCatalogDisplayStore(1).setColorMapColumn("FLUX");
+
+        catalogStore.restoreCatalogFromWorkspace(1);
+
+        expect(sendCatalogFilter.mock.calls[0][0].columnIndices).toEqual([0, 1, 2]);
+        expect(catalogStore.getCatalogDisplayStore(1)?.hasPlottedImageOverlay).toBe(false);
+    });
+
     test("requests the selection identity columns and every row needed to find it", () => {
         const profileStore = openFileCatalog(200);
         profileStore.setDisplayedColumns(["RA"]);
@@ -1186,6 +1196,42 @@ describe("CatalogStore request lifecycle", () => {
 
         expect(clearPositions).toHaveBeenCalledWith(catalogFileId);
         expect(displayStore.hasPlottedImageOverlay).toBe(false);
+    });
+
+    test("asks again from the first row for a mapped column the rows held were read without", () => {
+        const profileStore = openCatalog();
+        const displayStore = catalogStore.getCatalogDisplayStore(catalogFileId)!;
+        jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        /** Answer the request just sent with the rows and columns it asked for; each value says its row and column. */
+        const respond = () => {
+            const request = sendFilter.mock.calls[sendFilter.mock.calls.length - 1][0];
+            const start = request.subsetStartIndex ?? 0;
+            const count = Math.min(request.subsetDataSize, 100 - start);
+            const columns: {[column: number]: CARTA.ColumnData.$Properties} = {};
+            for (const column of request.columnIndices) {
+                columns[column] = {dataType: CARTA.ColumnType.Double, binaryData: new Uint8Array(new Float64Array(Array.from({length: count}, (_, i) => (start + i) * 10 + column)).buffer)};
+            }
+            catalogStore.handleFilterStream({
+                requestId: 11,
+                message: new CARTA.CatalogFilterResponse({fileId: catalogFileId, filterDataSize: 100, requestEndIndex: start + count, subsetDataSize: count, subsetEndIndex: start + count, progress: 1, columns})
+            });
+        };
+        // A filter drops the preview, and the rows asked for again carry only the columns shown.
+        profileStore.setDisplayedColumns(["RA", "DEC"]);
+        profileStore.setColumnFilter("> 0", "RA");
+        catalogStore.requestFilteredRows(catalogFileId);
+        respond();
+        expect(profileStore.catalogData.has(2)).toBe(false);
+        displayStore.setColorMapColumn("FLUX");
+        displayStore.setxAxis("RA");
+        displayStore.setyAxis("DEC");
+
+        catalogStore.plotImageOverlay(catalogFileId);
+
+        expect(sendFilter.mock.calls[1][0]).toMatchObject({subsetStartIndex: 0, subsetDataSize: 100, columnIndices: [0, 1, 2]});
+        respond();
+        expect(Array.from(profileStore.catalogData.get(2)?.data as ArrayLike<number>).slice(0, 3)).toEqual([2, 12, 22]);
+        expect(Array.from(profileStore.catalogData.get(0)?.data as ArrayLike<number>).slice(0, 3)).toEqual([0, 10, 20]);
     });
 
     test("requests hidden mapped columns on scroll and clears loading if send fails", () => {
