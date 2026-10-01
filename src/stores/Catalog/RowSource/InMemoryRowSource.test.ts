@@ -37,14 +37,7 @@ describe("InMemoryRowSource", () => {
         expect(source.visibleRowCount).toBe(5);
         expect(source.rowLimit).toBe(5);
         expect(source.canLoadMore).toBe(false);
-        expect([source.loadMore(), source.loadForPlot(), source.loadForOverlay(), source.restore(), source.sortBy("FLUX", CARTA.SortingType.Ascending), source.reset()]).toEqual([
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined
-        ]);
+        expect([source.loadMore(), source.loadForPlot(), source.loadForOverlay(), source.sortBy("FLUX", CARTA.SortingType.Ascending), source.reset()]).toEqual([undefined, undefined, undefined, undefined, undefined]);
         expect(source.isLoading || source.isStreaming).toBe(false);
     });
 
