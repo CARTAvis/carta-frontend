@@ -161,14 +161,14 @@ describe("StreamingRowSource", () => {
         const source = openSource();
         source.setActiveQuery(FLUX_ABOVE_ONE, "RA", CARTA.SortingType.Descending, COLUMNS);
 
-        const request = source.restore({filterConfigs: FLUX_ABOVE_ONE.configs, columnIndices: [0, 1, 2, 3], minRows: 120, isForOverlay: false});
+        const request = source.restore({columnIndices: [0, 1, 2, 3], minRows: 120, isForOverlay: false});
 
         expect(wire(request)).toMatchObject({columnIndices: [0, 1, 2, 3], subsetDataSize: 120, sortColumn: "RA", filterConfigs: [{columnName: "FLUX"}]});
         expect(source.visibleRowCount).toBe(0);
         expect(source.isLoading && source.isStreaming).toBe(true);
         expect(source.isLoadingForOverlay).toBe(false);
         // Rows for an overlay are every row up to the row limit, which is more than that.
-        expect(source.restore({filterConfigs: [], columnIndices: COLUMNS, minRows: 120, isForOverlay: true})?.subsetDataSize).toBe(DATA_SIZE);
+        expect(source.restore({columnIndices: COLUMNS, minRows: 120, isForOverlay: true})?.subsetDataSize).toBe(DATA_SIZE);
     });
 
     test("resets to the first rows with nothing applied, sized by the row limit it had", () => {
