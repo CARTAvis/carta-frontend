@@ -1,3 +1,5 @@
+import {RadiusUnits} from "enums";
+
 import {CatalogOnlineQueryConfigStore, type VizierItem} from "./CatalogOnlineQueryConfigStore";
 
 jest.mock("ast_wrapper", () => ({}));
@@ -10,6 +12,7 @@ jest.mock("stores", () => ({
     }
 }));
 jest.mock("utilities", () => ({
+    ...jest.requireActual("utilities/catalog/radius"),
     ASTSettingsString: jest.fn(),
     clamp: jest.fn(),
     getPixelValueFromWCS: jest.fn(),
@@ -38,5 +41,28 @@ describe("CatalogOnlineQueryConfigStore VizieR selection", () => {
         store.updateVizierSelectedTable({...table});
 
         expect(store.vizierSelectedTableName).toEqual([table]);
+    });
+});
+
+describe("CatalogOnlineQueryConfigStore search radius", () => {
+    test.each([
+        [RadiusUnits.DEGREES, 90],
+        [RadiusUnits.ARCMINUTES, 5400],
+        [RadiusUnits.ARCSECONDS, 324000]
+    ])("limits a radius in %s to 90 degrees", (units, maxRadius) => {
+        const store = new CatalogOnlineQueryConfigStore();
+        store.setRadiusUnits(units);
+
+        expect(store.maxRadius).toBe(maxRadius);
+    });
+
+    test("resets the radius to its default in the units shown", () => {
+        const store = new CatalogOnlineQueryConfigStore();
+        const radiusInDegree = store.searchRadiusInDegree;
+        store.setRadiusUnits(RadiusUnits.ARCMINUTES);
+
+        store.resetSearchRadius();
+
+        expect(store.searchRadius).toBe(radiusInDegree * 60);
     });
 });

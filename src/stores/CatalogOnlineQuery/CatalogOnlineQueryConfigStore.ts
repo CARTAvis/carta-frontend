@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {ASTSettingsString, clamp, convertRadius, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
+import {ASTSettingsString, clamp, convertRadius, getPixelValueFromWCS, RADIUS_UNITS_PER_DEGREE, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
 
@@ -152,31 +152,13 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action resetSearchRadius() {
-        let radius = this.searchRadiusInDegree;
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                radius = radius * 60;
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radius = radius * 3600;
-                break;
-            default:
-                break;
-        }
-        this.setSearchRadius(radius);
+        this.setSearchRadius(this.searchRadiusInDegree * RADIUS_UNITS_PER_DEGREE[this.radiusUnits]);
         this.setFrameCenter();
     }
 
     // SIMBAD radius range 0 - 90 degrees
     @computed get maxRadius(): number {
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                return 90 * 60;
-            case RadiusUnits.ARCSECONDS:
-                return 90 * 3600;
-            default:
-                return 90;
-        }
+        return 90 * RADIUS_UNITS_PER_DEGREE[this.radiusUnits];
     }
 
     @computed get isObjectSearchDisabled(): boolean {
