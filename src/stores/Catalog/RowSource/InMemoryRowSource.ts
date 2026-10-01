@@ -5,9 +5,7 @@ import {CatalogUpdateMode} from "enums";
 import {type ControlHeader} from "stores";
 import {filterProcessedColumnData, getInitIndexMap, getSortedIndexMap, type ProcessedColumnData} from "utilities";
 
-import {type CatalogActiveQuery, type CatalogRowFilters, type CatalogRowSource} from "./CatalogRowSource";
-
-const NO_FILTERS: CatalogRowFilters = {texts: new Map(), configs: []};
+import {type CatalogActiveQuery, type CatalogRowFilters, type CatalogRowSource, NO_ACTIVE_QUERY} from "./CatalogRowSource";
 
 /** What an in-memory source reads from the catalog's table to filter and sort its rows. */
 export interface InMemoryRowTable {
@@ -28,7 +26,7 @@ export class InMemoryRowSource implements CatalogRowSource {
     /** The order the table shows the rows that pass in, as indices into them. */
     @observable sortedIndexMap: number[];
     @observable mode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
-    @observable.ref activeQuery: CatalogActiveQuery = {filters: NO_FILTERS, sortColumn: null, sortingType: null, overlayAxes: undefined};
+    @observable.ref activeQuery: CatalogActiveQuery = NO_ACTIVE_QUERY;
 
     readonly filteredRowCount = undefined;
     readonly progress = undefined;
@@ -154,7 +152,7 @@ export class InMemoryRowSource implements CatalogRowSource {
         this.visibleRowCount = this.dataSize;
         this.sortedIndexMap = getInitIndexMap(this.visibleRowCount);
         this.filterIndexMap = getInitIndexMap(this.dataSize);
-        this.activeQuery = {filters: NO_FILTERS, sortColumn: null, sortingType: null, overlayAxes: undefined};
+        this.activeQuery = NO_ACTIVE_QUERY;
         return undefined;
     }
 

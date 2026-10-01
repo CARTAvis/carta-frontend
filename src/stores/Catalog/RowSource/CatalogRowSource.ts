@@ -27,10 +27,11 @@ export interface CatalogActiveQuery {
     readonly overlayAxes: CatalogOverlayAxes | undefined;
 }
 
+/** The Active Query of a catalog whose rows no filter or sort has been applied to. */
+export const NO_ACTIVE_QUERY: CatalogActiveQuery = {filters: {texts: new Map(), configs: []}, sortColumn: null, sortingType: null, overlayAxes: undefined};
+
 /** How far a restore has to reach, beyond the rows a table would show on its own. */
 export interface CatalogRowRestore {
-    /** The filters the saved table was applied with. */
-    filterConfigs: CARTA.FilterConfig[];
     /** The columns to ask for, including any the table does not show. */
     columnIndices: number[];
     /** The fewest rows to ask for. */
@@ -107,7 +108,7 @@ export interface CatalogRowSource {
      * the first row, every one when the rows held lack a column the overlay maps.
      */
     loadForOverlay(shouldStartFromFirstRow?: boolean): CARTA.CatalogFilterRequest | undefined;
-    /** Drop the rows held and ask again for the rows a saved catalog had. */
+    /** Drop the rows held and ask again, with the Active Query, for the rows a saved catalog had. */
     restore(restore: CatalogRowRestore): CARTA.CatalogFilterRequest | undefined;
     /** Drop the Active Query and the row limit, and ask for the first rows. */
     reset(columnIndices: number[]): CARTA.CatalogFilterRequest | undefined;

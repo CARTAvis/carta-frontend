@@ -4,9 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CatalogUpdateMode} from "enums";
 import {type ProcessedColumnData, ProtobufProcessing} from "utilities";
 
-import {type CatalogActiveQuery, type CatalogOverlayAxes, type CatalogRowFilters, type CatalogRowRestore, type CatalogRowSource} from "./CatalogRowSource";
-
-const NO_FILTERS: CatalogRowFilters = {texts: new Map(), configs: []};
+import {type CatalogActiveQuery, type CatalogOverlayAxes, type CatalogRowFilters, type CatalogRowRestore, type CatalogRowSource, NO_ACTIVE_QUERY} from "./CatalogRowSource";
 
 /**
  * The rows of a catalog read from a file, which stay with the backend and stream in a chunk at a
@@ -37,7 +35,7 @@ export class StreamingRowSource implements CatalogRowSource {
     @observable isLoading = false;
     @observable isStreaming = false;
     @observable isFetchingColumns = false;
-    @observable.ref activeQuery: CatalogActiveQuery = {filters: NO_FILTERS, sortColumn: null, sortingType: null, overlayAxes: undefined};
+    @observable.ref activeQuery: CatalogActiveQuery = NO_ACTIVE_QUERY;
     /** The columns a request asks for when it is not given its own. */
     private columnIndices: number[];
 
@@ -152,11 +150,10 @@ export class StreamingRowSource implements CatalogRowSource {
         return this.buildRequest(this.nextRange());
     }
 
-    @action restore({filterConfigs, columnIndices, minRows, isForOverlay}: CatalogRowRestore): CARTA.CatalogFilterRequest {
+    @action restore({columnIndices, minRows, isForOverlay}: CatalogRowRestore): CARTA.CatalogFilterRequest {
         this.dropRows();
         this.mode = isForOverlay ? CatalogUpdateMode.ViewUpdate : CatalogUpdateMode.TableUpdate;
         const range = this.nextRange();
-        this.activeQuery = {...this.activeQuery, filters: {...this.activeQuery.filters, configs: filterConfigs}};
         this.columnIndices = columnIndices;
         this.isStreaming = true;
         return this.buildRequest({start: range.start, size: Math.max(range.size, minRows)});
@@ -167,7 +164,7 @@ export class StreamingRowSource implements CatalogRowSource {
         this.filteredRowCount = undefined;
         this.isLoading = false;
         this.isStreaming = false;
-        this.activeQuery = {filters: NO_FILTERS, sortColumn: null, sortingType: null, overlayAxes: undefined};
+        this.activeQuery = NO_ACTIVE_QUERY;
         this.columnIndices = columnIndices;
         // The first rows are sized by the row limit being reset, not the one it is reset to.
         const request = this.buildRequest({start: 0, size: Math.min(StreamingRowSource.INIT_TABLE_ROWS, this.rowLimit, this.dataSize)});
