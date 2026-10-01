@@ -730,7 +730,7 @@ export class CatalogStore {
             // rows from the same filtered/sorted result.
             minRows = Math.max(minRows, this.getOverlayMaxRows(profileStore, overlay.maxRows));
         }
-        // Only a file catalog gets this far, and its streaming rows always have a request to send.
+        // Only a file catalog gets this far, and only its streaming rows are restored this way.
         const request = (profileStore as CatalogProfileStore).rows.restore({
             columnIndices: [...new Set([...profileStore.columnIndices, ...selectionColumnIndices])],
             minRows,
