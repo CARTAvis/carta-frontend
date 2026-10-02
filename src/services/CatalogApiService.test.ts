@@ -1,7 +1,9 @@
-import type {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 
-import {CatalogDatabase} from "enums";
-import {MirrorSiteStore} from "stores";
+import {CatalogDatabase, CatalogSystemType, CatalogType, RadiusUnits} from "enums";
+import {type WorkspaceCatalogQuerySource} from "models";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, CatalogStore, MirrorSiteStore} from "stores";
+import {CatalogApiProcessing} from "utilities";
 
 import {CatalogApiService} from "./CatalogApiService";
 
@@ -14,6 +16,7 @@ jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: {}},
     CatalogOnlineQueryProfileStore: jest.fn(),
+    CatalogStore: {Instance: {}},
     MirrorSiteStore: {
         Instance: {
             getMirrorSites: jest.fn(() => ["https://active.example/", "https://unused.example/"]),
@@ -75,5 +78,164 @@ describe("CatalogApiService active mirror", () => {
 
         expect(normalized).toBe("https://active.example/viz-bin/?tenant=one#section");
         expect(service.joinUrl(normalized as string, "votable?-out.max=1")).toBe("https://active.example/viz-bin/votable?-out.max=1&tenant=one");
+    });
+});
+
+describe("CatalogApiService.captureQuery", () => {
+    function configureDialog(center: {x: string | undefined; y: string | undefined}) {
+        const configStore = CatalogOnlineQueryConfigStore.Instance as any;
+        configStore.centerPixelCoordAsPoint2D = {x: 100, y: 200};
+        configStore.convertToDeg = jest.fn(() => center);
+        configStore.coordsType = CatalogSystemType.ICRS;
+        configStore.searchRadius = 2;
+        configStore.radiusUnits = RadiusUnits.ARCMINUTES;
+        configStore.maxObject = 500;
+        configStore.vizierKeyWords = "gaia";
+        return configStore;
+    }
+
+    test("takes a snapshot that later dialog changes cannot alter", () => {
+        const configStore = configureDialog({x: "12.5", y: "-30.25"});
+
+        const captured = CatalogApiService.captureQuery("simbad");
+
+        expect(captured).toEqual({
+            type: "simbad",
+            center: {x: 12.5, y: -30.25},
+            system: CatalogSystemType.ICRS,
+            radius: 2,
+            radiusUnits: RadiusUnits.ARCMINUTES,
+            maxObjects: 500,
+            keywords: undefined
+        });
+
+        // What the dialog says next belongs to the next query, not to this one.
+        configStore.searchRadius = 99;
+        configStore.convertToDeg = jest.fn(() => ({x: "0", y: "0"}));
+
+        expect(captured?.radius).toBe(2);
+        expect(captured?.center).toEqual({x: 12.5, y: -30.25});
+    });
+
+    test("describes nothing when the centre cannot be worked out", () => {
+        configureDialog({x: undefined, y: undefined});
+
+        expect(CatalogApiService.captureQuery("simbad")).toBeUndefined();
+    });
+
+    test("keeps the keywords a VizieR search was narrowed by", () => {
+        configureDialog({x: "12.5", y: "-30.25"});
+
+        expect(CatalogApiService.captureQuery("vizier")?.keywords).toBe("gaia");
+    });
+});
+
+/** Open a catalog the way CatalogStore does, giving each one `fileId`. */
+function mockCatalogOpen(fileId: number) {
+    return jest.fn(async (_frame: unknown, load: (catalogFileId: number) => Promise<unknown>) => ((await load(fileId)) ? fileId : undefined));
+}
+
+describe("CatalogApiService VizieR loading", () => {
+    test("passes on a table that cannot be read", async () => {
+        const service = new CatalogApiService();
+        const frame = {frameInfo: {fileId: 4}};
+        Object.assign(AppStore.Instance, {activeFrame: frame, getFrame: jest.fn(() => frame)});
+        Object.assign(CatalogStore.Instance, {open: mockCatalogOpen(7)});
+        (CatalogApiProcessing as any).processVizierTableData = jest.fn(() => {
+            throw new Error("malformed VOTable");
+        });
+        const resources = new Map([["a", {table: {tableElement: {}, name: "t"}, coosys: {system: "ICRS"}} as any]]);
+        jest.spyOn(service, "queryVizierSource").mockResolvedValue(resources);
+        const source: WorkspaceCatalogQuerySource = {type: "vizier", center: {x: 1, y: 2}, system: CatalogSystemType.ICRS, radius: 1, radiusUnits: RadiusUnits.DEGREES, maxObjects: 100, table: "t"};
+
+        await expect(service.loadVizierCatalogs(source, ["t"])).rejects.toThrow("malformed VOTable");
+    });
+});
+
+describe("CatalogApiService source-driven loading", () => {
+    const simbadSource: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+    const vizierSource: WorkspaceCatalogQuerySource = {type: "vizier", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.FK5, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500, keywords: "gaia"};
+
+    function configureSession() {
+        const frame = {frameInfo: {fileId: 4}};
+        const appStore = AppStore.Instance as any;
+        Object.assign(appStore, {
+            activeFrame: frame,
+            getFrame: jest.fn((fileId: number) => (fileId === 4 ? frame : undefined)),
+            dialogStore: {hideDialog: jest.fn()}
+        });
+        const catalogStore = CatalogStore.Instance as any;
+        Object.assign(catalogStore, {open: mockCatalogOpen(7), catalogProfileStores: new Map()});
+        jest.mocked(CatalogOnlineQueryProfileStore).mockClear();
+        return {appStore, catalogStore, frame};
+    }
+
+    test("queries SIMBAD in ICRS degrees and pins the image selected at dispatch", async () => {
+        const service = new CatalogApiService();
+        const {appStore, catalogStore, frame} = configureSession();
+        const getSimbadCatalog = jest.spyOn(service, "getSimbadCatalog").mockResolvedValue({status: 200, data: {metadata: [], data: [["source"]]}} as any);
+        (CatalogApiProcessing as any).processSimbadMetaData = jest.fn(() => []);
+        (CatalogApiProcessing as any).processSimbadData = jest.fn(() => new Map());
+
+        const loading = service.loadSimbadCatalog(simbadSource);
+        appStore.activeFrame = {frameInfo: {fileId: 8}};
+        const result = await loading;
+
+        expect(result).toEqual({dataSize: 1, fileId: 7});
+        expect(getSimbadCatalog).toHaveBeenCalledWith(expect.stringContaining("CIRCLE('ICRS',12.5,-30.25,0.0333333)"));
+        expect(catalogStore.open).toHaveBeenCalledWith(frame, expect.any(Function));
+        expect(jest.mocked(CatalogOnlineQueryProfileStore)).toHaveBeenCalledWith(
+            expect.objectContaining({fileId: 7, fileInfo: expect.objectContaining({name: "SIMBAD_ICRS_12.5_-30.25_2arcmin"}), query: simbadSource}),
+            [],
+            expect.any(Map),
+            CatalogType.SIMBAD
+        );
+        expect(appStore.dialogStore.hideDialog).toHaveBeenCalled();
+    });
+
+    test("keeps VizieR query, name and target image fixed while the dialog changes", async () => {
+        const service = new CatalogApiService();
+        const {appStore, catalogStore, frame} = configureSession();
+        catalogStore.open = mockCatalogOpen(9);
+        const resource = {table: {name: "I/355/gaiadr3", tableElement: {}}, coosys: {system: CatalogSystemType.ICRS}} as any;
+        let finishQuery!: (resources: Map<string, any>) => void;
+        const query = jest.spyOn(service, "queryVizierSource").mockReturnValue(new Promise(resolve => (finishQuery = resolve)));
+        (CatalogApiProcessing as any).processVizierTableData = jest.fn(() => ({headers: [], dataMap: new Map(), size: 1}));
+
+        const loading = service.loadVizierCatalogs(vizierSource, ["I/355/gaiadr3"]);
+        appStore.activeFrame = {frameInfo: {fileId: 8}};
+        Object.assign(CatalogOnlineQueryConfigStore.Instance, {catalogDB: CatalogDatabase.SIMBAD, searchRadius: 99, radiusUnits: RadiusUnits.DEGREES});
+        finishQuery(new Map([["I/355/gaiadr3", resource]]));
+        const fileIds = await loading;
+
+        expect(fileIds).toEqual([9]);
+        expect(query).toHaveBeenCalledWith({x: "12.5", y: "-30.25"}, 2, RadiusUnits.ARCMINUTES, 500, ["I/355/gaiadr3"]);
+        expect(catalogStore.open).toHaveBeenCalledWith(frame, expect.any(Function));
+        expect(jest.mocked(CatalogOnlineQueryProfileStore)).toHaveBeenCalledWith(
+            expect.objectContaining({fileId: 9, fileInfo: expect.objectContaining({name: "VizieR_ICRS_I/355/gaiadr3_2arcmin"}), query: expect.objectContaining({center: vizierSource.center, radius: 2, table: "I/355/gaiadr3"})}),
+            [],
+            expect.any(Map),
+            CatalogType.VIZIER
+        );
+    });
+
+    test("does not query from an invalid saved source", async () => {
+        const service = new CatalogApiService();
+        const query = jest.spyOn(service, "queryVizierSource");
+
+        await expect(service.loadVizierCatalogs({...vizierSource, center: {x: NaN, y: 1}}, ["I/355/gaiadr3"], 4)).resolves.toEqual([]);
+        await expect(service.loadVizierCatalogs(vizierSource, [""], 4)).resolves.toEqual([]);
+        await expect(service.loadSimbadCatalog({...simbadSource, center: {x: NaN, y: 1}}, 4)).resolves.toEqual({dataSize: 0});
+        expect(query).not.toHaveBeenCalled();
+    });
+
+    test("opens no catalog when its SIMBAD query is cancelled", async () => {
+        const service = new CatalogApiService();
+        const {appStore} = configureSession();
+        jest.spyOn(service, "getSimbadCatalog").mockRejectedValue(new axios.CanceledError("query cancelled"));
+
+        await expect(service.loadSimbadCatalog(simbadSource)).resolves.toEqual({dataSize: 0, fileId: undefined});
+        expect(jest.mocked(CatalogOnlineQueryProfileStore)).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
     });
 });

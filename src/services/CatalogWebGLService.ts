@@ -57,6 +57,7 @@ export class CatalogWebGLService {
     private orientationTextures: Map<number, WebGLTexture | null>;
     private selectedSourceTextures: Map<number, WebGLTexture | null>;
     private sizeMinorTextures: Map<number, WebGLTexture | null>;
+    private noSelectedSourceTexture: WebGLTexture | null | undefined;
     readonly gl: WebGL2RenderingContext | null;
     shaderUniforms: ShaderUniforms;
 
@@ -124,6 +125,25 @@ export class CatalogWebGLService {
                 break;
         }
     };
+
+    /**
+     * What the selected-source sampler reads for a catalog that has none of its own.
+     *
+     * That sampler is the shader's one `usampler2D`; every other one is a `sampler2D`. A sampler
+     * that is never assigned a texture unit stays on unit 0, which holds the colour map, and a draw
+     * with two samplers of different types on one unit is rejected outright -- taking the whole
+     * overlay down, not just the selection. So it is always given a unit, and always something to
+     * read there.
+     */
+    public get emptySelectedSourceTexture(): WebGLTexture | null | undefined {
+        if (!this.gl) {
+            return undefined;
+        }
+        if (this.noSelectedSourceTexture === undefined) {
+            this.noSelectedSourceTexture = createTextureFromArray(this.gl, new Uint8Array(1), GL2.TEXTURE6, 1);
+        }
+        return this.noSelectedSourceTexture;
+    }
 
     public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture | null | undefined => {
         switch (textureType) {

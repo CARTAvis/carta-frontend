@@ -12,7 +12,7 @@ import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 /* eslint-disable @typescript-eslint/naming-convention */
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
-const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
+const workspaceSchema = require("carta-schemas/workspace_schema_2.json");
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export interface RuntimeConfig {

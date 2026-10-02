@@ -1,10 +1,31 @@
+import {afterAll, beforeAll, describe, expect, jest, test} from "@jest/globals";
+
+jest.mock("services/CatalogWebGLService", () => ({
+    CatalogWebGLService: {
+        Instance: {
+            updateDataTexture: jest.fn()
+        }
+    }
+}));
+
 import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType, PreferenceKeys} from "enums";
 import {CatalogWebGLService} from "services";
-import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore} from "stores";
+import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
+
+// These tests draw catalogs, not choose their overlay axes, and their catalogs carry nothing that
+// choosing reads. Choosing is covered by CatalogDisplayStoreAxes.test.ts.
+let shouldAutoSelectOriginally: boolean;
+beforeAll(() => {
+    shouldAutoSelectOriginally = PreferenceStore.Instance.shouldAutoSelectImageOverlayCoordinateColumns;
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, false);
+});
+afterAll(() => {
+    PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS, shouldAutoSelectOriginally);
+});
 
 describe("CatalogDisplayStore angular size axis type", () => {
     test("keeps axis mode per catalog and converts radius values to diameters", () => {
@@ -35,28 +56,28 @@ describe("CatalogDisplayStore angular size axis type", () => {
             get1DPlotData: jest.fn(() => ({wcsData: new Float32Array([2, 4])}))
         };
         const calculateCatalogSize = jest.spyOn(CARTACompute, "CalculateCatalogSize").mockReturnValue(new Float32Array([2, 4]));
-        const widgetStore = new CatalogDisplayStore(fileId);
+        const displayStore = new CatalogDisplayStore(fileId);
         const previousProfileStore = CatalogStore.Instance.catalogProfileStores.get(fileId);
         CatalogStore.Instance.catalogProfileStores.set(fileId, profileStore as unknown as CatalogProfileStore);
 
         try {
-            widgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
-            widgetStore.setSizeMap("size");
-            widgetStore.setSizeColumnMin(2, "default");
-            widgetStore.setSizeColumnMax(4, "default");
+            displayStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+            displayStore.setSizeMap("size");
+            displayStore.setSizeColumnMin(2, "default");
+            displayStore.setSizeColumnMax(4, "default");
             calculateCatalogSize.mockClear();
 
-            widgetStore.sizeArray();
+            displayStore.sizeArray();
             const diameterCall = calculateCatalogSize.mock.calls[calculateCatalogSize.mock.calls.length - 1];
-            widgetStore.setCatalogSourceRadiusType("radius");
-            widgetStore.sizeArray();
+            displayStore.setCatalogSourceRadiusType("radius");
+            displayStore.sizeArray();
             const radiusCall = calculateCatalogSize.mock.calls[calculateCatalogSize.mock.calls.length - 1];
 
             expect(diameterCall?.[7]).toBe(1);
             expect(radiusCall?.[7]).toBe(2);
-            expect(widgetStore.catalogSize).toBe(widgetStore.showedCatalogSize * 2);
+            expect(displayStore.catalogSize).toBe(displayStore.showedCatalogSize * 2);
         } finally {
-            widgetStore.dispose();
+            displayStore.dispose();
             if (previousProfileStore) {
                 CatalogStore.Instance.catalogProfileStores.set(fileId, previousProfileStore);
             } else {
@@ -132,7 +153,7 @@ describe("CatalogDisplayStore overlay maps after replotting", () => {
     let columnData: Float32Array;
     let previousProfileStore: CatalogProfileStore | undefined;
     let displayStore: CatalogDisplayStore;
-    let updateDataTexture: jest.SpyInstance;
+    let updateDataTexture: jest.Spied<typeof CatalogWebGLService.Instance.updateDataTexture>;
 
     // Rebuilding the overlay positions (Plot, a filter, streamed data) resets and refills the plotted source count
     const replot = (sourceCount: number) => {
