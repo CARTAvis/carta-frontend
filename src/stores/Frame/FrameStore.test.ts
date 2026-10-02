@@ -1,5 +1,6 @@
 import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
 
 import {Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
@@ -772,5 +773,42 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO);
             expect(frame.obsTimeMjdUtc).toBeUndefined();
         });
+    });
+});
+
+describe("FrameStore.getRegionProperties", () => {
+    const ellipse = {
+        regionId: 1,
+        regionType: CARTA.RegionType.ELLIPSE,
+        controlPoints: [
+            {x: 320, y: 400},
+            {x: 100, y: 50}
+        ],
+        rotation: 30
+    };
+    const getProperties = (wcsProperties: string, isValidWcs: boolean = true): string[] =>
+        FrameStore.prototype.getRegionProperties.call(
+            {
+                isValidWcs,
+                getRegion: (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined),
+                getRegionFrameProperties: (region: typeof ellipse) => ({controlPoints: region.controlPoints, rotation: region.rotation}),
+                genRegionWcsProperties: () => wcsProperties
+            },
+            ellipse.regionId
+        );
+
+    test("returns the image and the world definition of the region", () => {
+        const world = 'ellipse(wcs:ICRS)[[18:20:21.0000000240, -16:12:10.0000000440], [40.0000000000", 20.0000000000"], 30.000000deg]';
+        const properties = getProperties(world);
+        expect(properties).toHaveLength(2);
+        expect(properties[0]).toMatch(/^ellipse\[\[320\.000000pix, 400\.000000pix\]/);
+        expect(properties[1]).toBe(world);
+    });
+
+    test("omits the world definition when none can be generated, e.g. in IMG display mode", () => {
+        const properties = getProperties("Invalid");
+        expect(properties).toHaveLength(1);
+        expect(properties[0]).toMatch(/^ellipse\[\[/);
+        expect(getProperties("unused", false)).toHaveLength(1);
     });
 });

@@ -2593,7 +2593,10 @@ export class FrameStore {
 
             propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
             if (this.isValidWcs) {
-                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
+                const wcsProperties = this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId);
+                if (wcsProperties !== "Invalid") {
+                    propertyString.push(wcsProperties);
+                }
             }
         }
         return propertyString;
