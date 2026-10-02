@@ -15,6 +15,10 @@ import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./FittingDialogComponent.scss";
 
+export function getImageFittingExportFileName(imageName: string | undefined, content: string): string {
+    return `${imageName}-${content}-${getTimestamp()}`;
+}
+
 @observer
 export class FittingDialogComponent extends React.Component {
     @observable private coord: CoordinateMode = CoordinateMode.Image;
@@ -84,7 +88,7 @@ export class FittingDialogComponent extends React.Component {
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
         if (content) {
-            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
+            const fileName = getImageFittingExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename, "2D_Fitting_Result");
             exportTxtFile(fileName, content);
         }
     };
@@ -92,7 +96,7 @@ export class FittingDialogComponent extends React.Component {
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
         if (content) {
-            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
+            const fileName = getImageFittingExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename, "2D_Fitting_Full_Log");
             exportTxtFile(fileName, content);
         }
     };
