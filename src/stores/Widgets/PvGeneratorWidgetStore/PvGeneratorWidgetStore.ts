@@ -75,7 +75,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
-        if (!frame) {
+        if (!frame || frame.isSpectralAxisNonlinear) {
             return;
         }
 
