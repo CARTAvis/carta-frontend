@@ -92,41 +92,29 @@ export class ControlMap {
             return null;
         }
 
-        if (widthRange === 0 && heightRange === 0) {
-            return this.getGridPoint(0, 0);
-        }
-
         const x0 = Math.floor(normalizedX);
         const y0 = Math.floor(normalizedY);
         const tx = normalizedX - x0;
         const ty = normalizedY - y0;
-        const rowValues = (row: number, component: 0 | 1) =>
-            [-1, 0, 1, 2].map(offset => {
-                const point = this.getGridPoint(x0 + offset, row);
-                return point ? (component === 0 ? point.x : point.y) : NaN;
-            });
-        const rows = [-1, 0, 1, 2].map(offset => this.cubic(rowValues(y0 + offset, 0), tx));
-        const rowsY = [-1, 0, 1, 2].map(offset => this.cubic(rowValues(y0 + offset, 1), tx));
-        const x = this.cubic(rows, ty);
-        const y = this.cubic(rowsY, ty);
+        const sampleRow = (row: number, component: 0 | 1) =>
+            this.cubic(this.getGridComponent(x0 - 1, row, component), this.getGridComponent(x0, row, component), this.getGridComponent(x0 + 1, row, component), this.getGridComponent(x0 + 2, row, component), tx);
+        const x = this.cubic(sampleRow(y0 - 1, 0), sampleRow(y0, 0), sampleRow(y0 + 1, 0), sampleRow(y0 + 2, 0), ty);
+        const y = this.cubic(sampleRow(y0 - 1, 1), sampleRow(y0, 1), sampleRow(y0 + 1, 1), sampleRow(y0 + 2, 1), ty);
         return isFinite(x) && isFinite(y) ? {x, y} : null;
     };
 
-    private cubic = (values: number[], t: number): number => {
-        const [a, b, c, d] = values;
+    private cubic = (a: number, b: number, c: number, d: number, t: number): number => {
         return (-a / 2 + (3 * b) / 2 - (3 * c) / 2 + d / 2) * t * t * t + (a - (5 * b) / 2 + 2 * c - d / 2) * t * t + (-a / 2 + c / 2) * t + b;
     };
 
-    private getGridPoint = (xIndex: number, yIndex: number): Point2D | null => {
+    private getGridComponent = (xIndex: number, yIndex: number, component: 0 | 1): number => {
         xIndex = Math.min(Math.max(xIndex, 0), this.width - 1);
         yIndex = Math.min(Math.max(yIndex, 0), this.height - 1);
-        const offset = (yIndex * this.width + xIndex) * 2;
-        const x = this.grid[offset];
-        const y = this.grid[offset + 1];
-        if (!isFinite(x) || !isFinite(y)) {
-            return null;
+        const value = this.grid[(yIndex * this.width + xIndex) * 2 + component];
+        if (!isFinite(value)) {
+            return NaN;
         }
 
-        return {x, y};
+        return value;
     };
 }

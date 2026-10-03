@@ -6,16 +6,16 @@ import {observer} from "mobx-react";
 import {AstFonts, ResizeDetector} from "components/Shared";
 import {BeamType, ContourDashMode, HelpType, ImageType, VectorOverlaySource} from "enums";
 import {type FrameView, type ImageViewItem, type Point2D, Zoom} from "models";
-import {AppStore, type DefaultWidgetConfig, type OverlayColorbarSettings, type Padding, type WidgetProps} from "stores";
-import {LayoutStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, LayoutStore, type OverlayColorbarSettings, type Padding, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, getChannelMapCell, getColorForTheme, getColorsForValues, toFixed} from "utilities";
+import {ceilToPower, getChannelMapCell, getColorForTheme, toFixed} from "utilities";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "utilities/export/beamSvgExport";
 import {type CatalogPointStyle, renderCatalogToSvg} from "utilities/export/catalogSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 import {renderContoursToSvg} from "utilities/export/contourSvgExport";
 import {renderRegionsToSvg} from "utilities/export/regionSvgExport";
+import {sampleSvgColormapColor} from "utilities/export/svgColor";
 import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, svgGroupFromLayer} from "utilities/export/svgExport";
 import {renderVectorOverlayToSvg} from "utilities/export/vectorOverlaySvgExport";
 
@@ -270,20 +270,6 @@ function rgbColorToCss(color: {r: number; g: number; b: number; a?: number} | un
     return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
 }
 
-function sampleColormapColor(colorMap: string, fraction: number, bias: number, contrast: number, fallbackColor: string): string {
-    const {color, size} = getColorsForValues(colorMap);
-    if (!size || color.length < 4) {
-        return fallbackColor;
-    }
-
-    let sampledFraction = clampValue(fraction - bias, 0, 1);
-    sampledFraction = clampValue((sampledFraction - 0.5) * contrast + 0.5, 0, 1);
-    const colorIndex = clampValue(Math.round(sampledFraction * (size - 1)), 0, size - 1);
-    const offset = colorIndex * 4;
-
-    return `rgba(${color[offset]}, ${color[offset + 1]}, ${color[offset + 2]}, ${(color[offset + 3] ?? 255) / 255})`;
-}
-
 function getContourStrokeWidth(sourceFrame: FrameStore, pixelRatio: number): number {
     return pixelRatio * sourceFrame.contourConfig.thickness;
 }
@@ -299,17 +285,15 @@ function getContourDashLength(destinationFrame: FrameStore, dashMode: ContourDas
     return pixelRatio * DEFAULT_CONTOUR_DASH_LENGTH * dashFactor * zoomScale;
 }
 
-function getContourStrokeColor(frame: FrameStore, level: number, levels: number[]): string {
+function getContourStrokeColor(frame: FrameStore, level: number, minLevel: number, maxLevel: number): string {
     const fallbackColor = rgbColorToCss(frame.contourConfig.color);
     if (!frame.contourConfig.isColormapEnabled) {
         return fallbackColor;
     }
 
-    const minLevel = Math.min(...levels);
-    const maxLevel = Math.max(...levels);
     const fraction = minLevel === maxLevel ? 1 : (level - minLevel) / (maxLevel - minLevel);
 
-    return sampleColormapColor(frame.contourConfig.colormap, fraction, frame.contourConfig.colormapBias, frame.contourConfig.colormapContrast, fallbackColor);
+    return sampleSvgColormapColor(frame.contourConfig.colormap, fraction, frame.contourConfig.colormapBias, frame.contourConfig.colormapContrast, fallbackColor, frame.contourConfig.isColormapInverted);
 }
 
 function getVectorZoomScale(frame: FrameStore): number {
@@ -348,7 +332,7 @@ function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
     const intensityMax = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None ? 1 : isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
     const fraction = !isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax ? 1 : (intensity - (intensityMin ?? 0)) / ((intensityMax ?? 0) - (intensityMin ?? 0));
 
-    return sampleColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor);
+    return sampleSvgColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor, frame.vectorOverlayConfig.isColormapInverted);
 }
 
 function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore, shouldUseCatalogTransform: boolean = false): Point2D | null {
@@ -361,7 +345,11 @@ function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinat
 }
 
 function transformContourPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
-    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame);
+    return transformFramePoint(point, sourceFrame, destinationFrame, false);
+}
+
+function transformFramePoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore, shouldUseCatalogTransform: boolean): Point2D | null {
+    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame, shouldUseCatalogTransform);
     if (!transformedPoint) {
         return null;
     }
@@ -427,11 +415,16 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
             continue;
         }
 
-        const levels = Array.from(contourFrame.contourStores.keys());
+        let minLevel = Infinity;
+        let maxLevel = -Infinity;
+        contourFrame.contourStores.forEach((_, level) => {
+            minLevel = Math.min(minLevel, level);
+            maxLevel = Math.max(maxLevel, level);
+        });
         contourFrame.contourStores.forEach((contourStore, level) => {
             const contourSvg = renderContoursToSvg(
                 transformContourVertexData(contourStore.exportVertexData, contourFrame, frame, frameView, layerWidth, layerHeight),
-                getContourStrokeColor(contourFrame, level, levels),
+                getContourStrokeColor(contourFrame, level, minLevel, maxLevel),
                 getContourStrokeWidth(contourFrame, pixelRatio),
                 getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio),
                 padding.left * pixelRatio,
@@ -556,7 +549,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const exportedIndices: number[] = [];
         let pointCount = 0;
         for (let index = 0; index < count; index++) {
-            const transformedPoint = transformOverlayPoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
+            const transformedPoint = transformFramePoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
             if (!transformedPoint) {
                 continue;
             }
@@ -585,7 +578,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
             pointStyles.push({
                 size: isFinite(pointSize) && pointSize > 0 ? getCatalogPointSize(frame, pointSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
                 minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
-                color: isFinite(mappedColor) ? sampleColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
+                color: isFinite(mappedColor) ? sampleSvgColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
                 rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
                 lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * pixelRatio : undefined
             });
@@ -773,7 +766,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     // 9. Regions — vector SVG from store data
-    const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio, `panel-${column}-${row}-`);
+    const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio);
     if (regionsSvg) {
         const clipId = `regions-clip-${column}-${row}`;
         const clipPath = createSvgElement("clipPath", {id: clipId});
@@ -1021,7 +1014,7 @@ function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanEleme
     return group;
 }
 
-function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number, idPrefix = ""): SVGGElement | null {
+function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
     const regions = frame.regionSet?.regionsAndAnnotationsForRender;
     if (!regions?.length) {
         return null;
@@ -1032,7 +1025,7 @@ function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         return null;
     }
 
-    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio, idPrefix});
+    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
 }
 
 @observer

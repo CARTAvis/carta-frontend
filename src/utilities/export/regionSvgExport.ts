@@ -7,6 +7,19 @@ import {type CompassAnnotationStore, type FrameStore, type RegionStore, type Rul
 import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const SPATIAL_APPROXIMATION_REGION_TYPES = new Set<CARTA.RegionType>([
+    CARTA.RegionType.LINE,
+    CARTA.RegionType.ANNLINE,
+    CARTA.RegionType.RECTANGLE,
+    CARTA.RegionType.ANNRECTANGLE,
+    CARTA.RegionType.ELLIPSE,
+    CARTA.RegionType.ANNELLIPSE,
+    CARTA.RegionType.POLYGON,
+    CARTA.RegionType.ANNPOLYGON,
+    CARTA.RegionType.POLYLINE,
+    CARTA.RegionType.ANNPOLYLINE,
+    CARTA.RegionType.ANNVECTOR
+]);
 
 function transformImagePoint(transform: AST.FrameSet | AST.Mapping, point: Point2D, isForward = true): Point2D {
     const transformed = AST.transformPoint(transform, point.x, point.y, isForward);
@@ -150,10 +163,8 @@ function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, r
     const ellipse = createSvgElement("ellipse", {
         cx: center.x,
         cy: center.y,
-        // Ellipse control points store the semi-minor radius in x and the
-        // semi-major radius in y, while SVG names the horizontal radius rx.
-        rx: size.y,
-        ry: size.x,
+        rx: size.x,
+        ry: size.y,
         ...getStrokeAttrs(region, pixelRatio)
     });
     if (rotation !== 0) {
@@ -274,7 +285,6 @@ function renderVectorAnnotation(points: Point2D[], region: RegionStore, pixelRat
 interface RegionSvgOptions {
     frame?: FrameStore;
     pixelRatio: number;
-    idPrefix?: string;
 }
 
 function toCanvasPoints(points: number[], frameView: FrameView, layerWidth: number, layerHeight: number, frame?: FrameStore): Point2D[] {
@@ -504,7 +514,29 @@ function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStor
     if (attrs["text-anchor"] === "end") textX += size.x / 2;
     if (attrs["dominant-baseline"] === "text-before-edge") textY -= size.y / 2;
     if (attrs["dominant-baseline"] === "text-after-edge") textY += size.y / 2;
-    const text = createSvgText(textContent, textX, textY, attrs);
+    const lines = textContent.split(/\r?\n/);
+    const lineHeight = Number(attrs["font-size"]) * 1.2;
+    if (lines.length > 1) {
+        const isTopAligned = attrs["dominant-baseline"] === "text-before-edge";
+        const isBottomAligned = attrs["dominant-baseline"] === "text-after-edge";
+        if (!isTopAligned && !isBottomAligned) {
+            textY -= (lineHeight * (lines.length - 1)) / 2;
+        } else if (isBottomAligned) {
+            textY -= lineHeight * (lines.length - 1);
+        }
+    }
+    const text = createSvgText("", textX, textY, attrs);
+    if (lines.length === 1) {
+        text.textContent = textContent;
+    } else {
+        lines.forEach((line, index) => {
+            const span = document.createElementNS(SVG_NS, "tspan");
+            span.setAttribute("x", `${textX}`);
+            span.setAttribute("dy", index === 0 ? "0" : `${lineHeight}`);
+            span.textContent = line;
+            text.appendChild(span);
+        });
+    }
     if (rotation !== 0) {
         text.setAttribute("transform", `rotate(${-rotation},${center.x},${center.y})`);
     }
@@ -517,8 +549,6 @@ function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStor
 export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView, layerWidth: number, layerHeight: number, offsetX: number, offsetY: number, options: Partial<RegionSvgOptions> = {}): SVGGElement {
     const renderOptions: RegionSvgOptions = {pixelRatio: options.pixelRatio ?? 1, frame: options.frame};
     const group = svgGroupFromLayer("regions");
-    const defs = document.createElementNS(SVG_NS, "defs");
-    group.appendChild(defs);
 
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
@@ -526,7 +556,7 @@ export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView,
 
     for (const region of regions) {
         if (!region.isTemporary && region.controlPoints.length > 0) {
-            const svgElement = renderSingleRegion(region, frameView, layerWidth, layerHeight, defs, renderOptions);
+            const svgElement = renderSingleRegion(region, frameView, layerWidth, layerHeight, renderOptions);
             if (svgElement) {
                 group.appendChild(svgElement);
             }
@@ -536,10 +566,10 @@ export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView,
     return group;
 }
 
-function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidth: number, layerHeight: number, defsElement: SVGDefsElement, options: RegionSvgOptions): SVGElement | null {
+function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidth: number, layerHeight: number, options: RegionSvgOptions): SVGElement | null {
     const cp = region.controlPoints;
     const frame = options.frame;
-    const spatialPoints = frame ? getSpatialRegionCanvasPoints(region, frame, frameView, layerWidth, layerHeight) : null;
+    const spatialPoints = frame && SPATIAL_APPROXIMATION_REGION_TYPES.has(region.regionType) ? getSpatialRegionCanvasPoints(region, frame, frameView, layerWidth, layerHeight) : null;
 
     switch (region.regionType) {
         case CARTA.RegionType.POINT:
@@ -567,7 +597,8 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
                 return renderPolygonRegion(spatialPoints, region, true, options.pixelRatio);
             }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
-            const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
+            // Ellipse control points store the vertical radius in x and the horizontal radius in y.
+            const size = imageSizeToCanvas(cp[1].y, cp[1].x, frameView, layerWidth, layerHeight);
             return renderEllipseRegion(center, size, region.rotation, region, options.pixelRatio);
         }
         case CARTA.RegionType.POLYGON:
