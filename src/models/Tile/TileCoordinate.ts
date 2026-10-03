@@ -1,7 +1,4 @@
 export class TileCoordinate {
-    private static readonly FileIdOffset = BigInt(2 ** 32);
-    private static readonly ChannelOffset = BigInt(2 ** 48);
-
     layer: number;
     x: number;
     y: number;
@@ -21,14 +18,6 @@ export class TileCoordinate {
             return -1;
         }
         return TileCoordinate.encode(coordinate.x, coordinate.y, coordinate.layer);
-    }
-
-    public static addFileIdAndChannel(encodedCoordinate: number, fileId: number, channel: number): bigint {
-        return BigInt(BigInt(encodedCoordinate) + BigInt(fileId) * TileCoordinate.FileIdOffset + BigInt(channel) * TileCoordinate.ChannelOffset);
-    }
-
-    public static removeFileIdAndChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
-        return Number((BigInt(encodedCoordinateWithFileIdAndChannel) % TileCoordinate.FileIdOffset) % TileCoordinate.ChannelOffset);
     }
 
     // Encoding a tile combines x, y and layer coordinates into a single number. This makes it more efficient
@@ -57,13 +46,5 @@ export class TileCoordinate {
     // Shortcut to quickly decode just the layer from an encoded coordinate
     public static getLayer(encodedCoordinate: number): number {
         return (encodedCoordinate >> 24) & 127;
-    }
-
-    public static getFileId(encodedCoordinateWithFileIdAndChannel: bigint): number {
-        return Number((encodedCoordinateWithFileIdAndChannel >> BigInt(32)) & BigInt("0xFFFF"));
-    }
-
-    public static getChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
-        return Math.floor(Number(encodedCoordinateWithFileIdAndChannel / TileCoordinate.ChannelOffset));
     }
 }

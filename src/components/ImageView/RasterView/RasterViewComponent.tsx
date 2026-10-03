@@ -6,7 +6,7 @@ import {type Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
 import {ImageType} from "enums";
-import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
+import {COMPUTED_POLARIZATIONS, type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -179,7 +179,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const w = canvas.width;
         const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+        let isCanvasCleared = false;
 
         if (image?.type === ImageType.COLOR_BLENDING) {
             ctx.globalCompositeOperation = "lighter";
@@ -190,23 +190,26 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
-                if (
-                    (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
-                    (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
-                ) {
+                const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
+                const canRender = (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) && frameStokesIndex === histStokesIndex;
+                if (canRender) {
+                    if (!isCanvasCleared) {
+                        ctx.clearRect(0, 0, w, h);
+                        isCanvasCleared = true;
+                    }
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
                     if (channel && isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame);
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
-                }
 
-                if (image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = image?.store?.alpha[index];
-                }
+                    if (image?.type === ImageType.COLOR_BLENDING) {
+                        ctx.globalAlpha = image?.store?.alpha[index];
+                    }
 
-                ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                    ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                }
             }
         });
     };
@@ -354,7 +357,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
-            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, shouldPeek);
+            const rasterTile = tileService.getTile(frame.frameInfo.fileId, frame.stokes, channel, encodedCoordinate, shouldPeek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
             } else {
@@ -524,6 +527,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const spatialReference = frame.spatialReference || frame;
                 const frameView = spatialReference.requiredFrameView;
                 const currentView = spatialReference.currentFrameView;
+                const channel = frame.channel;
+                const stokes = frame.stokes;
+                const histChannel = frame.renderConfig.histChannel;
+                const histStokesIndex = frame.renderConfig.stokesIndex;
+                const isUsingCubeHistogram = frame.renderConfig.isUsingCubeHistogram;
                 const colorMapping = {
                     min: frame.renderConfig.scaleMinVal,
                     max: frame.renderConfig.scaleMaxVal,
