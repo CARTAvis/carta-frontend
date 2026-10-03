@@ -3,13 +3,13 @@ import {Colors} from "@blueprintjs/core";
 import {AstFonts} from "components/Shared";
 import {BeamType, ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {type FrameView, type ImageViewItem, type Point2D} from "models";
-import {AppStore, type OverlayColorbarSettings, type Padding} from "stores";
+import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type Padding} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "./beamSvgExport";
-import {type CatalogPointStyle, renderCatalogToSvg} from "./catalogSvgExport";
+import {type CatalogPointStyle, getCatalogSizeFromArea, getCatalogSizeTuning, isCatalogPointVisible, renderCatalogToSvg} from "./catalogSvgExport";
 import {renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
 import {findElementInAllDocuments} from "./imageExportDom";
@@ -112,30 +112,35 @@ function getContourStrokeColor(frame: FrameStore, level: number, minLevel: numbe
     return sampleSvgColormapColor(frame.contourConfig.colormap, fraction, frame.contourConfig.colormapBias, frame.contourConfig.colormapContrast, fallbackColor, frame.contourConfig.isColormapInverted);
 }
 
-function getVectorZoomScale(frame: FrameStore): number {
-    return frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel;
-}
-
-function getVectorLineLengthInImageSpace(frame: FrameStore, intensity: number, pixelRatio: number): number {
+function getVectorCanvasLength(frame: FrameStore, intensity: number, pixelRatio: number): number {
     const config = frame.vectorOverlayConfig;
     const intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
     const intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
-    const zoomScale = getVectorZoomScale(frame);
     const lengthMin = config.lengthMin * pixelRatio;
     const lengthMax = config.lengthMax * pixelRatio;
 
     if (config.intensitySource === VectorOverlaySource.None) {
-        return lengthMax / zoomScale;
+        return lengthMax;
     }
 
     if (!isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax) {
-        return lengthMax / zoomScale;
+        return lengthMax;
     }
 
     const minIntensity = intensityMin ?? 0;
     const maxIntensity = intensityMax ?? minIntensity;
     const scaledIntensity = clampValue((intensity - minIntensity) / (maxIntensity - minIntensity), 0, 1);
-    return (lengthMin + (lengthMax - lengthMin) * scaledIntensity) / zoomScale;
+    return lengthMin + (lengthMax - lengthMin) * scaledIntensity;
+}
+
+function getVectorCanvasAngle(sourceFrame: FrameStore, destinationFrame: FrameStore, angleDegrees: number): number {
+    const config = sourceFrame.vectorOverlayConfig;
+    const rotationOffset = isFinite(config.rotationOffset) ? config.rotationOffset : 0;
+    const angle = config.angularSource === VectorOverlaySource.None ? 0 : ((-angleDegrees - rotationOffset) * Math.PI) / 180;
+    const zoomFrame = destinationFrame.spatialReference ?? destinationFrame;
+    const zoom = zoomFrame.effectiveZoomLevel ?? {x: zoomFrame.zoomLevel, y: zoomFrame.zoomLevel};
+    // The shader maps the center, then normalizes this screen-space direction.
+    return Math.atan2(Math.cos(angle) * zoom.y, -Math.sin(angle) * zoom.x * (sourceFrame.aspectRatio ?? 1));
 }
 
 function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
@@ -272,40 +277,23 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 
         const exportPositions: number[] = [];
         const strokeColors: string[] = [];
-        const rotationOffset = isFinite(vectorFrame.vectorOverlayConfig.rotationOffset) ? (vectorFrame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0 : 0;
-
         vectorFrame.vectorOverlayStore.tiles.forEach(tile => {
             for (let vectorIndex = 0; vectorIndex < tile.numVertices; vectorIndex++) {
                 const offset = vectorIndex * 4;
                 const center = {x: tile.vertexData[offset], y: tile.vertexData[offset + 1]};
                 const intensity = tile.vertexData[offset + 2];
                 const rawAngleDegrees = tile.vertexData[offset + 3];
-                const lineLength = getVectorLineLengthInImageSpace(vectorFrame, intensity, pixelRatio);
+                const lineLength = getVectorCanvasLength(vectorFrame, intensity, pixelRatio);
                 if (lineLength <= 0) {
                     continue;
                 }
 
-                const angle = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None ? 0 : (-rawAngleDegrees * Math.PI) / 180.0 - rotationOffset;
-                const halfLength = lineLength * 0.5;
-                // The WebGL renderer rotates a screen-space vertical vector. Convert
-                // that direction back to image coordinates before imageToCanvasPoint
-                // flips the y axis.
-                const dx = -Math.sin(angle) * halfLength;
-                const dy = -Math.cos(angle) * halfLength;
-                const startPoint = transformContourPoint({x: center.x - dx, y: center.y - dy}, vectorFrame, frame);
-                const endPoint = transformContourPoint({x: center.x + dx, y: center.y + dy}, vectorFrame, frame);
-                if (!startPoint || !endPoint) {
+                const transformedCenter = transformContourPoint(center, vectorFrame, frame);
+                if (!transformedCenter) {
                     continue;
                 }
-
-                const startCanvas = imageToCanvasPoint(startPoint, frameView, layerWidth, layerHeight);
-                const endCanvas = imageToCanvasPoint(endPoint, frameView, layerWidth, layerHeight);
-                const exportLength = Math.hypot(endCanvas.x - startCanvas.x, endCanvas.y - startCanvas.y);
-                if (exportLength <= 0) {
-                    continue;
-                }
-
-                exportPositions.push((startCanvas.x + endCanvas.x) * 0.5, (startCanvas.y + endCanvas.y) * 0.5, exportLength, Math.atan2(endCanvas.y - startCanvas.y, endCanvas.x - startCanvas.x));
+                const canvasCenter = imageToCanvasPoint(transformedCenter, frameView, layerWidth, layerHeight);
+                exportPositions.push(canvasCenter.x, canvasCenter.y, lineLength, getVectorCanvasAngle(vectorFrame, frame, rawAngleDegrees));
                 strokeColors.push(getVectorStrokeColor(vectorFrame, intensity));
             }
         });
@@ -339,6 +327,47 @@ function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: 
     return frameView ? imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x : size;
 }
 
+function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStore, pixelRatio: number): (index: number, isSelected: boolean) => CatalogPointStyle {
+    const mappedSizes = store.sizeArray?.() ?? new Float32Array();
+    const mappedMinorSizes = store.sizeMinorArray?.() ?? new Float32Array();
+    const mappedColors = store.colorArray?.() ?? new Float32Array();
+    const mappedOrientations = store.orientationArray?.() ?? new Float32Array();
+    const shapeSize = store.isImagePixelSize ? store.catalogSize : store.catalogSize + (store.shapeSettings?.diameterBase ?? 0);
+    const zoomFrame = frame.spatialReference ?? frame;
+    const zoomY = zoomFrame.effectiveZoomLevel?.y ?? zoomFrame.zoomLevel;
+    const areaScale = store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) * zoomY : 1;
+    const defaultSize = getCatalogPointSize(frame, shapeSize, store.isImagePixelSize, pixelRatio);
+    const lineWidth = (isFinite(store.thickness) ? store.thickness : 1) * (store.shapeSettings?.thicknessBase ?? 1) * pixelRatio;
+
+    return (index, isSelected) => {
+        const mappedSize = mappedSizes[index];
+        const hasMappedSize = isFinite(mappedSize);
+        let size = hasMappedSize ? getCatalogPointSize(frame, mappedSize, store.isImagePixelSize, pixelRatio) : defaultSize;
+        if (store.isSizeAreaMode) {
+            const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
+            size = getCatalogSizeFromArea(area, store.catalogShape);
+        }
+        const mappedMinorSize = mappedMinorSizes[index];
+        let minorSize: number | undefined;
+        if (isFinite(mappedMinorSize)) {
+            minorSize = getCatalogPointSize(frame, mappedMinorSize, store.isImagePixelSize, pixelRatio);
+            if (store.isSizeMinorAreaMode) {
+                // The shader's minor-area branch uses the resolved major dimension and scaled minor value.
+                minorSize = getCatalogSizeFromArea(size, store.catalogShape, mappedMinorSize * areaScale);
+            }
+        }
+        const mappedColor = mappedColors[index];
+        return {
+            size,
+            minorSize,
+            color: isFinite(mappedColor) ? sampleSvgColormapColor(store.colorMap, mappedColor, 0, 1, store.catalogColor) : store.catalogColor,
+            rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : 0,
+            lineWidth,
+            highlightColor: isSelected ? store.highlightColor : undefined
+        };
+    };
+}
+
 function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
     const catalogFileIds = AppStore.Instance.catalogStore.visibleCatalogFiles.get(frame);
     const frameView = getDestinationFrameView(frame);
@@ -361,47 +390,37 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
             return;
         }
 
-        const points = new Float32Array(count * 2);
-        const exportedIndices: number[] = [];
-        let pointCount = 0;
+        const profile = AppStore.Instance.catalogStore.catalogProfileStores?.get(fileId);
+        const selectedIndices = new Set(profile?.getSortedIndices(profile.selectedPointIndices) ?? []);
+        if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
+        const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio);
+        const layerWidth = frame.renderWidth * pixelRatio;
+        const layerHeight = frame.renderHeight * pixelRatio;
+        const featherWidth = (catalogWidgetStore.shapeSettings?.featherWidth ?? 0) * pixelRatio;
+        const points: number[] = [];
+        const pointStyles: CatalogPointStyle[] = [];
         for (let index = 0; index < count; index++) {
+            const isSelected = selectedIndices.has(index);
+            if (catalogWidgetStore.isShowingSelectedData && !isSelected) continue;
             const transformedPoint = transformFramePoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
             if (!transformedPoint) {
                 continue;
             }
 
-            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
-            points[pointCount * 2] = canvasPoint.x;
-            points[pointCount * 2 + 1] = canvasPoint.y;
-            exportedIndices.push(index);
-            pointCount++;
+            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, layerWidth, layerHeight);
+            const style = resolveStyle(index, isSelected);
+            if (!isCatalogPointVisible(canvasPoint, style, layerWidth, layerHeight, featherWidth)) continue;
+            points.push(canvasPoint.x, canvasPoint.y);
+            pointStyles.push(style);
         }
 
-        if (!pointCount) {
+        if (!points.length) {
             return;
         }
 
-        const shapeSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + (catalogWidgetStore.shapeSettings?.diameterBase ?? 0);
-        const mappedSizes = catalogWidgetStore.sizeArray?.() ?? new Float32Array();
-        const mappedMinorSizes = catalogWidgetStore.sizeMinorArray?.() ?? new Float32Array();
-        const mappedColors = catalogWidgetStore.colorArray?.() ?? new Float32Array();
-        const mappedOrientations = catalogWidgetStore.orientationArray?.() ?? new Float32Array();
-        const pointStyles: CatalogPointStyle[] = [];
-        for (const index of exportedIndices) {
-            const pointSize = mappedSizes[index];
-            const minorSize = mappedMinorSizes[index];
-            const mappedColor = mappedColors[index];
-            pointStyles.push({
-                size: isFinite(pointSize) && pointSize > 0 ? getCatalogPointSize(frame, pointSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
-                minorSize: isFinite(minorSize) && minorSize > 0 ? getCatalogPointSize(frame, minorSize, catalogWidgetStore.isImagePixelSize, pixelRatio) : undefined,
-                color: isFinite(mappedColor) ? sampleSvgColormapColor(catalogWidgetStore.colorMap, mappedColor, 0, 1, catalogWidgetStore.catalogColor) : undefined,
-                rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : undefined,
-                lineWidth: isFinite(catalogWidgetStore.thickness) ? catalogWidgetStore.thickness * pixelRatio : undefined
-            });
-        }
-        positionArrays.set(fileId, points.subarray(0, pointCount * 2));
+        positionArrays.set(fileId, Float32Array.from(points));
         shapes.set(fileId, catalogWidgetStore.catalogShape);
-        sizes.set(fileId, getCatalogPointSize(frame, shapeSize, catalogWidgetStore.isImagePixelSize, pixelRatio));
+        sizes.set(fileId, pointStyles[0].size ?? 0);
         colors.set(fileId, catalogWidgetStore.catalogColor);
         styles.set(fileId, pointStyles);
     });

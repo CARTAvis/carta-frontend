@@ -110,6 +110,43 @@ describe("renderRegionsToSvg", () => {
         expect(vectorArrowhead?.getAttribute("stroke-width")).toBe("2");
     });
 
+    it.each([
+        [CARTA.TextAnnotationPosition.TOP, 460],
+        [CARTA.TextAnnotationPosition.CENTER, 490],
+        [CARTA.TextAnnotationPosition.BOTTOM, 520]
+    ])("matches viewer line spacing and vertical alignment for position %s", (position, firstY) => {
+        const region = {
+            ...baseRegion(CARTA.RegionType.ANNTEXT, [
+                {x: 50, y: 50},
+                {x: 200, y: 100}
+            ]),
+            text: "first\nsecond",
+            fontSize: 20,
+            position
+        };
+        const spans = renderRegion(region).querySelectorAll("tspan");
+
+        expect(spans).toHaveLength(2);
+        expect(Number(spans[0].getAttribute("y"))).toBe(firstY);
+        expect(Number(spans[1].getAttribute("y"))).toBe(firstY + 20);
+    });
+
+    it("wraps and limits text to the viewer's screen-space annotation box", () => {
+        const region = {
+            ...baseRegion(CARTA.RegionType.ANNTEXT, [
+                {x: 50, y: 50},
+                {x: 7, y: 24}
+            ]),
+            text: "one two three four",
+            fontSize: 12,
+            position: CARTA.TextAnnotationPosition.TOP
+        };
+        const spans = renderRegion(region, 2).querySelectorAll("tspan");
+
+        expect([...spans].map(span => span.textContent)).toEqual(["one two", "three"]);
+        expect(Number(spans[1].getAttribute("y")) - Number(spans[0].getAttribute("y"))).toBe(24);
+    });
+
     it("keeps the full arrowhead when spatial approximation ends with a short segment", () => {
         const vector = {
             ...baseRegion(CARTA.RegionType.ANNVECTOR, [

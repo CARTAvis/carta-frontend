@@ -235,6 +235,108 @@ describe("getPanelSvg", () => {
         expect(line).toHaveAttribute("stroke", "rgba(0, 10, 20, 1)");
     });
 
+    test.each([0, 45, 90])("preserves screen vector length at angle %s under unequal axis zoom", angle => {
+        frame.zoomLevel = 4;
+        frame.effectiveZoomLevel = {x: 4, y: 2};
+        frame.requiredFrameView = {xMin: 0, xMax: 25, yMin: 0, yMax: 40};
+        frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        frame.vectorOverlayStore.tiles[0].vertexData[3] = angle;
+
+        const line = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
+        const dx = Number(line?.getAttribute("x2")) - Number(line?.getAttribute("x1"));
+        const dy = Number(line?.getAttribute("y2")) - Number(line?.getAttribute("y1"));
+
+        expect(Math.hypot(dx, dy)).toBeCloseTo(10, 1);
+    });
+
+    test("maps only the vector center through a spatial control map", () => {
+        const transformPoint = jest.fn(({x, y}) => ({x: x * 2, y: y * 2}));
+        const sourceFrame = {...frame, getControlMap: () => ({transformPoint})};
+        sourceFrame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        sourceFrame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
+        mockAppStore.vectorOverlayFrames.set(frame, [sourceFrame]);
+
+        const line = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
+
+        expect(transformPoint).toHaveBeenCalledTimes(1);
+        expect(Number(line?.getAttribute("y2")) - Number(line?.getAttribute("y1"))).toBeCloseTo(10);
+        expect(line).toHaveAttribute("x1", "40.00");
+    });
+
+    test("exports only selected catalog sources using their sorted position indices", () => {
+        mockAppStore.catalogStore.catalogCounts.set(11, 2);
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([30, 50]), y: new Float32Array([40, 40])});
+        mockAppStore.catalogStore.catalogProfileStores = new Map([[11, {selectedPointIndices: [0], getSortedIndices: jest.fn(() => [1])}]]);
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, isShowingSelectedData: true, highlightColor: "#ff00ff"});
+
+        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+
+        expect(catalog?.querySelectorAll("circle:not([data-selection-highlight])")).toHaveLength(1);
+        expect(catalog?.querySelector("circle")).toHaveAttribute("cx", "50");
+        expect(catalog?.querySelector("[data-selection-highlight]")).toHaveAttribute("stroke", "#ff00ff");
+    });
+
+    test("omits offscreen catalog sources while preserving edge-crossing sources", () => {
+        mockAppStore.catalogStore.catalogCounts.set(11, 3);
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([-100, -2, 30]), y: new Float32Array([40, 40, 40])});
+
+        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+
+        expect(catalog?.querySelectorAll("circle")).toHaveLength(2);
+        expect(catalog?.querySelector("circle")).toHaveAttribute("cx", "-2");
+    });
+
+    test.each([1, 2])("matches mapped screen-pixel circle areas at pixel ratio %s", pixelRatio => {
+        mockAppStore.pixelRatio = pixelRatio;
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 2, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
+
+        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
+
+        // Mapped values are uploaded directly to the shader; area conversion precedes any SVG geometry.
+        expect(Number(source?.getAttribute("r"))).toBeCloseTo(Math.sqrt(100 / Math.PI));
+    });
+
+    test("converts mapped box areas using the shape's area formula", () => {
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 1, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
+
+        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay rect");
+
+        expect(source).toHaveAttribute("width", "10");
+    });
+
+    test("applies image-pixel zoom before converting a mapped area", () => {
+        frame.effectiveZoomLevel = {x: 4, y: 2};
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 2, isImagePixelSize: true, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
+
+        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
+
+        expect(Number(source?.getAttribute("r"))).toBeCloseTo(Math.sqrt(200 / Math.PI));
+    });
+
+    test("matches the viewer's minor-area conversion for ellipses", () => {
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 11, isSizeMinorAreaMode: true, sizeArray: () => new Float32Array([100]), sizeMinorArray: () => new Float32Array([25])});
+
+        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
+
+        expect(Number(source?.getAttribute("ry"))).toBeCloseTo(Math.sqrt(100 / Math.PI));
+    });
+
+    test("skips style work when selected-only mode has no selection", () => {
+        const sizeArray = jest.fn(() => new Float32Array([100]));
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, isShowingSelectedData: true, sizeArray});
+
+        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panel?.querySelector("#catalog-overlay")).toBeNull();
+        expect(sizeArray).not.toHaveBeenCalled();
+    });
+
     test("maps spatial contours into the reference frame before exporting", () => {
         frame.spatialReference = {
             requiredFrameView: {xMin: 0, xMax: 100, yMin: 0, yMax: 80},

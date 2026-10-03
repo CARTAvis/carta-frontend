@@ -1,4 +1,5 @@
 import {CatalogOverlayShape} from "enums";
+import {type Point2D} from "models";
 
 import {createSvgElement, svgGroupFromLayer} from "./svgExport";
 
@@ -9,6 +10,51 @@ export interface CatalogPointStyle {
     /** Rotation in degrees, matching the catalog WebGL shader. */
     rotation?: number;
     lineWidth?: number;
+    highlightColor?: string;
+}
+
+/** Matches the catalog vertex shader's area-to-dimension conversion. */
+export function getCatalogSizeFromArea(area: number, shape: CatalogOverlayShape, minorSize = -1): number {
+    switch (shape) {
+        case CatalogOverlayShape.CIRCLE_FILLED:
+        case CatalogOverlayShape.CIRCLE_LINED:
+            return 2 * Math.sqrt(area / Math.PI);
+        case CatalogOverlayShape.ELLIPSE_LINED:
+            return 2 * Math.sqrt(Math.max(area, minorSize) / Math.PI);
+        case CatalogOverlayShape.HEXAGON_LINED:
+        case CatalogOverlayShape.HEXAGON_LINED_2:
+            return 2 * Math.sqrt((2 * area) / (3 * Math.sqrt(3))) * Math.sin(Math.PI / 3);
+        case CatalogOverlayShape.TRIANGLE_LINED_UP:
+        case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
+            return Math.sqrt((4 * area) / Math.sqrt(3));
+        default:
+            return Math.sqrt(area);
+    }
+}
+
+/** Image-pixel area values are tuned and zoomed before the shader takes their square root. */
+export function getCatalogSizeTuning(shape: CatalogOverlayShape): number {
+    switch (shape) {
+        case CatalogOverlayShape.BOX_LINED:
+        case CatalogOverlayShape.X_FILLED:
+        case CatalogOverlayShape.X_LINED:
+            return Math.SQRT2;
+        case CatalogOverlayShape.TRIANGLE_LINED_UP:
+        case CatalogOverlayShape.TRIANGLE_LINED_DOWN:
+            return 1 / Math.sin(Math.PI / 3);
+        case CatalogOverlayShape.ELLIPSE_LINED:
+            return 2;
+        default:
+            return 1;
+    }
+}
+
+export function isCatalogPointVisible(point: Point2D, style: CatalogPointStyle, width: number, height: number, featherWidth: number): boolean {
+    const size = style.size ?? 0;
+    if (!isFinite(point.x) || !isFinite(point.y) || !isFinite(size) || size <= 0) return false;
+    // A bounding circle covers axis flips and orientation; retain all edge-crossing strokes.
+    const radius = Math.hypot(size, style.minorSize ?? size) / 2 + 4 * (style.lineWidth ?? 1) + featherWidth;
+    return point.x + radius >= 0 && point.x - radius <= width && point.y + radius >= 0 && point.y - radius <= height;
 }
 
 /**
@@ -25,6 +71,7 @@ export function renderCatalogToSvg(
     styles?: Map<number, CatalogPointStyle[]>
 ): SVGGElement {
     const group = svgGroupFromLayer("catalog-overlay");
+    const highlights: SVGElement[] = [];
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
     }
@@ -48,9 +95,21 @@ export function renderCatalogToSvg(
             if (element) {
                 group.appendChild(element);
             }
+            if (style?.highlightColor) {
+                const highlight = renderCatalogShape(x, y, style.size ?? size, style.highlightColor, shape, style.minorSize, style.rotation, style.lineWidth);
+                if (highlight) {
+                    highlight.setAttribute("fill", "none");
+                    highlight.setAttribute("stroke", style.highlightColor);
+                    highlight.setAttribute("stroke-width", `${style.lineWidth ?? 1}`);
+                    highlight.setAttribute("data-selection-highlight", "true");
+                    highlights.push(highlight);
+                }
+            }
         }
     });
 
+    // Selected outlines have foreground depth in the WebGL renderer.
+    highlights.forEach(highlight => group.appendChild(highlight));
     return group;
 }
 

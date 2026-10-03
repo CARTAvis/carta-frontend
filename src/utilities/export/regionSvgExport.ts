@@ -1,8 +1,10 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {Text} from "konva/lib/shapes/Text";
 
 import {type FrameView, type Point2D} from "models";
-import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
+import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
 import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
 
@@ -472,67 +474,35 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
 }
 
 function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStore, pixelRatio: number, rotation = region.rotation): SVGElement {
-    const textRegion = region as RegionStore & {text?: string; fontSize?: number; font?: string; fontStyle?: string; position?: CARTA.TextAnnotationPosition};
-    const textContent = textRegion.text ?? "";
-    const attrs: Record<string, string | number> = {
+    const textRegion = region as TextAnnotationStore;
+    const layout = new Text(getTextAnnotationProps(textRegion, size));
+    const lineHeight = layout.fontSize() * layout.lineHeight() * pixelRatio;
+    const width = layout.width() * pixelRatio;
+    const height = layout.height() * pixelRatio;
+    const lines = layout.textArr.map(line => line.text);
+    const align = layout.align();
+    const verticalAlign = layout.verticalAlign();
+    const textX = center.x + (align === "left" ? -width / 2 : align === "right" ? width / 2 : 0);
+    const spareHeight = height - lines.length * lineHeight;
+    const alignmentOffset = verticalAlign === "top" ? 0 : verticalAlign === "bottom" ? spareHeight : spareHeight / 2;
+    const firstY = center.y - height / 2 + alignmentOffset + lineHeight / 2;
+    const attrs = {
         fill: region.color,
-        "font-size": Math.abs(textRegion.fontSize ?? 20) * pixelRatio,
-        "font-family": textRegion.font ?? "Helvetica",
-        "font-style": textRegion.fontStyle?.toLowerCase().includes("italic") ? "italic" : "normal",
-        "font-weight": textRegion.fontStyle?.toLowerCase().includes("bold") ? "bold" : "normal",
-        "text-anchor": "middle",
+        "font-size": layout.fontSize() * pixelRatio,
+        "font-family": layout.fontFamily(),
+        "font-style": layout.fontStyle().toLowerCase().includes("italic") ? "italic" : "normal",
+        "font-weight": layout.fontStyle().toLowerCase().includes("bold") ? "bold" : "normal",
+        "text-anchor": align === "left" ? "start" : align === "right" ? "end" : "middle",
         "dominant-baseline": "central"
     };
-    const position = textRegion.position ?? CARTA.TextAnnotationPosition.CENTER;
-    switch (position) {
-        case CARTA.TextAnnotationPosition.UPPER_LEFT:
-        case CARTA.TextAnnotationPosition.LOWER_LEFT:
-        case CARTA.TextAnnotationPosition.LEFT:
-            attrs["text-anchor"] = "start";
-            break;
-        case CARTA.TextAnnotationPosition.UPPER_RIGHT:
-        case CARTA.TextAnnotationPosition.LOWER_RIGHT:
-        case CARTA.TextAnnotationPosition.RIGHT:
-            attrs["text-anchor"] = "end";
-            break;
-    }
-    switch (position) {
-        case CARTA.TextAnnotationPosition.UPPER_LEFT:
-        case CARTA.TextAnnotationPosition.UPPER_RIGHT:
-        case CARTA.TextAnnotationPosition.TOP:
-            attrs["dominant-baseline"] = "text-before-edge";
-            break;
-        case CARTA.TextAnnotationPosition.LOWER_LEFT:
-        case CARTA.TextAnnotationPosition.LOWER_RIGHT:
-        case CARTA.TextAnnotationPosition.BOTTOM:
-            attrs["dominant-baseline"] = "text-after-edge";
-            break;
-    }
-    let textX = center.x;
-    let textY = center.y;
-    if (attrs["text-anchor"] === "start") textX -= size.x / 2;
-    if (attrs["text-anchor"] === "end") textX += size.x / 2;
-    if (attrs["dominant-baseline"] === "text-before-edge") textY -= size.y / 2;
-    if (attrs["dominant-baseline"] === "text-after-edge") textY += size.y / 2;
-    const lines = textContent.split(/\r?\n/);
-    const lineHeight = Number(attrs["font-size"]) * 1.2;
-    if (lines.length > 1) {
-        const isTopAligned = attrs["dominant-baseline"] === "text-before-edge";
-        const isBottomAligned = attrs["dominant-baseline"] === "text-after-edge";
-        if (!isTopAligned && !isBottomAligned) {
-            textY -= (lineHeight * (lines.length - 1)) / 2;
-        } else if (isBottomAligned) {
-            textY -= lineHeight * (lines.length - 1);
-        }
-    }
-    const text = createSvgText("", textX, textY, attrs);
+    layout.destroy();
+
+    const text = createSvgText("", textX, firstY, attrs);
     if (lines.length === 1) {
-        text.textContent = textContent;
+        text.textContent = lines[0];
     } else {
         lines.forEach((line, index) => {
-            const span = document.createElementNS(SVG_NS, "tspan");
-            span.setAttribute("x", `${textX}`);
-            span.setAttribute("dy", index === 0 ? "0" : `${lineHeight}`);
+            const span = createSvgElement("tspan", {x: textX, y: firstY + index * lineHeight});
             span.textContent = line;
             text.appendChild(span);
         });
@@ -617,7 +587,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         }
         case CARTA.RegionType.ANNTEXT: {
             const center = transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
-            const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
+            const size = {x: (cp[1].x / devicePixelRatio) * (frame?.aspectRatio ?? 1), y: cp[1].y / devicePixelRatio};
             const rotation = frame?.spatialReference && frame.spatialTransform ? region.rotation + (frame.spatialTransform.rotation * 180) / Math.PI : region.rotation;
             return renderTextAnnotation(center, size, region, options.pixelRatio, rotation);
         }
