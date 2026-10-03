@@ -1,38 +1,76 @@
 import * as React from "react";
-import Plot from "react-plotly.js";
+import {Bar} from "react-chartjs-2";
 import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import {BarController, BarElement, Chart, type ChartArea, type ChartOptions, Legend, LinearScale, LogarithmicScale, type Plugin, PointElement, type Tick} from "chart.js";
+import {type AnnotationOptions} from "chartjs-plugin-annotation";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import type * as Plotly from "plotly.js";
+import tinycolor from "tinycolor2";
 
-import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
-import {CatalogPlotType, CatalogUpdateMode} from "enums";
+import {ClearableNumericInputComponent, ProfilerInfoComponent} from "components/Shared";
+import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
+import {ScatterPlotComponent} from "components/Shared/ScatterPlot/ScatterPlotComponent";
+import {CatalogPlotType, CatalogUpdateMode, DragMode, PlotType, TickType} from "enums";
+import {CustomIcon} from "icons/CustomIcons";
+import {type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type DragMode, type XBorder} from "stores/Widgets";
-import {minMaxArray, toFixed, type TypedArray} from "utilities";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type XBorder} from "stores/Widgets";
+import {
+    CatalogHistogramInteraction,
+    CatalogScatterSpatialIndex,
+    clamp,
+    computeHistogramBins,
+    exportTsvFile,
+    formatCatalogPlotTick,
+    getCatalogScatterBorder,
+    getTimestamp,
+    isPointInPolygon,
+    minMaxArray,
+    toExponential,
+    toFixed
+} from "utilities";
+
+import {CatalogScatterWebGL} from "./CatalogScatterWebGL";
 
 import "./CatalogPlotComponent.scss";
 
+Chart.register(BarController, BarElement, Legend, LinearScale, LogarithmicScale, PointElement);
+
 const DEFAULT_NUM_BINS = 10; // default fallback
+const DOUBLE_CLICK_THRESHOLD = 300;
+const EXPORT_RIGHT_PADDING = 10;
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
-    @observable width: number = 680;
-    @observable height: number = 400;
-    @observable toolbarHeight: number = 40;
     @observable profileId: string = "";
     @observable componentId: string = "";
+    @observable private isHistogramMouseEntered: boolean = false;
     private plotType: CatalogPlotType;
-    private histogramY: {yMin?: number; yMax?: number};
     private static emptyColumn = "None";
     private catalogFileNames: Map<number, string>;
     private readonly disposers: IReactionDisposer[] = [];
     private widgetId: string;
+    private histogramInteraction: CatalogHistogramInteraction;
+    private histogramPlotRef: Chart<"bar"> | null = null;
+    private scatterChartArea: ChartArea | undefined;
+    private cursorNearestScatterPoint: {x: number; y: number} | undefined;
+    private cursorNearestScatterPointIndex: number | undefined;
+    private cursorNearestScatterXData: ArrayLike<number> | undefined;
+    private cursorNearestScatterYData: ArrayLike<number> | undefined;
+    private readonly scatterSpatialIndex = new CatalogScatterSpatialIndex();
+    private pendingScatterCursor: {x: number; y: number} | undefined;
+    private scatterCursorFrame: number | undefined;
+    private histogramHoverPixel: {x: number; y: number} | undefined;
+    private histogramHoverBinIndex: number | undefined;
+    private histogramHoverData: object | undefined;
+    private pendingHistogramClickHandle: ReturnType<typeof setTimeout> | undefined;
+    private hasHistogramBarDoubleClickHandled = false;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -54,7 +92,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         super(props);
 
         this.widgetId = props.id;
-        this.histogramY = {yMin: undefined, yMax: undefined};
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId);
         this.componentId = catalogPlot.catalogPlotComponentId ?? "";
         // The catalog a component is showing outlives the component, so it is only seeded here.
@@ -62,6 +99,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             CatalogStore.Instance.setCatalogPlotSelection(this.componentId, catalogPlot.catalogFileId);
         }
         this.catalogFileNames = new Map<number, string>();
+        this.histogramInteraction = new CatalogHistogramInteraction({
+            getChart: () => this.histogramPlotRef,
+            getData: () => this.histogramData,
+            getBorder: () => this.widgetStore?.histogramBorder,
+            setBorder: border => this.widgetStore?.setHistogramXBorder(border),
+            selectPoints: indices => this.selectCatalogPoints(indices)
+        });
 
         makeObservable(this);
 
@@ -120,36 +164,29 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             )
         );
+
+        this.disposers.push(
+            reaction(
+                () => {
+                    const scatter = this.scatterData;
+                    return [scatter.xData, scatter.yData] as const;
+                },
+                ([xData, yData]) => this.resetScatterCursorIfDataChanged(xData, yData),
+                {fireImmediately: true}
+            )
+        );
     }
 
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
-        this.toolbarResizeObserver?.disconnect();
-        this.toolbarResizeObserver = undefined;
-    }
-
-    @action private onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
-
-    private toolbarResizeObserver: ResizeObserver | undefined;
-
-    private onToolbarRef = (el: HTMLDivElement | null) => {
-        this.toolbarResizeObserver?.disconnect();
-        this.toolbarResizeObserver = undefined;
-        if (el) {
-            const win = (el.ownerDocument?.defaultView ?? window) as Window & typeof globalThis;
-            this.toolbarResizeObserver = new win.ResizeObserver(() => this.setToolbarHeight(el.offsetHeight));
-            this.toolbarResizeObserver.observe(el);
-            this.setToolbarHeight(el.offsetHeight);
+        this.histogramInteraction.stopTracking();
+        this.onHistogramContainerRef(null);
+        if (this.scatterCursorFrame !== undefined) {
+            window.cancelAnimationFrame(this.scatterCursorFrame);
         }
-    };
-
-    @action private setToolbarHeight = (toolbarHeight: number) => {
-        this.toolbarHeight = toolbarHeight;
-    };
+        clearTimeout(this.pendingHistogramClickHandle);
+    }
 
     /** The catalog this component is showing. Held by the store, so that a restored binding can move it. */
     @computed get catalogFileId(): number {
@@ -200,7 +237,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (xColumnName && yColumnName) {
                             const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
                             if (scatterCoords?.wcsX && scatterCoords?.wcsY) {
-                                const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
+                                const scatterBorder = getCatalogScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
                                 plotWidgetStore.setScatterborder(scatterBorder);
                             }
                         }
@@ -212,8 +249,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         if (xColumnName) {
                             const histogramCoords = profileStore?.get1DPlotData(xColumnName);
                             if (histogramCoords?.wcsData) {
-                                const histogramXBorder = this.getHistogramXBorder(histogramCoords.wcsData);
-                                plotWidgetStore.setHistogramXBorder(histogramXBorder);
+                                const histogramXBorder = this.initHistogramXBorder;
+                                if (histogramXBorder) {
+                                    plotWidgetStore.setHistogramXBorder(histogramXBorder);
+                                }
                             }
                         }
                     }
@@ -258,25 +297,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getScatterBorder(xArray: number[], yArray: number[]): Border {
-        const xBounds = minMaxArray(xArray);
-        const yBounds = minMaxArray(yArray);
-        return {
-            xMin: xBounds.minVal,
-            xMax: xBounds.maxVal,
-            yMin: yBounds.minVal,
-            yMax: yBounds.maxVal
-        };
-    }
-
-    private getHistogramXBorder(xArray: number[] | TypedArray): XBorder {
-        const xBounds = minMaxArray(xArray);
-        return {
-            xMin: xBounds.minVal,
-            xMax: xBounds.maxVal
-        };
-    }
-
     @computed get initScatterBorder(): Border | undefined {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -284,7 +304,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return undefined;
         }
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        return coords.wcsX && coords.wcsY ? this.getScatterBorder(coords.wcsX, coords.wcsY) : undefined;
+        return coords.wcsX && coords.wcsY ? getCatalogScatterBorder(coords.wcsX, coords.wcsY) : undefined;
     }
 
     @computed get initHistogramXBorder(): XBorder | undefined {
@@ -293,78 +313,53 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
             return undefined;
         }
-        const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        return coords.wcsData ? this.getHistogramXBorder(coords.wcsData) : undefined;
+        const {start, binSize, bins} = this.histogramData;
+        if (!bins.length || !Number.isFinite(start)) {
+            return undefined;
+        }
+        const end = start + bins.length * binSize;
+        const padding = start === end ? (end === 0 ? 1 : Math.abs(end * 0.05)) : 0;
+        return {xMin: start - padding, xMax: end + padding};
     }
 
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         if (!widgetStore || !profileStore || !widgetStore.xColumnName || !widgetStore.yColumnName) {
-            return {data: [], border: undefined};
+            return {xData: [] as number[], yData: [] as number[], border: undefined};
         }
         // dummy values to trigger update, since profileStore.catalogData is not observable
 
         const numVisibleRows = profileStore.numVisibleRows;
 
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        const scatterDatasets: Plotly.Data[] = [];
-        const data: Partial<Plotly.PlotData> = {};
-        data.type = "scattergl";
-        data.mode = "markers";
-        data.marker = {
-            symbol: "circle",
-            color: Colors.BLUE2,
-            opacity: 1
-        };
-        data.hoverinfo = "none";
-        data.x = coords.wcsX?.slice(0, numVisibleRows);
-        data.y = coords.wcsY?.slice(0, numVisibleRows);
-        scatterDatasets.push(data);
+        const xData = coords.wcsX ? coords.wcsX.slice(0, numVisibleRows) : [];
+        const yData = coords.wcsY ? coords.wcsY.slice(0, numVisibleRows) : [];
 
         if (!coords.wcsX || !coords.wcsY) {
-            return {data: scatterDatasets, border: undefined};
+            return {xData, yData, border: undefined};
         }
-        const border = this.getScatterBorder(coords.wcsX, coords.wcsY);
-        return {data: scatterDatasets, border: border};
+        const border = getCatalogScatterBorder(coords.wcsX, coords.wcsY);
+        return {xData, yData, border};
     }
-
     @computed get histogramData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
-            return {data: [], border: undefined};
+            return {bins: [] as Point2D[], binSize: 0, start: 0, binIndices: [] as number[][]};
         }
         // dummy values to trigger update, since profileStore.catalogData is not observable
 
         const numVisibleRows = profileStore.numVisibleRows;
 
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        const histogramDatasets: Plotly.Data[] = [];
-        const data: Partial<Plotly.PlotData> = {};
         if (!coords.wcsData) {
-            return {data: histogramDatasets, border: undefined};
+            return {bins: [] as Point2D[], binSize: 0, start: 0, binIndices: [] as number[][]};
         }
-        const xRange = this.getHistogramXBorder(coords.wcsData);
-        // increase x range to include border data
-        const fraction = 1.001;
-        const start = xRange.xMin;
+        const slicedData = coords.wcsData.slice(0, numVisibleRows);
         const nBinX = widgetStore.nBinX ? widgetStore.nBinX : this.numBinsX;
-        const end = start + (xRange.xMax - xRange.xMin) * fraction;
-        const size = (end - start) / nBinX;
-        data.type = "histogram";
-        data.hoverinfo = "none";
-        data.x = coords.wcsData?.slice(0, numVisibleRows);
-        data.marker = {
-            color: Colors.BLUE2
-        };
-        data.xbins = {
-            start: start,
-            size: size,
-            end: end
-        };
-        histogramDatasets.push(data);
-        return {data: histogramDatasets, border: xRange};
+        const result = computeHistogramBins(slicedData, nBinX);
+        return {bins: result.bins, binSize: result.binSize, start: result.start, binIndices: result.binIndices};
     }
 
     @computed get isPlotButtonEnabled(): boolean {
@@ -498,16 +493,77 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.widgetStore?.setLogScaleY(isLogScaleY);
     };
 
-    private onHover = (event: Plotly.PlotMouseEvent) => {
+    @action private updateScatterChartArea = (chartArea: ChartArea) => {
+        this.scatterChartArea = chartArea;
+    };
+
+    private resetScatterCursorIfDataChanged = (xData: ArrayLike<number>, yData: ArrayLike<number>) => {
+        if (this.cursorNearestScatterXData === xData && this.cursorNearestScatterYData === yData) {
+            return;
+        }
+        this.cursorNearestScatterXData = xData;
+        this.cursorNearestScatterYData = yData;
+        this.cursorNearestScatterPoint = undefined;
+        this.cursorNearestScatterPointIndex = undefined;
+        this.scatterSpatialIndex.clear();
+        this.widgetStore?.setIndicator(undefined);
+    };
+
+    private getNearestScatterPointIndex = (x: number, y: number) => {
+        const scatter = this.scatterData;
+        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
         const widgetStore = this.widgetStore;
-        const points = event.points;
-        if (points.length && widgetStore) {
-            const point = points[0];
-            widgetStore.setIndicator({x: point.x as number, y: point.y as number});
+        const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
+        if (!border) {
+            return -1;
+        }
+
+        const chartArea = this.scatterChartArea;
+        const chartWidth = chartArea ? chartArea.right - chartArea.left : 1;
+        const chartHeight = chartArea ? chartArea.bottom - chartArea.top : 1;
+        return this.scatterSpatialIndex.getNearestPointIndex(scatter.xData, scatter.yData, border, chartWidth, chartHeight, x, y);
+    };
+
+    private updateScatterCursor = () => {
+        this.scatterCursorFrame = undefined;
+        const cursor = this.pendingScatterCursor;
+        this.pendingScatterCursor = undefined;
+        if (!cursor) {
+            return;
+        }
+
+        const scatter = this.scatterData;
+        this.resetScatterCursorIfDataChanged(scatter.xData, scatter.yData);
+        const nearestIndex = this.getNearestScatterPointIndex(cursor.x, cursor.y);
+        if (nearestIndex < 0) {
+            this.cursorNearestScatterPoint = undefined;
+            this.cursorNearestScatterPointIndex = undefined;
+            this.widgetStore?.setIndicator(undefined);
+            return;
+        }
+        if (nearestIndex === this.cursorNearestScatterPointIndex) {
+            return;
+        }
+        this.cursorNearestScatterPointIndex = nearestIndex;
+        const nearest = {x: scatter.xData[nearestIndex], y: scatter.yData[nearestIndex]};
+        this.cursorNearestScatterPoint = nearest;
+        this.widgetStore?.setIndicator(nearest);
+    };
+
+    private onScatterCursorMoved = (x: number, y: number) => {
+        this.pendingScatterCursor = {x, y};
+        if (this.scatterCursorFrame === undefined) {
+            this.scatterCursorFrame = window.requestAnimationFrame(this.updateScatterCursor);
         }
     };
 
-    private onDoubleClick = () => {
+    private getNearestScatterPoint = (x: number, y: number) => {
+        const scatter = this.scatterData;
+        const nearestIndex = this.getNearestScatterPointIndex(x, y);
+        return nearestIndex >= 0 ? {x: scatter.xData[nearestIndex], y: scatter.yData[nearestIndex]} : undefined;
+    };
+
+    private onAutoscale = () => {
         const widgetsStore = this.widgetStore;
         if (!widgetsStore) {
             return;
@@ -521,66 +577,114 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         } else {
             const initBorder = this.initHistogramXBorder;
             if (initBorder) {
-                widgetsStore?.setHistogramXBorder(initBorder);
+                widgetsStore.setHistogramXBorder(initBorder);
             }
         }
     };
 
-    private onRelayout = (event: any) => {
-        const widgetStore = this.widgetStore;
-        if (!widgetStore) {
+    private onDoubleClick = () => {
+        this.onAutoscale();
+
+        this.onDeselect();
+    };
+
+    private onScatterDoubleClick = () => {
+        const dragMode = this.widgetStore?.dragMode;
+        if (dragMode === DragMode.Select || dragMode === DragMode.Lasso) {
+            this.onAutoscale();
+        } else {
+            this.onDoubleClick();
+        }
+    };
+
+    private selectCatalogPoints(rawIndices: number[]) {
+        const profileStore = this.profileStore;
+        const catalogDisplayStore = this.catalogDisplayStore;
+        if (!rawIndices.length) {
+            this.onDeselect();
             return;
         }
-
-        if (event.dragmode) {
-            widgetStore.setDragMode(event.dragmode);
+        if (!profileStore || !catalogDisplayStore) {
+            return;
         }
-        if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-            const xMin = event["xaxis.range[0]"];
-            const xMax = event["xaxis.range[1]"];
-            const yMin = event["yaxis.range[0]"];
-            const yMax = event["yaxis.range[1]"];
-            if (isFinite(xMin) || isFinite(yMin)) {
-                const currentBorder = widgetStore.scatterBorder;
-                if (currentBorder) {
-                    const scatterBorder: Border = {
-                        xMin: isFinite(xMin) ? xMin : currentBorder.xMin,
-                        xMax: isFinite(xMax) ? xMax : currentBorder.xMax,
-                        yMin: isFinite(yMin) ? yMin : currentBorder.yMin,
-                        yMax: isFinite(yMax) ? yMax : currentBorder.yMax
-                    };
-                    widgetStore.setScatterborder(scatterBorder);
-                }
-            }
+        WidgetsStore.Instance.updateCatalogWidgetSelection(profileStore.catalogInfo.fileId);
+        profileStore.setSelectedPointIndices(profileStore.getOriginIndices(rawIndices), true);
+        catalogDisplayStore.setCatalogTableAutoScroll(true);
+    }
 
-            if (event["xaxis.autorange"] && event["yaxis.autorange"]) {
-                const initBorder = this.initScatterBorder;
-                if (initBorder) {
-                    widgetStore.setScatterborder(initBorder);
-                }
+    private onScatterZoomedXY = (xMin: number, xMax: number, yMin: number, yMax: number) => {
+        const widgetStore = this.widgetStore;
+        if (widgetStore && Number.isFinite(xMin) && Number.isFinite(xMax) && Number.isFinite(yMin) && Number.isFinite(yMax) && xMax > xMin && yMax > yMin) {
+            widgetStore.setScatterborder({xMin, xMax, yMin, yMax});
+        }
+    };
+
+    private onBoxSelected = (xMin: number, xMax: number, yMin: number, yMax: number) => {
+        const scatter = this.scatterData;
+        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        const selected: number[] = [];
+        for (let i = 0; i < numPoints; i++) {
+            if (scatter.xData[i] >= xMin && scatter.xData[i] <= xMax && scatter.yData[i] >= yMin && scatter.yData[i] <= yMax) {
+                selected.push(i);
             }
         }
-        if (widgetStore.plotType === CatalogPlotType.Histogram) {
-            const xMin = event["xaxis.range[0]"];
-            const xMax = event["xaxis.range[1]"];
-            if (isFinite(xMin) || isFinite(xMax)) {
-                const currentBorder = widgetStore.histogramBorder;
-                if (currentBorder) {
-                    const histogramBorder: XBorder = {
-                        xMin: isFinite(xMin) ? xMin : currentBorder.xMin,
-                        xMax: isFinite(xMax) ? xMax : currentBorder.xMax
-                    };
-                    widgetStore.setHistogramXBorder(histogramBorder);
-                }
-            }
+        this.selectCatalogPoints(selected);
+    };
 
-            if (event["xaxis.autorange"]) {
-                const initBorder = this.initHistogramXBorder;
-                if (initBorder) {
-                    widgetStore.setHistogramXBorder(initBorder);
-                }
+    private onLassoSelected = (polygon: Point2D[]) => {
+        if (polygon.length < 3) {
+            return;
+        }
+        const scatter = this.scatterData;
+        const widgetStore = this.widgetStore;
+        const border = widgetStore?.isScatterAutoScaled ? scatter.border : widgetStore?.scatterBorder;
+        const polygonMinX = Math.min(...polygon.map(point => point.x));
+        const polygonMaxX = Math.max(...polygon.map(point => point.x));
+        const polygonMinY = Math.min(...polygon.map(point => point.y));
+        const polygonMaxY = Math.max(...polygon.map(point => point.y));
+        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        let candidateIndices: Iterable<number> | undefined;
+        const chartArea = this.scatterChartArea;
+        if (border && chartArea && Number.isFinite(polygonMinX) && Number.isFinite(polygonMaxX) && Number.isFinite(polygonMinY) && Number.isFinite(polygonMaxY)) {
+            const chartWidth = chartArea.right - chartArea.left;
+            const chartHeight = chartArea.bottom - chartArea.top;
+            candidateIndices = this.scatterSpatialIndex.getCandidatesInBounds(scatter.xData, scatter.yData, border, chartWidth, chartHeight, {
+                xMin: polygonMinX,
+                xMax: polygonMaxX,
+                yMin: polygonMinY,
+                yMax: polygonMaxY
+            });
+        }
+        const selected: number[] = [];
+        const addIfInside = (index: number) => {
+            if (isPointInPolygon({x: scatter.xData[index], y: scatter.yData[index]}, polygon)) {
+                selected.push(index);
+            }
+        };
+        if (candidateIndices) {
+            for (const index of candidateIndices) {
+                addIfInside(index);
+            }
+        } else {
+            for (let index = 0; index < numPoints; index++) {
+                addIfInside(index);
             }
         }
+        this.selectCatalogPoints(selected);
+    };
+
+    private onGraphClicked = (x: number, y: number, _data: {x: number; y: number; z?: number}[]) => {
+        const selectionMode: DragMode[] = [DragMode.Select, DragMode.Lasso];
+        const widgetStore = this.widgetStore;
+        const isInDragmode = widgetStore && widgetStore.dragMode !== false && selectionMode.includes(widgetStore.dragMode);
+        if (!isInDragmode) {
+            return;
+        }
+        const nearestIndex = this.getNearestScatterPointIndex(x, y);
+        if (nearestIndex < 0) {
+            return;
+        }
+        this.selectCatalogPoints([nearestIndex]);
     };
 
     private handlePlotClick = () => {
@@ -591,52 +695,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             profileStore.setUpdatingDataStream(true);
             const catalogFilter = profileStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
-        }
-    };
-
-    // region selection
-    private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
-        if (event && event.points && event.points.length > 0) {
-            const profileStore = this.profileStore;
-            const catalogDisplayStore = this.catalogDisplayStore;
-            const widgetStore = this.widgetStore;
-            if (!profileStore || !catalogDisplayStore || !widgetStore) {
-                return;
-            }
-            const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
-
-            let selectedPointIndices;
-            if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                const points = event.points;
-                selectedPointIndices = new Array(points.length);
-                for (let index = 0; index < points.length; index++) {
-                    selectedPointIndices[index] = points[index].pointIndex;
-                }
-            } else if (widgetStore.plotType === CatalogPlotType.Histogram) {
-                const points = event.points as any;
-                let arraySize = 0;
-                for (let i = 0; i < points.length; i++) {
-                    const count = points[i].pointIndices.length;
-                    arraySize = arraySize + count;
-                }
-                selectedPointIndices = new Array(arraySize);
-                let index = 0;
-                for (let i = 0; i < points.length; i++) {
-                    const selectedPoints = points[i].pointIndices;
-                    const size = selectedPoints.length;
-                    for (let j = 0; j < size; j++) {
-                        selectedPointIndices[index] = selectedPoints[j];
-                        index += 1;
-                    }
-                }
-            }
-
-            if (selectedPointIndices?.length) {
-                const matched = profileStore.getOriginIndices(selectedPointIndices);
-                profileStore.setSelectedPointIndices(matched, true);
-                catalogDisplayStore.setCatalogTableAutoScroll(true);
-            }
         }
     };
 
@@ -652,29 +710,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.updateStatistic();
     };
 
-    // Single source selected
-    private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
-        const selectionMode: DragMode[] = ["select", "lasso"];
-        const widgetStore = this.widgetStore;
-        const isInDragMode = widgetStore && selectionMode.includes(widgetStore.dragMode);
-        const profileStore = this.profileStore;
-        const catalogDisplayStore = this.catalogDisplayStore;
-        if (event?.points?.length > 0 && isInDragMode && profileStore && catalogDisplayStore) {
-            const catalogFileId = profileStore.catalogInfo.fileId;
-            WidgetsStore.Instance.updateCatalogWidgetSelection(catalogFileId);
-            let selectedPointIndex: number[] = [];
-            const selectedPoint = event.points[0] as any;
-            if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                selectedPointIndex.push(selectedPoint.pointIndex);
-            } else if (widgetStore.plotType === CatalogPlotType.Histogram && selectedPoint.pointIndices.length) {
-                selectedPointIndex = selectedPoint.pointIndices;
-            }
-            const matched = profileStore.getOriginIndices(selectedPointIndex);
-            profileStore.setSelectedPointIndices(matched, true);
-            catalogDisplayStore.setCatalogTableAutoScroll(true);
-        }
-    };
-
     private renderColumnNamePopOver = (column: string, itemProps: ItemRendererProps) => {
         return <MenuItem key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
@@ -682,14 +717,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
         const fileSearcher = new FuzzySearch([columnName]);
         return fileSearcher.search(query).length > 0;
-    };
-
-    private updateHistogramYrange = (figure: any, graphDiv: any) => {
-        // fixed react plotlyjs bug with fixed range and changed x range
-        if (this.widgetStore?.plotType === CatalogPlotType.Histogram) {
-            const yaxis = figure.layout.yaxis.range;
-            this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]};
-        }
     };
 
     private onNumBinChange = (val: number) => {
@@ -737,20 +764,200 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         widgetStore.setFitting(result);
     };
 
-    private formatTickValues = (range: number[]): string => {
-        const difference = range[1] - range[0];
-        const exponential = difference.toExponential(2);
-        const power = parseFloat(exponential.split("e")[1]);
-        const maxPower = parseFloat(range[1].toExponential(1).split("e")[1]);
-        const minPower = parseFloat(range[0].toExponential(1).split("e")[1]);
-        if (maxPower >= 5) {
-            return `e`;
-        } else if (minPower <= -5) {
-            const sigDig = Math.abs(power) - Math.abs(maxPower);
-            return sigDig <= 0 ? ".2e" : `.${sigDig + 1}e`;
-        } else {
-            return power <= 0 ? `.${Math.abs(power) + 1}f` : "~f";
+    private onHistogramPlotRef = (ref: Chart<"bar"> | undefined | null) => {
+        this.histogramPlotRef = ref ?? null;
+    };
+
+    @action private onHistogramMouseEnter = () => {
+        this.isHistogramMouseEntered = true;
+    };
+
+    @action private onHistogramMouseLeave = () => {
+        this.isHistogramMouseEntered = false;
+        this.histogramHoverPixel = undefined;
+        this.histogramHoverBinIndex = undefined;
+        this.histogramHoverData = undefined;
+        this.histogramPlotRef?.draw();
+    };
+
+    private histogramContainerRef: HTMLDivElement | null = null;
+
+    private onHistogramContainerRef = (element: HTMLDivElement | null) => {
+        this.histogramContainerRef?.removeEventListener("wheel", this.onHistogramWheel);
+        this.histogramContainerRef = element;
+        this.histogramContainerRef?.addEventListener("wheel", this.onHistogramWheel, {passive: false});
+    };
+
+    private onHistogramWheel = (event: WheelEvent) => {
+        const target = event.target as Element | null;
+        if (target?.closest(".profiler-toolbar")) {
+            return;
         }
+        const chart = this.histogramPlotRef;
+        const widgetStore = this.widgetStore;
+        if (!chart || !widgetStore) {
+            return;
+        }
+        const xScale = chart.scales["x"];
+        if (!xScale) {
+            return;
+        }
+        const chartArea = chart.chartArea;
+        if (!chartArea || event.offsetX < chartArea.left || event.offsetX > chartArea.right || event.offsetY < chartArea.top || event.offsetY > chartArea.bottom) {
+            return;
+        }
+        const currentMin = xScale.min;
+        const currentMax = xScale.max;
+        const range = currentMax - currentMin;
+        event.preventDefault();
+        const delta = event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? event.deltaY * chart.height : event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 15 : event.deltaY;
+        const zoomFactor = clamp(-delta * 0.0005, -0.5, 0.5);
+        const mouseX = xScale.getValueForPixel(event.offsetX) ?? currentMin + range / 2;
+        const fraction = (mouseX - currentMin) / range;
+        const newMin = currentMin + range * zoomFactor * fraction;
+        const newMax = currentMax - range * zoomFactor * (1 - fraction);
+        if (newMax > newMin) {
+            widgetStore.setHistogramXBorder({xMin: newMin, xMax: newMax});
+        }
+    };
+
+    private onHistogramMouseDown = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseDown(event);
+    private onHistogramMouseMove = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseMove(event);
+    private onHistogramMouseUp = (event: React.MouseEvent<HTMLDivElement>) => this.histogramInteraction.onMouseUp(event);
+
+    private onHistogramDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        const target = event.target as Element | null;
+        if (target?.closest(".profiler-toolbar")) {
+            return;
+        }
+        clearTimeout(this.pendingHistogramClickHandle);
+        this.pendingHistogramClickHandle = undefined;
+        requestAnimationFrame(() => {
+            const didDoubleClickBar = this.hasHistogramBarDoubleClickHandled;
+            this.hasHistogramBarDoubleClickHandled = false;
+            if (!didDoubleClickBar) {
+                this.onAutoscale();
+            }
+        });
+    };
+
+    private exportHistogramImage = () => {
+        const chart = this.histogramPlotRef;
+        if (!chart) {
+            return;
+        }
+        const ownerDocument = chart.canvas.ownerDocument;
+        const composed = ownerDocument.createElement("canvas") as HTMLCanvasElement;
+        composed.width = chart.canvas.width + EXPORT_RIGHT_PADDING;
+        composed.height = chart.canvas.height;
+        const ctx = composed.getContext("2d");
+        if (!ctx) {
+            return;
+        }
+        const histogramHoverPixel = this.histogramHoverPixel;
+        this.histogramHoverPixel = undefined;
+        chart.draw();
+        this.fillPlotBackground(ctx, composed.width, composed.height);
+        ctx.drawImage(chart.canvas, 0, 0);
+        this.histogramHoverPixel = histogramHoverPixel;
+        chart.draw();
+        const columnName = this.widgetStore?.xColumnName ?? "histogram";
+        this.downloadCanvasAsPng(composed, `catalog-histogram-${columnName}`);
+    };
+
+    private exportHistogramData = () => {
+        const histData = this.histogramData;
+        const columnName = this.widgetStore?.xColumnName ?? "histogram";
+        const comment = `# Catalog Histogram: ${columnName}\n# bin_center\tcount`;
+        const rows = histData.bins.map(bin => `${toExponential(bin.x, 10)}\t${bin.y}`);
+        const content = comment + "\n" + rows.join("\n");
+        exportTsvFile("catalog", `histogram-${columnName}`, content);
+    };
+
+    private fillPlotBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0.0)" : isDarkTheme ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    private downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string) {
+        const ownerDocument = canvas.ownerDocument;
+        const ownerWindow = ownerDocument.defaultView ?? window;
+        canvas.toBlob(blob => {
+            if (blob) {
+                const link = ownerDocument.createElement("a");
+                link.download = filename.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.href = ownerWindow.URL.createObjectURL(blob);
+                link.dispatchEvent(new ownerWindow.MouseEvent("click"));
+            }
+        }, "image/png");
+    }
+
+    private exportScatterData = () => {
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
+        const scatter = this.scatterData;
+        const xColumnName = widgetStore.xColumnName ?? "x";
+        const yColumnName = widgetStore.yColumnName ?? "y";
+        let comment = `# Catalog Scatter: ${xColumnName} vs ${yColumnName}`;
+        comment += `\n# xLabel: ${xColumnName}`;
+        comment += `\n# yLabel: ${yColumnName}`;
+
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
+            comment += "\n# " + widgetStore.fittingResultString.split("\n").join("\n# ");
+        }
+
+        const header = `# ${xColumnName}\t${yColumnName}`;
+        const numPoints = Math.min(scatter.xData.length, scatter.yData.length);
+        const rows: string[] = [];
+        for (let i = 0; i < numPoints; i++) {
+            rows.push(`${toExponential(scatter.xData[i], 10)}\t${toExponential(scatter.yData[i], 10)}`);
+        }
+
+        exportTsvFile("catalog", `scatter-${xColumnName}-${yColumnName}`, `${comment}\n${header}\n${rows.join("\n")}\n`);
+    };
+
+    private renderWebGLOverlay = (width: number, height: number, chartArea: ChartArea | undefined) => {
+        const widgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        if (!widgetStore || !profileStore || widgetStore.plotType !== CatalogPlotType.D2Scatter) {
+            return null;
+        }
+        const scatter = this.scatterData;
+        if (!scatter.xData.length) {
+            return null;
+        }
+        let border: Border | undefined;
+        if (widgetStore.isScatterAutoScaled) {
+            border = scatter.border;
+        } else {
+            border = widgetStore.scatterBorder;
+        }
+        if (!border) {
+            return null;
+        }
+
+        const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+        const selectedSet = new Set(selectedPointIndices);
+
+        return (
+            <CatalogScatterWebGL
+                width={width}
+                height={height}
+                chartArea={chartArea}
+                xData={scatter.xData}
+                yData={scatter.yData}
+                xMin={border.xMin}
+                xMax={border.xMax}
+                yMin={border.yMin}
+                yMax={border.yMax}
+                selectedIndices={selectedSet}
+                hasSelection={selectedSet.size > 0}
+                pointSize={5}
+            />
+        );
     };
 
     public render() {
@@ -758,7 +965,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const catalogDisplayStore = this.catalogDisplayStore;
         const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-        const scale = 1 / devicePixelRatio;
         if (!widgetStore || !profileStore || !catalogDisplayStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
@@ -772,14 +978,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const isDisabled = !this.isPlotButtonEnabled;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
-        const ratio = isScatterPlot ? devicePixelRatio : 1;
-        const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
-        let themeColor = Colors.LIGHT_GRAY5;
-        let labelColor = Colors.DARK_GRAY5;
-        let gridColor = Colors.LIGHT_GRAY1;
-        let markerColor = Colors.BLUE2;
-        let spikeLineClass = "catalog-plotly";
-        const catalogScatterClass = "catalog-scatter";
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        const labelColor = isDarkTheme ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
+        const gridColor = isDarkTheme ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
 
         const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
@@ -797,7 +998,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const noResults = <MenuItem disabled={true} text="No results" />;
 
         const renderFileSelect = (
-            <FormGroup inline={true} label="File">
+            <FormGroup inline={true} label="File" data-testid="catalog-plot-file-select">
                 <Select
                     className={Classes.FILL}
                     filterable={false}
@@ -807,13 +1008,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemRenderer={this.renderFilePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
-                    <Button text={this.catalogFileId} endIcon="double-caret-vertical" />
+                    <Button text={this.catalogFileId} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-file-dropdown" />
                 </Select>
             </FormGroup>
         );
 
         const renderXSelect = (
-            <FormGroup inline={true} label="X">
+            <FormGroup inline={true} label="X" data-testid="catalog-plot-x-select">
                 <Select
                     className={Classes.FILL}
                     items={xyOptions}
@@ -833,12 +1034,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderHistogramLog = (
             <FormGroup label={"Log scale"} inline={true} disabled={isDisabled}>
-                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} />
+                <Switch checked={widgetStore.isLogScaleY} onChange={this.handleLogScaleYChanged} disabled={isDisabled} data-testid="catalog-plot-log-scale-switch" />
             </FormGroup>
         );
 
         const renderYSelect = (
-            <FormGroup inline={true} label="Y">
+            <FormGroup inline={true} label="Y" data-testid="catalog-plot-y-select">
                 <Select
                     className={Classes.FILL}
                     items={xyOptions}
@@ -851,7 +1052,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.yColumnName} endIcon="double-caret-vertical" />
+                    <Button text={widgetStore.yColumnName} endIcon="double-caret-vertical" data-testid="catalog-plot-widget-y-dropdown" />
                 </Select>
             </FormGroup>
         );
@@ -875,10 +1076,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             </FormGroup>
         );
 
-        if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetStore.yColumnName === CatalogPlotComponent.emptyColumn) {
+        if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || (isScatterPlot && widgetStore.yColumnName === CatalogPlotComponent.emptyColumn)) {
             return (
                 <div className={"catalog-plot"}>
-                    <div className={"catalog-plot-option"} ref={this.onToolbarRef}>
+                    <div className={"catalog-plot-option"}>
                         {renderFileSelect}
                         {renderXSelect}
                         {isScatterPlot && renderYSelect}
@@ -888,202 +1089,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             );
         }
 
-        if (AppStore.Instance.isDarkTheme) {
-            gridColor = Colors.DARK_GRAY5;
-            labelColor = Colors.LIGHT_GRAY5;
-            themeColor = Colors.DARK_GRAY1;
-            markerColor = Colors.BLUE2;
-            spikeLineClass = "catalog-plotly-dark";
-        }
-
-        const layout: Partial<Plotly.Layout> = {
-            width: this.width * ratio,
-            height: (this.height - this.toolbarHeight - 70) * ratio,
-            paper_bgcolor: themeColor,
-            plot_bgcolor: themeColor,
-            hovermode: "closest",
-            xaxis: {
-                title: {
-                    text: widgetStore.xColumnName,
-                    font: {
-                        family: fontFamily,
-                        size: 12 * ratio,
-                        color: labelColor
-                    }
-                },
-                showticklabels: true,
-                tickfont: {
-                    family: fontFamily,
-                    size: 12 * ratio,
-                    color: labelColor
-                },
-                tickcolor: gridColor,
-                gridcolor: gridColor,
-                zerolinecolor: gridColor,
-                zerolinewidth: 2 * ratio,
-                // box boreder
-                mirror: true,
-                linecolor: gridColor,
-                showline: true,
-                // indicator
-                spikemode: "across",
-                spikedash: "solid",
-                spikecolor: markerColor,
-                spikethickness: 1 * ratio
-            },
-            yaxis: {
-                title: {
-                    font: {
-                        family: fontFamily,
-                        size: 12 * ratio,
-                        color: labelColor
-                    }
-                },
-                showticklabels: true,
-                tickfont: {
-                    family: fontFamily,
-                    size: 12 * ratio,
-                    color: labelColor
-                },
-                tickcolor: gridColor,
-                gridcolor: gridColor,
-                zerolinecolor: gridColor,
-                zerolinewidth: 2 * ratio,
-                mirror: true,
-                linecolor: gridColor,
-                showline: true,
-                spikemode: "across",
-                spikedash: "solid",
-                spikecolor: markerColor,
-                spikethickness: 1 * ratio
-            },
-            margin: {
-                t: 5 * ratio,
-                b: 60 * ratio,
-                l: 100 * ratio,
-                r: 5 * ratio,
-                pad: 0
-            },
-            showlegend: false,
-            dragmode: widgetStore.dragMode
-        };
-
-        if (widgetStore.isFittingResultVisible) {
-            const fitting = widgetStore.fitting;
-            const minMaxX = widgetStore.minMaxX;
-            if (fitting && minMaxX) {
-                layout.shapes = [
-                    {
-                        type: "line",
-                        layer: "above",
-                        x0: minMaxX.minVal,
-                        y0: fitting.intercept + fitting.slope * minMaxX.minVal,
-                        x1: minMaxX.maxVal,
-                        y1: fitting.intercept + fitting.slope * minMaxX.maxVal,
-                        line: {
-                            color: Colors.GREEN2,
-                            width: 2.5 * devicePixelRatio
-                        }
-                    }
-                ];
-
-                layout.annotations = [
-                    {
-                        xref: "paper",
-                        yref: "paper",
-                        x: 0,
-                        xanchor: "left",
-                        y: 1,
-                        yanchor: "top",
-                        align: "left",
-                        text: widgetStore.fittingResultString,
-                        showarrow: false,
-                        font: {
-                            size: 9 * devicePixelRatio,
-                            family: "monospace",
-                            color: AppStore.Instance.isDarkTheme ? "#f5f8fa" : "#182026"
-                        }
-                    }
-                ];
-            }
-        }
-
-        let data;
-        const catalogDataIndex = 0;
-        if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-            const scatter = this.scatterData;
-            data = scatter.data;
-            data[catalogDataIndex].marker.size = 5 * ratio;
-            let border: Border | undefined;
-            if (widgetStore.isScatterAutoScaled) {
-                border = scatter.border;
-            } else {
-                border = widgetStore.scatterBorder;
-            }
-            if (border && layout.xaxis && layout.yaxis) {
-                layout.xaxis.range = [border.xMin, border.xMax];
-                layout.yaxis.range = [border.yMin, border.yMax];
-                layout.yaxis.title = {
-                    text: widgetStore.yColumnName,
-                    font: {
-                        family: fontFamily,
-                        size: 12 * ratio,
-                        color: labelColor
-                    }
-                };
-                layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
-                layout.yaxis.tickformat = this.formatTickValues([border.yMin, border.yMax]);
-            }
-        } else {
-            data = this.histogramData.data;
-            let border: XBorder | undefined;
-            if (widgetStore.isHistogramAutoScaledX) {
-                border = this.histogramData.border;
-            } else {
-                border = widgetStore.histogramBorder;
-            }
-            if (border && layout.xaxis && layout.yaxis) {
-                layout.xaxis.range = [border.xMin, border.xMax];
-                layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
-                layout.yaxis.range = [this.histogramY?.yMin, this.histogramY?.yMax];
-                layout.yaxis.fixedrange = true;
-                // autorange will trigger y axis range change
-                layout.yaxis.autorange = true;
-                layout.yaxis.rangemode = "tozero";
-                layout.yaxis.title = {
-                    text: "Count",
-                    font: {
-                        family: fontFamily,
-                        size: 12 * ratio,
-                        color: labelColor
-                    }
-                };
-                if (widgetStore.isLogScaleY) {
-                    layout.yaxis.type = "log";
-                }
-            }
-        }
-
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
-        const scatterDataMarker = data[catalogDataIndex].marker;
-        if (selectedPointIndices.length > 0) {
-            data[catalogDataIndex]["selectedpoints"] = selectedPointIndices;
-            data[catalogDataIndex]["selected"] = {marker: {color: Colors.RED2}};
-            data[catalogDataIndex]["unselected"] = {marker: {opacity: 0.5}};
-        } else {
-            data[catalogDataIndex]["selectedpoints"] = [];
-            scatterDataMarker.color = Colors.BLUE2;
-            data[catalogDataIndex]["unselected"] = {marker: {opacity: 1}};
-        }
-
-        const config: Partial<Plotly.Config> = {
-            displaylogo: false,
-            scrollZoom: true,
-            showTips: false,
-            doubleClick: false,
-            showAxisDragHandles: false,
-            modeBarButtonsToRemove: ["zoomIn2d", "zoomOut2d", "resetScale2d", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"]
-        };
 
         const renderHistogramBins = (
             <ClearableNumericInputComponent
@@ -1103,37 +1109,251 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderLinearRegressionButton = (
             <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={isDisabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
         );
+
         const infoStrings = [this.genProfilerInfo];
         if (widgetStore.isStatisticResultVisible && widgetStore.isStatisticEnabled) {
             infoStrings.push(widgetStore.statisticString);
         }
 
-        return (
-            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+        // Histogram rendering
+        if (isHistogramPlot) {
+            const histData = this.histogramData;
+            const binEdgeMin = histData.start;
+            const binEdgeMax = histData.start + histData.bins.length * histData.binSize;
+            const xPadding = binEdgeMin === binEdgeMax ? (binEdgeMax === 0 ? 1 : Math.abs(binEdgeMax * 0.05)) : 0;
+            let xMin: number | undefined;
+            let xMax: number | undefined;
+            if (widgetStore.isHistogramAutoScaledX) {
+                xMin = binEdgeMin - xPadding;
+                xMax = binEdgeMax + xPadding;
+            } else {
+                xMin = widgetStore.histogramBorder?.xMin;
+                xMax = widgetStore.histogramBorder?.xMax;
+            }
+
+            const selectedSet = new Set<number>();
+            if (selectedPointIndices.length > 0) {
+                for (const idx of selectedPointIndices) {
+                    selectedSet.add(idx);
+                }
+            }
+
+            const hasSelection = selectedSet.size > 0;
+            const alphaValue = hasSelection ? 0.5 : 1.0;
+            const unselectedColor = tinycolor(Colors.BLUE2).setAlpha(alphaValue).toRgbString();
+            const barColors = histData.bins.map((_, i) => {
+                if (hasSelection && histData.binIndices[i]) {
+                    const hasBinSelected = histData.binIndices[i].some(idx => selectedSet.has(idx));
+                    return hasBinSelected ? Colors.RED2 : unselectedColor;
+                }
+                return unselectedColor;
+            });
+
+            const histogramOptions: ChartOptions<"bar"> = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {mode: "index", intersect: false},
+                plugins: {
+                    legend: {display: false}
+                },
+                scales: {
+                    x: {
+                        type: "linear",
+                        offset: false,
+                        title: {display: true, text: widgetStore.xColumnName, color: labelColor},
+                        ticks: {
+                            includeBounds: false,
+                            display: true,
+                            color: labelColor,
+                            callback: (value: string | number, _index: number, ticks: Tick[]) => {
+                                if (xMin !== undefined && xMax !== undefined) {
+                                    return formatCatalogPlotTick(Number(value), xMin, xMax, ticks);
+                                }
+                                return String(value);
+                            }
+                        },
+                        grid: {color: gridColor, offset: false},
+                        border: {color: gridColor},
+                        min: xMin,
+                        max: xMax
+                    },
+                    y: {
+                        type: widgetStore.isLogScaleY ? "logarithmic" : "linear",
+                        title: {display: true, text: "Count", color: labelColor},
+                        ticks: {
+                            color: labelColor
+                        },
+                        grid: {color: gridColor},
+                        border: {color: gridColor},
+                        min: widgetStore.isLogScaleY ? 0.5 : 0,
+                        beginAtZero: !widgetStore.isLogScaleY
+                    }
+                },
+                onClick: (event, _elements, chart) => {
+                    // Skip if a drag action (zoom/select) was just handled
+                    if (this.histogramInteraction.consumeHandledDrag()) {
+                        return;
+                    }
+                    const elements = event.native ? chart.getElementsAtEventForMode(event.native, "index", {axis: "xy", intersect: true}, false) : [];
+                    if (elements.length > 0) {
+                        clearTimeout(this.pendingHistogramClickHandle);
+                        this.pendingHistogramClickHandle = undefined;
+                        if (((event.native as MouseEvent | null)?.detail ?? 0) > 1) {
+                            this.hasHistogramBarDoubleClickHandled = true;
+                            this.onDeselect();
+                            return;
+                        }
+                        const binIndex = elements[0].index;
+                        if (histData.binIndices[binIndex]?.length) {
+                            const binIndices = histData.binIndices[binIndex];
+                            this.pendingHistogramClickHandle = setTimeout(() => {
+                                this.pendingHistogramClickHandle = undefined;
+                                if (this.histogramData === histData) {
+                                    this.selectCatalogPoints(binIndices);
+                                }
+                            }, DOUBLE_CLICK_THRESHOLD);
+                        }
+                    }
+                },
+                onHover: (_event, elements, chart) => {
+                    const nativeEvent = _event.native as MouseEvent;
+                    if (!elements.length) {
+                        if (this.histogramHoverPixel) {
+                            this.histogramHoverPixel = undefined;
+                            this.histogramHoverBinIndex = undefined;
+                            this.histogramHoverData = undefined;
+                            chart.draw();
+                        }
+                        return;
+                    }
+                    if (nativeEvent && chart.chartArea) {
+                        const xScale = chart.scales["x"];
+                        const yScale = chart.scales["y"];
+                        if (xScale && yScale && histData.bins.length > 0) {
+                            const xVal = xScale.getValueForPixel(nativeEvent.offsetX);
+                            if (xVal !== undefined) {
+                                const binIndex = histData.binSize > 0 ? Math.floor((xVal - histData.start) / histData.binSize) : 0;
+                                const clampedIndex = Math.max(0, Math.min(binIndex, histData.bins.length - 1));
+                                if (this.histogramHoverData === histData && this.histogramHoverBinIndex === clampedIndex) {
+                                    return;
+                                }
+                                this.histogramHoverData = histData;
+                                this.histogramHoverBinIndex = clampedIndex;
+                                const binCenter = histData.bins[clampedIndex].x;
+                                const binCount = histData.bins[clampedIndex].y;
+                                widgetStore.setIndicator({x: binCenter, y: binCount});
+                                const px = xScale.getPixelForValue(binCenter);
+                                const py = yScale.getPixelForValue(binCount);
+                                this.histogramHoverPixel = {x: px, y: py};
+                                chart.draw();
+                            }
+                        }
+                    } else {
+                        this.histogramHoverPixel = undefined;
+                    }
+                }
+            };
+
+            const crosshairPlugin: Plugin<"bar"> = {
+                id: "crosshairPlugin",
+                afterDraw: (chart: Chart) => {
+                    if (!this.histogramHoverPixel || !this.isHistogramMouseEntered) {
+                        return;
+                    }
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) {
+                        return;
+                    }
+                    const {x, y} = this.histogramHoverPixel;
+                    const lineColor = AppStore.Instance.isDarkTheme ? Colors.GRAY4 : Colors.DARK_GRAY3;
+                    ctx.save();
+                    ctx.strokeStyle = lineColor;
+                    ctx.lineWidth = 1;
+                    // Vertical line
+                    ctx.beginPath();
+                    ctx.moveTo(x, chartArea.top);
+                    ctx.lineTo(x, chartArea.bottom);
+                    ctx.stroke();
+                    // Horizontal line
+                    ctx.beginPath();
+                    ctx.moveTo(chartArea.left, y);
+                    ctx.lineTo(chartArea.right, y);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            };
+
+            const dragBoxPlugin: Plugin<"bar"> = {
+                id: "dragBoxPlugin",
+                afterDraw: (chart: Chart) => {
+                    const dragStartX = this.histogramInteraction.selectionStartX;
+                    const dragCurrentX = this.histogramInteraction.selectionCurrentX;
+                    if (dragStartX === undefined || dragCurrentX === undefined) {
+                        return;
+                    }
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) {
+                        return;
+                    }
+                    const startX = Math.max(dragStartX, chartArea.left);
+                    const endX = Math.min(dragCurrentX, chartArea.right);
+                    const boxWidth = endX - startX;
+                    const selectionColor = AppStore.Instance.isDarkTheme ? Colors.GRAY3 : Colors.DARK_GRAY1;
+                    ctx.save();
+                    ctx.fillStyle = selectionColor;
+                    ctx.globalAlpha = 0.2;
+                    ctx.fillRect(startX, chartArea.top, boxWidth, chartArea.bottom - chartArea.top);
+                    ctx.globalAlpha = 1.0;
+                    ctx.strokeStyle = selectionColor;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, chartArea.top);
+                    ctx.lineTo(startX, chartArea.bottom);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(endX, chartArea.top);
+                    ctx.lineTo(endX, chartArea.bottom);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            };
+
+            const histogramChartData = {
+                datasets: [
+                    {
+                        data: histData.bins,
+                        backgroundColor: barColors,
+                        borderColor: barColors,
+                        borderWidth: 1,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }
+                ]
+            };
+
+            return (
                 <div className={"catalog-plot"}>
-                    <div className={"catalog-plot-option"} ref={this.onToolbarRef}>
+                    <div className={"catalog-plot-option"}>
                         {renderFileSelect}
                         {renderXSelect}
-                        {isHistogramPlot && renderHistogramBins}
-                        {isHistogramPlot && renderHistogramLog}
-                        {isScatterPlot && renderYSelect}
+                        {renderHistogramBins}
+                        {renderHistogramLog}
                         {renderStatisticSelect}
                     </div>
-                    <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`} data-testid={"catalog-" + (isScatterPlot ? "scatter" : "histogram") + "-plot"}>
-                        <Plot
-                            data={data}
-                            layout={layout}
-                            config={config}
-                            onHover={this.onHover}
-                            onDoubleClick={this.onDoubleClick}
-                            onRelayout={this.onRelayout}
-                            onSelected={this.onLassoSelected}
-                            onDeselect={this.onDeselect}
-                            onClick={this.onSingleSourceClick}
-                            onInitialized={this.updateHistogramYrange}
-                            onUpdate={this.updateHistogramYrange}
-                            style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
-                        />
+                    <div
+                        className="catalog-chart-container"
+                        data-testid="catalog-histogram-plot"
+                        ref={this.onHistogramContainerRef}
+                        onMouseEnter={this.onHistogramMouseEnter}
+                        onMouseLeave={this.onHistogramMouseLeave}
+                        onMouseDown={this.onHistogramMouseDown}
+                        onMouseMove={this.onHistogramMouseMove}
+                        onMouseUp={this.onHistogramMouseUp}
+                        onDoubleClick={this.onHistogramDoubleClick}
+                    >
+                        <Bar ref={this.onHistogramPlotRef as any} data={histogramChartData} options={histogramOptions} plugins={[crosshairPlugin, dragBoxPlugin]} />
+                        <ToolbarComponent isDarkMode={isDarkTheme} isVisible={this.isHistogramMouseEntered} exportImage={this.exportHistogramImage} exportData={this.exportHistogramData} />
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="scatter-info" data-testid="catalog-plot-info">
@@ -1142,15 +1362,157 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip content={"Show only selected sources at image and table viewer"}>
                                 <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
-                                    <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} />
+                                    <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} data-testid="catalog-plot-selected-only-switch" />
                                 </FormGroup>
                             </Tooltip>
-                            {isScatterPlot && renderLinearRegressionButton}
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
                         </div>
                     </div>
                 </div>
-            </ResizeDetector>
+            );
+        }
+
+        // Scatter plot rendering
+        const scatter = this.scatterData;
+        let border: Border | undefined;
+        if (widgetStore.isScatterAutoScaled) {
+            border = scatter.border;
+        } else {
+            border = widgetStore.scatterBorder;
+        }
+
+        const scatterMultiPlotMap = new Map<string, MultiPlotProps>();
+        if (widgetStore.isFittingResultVisible) {
+            const fitting = widgetStore.fitting;
+            const minMaxX = widgetStore.minMaxX;
+            if (fitting && minMaxX) {
+                scatterMultiPlotMap.set("fitting", {
+                    imageName: "fitting",
+                    plotName: "Linear Fit",
+                    data: [
+                        {x: minMaxX.minVal, y: fitting.intercept + fitting.slope * minMaxX.minVal},
+                        {x: minMaxX.maxVal, y: fitting.intercept + fitting.slope * minMaxX.maxVal}
+                    ],
+                    type: PlotType.LINES,
+                    borderColor: Colors.GREEN2,
+                    order: 0,
+                    isHidden: false,
+                    borderWidth: 2.5
+                });
+            }
+        }
+
+        let scatterExtraPluginOptions: ChartOptions<"scatter">["plugins"] | undefined;
+        if (widgetStore.isFittingResultVisible && widgetStore.fittingResultString) {
+            const fittingAnnotation: AnnotationOptions = {
+                type: "label",
+                xValue: border?.xMin,
+                yValue: border?.yMax,
+                position: {x: "start", y: "start"},
+                content: widgetStore.fittingResultString.split("\n"),
+                textAlign: "start",
+                color: isDarkTheme ? Colors.LIGHT_GRAY4 : Colors.DARK_GRAY1,
+                font: {family: "monospace", size: 9},
+                padding: {top: 0, right: 0, bottom: 0, left: 0},
+                adjustScaleRange: false
+            };
+            scatterExtraPluginOptions = {
+                annotation: {
+                    annotations: {fittingLabel: fittingAnnotation}
+                }
+            };
+        }
+
+        return (
+            <div className={"catalog-plot"}>
+                <div className={"catalog-plot-option"}>
+                    {renderFileSelect}
+                    {renderXSelect}
+                    {renderYSelect}
+                    {renderStatisticSelect}
+                </div>
+                <div className="catalog-chart-container" data-testid="catalog-scatter-plot">
+                    <ScatterPlotComponent
+                        data={[]}
+                        xMin={border?.xMin}
+                        xMax={border?.xMax}
+                        yMin={border?.yMin}
+                        yMax={border?.yMax}
+                        xLabel={widgetStore.xColumnName}
+                        yLabel={widgetStore.yColumnName}
+                        isDarkMode={isDarkTheme}
+                        tickTypeX={TickType.Automatic}
+                        tickTypeY={TickType.Automatic}
+                        graphZoomedXY={this.onScatterZoomedXY}
+                        graphZoomReset={this.onScatterDoubleClick}
+                        graphSelectionReset={this.onDeselect}
+                        graphCursorMoved={this.onScatterCursorMoved}
+                        cursorNearestPointAt={this.getNearestScatterPoint}
+                        updateChartArea={this.updateScatterChartArea}
+                        graphClicked={this.onGraphClicked}
+                        pointRadius={0.001}
+                        cursorIndicatorStyle="crosshair"
+                        cursorHitRadius={5}
+                        shouldScrollZoom={true}
+                        multiPlotPropsMap={scatterMultiPlotMap}
+                        shouldAlignChartAreaRight={true}
+                        dragAction={widgetStore.dragMode}
+                        onBoxSelected={this.onBoxSelected}
+                        onLassoSelected={this.onLassoSelected}
+                        renderOverlay={this.renderWebGLOverlay}
+                        cursorNearestPoint={this.cursorNearestScatterPoint}
+                        extraPluginOptions={scatterExtraPluginOptions}
+                        customExportData={this.exportScatterData}
+                        exportFileName={`catalog-scatter-${widgetStore.xColumnName ?? "x"}-${widgetStore.yColumnName ?? "y"}`}
+                        exportRightPadding={EXPORT_RIGHT_PADDING}
+                        toolbarChildren={
+                            <React.Fragment>
+                                <Tooltip content="Box select">
+                                    <AnchorButton
+                                        aria-label="Box select"
+                                        icon="widget"
+                                        active={widgetStore.dragMode === DragMode.Select}
+                                        onClick={() => widgetStore.setDragMode(DragMode.Select)}
+                                        data-testid="catalog-scatter-box-select-button"
+                                    />
+                                </Tooltip>
+                                <Tooltip content="Lasso select">
+                                    <AnchorButton
+                                        icon={<CustomIcon icon="lasso" />}
+                                        aria-label="Lasso select"
+                                        active={widgetStore.dragMode === DragMode.Lasso}
+                                        onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Lasso ? DragMode.Select : DragMode.Lasso)}
+                                        data-testid="catalog-scatter-lasso-button"
+                                    />
+                                </Tooltip>
+                                <Tooltip content="Zoom">
+                                    <AnchorButton
+                                        icon="search"
+                                        aria-label="Zoom"
+                                        active={widgetStore.dragMode === DragMode.Zoom}
+                                        onClick={() => widgetStore.setDragMode(widgetStore.dragMode === DragMode.Zoom ? DragMode.Select : DragMode.Zoom)}
+                                        data-testid="catalog-scatter-zoom-button"
+                                    />
+                                </Tooltip>
+                            </React.Fragment>
+                        }
+                    />
+                </div>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className="scatter-info" data-testid="catalog-plot-info">
+                        <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
+                    </div>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Tooltip content={"Show only selected sources at image and table viewer"}>
+                            <FormGroup label={"Selected only"} inline={true} disabled={isDisabled}>
+                                <Switch checked={catalogDisplayStore.isShowingSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={isDisabled} data-testid="catalog-plot-selected-only-switch" />
+                            </FormGroup>
+                        </Tooltip>
+                        {renderLinearRegressionButton}
+                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={isDisabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                    </div>
+                </div>
+            </div>
         );
     }
 }
