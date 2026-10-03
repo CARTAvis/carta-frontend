@@ -7,7 +7,7 @@ import * as colorUtils from "utilities/color/color";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 
-import {getPanelSvg} from "./ImageViewComponent";
+import {getPanelSvg} from "./imageViewSvgExport";
 
 jest.mock("utilities/export/astSvgExport", () => ({
     renderAstOverlayToSvg: jest.fn(() => null)

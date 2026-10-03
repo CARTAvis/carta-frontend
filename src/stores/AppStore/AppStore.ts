@@ -9,7 +9,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, getImageViewSvg, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     AnimationMode,
@@ -91,6 +91,7 @@ import {
     type RegionClipboardItem
 } from "utilities";
 import * as Utils from "utilities";
+import {getImageViewSvg} from "utilities/export/imageViewSvgExport";
 import {downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
