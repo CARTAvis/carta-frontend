@@ -12,6 +12,7 @@ import {type FrameStore, type RegionStore, type TextAnnotationStore} from "store
 import {
     add2D,
     angle2D,
+    getAnnulusInnerSize,
     getResizedSimpleShapeFromCenter,
     getResizedSimpleShapeFromCorner,
     getSimpleShapeAnchorName,
@@ -22,6 +23,7 @@ import {
     MIN_EDITED_REGION_DIMENSION,
     rotate2D,
     scale2D,
+    SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX,
     subtract2D,
     transformPoint,
     usesSimpleShapeBoxSize
@@ -159,9 +161,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         });
         if (region.regionType === CARTA.RegionType.ANNULUS) {
             const ratio = region.size.y > 0 ? region.innerSize.y / region.size.y : 0.5;
-            const newInnerY = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(edit.size.y * 0.99, edit.size.y * ratio));
-            const aspect = edit.size.y > 0 ? edit.size.x / edit.size.y : 1;
-            region.setControlPoints([edit.center, edit.size, {x: newInnerY * aspect, y: newInnerY}]);
+            region.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
             return;
         }
         region.setControlPoints([edit.center, edit.size]);
@@ -203,7 +203,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(region.size.x * 0.99, Math.abs(localDelta.y)));
         const ratio = region.size.x > 0 ? region.size.y / region.size.x : 1;
         const newInnerY = newInnerX * ratio;
-        region.setInnerSize({x: newInnerX, y: newInnerY});
+        region.setInnerSize(getAnnulusInnerSize(region.size, {x: newInnerX, y: newInnerY}, "x"));
     };
 
     private handleDragStart = () => {
@@ -452,7 +452,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
 
             const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && (config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex) || (config.anchor === "inner-radius" && region.selectedPointIndex === 9));
+            const isSelectedSimpleShapeAnchor =
+                region.hasSelectedPoint && (config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex) || (config.anchor === "inner-radius" && region.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX));
             return (
                 <Anchor
                     key={config.anchor}
