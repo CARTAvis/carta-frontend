@@ -12,6 +12,7 @@ interface ShaderUniforms {
     RotationAngle: WebGLUniformLocation | null;
     ScaleAdjustment: WebGLUniformLocation | null;
     ZoomLevel: WebGLUniformLocation | null;
+    PixelRatio: WebGLUniformLocation | null;
     CanvasSpaceLineWidth: WebGLUniformLocation | null;
     FeatherWidth: WebGLUniformLocation | null;
     LengthMin: WebGLUniformLocation | null;
@@ -23,6 +24,7 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation | null;
     NumCmaps: WebGLUniformLocation | null;
     CmapIndex: WebGLUniformLocation | null;
+    CmapInverted: WebGLUniformLocation | null;
     Bias: WebGLUniformLocation | null;
     Contrast: WebGLUniformLocation | null;
     LineColor: WebGLUniformLocation | null;
@@ -73,6 +75,7 @@ export class VectorOverlayWebGLService {
                 ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
                 RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
                 ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
+                PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
                 CanvasSpaceLineWidth: this.gl.getUniformLocation(shaderProgram, "uCanvasSpaceLineWidth"),
                 FeatherWidth: this.gl.getUniformLocation(shaderProgram, "uFeatherWidth"),
                 LengthMin: this.gl.getUniformLocation(shaderProgram, "uLengthMin"),
@@ -84,6 +87,7 @@ export class VectorOverlayWebGLService {
                 CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
                 NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
                 CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+                CmapInverted: this.gl.getUniformLocation(shaderProgram, "uCmapInverted"),
                 Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
                 Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
                 LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),

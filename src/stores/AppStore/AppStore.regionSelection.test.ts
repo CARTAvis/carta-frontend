@@ -32,7 +32,6 @@ jest.mock("components/Shared", () => ({
 
 jest.mock("models", () => ({
     CARTA_INFO: {},
-    WorkspaceConfig: jest.requireActual("models/Workspace").WorkspaceConfig,
     COMPUTED_POLARIZATIONS: [],
     FloatingObjzIndexManager: jest.fn().mockImplementation(() => ({})),
     PresetLayout: {},
@@ -109,6 +108,7 @@ jest.mock("stores", () => ({
     SnippetStore: {Instance: MockMakeStore()},
     SpatialProfileStore: jest.fn(),
     SpectralProfileStore: jest.fn(),
+    TimeSeriesStore: {Instance: MockMakeStore({isMember: jest.fn(() => false)})},
     WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
 }));
 
@@ -465,11 +465,11 @@ describe("annulus statistics settings in workspaces", () => {
         });
         const restoredRegions: any[] = [];
         const frame = {
-            frameInfo: {fileId: 1},
+            frameInfo: {fileId: 1, fileInfo: {name: "image.fits"}},
             filename: "image.fits",
-            renderConfig: {updateFromWorkspace: jest.fn()},
-            contourConfig: {},
-            vectorOverlayConfig: {},
+            renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+            contourConfig: {toConfig: jest.fn()},
+            vectorOverlayConfig: {toConfig: jest.fn()},
             setChannels: jest.fn(),
             regionSet: {
                 regions: [region],
@@ -494,6 +494,7 @@ describe("annulus statistics settings in workspaces", () => {
         appStore.spectralReference = null;
         appStore.rasterScalingReference = null;
         Object.defineProperty(appStore, "imageViewConfigStore", {configurable: true, value: {frames: [frame], visibleFrames: [], colorBlendingImageMap: new Map()}});
+        Object.defineProperty(appStore, "widgetsStore", {configurable: true, value: {clearUnmatchedPendingCatalogRestores: jest.fn()}});
         Object.defineProperty(appStore, "animatorStore", {configurable: true, value: {stopAnimation: jest.fn()}});
         Object.defineProperty(appStore, "tileService", {configurable: true, value: {clearRequestQueue: jest.fn()}});
         Object.defineProperty(appStore, "removeAllFrames", {configurable: true, value: jest.fn()});

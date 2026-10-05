@@ -108,7 +108,7 @@ describe("RenderConfigStore alpha validation", () => {
     test("sanitizes current workspace alpha values", () => {
         const renderConfig = createRenderConfig();
 
-        renderConfig.updateFromWorkspace({alphaLog: 1e300, alphaPower: 1e300, alphaSinh: 1e-300, alphaAsinh: Number.POSITIVE_INFINITY, gamma: 1e300});
+        renderConfig.applyConfig({alphaLog: 1e300, alphaPower: 1e300, alphaSinh: 1e-300, alphaAsinh: Number.POSITIVE_INFINITY, gamma: 1e300});
 
         expect(renderConfig.alphaLog).toBe(1_000_000);
         expect(renderConfig.alphaPower).toBe(1_000_000);
@@ -121,10 +121,36 @@ describe("RenderConfigStore alpha validation", () => {
         const renderConfig = createRenderConfig();
         renderConfig.setScaling(FrameScaling.LOG);
 
-        renderConfig.updateFromWorkspace({scaling: FrameScaling.EXP});
+        renderConfig.applyConfig({scaling: FrameScaling.EXP});
         expect(renderConfig.scaling).toBe(FrameScaling.LOG);
 
-        renderConfig.updateFromWorkspace({scaling: FrameScaling.ASINH});
+        renderConfig.applyConfig({scaling: FrameScaling.ASINH});
         expect(renderConfig.scaling).toBe(FrameScaling.ASINH);
+    });
+});
+
+describe("RenderConfigStore workspace round trip", () => {
+    test("returns the applied config", () => {
+        const renderConfig = createRenderConfig();
+        const config = {
+            scaling: FrameScaling.LOG,
+            colorMap: "viridis",
+            bias: 0.1,
+            contrast: 1.2,
+            gamma: 2,
+            alphaLog: 500,
+            alphaPower: 500,
+            alphaSinh: 0.2,
+            alphaAsinh: 0.2,
+            inverted: true,
+            selectedPercentile: [90],
+            scaleMin: [0],
+            scaleMax: [1],
+            visible: false
+        };
+
+        renderConfig.applyConfig(config);
+
+        expect(renderConfig.toConfig()).toEqual({...config, useCubeHistogram: false, useCubeHistogramContours: false});
     });
 });

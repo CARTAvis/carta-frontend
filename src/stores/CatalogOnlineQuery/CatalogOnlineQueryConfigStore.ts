@@ -76,8 +76,16 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action updateVizierSelectedTable(table: VizierItem) {
-        if (!this.vizierSelectedTableName.includes(table)) {
+        if (!this.vizierSelectedTableName.some(selected => selected.name === table.name)) {
             this.vizierSelectedTableName.push(table);
+        }
+    }
+
+    @action toggleVizierSelectedTable(table: VizierItem) {
+        if (this.vizierSelectedTableName.some(selected => selected.name === table.name)) {
+            this.vizierSelectedTableName = this.vizierSelectedTableName.filter(selected => selected.name !== table.name);
+        } else {
+            this.updateVizierSelectedTable(table);
         }
     }
 

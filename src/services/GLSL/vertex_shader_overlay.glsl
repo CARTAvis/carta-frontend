@@ -5,7 +5,8 @@ uniform vec2 uRangeOffset;
 uniform float uRotationOffset;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
-uniform float uZoomLevel;
+uniform vec2 uZoomLevel;
+uniform float uPixelRatio;
 uniform float uCanvasSpaceLineWidth;
 uniform float uFeatherWidth;
 uniform sampler2D uDataTexture;
@@ -31,6 +32,7 @@ uniform sampler2D uCmapTexture;
 uniform float uCmapValue;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
+uniform int uCmapInverted;
 uniform float uBias;
 uniform float uContrast;
 
@@ -58,8 +60,8 @@ void main() {
         centerPoint = controlMapLookup(uControlMapTexture, centerPoint, uControlMapSize, uControlMapMin, uControlMapMax);
     }
 
-    float lineLength = calculateLength(data.z) / (uZoomLevel * uScaleAdjustment);
-    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel * uScaleAdjustment);
+    float lineLength = calculateLength(data.z);
+    float lineWidth = uCanvasSpaceLineWidth;
     float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
 
     if (uIntensityPlot) {
@@ -68,12 +70,22 @@ void main() {
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);
-    offset = vec2((lineWidth + uFeatherWidth / uZoomLevel) * offset.x, (lineLength + uFeatherWidth / uZoomLevel) * offset.y);
+    float featherWidth = uFeatherWidth;
+    offset = vec2((lineWidth + featherWidth) * offset.x, (lineLength + featherWidth) * offset.y);
     // location vertex attribute is in line space before rotation
     v_location = offset;
-    // position is in canvas space
-    // Scale and rotate
-    vec2 posImageSpace = centerPoint + rotate2D(offset, angle);
+    // Build a screen-space rectangle from the image-space direction. This keeps the
+    // edges perpendicular while allowing anisotropic zoom to change the line slope.
+    vec2 referenceDirection = rotate2D(vec2(0.0, 1.0), angle + uRotationAngle);
+    vec2 screenDirection = normalize(vec2(uPixelRatio * uZoomLevel.x * referenceDirection.x, uZoomLevel.y * referenceDirection.y));
+    vec2 screenNormal = vec2(-screenDirection.y, screenDirection.x);
+    vec2 screenOffset = offset.x * screenNormal + offset.y * screenDirection;
+
+    // Convert the screen-space offset back into image space before applying the
+    // frame's spatial transform below.
+    vec2 referenceOffset = vec2(screenOffset.x / (uPixelRatio * uZoomLevel.x), screenOffset.y / uZoomLevel.y);
+    vec2 positionOffset = rotate2D(referenceOffset, -uRotationAngle) / uScaleAdjustment;
+    vec2 posImageSpace = centerPoint + positionOffset;
     vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
     // Convert from image space to GL space [-1, 1]
     vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;
@@ -87,6 +99,10 @@ void main() {
         x = clamp(x - uBias, 0.0, 1.0);
         // contrast mod
         x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+        // invert mod
+        if (uCmapInverted > 0) {
+            x = 1.0 - x;
+        }
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
         v_colour = texture(uCmapTexture, cmapCoords);

@@ -2,7 +2,23 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {
+    BeamType,
+    ColorMap,
+    ContourGeneratorType,
+    CursorInfoVisibility,
+    FileFilteringType,
+    FileFilterMode,
+    FrameScaling,
+    ImagePanelMode,
+    PasteOffsetUnit,
+    PreferenceKeys,
+    RestFrameShiftMode,
+    SpectralType,
+    TelemetryMode,
+    VelocityConvention,
+    WCSMatchingType
+} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
@@ -21,7 +37,11 @@ const DEFAULTS = {
         imagePanelRows: 2,
         checkNewRelease: true,
         latestRelease: "v" + CARTA_INFO.version,
-        pvAxesOrderReverse: false
+        pvAxesOrderReverse: false,
+        imageViewRestFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY,
+        imageViewRestFrameVelocityConvention: VelocityConvention.RADIO,
+        spectralProfilerRestFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY,
+        spectralProfilerRestFrameVelocityConvention: VelocityConvention.RADIO
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -41,6 +61,7 @@ const DEFAULTS = {
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
         colormap: ColorMap.Inferno,
+        colormapInverted: false,
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
@@ -54,6 +75,7 @@ const DEFAULTS = {
         contourNumLevels: 5,
         contourThickness: 1,
         contourColormapEnabled: false,
+        contourColormapInverted: false,
         contourColor: Colors.GREEN3,
         contourColormap: ColorMap.Viridis
     },
@@ -62,6 +84,7 @@ const DEFAULTS = {
         vectorOverlayFractionalIntensity: false,
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
+        vectorOverlayColormapInverted: false,
         vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: ColorMap.Viridis
     },
@@ -222,6 +245,26 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
+    @computed get imageViewRestFrameShiftMode(): RestFrameShiftMode {
+        const mode = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+        return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.imageViewRestFrameShiftMode;
+    }
+
+    @computed get imageViewRestFrameVelocityConvention(): VelocityConvention {
+        const convention = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+        return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.imageViewRestFrameVelocityConvention;
+    }
+
+    @computed get spectralProfilerRestFrameShiftMode(): RestFrameShiftMode {
+        const mode = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+        return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.spectralProfilerRestFrameShiftMode;
+    }
+
+    @computed get spectralProfilerRestFrameVelocityConvention(): VelocityConvention {
+        const convention = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.spectralProfilerRestFrameVelocityConvention;
+    }
+
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
         if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
             return true;
@@ -253,6 +296,10 @@ export class PreferenceStore {
 
     @computed get colormap(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+    }
+
+    @computed get isColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.RENDER_CONFIG.colormapInverted;
     }
 
     @computed get colormapHex(): string {
@@ -320,6 +367,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
+    @computed get isContourColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapInverted;
+    }
+
     @computed get contourColormap(): string {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
     }
@@ -371,6 +422,10 @@ export class PreferenceStore {
 
     @computed get isVectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    }
+
+    @computed get isVectorOverlayColormapInverted(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapInverted;
     }
 
     @computed get vectorOverlayColor(): string {
@@ -742,7 +797,11 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
             PreferenceKeys.IMAGE_PANEL_ROWS,
-            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE,
+            PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE,
+            PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION,
+            PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE,
+            PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION
         ]);
     };
 
@@ -773,6 +832,7 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
             PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
@@ -796,6 +856,7 @@ export class PreferenceStore {
             PreferenceKeys.CONTOUR_CONFIG_COLOR,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
             PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED,
             PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
             PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
             PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
@@ -814,6 +875,7 @@ export class PreferenceStore {
             PreferenceKeys.VECTOR_OVERLAY_COLOR,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
             PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED,
             PreferenceKeys.VECTOR_OVERLAY_THICKNESS
         ]);
     };

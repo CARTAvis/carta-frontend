@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {NumberFormatType, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
+import {NumberFormatType, type SpectralSystem, SpectralType, SpectralUnit} from "enums";
 import {type Point2D, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, type WCSPoint2D} from "models";
 import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -32,6 +32,105 @@ export interface SwappedZWcsSettings {
     dirXLabel: string;
     dirY: number;
     dirYLabel: string;
+}
+
+function transformSpectralValue(
+    spectralFrame: AST.SpecFrame | null,
+    spectralType: SpectralType | null,
+    spectralUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    value: number,
+    isForward: boolean = true
+): number | undefined {
+    if (!spectralFrame || !isFinite(value)) {
+        return undefined;
+    }
+
+    const transformedValue = isForward ? AST.transformSpectralPoint(spectralFrame, spectralType, spectralUnit, spectralSystem, value) : AST.transformSpectralPoint(spectralFrame, spectralType, spectralUnit, spectralSystem, value, false);
+    return isFinite(transformedValue) ? transformedValue : undefined;
+}
+
+function transformSpectralValues(
+    spectralFrame: AST.SpecFrame | null,
+    spectralType: SpectralType | null,
+    spectralUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    values: number[] | Float64Array,
+    isForward: boolean = true
+): Float64Array | undefined {
+    if (!spectralFrame || !values.length || !values.every(value => isFinite(value))) {
+        return undefined;
+    }
+
+    const transformedValues = isForward
+        ? AST.transformSpectralPointArray(spectralFrame, spectralType, spectralUnit, spectralSystem, values)
+        : AST.transformSpectralPointArray(spectralFrame, spectralType, spectralUnit, spectralSystem, values, false);
+    return transformedValues.length === values.length && transformedValues.every(value => isFinite(value)) ? transformedValues : undefined;
+}
+
+function convertSpectralValue(
+    spectralFrame: AST.SpecFrame | null,
+    sourceType: SpectralType | null,
+    sourceUnit: SpectralUnit | null,
+    targetType: SpectralType | null,
+    targetUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    value: number
+): number | undefined {
+    if (!spectralFrame || !sourceType || !sourceUnit || !targetType || !targetUnit || !isFinite(value)) {
+        return undefined;
+    }
+    if (sourceType === targetType && sourceUnit === targetUnit) {
+        return value;
+    }
+
+    const nativeValue = transformSpectralValue(spectralFrame, sourceType, sourceUnit, spectralSystem, value, false);
+    return nativeValue === undefined ? undefined : transformSpectralValue(spectralFrame, targetType, targetUnit, spectralSystem, nativeValue);
+}
+
+function convertSpectralValues(
+    spectralFrame: AST.SpecFrame | null,
+    sourceType: SpectralType | null,
+    sourceUnit: SpectralUnit | null,
+    targetType: SpectralType | null,
+    targetUnit: SpectralUnit | null,
+    spectralSystem: SpectralSystem | null,
+    values: number[]
+): number[] | undefined {
+    if (!spectralFrame || !values?.length || !values.every(value => isFinite(value)) || !sourceType || !sourceUnit || !targetType || !targetUnit) {
+        return undefined;
+    }
+    if (sourceType === targetType && sourceUnit === targetUnit) {
+        return values.slice();
+    }
+
+    const nativeValues = transformSpectralValues(spectralFrame, sourceType, sourceUnit, spectralSystem, values, false);
+    if (!nativeValues) {
+        return undefined;
+    }
+
+    const transformedValues = transformSpectralValues(spectralFrame, targetType, targetUnit, spectralSystem, nativeValues);
+    return transformedValues ? Array.from(transformedValues) : undefined;
+}
+
+export function convertToNativeWCS(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
+    return transformSpectralValue(spectralFrame, spectralType, spectralUnit, spectralSystem, value, false);
+}
+
+export function convertFreqMHzToSettingWCS(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
+    return convertSpectralValue(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralType, spectralUnit, spectralSystem, value);
+}
+
+export function convertFreqMHzToSettingWCSArray(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, values: number[]): number[] | undefined {
+    return convertSpectralValues(spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, spectralType, spectralUnit, spectralSystem, values);
+}
+
+export function convertSettingWCSToFreqMHz(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, value: number): number | undefined {
+    return convertSpectralValue(spectralFrame, spectralType, spectralUnit, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, value);
+}
+
+export function convertSettingWCSToFreqMHzArray(spectralFrame: AST.SpecFrame | null, spectralType: SpectralType | null, spectralUnit: SpectralUnit | null, spectralSystem: SpectralSystem | null, values: number[]): number[] | undefined {
+    return convertSpectralValues(spectralFrame, spectralType, spectralUnit, SpectralType.FREQ, SpectralUnit.MHZ, spectralSystem, values);
 }
 
 export function getSwappedDirAxisInfo(dirX: number, dirY: number, width: number, height: number, headerEntries: CARTA.HeaderEntry.$Properties[], wcsPrecision: number): SwappedDirAxisInfo {
@@ -114,6 +213,17 @@ export function getHeaderNumericValue(headerEntry: CARTA.HeaderEntry.$Properties
     } else {
         return parseFloat(trimFitsComment(headerEntry.value));
     }
+}
+
+export function getPixelScale(headerEntries: CARTA.HeaderEntry.$Properties[], axisNumber: number): number | null {
+    const unitHeader = headerEntries.find(entry => entry.name?.indexOf(`CUNIT${axisNumber}`) !== -1);
+    const deltaHeader = headerEntries.find(entry => entry.name?.indexOf(`CDELT${axisNumber}`) !== -1);
+    const unit = unitHeader?.value?.trim() || "deg";
+    const delta = deltaHeader ? getHeaderNumericValue(deltaHeader) : NaN;
+    if (!isFinite(delta) || delta === 0 || (unit !== "deg" && unit !== "rad")) {
+        return null;
+    }
+    return Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600) / Math.PI);
 }
 
 export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {

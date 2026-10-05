@@ -42,6 +42,7 @@ describe("annulus statistics widget", () => {
             polarizations: [0],
             coordinateOptionsZ: [],
             headerUnit: "Jy/beam",
+            getBeamProperties: jest.fn(() => null),
             getRegionProperties: () => ["Annulus"],
             regionSet: {regions: [{regionId: 1, nameString: "Region 1"}]}
         };
@@ -129,6 +130,21 @@ describe("annulus statistics widget", () => {
         expect(screen.getByText("NaN")).toBeInTheDocument();
         fireEvent.click(screen.getByText("Export"));
         expect(exportTsvFile).toHaveBeenLastCalledWith("image.fits", "statistics", expect.stringContaining("S/N\tNaN\tN/A"));
+    });
+
+    test("retains beam statistics alongside annulus S/N", () => {
+        const widget = APP_STORE_MOCK.widgetsStore.statsWidgets.get("stats-test");
+        widget.effectiveFrame.getBeamProperties = () => ({beamArea: 0.01, beamAreaPixels: 2});
+        widget.effectiveRegion.statsBackground = "annulus";
+        render(<StatsComponent id="stats-test" docked={true} />);
+        expect(screen.getByText("NumBeams")).toBeInTheDocument();
+        expect(screen.getByText("2 beam(s)")).toBeInTheDocument();
+        expect(screen.getByText("0.01 sr")).toBeInTheDocument();
+        expect(screen.getByText("S/N")).toBeInTheDocument();
+        fireEvent.click(screen.getByText("Export"));
+        const exported = (exportTsvFile as jest.Mock).mock.calls.at(-1)[2];
+        expect(exported).toContain("NumBeams    \t2\tbeam(s)");
+        expect(exported).toContain(`S/N\t${5 / 3}\tN/A`);
     });
 
     test("waits for the selected background statistics", async () => {

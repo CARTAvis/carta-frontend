@@ -86,7 +86,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true}>
-                        <Switch checked={props.isColorMapInverted} onChange={props.handleInvertedColorMapChanged} />
+                        <Switch checked={props.isColorMapInverted} onChange={props.handleInvertedColorMapChanged} data-testid="scatter-plot-invert-colormap-toggle" />
                     </FormGroup>
                     <FormGroup inline={true} label="Symbol size" labelInfo="(px)">
                         <SafeNumericInput

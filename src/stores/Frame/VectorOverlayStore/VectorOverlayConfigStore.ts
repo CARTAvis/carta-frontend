@@ -26,6 +26,7 @@ export class VectorOverlayConfigStore {
     @observable isVisible: boolean = true;
     @observable thickness: number = 1;
     @observable isColormapEnabled: boolean = false;
+    @observable isColormapInverted: boolean = false;
     @observable color: RgbaColor = {r: 0, g: 0, b: 0, a: 1};
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
@@ -50,6 +51,7 @@ export class VectorOverlayConfigStore {
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.isColormapEnabled = this.preferenceStore.isVectorOverlayColormapEnabled;
+        this.isColormapInverted = this.preferenceStore.isVectorOverlayColormapInverted;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
         makeObservable(this);
@@ -111,6 +113,10 @@ export class VectorOverlayConfigStore {
         this.isColormapEnabled = isColormapEnabled;
     };
 
+    @action setColormapInverted = (isColormapInverted: boolean) => {
+        this.isColormapInverted = isColormapInverted;
+    };
+
     @action setColormapBias = (val: number) => {
         this.colormapBias = val;
     };
@@ -141,7 +147,7 @@ export class VectorOverlayConfigStore {
         this.isVisible = !this.isVisible;
     };
 
-    @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
+    @action applyConfig = (config: WorkspaceVectorOverlayConfig) => {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
         this.pixelAveraging = config.pixelAveraging;
@@ -164,11 +170,44 @@ export class VectorOverlayConfigStore {
         this.rotationOffset = config.rotationOffset;
 
         this.isColormapEnabled = config.colormapEnabled;
+        this.isColormapInverted = config.colormapInverted ?? false;
         if (config.color) {
             this.color = config.color;
         }
         if (config.colormap) {
             this.colormap = config.colormap;
         }
+    };
+
+    public toConfig = (): WorkspaceVectorOverlayConfig | undefined => {
+        if (!this.isEnabled) {
+            return undefined;
+        }
+
+        return {
+            angularSource: this.angularSource,
+            intensitySource: this.intensitySource,
+            fractionalIntensity: this.isFractionalIntensity,
+            pixelAveraging: this.pixelAveraging,
+            thresholdEnabled: this.isThresholdEnabled,
+            threshold: this.threshold,
+            debiasing: this.isDebiasing,
+            qError: this.qError,
+            uError: this.uError,
+            thresholdOption: this.thresholdOption,
+            visible: this.isVisible,
+            thickness: this.thickness,
+            colormapEnabled: this.isColormapEnabled,
+            colormapInverted: this.isColormapInverted,
+            color: this.color,
+            colormap: this.colormap,
+            colormapContrast: this.colormapContrast,
+            colormapBias: this.colormapBias,
+            lengthMin: this.lengthMin,
+            lengthMax: this.lengthMax,
+            intensityMin: this.intensityMin,
+            intensityMax: this.intensityMax,
+            rotationOffset: this.rotationOffset
+        };
     };
 }

@@ -80,7 +80,7 @@ export class BackendService {
     readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
-    readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly catalogStream: Subject<CARTA.CatalogFilterResponse & {eventId?: number}>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
@@ -577,11 +577,12 @@ export class BackendService {
     }
 
     @action("set catalog filter")
-    setCatalogFilterRequest(filterRequest: CARTA.CatalogFilterRequest.$Properties) {
+    setCatalogFilterRequest(filterRequest: CARTA.CatalogFilterRequest.$Properties): number | false {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterRequest, false);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, requestId, filterRequest, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterRequest).finish())) {
-                return true;
+                return requestId;
             }
         }
         return false;
@@ -1025,7 +1026,8 @@ export class BackendService {
         this.scriptingStream.next(scriptingRequest);
     }
 
-    private onStreamedCatalogData(_eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+    private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+        Object.defineProperty(catalogFilter, "eventId", {configurable: true, enumerable: false, value: eventId});
         this.catalogStream.next(catalogFilter);
     }
 

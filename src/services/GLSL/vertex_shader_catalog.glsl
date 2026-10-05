@@ -31,7 +31,7 @@ uniform float uRotationAngle;
 uniform vec2 uRangeOffset;
 uniform vec2 uRangeScale;
 uniform float uScaleAdjustment;
-uniform float uZoomLevel;
+uniform vec2 uZoomLevel;
 uniform float uPixelRatio;
 
 // Control-map based transformation
@@ -104,7 +104,7 @@ void main() {
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
     if (uIsImagePixelSize) {
-        v_pointSize = tuneSize(uPointSize) * uZoomLevel;
+        v_pointSize = tuneSize(uPointSize) * uZoomLevel.y;
     }    
     v_featherWidth = uFeatherWidth;
 
@@ -127,7 +127,7 @@ void main() {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
         if (uIsImagePixelSize) {
-            size = tuneSize(size) * uZoomLevel;
+            size = tuneSize(size) * uZoomLevel.y;
         } 
 
         if(!isNaN(size)) {
@@ -153,7 +153,7 @@ void main() {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
         if (uIsImagePixelSize) {
-            v_minorSize = tuneSize(v_minorSize) * uZoomLevel;
+            v_minorSize = tuneSize(v_minorSize) * uZoomLevel.y;
         } 
 
         if (uAreaModeMinor) {
@@ -174,10 +174,13 @@ void main() {
 
     vec2 offset = getOffsetFromId(gl_VertexID);
     v_pointCoord = vec2(offset.x, -offset.y) + 0.5;
-    posImageSpace += offset * point_size / (uZoomLevel * uScaleAdjustment) * vec2(1.0 / uPixelRatio, 1.0);
+    vec2 positionOffset = offset * point_size / (uZoomLevel.y * uScaleAdjustment);
+    positionOffset = rotate2D(positionOffset, uRotationAngle);
+    positionOffset.x /= uPixelRatio * (uZoomLevel.x / uZoomLevel.y);
 
     // Scale and rotate
-    vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uScaleAdjustment * uRangeScale + uRangeOffset;
+    vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment) + positionOffset * uScaleAdjustment;
+    vec2 pos = posRefSpace * uRangeScale + uRangeOffset;
 
     gl_Position = vec4(imageToGL(pos), 0.5, 1.0);
 }

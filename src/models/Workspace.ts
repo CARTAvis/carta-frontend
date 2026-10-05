@@ -1,9 +1,8 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 
-import {type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
-import {type ContourConfigStore, type RenderConfigStore, type VectorOverlayConfigStore} from "stores/Frame";
-import {sanitizeScalingParameter} from "utilities/scaling/scaling";
+import {type AngularSizeUnit, type CatalogDisplayMode, type CatalogOverlayShape, type CatalogPlotType, type CatalogSizeUnits, type CatalogSourceRadiusMode, type ContourDashMode, FrameScaling, type VectorOverlaySource} from "enums";
+import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
 
@@ -34,6 +33,7 @@ export interface WorkspaceContourConfig {
     smoothingFactor: number;
     color?: RgbaColor;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     colormap?: string;
     colormapContrast: number;
     colormapBias: number;
@@ -57,6 +57,7 @@ export interface WorkspaceVectorOverlayConfig {
     visible: boolean;
     thickness: number;
     colormapEnabled: boolean;
+    colormapInverted?: boolean;
     color?: RgbaColor;
     colormap?: string;
     colormapContrast: number;
@@ -66,6 +67,73 @@ export interface WorkspaceVectorOverlayConfig {
     intensityMin: number | undefined;
     intensityMax: number | undefined;
     rotationOffset: number;
+}
+
+/** What every mapped catalog axis holds: the column it maps, its clipped range, and its scaling. */
+export interface WorkspaceCatalogAxisConfig {
+    mapColumn?: string;
+    /** Lower end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMinClip?: number;
+    /** Upper end of the mapped data range, as clipped by the user. Absent while it follows the data. */
+    columnMaxClip?: number;
+    scalingType?: FrameScaling;
+    scalingParameters?: ScalingParameters;
+}
+
+/** One catalog size axis: the major axis, or the minor axis of an ellipse. */
+export interface WorkspaceCatalogSizeAxisConfig extends WorkspaceCatalogAxisConfig {
+    min?: {area: number; diameter: number};
+    max?: {area: number; diameter: number};
+    areaMode?: boolean;
+    /** Whether the other size axis follows this axis at the lower end. */
+    columnMinLocked?: boolean;
+    /** Whether the other size axis follows this axis at the upper end. */
+    columnMaxLocked?: boolean;
+}
+
+export interface WorkspaceCatalogColorAxisConfig extends WorkspaceCatalogAxisConfig {
+    colorMap?: string;
+    inverted?: boolean;
+}
+
+export interface WorkspaceCatalogOrientationAxisConfig extends WorkspaceCatalogAxisConfig {
+    /** Lower end of the angle range the mapped data is spread over, in degrees. */
+    angleMin?: number;
+    /** Upper end of the angle range the mapped data is spread over, in degrees. */
+    angleMax?: number;
+}
+
+/** A catalog association that remains meaningful when backend file IDs change between sessions. */
+export interface WorkspaceCatalogAssociation {
+    /** Session-local fallback. It is used only when it still identifies a loaded catalog. */
+    catalogFileId?: number;
+    catalogDirectory?: string;
+    catalogFilename?: string;
+}
+
+/**
+ * How one catalog is drawn. Holds only what the user authored: the state a widget keeps for its
+ * own presentation, and the values recomputed from the catalog data, are deliberately absent.
+ */
+export interface WorkspaceCatalogConfig {
+    color?: string;
+    highlightColor?: string;
+    shape?: CatalogOverlayShape;
+    /** Source size in the current size unit, as entered by the user. */
+    size?: number;
+    thickness?: number;
+    displayMode?: CatalogDisplayMode;
+    canvasSizeUnit?: CatalogSizeUnits;
+    worldSizeUnit?: AngularSizeUnit;
+    /** Whether an authored angular size is the source's radius or its full diameter. */
+    sourceRadiusType?: CatalogSourceRadiusMode;
+    plotType?: CatalogPlotType;
+    xAxis?: string;
+    yAxis?: string;
+    sizeAxis?: WorkspaceCatalogSizeAxisConfig;
+    sizeMinorAxis?: WorkspaceCatalogSizeAxisConfig;
+    colorAxis?: WorkspaceCatalogColorAxisConfig;
+    orientationAxis?: WorkspaceCatalogOrientationAxisConfig;
 }
 
 export interface WorkspaceRegion {
@@ -94,6 +162,7 @@ export interface WorkspaceFile {
     directory?: string;
     filename: string;
     hdu?: string;
+    timeSeriesMember?: boolean;
     references?: {
         spatial?: number;
         spectral?: number;
@@ -101,6 +170,8 @@ export interface WorkspaceFile {
     };
     center?: Point2D;
     zoomLevel?: number;
+    axisZoomLevel?: Point2D;
+    zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
 
@@ -169,108 +240,6 @@ export class WorkspaceConfig {
 
                 return {...file, renderConfig};
             })
-        };
-    }
-
-    public static createRenderConfig(renderConfig: RenderConfigStore): WorkspaceRenderConfig {
-        const {scaling, colorMap, bias, contrast, gamma, alphaLog, alphaPower, alphaSinh, alphaAsinh, isInverted, isUsingCubeHistogram, isUsingCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, isVisible} = renderConfig;
-
-        return {
-            scaling,
-            colorMap,
-            bias,
-            contrast,
-            gamma,
-            alphaLog,
-            alphaPower,
-            alphaSinh,
-            alphaAsinh,
-            inverted: isInverted,
-            useCubeHistogram: isUsingCubeHistogram,
-            useCubeHistogramContours: isUsingCubeHistogramContours,
-            selectedPercentile,
-            scaleMin,
-            scaleMax,
-            visible: isVisible
-        };
-    }
-
-    public static createContourConfig(contourConfig: ContourConfigStore): WorkspaceContourConfig | undefined {
-        const {isEnabled, levels, smoothingMode, smoothingFactor, color, isColormapEnabled, colormap, colormapContrast, colormapBias, dashMode, thickness, isVisible} = contourConfig;
-
-        if (!isEnabled) {
-            return undefined;
-        }
-
-        return {
-            levels,
-            smoothingMode,
-            smoothingFactor,
-            color,
-            colormapEnabled: isColormapEnabled,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            dashMode,
-            thickness,
-            visible: isVisible
-        };
-    }
-
-    public static createVectorOverlayConfig(vectorOverlayConfig: VectorOverlayConfigStore): WorkspaceVectorOverlayConfig | undefined {
-        const {
-            isEnabled,
-            angularSource,
-            intensitySource,
-            isFractionalIntensity,
-            pixelAveraging,
-            isThresholdEnabled,
-            threshold,
-            isDebiasing,
-            qError,
-            uError,
-            thresholdOption,
-            isVisible,
-            thickness,
-            isColormapEnabled,
-            color,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            lengthMin,
-            lengthMax,
-            intensityMin,
-            intensityMax,
-            rotationOffset
-        } = vectorOverlayConfig;
-
-        if (!isEnabled) {
-            return undefined;
-        }
-
-        return {
-            angularSource,
-            intensitySource,
-            fractionalIntensity: isFractionalIntensity,
-            pixelAveraging,
-            thresholdEnabled: isThresholdEnabled,
-            threshold,
-            debiasing: isDebiasing,
-            qError,
-            uError,
-            thresholdOption,
-            visible: isVisible,
-            thickness,
-            colormapEnabled: isColormapEnabled,
-            color,
-            colormap,
-            colormapContrast,
-            colormapBias,
-            lengthMin,
-            lengthMax,
-            intensityMin,
-            intensityMax,
-            rotationOffset
         };
     }
 }
