@@ -1,6 +1,6 @@
 import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
-import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, comparer, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {
     AngularSizeUnit,
@@ -61,6 +61,12 @@ type ClipGroup = "sizeMajor" | "sizeMinor" | "color" | "orientation";
  * told apart by value, because a chosen bound may happen to equal the one the data implies.
  */
 type ClipBound = {default: number | undefined; clipd: number | undefined; isExplicit: boolean};
+
+/** Copy the bound in force together with its authored state, keeping the target's own default. */
+function copyClipBound(source: Pick<ClipBound, "clipd" | "isExplicit">, target: ClipBound) {
+    target.clipd = source.clipd;
+    target.isExplicit = source.isExplicit;
+}
 
 interface ColumnRangeCache {
     profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore;
@@ -393,25 +399,25 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeColumnMin.clipd,
-                sizeColumnMin => {
+                () => ({clipd: this.sizeColumnMin.clipd, isExplicit: this.sizeColumnMin.isExplicit}),
+                bound => {
                     if (this.isSizeColumnMinLocked) {
-                        this.sizeMinorColumnMin.clipd = sizeColumnMin;
-                        this.sizeMinorColumnMin.isExplicit = this.sizeColumnMin.isExplicit;
+                        copyClipBound(bound, this.sizeMinorColumnMin);
                     }
-                }
+                },
+                {equals: comparer.structural}
             )
         );
 
         this.disposers.push(
             reaction(
-                () => this.sizeColumnMax.clipd,
-                sizeColumnMax => {
+                () => ({clipd: this.sizeColumnMax.clipd, isExplicit: this.sizeColumnMax.isExplicit}),
+                bound => {
                     if (this.isSizeColumnMaxLocked) {
-                        this.sizeMinorColumnMax.clipd = sizeColumnMax;
-                        this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
+                        copyClipBound(bound, this.sizeMinorColumnMax);
                     }
-                }
+                },
+                {equals: comparer.structural}
             )
         );
 
@@ -450,25 +456,25 @@ export class CatalogDisplayStore {
 
         this.disposers.push(
             reaction(
-                () => this.sizeMinorColumnMin.clipd,
-                sizeMinorColumnMin => {
+                () => ({clipd: this.sizeMinorColumnMin.clipd, isExplicit: this.sizeMinorColumnMin.isExplicit}),
+                bound => {
                     if (this.isSizeMinorColumnMinLocked) {
-                        this.sizeColumnMin.clipd = sizeMinorColumnMin;
-                        this.sizeColumnMin.isExplicit = this.sizeMinorColumnMin.isExplicit;
+                        copyClipBound(bound, this.sizeColumnMin);
                     }
-                }
+                },
+                {equals: comparer.structural}
             )
         );
 
         this.disposers.push(
             reaction(
-                () => this.sizeMinorColumnMax.clipd,
-                sizeMinorColumnMax => {
+                () => ({clipd: this.sizeMinorColumnMax.clipd, isExplicit: this.sizeMinorColumnMax.isExplicit}),
+                bound => {
                     if (this.isSizeMinorColumnMaxLocked) {
-                        this.sizeColumnMax.clipd = sizeMinorColumnMax;
-                        this.sizeColumnMax.isExplicit = this.sizeMinorColumnMax.isExplicit;
+                        copyClipBound(bound, this.sizeColumnMax);
                     }
-                }
+                },
+                {equals: comparer.structural}
             )
         );
 
@@ -1045,28 +1051,28 @@ export class CatalogDisplayStore {
     @action toggleSizeColumnMinLock = () => {
         this.isSizeColumnMinLocked = !this.isSizeColumnMinLocked;
         if (this.isSizeColumnMinLocked) {
-            this.sizeMinorColumnMin.clipd = this.sizeColumnMin.clipd;
+            copyClipBound(this.sizeColumnMin, this.sizeMinorColumnMin);
         }
     };
 
     @action toggleSizeColumnMaxLock = () => {
         this.isSizeColumnMaxLocked = !this.isSizeColumnMaxLocked;
         if (this.isSizeColumnMaxLocked) {
-            this.sizeMinorColumnMax.clipd = this.sizeColumnMax.clipd;
+            copyClipBound(this.sizeColumnMax, this.sizeMinorColumnMax);
         }
     };
 
     @action toggleSizeMinorColumnMinLock = () => {
         this.isSizeMinorColumnMinLocked = !this.isSizeMinorColumnMinLocked;
         if (this.isSizeMinorColumnMinLocked) {
-            this.sizeColumnMin.clipd = this.sizeMinorColumnMin.clipd;
+            copyClipBound(this.sizeMinorColumnMin, this.sizeColumnMin);
         }
     };
 
     @action toggleSizeMinorColumnMaxLock = () => {
         this.isSizeMinorColumnMaxLocked = !this.isSizeMinorColumnMaxLocked;
         if (this.isSizeMinorColumnMaxLocked) {
-            this.sizeColumnMax.clipd = this.sizeMinorColumnMax.clipd;
+            copyClipBound(this.sizeMinorColumnMax, this.sizeColumnMax);
         }
     };
 
@@ -1917,12 +1923,10 @@ export class CatalogDisplayStore {
 
     private propagateLockedSizeBounds() {
         if (this.isSizeColumnMinLocked) {
-            this.sizeMinorColumnMin.clipd = this.sizeColumnMin.clipd;
-            this.sizeMinorColumnMin.isExplicit = this.sizeColumnMin.isExplicit;
+            copyClipBound(this.sizeColumnMin, this.sizeMinorColumnMin);
         }
         if (this.isSizeColumnMaxLocked) {
-            this.sizeMinorColumnMax.clipd = this.sizeColumnMax.clipd;
-            this.sizeMinorColumnMax.isExplicit = this.sizeColumnMax.isExplicit;
+            copyClipBound(this.sizeColumnMax, this.sizeMinorColumnMax);
         }
     }
 

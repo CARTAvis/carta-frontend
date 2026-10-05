@@ -315,6 +315,110 @@ describe("CatalogDisplayStore display config", () => {
         expect(target.sizeColumnMax.clipd).toBe(8);
     });
 
+    describe.each([
+        {
+            label: "major minimum",
+            source: "sizeColumnMin",
+            target: "sizeMinorColumnMin",
+            setter: "setSizeColumnMin",
+            resetter: "resetSizeColumnValue",
+            toggle: "toggleSizeColumnMinLock",
+            axis: "sizeMinorAxis",
+            clip: "columnMinClip",
+            bound: "min",
+            value: 3
+        },
+        {
+            label: "major maximum",
+            source: "sizeColumnMax",
+            target: "sizeMinorColumnMax",
+            setter: "setSizeColumnMax",
+            resetter: "resetSizeColumnValue",
+            toggle: "toggleSizeColumnMaxLock",
+            axis: "sizeMinorAxis",
+            clip: "columnMaxClip",
+            bound: "max",
+            value: 8
+        },
+        {
+            label: "minor minimum",
+            source: "sizeMinorColumnMin",
+            target: "sizeColumnMin",
+            setter: "setSizeMinorColumnMin",
+            resetter: "resetSizeMinorColumnValue",
+            toggle: "toggleSizeMinorColumnMinLock",
+            axis: "sizeAxis",
+            clip: "columnMinClip",
+            bound: "min",
+            value: 3
+        },
+        {
+            label: "minor maximum",
+            source: "sizeMinorColumnMax",
+            target: "sizeColumnMax",
+            setter: "setSizeMinorColumnMax",
+            resetter: "resetSizeMinorColumnValue",
+            toggle: "toggleSizeMinorColumnMaxLock",
+            axis: "sizeAxis",
+            clip: "columnMaxClip",
+            bound: "max",
+            value: 8
+        }
+    ] as const)("$label lock", ({source, target, setter, resetter, toggle, axis, clip, bound, value}) => {
+        test("preserves an authored bound through lock/unlock and config restore", () => {
+            const store = createStore();
+            store.applyConfig({sizeAxis: {mapColumn: "Fmag"}, sizeMinorAxis: {mapColumn: "Bmag"}});
+
+            store[setter](value, "clipd");
+            store[toggle]();
+            store[toggle]();
+
+            expect(store[target].clipd).toBe(value);
+            expect(store[target].isExplicit).toBe(true);
+            const config = store.toConfig();
+            expect(config[axis]?.[clip]).toBe(value);
+
+            const restored = createStore();
+            expect(restored.applyConfig(config)).toEqual({success: true, errors: []});
+            expect(restored[target].clipd).toBe(value);
+            expect(restored.toConfig()[axis]?.[clip]).toBe(value);
+        });
+
+        test("propagates authored-state changes when the locked value stays unchanged", () => {
+            const store = createStore();
+            store.applyConfig({sizeAxis: {mapColumn: "Fmag"}, sizeMinorAxis: {mapColumn: "Bmag"}});
+            const defaultValue = store[source].clipd!;
+            store[toggle]();
+            expect(store[target].clipd).toBe(defaultValue);
+            expect(store[target].isExplicit).toBe(false);
+
+            store[setter](defaultValue, "clipd");
+            expect(store[target].clipd).toBe(defaultValue);
+            expect(store.toConfig()[axis]?.[clip]).toBe(defaultValue);
+
+            store[resetter](bound);
+            expect(store[target].clipd).toBe(defaultValue);
+            expect(store[target].isExplicit).toBe(false);
+            store[toggle]();
+            expect(store.toConfig()[axis]?.[clip]).toBeUndefined();
+        });
+
+        test("replaces an authored target with a data-derived bound when locking", () => {
+            const store = createStore();
+            store.applyConfig({sizeAxis: {mapColumn: "Fmag", columnMinClip: value, columnMaxClip: value}, sizeMinorAxis: {mapColumn: "Bmag", columnMinClip: value, columnMaxClip: value}});
+            store[resetter](bound);
+            const defaultValue = store[source].clipd;
+            expect(store[target].isExplicit).toBe(true);
+
+            store[toggle]();
+            store[toggle]();
+
+            expect(store[target].clipd).toBe(defaultValue);
+            expect(store[target].isExplicit).toBe(false);
+            expect(store.toConfig()[axis]?.[clip]).toBeUndefined();
+        });
+    });
+
     test("restores both size axes when the major axis is locked", () => {
         const store = createStore();
         const config: WorkspaceCatalogConfig = {
