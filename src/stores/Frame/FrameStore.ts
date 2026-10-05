@@ -1712,7 +1712,6 @@ export class FrameStore {
             return;
         }
         this.isDisposed = true;
-        this.frameRegionSet.regions.forEach(region => region.clearAnnulusStatsRegions());
 
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;

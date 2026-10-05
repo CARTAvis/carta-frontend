@@ -11,7 +11,7 @@ import {HelpType, Polarizations} from "enums";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
-import {exportTsvFile, getAnnulusSignalToNoise, pixelToFluxDensityUnit, toExponential} from "utilities";
+import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
 import "./StatsComponent.scss";
 
@@ -50,33 +50,27 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return this.cachedWidgetStore;
     }
 
-    private getStatsData = (regionId: number | null): CARTA.RegionStatsData | null => {
-        const frame = this.widgetStore.effectiveFrame;
-        if (!frame || regionId === null) {
-            return null;
-        }
-        const data = AppStore.Instance.regionStats.get(frame.frameInfo.fileId)?.get(regionId)?.get(this.getEffectiveStokes(frame));
-        return data?.channel === frame.requiredChannel ? data : null;
-    };
-
     @computed get statsData(): CARTA.RegionStatsData | null {
-        return this.getStatsData(this.widgetStore.statsRegionId);
-    }
+        const appStore = AppStore.Instance;
+        if (this.widgetStore.effectiveFrame) {
+            const frame = this.widgetStore.effectiveFrame;
+            const fileId = frame.frameInfo.fileId;
+            if (fileId === undefined) {
+                return null;
+            }
+            const regionId = this.widgetStore.effectiveRegionId;
 
-    @computed get backgroundStatsData(): CARTA.RegionStatsData | null {
-        return this.getStatsData(this.widgetStore.backgroundStatsRegionId);
-    }
-
-    @computed get signalToNoise(): string | null {
-        if (!this.widgetStore.hasBackground) {
-            return null;
+            const frameMap = appStore.regionStats.get(fileId);
+            if (!frameMap || !regionId) {
+                return null;
+            }
+            const regionMap = frameMap.get(regionId);
+            if (!regionMap) {
+                return null;
+            }
+            return regionMap.get(this.getEffectiveStokes(frame)) || null;
         }
-        const data = this.statsData;
-        const background = this.backgroundStatsData;
-        if (!data || !background) {
-            return null;
-        }
-        return toExponential(getAnnulusSignalToNoise(data, background), 12);
+        return null;
     }
 
     @action showMouseEnterWidget = () => {
@@ -145,8 +139,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                             regionString = region.nameString;
                         }
                     }
-                    const component = this.widgetStore.isAnnulus ? ` (${this.widgetStore.effectiveRegion?.statsArea === "inner" ? "Inner disk" : "Annulus"})` : "";
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString}${component} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
                 } else {
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
                 }
@@ -281,7 +274,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     exportData = () => {
         const frame = this.widgetStore.effectiveFrame;
-        if (this.statsData && frame && (!this.widgetStore.hasBackground || this.signalToNoise !== null)) {
+        if (this.statsData && frame) {
             const fileName = frame.filename;
             const plotName = "statistics";
             const title = `# ${fileName} ${plotName}\n`;
@@ -296,8 +289,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
             const channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
             const stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
-            const componentInfo = this.widgetStore.isAnnulus ? `# component: ${this.widgetStore.effectiveRegion?.statsArea}\n` : "";
-            const comment = `${channelInfo}${stokesInfo}${regionInfo}${componentInfo}`;
+            const comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
 
@@ -306,11 +298,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 const unit = value.unit === "" ? "N/A" : value.unit;
                 rows += `${name.padEnd(12)}\t${value.num}\t${unit}\n`;
             });
-
-            if (this.widgetStore.hasBackground) {
-                rows += `# background: ${this.widgetStore.effectiveRegion?.statsBackground}\n`;
-                rows += `S/N\t${this.signalToNoise}\tN/A\n`;
-            }
 
             exportTsvFile(fileName, plotName, `${title}${comment}${header}${rows}`);
         }
@@ -336,7 +323,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         let formContent;
         let exportDataComponent: React.JSX.Element | null = null;
-        if (this.statsData && (!this.widgetStore.hasBackground || this.signalToNoise !== null)) {
+        if (this.statsData) {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
 
@@ -349,14 +336,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 </tr>
             ));
 
-            if (widgetStore.hasBackground) {
-                rows.push(
-                    <tr key="signal-to-noise">
-                        <td>S/N</td>
-                        <td>{this.signalToNoise}</td>
-                    </tr>
-                );
-            }
             formContent = (
                 <HTMLTable data-testid="statistics-table">
                     <thead className={appStore.isDarkTheme ? "dark-theme" : ""}>
@@ -375,7 +354,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 </div>
             );
         } else {
-            formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={widgetStore.shouldUseAnalysisRegions ? "Waiting for annulus and inner-disk statistics" : "Select a valid region from the dropdown"} />;
+            formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
         const className = classNames("stats-widget", {"dark-theme": appStore.isDarkTheme});

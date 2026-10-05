@@ -89,8 +89,7 @@ export enum ContourDialogTabs {
 
 export enum RegionDialogTabs {
     Configuration,
-    Styling,
-    Statistics
+    Styling
 }
 
 export enum FittingResultTabs {

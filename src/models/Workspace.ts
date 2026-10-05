@@ -147,8 +147,6 @@ export interface WorkspaceRegion {
     dashes?: number[];
     locked?: boolean;
     annotationStyles?: any;
-    statsArea?: "annulus" | "inner";
-    statsBackground?: "none" | "annulus" | "inner";
 }
 
 export interface WorkspaceColorBlending {

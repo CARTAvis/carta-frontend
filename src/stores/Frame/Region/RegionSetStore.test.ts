@@ -45,13 +45,8 @@ jest.mock("stores/Frame", () => {
 });
 
 jest.mock("models", () => ({
-    Transform2D: jest.fn().mockImplementation(() => ({scale: 1, rotation: 0})),
+    Transform2D: jest.fn(),
     isValidWcsPoint: jest.fn(() => true)
-}));
-
-jest.mock("utilities", () => ({
-    ...jest.requireActual("utilities"),
-    transformPoint: jest.fn((_, point) => ({...point}))
 }));
 
 import {RegionSetStore} from "./RegionSetStore";
@@ -370,25 +365,5 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(annulus.center).toEqual({x: 50, y: 50});
         expect(annulus.size).toEqual({x: 10, y: 20});
         expect(annulus.innerSize).toEqual({x: 5, y: 10});
-    });
-});
-
-describe("annulus statistics settings during spatial migration", () => {
-    test.each([true, false])("preserves area and background when migrating forward=%s", async isForward => {
-        const source = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
-        const destination = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
-        const annulus = source.addAnnulusRegion({x: 50, y: 50}, 20, 10, 10, 5, true);
-        annulus.modifiedTimestamp = 12345;
-        annulus.setStatsArea("annulus");
-        annulus.setStatsBackground("inner");
-
-        destination.migrateRegionsFromExistingSet(source, 1, isForward);
-        await Promise.resolve();
-
-        const migrated = destination.regions.find(region => region.regionType === CARTA.RegionType.ANNULUS)!;
-        expect(migrated).toBeDefined();
-        expect(migrated.statsArea).toBe("annulus");
-        expect(migrated.statsBackground).toBe("inner");
-        expect(migrated.annulusStatsRegionIds).toBeNull();
     });
 });
