@@ -2,7 +2,7 @@ import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@je
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
+import {NumberFormatType, Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
 import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
@@ -829,6 +829,44 @@ describe("FrameStore.getRegionProperties", () => {
             const imgMode = frame.getRegionProperties(ellipse.regionId);
             expect(imgMode).toEqual([worldMode[0]]);
         } finally {
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("marks coordinates in the degrees format with deg, per axis", async () => {
+        const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+        const previousSystem = overlay.system;
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        try {
+            await overlay.setSystem(SystemType.ICRS);
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0deg, 0deg\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.DMS);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0deg\], /);
+        } finally {
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            numbers.setCustomFormat(false);
+            numbers.setValidWcs(false);
             await overlay.setSystem(previousSystem);
             overlay.setValidWcs(false);
         }

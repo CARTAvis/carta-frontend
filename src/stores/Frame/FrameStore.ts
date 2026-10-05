@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {Polarizations, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "enums";
+import {NumberFormatType, Polarizations, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -2627,7 +2627,12 @@ export class FrameStore {
             return "Invalid";
         }
 
-        const center = regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
+        const numbers = AppStore.Instance.overlaySettings.numbers;
+        const unitX = numbers.formatTypeX === NumberFormatType.Degrees ? "deg" : "";
+        const unitY = numbers.formatTypeY === NumberFormatType.Degrees ? "deg" : "";
+        const withUnit = (value: string | undefined, unit: string) => (value === undefined || value === "Invalid" ? `${value}` : `${value}${unit}`);
+        const formatPoint = (point: {x?: string; y?: string}) => `${withUnit(point.x, unitX)}, ${withUnit(point.y, unitY)}`;
+        const center = formatPoint(regionId === RegionId.CURSOR ? (this.cursorInfo?.infoWCS ?? {}) : wcsCenter);
         const systemType = AppStore.Instance.overlaySettings.global.explicitSystem;
 
         switch (regionType) {
@@ -2636,7 +2641,7 @@ export class FrameStore {
             case CARTA.RegionType.LINE:
                 const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[0]) ?? {x: "Invalid", y: "Invalid"};
                 const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]) ?? {x: "Invalid", y: "Invalid"};
-                return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
+                return `Line (wcs:${systemType}) [[${formatPoint(wcsStartPoint)}], [${formatPoint(wcsEndPoint)}]]`;
             case CARTA.RegionType.RECTANGLE:
                 const recSizePoint = controlPoints[SIZE_POINT_INDEX];
                 const recWcsSize = this.getWcsSizeInArcsec(recSizePoint);
@@ -2651,7 +2656,7 @@ export class FrameStore {
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 controlPoints.forEach((point, index) => {
                     const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
-                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polygonWcsProperties += wcsPoint ? `[${formatPoint(wcsPoint)}]` : "[Invalid]";
                     polygonWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
                 });
                 return polygonWcsProperties;
@@ -2659,7 +2664,7 @@ export class FrameStore {
                 let polylineWcsProperties = `Polyline (wcs:${systemType})[`;
                 controlPoints.forEach((point, index) => {
                     const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
-                    polylineWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polylineWcsProperties += wcsPoint ? `[${formatPoint(wcsPoint)}]` : "[Invalid]";
                     polylineWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
                 });
                 return polylineWcsProperties;
