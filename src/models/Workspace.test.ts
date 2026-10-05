@@ -1,3 +1,6 @@
+import Ajv from "ajv";
+import {CARTA} from "carta-protobuf";
+
 import {type Workspace, WorkspaceConfig} from "./Workspace";
 
 describe("WorkspaceConfig.upgradeForRuntime", () => {
@@ -47,5 +50,17 @@ describe("WorkspaceConfig.upgradeForRuntime", () => {
 
         expect(runtimeRenderConfig).toEqual({});
         expect(storedWorkspace.files?.[0].renderConfig).toHaveProperty("alpha", "invalid");
+    });
+});
+
+describe("workspace annulus statistics compatibility", () => {
+    const schema = require("carta-schemas/workspace_schema_1.json");
+    const validate = new Ajv({strictTypes: false}).compile({definitions: schema.definitions, $ref: "#/definitions/region"});
+    const region = {id: 1, points: [], rotation: 0, type: CARTA.RegionType.ANNULUS};
+
+    test("accepts legacy regions and statistics settings without schema extensions", () => {
+        expect(validate(region)).toBe(true);
+        expect(validate({...region, statsArea: "annulus", statsBackground: "inner"})).toBe(true);
+        expect(validate({...region, statsArea: "inner", statsBackground: "none"})).toBe(true);
     });
 });

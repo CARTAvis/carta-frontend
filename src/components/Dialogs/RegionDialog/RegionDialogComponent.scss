@@ -4,6 +4,10 @@
     .#{$ns}-dialog-body {
         user-select: none;
 
+        .statistics-form .#{$ns}-html-select select {
+            width: 125px;
+        }
+
         .region-form {
             user-select: none;
 

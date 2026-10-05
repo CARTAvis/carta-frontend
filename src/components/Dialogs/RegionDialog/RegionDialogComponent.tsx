@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, type DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
@@ -146,9 +146,47 @@ export class RegionDialogComponent extends React.Component {
             if (configurationPanel) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} />;
                 bodyContent = (
-                    <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
+                    <Tabs
+                        id="regionDialogTabs"
+                        selectedTabId={this.selectedTab === RegionDialogTabs.Statistics && region.regionType !== CARTA.RegionType.ANNULUS ? RegionDialogTabs.Configuration : this.selectedTab}
+                        onChange={this.setSelectedTab}
+                    >
                         <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} data-testid="region-dialog-config-tab-title" />
                         <Tab id={RegionDialogTabs.Styling} title="Styling" panel={stylingPanel} data-testid="region-dialog-styling-tab-title" />
+                        {region.regionType === CARTA.RegionType.ANNULUS && (
+                            <Tab
+                                id={RegionDialogTabs.Statistics}
+                                title="Statistics"
+                                data-testid="region-dialog-statistics-tab-title"
+                                panel={
+                                    <div className="region-form statistics-form">
+                                        <FormGroup label="Area" inline={true}>
+                                            <HTMLSelect
+                                                value={region.statsArea}
+                                                options={[
+                                                    {value: "inner", label: "Inner disk"},
+                                                    {value: "annulus", label: "Annulus"}
+                                                ]}
+                                                onChange={event => region?.setStatsArea(event.target.value)}
+                                                data-testid="annulus-area-dropdown"
+                                            />
+                                        </FormGroup>
+                                        <FormGroup label="Background" inline={true}>
+                                            <HTMLSelect
+                                                value={region.statsBackground}
+                                                options={[
+                                                    {value: "none", label: "None"},
+                                                    {value: "annulus", label: "Annulus"},
+                                                    {value: "inner", label: "Inner disk"}
+                                                ]}
+                                                onChange={event => region?.setStatsBackground(event.target.value)}
+                                                data-testid="annulus-background-dropdown"
+                                            />
+                                        </FormGroup>
+                                    </div>
+                                }
+                            />
+                        )}
                     </Tabs>
                 );
             }

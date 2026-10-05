@@ -8,6 +8,33 @@ import {RegionWidgetStore} from "stores/Widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
     @observable coordinate: string = "z";
+    @computed get isAnnulus(): boolean {
+        return this.effectiveRegion?.regionType === CARTA.RegionType.ANNULUS;
+    }
+
+    @computed get hasBackground(): boolean {
+        return this.isAnnulus && this.effectiveRegion?.statsBackground !== "none";
+    }
+
+    @computed get shouldUseAnalysisRegions(): boolean {
+        return this.isAnnulus && (this.effectiveRegion?.statsArea === "inner" || this.hasBackground);
+    }
+
+    @computed get statsRegionId(): number | null {
+        if (!this.shouldUseAnalysisRegions) {
+            return this.effectiveRegionId;
+        }
+        const ids = this.effectiveRegion?.annulusStatsRegionIds;
+        return (this.effectiveRegion?.statsArea === "inner" ? ids?.inner : ids?.annulus) ?? null;
+    }
+
+    @computed get backgroundStatsRegionId(): number | null {
+        if (!this.hasBackground) {
+            return null;
+        }
+        const ids = this.effectiveRegion?.annulusStatsRegionIds;
+        return (this.effectiveRegion?.statsBackground === "inner" ? ids?.inner : ids?.annulus) ?? null;
+    }
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -34,33 +61,28 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
-            if (!frame || !frame.regionSet) {
+            const parentId = widgetStore.effectiveRegionId;
+            if (!frame?.regionSet || (parentId !== -1 && !widgetStore.effectiveRegion?.isClosedRegion)) {
                 return;
             }
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.effectiveRegionId;
-            const coordinate = widgetStore.coordinate;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || (region && region.isClosedRegion)) {
+            const regionIds = [widgetStore.statsRegionId, widgetStore.backgroundStatsRegionId];
+            for (const regionId of regionIds) {
+                if (regionId === null) {
+                    continue;
+                }
                 let frameRequirements = updatedRequirements.get(fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetStatsRequirements>();
                     updatedRequirements.set(fileId, frameRequirements);
                 }
-
-                let regionRequirements = frameRequirements.get(regionId ?? NaN);
-                if (!regionRequirements && regionId !== null) {
+                let regionRequirements = frameRequirements.get(regionId);
+                if (!regionRequirements) {
                     regionRequirements = new CARTA.SetStatsRequirements({fileId, regionId});
                     frameRequirements.set(regionId, regionRequirements);
                 }
-
-                if (regionRequirements && !regionRequirements.statsConfigs) {
-                    regionRequirements.statsConfigs = [];
-                }
-
-                const histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
-                if (!histogramConfig) {
-                    regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
+                if (!regionRequirements.statsConfigs.find(config => config.coordinate === widgetStore.coordinate)) {
+                    regionRequirements.statsConfigs.push({coordinate: widgetStore.coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
             }
         });

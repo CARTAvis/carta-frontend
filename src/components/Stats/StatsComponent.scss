@@ -35,10 +35,9 @@
 
     .stats-display {
         height: calc(100% - 40px);
+        overflow: auto;
 
         table {
-            height: 100%;
-            overflow-y: auto;
             padding: 5px 5px 0;
             display: block;
             user-select: text;

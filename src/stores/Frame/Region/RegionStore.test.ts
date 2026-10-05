@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {RegionOpacity} from "enums";
 
@@ -6,6 +7,7 @@ jest.mock("stores", () => ({
     AppStore: {
         Instance: {
             imageRatio: 1,
+            clearRegionStats: jest.fn(),
             resetCursorRegionSpectralProfileProgress: jest.fn(),
             resetRegionSpectralProfileProgress: jest.fn()
         }
@@ -34,7 +36,8 @@ import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
 const BACKEND_SERVICE = {
     setCursor: jest.fn(),
-    setRegion: jest.fn(() => Promise.resolve({regionId: 1}))
+    setRegion: jest.fn((_fileId?: number, _regionId?: number, _region?: unknown) => Promise.resolve({regionId: 1})),
+    removeRegion: jest.fn()
 };
 
 const MakeFrame = (overrides: Partial<any> = {}) =>
@@ -336,5 +339,198 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
             {x: 5, y: 20}
         ]);
         expect(invalidMinorAxis.isValid).toBe(false);
+    });
+});
+
+describe("frontend-managed annulus statistics regions", () => {
+    const makeAnnulus = () =>
+        new RegionStore(
+            BACKEND_SERVICE as any,
+            1,
+            MakeFrame(),
+            [
+                {x: 3, y: 4},
+                {x: 4, y: 3},
+                {x: 2, y: 1.5}
+            ],
+            CARTA.RegionType.ANNULUS,
+            5,
+            37
+        );
+    beforeEach(() => {
+        jest.clearAllMocks();
+        let nextId = 100;
+        BACKEND_SERVICE.setRegion.mockImplementation(() => Promise.resolve({regionId: nextId++}));
+    });
+
+    test("defaults statistics to the inner disk without background and updates settings", () => {
+        const region = makeAnnulus();
+        expect(region.statsArea).toBe("inner");
+        expect(region.statsBackground).toBe("none");
+        region.setStatsArea("annulus");
+        region.setStatsBackground("inner");
+        expect(region.statsArea).toBe("annulus");
+        expect(region.statsBackground).toBe("inner");
+    });
+
+    test.each(["inner", "annulus"])("resets matching %s area and background to None from either control", area => {
+        const region = makeAnnulus();
+        region.setStatsArea(area);
+        region.setStatsBackground(area);
+        expect(region.statsBackground).toBe("none");
+        region.setStatsArea(area === "inner" ? "annulus" : "inner");
+        region.setStatsBackground(area);
+        expect(region.statsBackground).toBe(area);
+        region.setStatsArea(area);
+        expect(region.statsBackground).toBe("none");
+    });
+
+    test("creates a shared annulus/ellipse pair with the existing region API", async () => {
+        const region = makeAnnulus();
+        const request = region.ensureAnnulusStatsRegions();
+        expect(region.ensureAnnulusStatsRegions()).toBe(request);
+        await request;
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenNthCalledWith(1, 1, -1, {
+            regionType: CARTA.RegionType.ANNULUS,
+            rotation: 37,
+            controlPoints: [
+                {x: 3, y: 4},
+                {x: 4, y: 3},
+                {x: 2, y: 1.5}
+            ]
+        });
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenNthCalledWith(2, 1, -1, {
+            regionType: CARTA.RegionType.ELLIPSE,
+            rotation: 37,
+            controlPoints: [
+                {x: 3, y: 4},
+                {x: 2, y: 1.5}
+            ]
+        });
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 100, inner: 101});
+        await region.ensureAnnulusStatsRegions();
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(2);
+    });
+
+    test("uses new IDs after editing and releases the old pair after creating its replacement", async () => {
+        const region = makeAnnulus();
+        await region.ensureAnnulusStatsRegions();
+        region.beginEditing();
+        region.setControlPoints(
+            [
+                {x: 8, y: 9},
+                {x: 6, y: 4},
+                {x: 3, y: 2}
+            ],
+            true
+        );
+        expect(region.annulusStatsRegionIds).toBeNull();
+        await region.ensureAnnulusStatsRegions();
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(2);
+        runInAction(() => {
+            region.isEditing = false;
+        });
+        await region.ensureAnnulusStatsRegions();
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 102, inner: 103});
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(100);
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(101);
+        expect(BACKEND_SERVICE.removeRegion.mock.invocationCallOrder[0]).toBeGreaterThan(BACKEND_SERVICE.setRegion.mock.invocationCallOrder[3]);
+    });
+
+    test("does not expose a geometry that changed while its regions were being created", async () => {
+        let resolveAck!: (value: {regionId: number}) => void;
+        let nextId = 101;
+        BACKEND_SERVICE.setRegion.mockImplementation(() => Promise.resolve({regionId: nextId++}));
+        BACKEND_SERVICE.setRegion.mockImplementationOnce(
+            () =>
+                new Promise(resolve => {
+                    resolveAck = resolve;
+                })
+        );
+        const region = makeAnnulus();
+        const request = region.ensureAnnulusStatsRegions();
+        await Promise.resolve();
+        region.beginEditing();
+        region.setControlPoints(
+            [
+                {x: 8, y: 9},
+                {x: 6, y: 4},
+                {x: 3, y: 2}
+            ],
+            true
+        );
+        runInAction(() => {
+            region.isEditing = false;
+        });
+        resolveAck({regionId: 100});
+        await request;
+        expect(region.annulusStatsRegionIds).toBeNull();
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenNthCalledWith(2, 1, -1, {
+            regionType: CARTA.RegionType.ELLIPSE,
+            rotation: 37,
+            controlPoints: [
+                {x: 3, y: 4},
+                {x: 2, y: 1.5}
+            ]
+        });
+        await region.ensureAnnulusStatsRegions();
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 102, inner: 103});
+        expect(region.hasAnnulusStatsRegion(100)).toBe(false);
+    });
+
+    test("cleans up an acknowledged region if deletion happened during creation", async () => {
+        let resolveAck!: (value: {regionId: number}) => void;
+        BACKEND_SERVICE.setRegion.mockImplementationOnce(
+            () =>
+                new Promise(resolve => {
+                    resolveAck = resolve;
+                })
+        );
+        const region = makeAnnulus();
+        const request = region.ensureAnnulusStatsRegions();
+        await Promise.resolve();
+        region.clearAnnulusStatsRegions();
+        resolveAck({regionId: 100});
+        await request;
+        expect(region.annulusStatsRegionIds).toBeNull();
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(1);
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(100);
+    });
+
+    test("removes a partial pair after failure and permits retry", async () => {
+        BACKEND_SERVICE.setRegion.mockResolvedValueOnce({regionId: 90}).mockRejectedValueOnce(new Error("creation failed"));
+        const region = makeAnnulus();
+        await expect(region.ensureAnnulusStatsRegions()).rejects.toThrow("creation failed");
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(90);
+        expect(region.annulusStatsRegionIds).toBeNull();
+        await region.ensureAnnulusStatsRegions();
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 100, inner: 101});
+        region.clearAnnulusStatsRegions();
+        expect(region.annulusStatsRegionIds).toBeNull();
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(100);
+        expect(BACKEND_SERVICE.removeRegion).toHaveBeenCalledWith(101);
+    });
+
+    test.each([false, true])("reconnects with an old creation request pending, previously canceled=%s", async isCanceled => {
+        let resolveAck!: (value: {regionId: number}) => void;
+        BACKEND_SERVICE.setRegion.mockImplementationOnce(
+            () =>
+                new Promise(resolve => {
+                    resolveAck = resolve;
+                })
+        );
+        const region = makeAnnulus();
+        const oldRequest = region.ensureAnnulusStatsRegions();
+        await Promise.resolve();
+        if (isCanceled) {
+            region.clearAnnulusStatsRegions();
+        }
+        region.clearAnnulusStatsRegions(false);
+        await region.ensureAnnulusStatsRegions();
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 100, inner: 101});
+        resolveAck({regionId: 100});
+        await oldRequest;
+        expect(BACKEND_SERVICE.removeRegion).not.toHaveBeenCalled();
+        expect(region.annulusStatsRegionIds).toMatchObject({annulus: 100, inner: 101});
     });
 });

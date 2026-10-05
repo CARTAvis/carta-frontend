@@ -5,6 +5,7 @@ jest.mock("axios", () => ({
 
 jest.mock("mobx", () => {
     const actual = jest.requireActual("mobx");
+    actual.configure({safeDescriptors: false});
     return {
         ...actual,
         autorun: jest.fn(() => jest.fn()),
@@ -31,6 +32,7 @@ jest.mock("components/Shared", () => ({
 
 jest.mock("models", () => ({
     CARTA_INFO: {},
+    WorkspaceConfig: jest.requireActual("models/Workspace").WorkspaceConfig,
     COMPUTED_POLARIZATIONS: [],
     FloatingObjzIndexManager: jest.fn().mockImplementation(() => ({})),
     PresetLayout: {},
@@ -79,6 +81,11 @@ jest.mock("services", () => ({
             zfpReady: false
         }
     }
+}));
+
+jest.mock("utilities", () => ({
+    ...jest.requireActual("utilities"),
+    exportScreenshot: jest.fn(() => Promise.resolve(undefined))
 }));
 
 const MockMakeStore = (overrides = {}) => ({...overrides});
@@ -415,5 +422,100 @@ describe("AppStore region copy-paste", () => {
         ]);
         expect(pastedRegions[1].controlPoints).toEqual([{x: 70, y: 30}]);
         expect(regionSet.setSelectionByIds).toHaveBeenCalledWith([-1, -2], -1);
+    });
+});
+
+describe("AppStore frontend-managed annulus statistics", () => {
+    const appStore = AppStore.Instance;
+    let region: {regionId: number; hasAnnulusStatsRegion: jest.Mock};
+    beforeEach(() => {
+        region = {regionId: 1, hasAnnulusStatsRegion: jest.fn((id: number) => id === 51 || id === 52)};
+        const frame = {frameInfo: {fileId: 4}, regionSet: {regions: [region]}};
+        Object.defineProperty(appStore, "imageViewConfigStore", {configurable: true, value: {frames: [frame], visibleFrames: []}});
+        appStore.regionStats = new Map();
+    });
+
+    test("routes ordinary and hidden-region statistics for a matched image", () => {
+        for (const regionId of [1, 51, 52]) {
+            const message = new CARTA.RegionStatsData({fileId: 4, regionId, stokes: 0, channel: 0});
+            appStore.handleRegionStatsStream(message);
+            expect(appStore.regionStats.get(4)?.get(regionId)?.get(0)).toEqual(message);
+        }
+    });
+
+    test("drops late statistics for a removed geometry and clears its cached results", () => {
+        const message = new CARTA.RegionStatsData({fileId: 4, regionId: 51, stokes: 0, channel: 0});
+        appStore.handleRegionStatsStream(message);
+        expect(appStore.regionStats.get(4)?.has(51)).toBe(true);
+        region.hasAnnulusStatsRegion.mockReturnValue(false);
+        appStore.clearRegionStats([51, 52]);
+        appStore.handleRegionStatsStream(message);
+        expect(appStore.regionStats.get(4)?.has(51)).toBe(false);
+    });
+});
+
+describe("annulus statistics settings in workspaces", () => {
+    test.each([true, false])("restores statistics settings, legacy workspace=%s", async isLegacy => {
+        const appStore = AppStore.Instance;
+        appStore.setActiveImage(null);
+        const region = MakeRegion(1, false, {
+            regionType: CARTA.RegionType.ANNULUS,
+            statsArea: "annulus",
+            statsBackground: "inner"
+        });
+        const restoredRegions: any[] = [];
+        const frame = {
+            frameInfo: {fileId: 1},
+            filename: "image.fits",
+            renderConfig: {updateFromWorkspace: jest.fn()},
+            contourConfig: {},
+            vectorOverlayConfig: {},
+            setChannels: jest.fn(),
+            regionSet: {
+                regions: [region],
+                addExistingRegion: jest.fn(() => {
+                    const restored = MakeRegion(2, false, {
+                        statsArea: "inner",
+                        statsBackground: "none",
+                        setLocked: jest.fn(),
+                        setStatsArea: jest.fn(function (area) {
+                            this.statsArea = area;
+                        }),
+                        setStatsBackground: jest.fn(function (background) {
+                            this.statsBackground = background;
+                        })
+                    });
+                    restoredRegions.push(restored);
+                    return restored;
+                })
+            }
+        };
+        appStore.spatialReference = null;
+        appStore.spectralReference = null;
+        appStore.rasterScalingReference = null;
+        Object.defineProperty(appStore, "imageViewConfigStore", {configurable: true, value: {frames: [frame], visibleFrames: [], colorBlendingImageMap: new Map()}});
+        Object.defineProperty(appStore, "animatorStore", {configurable: true, value: {stopAnimation: jest.fn()}});
+        Object.defineProperty(appStore, "tileService", {configurable: true, value: {clearRequestQueue: jest.fn()}});
+        Object.defineProperty(appStore, "removeAllFrames", {configurable: true, value: jest.fn()});
+        Object.defineProperty(appStore, "appendFile", {configurable: true, value: jest.fn(() => Promise.resolve(frame))});
+        const apiService = {
+            setWorkspace: jest.fn((_, workspace) => Promise.resolve(JSON.parse(JSON.stringify(workspace)))),
+            getWorkspace: jest.fn()
+        };
+        Object.defineProperty(appStore, "apiService", {configurable: true, value: apiService});
+
+        expect(await appStore.saveWorkspace("annulus")).toBe(true);
+        const savedWorkspace = await apiService.setWorkspace.mock.results[0].value;
+        const savedRegion = savedWorkspace.files[0].regionsSet.regions[0];
+        expect(savedRegion).toMatchObject({statsArea: "annulus", statsBackground: "inner"});
+        if (isLegacy) {
+            delete savedRegion.statsArea;
+            delete savedRegion.statsBackground;
+        }
+        apiService.getWorkspace.mockResolvedValue(savedWorkspace);
+
+        expect(await appStore.loadWorkspace("annulus")).toBe(true);
+        expect(restoredRegions[0].statsArea).toBe(isLegacy ? "inner" : "annulus");
+        expect(restoredRegions[0].statsBackground).toBe(isLegacy ? "none" : "inner");
     });
 });

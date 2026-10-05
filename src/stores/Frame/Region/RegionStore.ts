@@ -2,7 +2,7 @@ import {Colors, type IconName} from "@blueprintjs/core";
 import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 
 import {CoordinateMode, PreferenceKeys, RegionOpacity} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
@@ -70,6 +70,24 @@ export class RegionStore {
     @observable lineRegionSampleWidth: number = 3;
     @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
+    @observable statsArea: "annulus" | "inner" = "inner";
+    @observable statsBackground: "none" | "annulus" | "inner" = "none";
+
+    @action setStatsArea = (area: string) => {
+        if (area === "annulus" || area === "inner") {
+            this.statsArea = area;
+            if (this.statsBackground === area) {
+                this.statsBackground = "none";
+            }
+        }
+    };
+
+    @action setStatsBackground = (background: string) => {
+        if (background === "none" || background === "annulus" || background === "inner") {
+            this.statsBackground = background === this.statsArea ? "none" : background;
+        }
+    };
+
     /* eslint-disable @typescript-eslint/naming-convention */
     public static get MIN_LINE_WIDTH(): number {
         return PreferenceStore.Instance.getMinConstraint(PreferenceKeys.REGION_LINE_WIDTH) ?? 0.5;
@@ -94,6 +112,98 @@ export class RegionStore {
     protected readonly regionApproximationMap: Map<AST.Mapping, Point2D[]>;
     private readonly annulusApproximationMap: Map<AST.Mapping, {outer: Point2D[]; inner: Point2D[]}>;
     public modifiedTimestamp: number;
+    @observable.ref private annulusStatsRegions: {annulus: number; inner: number; geometry: string} | null = null;
+    private annulusStatsRequest: Promise<void> | null = null;
+    private annulusStatsGeneration = 0;
+    private annulusStatsSession = 0;
+
+    private getAnnulusStatsGeometry = () => JSON.stringify([this.regionId, this.controlPoints, this.rotation]);
+
+    @computed get annulusStatsRegionIds(): {annulus: number; inner: number} | null {
+        if (this.regionType !== CARTA.RegionType.ANNULUS || this.isCreating || this.isEditing || this.annulusStatsRegions?.geometry !== this.getAnnulusStatsGeometry()) {
+            return null;
+        }
+        return this.annulusStatsRegions;
+    }
+
+    hasAnnulusStatsRegion = (regionId: number): boolean => this.annulusStatsRegions?.annulus === regionId || this.annulusStatsRegions?.inner === regionId;
+
+    /** Create ordinary backend regions for a fixed annulus geometry, shared by statistics widgets. */
+    ensureAnnulusStatsRegions = (): Promise<void> => {
+        if (this.regionType !== CARTA.RegionType.ANNULUS || this.regionId <= 0 || !this.isValid || this.isCreating || this.isEditing || this.annulusStatsRegionIds) {
+            return Promise.resolve();
+        }
+        if (this.annulusStatsRequest) {
+            return this.annulusStatsRequest;
+        }
+
+        const geometry = this.getAnnulusStatsGeometry();
+        const generation = this.annulusStatsGeneration;
+        const session = this.annulusStatsSession;
+        const annulus = {regionType: CARTA.RegionType.ANNULUS, rotation: this.rotation, controlPoints: this.controlPoints.map(point => ({...point}))};
+        const inner = {regionType: CARTA.RegionType.ELLIPSE, rotation: annulus.rotation, controlPoints: [annulus.controlPoints[0], annulus.controlPoints[2]]};
+        const createdIds: number[] = [];
+
+        this.annulusStatsRequest = Promise.resolve().then(async () => {
+            try {
+                for (const region of [annulus, inner]) {
+                    const ack = await this.backendService.setRegion(this.fileId, -1, region);
+                    if (ack.success === false || !ack.regionId || ack.regionId <= 0) {
+                        throw new Error(ack.message || "Could not create annulus statistics region");
+                    }
+                    createdIds.push(ack.regionId);
+                    if (generation !== this.annulusStatsGeneration) {
+                        return;
+                    }
+                }
+                runInAction(() => {
+                    const previous = this.annulusStatsRegions;
+                    this.annulusStatsRegions = {annulus: createdIds[0], inner: createdIds[1], geometry};
+                    createdIds.length = 0;
+                    if (previous) {
+                        this.removeAnnulusStatsRegions([previous.annulus, previous.inner]);
+                    }
+                });
+            } finally {
+                // A reconnect invalidates IDs from the old backend session.
+                if (session === this.annulusStatsSession) {
+                    this.removeAnnulusStatsRegions(createdIds);
+                }
+                if (generation === this.annulusStatsGeneration) {
+                    this.annulusStatsRequest = null;
+                }
+            }
+        });
+        return this.annulusStatsRequest;
+    };
+
+    private removeAnnulusStatsRegions = (ids: number[]) => {
+        if (ids.length) {
+            ids.forEach(id => this.backendService.removeRegion(id));
+            AppStore.Instance.clearRegionStats(ids);
+        }
+    };
+
+    @action clearAnnulusStatsRegions = (shouldRemoveBackend = true) => {
+        if (shouldRemoveBackend && !this.annulusStatsRegions && !this.annulusStatsRequest) {
+            return;
+        }
+        // Always advance the session on reconnect, including canceled requests still awaiting an ack.
+        if (!shouldRemoveBackend) {
+            this.annulusStatsSession++;
+        }
+        this.annulusStatsGeneration++;
+        this.annulusStatsRequest = null;
+        const previous = this.annulusStatsRegions;
+        this.annulusStatsRegions = null;
+        if (previous) {
+            if (shouldRemoveBackend) {
+                this.removeAnnulusStatsRegions([previous.annulus, previous.inner]);
+            } else {
+                AppStore.Instance.clearRegionStats([previous.annulus, previous.inner]);
+            }
+        }
+    };
 
     public static regionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {

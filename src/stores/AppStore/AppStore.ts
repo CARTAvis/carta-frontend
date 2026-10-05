@@ -2355,6 +2355,14 @@ export class AppStore {
             return;
         }
 
+        // Discard late results for removed or superseded analysis regions.
+        if (regionStatsData.regionId > 0) {
+            const regions = this.getFrame(regionStatsData.fileId)?.regionSet?.regions;
+            if (!regions?.some(region => region.regionId === regionStatsData.regionId || region.hasAnnulusStatsRegion(regionStatsData.regionId))) {
+                return;
+            }
+        }
+
         let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
         if (!frameStatsMap) {
             frameStatsMap = new ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>();
@@ -2368,6 +2376,11 @@ export class AppStore {
         }
 
         regionStatsMap.set(regionStatsData.stokes, regionStatsData);
+    };
+
+    @action clearRegionStats = (regionIds: number[]) => {
+        this.regionStats.forEach(frameStats => regionIds.forEach(id => frameStats.delete(id)));
+        this.statsRequirements.forEach(frameRequirements => regionIds.forEach(id => frameRequirements.delete(id)));
     };
 
     handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
@@ -2625,6 +2638,7 @@ export class AppStore {
         // Clear requirements once session has resumed
         this.initRequirements();
         this.isResumingSession = false;
+        new Set(this.frames.flatMap(frame => frame.regionSet.regions)).forEach(region => region.clearAnnulusStatsRegions(false));
         this.backendService.hasConnectionDropped = false;
 
         // Reset file browser loading states
@@ -2787,6 +2801,8 @@ export class AppStore {
                             );
                             if (region) {
                                 region.setLocked(regionInfo.locked ?? false);
+                                region.setStatsArea(regionInfo.statsArea ?? "inner");
+                                region.setStatsBackground(regionInfo.statsBackground ?? "none");
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
                                     frame.regionSet.selectSingleRegion(region);
@@ -2908,6 +2924,7 @@ export class AppStore {
                         color: region.color,
                         lineWidth: region.lineWidth,
                         locked: region.isLocked,
+                        ...(region.regionType === CARTA.RegionType.ANNULUS ? {statsArea: region.statsArea, statsBackground: region.statsBackground} : {}),
                         dashes: region.dashLength ? [region.dashLength] : [],
                         // Check if styles are available. If so, add them to the region
                         annotationStyles: (region as any).getAnnotationStyles?.()
@@ -3739,9 +3756,25 @@ export class AppStore {
     };
 
     private recalculateStatsRequirements() {
-        if (!this.activeFrame) {
+        if (!this.activeFrame || this.backendService.connectionStatus !== ConnectionStatus.ACTIVE || this.isResumingSession || this.backendService.hasConnectionDropped) {
             return;
         }
+
+        const analysisRegions = new Set<RegionStore>();
+        this.widgetsStore.statsWidgets.forEach(widget => {
+            if (widget.shouldUseAnalysisRegions && widget.effectiveRegion) {
+                analysisRegions.add(widget.effectiveRegion);
+                widget.effectiveRegion.ensureAnnulusStatsRegions().catch(error => console.error(error));
+            }
+        });
+        const regionSets = new Set(this.frames.map(frame => frame.regionSet));
+        regionSets.forEach(regionSet =>
+            regionSet.regions.forEach(region => {
+                if (!analysisRegions.has(region)) {
+                    region.clearAnnulusStatsRegions();
+                }
+            })
+        );
 
         const updatedRequirements = StatsWidgetStore.calculateRequirementsMap(this.widgetsStore.statsWidgets);
         const diffList = StatsWidgetStore.diffStatsRequirements(this.statsRequirements, updatedRequirements);

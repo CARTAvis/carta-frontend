@@ -739,6 +739,7 @@ export class RegionSetStore {
             const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
+            region.clearAnnulusStatsRegions();
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
             }
@@ -860,6 +861,8 @@ export class RegionSetStore {
                         newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], true, annotationStyles);
                         newRegion.endCreating();
                     }
+                    newRegion.setStatsArea(region.statsArea);
+                    newRegion.setStatsBackground(region.statsBackground);
                     newRegion.setLocked(region.isLocked);
                     newRegion.setOpacity(region.opacity);
                     // Link the two regions together

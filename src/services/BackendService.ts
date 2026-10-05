@@ -538,7 +538,7 @@ export class BackendService {
         return false;
     }
 
-    async setRegion(fileId: number, regionId: number, region: RegionStore, isRequestingPreview?: boolean): Promise<CARTA.SetRegionAck.$Properties> {
+    async setRegion(fileId: number, regionId: number, region: Pick<RegionStore, "regionType" | "rotation" | "controlPoints">, isRequestingPreview?: boolean): Promise<CARTA.SetRegionAck.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
