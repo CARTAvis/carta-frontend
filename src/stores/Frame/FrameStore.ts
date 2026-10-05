@@ -2602,11 +2602,6 @@ export class FrameStore {
         return propertyString;
     }
 
-    public getRegionWcsProperties = (region: RegionStore): string => {
-        const regionFrameProperties = this.getRegionFrameProperties(region);
-        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
-    };
-
     private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
         const spatialTransformAST = this.spatialTransformAST;
         if (!this.spatialReference || !spatialTransformAST) {

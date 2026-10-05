@@ -552,8 +552,7 @@ export class ImageFittingStore {
                 const region = this.effectiveFrame?.getRegion(regionId);
                 if (region) {
                     log += `Region: ${region.nameString}\n`;
-                    log += region.regionProperties + "\n";
-                    log += this.effectiveFrame?.getRegionWcsProperties(region) + "\n";
+                    this.effectiveFrame?.getRegionProperties(regionId).forEach(property => (log += `${property}\n`));
                 }
                 break;
         }
