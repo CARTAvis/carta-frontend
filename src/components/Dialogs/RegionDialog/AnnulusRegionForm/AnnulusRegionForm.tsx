@@ -318,12 +318,12 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                     {yInput}
                     <span className="info-string">{infoString}</span>
                 </FormGroup>
-                <FormGroup label="Outer ring" labelInfo={pxUnit} inline={true}>
+                <FormGroup label="Outer axes" labelInfo={pxUnit} inline={true}>
                     {outerWidthInput}
                     {outerHeightInput}
                     <span className="info-string">{outerSizeInfoString}</span>
                 </FormGroup>
-                <FormGroup label="Inner ring" labelInfo={pxUnit} inline={true}>
+                <FormGroup label="Inner axes" labelInfo={pxUnit} inline={true}>
                     {innerWidthInput}
                     {innerHeightInput}
                     <span className="info-string">{innerSizeInfoString}</span>
