@@ -2,10 +2,10 @@ import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@je
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
+import {Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
-import {type FrameInfo, FrameStore, PreferenceStore} from "../index";
+import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
@@ -803,6 +803,39 @@ describe("FrameStore.getRegionProperties", () => {
         expect(properties).toHaveLength(2);
         expect(properties[0]).toMatch(/^ellipse\[\[320\.000000pix, 400\.000000pix\]/);
         expect(properties[1]).toBe(world);
+    });
+
+    test("with the real generator, adds the world definition except in IMG display mode", async () => {
+        const overlay = AppStore.Instance.overlaySettings.global;
+        const previousSystem = overlay.system;
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        try {
+            await overlay.setSystem(SystemType.FK5);
+            const worldMode = frame.getRegionProperties(ellipse.regionId);
+            expect(worldMode).toHaveLength(2);
+            expect(worldMode[1]).toMatch(/^ellipse\(wcs:FK5\)\[\[/);
+
+            await overlay.setSystem(SystemType.Image);
+            expect(AppStore.Instance.overlaySettings.isImgCoordinates).toBe(true);
+            const imgMode = frame.getRegionProperties(ellipse.regionId);
+            expect(imgMode).toEqual([worldMode[0]]);
+        } finally {
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("returns no region lines for a region that does not exist", () => {
+        expect(new FrameStore(STOKES_CUBEFRAME_INFO).getRegionProperties(99)).toEqual([]);
     });
 
     test("omits the world definition when none can be generated, e.g. in IMG display mode", () => {
