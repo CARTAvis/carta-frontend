@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {autorun, runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, PreferenceKeys, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, DragMode, ImageType, PreferenceKeys, WorkspaceItemKind} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
@@ -386,11 +386,11 @@ describe("Catalog plot workspace binding", () => {
     });
 
     test("ignores what an older layout kept about the columns a plot is drawn from", () => {
-        widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {widgetId: "plot-a", xColumnName: "LEGACY", dragMode: "pan"});
+        widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0", {widgetId: "plot-a", xColumnName: "LEGACY", dragMode: DragMode.Zoom});
 
         const plotStore = widgetsStore.catalogPlotWidgets.get("catalog-plot-0");
         expect(plotStore?.xColumnName).toBe("RA");
-        expect(plotStore?.dragMode).toBe("pan");
+        expect(plotStore?.dragMode).toBe(DragMode.Zoom);
     });
 
     test("saves the fallback a plot shows, without what it was drawn from, when its catalog is unavailable", () => {
