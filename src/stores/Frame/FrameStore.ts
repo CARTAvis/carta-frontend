@@ -2644,6 +2644,13 @@ export class FrameStore {
                 const ellipseWcsSize = this.getWcsSizeInArcsec(ellipseSizePoint);
                 const ellipseSize = {x: formattedArcsec(ellipseWcsSize?.x, WCS_PRECISION), y: formattedArcsec(ellipseWcsSize?.y, WCS_PRECISION)};
                 return `ellipse(wcs:${systemType})[[${center}], [${ellipseSize.x ?? ""}, ${ellipseSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
+            case CARTA.RegionType.ANNULUS: {
+                const outerWcsSize = this.getWcsSizeInArcsec(controlPoints[SIZE_POINT_INDEX]);
+                const innerWcsSize = this.getWcsSizeInArcsec(controlPoints[2]);
+                const outerSize = {x: formattedArcsec(outerWcsSize?.x, WCS_PRECISION), y: formattedArcsec(outerWcsSize?.y, WCS_PRECISION)};
+                const innerSize = {x: formattedArcsec(innerWcsSize?.x, WCS_PRECISION), y: formattedArcsec(innerWcsSize?.y, WCS_PRECISION)};
+                return `annulus(wcs:${systemType})[[${center}], [${innerSize.x ?? ""}, ${innerSize.y ?? ""}], [${outerSize.x ?? ""}, ${outerSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
+            }
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 controlPoints.forEach((point, index) => {

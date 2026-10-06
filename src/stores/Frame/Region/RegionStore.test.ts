@@ -306,7 +306,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         annulus.selectPoint(9);
         annulus.moveSelectedPoint(0, 2); // localDelta.y = 2
         expect(annulus.innerSize.x).toBe(7);
-        expect(annulus.innerSize.y).toBe(14); // ratio 20/10 = 2, so 7 * 2 = 14
+        expect(annulus.innerSize.y).toBe(10);
 
         // Test outer radius corner/side movement
         annulus.selectPoint(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
@@ -315,7 +315,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(annulus.innerSize.x).toBeGreaterThan(0);
     });
 
-    test("annulus region setInnerSize aspect ratio enforcement for x and y edits", () => {
+    test("annulus inner axes can be edited independently", () => {
         const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
             {x: 0, y: 0},
             {x: 10, y: 20},
@@ -325,12 +325,12 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         // Edit inner size x from 5 to 6 (keeping y at 10) -> diffX = 1, diffY = 0
         annulus.setInnerSize({x: 6, y: 10});
         expect(annulus.innerSize.x).toBe(6);
-        expect(annulus.innerSize.y).toBe(12); // aspect ratio 10/20 = 0.5, so 6 / 0.5 = 12
+        expect(annulus.innerSize.y).toBe(10);
 
         // Edit inner size y from 12 to 16 (keeping x at 6) -> diffX = 0, diffY = 4
         annulus.setInnerSize({x: 6, y: 16});
         expect(annulus.innerSize.y).toBe(16);
-        expect(annulus.innerSize.x).toBe(8); // aspect ratio 0.5, so 16 * 0.5 = 8
+        expect(annulus.innerSize.x).toBe(6);
     });
 
     test("annulus region is invalid when inner axes are not contained by outer axes", () => {

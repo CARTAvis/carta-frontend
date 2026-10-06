@@ -625,8 +625,8 @@ export class RegionStore {
             const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
-            const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-            this.setAnnulusGeometry(this.center, p, {x: ratio, y: ratio}, shouldSkipUpdate);
+            const size = {x: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(p.x)), y: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(p.y))};
+            this.setAnnulusGeometry(this.center, size, {x: this.innerSize.x / size.x, y: this.innerSize.y / size.y}, shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }
@@ -634,11 +634,7 @@ export class RegionStore {
 
     @action setInnerSize = (p: Point2D, shouldSkipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
-            // Enforce same shape as outer ring: inner aspect ratio must match outer aspect ratio.
-            const diffX = Math.abs(p.x - this.innerSize.x);
-            const diffY = Math.abs(p.y - this.innerSize.y);
-            const axis = diffY > diffX ? "y" : "x";
-            this.setControlPoint(2, getAnnulusInnerSize(this.size, p, axis), shouldSkipUpdate);
+            this.setControlPoint(2, getAnnulusInnerSize(this.size, {x: Math.min(Math.abs(p.x), this.size.x * 0.99), y: Math.min(Math.abs(p.y), this.size.y * 0.99)}), shouldSkipUpdate);
         }
     };
 
@@ -811,7 +807,6 @@ export class RegionStore {
         // re-calculate projected points when the status changes from unclosed to closed
         if (this.regionType === CARTA.RegionType.POLYGON) {
             this.regionApproximationMap.clear();
-            this.annulusApproximationMap.clear();
         }
 
         if (this.regionType !== CARTA.RegionType.POINT && this.regionType !== CARTA.RegionType.ANNPOINT) {
@@ -965,8 +960,7 @@ export class RegionStore {
         });
         if (edit) {
             if (this.regionType === CARTA.RegionType.ANNULUS) {
-                const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-                this.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
+                this.setAnnulusGeometry(edit.center, edit.size, {x: this.innerSize.x / this.size.x, y: this.innerSize.y / this.size.y});
             } else {
                 this.setControlPoints([edit.center, edit.size]);
             }

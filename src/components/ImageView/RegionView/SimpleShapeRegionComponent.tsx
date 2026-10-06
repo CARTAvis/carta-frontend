@@ -162,8 +162,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
         });
         if (region.regionType === CARTA.RegionType.ANNULUS) {
-            const ratio = region.size.y > 0 ? region.innerSize.y / region.size.y : 0.5;
-            region.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
+            region.setAnnulusGeometry(edit.center, edit.size, {x: region.innerSize.x / region.size.x, y: region.innerSize.y / region.size.y});
             return;
         }
         region.setControlPoints([edit.center, edit.size]);
@@ -203,8 +202,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const delta = subtract2D(newAnchorPoint, region.center);
         const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
         const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(region.size.x * 0.99, Math.abs(localDelta.y)));
-        const ratio = region.size.x > 0 ? region.size.y / region.size.x : 1;
-        const newInnerY = newInnerX * ratio;
+        const newInnerY = Math.min(region.size.y * 0.99, Math.abs(localDelta.x));
         region.setInnerSize(getAnnulusInnerSize(region.size, {x: newInnerX, y: newInnerY}, "x"));
     };
 
