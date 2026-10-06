@@ -546,7 +546,7 @@ export class ImageFittingStore {
                 if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
                     log += getRegionPixelProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                     const wcsProperties = this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation);
-                    if (wcsProperties && wcsProperties !== "Invalid") {
+                    if (wcsProperties) {
                         log += wcsProperties + "\n";
                     }
                 }

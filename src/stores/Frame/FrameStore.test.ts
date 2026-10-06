@@ -1,8 +1,9 @@
-import {afterAll, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {NumberFormatType, Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
+import {NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
 import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
@@ -786,7 +787,7 @@ describe("FrameStore.getRegionProperties", () => {
         ],
         rotation: 30
     };
-    const getProperties = (wcsProperties: string, isValidWcs: boolean = true): string[] =>
+    const getProperties = (wcsProperties: string | undefined, isValidWcs: boolean = true): string[] =>
         FrameStore.prototype.getRegionProperties.call(
             {
                 isValidWcs,
@@ -805,17 +806,22 @@ describe("FrameStore.getRegionProperties", () => {
         expect(properties[1]).toBe(world);
     });
 
-    test("with the real generator, adds the world definition except in IMG display mode", async () => {
+    test("with the real generator, adds the world definition in IMG display mode in the image's default system", async () => {
         const overlay = AppStore.Instance.overlaySettings.global;
         const previousSystem = overlay.system;
+        const wcsCopy = {copy: true};
+        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const deleteObject = jest.spyOn(AST, "deleteObject");
         const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
             isValidWcs: boolean;
             wcsInfoForTransformation: unknown;
+            defaultWcsSystem: SystemType;
             getRegion: (regionId: number) => unknown;
             getRegionProperties: (regionId: number) => string[];
         };
         frame.isValidWcs = true;
         frame.wcsInfoForTransformation = {};
+        frame.defaultWcsSystem = SystemType.Galactic;
         frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
         overlay.setValidWcs(true);
         try {
@@ -827,7 +833,10 @@ describe("FrameStore.getRegionProperties", () => {
             await overlay.setSystem(SystemType.Image);
             expect(AppStore.Instance.overlaySettings.isImgCoordinates).toBe(true);
             const imgMode = frame.getRegionProperties(ellipse.regionId);
-            expect(imgMode).toEqual([worldMode[0]]);
+            expect(imgMode).toHaveLength(2);
+            expect(imgMode[0]).toBe(worldMode[0]);
+            expect(imgMode[1]).toMatch(/^ellipse\(wcs:GALACTIC\)\[\[0deg, 0deg\], /);
+            expect(deleteObject).toHaveBeenCalledWith(wcsCopy);
         } finally {
             await overlay.setSystem(previousSystem);
             overlay.setValidWcs(false);
@@ -877,9 +886,180 @@ describe("FrameStore.getRegionProperties", () => {
     });
 
     test("omits the world definition when none can be generated, e.g. in IMG display mode", () => {
-        const properties = getProperties("Invalid");
+        const properties = getProperties(undefined);
         expect(properties).toHaveLength(1);
         expect(properties[0]).toMatch(/^ellipse\[\[/);
         expect(getProperties("unused", false)).toHaveLength(1);
+    });
+});
+
+describe("FrameStore.genRegionWcsProperties output", () => {
+    const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+    const badX = 999;
+    let previousSystem: SystemType;
+
+    const makeFrame = () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            pixelUnitSizeArcsec: {x: number; y: number};
+            cursorInfo: unknown;
+            genRegionWcsProperties: (regionType: CARTA.RegionType, controlPoints: {x: number; y: number}[], rotation: number, regionId?: number) => string;
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.pixelUnitSizeArcsec = {x: 2, y: 3};
+        runInAction(() => {
+            frame.cursorInfo = {infoWCS: {x: "1:00:00", y: "2:00:00"}};
+        });
+        return frame;
+    };
+
+    beforeEach(async () => {
+        previousSystem = overlay.system;
+        jest.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        jest.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        jest.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `${x}.5`, y: `${y}.25`}));
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        numbers.setFormatX(NumberFormatType.Degrees);
+        numbers.setFormatY(NumberFormatType.Degrees);
+        await overlay.setSystem(SystemType.ICRS);
+    });
+
+    afterEach(async () => {
+        jest.restoreAllMocks();
+        numbers.setCustomFormat(false);
+        numbers.setValidWcs(false);
+        await overlay.setSystem(previousSystem);
+        overlay.setValidWcs(false);
+    });
+
+    test("formats every region shape", () => {
+        const frame = makeFrame();
+        const center = {x: 10, y: 20};
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [center], 0)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [10.5deg, 20.25deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.RECTANGLE, [center, {x: 4, y: 6}], 15)).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 15.000000deg]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ELLIPSE, [center, {x: 4, y: 6}], 30)).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYGON,
+                [
+                    {x: 10, y: 20},
+                    {x: NaN, y: 5},
+                    {x: badX, y: 5},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"poly(wcs:ICRS)[[10.5deg, 20.25deg], [Invalid], [Invalid], [30.5deg, 40.25deg]]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYLINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Polyline (wcs:ICRS)[[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ANNTEXT, [center], 0)).toMatchInlineSnapshot(`"Not Implemented"`);
+    });
+
+    test("uses the cursor readout, placeholders and the per-axis units", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [1:00:00deg, 2:00:00deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: badX, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [Invalid, Invalid]]"`);
+        numbers.setFormatX(NumberFormatType.HMS);
+        numbers.setFormatY(NumberFormatType.DMS);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5, 20.25], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        frame.pixelUnitSizeArcsec = null as unknown as {x: number; y: number};
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.RECTANGLE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                0
+            )
+        ).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5, 20.25], [, ], 0.000000deg]"`);
+    });
+
+    test("has no world definition for an unusable center or an invalid WCS", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: NaN, y: 20}], 0)).toBeUndefined();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: badX, y: 20}], 0)).toBeUndefined();
+        frame.isValidWcs = false;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+    });
+
+    test("in IMG display mode, formats a temporary copy in the default system with the preference-derived format", async () => {
+        const frame = makeFrame() as ReturnType<typeof makeFrame> & {defaultWcsSystem: SystemType; defaultWcsEquinox: string; defaultWcsEpoch: string};
+        const shared = frame.wcsInfoForTransformation;
+        const wcsCopy = {copy: true};
+        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const set = jest.spyOn(AST, "set");
+        const deleteObject = jest.spyOn(AST, "deleteObject");
+        await overlay.setSystem(SystemType.Image);
+
+        frame.defaultWcsSystem = undefined as unknown as SystemType;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+
+        frame.defaultWcsSystem = SystemType.FK5;
+        frame.defaultWcsEquinox = "J2000";
+        frame.defaultWcsEpoch = "";
+        set.mockClear();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(set.mock.calls.every(([target]) => target === wcsCopy)).toBe(true);
+        expect(set.mock.calls[0]?.[1]).toBe(`System=FK5, Equinox=J2000, Format(${(frame as unknown as FrameStore).dirX})=hms.10, Format(${(frame as unknown as FrameStore).dirY})=dms.10`);
+        expect(set.mock.calls.some(([target]) => target === shared)).toBe(false);
+        expect(deleteObject.mock.calls.filter(([target]) => target === wcsCopy)).toHaveLength(2);
+
+        frame.defaultWcsSystem = SystemType.Galactic;
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toBe('ellipse(wcs:GALACTIC)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]');
     });
 });

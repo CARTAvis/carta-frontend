@@ -33,8 +33,8 @@ describe("ImageFittingStore region info log", () => {
         expect(lines[2]).toBe(world);
     });
 
-    test("omits the world line when it is unavailable, e.g. in IMG display mode or without a frame", () => {
-        for (const frame of [{genRegionWcsProperties: () => "Invalid"}, null]) {
+    test("omits the world line when it is unavailable or there is no frame", () => {
+        for (const frame of [{genRegionWcsProperties: () => undefined}, null]) {
             const log = getFovLog(frame);
             expect(log).toMatch(/^Region: field of view\nrotbox\[\[50\.000000pix, 60\.000000pix\].*\n$/);
             expect(log).not.toContain("Invalid");
