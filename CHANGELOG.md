@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed missing spectral coordinate conversions for images with a non-linear spectral axis such as `WAVE-LOG` in SDSS MaNGA cubes ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
+* Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
 * Displayed statistic names instead of internal IDs in the profile fitting export ([#2983](https://github.com/CARTAvis/carta-frontend/issues/2983)).
 * Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
 
