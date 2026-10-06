@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled, and the marker being drawn in the wrong orientation in the exported PNG of histogram plots ([#2963](https://github.com/CARTAvis/carta-frontend/issues/2963)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
+* Displayed statistic names instead of internal IDs in the profile fitting export ([#2983](https://github.com/CARTAvis/carta-frontend/issues/2983)).
 
 ## [6.0.0]
 
