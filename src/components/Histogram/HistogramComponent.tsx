@@ -92,19 +92,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     @computed get exportHeaders(): string[] {
-        const headerString: string[] = [];
-
-        // region info
         const frame = this.widgetStore.effectiveFrame;
-        if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                headerString.push(region.regionProperties);
-            }
-        }
-
-        return headerString;
+        const regionId = this.widgetStore.effectiveRegionId;
+        return frame && regionId !== null ? frame.getRegionProperties(regionId) : [];
     }
 
     constructor(props: WidgetProps) {

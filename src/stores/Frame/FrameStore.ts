@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {Polarizations, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "enums";
+import {NumberFormatType, Polarizations, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -38,7 +38,7 @@ import {
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
 import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
-import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
+import {ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     ASTSettingsString,
@@ -55,11 +55,13 @@ import {
     formattedFrequency,
     frequencyFromVelocity,
     getAngleInRad,
+    getDefaultWcsFormats,
     getFormattedWCSPoint,
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
     getRegionPixelProperties,
+    getRegionWcsProperties,
     GetRequiredTiles,
     getRestFrameSpectralTransform as getRestFrameSpectralTransformUtility,
     getSwappedDirAxisInfo,
@@ -2618,16 +2620,14 @@ export class FrameStore {
 
             propertyString.push(getRegionPixelProperties(region.regionType, controlPoints, rotation));
             if (this.isValidWcs) {
-                propertyString.push(this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId));
+                const wcsProperties = this.genRegionWcsProperties(region.regionType, controlPoints, rotation, region.regionId);
+                if (wcsProperties !== undefined) {
+                    propertyString.push(wcsProperties);
+                }
             }
         }
         return propertyString;
     }
-
-    public getRegionWcsProperties = (region: RegionStore): string => {
-        const regionFrameProperties = this.getRegionFrameProperties(region);
-        return this.genRegionWcsProperties(region.regionType, regionFrameProperties.controlPoints, regionFrameProperties.rotation, region.regionId);
-    };
 
     private getRegionFrameProperties(region: RegionStore): {controlPoints: Point2D[]; rotation: number} {
         const spatialTransformAST = this.spatialTransformAST;
@@ -2638,55 +2638,59 @@ export class FrameStore {
         return getTransformedRegionProperties(region, spatialTransformAST);
     }
 
-    public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
-        const centerPoint = controlPoints[CENTER_POINT_INDEX];
-        if (!this.isValidWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || AppStore.Instance.overlaySettings.isImgCoordinates) {
-            return "Invalid";
+    public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string | undefined => {
+        const overlay = AppStore.Instance.overlaySettings;
+        if (!this.isValidWcs || !this.wcsInfoForTransformation) {
+            return undefined;
         }
 
-        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, centerPoint);
-        if (!wcsCenter) {
-            return "Invalid";
+        if (overlay.isImgCoordinates) {
+            return this.genRegionWcsPropertiesInDefaultSystem(regionType, controlPoints, rotation);
         }
 
-        const center = regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const systemType = AppStore.Instance.overlaySettings.global.explicitSystem;
+        return getRegionWcsProperties(regionType, controlPoints, rotation, {
+            wcsInfo: this.wcsInfoForTransformation,
+            system: `${overlay.global.explicitSystem}`,
+            isDegreesX: overlay.numbers.formatTypeX === NumberFormatType.Degrees,
+            isDegreesY: overlay.numbers.formatTypeY === NumberFormatType.Degrees,
+            pixelUnitSizeArcsec: this.pixelUnitSizeArcsec,
+            precision: WCS_PRECISION,
+            centerOverride: regionId === RegionId.CURSOR ? (this.cursorInfo?.infoWCS ?? {}) : undefined
+        });
+    };
 
-        switch (regionType) {
-            case CARTA.RegionType.POINT:
-                return `Point (wcs:${systemType}) [${center}]`;
-            case CARTA.RegionType.LINE:
-                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[0]) ?? {x: "Invalid", y: "Invalid"};
-                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]) ?? {x: "Invalid", y: "Invalid"};
-                return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
-            case CARTA.RegionType.RECTANGLE:
-                const recSizePoint = controlPoints[SIZE_POINT_INDEX];
-                const recWcsSize = this.getWcsSizeInArcsec(recSizePoint);
-                const recSize = {x: formattedArcsec(recWcsSize?.x, WCS_PRECISION), y: formattedArcsec(recWcsSize?.y, WCS_PRECISION)};
-                return `rotbox(wcs:${systemType})[[${center}], [${recSize.x ?? ""}, ${recSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.ELLIPSE:
-                const ellipseSizePoint = controlPoints[SIZE_POINT_INDEX];
-                const ellipseWcsSize = this.getWcsSizeInArcsec(ellipseSizePoint);
-                const ellipseSize = {x: formattedArcsec(ellipseWcsSize?.x, WCS_PRECISION), y: formattedArcsec(ellipseWcsSize?.y, WCS_PRECISION)};
-                return `ellipse(wcs:${systemType})[[${center}], [${ellipseSize.x ?? ""}, ${ellipseSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
-            case CARTA.RegionType.POLYGON:
-                let polygonWcsProperties = `poly(wcs:${systemType})[`;
-                controlPoints.forEach((point, index) => {
-                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
-                    polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
-                    polygonWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polygonWcsProperties;
-            case CARTA.RegionType.POLYLINE:
-                let polylineWcsProperties = `Polyline (wcs:${systemType})[`;
-                controlPoints.forEach((point, index) => {
-                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
-                    polylineWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
-                    polylineWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
-                });
-                return polylineWcsProperties;
-            default:
-                return "Not Implemented";
+    // In IMG display mode the shared WCS frameset keeps whichever world system was last applied, so
+    // format a temporary copy in the image's own default system and preference-derived format instead.
+    private genRegionWcsPropertiesInDefaultSystem = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string | undefined => {
+        if (!this.defaultWcsSystem) {
+            return undefined;
+        }
+        const wcsCopy = AST.copy(this.wcsInfoForTransformation);
+        if (!wcsCopy) {
+            return undefined;
+        }
+
+        try {
+            const formats = getDefaultWcsFormats(PreferenceStore.Instance.wcsType, this.defaultWcsSystem);
+            const astString = new ASTSettingsString();
+            astString.add("System", this.defaultWcsSystem);
+            astString.add("Equinox", this.defaultWcsEquinox || undefined);
+            astString.add("Epoch", this.defaultWcsEpoch || undefined);
+            astString.add(`Format(${this.dirX})`, `${formats.x}.${WCS_PRECISION}`);
+            astString.add(`Format(${this.dirY})`, `${formats.y}.${WCS_PRECISION}`);
+            AST.setI(wcsCopy, "Current", 2);
+            AST.set(wcsCopy, astString.toString());
+
+            return getRegionWcsProperties(regionType, controlPoints, rotation, {
+                wcsInfo: wcsCopy,
+                system: this.defaultWcsSystem,
+                isDegreesX: formats.x === NumberFormatType.Degrees,
+                isDegreesY: formats.y === NumberFormatType.Degrees,
+                pixelUnitSizeArcsec: this.pixelUnitSizeArcsec,
+                precision: WCS_PRECISION
+            });
+        } finally {
+            AST.deleteObject(wcsCopy);
         }
     };
 

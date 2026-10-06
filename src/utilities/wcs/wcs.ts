@@ -1,8 +1,8 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {NumberFormatType, type SpectralSystem, SpectralType, SpectralUnit} from "enums";
-import {type Point2D, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, type WCSPoint2D} from "models";
+import {NumberFormatType, type SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {type Point2D, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, type WCSPoint2D, WCSType} from "models";
 import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
@@ -269,6 +269,18 @@ export function getPixelSizes(frame: FrameStore, rounding?: number): {x: number;
         return {x: xPixelSizeArcsec, y: yPixelSizeArcsec};
     }
     return {x: NaN, y: NaN};
+}
+
+export function getDefaultWcsFormats(wcsType: string, system: SystemType | undefined): {x: NumberFormatType; y: NumberFormatType} {
+    switch (wcsType) {
+        case WCSType.DEGREES:
+            return {x: NumberFormatType.Degrees, y: NumberFormatType.Degrees};
+        case WCSType.SEXAGESIMAL:
+            return {x: NumberFormatType.HMS, y: NumberFormatType.DMS};
+        case WCSType.AUTOMATIC:
+        default:
+            return system && [SystemType.FK4, SystemType.FK5, SystemType.ICRS].includes(system) ? {x: NumberFormatType.HMS, y: NumberFormatType.DMS} : {x: NumberFormatType.Degrees, y: NumberFormatType.Degrees};
+    }
 }
 
 export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
