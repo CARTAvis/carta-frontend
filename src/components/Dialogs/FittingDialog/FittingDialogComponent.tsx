@@ -11,13 +11,9 @@ import {CoordinateMode, DialogId, FittingResultTabs, HelpType, InputType} from "
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {exportTxtFile, getExportFileName} from "utilities";
 
 import "./FittingDialogComponent.scss";
-
-export function getImageFittingExportFileName(imageName: string | undefined, content: string): string {
-    return `${imageName}-${content}-${getTimestamp()}`;
-}
 
 @observer
 export class FittingDialogComponent extends React.Component {
@@ -88,7 +84,7 @@ export class FittingDialogComponent extends React.Component {
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
         if (content) {
-            const fileName = getImageFittingExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename, "2D_Fitting_Result");
+            const fileName = getExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename ?? "unknown", "2D_Fitting_Result");
             exportTxtFile(fileName, content);
         }
     };
@@ -96,7 +92,7 @@ export class FittingDialogComponent extends React.Component {
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
         if (content) {
-            const fileName = getImageFittingExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename, "2D_Fitting_Full_Log");
+            const fileName = getExportFileName(AppStore.Instance.imageFittingStore.effectiveFrame?.filename ?? "unknown", "2D_Fitting_Full_Log");
             exportTxtFile(fileName, content);
         }
     };

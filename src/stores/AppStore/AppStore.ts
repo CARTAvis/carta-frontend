@@ -81,9 +81,9 @@ import {
     Distinct,
     exportScreenshot,
     getColorForTheme,
+    getExportFileName,
     getPasteRegionOffset,
     GetRequiredTiles,
-    getTimestamp,
     mapToObject,
     markAsScriptingMap,
     offsetPointsToAvoidCollision,
@@ -3775,8 +3775,7 @@ export class AppStore {
                             if (blob) {
                                 const link = document.createElement("a") as HTMLAnchorElement;
                                 const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                                // Trim filename before timestamp to 200 characters to prevent browser errors
-                                link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
+                                link.download = `${getExportFileName(joinedNames, "image")}.png`;
                                 link.href = URL.createObjectURL(blob);
                                 link.dispatchEvent(new MouseEvent("click"));
                             }

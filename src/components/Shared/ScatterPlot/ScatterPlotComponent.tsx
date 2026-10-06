@@ -11,7 +11,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 
 import "./ScatterPlotComponent.scss";
 
@@ -348,8 +348,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             composedCanvas.toBlob(blob => {
                 if (blob) {
                     const link = document.createElement("a") as HTMLAnchorElement;
-                    // Trim filename before timestamp to 200 characters to prevent browser errors
-                    link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                    link.download = `${getExportFileName(imageName, plotName)}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }
