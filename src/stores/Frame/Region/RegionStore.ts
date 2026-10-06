@@ -358,7 +358,16 @@ export class RegionStore {
             case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.ANNULUS:
-                return this.controlPoints.length === 3 && this.size.x > 0 && this.size.y > 0 && this.innerSize.x > 0 && this.innerSize.y > 0 && this.innerSize.x < this.size.x && this.innerSize.y < this.size.y;
+                return (
+                    this.controlPoints.length === 3 &&
+                    this.size.x > 0 &&
+                    this.size.y > 0 &&
+                    this.innerSize.x > 0 &&
+                    this.innerSize.y > 0 &&
+                    this.innerSize.x < this.size.x &&
+                    this.innerSize.y < this.size.y &&
+                    Math.abs(this.innerSize.x / this.size.x - this.innerSize.y / this.size.y) <= 1e-5
+                );
             case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints.length === 2;
             case CARTA.RegionType.POLYGON:
@@ -625,8 +634,8 @@ export class RegionStore {
             const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
-            const size = {x: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(p.x)), y: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(p.y))};
-            this.setAnnulusGeometry(this.center, size, {x: this.innerSize.x / size.x, y: this.innerSize.y / size.y}, shouldSkipUpdate);
+            const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
+            this.setAnnulusGeometry(this.center, p, {x: ratio, y: ratio}, shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }
@@ -634,7 +643,10 @@ export class RegionStore {
 
     @action setInnerSize = (p: Point2D, shouldSkipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
-            this.setControlPoint(2, getAnnulusInnerSize(this.size, {x: Math.min(Math.abs(p.x), this.size.x * 0.99), y: Math.min(Math.abs(p.y), this.size.y * 0.99)}), shouldSkipUpdate);
+            const diffX = Math.abs(p.x - this.innerSize.x);
+            const diffY = Math.abs(p.y - this.innerSize.y);
+            const axis = diffY > diffX ? "y" : "x";
+            this.setControlPoint(2, getAnnulusInnerSize(this.size, p, axis), shouldSkipUpdate);
         }
     };
 
@@ -960,7 +972,8 @@ export class RegionStore {
         });
         if (edit) {
             if (this.regionType === CARTA.RegionType.ANNULUS) {
-                this.setAnnulusGeometry(edit.center, edit.size, {x: this.innerSize.x / this.size.x, y: this.innerSize.y / this.size.y});
+                const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
+                this.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
             } else {
                 this.setControlPoints([edit.center, edit.size]);
             }

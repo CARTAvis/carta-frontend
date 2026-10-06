@@ -306,7 +306,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         annulus.selectPoint(9);
         annulus.moveSelectedPoint(0, 2); // localDelta.y = 2
         expect(annulus.innerSize.x).toBe(7);
-        expect(annulus.innerSize.y).toBe(10);
+        expect(annulus.innerSize.y).toBe(14);
 
         // Test outer radius corner/side movement
         annulus.selectPoint(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
@@ -315,22 +315,22 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(annulus.innerSize.x).toBeGreaterThan(0);
     });
 
-    test("annulus inner axes can be edited independently", () => {
+    test("annulus inner axes preserve the outer ellipse shape", () => {
         const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
             {x: 0, y: 0},
             {x: 10, y: 20},
             {x: 5, y: 10}
         ]);
 
-        // Edit inner size x from 5 to 6 (keeping y at 10) -> diffX = 1, diffY = 0
+        // Changing the inner x axis keeps the outer ellipse's aspect ratio.
         annulus.setInnerSize({x: 6, y: 10});
         expect(annulus.innerSize.x).toBe(6);
-        expect(annulus.innerSize.y).toBe(10);
+        expect(annulus.innerSize.y).toBe(12);
 
-        // Edit inner size y from 12 to 16 (keeping x at 6) -> diffX = 0, diffY = 4
+        // Changing the inner y axis also preserves the shape ratio.
         annulus.setInnerSize({x: 6, y: 16});
         expect(annulus.innerSize.y).toBe(16);
-        expect(annulus.innerSize.x).toBe(6);
+        expect(annulus.innerSize.x).toBe(8);
     });
 
     test("annulus region is invalid when inner axes are not contained by outer axes", () => {
@@ -354,5 +354,14 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
             {x: 5, y: 20}
         ]);
         expect(invalidMinorAxis.isValid).toBe(false);
+    });
+
+    test("annulus region is invalid when inner and outer ellipses have different shapes", () => {
+        const mismatchedAnnulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 5}
+        ]);
+        expect(mismatchedAnnulus.isValid).toBe(false);
     });
 });
