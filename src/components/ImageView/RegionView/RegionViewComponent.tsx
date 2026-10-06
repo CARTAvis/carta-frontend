@@ -309,7 +309,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     const sizeFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5);
                     const zoom = frame.effectiveZoomLevel;
                     const size = this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1};
-                    this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoom.x, y: (size.y * sizeFactor) / zoom.y});
+                    const zoomX = this.creatingRegion.regionType === CARTA.RegionType.ANNULUS ? zoom.y : zoom.x;
+                    const zoomY = this.creatingRegion.regionType === CARTA.RegionType.ANNULUS ? zoom.x : zoom.y;
+                    this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoomX, y: (size.y * sizeFactor) / zoomY});
                     if (this.creatingRegion.regionType === CARTA.RegionType.ANNULUS) {
                         this.creatingRegion.setInnerSize(scale2D(this.creatingRegion.size, 0.5));
                     }

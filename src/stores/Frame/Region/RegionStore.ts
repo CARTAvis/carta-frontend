@@ -19,6 +19,7 @@ import {
     getRegionCenterFromPoints,
     getRegionPixelProperties,
     getSimpleShapePointSelectionOrder,
+    hasValidAnnulusShape,
     isAstBadPoint,
     length2D,
     MAX_ANNULUS_INNER_TO_OUTER_RATIO,
@@ -367,7 +368,7 @@ export class RegionStore {
                     this.innerSize.y > 0 &&
                     this.innerSize.x < this.size.x &&
                     this.innerSize.y < this.size.y &&
-                    Math.abs(this.innerSize.x / this.size.x - this.innerSize.y / this.size.y) <= 1e-5
+                    hasValidAnnulusShape(this.size, this.innerSize)
                 );
             case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints.length === 2;

@@ -105,8 +105,8 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
         };
         component.creatingRegion = region as any;
         (component as any).regionCreationEnd();
-        expect(region.setSize).toHaveBeenCalledWith({x: 2.5, y: 1.25});
-        expect(region.setInnerSize).toHaveBeenCalledWith({x: 1.25, y: 0.625});
+        expect(region.setSize).toHaveBeenCalledWith({x: 1.25, y: 2.5});
+        expect(region.setInnerSize).toHaveBeenCalledWith({x: 0.625, y: 1.25});
         expect(region.endCreating).toHaveBeenCalled();
         jest.runOnlyPendingTimers();
     });

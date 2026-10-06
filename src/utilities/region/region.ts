@@ -25,6 +25,17 @@ import {
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
+export const ANNULUS_SHAPE_TOLERANCE = 1e-5;
+
+/** Checks that an annulus's inner and outer ellipses have matching axis ratios. */
+export function hasValidAnnulusShape(outerSize: Point2D, innerSize: Point2D): boolean {
+    if (outerSize.x <= 0 || outerSize.y <= 0 || innerSize.x <= 0 || innerSize.y <= 0) {
+        return false;
+    }
+    const outerRatio = outerSize.x / outerSize.y;
+    const innerRatio = innerSize.x / innerSize.y;
+    return Math.abs(outerRatio - innerRatio) <= ANNULUS_SHAPE_TOLERANCE * Math.max(outerRatio, innerRatio);
+}
 export const PASTE_OFFSET = 20;
 
 /**
