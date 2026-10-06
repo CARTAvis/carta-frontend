@@ -23,6 +23,7 @@ interface FileEntry extends ISelectedFile {
     isFile?: boolean;
     itemCount?: number;
     size?: number;
+    sizeIsDeclared?: boolean;
     date?: number;
     fileInfo?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
     hdu?: string;
@@ -66,7 +67,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         [CARTA.FileType.DS9_REG, {type: "DS9", description: "DS9 Region Format"}],
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
         [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
-        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}]
+        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "Miriad Image"}],
+        [CARTA.FileType.ZARR, {type: "Zarr", description: "Zarr Image (XRADIO Schema)"}]
     ]);
 
     private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, {type: string; description: string}>([
@@ -95,17 +97,20 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         return FileListTableComponent.toNumber(a) - FileListTableComponent.toNumber(b);
     }
 
-    private static getFileSizeDisplay(sizeInBytes: number): string {
+    private static readonly DeclaredSizeTooltip = "Uncompressed size from metadata";
+
+    private static getFileSizeDisplay(sizeInBytes: number, isSizeDeclared?: boolean): string {
+        const prefix = isSizeDeclared ? "~" : "";
         if (sizeInBytes >= 1e12) {
-            return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
+            return `${prefix}${toFixed(sizeInBytes / 1e12, 2)} TB`;
         } else if (sizeInBytes >= 1e9) {
-            return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
+            return `${prefix}${toFixed(sizeInBytes / 1e9, 1)} GB`;
         } else if (sizeInBytes >= 1e6) {
-            return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
+            return `${prefix}${toFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
+            return `${prefix}${toFixed(sizeInBytes / 1e3, 1)} kB`;
         } else {
-            return `${sizeInBytes} B`;
+            return `${prefix}${sizeInBytes} B`;
         }
     }
 
@@ -180,10 +185,11 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: directory.name || "",
                         typeInfo: FileListTableComponent.getFileTypeDisplay(directory.type),
                         size: FileListTableComponent.toNumber(directory.size),
+                        sizeIsDeclared: directory.sizeIsDeclared ?? undefined,
                         date: FileListTableComponent.toNumber(directory.date),
                         isDirectory: true,
                         isFile: true,
-                        fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
+                        fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date, sizeIsDeclared: directory.sizeIsDeclared}
                     });
                 } else {
                     entries.push({
@@ -239,6 +245,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                                 filename,
                                 typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                                 size: FileListTableComponent.toNumber(file.size),
+                                sizeIsDeclared: file.sizeIsDeclared ?? undefined,
                                 date: FileListTableComponent.toNumber(file.date),
                                 fileInfo: file,
                                 hdu,
@@ -253,6 +260,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: file.name || "",
                         typeInfo: file.type != null ? FileListTableComponent.getFileTypeDisplay(file.type) : undefined,
                         size: FileListTableComponent.toNumber(file.size),
+                        sizeIsDeclared: file.sizeIsDeclared ?? undefined,
                         date: FileListTableComponent.toNumber(file.date),
                         fileInfo: file,
                         isFile: true
@@ -392,10 +400,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         return (
-            <Cell>
+            <Cell tooltip={entry.isFile && entry.sizeIsDeclared ? FileListTableComponent.DeclaredSizeTooltip : undefined}>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size)}
+                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size, entry.sizeIsDeclared)}
                         {!entry.isFile && entry.itemCount !== undefined && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>
