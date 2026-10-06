@@ -20,6 +20,7 @@ import {
     getSimpleShapeAnchorSizeScale,
     isRectangleRegionType,
     isTextRegionType,
+    MAX_ANNULUS_INNER_TO_OUTER_RATIO,
     MIN_EDITED_REGION_DIMENSION,
     multiply2D,
     rotate2D,
@@ -202,10 +203,37 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         const delta = subtract2D(newAnchorPoint, region.center);
         const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
-        const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(region.size.x * 0.99, Math.abs(localDelta.y)));
+        const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(region.size.x * MAX_ANNULUS_INNER_TO_OUTER_RATIO, Math.abs(localDelta.y)));
         const ratio = region.size.x > 0 ? region.size.y / region.size.x : 1;
         const newInnerY = newInnerX * ratio;
         region.setInnerSize(getAnnulusInnerSize(region.size, {x: newInnerX, y: newInnerY}, "x"));
+    };
+
+    private getBoundedInnerRadiusAnchorPosition = (position: Point2D): Point2D => {
+        const frame = this.props.frame;
+        const region = this.props.region;
+        let imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
+        if (frame.spatialReference && frame.spatialTransformAST) {
+            imagePosition = transformPoint(frame.spatialTransformAST, imagePosition, true);
+        }
+        const delta = subtract2D(imagePosition, region.center);
+        const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
+        const boundedY = Math.sign(localDelta.y || 1) * Math.min(Math.abs(localDelta.y), region.size.x);
+        let boundedPosition = add2D(region.center, rotate2D({x: 0, y: boundedY}, (region.rotation * Math.PI) / 180.0));
+        if (frame.spatialReference && frame.spatialTransformAST) {
+            boundedPosition = transformPoint(frame.spatialTransformAST, boundedPosition, false);
+        }
+        const boundedCanvasPosition = transformedImageToCanvasPos(boundedPosition, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+        return adjustPosToUnityStage(boundedCanvasPosition, this.props.stageRef.current);
+    };
+
+    private getInnerRadiusAnchorPosition = (region: RegionStore): Point2D => {
+        const frame = this.props.frame;
+        let position = add2D(region.center, rotate2D({x: 0, y: region.innerSize.x}, (region.rotation * Math.PI) / 180.0));
+        if (frame.spatialReference && frame.spatialTransformAST) {
+            position = transformPoint(frame.spatialTransformAST, position, false);
+        }
+        return transformedImageToCanvasPos(position, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
     };
 
     private handleDragStart = () => {
@@ -389,6 +417,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 region.setRotation(region.rotation + angle);
             } else if (anchorName === "inner-radius") {
                 this.applyInnerRadiusScaling(region, offsetPoint.x, offsetPoint.y);
+                anchor.position(this.getInnerRadiusAnchorPosition(region));
             } else {
                 const isKeepAspectMode = evt.shiftKey;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
@@ -492,6 +521,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     onDragMove={this.handleAnchorDrag}
                     onClick={this.handleAnchorClick}
                     isInnerRadius={config.anchor === "inner-radius"}
+                    dragBoundFunc={config.anchor === "inner-radius" ? this.getBoundedInnerRadiusAnchorPosition : undefined}
                 />
             );
         });

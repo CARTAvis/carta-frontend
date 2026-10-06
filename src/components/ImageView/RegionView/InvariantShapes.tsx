@@ -164,6 +164,7 @@ interface AnchorProps {
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
     isInnerRadius?: boolean;
+    dragBoundFunc?: (position: Point2D) => Point2D;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -208,6 +209,7 @@ export const Anchor = (props: AnchorProps) => {
             strokeScaleEnabled={false}
             opacity={props.opacity}
             draggable={props.interactive}
+            dragBoundFunc={props.dragBoundFunc}
             listening={props.interactive}
             key={props.anchor}
             id={props.anchor}

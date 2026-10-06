@@ -15,12 +15,13 @@ export const SIMPLE_SHAPE_BOTTOM_RIGHT_POINT_INDEX = 7;
 export const SIMPLE_SHAPE_ROTATION_POINT_INDEX = 8;
 export const SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX = 9;
 export const MIN_EDITED_REGION_DIMENSION = 1e-3;
+export const MAX_ANNULUS_INNER_TO_OUTER_RATIO = 0.999;
 
 export function getAnnulusInnerSize(outerSize: Point2D, innerSize: Point2D, axis: "x" | "y" = "y"): Point2D {
     const outerAxis = outerSize[axis];
     const requestedRatio = outerAxis > 0 ? innerSize[axis] / outerAxis : 0.5;
     const minRatio = Math.max(MIN_EDITED_REGION_DIMENSION / Math.max(outerSize.x, MIN_EDITED_REGION_DIMENSION), MIN_EDITED_REGION_DIMENSION / Math.max(outerSize.y, MIN_EDITED_REGION_DIMENSION));
-    const ratio = Math.min(0.99, Math.max(minRatio, requestedRatio));
+    const ratio = Math.min(MAX_ANNULUS_INNER_TO_OUTER_RATIO, Math.max(minRatio, requestedRatio));
     return {x: outerSize.x * ratio, y: outerSize.y * ratio};
 }
 

@@ -21,6 +21,7 @@ import {
     getSimpleShapePointSelectionOrder,
     isAstBadPoint,
     length2D,
+    MAX_ANNULUS_INNER_TO_OUTER_RATIO,
     MIN_EDITED_REGION_DIMENSION,
     minMax2D,
     rotate2D,
@@ -938,7 +939,7 @@ export class RegionStore {
             if (this.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX) {
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const localDelta = rotate2D({x: deltaX, y: deltaY}, -rotation);
-                const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(this.size.x * 0.99, this.innerSize.x + localDelta.y));
+                const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(this.size.x * MAX_ANNULUS_INNER_TO_OUTER_RATIO, this.innerSize.x + localDelta.y));
                 this.setInnerSize({x: newInnerX, y: this.innerSize.y});
                 return;
             }
