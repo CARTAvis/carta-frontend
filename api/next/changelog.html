@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Changelog | API | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/api/next/changelog"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Changelog | API | CARTA Frontend Documentation"><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/api/next/changelog"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/next/changelog" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/next/changelog" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[]}</script><link rel="stylesheet" href="/carta-frontend/assets/css/styles.326fcaba.css">
-<script src="/carta-frontend/assets/js/runtime~main.ef5242fa.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.d2e00e09.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.2f8d5424.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.1a2a3392.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -46,11 +46,13 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <li class="">Fixed numeric catalog coordinate columns that declare hour or radian units being plotted as though their values were degrees (<a href="https://github.com/CARTAvis/carta-frontend/issues/2954" target="_blank" rel="noopener noreferrer" class="">#2954</a>).</li>
 <li class="">Fixed a catalog&#x27;s <code>COOSYS</code> declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (<code>ecl_FK5</code>, <code>ecl_FK4</code>) were read as equatorial, and the declared equinox and epoch were ignored (<a href="https://github.com/CARTAvis/carta-frontend/issues/2954" target="_blank" rel="noopener noreferrer" class="">#2954</a>).</li>
 <li class="">Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled, and the marker being drawn in the wrong orientation in the exported PNG of histogram plots (<a href="https://github.com/CARTAvis/carta-frontend/issues/2963" target="_blank" rel="noopener noreferrer" class="">#2963</a>).</li>
+<li class="">Fixed missing spectral coordinate conversions for images with a non-linear spectral axis such as <code>WAVE-LOG</code> in SDSS MaNGA cubes (<a href="https://github.com/CARTAvis/carta-frontend/issues/2890" target="_blank" rel="noopener noreferrer" class="">#2890</a>).</li>
 </ul>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="changed">Changed<a href="#changed" class="hash-link" aria-label="Direct link to Changed" title="Direct link to Changed" translate="no">​</a></h3>
 <ul>
 <li class="">Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes (<a href="https://github.com/CARTAvis/carta-frontend/issues/2408" target="_blank" rel="noopener noreferrer" class="">#2408</a>).</li>
 <li class="">Displayed statistic names instead of internal IDs in the profile fitting export (<a href="https://github.com/CARTAvis/carta-frontend/issues/2983" target="_blank" rel="noopener noreferrer" class="">#2983</a>).</li>
+<li class="">Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported (<a href="https://github.com/CARTAvis/carta-frontend/issues/2890" target="_blank" rel="noopener noreferrer" class="">#2890</a>).</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="600">[6.0.0]<a href="#600" class="hash-link" aria-label="Direct link to [6.0.0]" title="Direct link to [6.0.0]" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="added-1">Added<a href="#added-1" class="hash-link" aria-label="Direct link to Added" title="Direct link to Added" translate="no">​</a></h3>
