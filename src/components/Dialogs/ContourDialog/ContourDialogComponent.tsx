@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -8,14 +8,13 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
 import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {getColorForTheme, getHistogramPlotData, type HistogramPlotData, toExponential, toFixed} from "utilities";
 
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
@@ -150,42 +149,10 @@ export class ContourDialogComponent extends React.Component {
         );
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
-        const dataSource = AppStore.Instance.contourDataSource;
-        const histogram = dataSource?.renderConfig.contourHistogram;
-
-        if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
-            return null;
-        }
-
-        let minIndex = 0;
-        let maxIndex = histogram.bins.length - 1;
-
-        // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-        if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
-            minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-            minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-            maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-            maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
-        }
-
-        const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-        const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-        let yMin = histogram.bins[minIndex];
-        let yMax = yMin;
-
-        let values: Array<{x: number; y: number}> = [];
-        const N = maxIndex - minIndex;
-        if (N > 0 && !isNaN(N)) {
-            values = new Array(maxIndex - minIndex);
-
-            for (let i = minIndex; i <= maxIndex; i++) {
-                values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                yMin = Math.min(yMin, histogram.bins[i]);
-                yMax = Math.max(yMax, histogram.bins[i]);
-            }
-        }
-        return {values, xMin, xMax, yMin, yMax};
+    @computed get plotData(): HistogramPlotData | null {
+        const histogram = AppStore.Instance.contourDataSource?.renderConfig.contourHistogram;
+        const {isAutoScaledX, minX, maxX} = this.widgetStore;
+        return getHistogramPlotData(histogram, !isAutoScaledX && minX != null && maxX != null ? {min: minX, max: maxX} : undefined);
     }
 
     private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {
@@ -416,28 +383,8 @@ export class ContourDialogComponent extends React.Component {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.isMeanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
-            const mean = dataSource.renderConfig.contourHistogram.mean ?? 0;
-            const stdDev = dataSource.renderConfig.contourHistogram.stdDev;
-
-            linePlotProps.markers.push({
-                value: mean,
-                id: "marker-mean",
-                draggable: false,
-                horizontal: false,
-                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                dash: [5]
-            });
-
-            linePlotProps.markers.push({
-                value: mean,
-                id: "marker-rms",
-                draggable: false,
-                horizontal: false,
-                width: stdDev,
-                opacity: 0.2,
-                color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
-            });
+        if (this.widgetStore.isMeanRmsVisible) {
+            linePlotProps.markers.push(...genMeanRmsMarkers(dataSource.renderConfig.contourHistogram, appStore.isDarkTheme));
         }
 
         const sortedLevels = this.levels

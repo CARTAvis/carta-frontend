@@ -2,13 +2,14 @@ import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
+import Annotation from "chartjs-plugin-annotation";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
-Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
+Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement, Annotation);
 
 export class PlotContainerProps {
     width?: number;
@@ -49,6 +50,8 @@ export class PlotContainerProps {
     borderWidth?: number;
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    shouldAlignChartAreaRight?: boolean;
+    extraPluginOptions?: ChartOptions<"scatter">["plugins"];
 }
 
 export class MultiPlotProps {
@@ -71,6 +74,17 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private plotRef: Chart;
     private chartArea: ChartArea;
 
+    // Chart.js 4.5.1 exposes no public setter for the pixel range used by scale conversion.
+    // Keep this compatibility workaround isolated so a future Chart.js upgrade has one place to revisit.
+    private setScalePixelRange = (scale: Scale, left: number, right: number) => {
+        scale.left = left;
+        scale.right = right;
+        scale.width = right - left;
+        const privateScale = scale as Scale & {_startPixel: number; _length: number};
+        privateScale._startPixel = left;
+        privateScale._length = scale.width;
+    };
+
     private afterChartLayout = (chart: Chart) => {
         if (this.props.isGroupSubPlot) {
             var xScale = chart.scales["x"];
@@ -80,17 +94,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             chart.chartArea.left = 85;
             chart.chartArea.right = currentWidth - 1;
 
-            xScale.left = 85;
-            xScale.right = currentWidth - 1;
-            xScale.width = xScale.right - xScale.left;
-            xScale["_startPixel"] = xScale.left;
-            xScale["_length"] = xScale.width;
+            this.setScalePixelRange(xScale, 85, currentWidth - 1);
 
             chart.chartArea.left = 85;
             chart.chartArea.right = currentWidth - 1;
 
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
+        }
+
+        if (this.props.shouldAlignChartAreaRight) {
+            const xScale = chart.scales["x"];
+            if (xScale) {
+                const right = chart.width - 1;
+                chart.chartArea.right = right;
+                this.setScalePixelRange(xScale, xScale.left, right);
+            }
         }
 
         if (!_.isEqual(chart.chartArea, this.chartArea)) {
@@ -315,6 +334,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
             return true;
+        } else if (props.shouldAlignChartAreaRight !== nextProps.shouldAlignChartAreaRight) {
+            return true;
         } else if (props.pointRadius !== nextProps.pointRadius) {
             return true;
         } else if (props.zeroLineWidth !== nextProps.zeroLineWidth) {
@@ -335,17 +356,23 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         }
 
-        if (!props.multiColorSingleLineColors || !nextProps.multiColorSingleLineColors || props.multiColorSingleLineColors.length !== nextProps.multiColorSingleLineColors.length) {
+        if (props.multiColorSingleLineColors?.length !== nextProps.multiColorSingleLineColors?.length) {
             return true;
         }
-        for (let i = 0; i < props.multiColorSingleLineColors.length; i++) {
-            if (props.multiColorSingleLineColors[i] !== nextProps.multiColorSingleLineColors[i]) {
-                return true;
+        if (props.multiColorSingleLineColors && nextProps.multiColorSingleLineColors) {
+            for (let i = 0; i < props.multiColorSingleLineColors.length; i++) {
+                if (props.multiColorSingleLineColors[i] !== nextProps.multiColorSingleLineColors[i]) {
+                    return true;
+                }
             }
         }
 
         // Deep check of maps
         if (!_.isEqual(props.multiPlotPropsMap, nextProps.multiPlotPropsMap)) {
+            return true;
+        }
+
+        if (!_.isEqual(props.extraPluginOptions, nextProps.extraPluginOptions)) {
             return true;
         }
 
@@ -368,7 +395,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plugins: {
                 legend: {
                     display: this.props.shouldShowLegend === undefined ? false : this.props.shouldShowLegend
-                }
+                },
+                ...this.props.extraPluginOptions
             },
             scales: {
                 x: {
@@ -389,6 +417,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
+                        z: -1,
                         color: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
@@ -427,6 +456,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.getCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
                     },
                     grid: {
+                        z: -1,
                         color: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.tick.value === 0 && this.props.shouldShowZeroLine ? this.props.zeroLineWidth : 1)
                     },

@@ -1,7 +1,5 @@
 import {type CARTA} from "carta-protobuf";
 
-import type {TypedArray} from "../Processed/Processed";
-
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
     return level0 + (level1 - level0) * stepVal;
@@ -97,14 +95,14 @@ export function floorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
 }
 
-export function minMaxArray(data: Array<number> | TypedArray): {minVal: number; maxVal: number} {
+export function minMaxArray(data: ArrayLike<number>): {minVal: number; maxVal: number} {
     if (data && data.length) {
         let maxVal = -Number.MAX_VALUE;
         let minVal = Number.MAX_VALUE;
 
         for (let i = data.length - 1; i >= 0; i--) {
             const val = data[i];
-            if (isNaN(val)) {
+            if (!Number.isFinite(val)) {
                 continue;
             }
             if (val > maxVal) {
@@ -129,4 +127,22 @@ export function gaussian(x: number, amp: number, center: number, fwhm: number) {
 
 export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
     return (amp * 0.25 * Math.pow(fwhm, 2)) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
+}
+
+export function isUniformlySpaced(values: ArrayLike<number>, relativeTolerance: number = 1e-6): boolean {
+    if (!values || values.length < 3) {
+        return true;
+    }
+    const step = values[1] - values[0];
+    if (!isFinite(step)) {
+        return false;
+    }
+    for (let i = 2; i < values.length; i++) {
+        const delta = values[i] - values[i - 1];
+        const tolerance = Math.max(Math.abs(step) * relativeTolerance, Math.abs(values[i]) * 1e-12);
+        if (!isFinite(delta) || Math.abs(delta - step) > tolerance) {
+            return false;
+        }
+    }
+    return true;
 }
