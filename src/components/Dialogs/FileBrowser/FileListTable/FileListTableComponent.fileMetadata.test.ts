@@ -45,7 +45,7 @@ describe("FileListTableComponent", () => {
             ...defaultProps,
             fileList: {
                 ...defaultProps.fileList,
-                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, date: 0, HDUList: ["0"]}]
+                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, date: 0, HDUList: ["SKY"]}]
             }
         });
 
@@ -53,10 +53,23 @@ describe("FileListTableComponent", () => {
             {
                 filename: "cube.zarr",
                 typeInfo: {type: "Zarr", description: "Zarr Image (XRADIO Schema)"},
-                hdu: "0",
+                hdu: "",
                 isFile: true
             }
         ]);
+    });
+
+    test("lists a Zarr store with several images as one entry", () => {
+        const component = new FileListTableComponent({
+            ...defaultProps,
+            fileList: {
+                ...defaultProps.fileList,
+                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, date: 0, HDUList: ["SKY", "FLAG_SKY"]}]
+            }
+        });
+
+        expect(component.tableEntries).toHaveLength(1);
+        expect(component.tableEntries[0]).toMatchObject({filename: "cube.zarr", hdu: "", isFile: true});
     });
 
     test("preserves the declared file size flag for image files", () => {
@@ -64,7 +77,7 @@ describe("FileListTableComponent", () => {
             ...defaultProps,
             fileList: {
                 ...defaultProps.fileList,
-                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, sizeIsDeclared: true, date: 0, HDUList: ["0"]}]
+                files: [{name: "cube.zarr", type: CARTA.FileType.ZARR, size: 1024, sizeIsDeclared: true, date: 0, HDUList: ["SKY"]}]
             }
         });
 

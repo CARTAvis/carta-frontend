@@ -254,7 +254,7 @@ export class FileBrowserStore {
                 }
             }
 
-            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.HDUList?.[0]});
+            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.type === CARTA.FileType.ZARR ? "" : fileInfo.HDUList?.[0]});
             const selectedFileIndex = this.selectedFiles.findIndex(item => item.fileInfo?.name === fileInfo.name);
             if (selectedFileIndex !== -1) {
                 this.selectedFiles[selectedFileIndex].fileInfo = fileInfo;

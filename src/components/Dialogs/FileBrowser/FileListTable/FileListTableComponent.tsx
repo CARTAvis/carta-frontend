@@ -238,7 +238,19 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 }
             } else if (fileBrowserMode === BrowserMode.File) {
                 for (const file of filteredFiles as CARTA.FileInfo.$Properties[]) {
-                    if (file.HDUList) {
+                    if (file.type === CARTA.FileType.ZARR) {
+                        // One entry per store; its images are chosen from the HDU menu
+                        entries.push({
+                            filename: file.name || "",
+                            typeInfo: FileListTableComponent.getFileTypeDisplay(file.type),
+                            size: FileListTableComponent.toNumber(file.size),
+                            sizeIsDeclared: file.sizeIsDeclared ?? undefined,
+                            date: FileListTableComponent.toNumber(file.date),
+                            fileInfo: file,
+                            hdu: "",
+                            isFile: true
+                        });
+                    } else if (file.HDUList) {
                         for (const hdu of file.HDUList) {
                             const filename = file.HDUList.length > 1 ? `${file.name || ""}: HDU ${hdu}` : file.name || "";
                             entries.push({
