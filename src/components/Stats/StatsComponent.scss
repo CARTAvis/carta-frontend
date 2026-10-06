@@ -49,7 +49,16 @@
                 white-space: nowrap;
             }
 
+            th:last-of-type,
+            td:last-of-type {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
             thead {
+                display: block;
+
                 &.dark-theme {
                     background: $dark-gray4;
 
