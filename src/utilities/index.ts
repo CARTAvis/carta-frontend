@@ -1,6 +1,8 @@
 export * from "./array/array";
 export * from "./ast/ast";
 export * from "./catalog/axisColumns";
+export * from "./catalog/catalogHistogram";
+export * from "./catalog/catalogScatter";
 export * from "./catalog/columnTypeLabel";
 export * from "./catalog/constants";
 export * from "./catalog/contentHash";
@@ -13,6 +15,7 @@ export * from "./cosmology/cosmology";
 export * from "./export/export";
 export * from "./fitting_heuristics/fitting_heuristics";
 export * from "./flow/flow";
+export * from "./math/histogramPlotData";
 export * from "./math/math";
 export * from "./math2d/math2d";
 export * from "./parsing/parsing";

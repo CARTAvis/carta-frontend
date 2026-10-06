@@ -117,6 +117,49 @@ const OBS_TIME_FRAME_INFO: FrameInfo = {
     } as any
 };
 
+// SDSS MaNGA LOGCUBE: log-wavelength spectral axis, no SPECSYS, no RESTFRQ (issue #2890)
+const LOG_WAVELENGTH_CUBEFRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["1"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
+        dimensions: 3,
+        width: 2,
+        height: 2,
+        depth: 3,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 3, stokes: 0, depth: 3},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---TAN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--TAN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "CTYPE3", value: "WAVE-LOG"},
+            {name: "CRVAL3", value: "3621.59598486", entryType: 1, numericValue: 3621.59598486},
+            {name: "CD3_3", value: "0.833903304339", entryType: 1, numericValue: 0.833903304339},
+            {name: "CRPIX3", value: "1", entryType: 1, numericValue: 1},
+            {name: "CUNIT3", value: "Angstrom"},
+            {name: "BUNIT", value: "1E-17 erg/s/cm^2/Angstrom/spaxel"}
+        ]
+    } as any
+};
+
+// The log-wavelength cube with its CTYPE3 (and optionally CUNIT3) card replaced, or removed when undefined
+const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | undefined, cunitEntry?: {name: string; value: string}): FrameInfo => ({
+    ...LOG_WAVELENGTH_CUBEFRAME_INFO,
+    fileInfoExtended: {
+        ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended,
+        headerEntries: LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries.flatMap(entry => {
+            if (entry.name === "CTYPE3") {
+                return ctypeEntry ? [ctypeEntry] : [];
+            }
+            if (entry.name === "CUNIT3" && cunitEntry) {
+                return [cunitEntry];
+            }
+            return [entry];
+        })
+    } as any
+});
+
 describe("FrameStore", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -253,6 +296,121 @@ describe("FrameStore", () => {
 
             expect(config["bmaj"]).toEqual([0.931560754776001, 0.9315542578697205, 0.9315447807312012]);
             expect(config["bmin"]).toEqual([0.8433191776275635, 0.8433099985122681, 0.8433027863502502]);
+        });
+    });
+
+    describe("spectral axis with a non-linear algorithm code", () => {
+        test("recognizes a WAVE-LOG axis as a vacuum wavelength axis", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, ctype: "WAVE-LOG", specsys: ""}));
+            expect(frame.nativeSpectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+            expect(frame.spectralType).toBe(SpectralType.WAVE);
+            expect(frame.isSpectralCoordinateConvertible).toBe(true);
+        });
+
+        test("flags a WAVE-LOG axis as nonlinear and a linear FREQ axis as linear", () => {
+            expect(new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+            expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+        });
+
+        test("flags a spectral axis with non-uniform channel spacing as nonlinear", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
+            try {
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+                mockChannelInfo.mockImplementation(() => ({fromWCS: true, values: [1, 2, 3, 4], indexes: [0, 1, 2, 3]}) as any);
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("opens in the header unit when it is not the standard base unit of the axis", () => {
+            const logFrame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(logFrame.spectralUnit).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralUnitSecondary).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+
+            // a frequency axis in Hz keeps CARTA's default of GHz
+            const linearFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            expect(linearFrame.spectralUnit).toBe(SpectralUnit.GHZ);
+            expect(linearFrame.spectralCoordinate).toBe("Frequency (GHz)");
+        });
+
+        test("offers wavelength and frequency coordinates but no velocity or system conversion without RESTFRQ and SPECSYS", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            const coordinates = Array.from(frame.spectralCoordsSupported?.keys() ?? []);
+            expect(coordinates).toEqual(expect.arrayContaining(["Vacuum wavelength (Angstrom)", "Frequency (GHz)", "Air wavelength (nm)", "Channel"]));
+            expect(coordinates).not.toEqual(expect.arrayContaining(["Radio velocity (km/s)"]));
+            expect(frame.spectralSystemsSupported).toEqual([]);
+            expect(frame.isSpectralSystemConvertible).toBe(false);
+        });
+
+        test("shows an unknown spectral type as it is, with channel as the only alternative", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "LAMBDA"}));
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: false, ctype: "LAMBDA"}));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["LAMBDA (Angstrom)", "Channel"]);
+            expect(frame.spectralType).toBeNull();
+            expect(frame.spectralCoordinate).toBe("LAMBDA (Angstrom)");
+            expect(frame.spectralSystemsSupported).toEqual([]);
+        });
+
+        test.each([
+            ["empty", {name: "CTYPE3", value: ""}],
+            ["missing", undefined]
+        ])("shows a spectral axis with an %s CTYPE as channel only", (_, ctypeEntry) => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo(ctypeEntry));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["Channel"]);
+            expect(frame.spectralType).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralTypeSecondary).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralCoordinate).toBe("Channel");
+            expect(frame.spectralUnitStr).toBe("Channel");
+            expect(frame.isCoordChannel).toBe(true);
+        });
+
+        test("keeps the native values for a spectral axis without CTYPE that is not the depth axis", () => {
+            const mockIsSpectralChannel = jest.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
+            try {
+                const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: ""}));
+                expect(frame.spectralType).toBeNull();
+                expect(frame.isCoordChannel).toBe(false);
+                expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toContain("Channel");
+                expect(Array.from(frame.channelValues)).toEqual([3621.59598486, 3622.4300286, 3623.264263]);
+            } finally {
+                mockIsSpectralChannel.mockRestore();
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("falls back to the default unit when the header unit does not belong to the spectral type", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "Hz"}));
+            expect(frame.spectralUnit).toBe(SpectralUnit.KMS);
+            expect(frame.spectralCoordinate).toBe("Radio velocity (km/s)");
+            expect(frame.spectralCoordsSupported?.has(frame.spectralCoordinate)).toBe(true);
+        });
+
+        test("omits the missing spectral system from the converted cursor info of frequency and velocity axes", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
+            try {
+                // FREQ in Hz and VRAD in m/s take the conversion branches (unit differs from the default), with no SPECSYS to name
+                const frequencyFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+                expect(frequencyFrame.spectralSystem).toBeNull();
+                expect(frequencyFrame.getFreqWithChannel(0).spectralString).toMatch(/^Frequency: /);
+                const velocityFrame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "m/s"}));
+                expect(velocityFrame.getFreqWithChannel(0).spectralString).toMatch(/^Velocity: /);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("names the recognized type and omits the missing spectral system in the cursor info", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
+            try {
+                const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+                expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
         });
     });
 

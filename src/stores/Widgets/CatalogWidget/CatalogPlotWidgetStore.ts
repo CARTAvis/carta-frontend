@@ -1,7 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
-import {CatalogOverlay, type CatalogPlotType} from "enums";
+import {CatalogOverlay, type CatalogPlotType, DragMode} from "enums";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -12,14 +12,13 @@ export interface CatalogPlotWidgetStoreProps {
 
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
-export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 /** What a Layout keeps for a plot: what would still make sense against any catalog. */
 export interface CatalogPlotLayoutSettings {
     /** The plot's own identity, stable across the sessions a workspace spans. */
     widgetId?: string;
     plotType: CatalogPlotType;
-    dragMode?: DragMode;
+    dragMode?: DragMode | false;
     scatterBorder?: Border;
     histogramBorder?: XBorder;
 }
@@ -41,7 +40,7 @@ export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterBorder: Border | undefined = undefined;
-    @observable dragMode: DragMode = "select";
+    @observable dragMode: DragMode | false = DragMode.Select;
     @observable plotType: CatalogPlotType;
     @observable histogramBorder: XBorder | undefined = undefined;
     @observable isLogScaleY: boolean = true;
@@ -97,7 +96,8 @@ export class CatalogPlotWidgetStore {
     /** Put back what a Layout kept. Anything else an older Layout carries is not read. */
     @action applyLayoutSettings(settings: Partial<CatalogPlotLayoutSettings>) {
         if (settings.dragMode !== undefined) {
-            this.dragMode = settings.dragMode;
+            const dragMode = settings.dragMode;
+            this.dragMode = dragMode === false || Object.values(DragMode).includes(dragMode) ? dragMode : DragMode.Select;
         }
         if (settings.scatterBorder) {
             this.scatterBorder = settings.scatterBorder;
@@ -144,7 +144,7 @@ export class CatalogPlotWidgetStore {
         this.yColumnName = columnName;
     }
 
-    @action setIndicator(val: Point2D) {
+    @action setIndicator(val: Point2D | undefined) {
         this.indicatorInfo = val;
     }
 
@@ -156,7 +156,7 @@ export class CatalogPlotWidgetStore {
         this.histogramBorder = xborder;
     }
 
-    @action setDragMode(mode: DragMode) {
+    @action setDragMode(mode: DragMode | false) {
         this.dragMode = mode;
     }
 
@@ -201,13 +201,13 @@ export class CatalogPlotWidgetStore {
         if (this.isFittingResultVisible && this.fitting) {
             const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
             const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
-            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
+            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName}\ncov00 = ${toExponential(
                 this.fitting.cov00,
                 CatalogPlotWidgetStore.Decimals
             )}, cov01 = ${toExponential(this.fitting.cov01, CatalogPlotWidgetStore.Decimals)}, cov11 = ${toExponential(
                 this.fitting.cov11,
                 CatalogPlotWidgetStore.Decimals
-            )} <br>sqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11} <br>rss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
+            )}\nsqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11}\nrss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
         }
         return "";
     }
