@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
 import {SimpleTableComponent, type SimpleTableComponentProps} from "components/Shared";
 import {FileInfoType} from "enums";
+import {GetComputedEntriesForDisplay} from "models";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 
@@ -19,6 +20,7 @@ export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
     HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.FileInfoExtended.$Properties | null;
+    isSpectralAxisNonlinear?: boolean;
     regionFileInfo: string;
     catalogFileInfo: CARTA.CatalogFileInfo.$Properties | null;
     selectedTab: TabId;
@@ -255,7 +257,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.SELECT_REGION:
                 return <RegionSelectComponent />;
             case FileInfoType.IMAGE_FILE:
-                return this.renderImageHeaderList(this.props.fileInfoExtended?.computedEntries ?? []);
+                return this.renderImageHeaderList(GetComputedEntriesForDisplay(this.props.fileInfoExtended, this.props.isSpectralAxisNonlinear));
             case FileInfoType.IMAGE_HEADER:
                 return this.renderImageHeaderList(this.props.fileInfoExtended?.headerEntries ?? []);
             case FileInfoType.REGION_FILE:

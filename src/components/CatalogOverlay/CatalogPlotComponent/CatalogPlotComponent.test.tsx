@@ -1,7 +1,8 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType} from "enums";
+import {CatalogOverlay, CatalogPlotType, DragMode} from "enums";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
+import {CatalogHistogramInteraction} from "utilities";
 
 import {CatalogPlotComponent} from "./CatalogPlotComponent";
 
@@ -21,6 +22,8 @@ function loadCatalog(fileId: number, filename: string) {
         catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
         catalogHeader,
         catalogControlHeader,
+        get2DPlotData: jest.fn(() => ({wcsX: [], wcsY: []})),
+        get1DPlotData: jest.fn(() => ({wcsData: new Float32Array()})),
         getColumnHeader: (columnName: string) => {
             const dataIndex = catalogControlHeader.get(columnName)?.dataIndex;
             return dataIndex !== undefined ? catalogHeader[dataIndex] : undefined;
@@ -40,6 +43,9 @@ describe("CatalogPlotComponent catalog selection", () => {
         const widgetsStore = WidgetsStore.Instance;
         const profileStore = {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
+            catalogData: [],
+            numVisibleRows: 4,
+            get2DPlotData: jest.fn(() => ({wcsX: [0, 10, 20, 30], wcsY: [0, 10, 20, 30]})),
             getOriginIndices: jest.fn(() => [12]),
             setSelectedPointIndices: jest.fn()
         };
@@ -47,7 +53,10 @@ describe("CatalogPlotComponent catalog selection", () => {
             setCatalogTableAutoScroll: jest.fn()
         };
         const widgetStore = {
-            dragMode: "lasso",
+            dragMode: DragMode.Lasso,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag",
+            setIndicator: jest.fn(),
             plotType: CatalogPlotType.D2Scatter
         };
         catalogStore.catalogProfileStores.set(7, profileStore as any);
@@ -57,13 +66,84 @@ describe("CatalogPlotComponent catalog selection", () => {
         const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
 
-        component["onLassoSelected"]({points: [{pointIndex: 3}]} as any);
+        component["onLassoSelected"]([
+            {x: 25, y: 25},
+            {x: 35, y: 25},
+            {x: 35, y: 35},
+            {x: 25, y: 35}
+        ]);
         component.componentWillUnmount();
 
         expect(widget.selectedCatalogId).toBe(7);
         expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
         expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);
+    });
+
+    test("clears the selection when a plot selection contains no sources", () => {
+        const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
+        const onDeselect = jest.spyOn(component as any, "onDeselect").mockImplementation(() => undefined);
+
+        component["selectCatalogPoints"]([]);
+
+        expect(onDeselect).toHaveBeenCalledTimes(1);
+        component.componentWillUnmount();
+    });
+
+    test("clears histogram pan state when released outside the plot", () => {
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => null,
+            getData: () => ({bins: [], binSize: 0, binIndices: []}),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints: jest.fn()
+        });
+        interaction["panPreviousX"] = 10;
+        interaction["hasHandledDrag"] = true;
+
+        interaction["onWindowMouseUp"]({clientX: 0} as MouseEvent);
+
+        expect(interaction.consumeHandledDrag()).toBe(false);
+    });
+
+    test("selects histogram bins when released outside the plot", () => {
+        const selectPoints = jest.fn();
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getData: () => ({
+                bins: [
+                    {x: 20, y: 1},
+                    {x: 60, y: 1}
+                ],
+                binSize: 20,
+                binIndices: [[7], [8]]
+            }),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints
+        });
+        interaction["dragStartX"] = 10;
+        interaction["dragCurrentX"] = 30;
+
+        interaction["onWindowMouseUp"]({clientX: 170} as MouseEvent);
+
+        expect(selectPoints).toHaveBeenCalledWith([7, 8]);
+    });
+
+    test("selects histogram bins on release when no mousemove was recorded", () => {
+        const selectPoints = jest.fn();
+        const interaction = new CatalogHistogramInteraction({
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getData: () => ({bins: [{x: 20, y: 1}], binSize: 20, binIndices: [[7]]}),
+            getBorder: () => undefined,
+            setBorder: jest.fn(),
+            selectPoints
+        });
+        interaction["dragStartX"] = 10;
+
+        interaction["onWindowMouseUp"]({clientX: 130} as MouseEvent);
+
+        expect(selectPoints).toHaveBeenCalledWith([7]);
     });
 });
 
