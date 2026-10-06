@@ -6,7 +6,7 @@ import tinycolor from "tinycolor2";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogOverlayShape, CatalogTextureType, ImageViewLayer} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {closestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -57,7 +57,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const catalogStore = appStore.catalogStore;
         const catalogFileIds = catalogStore.visibleCatalogFiles.get(baseFrame);
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
-            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
             if (!catalogDisplayStore) {
                 return;
             }
@@ -170,7 +170,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     };
 
     private renderCatalog() {
-        const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
@@ -187,10 +186,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const destinationFrame = this.props.frame;
         catalogStore.visibleCatalogFiles.get(destinationFrame)?.forEach(fileId => {
             const catalog = catalogStore.catalogGLData.get(fileId);
-            const catalogDisplayStore = catalogStore.getOrCreateCatalogDisplayStore(fileId);
+            const catalogDisplayStore = catalogStore.getCatalogDisplayStore(fileId);
             const count = catalogStore.catalogCounts.get(fileId);
             if (catalog && catalogDisplayStore && count && count > 0) {
-                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
+                const frame = catalogStore.frameOf(fileId);
                 const isActive = frame === destinationFrame;
 
                 if (!catalogDisplayStore.isSourceSizeDefined) {
@@ -295,12 +294,14 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
 
                 // selected source
-                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
-                if (selectedSource) {
-                    this.gl.activeTexture(GL2.TEXTURE6);
-                    this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
-                }
+                // Bound whether or not this catalog has a selection: leaving the one integer sampler
+                // on the default unit, alongside a float texture, makes the draw fail for the
+                // overlay as a whole. A catalog restored from a workspace has no selection texture
+                // until something makes one, which is how the overlay came back invisible.
+                const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource) ?? this.catalogWebGLService.emptySelectedSourceTexture;
+                this.gl.activeTexture(GL2.TEXTURE6);
+                this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource ?? null);
+                this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
 
                 // size minor
                 this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 0);
@@ -362,7 +363,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
         const selectedPoint: {fileId: number | undefined; minIndex: number | undefined; minDistanceSquared: number} = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData?.forEach((catalog, fileId) => {
-            const frame = AppStore.Instance.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
+            const frame = catalogStore.frameOf(fileId);
             if (!frame) {
                 return;
             }
@@ -382,7 +383,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
             if (catalogProfileStore) {
                 const catalogDisplayStore = catalogStore.getCatalogDisplayStore(selectedPoint.fileId);
-                WidgetsStore.Instance.updateCatalogWidgetSelection(selectedPoint.fileId);
+                catalogStore.widgetBindings.showInTable(selectedPoint.fileId);
                 const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
                 catalogProfileStore.setSelectedPointIndices(matched, false);
                 catalogDisplayStore?.setCatalogTableAutoScroll(true);

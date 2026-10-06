@@ -9,6 +9,8 @@ describe("CatalogPlotWidgetStore config", () => {
         store.setNumBinsX(25);
         store.setDragMode(DragMode.Zoom);
         store.setScatterborder({xMin: 1, xMax: 10, yMin: 2, yMax: 11});
+        store.setFitting({intercept: 1, slope: 2, cov00: 3, cov01: 4, cov11: 5, rss: 6});
+        store.setMinMaxX({minVal: 2, maxVal: 8});
 
         const restored = new CatalogPlotWidgetStore({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter});
         restored.applyConfig(store.toConfig());
@@ -28,10 +30,10 @@ describe("CatalogPlotWidgetStore config", () => {
     test("normalizes legacy drag modes while preserving disabled drag", () => {
         const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
 
-        store.applyConfig({dragMode: "pan" as any});
+        store.applyLayoutSettings({dragMode: "pan" as any});
         expect(store.dragMode).toBe(DragMode.Select);
 
-        store.applyConfig({dragMode: false});
+        store.applyLayoutSettings({dragMode: false});
         expect(store.dragMode).toBe(false);
     });
 });

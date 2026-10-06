@@ -104,36 +104,61 @@ export class LayoutStore {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return false;
         }
+        return this.applyLayoutConfig(this.layouts[layoutName], layoutName);
+    };
 
-        const config = this.layouts[layoutName];
+    /**
+     * Put a layout config in place, replacing every widget the session is showing.
+     *
+     * @param config - the layout, in the form a saved layout and a workspace both hold it.
+     * @param layoutName - the saved layout it came from, or "" when it is not a layout of its own,
+     *                     as for the layout a workspace carries.
+     * @returns whether the layout could be applied.
+     */
+    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = ""): boolean => {
+        const preparedConfig = LayoutConfig.prepareLayout(config);
+        if (!preparedConfig) {
+            return false;
+        }
+
         const appStore = AppStore.Instance;
-        this.clearCurrentLayout();
-        appStore.widgetsStore.clearPopoutPositions();
-
         // generate docked config & collect docked components
         const dockedConfig = {
-            type: config.docked.type,
+            type: preparedConfig.docked.type,
             content: []
         };
         // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
-        LayoutConfig.createConfigToApply(dockedConfig.content, config.docked.content, []);
+        LayoutConfig.createConfigToApply(dockedConfig.content, preparedConfig.docked.content, []);
 
         // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
         const dockedComponentConfigs: any[] = [];
         const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
-
-        // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
-
-        this.layoutModel = Model.fromJson(modelJson);
-        this.layoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+        const nextLayoutModel = Model.fromJson(modelJson);
+        nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
             return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
         });
+
+        this.clearCurrentLayout();
+        appStore.widgetsStore.clearPopoutPositions();
+
+        // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
+        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? []);
+
+        this.layoutModel = nextLayoutModel;
 
         appStore.widgetsStore.updateImageWidgetTitle();
         this.currentLayoutName = layoutName;
 
         return true;
+    };
+
+    /** The layout the session is showing, in the form a saved layout and a workspace both hold it. */
+    public currentLayoutConfig = (): {layoutVersion: number; docked: any; floating: any[]} | undefined => {
+        const modelJson = this.layoutModel?.toJson();
+        if (!modelJson?.layout) {
+            return undefined;
+        }
+        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson) ?? undefined;
     };
 
     @flow.bound *saveLayout() {

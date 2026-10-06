@@ -32,6 +32,7 @@ const MOCK_MIRROR_STORE = {
 jest.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: MOCK_CONFIG_STORE},
+    CatalogOnlineQueryStore: {Instance: {resetResultSize: jest.fn()}},
     MirrorSiteStore: {Instance: MOCK_MIRROR_STORE}
 }));
 jest.mock("utilities", () => ({
@@ -249,5 +250,18 @@ describe("CatalogQueryComponent object resolution error", () => {
         expect(AppToaster.show).toHaveBeenCalledWith({message: error.message});
         expect(MOCK_CONFIG_STORE.setObjectQueryStatus).toHaveBeenNthCalledWith(1, true);
         expect(MOCK_CONFIG_STORE.setObjectQueryStatus).toHaveBeenNthCalledWith(2, false);
+    });
+});
+
+describe("CatalogQueryComponent result size", () => {
+    test("clears the last query's result size when it is mounted, not when it is constructed", () => {
+        const resetResultSize: jest.Mock = jest.requireMock("stores").CatalogOnlineQueryStore.Instance.resetResultSize;
+        resetResultSize.mockClear();
+
+        const component = new CatalogQueryComponent({});
+        expect(resetResultSize).not.toHaveBeenCalled();
+
+        component.componentDidMount();
+        expect(resetResultSize).toHaveBeenCalledTimes(1);
     });
 });
