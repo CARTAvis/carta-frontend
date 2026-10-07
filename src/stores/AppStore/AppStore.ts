@@ -38,6 +38,8 @@ import {
     type FrameView,
     type ImageItem,
     type ImageViewItem,
+    NONLINEAR_SPECTRAL_AXIS_MESSAGE,
+    NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
     PresetLayout,
     type RegionId,
@@ -915,6 +917,9 @@ export class AppStore {
         if (!this.activeFrame) {
             throw new Error("No active image");
         }
+        if (this.activeFrame.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
         this.startFileSaving();
         const fileId = this.activeFrame.frameInfo.fileId;
         try {
@@ -1581,6 +1586,9 @@ export class AppStore {
         if (!message || !frame) {
             return;
         }
+        if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
 
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
@@ -1634,6 +1642,9 @@ export class AppStore {
         if (!message || !frame) {
             return;
         }
+        if (frame.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
 
         this.startFileLoading();
         // clear previously generated moment images under this frame
@@ -1674,6 +1685,9 @@ export class AppStore {
     @flow.bound *requestPreviewPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, id: string) {
         if (!message || !frame) {
             return;
+        }
+        if (frame.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
         try {
             this.startFileLoading();
