@@ -11,7 +11,7 @@ import {RegionStore} from "stores/Frame";
 import {getDataTypeString, getHeaderNumericValue, type ProcessedColumnData} from "utilities";
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
-export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
+export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD | CARTA.FileType.ZARR;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
 type DirectoryInfo = CARTA.FileInfo.$Properties & Omit<CARTA.DirectoryInfo.$Properties, keyof CARTA.FileInfo.$Properties>;
@@ -250,10 +250,11 @@ export class FileBrowserStore {
                     directoryInfo.type = fileInfo.type;
                     directoryInfo.size = fileInfo.size;
                     directoryInfo.HDUList = fileInfo.HDUList;
+                    directoryInfo.sizeIsDeclared = fileInfo.sizeIsDeclared;
                 }
             }
 
-            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.HDUList?.[0]});
+            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.type === CARTA.FileType.ZARR ? "" : fileInfo.HDUList?.[0]});
             const selectedFileIndex = this.selectedFiles.findIndex(item => item.fileInfo?.name === fileInfo.name);
             if (selectedFileIndex !== -1) {
                 this.selectedFiles[selectedFileIndex].fileInfo = fileInfo;
