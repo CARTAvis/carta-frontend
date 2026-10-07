@@ -17,6 +17,7 @@ interface ColorPickerComponentProps {
     darkTheme: boolean;
     disableAlpha: boolean;
     disabled?: boolean;
+    "data-testid"?: string;
     setColor: (color: ColorResult) => void;
 }
 @observer
@@ -58,7 +59,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
                 onClose={this.handleColorClose}
                 placement="right"
             >
-                <Button onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
+                <Button data-testid={this.props["data-testid"]} onClick={this.handleColorClick} className="color-swatch-button" disabled={this.props.disabled}>
                     <div className={classNames({"transparent-color": buttonColor.getAlpha() === 0})} style={{backgroundColor: buttonColor.toString()}} />
                 </Button>
             </ColorPickerPopover>

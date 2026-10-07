@@ -161,6 +161,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         const centerWCSPoint = this.centerWCS;
         const xInput = (
             <CoordNumericInput
+                data-testid="region-dialog-elliptical-center-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
@@ -172,6 +173,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         );
         const yInput = (
             <CoordNumericInput
+                data-testid="region-dialog-elliptical-center-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
@@ -187,6 +189,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         const sizeWCS = this.sizeWCS;
         const sizeWidthInput = (
             <CoordNumericInput
+                data-testid="region-dialog-elliptical-major-axis-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.x}
@@ -199,6 +202,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         );
         const sizeHeightInput = (
             <CoordNumericInput
+                data-testid="region-dialog-elliptical-minor-axis-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.y}
@@ -213,12 +217,12 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
             region.coordinate === CoordinateMode.Image ? `WCS (Semi-major, Semi-minor): ${isImgCoordinates ? "-" : sizeWCS ? WCSPoint2D.toString(sizeWCS, 3) : ""}` : `Image (Semi-major, Semi-minor): ${Point2D.toString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-elliptical-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="region-dialog-elliptical-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-elliptical-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
                     {xInput}
@@ -231,7 +235,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                     <span className="info-string">{sizeInfoString}</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
-                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
+                    <ImageCoordNumericInput data-testid="region-dialog-elliptical-rotation-input" value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
                 </FormGroup>
             </div>
         );

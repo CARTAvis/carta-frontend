@@ -295,6 +295,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const startWCSPoint = this.startWCS;
         const startInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-line-start-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={startPoint?.x}
@@ -306,6 +307,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         );
         const startInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-line-start-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={startPoint?.y}
@@ -322,6 +324,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const endWCSPoint = this.endWCS;
         const endInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-line-end-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={endPoint?.x}
@@ -333,6 +336,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         );
         const endInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-line-end-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={endPoint?.y}
@@ -349,6 +353,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const centerWCSPoint = this.centerWCS;
         const centerInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-line-center-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
@@ -360,6 +365,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         );
         const centerInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-line-center-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
@@ -377,6 +383,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const lengthWCS = this.lengthWCS;
         const lengthInput = (
             <CoordNumericInput
+                data-testid="region-dialog-line-length-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={length}
@@ -391,12 +398,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-line-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="region-dialog-line-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-line-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 <FormGroup label="Start" labelInfo={pxUnit} inline={true}>
                     {startInputX}
@@ -420,7 +427,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                             <span className="info-string">{lengthInfoString}</span>
                         </FormGroup>
                         <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
-                            <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} customPlaceholder="P.A." />
+                            <ImageCoordNumericInput data-testid="region-dialog-line-rotation-input" value={region.rotation} onChange={this.handleRotationChange} customPlaceholder="P.A." />
                         </FormGroup>
                     </>
                 ) : null}

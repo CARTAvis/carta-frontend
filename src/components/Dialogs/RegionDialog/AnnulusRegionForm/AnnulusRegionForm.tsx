@@ -220,6 +220,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const centerWCSPoint = this.centerWCS;
         const xInput = (
             <CoordNumericInput
+                data-testid="annulus-center-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
@@ -231,6 +232,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         );
         const yInput = (
             <CoordNumericInput
+                data-testid="annulus-center-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
@@ -246,6 +248,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const outerSizeWCS = this.outerSizeWCS;
         const outerWidthInput = (
             <CoordNumericInput
+                data-testid="annulus-outer-major-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={outerSize.x}
@@ -258,6 +261,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         );
         const outerHeightInput = (
             <CoordNumericInput
+                data-testid="annulus-outer-minor-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={outerSize.y}
@@ -277,6 +281,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const innerSizeWCS = this.innerSizeWCS;
         const innerWidthInput = (
             <CoordNumericInput
+                data-testid="annulus-inner-major-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={innerSize.x}
@@ -289,6 +294,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         );
         const innerHeightInput = (
             <CoordNumericInput
+                data-testid="annulus-inner-minor-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={innerSize.y}
@@ -306,12 +312,12 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
 
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="annulus-region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="annulus-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="annulus-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
                     {xInput}
@@ -330,7 +336,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                     <span className="info-string">Inner axes keep the outer axis ratio; changing one updates the other.</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
-                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
+                    <ImageCoordNumericInput data-testid="annulus-rotation-input" value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
                 </FormGroup>
             </div>
         );
