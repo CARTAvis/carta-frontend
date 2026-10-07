@@ -28,24 +28,8 @@ export class WCSPoint2D {
             }
 
             if (value.includes(":")) {
-                const sexagesimalMatch = value.match(/^([+-]?)(\d+):(\d{1,2}):(\d{1,2})(\.\d+)?$/);
-                if (!sexagesimalMatch) {
-                    return coordinate;
-                }
-                const [, sign, major, minute, second, fraction = ""] = sexagesimalMatch;
-                const roundedSeconds = Number(`${second}${fraction}`);
-                const normalizedSeconds = Number(toFixed(roundedSeconds, decimals));
-                let totalMinutes = Number(minute);
-                let totalMajor = Number(major);
-                if (normalizedSeconds >= 60) {
-                    totalMinutes++;
-                }
-                if (totalMinutes >= 60) {
-                    totalMajor += Math.floor(totalMinutes / 60);
-                    totalMinutes %= 60;
-                }
-                const secondsString = toFixed(normalizedSeconds >= 60 ? 0 : normalizedSeconds, decimals).padStart(decimals > 0 ? decimals + 3 : 2, "0");
-                return `${sign}${String(totalMajor).padStart(2, "0")}:${String(totalMinutes).padStart(2, "0")}:${secondsString}${unit}`;
+                // Preserve the WCS formatter's precision and coordinate normalization.
+                return coordinate;
             }
             return `${toFixed(Number(value), decimals)}${unit}`;
         };

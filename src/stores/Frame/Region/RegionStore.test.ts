@@ -301,6 +301,30 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(compass.length).toBe(MIN_EDITED_REGION_DIMENSION);
     });
 
+    test("rectangular-pixel annuli reject the hidden rotator and retain the inner handle", () => {
+        const annulus = MakeRegion(
+            CARTA.RegionType.ANNULUS,
+            [
+                {x: 0, y: 0},
+                {x: 10, y: 20},
+                {x: 5, y: 10}
+            ],
+            {frame: {hasSquarePixels: false}}
+        );
+        annulus.selectPoint(8);
+        expect(annulus.selectedPointIndex).toBe(-1);
+        annulus.selectPoint(9);
+        expect(annulus.hasSelectedPoint).toBe(true);
+        expect(annulus.selectablePointCount).toBe(9);
+        expect(annulus.selectablePointIndices).toHaveLength(9);
+        expect(annulus.selectablePointIndices).not.toContain(8);
+        for (let i = 0; i < 10; i++) {
+            annulus.selectNextPoint();
+            expect(annulus.hasSelectedPoint).toBe(true);
+            expect(annulus.selectedPointIndex).not.toBe(8);
+        }
+    });
+
     test("annulus region inner radius and outer radius keyboard movement", () => {
         const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
             {x: 0, y: 0},

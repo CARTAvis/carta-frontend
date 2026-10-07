@@ -242,7 +242,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const outerSize = region.size;
         const outerSizeWCS = this.outerSizeWCS;

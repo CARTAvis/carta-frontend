@@ -183,7 +183,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const size = region.size;
         const sizeWCS = this.sizeWCS;

@@ -24,6 +24,7 @@ jest.mock("stores", () => ({
 }));
 
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {RegionMode} from "enums";
 
@@ -70,7 +71,9 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
             current: {
                 getPosition: () => ({x: 0, y: 0}),
                 scaleX: () => 1,
-                scaleY: () => 1
+                scaleY: () => 1,
+                scale: jest.fn(),
+                position: jest.fn()
             }
         };
     });
@@ -83,9 +86,12 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
     test("creates annulus inner and outer radii using independent axis zoom", () => {
         jest.useFakeTimers();
         const frame = (component as any).frame;
-        frame.effectiveZoomLevel = {x: 2, y: 4};
-        frame.regionSet.mode = RegionMode.CREATING;
-        frame.regionSet.newRegionType = CARTA.RegionType.ANNULUS;
+        runInAction(() => {
+            frame.effectiveZoomLevel = {x: 2, y: 4};
+            frame.regionSet.mode = RegionMode.CREATING;
+            frame.regionSet.newRegionType = CARTA.RegionType.ANNULUS;
+        });
+        expect((component as any).stageRef.current.scale).toHaveBeenCalledWith({x: 2, y: 4});
         frame.regionSet.selectSingleRegion = jest.fn();
         frame.regionSet.setMode = jest.fn();
         const region = {

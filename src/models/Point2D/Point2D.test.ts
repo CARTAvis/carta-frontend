@@ -13,10 +13,14 @@ test("preserves angle units while rounding decimal WCS coordinates", () => {
     expect(WCSPoint2D.toString({x: "123.456789'", y: "-12.345678 deg"}, 3)).toBe("(123.457', -12.346 deg)");
 });
 
-test("rounds the fractional part of sexagesimal WCS coordinates", () => {
-    expect(WCSPoint2D.toString({x: "12:34:56.789", y: "-12:34:56.789"}, 2)).toBe("(12:34:56.79, -12:34:56.79)");
-    expect(WCSPoint2D.toString({x: "12:34:56.789", y: "-12:34:56.789"}, 0)).toBe("(12:34:57, -12:34:57)");
-    expect(WCSPoint2D.toString({x: "12:34:56.789 deg", y: "-12:34:56.789'"}, 2)).toBe("(12:34:56.79 deg, -12:34:56.79')");
+test("preserves formatter precision and normalization for sexagesimal coordinates", () => {
+    const point = {x: "23:59:59.9996", y: "-12:34:56.789"};
+    expect(WCSPoint2D.toString(point, 3)).toBe("(23:59:59.9996, -12:34:56.789)");
+    expect(WCSPoint2D.toString(point, 0)).toBe("(23:59:59.9996, -12:34:56.789)");
+});
+
+test("preserves decimal coordinate precision when using the WCS formatter output", () => {
+    expect(WCSPoint2D.toString({x: "123.456789 deg", y: "-12.345678 deg"})).toBe("(123.456789 deg, -12.345678 deg)");
 });
 
 test("leaves coordinates without decimals unchanged", () => {

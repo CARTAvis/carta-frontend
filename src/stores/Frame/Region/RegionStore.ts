@@ -433,7 +433,7 @@ export class RegionStore {
             return hasSquarePixels ? 9 : 8;
         }
         if (this.regionType === CARTA.RegionType.ANNULUS) {
-            return 10;
+            return hasSquarePixels ? 10 : 9;
         }
         if (this.isRotationSelectableLineLikeRegion) {
             return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
@@ -442,6 +442,13 @@ export class RegionStore {
             return 1;
         }
         return this.controlPoints.length;
+    }
+
+    @computed get selectablePointIndices(): number[] {
+        if (this.isSimpleShapeRegion || this.regionType === CARTA.RegionType.ANNULUS) {
+            return getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels, this.regionType === CARTA.RegionType.ANNULUS);
+        }
+        return Array.from({length: this.selectablePointCount}, (_, index) => index);
     }
 
     @computed get isSimpleShapeRegion(): boolean {
@@ -483,7 +490,7 @@ export class RegionStore {
     }
 
     @computed get hasSelectedPoint(): boolean {
-        return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.selectablePointCount;
+        return this.isSelectablePoint(this.selectedPointIndex);
     }
 
     public getRegionApproximation(astTransform: AST.Mapping): Point2D[] {
@@ -871,8 +878,18 @@ export class RegionStore {
         }
     };
 
+    private isSelectablePoint = (index: number): boolean => {
+        if (!Number.isInteger(index)) {
+            return false;
+        }
+        if (this.isSimpleShapeRegion || this.regionType === CARTA.RegionType.ANNULUS) {
+            return this.selectablePointIndices.includes(index);
+        }
+        return index >= 0 && index < this.selectablePointCount;
+    };
+
     @action selectPoint = (index: number) => {
-        if (this.canSelectPoint && index >= 0 && index < this.selectablePointCount) {
+        if (this.canSelectPoint && this.isSelectablePoint(index)) {
             this.selectedPointIndex = index;
         }
     };
@@ -909,7 +926,7 @@ export class RegionStore {
     };
 
     private cycleSimpleShapePointSelection = (direction: 1 | -1) => {
-        const selectionOrder = getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels, this.regionType === CARTA.RegionType.ANNULUS);
+        const selectionOrder = this.selectablePointIndices;
         if (!selectionOrder.length) {
             return;
         }

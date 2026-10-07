@@ -372,7 +372,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const isRotated = Math.abs(region.rotation) > 1e-3;
         // bottom left
@@ -405,7 +405,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             />
         );
         const bottomLeftInfoString =
-            region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : bottomLeftWCSPoint ? WCSPoint2D.toString(bottomLeftWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(this.bottomLeftPoint, "px", 3)}`;
+            region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : bottomLeftWCSPoint ? WCSPoint2D.toString(bottomLeftWCSPoint) : ""}` : `Image: ${Point2D.toString(this.bottomLeftPoint, "px", 3)}`;
 
         // top right
         const topRightPoint = this.topRightPoint;
@@ -436,7 +436,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
             />
         );
-        const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : topRightWCSPoint ? WCSPoint2D.toString(topRightWCSPoint, 3) : ""}` : `Image: ${Point2D.toString(this.topRightPoint, "px", 3)}`;
+        const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : topRightWCSPoint ? WCSPoint2D.toString(topRightWCSPoint) : ""}` : `Image: ${Point2D.toString(this.topRightPoint, "px", 3)}`;
 
         // size
         const size = isTextAnnotation ? multiply2D(region.size, this.textScale) : region.size;

@@ -271,6 +271,7 @@ export class TelemetryService {
                 TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, regionType, width, height, depth});
                 break;
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNULUS:
                 TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, regionType, semi_major: width, semi_minor: height, depth});
                 break;
             default:
