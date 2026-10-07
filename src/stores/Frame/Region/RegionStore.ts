@@ -206,6 +206,9 @@ export class RegionStore {
         [CARTA.RegionType.ANNULUS, "Annulus"]
     ]);
 
+    // The preference schema does not support annuli as the default region type.
+    public static readonly AVAILABLE_DEFAULT_REGION_TYPES = new Map([...RegionStore.AVAILABLE_REGION_TYPES].filter(([type]) => type !== CARTA.RegionType.ANNULUS));
+
     public static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.ANNPOINT, "Point"],
         [CARTA.RegionType.ANNLINE, "Line"],

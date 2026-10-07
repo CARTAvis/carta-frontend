@@ -569,7 +569,7 @@ export class PreferenceDialogComponent extends React.Component {
         );
 
         const regionTypes: React.JSX.Element[] = [];
-        RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
+        RegionStore.AVAILABLE_DEFAULT_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
                     {name}

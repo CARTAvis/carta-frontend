@@ -1,3 +1,4 @@
+import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
 import {RegionOpacity} from "enums";
@@ -31,6 +32,14 @@ import {MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_RIGHT_POINT_INDEX, SIMPLE_SHAP
 import {CompassAnnotationStore} from "../AnnotationStore";
 
 import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
+
+test("all default region options can be persisted by the preference schema", () => {
+    const validate = new Ajv({strictTypes: false}).compile(require("carta-schemas/preferences_schema_2.json"));
+    for (const regionType of RegionStore.AVAILABLE_DEFAULT_REGION_TYPES.keys()) {
+        expect(validate({version: 2, regionType})).toBe(true);
+    }
+    expect(RegionStore.AVAILABLE_REGION_TYPES.has(CARTA.RegionType.ANNULUS)).toBe(true);
+});
 
 const BACKEND_SERVICE = {
     setCursor: jest.fn(),
