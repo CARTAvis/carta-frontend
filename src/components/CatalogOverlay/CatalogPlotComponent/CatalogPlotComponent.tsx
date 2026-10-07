@@ -29,7 +29,7 @@ import {
     exportTsvFile,
     formatCatalogPlotTick,
     getCatalogScatterBorder,
-    getTimestamp,
+    getExportFileName,
     isPointInPolygon,
     minMaxArray,
     toExponential,
@@ -862,7 +862,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.histogramHoverPixel = histogramHoverPixel;
         chart.draw();
         const columnName = this.widgetStore?.xColumnName ?? "histogram";
-        this.downloadCanvasAsPng(composed, `catalog-histogram-${columnName}`);
+        this.downloadCanvasAsPng(composed, "catalog", `histogram-${columnName}`);
     };
 
     private exportHistogramData = () => {
@@ -880,13 +880,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         ctx.fillRect(0, 0, width, height);
     }
 
-    private downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: string) {
+    private downloadCanvasAsPng(canvas: HTMLCanvasElement, imageName: string, content: string) {
         const ownerDocument = canvas.ownerDocument;
         const ownerWindow = ownerDocument.defaultView ?? window;
         canvas.toBlob(blob => {
             if (blob) {
                 const link = ownerDocument.createElement("a");
-                link.download = filename.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.download = `${getExportFileName(imageName, content)}.png`;
                 link.href = ownerWindow.URL.createObjectURL(blob);
                 link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }
@@ -1463,7 +1463,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         cursorNearestPoint={this.cursorNearestScatterPoint}
                         extraPluginOptions={scatterExtraPluginOptions}
                         customExportData={this.exportScatterData}
-                        exportFileName={`catalog-scatter-${widgetStore.xColumnName ?? "x"}-${widgetStore.yColumnName ?? "y"}`}
+                        imageName="catalog"
+                        plotName={`scatter-${widgetStore.xColumnName ?? "x"}-${widgetStore.yColumnName ?? "y"}`}
                         exportRightPadding={EXPORT_RIGHT_PADDING}
                         toolbarChildren={
                             <React.Fragment>

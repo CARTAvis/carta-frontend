@@ -9,7 +9,7 @@ import {FittingContinuum, FittingFunction, ImageType, RegionId} from "enums";
 import {StatsTypeString} from "models";
 import {AppStore, type ProfileFittingStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {exportTxtFile, getExportFileName} from "utilities";
 
 import "./ProfileFittingComponent.scss";
 
@@ -156,7 +156,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         }
 
         const content = buildProfileFittingLogContent(headerString, this.widgetStore.restFrameCorrectionExportComments, this.fittingStore.resultLog);
-        const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
+        const fileName = getExportFileName(this.widgetStore.effectiveFrame?.filename ?? "unknown", "Profile_Fitting_Result_Log");
         exportTxtFile(fileName, content);
     };
 
