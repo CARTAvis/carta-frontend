@@ -327,6 +327,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                     {innerWidthInput}
                     {innerHeightInput}
                     <span className="info-string">{innerSizeInfoString}</span>
+                    <span className="info-string">Inner axes keep the outer axis ratio; changing one updates the other.</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
                     <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
