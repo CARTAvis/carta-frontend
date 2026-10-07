@@ -10,7 +10,7 @@ import {ResizeDetector} from "components/Shared";
 import {InteractionMode, LinePlotSelectingMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {type MultiPlotProps, PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
@@ -715,8 +715,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.toBlob(blob => {
             if (blob) {
                 const link = ownerDoc.createElement("a") as HTMLAnchorElement;
-                // Trim filename before timestamp to 200 characters to prevent browser errors
-                link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.download = `${getExportFileName(imageName, plotName)}.png`;
                 link.href = ownerWindow.URL.createObjectURL(blob);
                 link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }

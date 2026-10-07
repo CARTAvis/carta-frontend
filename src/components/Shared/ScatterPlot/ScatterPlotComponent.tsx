@@ -11,7 +11,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {DragMode, InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 
 import "./ScatterPlotComponent.scss";
 
@@ -80,7 +80,6 @@ export class ScatterPlotComponentProps {
     extraPluginOptions?: ChartOptions<"scatter">["plugins"];
     customExportImage?: () => void;
     customExportData?: () => void;
-    exportFileName?: string;
     exportRightPadding?: number;
 }
 
@@ -421,8 +420,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (blob) {
                     const link = ownerDocument.createElement("a") as HTMLAnchorElement;
                     // Trim filename before timestamp to 200 characters to prevent browser errors
-                    const fileName = this.props.exportFileName ?? `${imageName}-${plotName.replace(" ", "-")}`;
-                    link.download = fileName.substring(0, 200) + `-${getTimestamp()}.png`;
+                    link.download = `${getExportFileName(imageName, plotName)}.png`;
                     link.href = ownerWindow.URL.createObjectURL(blob);
                     link.dispatchEvent(new ownerWindow.MouseEvent("click"));
                 }
