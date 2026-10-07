@@ -1,6 +1,43 @@
+import * as React from "react";
+import {render} from "@testing-library/react";
+
 import {DragMode, InteractionMode, ZoomMode} from "enums";
+import {AppStore} from "stores";
 
 import {ScatterPlotComponent} from "./ScatterPlotComponent";
+
+test("exports the source overlay canvas from the mounted scatter container", () => {
+    const originalResizeObserver = window.ResizeObserver;
+    const originalIntersectionObserver = window.IntersectionObserver;
+    const mockObserver = jest.fn(() => ({observe: jest.fn(), disconnect: jest.fn()}));
+    window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
+    window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
+    const componentRef = React.createRef<ScatterPlotComponent>();
+    const {container, unmount} = render(<ScatterPlotComponent ref={componentRef} />);
+    const chartCanvas = document.createElement("canvas");
+    const overlayCanvas = document.createElement("canvas");
+    overlayCanvas.dataset.overlay = "true";
+    container.querySelector(".scatter-plot-component")!.appendChild(overlayCanvas);
+    componentRef.current!.onPlotRefUpdated({canvas: chartCanvas});
+    const drawImage = jest.fn();
+    const appStore = jest.spyOn(AppStore, "Instance", "get").mockReturnValue({preferenceStore: {hasTransparentImageBackground: false}} as AppStore);
+    const getContext = jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({fillRect: jest.fn(), drawImage} as unknown as CanvasRenderingContext2D);
+    const toBlob = jest.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(() => {});
+
+    try {
+        componentRef.current!.exportImage();
+
+        expect(drawImage).toHaveBeenCalledWith(chartCanvas, 0, 0);
+        expect(drawImage).toHaveBeenCalledWith(overlayCanvas, 0, 0);
+    } finally {
+        unmount();
+        appStore.mockRestore();
+        getContext.mockRestore();
+        toBlob.mockRestore();
+        window.ResizeObserver = originalResizeObserver;
+        window.IntersectionObserver = originalIntersectionObserver;
+    }
+});
 
 const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKey" | "shiftKey" | "button">> = {}) => ({
     evt: {
