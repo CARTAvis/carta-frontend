@@ -333,6 +333,23 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(annulus.innerSize.x).toBe(8);
     });
 
+    test("annulus geometry uses one inner scale and clamps an explicitly edited axis", () => {
+        const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+        annulus.setAnnulusGeometry({x: 2, y: 3}, {x: 20, y: 40}, 0.25);
+        expect(annulus.center).toEqual({x: 2, y: 3});
+        expect(annulus.innerSize).toEqual({x: 5, y: 10});
+        annulus.setInnerSize({x: 100, y: 10}, false, "x");
+        expect(annulus.innerSize.x).toBeCloseTo(19.98);
+        expect(annulus.innerSize.y).toBeCloseTo(39.96);
+        annulus.setInnerSize({x: -100, y: 10}, false, "x");
+        expect(annulus.innerSize.x).toBe(MIN_EDITED_REGION_DIMENSION);
+        expect(annulus.innerSize.y).toBe(MIN_EDITED_REGION_DIMENSION * 2);
+    });
+
     test("annulus region is invalid when inner axes are not contained by outer axes", () => {
         const validAnnulus = MakeRegion(CARTA.RegionType.ANNULUS, [
             {x: 0, y: 0},

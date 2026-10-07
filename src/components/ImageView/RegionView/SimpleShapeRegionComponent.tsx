@@ -12,7 +12,6 @@ import {type FrameStore, type RegionStore, type TextAnnotationStore} from "store
 import {
     add2D,
     angle2D,
-    getAnnulusInnerSize,
     getResizedSimpleShapeFromCenter,
     getResizedSimpleShapeFromCorner,
     getSimpleShapeAnchorName,
@@ -20,8 +19,6 @@ import {
     getSimpleShapeAnchorSizeScale,
     isRectangleRegionType,
     isTextRegionType,
-    MAX_ANNULUS_INNER_TO_OUTER_RATIO,
-    MIN_EDITED_REGION_DIMENSION,
     multiply2D,
     rotate2D,
     scale2D,
@@ -164,7 +161,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         });
         if (region.regionType === CARTA.RegionType.ANNULUS) {
             const ratio = region.size.y > 0 ? region.innerSize.y / region.size.y : 0.5;
-            region.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
+            region.setAnnulusGeometry(edit.center, edit.size, ratio);
             return;
         }
         region.setControlPoints([edit.center, edit.size]);
@@ -203,10 +200,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         const delta = subtract2D(newAnchorPoint, region.center);
         const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
-        const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(region.size.x * MAX_ANNULUS_INNER_TO_OUTER_RATIO, Math.abs(localDelta.y)));
-        const ratio = region.size.x > 0 ? region.size.y / region.size.x : 1;
-        const newInnerY = newInnerX * ratio;
-        region.setInnerSize(getAnnulusInnerSize(region.size, {x: newInnerX, y: newInnerY}, "x"));
+        region.setInnerSize({x: Math.abs(localDelta.y), y: region.innerSize.y}, false, "x");
     };
 
     private getBoundedInnerRadiusAnchorPosition = (position: Point2D): Point2D => {

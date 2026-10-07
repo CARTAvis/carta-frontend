@@ -22,7 +22,6 @@ import {
     hasValidAnnulusShape,
     isAstBadPoint,
     length2D,
-    MAX_ANNULUS_INNER_TO_OUTER_RATIO,
     MIN_EDITED_REGION_DIMENSION,
     minMax2D,
     rotate2D,
@@ -637,28 +636,28 @@ export class RegionStore {
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
             const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-            this.setAnnulusGeometry(this.center, p, {x: ratio, y: ratio}, shouldSkipUpdate);
+            this.setAnnulusGeometry(this.center, p, ratio, shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }
     };
 
-    @action setInnerSize = (p: Point2D, shouldSkipUpdate = false) => {
+    @action setInnerSize = (p: Point2D, shouldSkipUpdate = false, editedAxis?: "x" | "y") => {
         if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
             const diffX = Math.abs(p.x - this.innerSize.x);
             const diffY = Math.abs(p.y - this.innerSize.y);
-            const axis = diffY > diffX ? "y" : "x";
+            const axis = editedAxis ?? (diffY > diffX ? "y" : "x");
             this.setControlPoint(2, getAnnulusInnerSize(this.size, p, axis), shouldSkipUpdate);
         }
     };
 
-    @action setAnnulusGeometry = (center: Point2D, outerSize: Point2D, innerRatio: Point2D, shouldSkipUpdate = false) => {
+    @action setAnnulusGeometry = (center: Point2D, outerSize: Point2D, innerRatio: number, shouldSkipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
             const size = {
                 x: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(outerSize.x)),
                 y: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(outerSize.y))
             };
-            const innerSize = getAnnulusInnerSize(size, {x: size.x * innerRatio.x, y: size.y * innerRatio.y});
+            const innerSize = getAnnulusInnerSize(size, {x: size.x * innerRatio, y: size.y * innerRatio});
             this.setControlPoints([center, size, innerSize], shouldSkipUpdate);
         }
     };
@@ -940,8 +939,8 @@ export class RegionStore {
             if (this.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX) {
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const localDelta = rotate2D({x: deltaX, y: deltaY}, -rotation);
-                const newInnerX = Math.max(MIN_EDITED_REGION_DIMENSION, Math.min(this.size.x * MAX_ANNULUS_INNER_TO_OUTER_RATIO, this.innerSize.x + localDelta.y));
-                this.setInnerSize({x: newInnerX, y: this.innerSize.y});
+                const newInnerX = this.innerSize.x + localDelta.y;
+                this.setInnerSize({x: newInnerX, y: this.innerSize.y}, false, "x");
                 return;
             }
             this.moveSelectedSimpleShapeSide(deltaX, deltaY);
@@ -975,7 +974,7 @@ export class RegionStore {
         if (edit) {
             if (this.regionType === CARTA.RegionType.ANNULUS) {
                 const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-                this.setAnnulusGeometry(edit.center, edit.size, {x: ratio, y: ratio});
+                this.setAnnulusGeometry(edit.center, edit.size, ratio);
             } else {
                 this.setControlPoints([edit.center, edit.size]);
             }
