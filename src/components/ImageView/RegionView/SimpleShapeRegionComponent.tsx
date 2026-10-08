@@ -734,10 +734,25 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const innerWidth = region.innerSize.x / devicePixelRatio;
                 const innerHeight = region.innerSize.y / devicePixelRatio;
                 shapeNode = (
-                    <>
-                        <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />
-                        <Ellipse {...commonProps} radiusY={innerWidth} radiusX={innerHeight * frame.aspectRatio} />
-                    </>
+                    <Group
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        scaleX={frame.aspectRatio}
+                        draggable={commonProps.draggable}
+                        listening={commonProps.listening}
+                        onDragStart={commonProps.onDragStart}
+                        onDragEnd={commonProps.onDragEnd}
+                        onDragMove={commonProps.onDragMove}
+                        onClick={commonProps.onClick}
+                        onDblClick={commonProps.onDblClick}
+                        onContextMenu={commonProps.onContextMenu}
+                        perfectDrawEnabled={commonProps.perfectDrawEnabled}
+                    >
+                        <Group rotation={-rotation}>
+                            <Ellipse x={0} y={0} radiusY={width} radiusX={height} stroke={region.color} strokeWidth={region.lineWidth} opacity={region.visualOpacity} dash={[region.dashLength]} strokeScaleEnabled={false} />
+                            <Ellipse x={0} y={0} radiusY={innerWidth} radiusX={innerHeight} stroke={region.color} strokeWidth={region.lineWidth} opacity={region.visualOpacity} dash={[region.dashLength]} strokeScaleEnabled={false} />
+                        </Group>
+                    </Group>
                 );
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
