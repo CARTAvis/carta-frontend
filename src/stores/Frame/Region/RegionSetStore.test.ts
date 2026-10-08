@@ -1,3 +1,4 @@
+import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
 import {RegionOpacity} from "enums";
@@ -109,6 +110,31 @@ describe("RegionSetStore multi-selection behavior", () => {
 
     afterEach(() => {
         consoleLogSpy.mockRestore();
+    });
+
+    test("matching and unmatching mirrored images preserves annulus geometry", () => {
+        const transformPoint = AST.transformPoint as jest.Mock;
+        transformPoint.mockImplementation((_mapping, x, y) => ({x: 40 - x, y}));
+        try {
+            const source = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+            const annulus = source.addAnnulusRegion({x: 20, y: 20}, 7, 3, 3.5, 1.5, true);
+            annulus.setRotation(30, true);
+            annulus.setRegionId(1);
+            const target = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+            target.migrateRegionsFromExistingSet(source, {} as any, true);
+            const migrated = target.regions.find(region => region.regionType === CARTA.RegionType.ANNULUS)!;
+            expect(migrated.rotation % 180).toBeCloseTo(150);
+            expect(migrated.size.x).toBeCloseTo(3);
+            expect(migrated.size.y).toBeCloseTo(7);
+            expect(migrated.innerSize.x).toBeCloseTo(1.5);
+            expect(migrated.innerSize.y).toBeCloseTo(3.5);
+
+            const restored = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+            restored.migrateRegionsFromExistingSet(target, {} as any);
+            expect(restored.regions.find(region => region.regionType === CARTA.RegionType.ANNULUS)!.rotation % 180).toBeCloseTo(30);
+        } finally {
+            transformPoint.mockReset();
+        }
     });
 
     test("selectSingleRegion replaces the selected id set and focus", () => {

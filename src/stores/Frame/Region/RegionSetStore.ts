@@ -7,7 +7,7 @@ import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {getNextRegionOpacity, isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {getNextRegionOpacity, getTransformedAnnulusProperties, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
@@ -789,7 +789,6 @@ export class RegionSetStore {
                     case CARTA.RegionType.RECTANGLE:
                     case CARTA.RegionType.ANNRECTANGLE:
                     case CARTA.RegionType.ELLIPSE:
-                    case CARTA.RegionType.ANNULUS:
                         switch (region.regionType) {
                             case CARTA.RegionType.ANNTEXT:
                                 annotationStyles = (region as TextAnnotationStore).getAnnotationStyles();
@@ -804,14 +803,17 @@ export class RegionSetStore {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
                             const size = scale2D(region.size, isForward ? transform.scale : 1.0 / transform.scale);
                             rotation = region.rotation + ((isForward ? 1 : -1) * transform.rotation * 180) / Math.PI;
-                            if (region.regionType === CARTA.RegionType.ANNULUS) {
-                                const innerSize = scale2D(region.innerSize, isForward ? transform.scale : 1.0 / transform.scale);
-                                newControlPoints = [centerNewFrame, size, innerSize];
-                            } else {
-                                newControlPoints = [centerNewFrame, size];
-                            }
+                            newControlPoints = [centerNewFrame, size];
                         }
                         break;
+                    case CARTA.RegionType.ANNULUS: {
+                        const transformed = getTransformedAnnulusProperties(region, spatialTransformAST, isForward);
+                        if (transformed) {
+                            newControlPoints = transformed.controlPoints;
+                            rotation = transformed.rotation;
+                        }
+                        break;
+                    }
                     case CARTA.RegionType.POINT:
                     case CARTA.RegionType.POLYGON:
                     case CARTA.RegionType.ANNPOLYGON:
