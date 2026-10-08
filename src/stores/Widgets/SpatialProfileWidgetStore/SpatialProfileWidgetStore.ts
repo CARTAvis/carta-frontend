@@ -365,7 +365,14 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
             this.isMeanRmsVisible = widgetSettings.meanRmsVisible;
         }
-        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+        if (
+            typeof widgetSettings.plotType === "string" &&
+            (widgetSettings.plotType === PlotType.STEPS ||
+                widgetSettings.plotType === PlotType.LINES ||
+                widgetSettings.plotType === PlotType.POINTS ||
+                widgetSettings.plotType === PlotType.POINTS_AND_LINES ||
+                widgetSettings.plotType === PlotType.POINTS_AND_STEPS)
+        ) {
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.minXVal === "number") {

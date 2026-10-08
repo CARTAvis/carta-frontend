@@ -24,7 +24,7 @@ export interface SequentialProfileWidgetPreferenceAccessors {
 }
 
 export class SequentialProfileWidgetStore {
-    @observable plotType = PlotType.LINES;
+    @observable plotType = PlotType.POINTS;
     @observable lineWidth = 1;
     @observable linePlotPointSize = 3;
     @observable settingsTabId: "styling" | "management" | "x-axis" = "styling";
@@ -106,7 +106,7 @@ export class SequentialProfileWidgetStore {
     };
 
     @action applyConfig = (config: Record<string, any>) => {
-        if (config?.plotType === PlotType.LINES || config?.plotType === PlotType.POINTS || config?.plotType === PlotType.STEPS) {
+        if (config?.plotType === PlotType.LINES || config?.plotType === PlotType.POINTS || config?.plotType === PlotType.STEPS || config?.plotType === PlotType.POINTS_AND_LINES || config?.plotType === PlotType.POINTS_AND_STEPS) {
             this.plotType = config.plotType;
         }
         if (SEQUENTIAL_X_AXIS_OPTIONS.some(option => option.value === config?.xAxisFormat)) {

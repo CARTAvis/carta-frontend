@@ -52,7 +52,9 @@ export enum ScatterSettings {
 export enum PlotType {
     STEPS = "Steps",
     LINES = "Lines",
-    POINTS = "Points"
+    POINTS = "Points",
+    POINTS_AND_LINES = "Points + Lines",
+    POINTS_AND_STEPS = "Points + Steps"
 }
 
 export enum SmoothingType {

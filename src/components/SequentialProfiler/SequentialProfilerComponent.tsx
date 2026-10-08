@@ -335,7 +335,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
         const multiPlotPropsMap = new Map<string, MultiPlotProps>();
         const widgetStore = WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId);
         this.plotGroups.forEach(({group, data}) => {
-            const plotType = group.regionGroupType === RegionGroupType.REGION_SERIES && data.length === 1 ? PlotType.POINTS : (widgetStore?.plotType ?? PlotType.LINES);
+            const plotType = widgetStore?.plotType ?? PlotType.POINTS;
             multiPlotPropsMap.set(this.getRegionGroupLabel(group), {
                 imageName: this.getRegionGroupLabel(group),
                 plotName: group.regionGroupType === RegionGroupType.REGION_SERIES ? "region series" : "light curve",
@@ -357,7 +357,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
             yLabel: unit ? `${statisticLabel} (${unit})` : statisticLabel,
             tickTypeX: this.selectedSeriesType === RegionGroupType.REGION_SERIES || this.xAxisFormat === "index" ? TickType.Integer : TickType.Automatic,
             tickTypeY: TickType.Scientific,
-            plotType: widgetStore?.plotType ?? PlotType.LINES,
+            plotType: widgetStore?.plotType ?? PlotType.POINTS,
             pointRadius: widgetStore?.linePlotPointSize ?? 3,
             borderWidth: widgetStore?.lineWidth ?? 1,
             isDarkMode: AppStore.Instance.isDarkTheme,

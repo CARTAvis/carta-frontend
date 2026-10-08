@@ -502,9 +502,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.borderWidth = 0;
                 datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
             } else {
-                datasetConfig.pointRadius = 0;
+                const isShowingPoints = this.props.plotType === PlotType.POINTS_AND_LINES || this.props.plotType === PlotType.POINTS_AND_STEPS;
+                datasetConfig.pointRadius = isShowingPoints ? this.props.pointRadius || 1 : 0;
+                datasetConfig.pointStyle = isShowingPoints ? "circle" : "line";
+                datasetConfig.pointBackgroundColor = isShowingPoints ? lineColor : undefined;
                 datasetConfig.showLine = true;
-                datasetConfig.stepped = this.props.plotType === PlotType.STEPS ? "middle" : false;
+                datasetConfig.stepped = this.props.plotType === PlotType.STEPS || this.props.plotType === PlotType.POINTS_AND_STEPS ? "middle" : false;
                 datasetConfig.borderWidth = this.props.borderWidth ? this.props.borderWidth : 1;
                 datasetConfig.borderColor = lineColor;
             }
@@ -515,8 +518,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     datasetConfig.pointStyle = "circle";
                     datasetConfig.pointBackgroundColor = this.props.multiColorSingleLineColors;
                 } else {
-                    datasetConfig.pointRadius = 0.5;
-                    datasetConfig.pointStyle = "line";
+                    const isShowingPoints = this.props.plotType === PlotType.POINTS_AND_LINES || this.props.plotType === PlotType.POINTS_AND_STEPS;
+                    datasetConfig.pointRadius = isShowingPoints ? this.props.pointRadius || 1 : 0.5;
+                    datasetConfig.pointStyle = isShowingPoints ? "circle" : "line";
+                    if (isShowingPoints) {
+                        datasetConfig.pointBackgroundColor = this.props.multiColorSingleLineColors;
+                    }
                     datasetConfig.segment = {
                         borderColor: segment => {
                             return this.props.multiColorSingleLineColors?.[segment.p0DataIndex] || lineColor;
@@ -536,7 +543,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 if (props.isHidden) {
                     return;
                 }
-
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
                 const currentOpacity = clamp(props.opacity ?? opacity, 0, 1);
                 if (currentOpacity < 1.0) {
@@ -580,11 +586,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.borderWidth = 0;
                     multiPlotDatasetConfig.borderColor = "rgba(0, 0, 0, 0)";
-                } else if (props.type === PlotType.LINES || props.type === PlotType.STEPS) {
+                } else if (props.type === PlotType.LINES || props.type === PlotType.STEPS || props.type === PlotType.POINTS_AND_LINES || props.type === PlotType.POINTS_AND_STEPS) {
+                    const isShowingPoints = props.type === PlotType.POINTS_AND_LINES || props.type === PlotType.POINTS_AND_STEPS;
                     multiPlotDatasetConfig.showLine = true;
-                    multiPlotDatasetConfig.pointRadius = 0.5;
-                    multiPlotDatasetConfig.pointStyle = "line";
-                    multiPlotDatasetConfig.stepped = props.type === PlotType.STEPS ? "middle" : false;
+                    multiPlotDatasetConfig.pointRadius = isShowingPoints ? currentPointRadius || 1 : 0.5;
+                    multiPlotDatasetConfig.pointStyle = isShowingPoints ? "circle" : "line";
+                    if (isShowingPoints) {
+                        multiPlotDatasetConfig.pointBackgroundColor = this.props.multiColorMultiLinesColors?.get(key) ?? currentLineColor;
+                    }
+                    multiPlotDatasetConfig.stepped = props.type === PlotType.STEPS || props.type === PlotType.POINTS_AND_STEPS ? "middle" : false;
                     multiPlotDatasetConfig.borderWidth = currentLineWidth ? currentLineWidth : 1;
                     multiPlotDatasetConfig.borderColor = currentLineColor;
                 }

@@ -124,7 +124,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             max={LineSettings.MAX_POINT_SIZE}
                             value={props.linePlotPointSize}
                             stepSize={LineSettings.POINT_SIZE_STEP_SIZE}
-                            disabled={props.plotType !== PlotType.POINTS}
+                            disabled={props.plotType !== PlotType.POINTS && props.plotType !== PlotType.POINTS_AND_LINES && props.plotType !== PlotType.POINTS_AND_STEPS}
                             onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
@@ -154,7 +154,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     <FormGroup inline={true} label={"Line style"}>
-                        <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType} />
+                        <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType} toggleStyle={true} />
                     </FormGroup>
                     {typeof props.xMinVal !== "undefined" && props.handleXMinChange && (
                         <FormGroup label={"X min"} inline={true}>
