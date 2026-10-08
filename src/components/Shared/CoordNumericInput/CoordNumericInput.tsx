@@ -12,9 +12,10 @@ type WcsCoordNumericInputProps = {
     onChangeWcs: (val: string) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
+    "data-testid"?: string;
 };
 
-const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled: isDisabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
+const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled: isDisabled = false, customPlaceholder = "", "data-testid": testId}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
@@ -66,7 +67,7 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled: isDis
 
     return (
         <Tooltip content={tooltipContent} position={Position.BOTTOM} hoverOpenDelay={300}>
-            <SafeNumericInput allowNumericCharactersOnly={false} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={valueWcs ?? ""} onBlur={handleChange} onKeyDown={handleChange} />
+            <SafeNumericInput data-testid={testId} allowNumericCharactersOnly={false} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={valueWcs ?? ""} onBlur={handleChange} onKeyDown={handleChange} />
         </Tooltip>
     );
 };
@@ -77,9 +78,10 @@ interface ImageCoordNumericInputProps {
     onChange: (val: number) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
+    "data-testid"?: string;
 }
 
-export const ImageCoordNumericInput = ({inputType, value, onChange, disabled: isDisabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
+export const ImageCoordNumericInput = ({inputType, value, onChange, disabled: isDisabled = false, customPlaceholder = "", "data-testid": testId}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
@@ -107,7 +109,7 @@ export const ImageCoordNumericInput = ({inputType, value, onChange, disabled: is
         placeholder = customPlaceholder;
     }
 
-    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={isFinite(value) ? value : ""} onBlur={handleChange} onKeyDown={handleChange} />;
+    return <SafeNumericInput data-testid={testId} selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={isDisabled} value={isFinite(value) ? value : ""} onBlur={handleChange} onKeyDown={handleChange} />;
 };
 
 interface CoordNumericInputProps {
@@ -120,13 +122,23 @@ interface CoordNumericInputProps {
     disabled?: boolean;
     wcsDisabled?: boolean;
     customPlaceholder?: string;
+    "data-testid"?: string;
 }
 
-export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled: isDisabled = false, wcsDisabled: isWcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
+export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled: isDisabled = false, wcsDisabled: isWcsDisabled = false, customPlaceholder = "", "data-testid": testId}: CoordNumericInputProps) => {
     const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
     if (coord === CoordinateMode.Image) {
-        return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={isDisabled} customPlaceholder={customPlaceholder} />;
+        return <ImageCoordNumericInput data-testid={testId} inputType={inputType} value={value} onChange={onChange} disabled={isDisabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={isImgCoordinates ? "" : valueWcs} onChangeWcs={onChangeWcs} disabled={isDisabled || isWcsDisabled || isImgCoordinates} customPlaceholder={customPlaceholder} />;
+        return (
+            <WcsCoordNumericInput
+                data-testid={testId}
+                inputType={inputType}
+                valueWcs={isImgCoordinates ? "" : valueWcs}
+                onChangeWcs={onChangeWcs}
+                disabled={isDisabled || isWcsDisabled || isImgCoordinates}
+                customPlaceholder={customPlaceholder}
+            />
+        );
     }
 };

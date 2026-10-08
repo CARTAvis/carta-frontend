@@ -30,6 +30,7 @@ export class ToolbarMenuComponent extends React.Component {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNULUS:
                 tooltip = (
                     <small>
                         Click-and-drag to define a region ({isRegionModeCenter ? "center to corner" : "corner to corner"}).
@@ -38,7 +39,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
-                        {type === CARTA.RegionType.LINE ? "" : `Hold shift key to create a ${type === CARTA.RegionType.RECTANGLE ? "square" : "circle"}.`}
+                        {type === CARTA.RegionType.LINE ? "" : type === CARTA.RegionType.ANNULUS ? "Hold shift key to create a circular annulus." : `Hold shift key to create a ${type === CARTA.RegionType.RECTANGLE ? "square" : "circle"}.`}
                     </small>
                 );
                 break;

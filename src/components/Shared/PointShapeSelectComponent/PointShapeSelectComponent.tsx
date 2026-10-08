@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
 
-export const PointShapeSelectComponent = observer((props: {handleChange: (pointShape: CARTA.PointAnnotationShape) => void; pointShape: CARTA.PointAnnotationShape}) => {
+export const PointShapeSelectComponent = observer((props: {handleChange: (pointShape: CARTA.PointAnnotationShape) => void; pointShape: CARTA.PointAnnotationShape; "data-testid"?: string}) => {
     const appStore = AppStore.Instance;
     const preference = appStore.preferenceStore;
 
@@ -26,7 +26,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
 
     const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: ItemRendererProps) => {
         const shapeItem = getPointShape(shape);
-        return <MenuItem icon={shapeItem} text="" key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem data-testid={props["data-testid"] ? `${props["data-testid"]}-option-${shape}` : undefined} icon={shapeItem} text="" key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     const getPointShape = (shape: CARTA.PointAnnotationShape) => {
@@ -65,7 +65,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             itemRenderer={renderShapePopOver}
             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
         >
-            <Button icon={getPointShape(props.pointShape)} endIcon="double-caret-vertical" />
+            <Button data-testid={props["data-testid"]} icon={getPointShape(props.pointShape)} endIcon="double-caret-vertical" />
         </Select>
     );
 });

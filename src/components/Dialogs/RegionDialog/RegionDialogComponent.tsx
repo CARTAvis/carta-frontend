@@ -12,6 +12,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type RegionStore} from "stores/Frame";
 
+import {AnnulusRegionForm} from "./AnnulusRegionForm/AnnulusRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
@@ -35,8 +36,8 @@ export class RegionDialogComponent extends React.Component {
         makeObservable(this);
     }
 
-    private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
-    private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
+    private static readonly MissingRegionNode = (<NonIdealState data-testid="region-dialog-no-selection" icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
+    private static readonly InvalidRegionNode = (<NonIdealState data-testid="region-dialog-unsupported-region" icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
 
     private static readonly DefaultWidth = 525;
     private static readonly DefaultHeight = 575;
@@ -121,6 +122,9 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ANNELLIPSE:
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     break;
+                case CARTA.RegionType.ANNULUS:
+                    configurationPanel = <AnnulusRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
+                    break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
@@ -142,7 +146,7 @@ export class RegionDialogComponent extends React.Component {
             if (configurationPanel) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} />;
                 bodyContent = (
-                    <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
+                    <Tabs data-testid="region-dialog-tabs" id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} data-testid="region-dialog-config-tab-title" />
                         <Tab id={RegionDialogTabs.Styling} title="Styling" panel={stylingPanel} data-testid="region-dialog-styling-tab-title" />
                     </Tabs>

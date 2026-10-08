@@ -1,3 +1,4 @@
+import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
 import {RegionOpacity} from "enums";
@@ -32,6 +33,14 @@ import {CompassAnnotationStore} from "../AnnotationStore";
 
 import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
+test("all default region options can be persisted by the preference schema", () => {
+    const validate = new Ajv({strictTypes: false}).compile(require("carta-schemas/preferences_schema_2.json"));
+    for (const regionType of RegionStore.AVAILABLE_DEFAULT_REGION_TYPES.keys()) {
+        expect(validate({version: 2, regionType})).toBe(true);
+    }
+    expect(RegionStore.AVAILABLE_REGION_TYPES.has(CARTA.RegionType.ANNULUS)).toBe(true);
+});
+
 const BACKEND_SERVICE = {
     setCursor: jest.fn(),
     setRegion: jest.fn(() => Promise.resolve({regionId: 1}))
@@ -54,6 +63,16 @@ const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: numbe
     region.beginEditing();
     return region;
 };
+
+test("imported annulus retains its orientation on rectangular pixels", () => {
+    const axes = [
+        {x: 10, y: 10},
+        {x: 3, y: 6},
+        {x: 1, y: 2}
+    ];
+    expect(MakeRegion(CARTA.RegionType.ANNULUS, axes, {frame: {hasSquarePixels: false}, rotation: 270}).rotation).toBe(270);
+    expect(MakeRegion(CARTA.RegionType.ELLIPSE, axes.slice(0, 2), {frame: {hasSquarePixels: false}, rotation: 270}).rotation).toBe(0);
+});
 
 describe("RegionStore selection and keyboard-edit helpers", () => {
     beforeEach(() => {
@@ -290,5 +309,119 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
 
         compass.moveSelectedPoint(-100, 0);
         expect(compass.length).toBe(MIN_EDITED_REGION_DIMENSION);
+    });
+
+    test("rectangular-pixel annuli reject the hidden rotator and retain the inner handle", () => {
+        const annulus = MakeRegion(
+            CARTA.RegionType.ANNULUS,
+            [
+                {x: 0, y: 0},
+                {x: 10, y: 20},
+                {x: 5, y: 10}
+            ],
+            {frame: {hasSquarePixels: false}}
+        );
+        annulus.selectPoint(8);
+        expect(annulus.selectedPointIndex).toBe(-1);
+        annulus.selectPoint(9);
+        expect(annulus.hasSelectedPoint).toBe(true);
+        expect(annulus.selectablePointCount).toBe(9);
+        expect(annulus.selectablePointIndices).toHaveLength(9);
+        expect(annulus.selectablePointIndices).not.toContain(8);
+        for (let i = 0; i < 10; i++) {
+            annulus.selectNextPoint();
+            expect(annulus.hasSelectedPoint).toBe(true);
+            expect(annulus.selectedPointIndex).not.toBe(8);
+        }
+    });
+
+    test("annulus region inner radius and outer radius keyboard movement", () => {
+        const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+
+        expect(annulus.size).toEqual({x: 10, y: 20});
+        expect(annulus.innerSize).toEqual({x: 5, y: 10});
+
+        // Test inner radius handle (index 9) movement
+        annulus.selectPoint(9);
+        annulus.moveSelectedPoint(0, 2); // localDelta.y = 2
+        expect(annulus.innerSize.x).toBe(7);
+        expect(annulus.innerSize.y).toBe(14);
+
+        // Test outer radius corner/side movement
+        annulus.selectPoint(SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX);
+        annulus.moveSelectedPoint(-2, 2);
+        expect(annulus.size.x).toBeGreaterThan(10);
+        expect(annulus.innerSize.x).toBeGreaterThan(0);
+    });
+
+    test("annulus inner axes preserve the outer ellipse shape", () => {
+        const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+
+        // Changing the inner x axis keeps the outer ellipse's aspect ratio.
+        annulus.setInnerSize({x: 6, y: 10});
+        expect(annulus.innerSize.x).toBe(6);
+        expect(annulus.innerSize.y).toBe(12);
+
+        // Changing the inner y axis also preserves the shape ratio.
+        annulus.setInnerSize({x: 6, y: 16});
+        expect(annulus.innerSize.y).toBe(16);
+        expect(annulus.innerSize.x).toBe(8);
+    });
+
+    test("annulus geometry uses one inner scale and clamps an explicitly edited axis", () => {
+        const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+        annulus.setAnnulusGeometry({x: 2, y: 3}, {x: 20, y: 40}, 0.25);
+        expect(annulus.center).toEqual({x: 2, y: 3});
+        expect(annulus.innerSize).toEqual({x: 5, y: 10});
+        annulus.setInnerSize({x: 100, y: 10}, false, "x");
+        expect(annulus.innerSize.x).toBeCloseTo(19.98);
+        expect(annulus.innerSize.y).toBeCloseTo(39.96);
+        annulus.setInnerSize({x: -100, y: 10}, false, "x");
+        expect(annulus.innerSize.x).toBe(MIN_EDITED_REGION_DIMENSION);
+        expect(annulus.innerSize.y).toBe(MIN_EDITED_REGION_DIMENSION * 2);
+    });
+
+    test("annulus region is invalid when inner axes are not contained by outer axes", () => {
+        const validAnnulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 10}
+        ]);
+        expect(validAnnulus.isValid).toBe(true);
+
+        const invalidMajorAxis = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 10, y: 10}
+        ]);
+        expect(invalidMajorAxis.isValid).toBe(false);
+
+        const invalidMinorAxis = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 20}
+        ]);
+        expect(invalidMinorAxis.isValid).toBe(false);
+    });
+
+    test("annulus region is invalid when inner and outer ellipses have different shapes", () => {
+        const mismatchedAnnulus = MakeRegion(CARTA.RegionType.ANNULUS, [
+            {x: 0, y: 0},
+            {x: 10, y: 20},
+            {x: 5, y: 5}
+        ]);
+        expect(mismatchedAnnulus.isValid).toBe(false);
     });
 });

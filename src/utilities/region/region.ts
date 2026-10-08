@@ -25,6 +25,17 @@ import {
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
+export const ANNULUS_SHAPE_TOLERANCE = 1e-5;
+
+/** Checks that an annulus's inner and outer ellipses have matching axis ratios. */
+export function hasValidAnnulusShape(outerSize: Point2D, innerSize: Point2D): boolean {
+    if (outerSize.x <= 0 || outerSize.y <= 0 || innerSize.x <= 0 || innerSize.y <= 0) {
+        return false;
+    }
+    const outerRatio = outerSize.x / outerSize.y;
+    const innerRatio = innerSize.x / innerSize.y;
+    return Math.abs(outerRatio - innerRatio) <= ANNULUS_SHAPE_TOLERANCE * Math.max(outerRatio, innerRatio);
+}
 export const PASTE_OFFSET = 20;
 
 /**
@@ -49,8 +60,36 @@ export interface RegionTransformSource {
     regionType: CARTA.RegionType;
     center: Point2D;
     size: Point2D;
+    innerSize?: Point2D;
     controlPoints: Point2D[];
     rotation: number;
+}
+
+/** Transform both annulus axes so rotations, reflections, and unequal scales retain the ellipse geometry. */
+export function getTransformedAnnulusProperties(region: RegionTransformSource, spatialTransformAST: AST.Mapping, isForward = false): {controlPoints: Point2D[]; rotation: number} | null {
+    const angle = (region.rotation * Math.PI) / 180;
+    const firstDirection = {x: -Math.sin(angle), y: Math.cos(angle)};
+    const secondDirection = {x: Math.cos(angle), y: Math.sin(angle)};
+    const center = transformPoint(spatialTransformAST, region.center, isForward);
+    const firstEnd = transformPoint(spatialTransformAST, add2D(region.center, firstDirection), isForward);
+    const secondEnd = transformPoint(spatialTransformAST, add2D(region.center, secondDirection), isForward);
+    if ([center, firstEnd, secondEnd].some(isAstBadPoint)) {
+        return null;
+    }
+
+    const firstAxis = scale2D(subtract2D(firstEnd, center), region.size.x);
+    const secondAxis = scale2D(subtract2D(secondEnd, center), region.size.y);
+    const xx = firstAxis.x ** 2 + secondAxis.x ** 2;
+    const yy = firstAxis.y ** 2 + secondAxis.y ** 2;
+    const xy = firstAxis.x * firstAxis.y + secondAxis.x * secondAxis.y;
+    const difference = Math.hypot(xx - yy, 2 * xy);
+    const major = Math.sqrt((xx + yy + difference) / 2);
+    const minor = Math.sqrt(Math.max(0, (xx + yy - difference) / 2));
+    const isFirstMajor = region.size.x > region.size.y;
+    const size = isFirstMajor ? {x: major, y: minor} : {x: minor, y: major};
+    const rotation = ((Math.atan2(2 * xy, xx - yy) * 90) / Math.PI - (isFirstMajor ? 90 : 0) + 360) % 360;
+    const innerRatio = region.innerSize ? region.innerSize.x / region.size.x : 1;
+    return {controlPoints: [center, size, scale2D(size, innerRatio)], rotation};
 }
 
 /** Serialisable geometry and style data for one copied region. */
@@ -103,6 +142,11 @@ export function getRegionPixelProperties(regionType: CARTA.RegionType, controlPo
             const size = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
             return `ellipse[[${center}], [${size}], ${toFixed(rotation, 6)}deg]`;
         }
+        case CARTA.RegionType.ANNULUS: {
+            const outerSize = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
+            const innerSize = controlPoints.length >= 3 ? getSizePixelString(controlPoints[2]) : outerSize;
+            return `annulus[[${center}], [${innerSize}], [${outerSize}], ${toFixed(rotation, 6)}deg]`;
+        }
         case CARTA.RegionType.POLYGON:
             let polygonProperties = "poly[";
             controlPoints.forEach((point, index) => {
@@ -153,6 +197,9 @@ export function getTransformedRegionProperties(region: RegionTransformSource, sp
                 controlPoints: [center, scale2D(region.size, 1.0 / transform.scale)],
                 rotation: region.rotation - (transform.rotation * 180) / Math.PI
             };
+        }
+        case CARTA.RegionType.ANNULUS: {
+            return getTransformedAnnulusProperties(region, spatialTransformAST) ?? {controlPoints: [{x: NaN, y: NaN}, region.size, region.innerSize || region.size], rotation: region.rotation};
         }
         default:
             return {
@@ -292,7 +339,7 @@ export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     }
 
     const rotation = (region.rotation * Math.PI) / 180.0;
-    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE) {
+    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE || region.regionType === CARTA.RegionType.ANNULUS) {
         // Ellipse size stores semi-major in y and semi-minor in x.
         return getRotatedBoxPoints(region.center, region.size.y, region.size.x, rotation);
     }
@@ -366,7 +413,7 @@ export function getRegionSelectionSegments(region: RegionStore, points: Point2D[
         return getPathSegments(points, isClosed);
     }
 
-    if (region.isSimpleShapeRegion) {
+    if (region.isSimpleShapeRegion || region.regionType === CARTA.RegionType.ANNULUS) {
         return getPathSegments(points, true);
     }
 
@@ -466,6 +513,7 @@ export function translateRegionPoints(points: Point2D[], regionType: CARTA.Regio
         case CARTA.RegionType.ANNRECTANGLE:
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE:
+        case CARTA.RegionType.ANNULUS:
         case CARTA.RegionType.ANNTEXT:
         case CARTA.RegionType.ANNCOMPASS:
             return points.map((point, index) => (index === CENTER_POINT_INDEX ? add2D(point, delta) : {...point}));

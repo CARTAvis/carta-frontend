@@ -7,7 +7,7 @@ import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {getNextRegionOpacity, isAstBadPoint, scale2D, transformPoint} from "utilities";
+import {getNextRegionOpacity, getTransformedAnnulusProperties, isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";
 
@@ -478,6 +478,10 @@ export class RegionSetStore {
         return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ELLIPSE, isTemporary);
     };
 
+    @action addAnnulusRegion = (center: Point2D, outerSemiMajor: number, outerSemiMinor: number, innerSemiMajor: number, innerSemiMinor: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: outerSemiMinor, y: outerSemiMajor}, {x: innerSemiMinor, y: innerSemiMajor}], 0, CARTA.RegionType.ANNULUS, isTemporary);
+    };
+
     @action addPolygonalRegion = (points: Point2D[], isTemporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, isTemporary);
     };
@@ -802,6 +806,14 @@ export class RegionSetStore {
                             newControlPoints = [centerNewFrame, size];
                         }
                         break;
+                    case CARTA.RegionType.ANNULUS: {
+                        const transformed = getTransformedAnnulusProperties(region, spatialTransformAST, isForward);
+                        if (transformed) {
+                            newControlPoints = transformed.controlPoints;
+                            rotation = transformed.rotation;
+                        }
+                        break;
+                    }
                     case CARTA.RegionType.POINT:
                     case CARTA.RegionType.POLYGON:
                     case CARTA.RegionType.ANNPOLYGON:

@@ -160,6 +160,16 @@ const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | u
     } as any
 });
 
+test("annulus world axes follow the ellipse orientation on rectangular pixels", () => {
+    const frame = Object.create(FrameStore.prototype) as FrameStore;
+    Object.defineProperty(frame, "pixelUnitSizeArcsec", {value: {x: 120, y: 60}});
+    expect(frame.getAnnulusWcsSizeInArcsec({x: 3, y: 6}, 0)).toEqual({x: 180, y: 720});
+    expect(frame.getAnnulusWcsSizeInArcsec({x: 3, y: 6}, 90)).toEqual({x: 360, y: 360});
+    const diagonal = frame.getAnnulusWcsAxisScale(30);
+    expect(diagonal.x).toBeCloseTo(Math.hypot(60, 30 * Math.sqrt(3)));
+    expect(diagonal.y).toBeCloseTo(Math.hypot(60 * Math.sqrt(3), 30));
+});
+
 describe("FrameStore", () => {
     beforeEach(() => {
         jest.clearAllMocks();

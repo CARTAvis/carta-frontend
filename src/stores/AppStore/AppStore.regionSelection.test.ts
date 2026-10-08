@@ -102,7 +102,7 @@ jest.mock("stores", () => ({
     SnippetStore: {Instance: MockMakeStore()},
     SpatialProfileStore: jest.fn(),
     SpectralProfileStore: jest.fn(),
-    TimeSeriesStore: {Instance: MockMakeStore()},
+    TimeSeriesStore: {Instance: MockMakeStore({isMember: jest.fn(() => false)})},
     WidgetsStore: {Instance: MockMakeStore({removeRegionFromRegionWidgets: jest.fn(), updateRenderConfigSettingsVisibility: jest.fn()})}
 }));
 

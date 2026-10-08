@@ -11,7 +11,7 @@ import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type FrameView, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
@@ -226,6 +226,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.creatingRegion = frame.regionSet.addEllipticalRegion(cursorPosImageSpace, 0, 0, true);
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
+            case CARTA.RegionType.ANNULUS:
+                this.creatingRegion = frame.regionSet.addAnnulusRegion(cursorPosImageSpace, 0, 0, 0, 0, true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
             case CARTA.RegionType.POLYGON:
                 this.creatingRegion = frame.regionSet.addPolygonalRegion([cursorPosImageSpace], true);
                 this.polygonRegionCreating(mouseEvent);
@@ -295,6 +299,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
@@ -304,7 +309,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     const sizeFactor = PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5);
                     const zoom = frame.effectiveZoomLevel;
                     const size = this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1};
-                    this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoom.x, y: (size.y * sizeFactor) / zoom.y});
+                    const zoomX = this.creatingRegion.regionType === CARTA.RegionType.ANNULUS ? zoom.y : zoom.x;
+                    const zoomY = this.creatingRegion.regionType === CARTA.RegionType.ANNULUS ? zoom.x : zoom.y;
+                    this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoomX, y: (size.y * sizeFactor) / zoomY});
+                    if (this.creatingRegion.regionType === CARTA.RegionType.ANNULUS) {
+                        this.creatingRegion.setInnerSize(scale2D(this.creatingRegion.size, 0.5));
+                    }
                 }
                 break;
             case CARTA.RegionType.ANNCOMPASS:
@@ -400,8 +410,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
-                    this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
+                case CARTA.RegionType.ANNULUS: {
+                    const outerSize = {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0};
+                    if (this.creatingRegion.regionType === CARTA.RegionType.ANNULUS) {
+                        this.creatingRegion.setControlPoints([center, outerSize, {x: outerSize.x * 0.5, y: outerSize.y * 0.5}]);
+                    } else {
+                        this.creatingRegion.setControlPoints([center, outerSize]);
+                    }
                     break;
+                }
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
@@ -423,8 +440,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
+                case CARTA.RegionType.ANNULUS: {
+                    const outerSizeCC = {y: Math.abs(dx), x: Math.abs(dy)};
+                    if (this.creatingRegion.regionType === CARTA.RegionType.ANNULUS) {
+                        this.creatingRegion.setControlPoints([this.regionStartPoint, outerSizeCC, {x: outerSizeCC.x * 0.5, y: outerSizeCC.y * 0.5}]);
+                    } else {
+                        this.creatingRegion.setControlPoints([this.regionStartPoint, outerSizeCC]);
+                    }
                     break;
+                }
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
@@ -785,6 +809,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
@@ -823,6 +848,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
@@ -877,6 +903,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
+                case CARTA.RegionType.ANNULUS:
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:

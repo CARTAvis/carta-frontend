@@ -81,6 +81,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
             const xInput = (
                 <CoordNumericInput
+                    data-testid={`region-dialog-polygon-point-${index}-x-input`}
                     coord={region.coordinate}
                     inputType={InputType.XCoord}
                     value={point.x}
@@ -92,6 +93,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
             );
             const yInput = (
                 <CoordNumericInput
+                    data-testid={`region-dialog-polygon-point-${index}-y-input`}
                     coord={region.coordinate}
                     inputType={InputType.YCoord}
                     value={point.y}
@@ -112,12 +114,12 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         });
 
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-polygon-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup data-testid="region-dialog-polygon-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} spellCheck={false} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-polygon-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 {pointRows}
             </div>

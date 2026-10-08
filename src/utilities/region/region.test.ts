@@ -64,6 +64,17 @@ beforeEach(() => {
 });
 
 describe("region transform utilities", () => {
+    test("annulus properties preserve reflected axes and their shared inner ratio", () => {
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({x: 40 - point.x, y: point.y}));
+        const result = getTransformedRegionProperties(MakeRegion({regionType: CARTA.RegionType.ANNULUS, center: {x: 20, y: 20}, size: {x: 3, y: 7}, innerSize: {x: 1.5, y: 3.5}, rotation: 30}), {} as any);
+        expect(result.controlPoints[0]).toEqual({x: 20, y: 20});
+        expect(result.controlPoints[1].x).toBeCloseTo(3);
+        expect(result.controlPoints[1].y).toBeCloseTo(7);
+        expect(result.controlPoints[2].x).toBeCloseTo(1.5);
+        expect(result.controlPoints[2].y).toBeCloseTo(3.5);
+        expect(result.rotation % 180).toBeCloseTo(150);
+    });
+
     test("treats ANNCOMPASS as a center-plus-size region when transforming", () => {
         const result = getTransformedRegionProperties(
             {
