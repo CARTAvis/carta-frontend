@@ -58,17 +58,6 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
         });
     };
 
-    private updateType = (regionGroup: RegionGroupStore, type: RegionGroupType) => {
-        const appStore = AppStore.Instance;
-        if ((type === RegionGroupType.TIME_SERIES || type === RegionGroupType.REGION_SERIES) && regionGroup.regionGroupType === RegionGroupType.FREQUENCY_SERIES && appStore.isCurveLimitReached) {
-            return;
-        }
-        regionGroup.setType(type);
-        if (type === RegionGroupType.REGION_SERIES) {
-            this.selectRegionSeriesFrame(regionGroup, (appStore.activeFrame ?? appStore.frames[0])?.id);
-        }
-    };
-
     private selectRegionSeriesFrame = (regionGroup: RegionGroupStore, frameId?: number) => {
         regionGroup.setRegionSeriesFrame(frameId);
         AppStore.Instance.syncRegionSeriesGroup(regionGroup);
@@ -132,18 +121,15 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
     private renderGroup = (regionGroup: RegionGroupStore) => {
         const appStore = AppStore.Instance;
         const groupName = this.getRegionGroupLabel(regionGroup);
-        const typeOptions = Object.values(RegionGroupType).map(type => ({
-            value: type,
-            label: type,
-            disabled: (type === RegionGroupType.TIME_SERIES || type === RegionGroupType.REGION_SERIES) && regionGroup.regionGroupType === RegionGroupType.FREQUENCY_SERIES && appStore.isCurveLimitReached
-        }));
         return (
             <div className="region-group-panel">
-                <FormGroup label="Name">
-                    <InputGroup value={groupName} onChange={event => regionGroup.setName(event.currentTarget.value)} />
-                </FormGroup>
-                <FormGroup label="Type" inline={true}>
-                    <HTMLSelect value={regionGroup.regionGroupType} options={typeOptions} onChange={event => this.updateType(regionGroup, event.currentTarget.value as RegionGroupType)} />
+                <FormGroup label="Name" inline={true}>
+                    <div className="region-group-name-control">
+                        <InputGroup value={groupName} onChange={event => regionGroup.setName(event.currentTarget.value)} />
+                        <Tooltip content="Open Image List">
+                            <Button icon="layers" aria-label="Open Image List" onClick={() => AppStore.Instance.widgetsStore.createFloatingLayerListWidget()} />
+                        </Tooltip>
+                    </div>
                 </FormGroup>
                 {regionGroup.regionGroupType === RegionGroupType.TIME_SERIES && appStore.timeSeriesStore.elements.map(({frame}) => this.renderFrame(regionGroup, frame))}
                 {regionGroup.regionGroupType === RegionGroupType.REGION_SERIES && (
@@ -163,8 +149,6 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
                     </>
                 )}
                 <ButtonGroup>
-                    <Button icon="add" text="New light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length || appStore.isCurveLimitReached} />
-                    <Button icon="add" text="New region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length || appStore.isCurveLimitReached} />
                     <Button icon="trash" text="Delete" onClick={() => this.deleteRegionGroup(regionGroup)} />
                 </ButtonGroup>
             </div>
@@ -187,18 +171,16 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
 
         return (
             <div className="region-group-manager">
+                <ButtonGroup className="region-group-manager-actions">
+                    <Button icon="add" text="Light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length || appStore.isCurveLimitReached} />
+                    <Button icon="add" text="Region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length || appStore.isCurveLimitReached} />
+                </ButtonGroup>
                 {groups.length > 0 && (
                     <Tabs selectedTabId={selectedRegionGroupId} onChange={tabId => this.selectRegionGroup(String(tabId))}>
                         {groups.map(group => (
                             <Tab key={group.regionGroupId} id={group.regionGroupId} title={this.getRegionGroupLabel(group)} panel={this.renderGroup(group)} />
                         ))}
                     </Tabs>
-                )}
-                {!groups.length && (
-                    <ButtonGroup>
-                        <Button icon="add" text="New light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length || appStore.isCurveLimitReached} />
-                        <Button icon="add" text="New region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length || appStore.isCurveLimitReached} />
-                    </ButtonGroup>
                 )}
             </div>
         );

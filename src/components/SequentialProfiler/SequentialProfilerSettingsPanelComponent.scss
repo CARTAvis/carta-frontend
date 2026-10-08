@@ -1,3 +1,16 @@
 .sequential-profiler-settings {
     margin: 20px;
+
+    > .bp6-tabs > .bp6-tab-panel {
+        padding: 12px;
+    }
+
+    .line-settings-panel {
+        margin-top: 0;
+    }
+
+    .region-group-manager {
+        margin: 0;
+        padding: 0;
+    }
 }

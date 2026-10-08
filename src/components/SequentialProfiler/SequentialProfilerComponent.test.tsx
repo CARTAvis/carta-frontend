@@ -145,7 +145,7 @@ test("creating a region series from management replaces the empty plot", async (
     expect(screen.getByText("No series")).toBeInTheDocument();
 
     await act(async () => {
-        fireEvent.click(screen.getByRole("button", {name: "New region series"}));
+        fireEvent.click(screen.getByRole("button", {name: "Region series"}));
     });
 
     expect(screen.queryByText("No series")).not.toBeInTheDocument();

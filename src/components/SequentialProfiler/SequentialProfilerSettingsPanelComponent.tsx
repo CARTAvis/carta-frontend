@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {RegionGroupManagerComponent} from "components/RegionGroup/RegionGroupManagerComponent";
 import {LinePlotSettingsPanelComponent, ScrollShadow} from "components/Shared";
 import {RegionGroupType} from "enums";
-import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps, WidgetsStore} from "stores";
 import {SEQUENTIAL_X_AXIS_OPTIONS} from "stores/Widgets/SequentialProfileWidgetStore";
 
 import "./SequentialProfilerSettingsPanelComponent.scss";
@@ -27,6 +27,16 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
         };
     }
 
+    private getCurveName = (group: RegionGroupStore) => {
+        if (group.regionGroupType === RegionGroupType.TIME_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Light curve");
+        }
+        if (group.regionGroupType === RegionGroupType.REGION_SERIES) {
+            return group.regionGroupName.replace(/^Region Group/, "Region series");
+        }
+        return group.regionGroupName;
+    };
+
     render() {
         const widgetStore = WidgetsStore.Instance.sequentialProfileWidgets.get(this.props.id);
         if (!widgetStore) {
@@ -44,7 +54,7 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
                             panel={
                                 <LinePlotSettingsPanelComponent
                                     lineColorMap={new Map(groups.map((group, index) => [group.regionGroupId, widgetStore.getLineColor(group.regionGroupId, index)]))}
-                                    lineOptions={groups.map(group => ({value: group.regionGroupId, label: group.regionGroupName}))}
+                                    lineOptions={groups.map(group => ({value: group.regionGroupId, label: this.getCurveName(group)}))}
                                     lineWidth={widgetStore.lineWidth}
                                     linePlotPointSize={widgetStore.linePlotPointSize}
                                     plotType={widgetStore.plotType}

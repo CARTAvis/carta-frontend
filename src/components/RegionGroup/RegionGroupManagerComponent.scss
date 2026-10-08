@@ -2,6 +2,20 @@
     margin: 0px 12px 12px 12px;
     padding: 12px;
 
+    .region-group-manager-actions {
+        margin-bottom: 10px;
+    }
+
+    .region-group-name-control {
+        display: flex;
+        gap: 4px;
+
+        .bp6-input-group {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
     .region-entry {
         margin-bottom: 8px;
     }
