@@ -134,7 +134,7 @@ test("leaves space outside the first and last time-series points", () => {
     GROUPS.clear();
 });
 
-test("creating a region series from management replaces the empty plot", async () => {
+test("region-series creation is not exposed in management", () => {
     MOCK_APP_STORE.timeSeriesStore.elements = [];
     const {unmount} = render(
         <>
@@ -143,13 +143,7 @@ test("creating a region series from management replaces the empty plot", async (
         </>
     );
     expect(screen.getByText("No series")).toBeInTheDocument();
-
-    await act(async () => {
-        fireEvent.click(screen.getByRole("button", {name: "Region series"}));
-    });
-
-    expect(screen.queryByText("No series")).not.toBeInTheDocument();
-    expect(screen.getByTestId("plot-data")).toHaveTextContent('"x":7,"y":8');
+    expect(screen.queryByRole("button", {name: "Region series"})).not.toBeInTheDocument();
     unmount();
     GROUPS.clear();
 });

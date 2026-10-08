@@ -173,7 +173,7 @@ export class RegionGroupManagerComponent extends React.Component<WidgetProps, {s
             <div className="region-group-manager">
                 <ButtonGroup className="region-group-manager-actions">
                     <Button icon="add" text="Light curve" onClick={() => this.createRegionGroup()} disabled={!appStore.timeSeriesStore.elements.length || appStore.isCurveLimitReached} />
-                    <Button icon="add" text="Region series" onClick={() => this.createRegionGroup(RegionGroupType.REGION_SERIES)} disabled={!appStore.frames.length || appStore.isCurveLimitReached} />
+                    {/* Region-series curve creation is deferred from this PR. */}
                 </ButtonGroup>
                 {groups.length > 0 && (
                     <Tabs selectedTabId={selectedRegionGroupId} onChange={tabId => this.selectRegionGroup(String(tabId))}>

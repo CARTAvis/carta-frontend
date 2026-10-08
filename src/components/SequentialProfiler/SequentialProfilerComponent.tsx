@@ -124,6 +124,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed private get plotGroups(): Array<{group: RegionGroupStore; entries: Array<{entry: RegionGroupStore["entries"][number]; x: number}>; data: Point2D[]}> {
+        // Region-series curve support is deferred from this PR; keep this branch scoped for follow-up.
         const timeSeriesIndexByFrameId = new Map(AppStore.Instance.timeSeriesStore.elements.map(({frame}, index) => [frame.id, index + 1]));
         const entries = this.selectedRegionGroups
             .filter(group => group.regionGroupType === RegionGroupType.TIME_SERIES)
