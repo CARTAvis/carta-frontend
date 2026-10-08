@@ -29,7 +29,7 @@ import {
 } from "utilities";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, projectedRegionPointsToCanvasOffsets, transformedImageToCanvasPos} from "./shared";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -624,17 +624,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 shapeNode = <Text {...this.getTextProps(region, centerPixelSpace)} />;
             } else if (region.regionType === CARTA.RegionType.ANNULUS) {
                 const approx = region.getAnnulusApproximation(frame.spatialTransformAST);
-                const makePointArray = (pts: Point2D[]) => {
-                    const arr = new Array<number>(pts.length * 2);
-                    for (let i = 0; i < pts.length; i++) {
-                        const approxPointPixelSpace = transformedImageToCanvasPos(pts[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                        arr[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
-                        arr[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
-                    }
-                    return arr;
-                };
-                const outerPoints = makePointArray(approx.outer);
-                const innerPoints = makePointArray(approx.inner);
+                const outerPoints = projectedRegionPointsToCanvasOffsets(approx.outer, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const innerPoints = projectedRegionPointsToCanvasOffsets(approx.inner, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 const lineProps = {
                     x: centerPixelSpace.x,
                     y: centerPixelSpace.y,
@@ -663,13 +654,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 );
             } else {
                 const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
-                const N = (pointsSecondaryImage as Point2D[]).length;
-                const pointArray = new Array<number>(N * 2);
-                for (let i = 0; i < N; i++) {
-                    const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
-                    pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
-                }
+                const pointArray = projectedRegionPointsToCanvasOffsets(pointsSecondaryImage, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
 
                 shapeNode = (
                     <Line

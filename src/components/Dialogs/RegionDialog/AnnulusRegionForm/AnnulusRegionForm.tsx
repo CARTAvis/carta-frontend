@@ -23,7 +23,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
             return null;
         }
         const size = region.size;
-        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
+        const wcsSize = this.props.frame.getAnnulusWcsSizeInArcsec(size, region.rotation);
         if (IsValidWcsPoint(wcsSize)) {
             const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
             const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
@@ -40,7 +40,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
             return null;
         }
         const size = region.innerSize;
-        const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
+        const wcsSize = this.props.frame.getAnnulusWcsSizeInArcsec(size, region.rotation);
         if (IsValidWcsPoint(wcsSize)) {
             const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
             const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
@@ -117,7 +117,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
     private handleOuterMajorAxisWCSChange = (wcsString: string): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
-            const value = this.props.frame.getImageXValueFromArcsec(arcsecValue);
+            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).x;
             const existingValue = this.props.region.size.x;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
                 this.props.region.setSize({x: value, y: this.props.region.size.y});
@@ -139,7 +139,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
     private handleOuterMinorAxisWCSChange = (wcsString: string): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
-            const value = this.props.frame.getImageYValueFromArcsec(arcsecValue);
+            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).y;
             const existingValue = this.props.region.size.y;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
                 this.props.region.setSize({x: this.props.region.size.x, y: value});
@@ -161,7 +161,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
     private handleInnerMajorAxisWCSChange = (wcsString: string): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
-            const value = this.props.frame.getImageXValueFromArcsec(arcsecValue);
+            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).x;
             const existingValue = this.props.region.innerSize.x;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
                 this.props.region.setInnerSize({x: value, y: this.props.region.innerSize.y});
@@ -183,7 +183,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
     private handleInnerMinorAxisWCSChange = (wcsString: string): boolean => {
         const arcsecValue = getValueFromArcsecString(wcsString);
         if (arcsecValue !== null) {
-            const value = this.props.frame.getImageYValueFromArcsec(arcsecValue);
+            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).y;
             const existingValue = this.props.region.innerSize.y;
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
                 this.props.region.setInnerSize({x: this.props.region.innerSize.x, y: value});

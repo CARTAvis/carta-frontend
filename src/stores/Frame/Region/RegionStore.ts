@@ -280,7 +280,7 @@ export class RegionStore {
         if (!this.size || !frame?.isValidWcs) {
             return {x: 0, y: 0};
         }
-        const wcsSize = frame.getWcsSizeInArcsec(this.size);
+        const wcsSize = this.regionType === CARTA.RegionType.ANNULUS ? frame.getAnnulusWcsSizeInArcsec(this.size, this.rotation) : frame.getWcsSizeInArcsec(this.size);
         return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
@@ -296,7 +296,7 @@ export class RegionStore {
         if (!this.innerSize || !frame?.isValidWcs) {
             return {x: 0, y: 0};
         }
-        const wcsSize = frame.getWcsSizeInArcsec(this.innerSize);
+        const wcsSize = frame.getAnnulusWcsSizeInArcsec(this.innerSize, this.rotation);
         return IsValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
@@ -575,8 +575,8 @@ export class RegionStore {
         }
         this.isSimplePolygon = true;
 
-        // Force rotation to zero if image pixes are non-square
-        if (!this.activeFrame?.hasSquarePixels) {
+        // Preserve the imported annulus orientation on rectangular pixels.
+        if (!this.activeFrame?.hasSquarePixels && regionType !== CARTA.RegionType.ANNULUS) {
             this.rotation = 0;
         }
 

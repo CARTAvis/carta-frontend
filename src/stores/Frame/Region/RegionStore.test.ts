@@ -64,6 +64,16 @@ const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: numbe
     return region;
 };
 
+test("imported annulus retains its orientation on rectangular pixels", () => {
+    const axes = [
+        {x: 10, y: 10},
+        {x: 3, y: 6},
+        {x: 1, y: 2}
+    ];
+    expect(MakeRegion(CARTA.RegionType.ANNULUS, axes, {frame: {hasSquarePixels: false}, rotation: 270}).rotation).toBe(270);
+    expect(MakeRegion(CARTA.RegionType.ELLIPSE, axes.slice(0, 2), {frame: {hasSquarePixels: false}, rotation: 270}).rotation).toBe(0);
+});
+
 describe("RegionStore selection and keyboard-edit helpers", () => {
     beforeEach(() => {
         jest.clearAllMocks();

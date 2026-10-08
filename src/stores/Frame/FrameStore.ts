@@ -2573,6 +2573,21 @@ export class FrameStore {
         return {x: NaN, y: NaN};
     }
 
+    public getAnnulusWcsAxisScale(rotation: number): Point2D {
+        const scale = this.pixelUnitSizeArcsec;
+        if (!scale) {
+            return {x: NaN, y: NaN};
+        }
+        const angle = (rotation * Math.PI) / 180;
+        const sine = Math.sin(angle);
+        const cosine = Math.cos(angle);
+        return {x: Math.hypot(scale.x * sine, scale.y * cosine), y: Math.hypot(scale.x * cosine, scale.y * sine)};
+    }
+
+    public getAnnulusWcsSizeInArcsec(size: Point2D, rotation: number): Point2D {
+        return multiply2D(size, this.getAnnulusWcsAxisScale(rotation));
+    }
+
     public getImageXValueFromArcsec(arcsecValue: number): number {
         if (isFinite(arcsecValue) && this.pixelUnitSizeArcsec && isFinite(this.pixelUnitSizeArcsec.x)) {
             return arcsecValue / this.pixelUnitSizeArcsec.x;
@@ -2670,8 +2685,8 @@ export class FrameStore {
                 const ellipseSize = {x: formattedArcsec(ellipseWcsSize?.x, WCS_PRECISION), y: formattedArcsec(ellipseWcsSize?.y, WCS_PRECISION)};
                 return `ellipse(wcs:${systemType})[[${center}], [${ellipseSize.x ?? ""}, ${ellipseSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ANNULUS: {
-                const outerWcsSize = this.getWcsSizeInArcsec(controlPoints[SIZE_POINT_INDEX]);
-                const innerWcsSize = this.getWcsSizeInArcsec(controlPoints[2]);
+                const outerWcsSize = this.getAnnulusWcsSizeInArcsec(controlPoints[SIZE_POINT_INDEX], rotation);
+                const innerWcsSize = this.getAnnulusWcsSizeInArcsec(controlPoints[2], rotation);
                 const outerSize = {x: formattedArcsec(outerWcsSize?.x, WCS_PRECISION), y: formattedArcsec(outerWcsSize?.y, WCS_PRECISION)};
                 const innerSize = {x: formattedArcsec(innerWcsSize?.x, WCS_PRECISION), y: formattedArcsec(innerWcsSize?.y, WCS_PRECISION)};
                 return `annulus(wcs:${systemType})[[${center}], [${innerSize.x ?? ""}, ${innerSize.y ?? ""}], [${outerSize.x ?? ""}, ${outerSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
