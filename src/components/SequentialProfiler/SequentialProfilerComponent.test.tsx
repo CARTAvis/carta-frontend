@@ -26,7 +26,13 @@ jest.mock("stores", () => ({
             return MOCK_WIDGETS_STORE;
         }
     },
-    SEQUENTIAL_X_AXIS_OPTIONS: [{value: "index", label: "Index"}]
+    SEQUENTIAL_X_AXIS_OPTIONS: [{value: "index", label: "Index"}],
+    SEQUENTIAL_Y_AXIS_OPTIONS: [
+        {value: 3, label: "Flux density"},
+        {value: 2, label: "Intensity sum"},
+        {value: 4, label: "Intensity mean"},
+        {value: 5, label: "Intensity max"}
+    ]
 }));
 
 import {RegionGroupStore} from "../../stores/RegionGroupStore/RegionGroupStore";
@@ -35,9 +41,22 @@ import {RegionGroupManagerComponent} from "../RegionGroup/RegionGroupManagerComp
 import {SequentialProfilerComponent} from "./SequentialProfilerComponent";
 
 const GROUPS = observable.map<string, any>();
-const MOCK_WIDGETS_STORE = {
-    sequentialProfileWidgets: new Map([["sequential-profiler-0", {getLineColor: () => "auto-blue", plotType: "Lines", lineWidth: 1, linePlotPointSize: 3, visibleXAxisFormats: ["index"]}]])
-};
+const SEQUENTIAL_WIDGET_STORE = observable({
+    getLineColor: () => "auto-blue",
+    plotType: "Lines",
+    statistic: 3,
+    lineWidth: 1,
+    linePlotPointSize: 3,
+    visibleXAxisFormats: ["index"],
+    xAxisFormat: "auto",
+    setStatistic(statistic: number) {
+        this.statistic = statistic;
+    },
+    setXAxisFormat(format: string) {
+        this.xAxisFormat = format;
+    }
+});
+const MOCK_WIDGETS_STORE = {sequentialProfileWidgets: new Map([["sequential-profiler-0", SEQUENTIAL_WIDGET_STORE]])};
 const FRAME = {id: 2, frameInfo: {fileId: 2}, filename: "frame.fits", requiredStokes: 0, headerUnit: "Jy/beam", regionSet: {editableRegionsList: [{regionId: 7, isClosedRegion: true, nameString: "Region 7"}]}};
 const MOCK_APP_STORE = {
     get regionGroupStores() {
@@ -59,6 +78,12 @@ const MOCK_APP_STORE = {
         group.syncRegionSeriesFrame({frameId: 2, stokes: 0, regionIds: [7], regionSumUnit: "Jy/beam", regionFluxDensityUnit: "Jy"}, () => ({regionFluxDensity: 8}));
     }
 };
+
+beforeEach(() => {
+    runInAction(() => {
+        SEQUENTIAL_WIDGET_STORE.statistic = 3;
+    });
+});
 
 test("plots a newly created region series immediately", () => {
     GROUPS.set("light-curve", {

@@ -1,12 +1,12 @@
 import * as React from "react";
-import {Checkbox, FormGroup, Tab, Tabs} from "@blueprintjs/core";
+import {Checkbox, FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {RegionGroupManagerComponent} from "components/RegionGroup/RegionGroupManagerComponent";
 import {LinePlotSettingsPanelComponent, ScrollShadow} from "components/Shared";
 import {RegionGroupType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, type WidgetProps, WidgetsStore} from "stores";
-import {SEQUENTIAL_X_AXIS_OPTIONS} from "stores/Widgets/SequentialProfileWidgetStore";
+import {SEQUENTIAL_X_AXIS_OPTIONS, SEQUENTIAL_Y_AXIS_OPTIONS, type SequentialStatistic, type SequentialXAxisFormat} from "stores/Widgets/SequentialProfileWidgetStore";
 
 import "./SequentialProfilerSettingsPanelComponent.scss";
 
@@ -47,7 +47,38 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
         return (
             <ScrollShadow>
                 <div className="sequential-profiler-settings">
-                    <Tabs id="sequentialProfilerSettingsTabs" selectedTabId={widgetStore.settingsTabId} onChange={tabId => widgetStore.setSettingsTabId(tabId as "styling" | "management" | "x-axis")}>
+                    <Tabs id="sequentialProfilerSettingsTabs" selectedTabId={widgetStore.settingsTabId} onChange={tabId => widgetStore.setSettingsTabId(tabId as "axes" | "styling" | "management")}>
+                        <Tab
+                            id="axes"
+                            title="Axes"
+                            panel={
+                                <>
+                                    <FormGroup label="X axis" inline={true}>
+                                        <HTMLSelect
+                                            value={widgetStore.xAxisFormat}
+                                            options={SEQUENTIAL_X_AXIS_OPTIONS.filter(option => widgetStore.visibleXAxisFormats.includes(option.value))}
+                                            disabled={!widgetStore.visibleXAxisFormats.length}
+                                            onChange={event => widgetStore.setXAxisFormat(event.currentTarget.value as SequentialXAxisFormat)}
+                                        />
+                                    </FormGroup>
+                                    <FormGroup label="Y axis" inline={true}>
+                                        <HTMLSelect value={widgetStore.statistic} options={SEQUENTIAL_Y_AXIS_OPTIONS} onChange={event => widgetStore.setStatistic(Number(event.currentTarget.value) as SequentialStatistic)} />
+                                    </FormGroup>
+                                    <FormGroup label="Options shown in the X-axis dropdown">
+                                        <Checkbox
+                                            label="Select all"
+                                            checked={widgetStore.visibleXAxisFormats.length === SEQUENTIAL_X_AXIS_OPTIONS.length}
+                                            indeterminate={widgetStore.visibleXAxisFormats.length > 0 && widgetStore.visibleXAxisFormats.length < SEQUENTIAL_X_AXIS_OPTIONS.length}
+                                            onChange={event => widgetStore.setAllXAxisFormatsVisible(event.currentTarget.checked)}
+                                        />
+                                        {SEQUENTIAL_X_AXIS_OPTIONS.map(option => {
+                                            const isVisible = widgetStore.visibleXAxisFormats.includes(option.value);
+                                            return <Checkbox key={option.value} label={option.label} checked={isVisible} onChange={event => widgetStore.setXAxisFormatVisibility(option.value, event.currentTarget.checked)} />;
+                                        })}
+                                    </FormGroup>
+                                </>
+                            }
+                        />
                         <Tab
                             id="styling"
                             title="Styling"
@@ -63,24 +94,6 @@ export class SequentialProfilerSettingsPanelComponent extends React.Component<Wi
                                     setLinePlotPointSize={widgetStore.setLinePlotPointSize}
                                     setPlotType={widgetStore.setPlotType}
                                 />
-                            }
-                        />
-                        <Tab
-                            id="x-axis"
-                            title="X-axis"
-                            panel={
-                                <FormGroup label="Options shown in the X-axis dropdown">
-                                    <Checkbox
-                                        label="Select all"
-                                        checked={widgetStore.visibleXAxisFormats.length === SEQUENTIAL_X_AXIS_OPTIONS.length}
-                                        indeterminate={widgetStore.visibleXAxisFormats.length > 0 && widgetStore.visibleXAxisFormats.length < SEQUENTIAL_X_AXIS_OPTIONS.length}
-                                        onChange={event => widgetStore.setAllXAxisFormatsVisible(event.currentTarget.checked)}
-                                    />
-                                    {SEQUENTIAL_X_AXIS_OPTIONS.map(option => {
-                                        const isVisible = widgetStore.visibleXAxisFormats.includes(option.value);
-                                        return <Checkbox key={option.value} label={option.label} checked={isVisible} onChange={event => widgetStore.setXAxisFormatVisibility(option.value, event.currentTarget.checked)} />;
-                                    })}
-                                </FormGroup>
                             }
                         />
                         <Tab id="management" title="Management" panel={<RegionGroupManagerComponent id={this.props.id} docked={false} />} />

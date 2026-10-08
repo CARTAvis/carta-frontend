@@ -1,9 +1,11 @@
+import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {LineSettings, PlotType, RelativeTimeUnit, TimeLabelFormat} from "enums";
 import {SELECTABLE_COLORS} from "utilities";
 
 export type SequentialXAxisFormat = TimeLabelFormat | RelativeTimeUnit | "index";
+export type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean | CARTA.StatsType.Max;
 
 export const SEQUENTIAL_X_AXIS_OPTIONS: Array<{value: SequentialXAxisFormat; label: string}> = [
     {value: "index", label: "Index"},
@@ -18,6 +20,13 @@ export const SEQUENTIAL_X_AXIS_OPTIONS: Array<{value: SequentialXAxisFormat; lab
     {value: RelativeTimeUnit.YEAR, label: "Relative Julian years"}
 ];
 
+export const SEQUENTIAL_Y_AXIS_OPTIONS: Array<{value: SequentialStatistic; label: string}> = [
+    {value: CARTA.StatsType.FluxDensity, label: "Flux density"},
+    {value: CARTA.StatsType.Sum, label: "Intensity sum"},
+    {value: CARTA.StatsType.Mean, label: "Intensity mean"},
+    {value: CARTA.StatsType.Max, label: "Intensity max"}
+];
+
 export interface SequentialProfileWidgetPreferenceAccessors {
     getVisibleXAxisFormats: () => unknown;
     setVisibleXAxisFormats: (formats: SequentialXAxisFormat[]) => void;
@@ -25,9 +34,10 @@ export interface SequentialProfileWidgetPreferenceAccessors {
 
 export class SequentialProfileWidgetStore {
     @observable plotType = PlotType.POINTS;
+    @observable statistic: SequentialStatistic = CARTA.StatsType.FluxDensity;
     @observable lineWidth = 1;
     @observable linePlotPointSize = 3;
-    @observable settingsTabId: "styling" | "management" | "x-axis" = "styling";
+    @observable settingsTabId: "axes" | "styling" | "management" = "styling";
     @observable private selectedXAxisFormat: SequentialXAxisFormat = TimeLabelFormat.AUTO;
     @observable lineColors = observable.map<string, string>();
 
@@ -72,7 +82,13 @@ export class SequentialProfileWidgetStore {
         this.plotType = plotType;
     };
 
-    @action setSettingsTabId = (tabId: "styling" | "management" | "x-axis") => {
+    @action setStatistic = (statistic: SequentialStatistic) => {
+        if (SEQUENTIAL_Y_AXIS_OPTIONS.some(option => option.value === statistic)) {
+            this.statistic = statistic;
+        }
+    };
+
+    @action setSettingsTabId = (tabId: "axes" | "styling" | "management") => {
         this.settingsTabId = tabId;
     };
 

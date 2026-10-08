@@ -9,12 +9,11 @@ import {LinePlotComponent, type LinePlotComponentProps} from "components/Shared"
 import {type MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {IsoTimePrecision, PlotType, RegionGroupType, RelativeTimeReference, RelativeTimeUnit, TickType, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {type Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, SEQUENTIAL_X_AXIS_OPTIONS, type SequentialXAxisFormat, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type RegionGroupStore, SEQUENTIAL_X_AXIS_OPTIONS, SEQUENTIAL_Y_AXIS_OPTIONS, type SequentialStatistic, type SequentialXAxisFormat, type WidgetProps, WidgetsStore} from "stores";
 import {formatMjdUtcAsIso, formatTimeSeriesTickLabels, getColorForTheme, toFixed} from "utilities";
 
 import "./SequentialProfilerComponent.scss";
 
-type SequentialStatistic = CARTA.StatsType.Sum | CARTA.StatsType.FluxDensity | CARTA.StatsType.Mean | CARTA.StatsType.Max;
 const JULIAN_DATE_OFFSET = 2400000.5;
 const SECONDS_PER_DAY = 86400;
 const DAYS_PER_JULIAN_YEAR = 365.25;
@@ -26,7 +25,6 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     private disposeManagerSelection?: IReactionDisposer;
     @observable private isMultiRegionGroupEnabled = false;
     @observable private selectedRegionGroupIds: string[] = [];
-    @observable private statistic: SequentialStatistic = CARTA.StatsType.FluxDensity;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -116,7 +114,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private get effectiveStatistic(): SequentialStatistic {
-        return this.statistic;
+        return WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.statistic ?? CARTA.StatsType.FluxDensity;
     }
 
     @computed private get selectedRegionGroupText(): string {
@@ -400,7 +398,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     @action private selectStatistic = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.statistic = Number(event.currentTarget.value) as SequentialStatistic;
+        WidgetsStore.Instance.sequentialProfileWidgets.get(this.widgetId)?.setStatistic(Number(event.currentTarget.value) as SequentialStatistic);
     };
 
     @action private selectXAxisFormat = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -469,16 +467,7 @@ export class SequentialProfilerComponent extends React.Component<WidgetProps> {
                         </FormGroup>
                     )}
                     <FormGroup label="Y axis" inline={true}>
-                        <HTMLSelect
-                            value={this.effectiveStatistic}
-                            options={[
-                                {value: CARTA.StatsType.FluxDensity, label: "Flux density"},
-                                {value: CARTA.StatsType.Sum, label: "Intensity sum"},
-                                {value: CARTA.StatsType.Mean, label: "Intensity mean"},
-                                {value: CARTA.StatsType.Max, label: "Intensity max"}
-                            ]}
-                            onChange={this.selectStatistic}
-                        />
+                        <HTMLSelect value={this.effectiveStatistic} options={SEQUENTIAL_Y_AXIS_OPTIONS} onChange={this.selectStatistic} />
                     </FormGroup>
                     <Button icon="series-configuration" aria-label="Light curve management" title="Light curve management" onClick={this.openRegionGroupManager} />
                 </div>
