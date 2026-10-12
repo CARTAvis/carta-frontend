@@ -81,7 +81,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private static readonly NameColumnWidth = 90;
+    private static readonly NameColumnWidth = 110;
 
     constructor(props: WidgetProps) {
         super(props);
@@ -307,13 +307,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let formContent;
         let exportDataComponent: React.JSX.Element | null = null;
         if (this.statsData) {
-            // stretch value column to cover width
-            const valueWidth = Math.max(0, this.width - StatsComponent.NameColumnWidth);
-
             const rows = this.getTableRows().map(({name, type, value}) => (
                 <tr key={type}>
                     <td style={{width: StatsComponent.NameColumnWidth}}>{name}</td>
-                    <td style={{width: valueWidth}}>
+                    <td>
                         {value.num} {value.unit}
                     </td>
                 </tr>
@@ -324,7 +321,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     <thead className={appStore.isDarkTheme ? "dark-theme" : ""}>
                         <tr>
                             <th style={{width: StatsComponent.NameColumnWidth}}>Statistic</th>
-                            <th style={{width: valueWidth}}>Value</th>
+                            <th>Value</th>
                         </tr>
                     </thead>
                     <tbody className={appStore.isDarkTheme ? "dark-theme" : ""}>{rows}</tbody>
