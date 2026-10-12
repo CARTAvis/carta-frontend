@@ -17,6 +17,7 @@ export enum SelectionType {
 export enum RegionId {
     NONE = -4,
     ACTIVE = -3,
+    CUBE = -2,
     IMAGE = -1,
     CURSOR = 0
 }
