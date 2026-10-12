@@ -85,18 +85,18 @@
     },
     "dependencies": {
         "@docusaurus/core": "^3.10.1",
-        "@docusaurus/preset-classic": "^3.10.1",
-        "@loveluthien/docusaurus-plugin-typedoc-api": "^4.6.2",
+        "@docusaurus/preset-classic": "^3.10.2",
+        "@loveluthien/docusaurus-plugin-typedoc-api": "^4.6.3",
         "@mdx-js/react": "^3.1.1",
         "clsx": "^2.1.1",
         "docusaurus-lunr-search": "^3.6.0",
         "prism-react-renderer": "^2.4.1",
-        "react": "^19.2.7",
-        "react-dom": "^19.2.7"
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0"
     },
     "devDependencies": {
         "eslint-plugin-simple-import-sort": "^13.0.0",
-        "prettier": "^3.8.3"
+        "prettier": "^3.9.10"
     },
     "overrides": {
         "serialize-javascript": "^7.0.5",
