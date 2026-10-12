@@ -696,7 +696,8 @@ export class PreferenceStore {
     }
 
     @computed get statistics(): StatsDisplayType[] {
-        return this.preferences.get(PreferenceKeys.STATISTICS) ?? DEFAULTS.STATISTICS.statistics;
+        const statistics = this.preferences.get(PreferenceKeys.STATISTICS);
+        return Array.isArray(statistics) && statistics.every(type => STATISTICS_NAME_MAP.has(type)) ? statistics : DEFAULTS.STATISTICS.statistics;
     }
 
     @action toggleStatistic = (type: StatsDisplayType) => {
