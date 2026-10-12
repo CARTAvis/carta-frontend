@@ -42,7 +42,23 @@
             padding: 5px 5px 0;
             display: block;
             user-select: text;
+            th:first-of-type,
+            td:first-of-type {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            th:last-of-type,
+            td:last-of-type {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
             thead {
+                display: block;
+
                 &.dark-theme {
                     background: $dark-gray4;
 
@@ -60,9 +76,11 @@
                 }
 
                 tr {
-                    display: block;
+                    display: flex;
 
                     th {
+                        box-sizing: border-box;
+                        flex: none;
                         padding: 3px;
                         font-size: 13px;
                         cursor: default;
@@ -97,7 +115,11 @@
                 }
 
                 tr {
+                    display: flex;
+
                     td {
+                        box-sizing: border-box;
+                        flex: none;
                         padding: 3px;
                         font-size: 12px;
                         cursor: pointer;
