@@ -42,8 +42,10 @@ out vec4 fragColor;
 
 void main() {
     float dist = distance(gl_PointCoord, vec2(0.5));
-    if (dist > 0.5) discard;
+    float coverage = 1.0 - smoothstep(0.5 - fwidth(dist), 0.5, dist);
+    if (coverage <= 0.0) discard;
     fragColor = vSelected > 0.5 ? uSelectedColor : uColor;
+    fragColor.a *= coverage;
 }`;
 
 interface CatalogScatterWebGLProps {
@@ -162,7 +164,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
             return;
         }
 
-        const gl = canvas.getContext("webgl2", {alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true});
+        const gl = canvas.getContext("webgl2", {alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true});
         if (!gl) {
             console.error("WebGL2 not available for catalog scatter");
             this.setState({isUnavailable: true});
@@ -238,7 +240,7 @@ export class CatalogScatterWebGL extends React.Component<CatalogScatterWebGLProp
         gl.useProgram(shaderProgram);
 
         gl.enable(GL2.BLEND);
-        gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);
+        gl.blendFuncSeparate(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA, GL2.ONE, GL2.ONE_MINUS_SRC_ALPHA);
         gl.enable(GL2.DEPTH_TEST);
         gl.depthFunc(GL2.LEQUAL);
 
