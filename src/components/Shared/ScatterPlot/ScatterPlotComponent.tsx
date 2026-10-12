@@ -829,7 +829,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     render() {
         return (
-            <ResizeDetector onResize={this.resize} throttleTime={33}>
+            <ResizeDetector onResize={this.resize} throttleTime={33} targetRef={this.containerRef}>
                 <div
                     ref={this.containerRef}
                     className={"scatter-plot-component"}
