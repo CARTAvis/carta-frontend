@@ -143,15 +143,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             headerString += `# image: ${frame.filename}\n`;
 
             const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             headerString += buildProfileFittingStatisticHeader(regionId, this.widgetStore.profileSelectionStore.selectedStatsTypes[0]);
             // region info
-            if (region) {
-                headerString += `# ${region.regionProperties}\n`;
-                if (frame.isValidWcs) {
-                    headerString += `# ${frame.getRegionWcsProperties(region)}\n`;
-                }
+            if (regionId !== null) {
+                frame.getRegionProperties(regionId).forEach(property => (headerString += `# ${property}\n`));
             }
         }
 
