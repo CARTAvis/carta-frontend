@@ -36,6 +36,16 @@
         }
     }
 
+    .effective-redshift {
+        line-height: 30px;
+    }
+
+    .conversion-panel .#{$ns}-label {
+        min-width: 12em;
+        width: 12em;
+        white-space: nowrap;
+    }
+
     .font-group {
         .#{$ns}-form-content {
             display: flex;

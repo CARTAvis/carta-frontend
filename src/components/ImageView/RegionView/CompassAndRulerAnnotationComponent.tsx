@@ -8,10 +8,20 @@ import {SelectionType} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
-import {getInterpolatedPathAtDistance, pointDistance, subtract2D, transformPoint} from "utilities";
+import {subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {
+    adjustPosToUnityStage,
+    canvasToTransformedImagePos,
+    getCanvasPathAtScreenDistance,
+    getDirectionalStageScale,
+    getEffectiveZoomLevel,
+    getScreenDistance,
+    getZoomInvariantCanvasOffset,
+    getZoomInvariantTransform,
+    transformedImageToCanvasPos
+} from "./shared";
 
 interface CompassRulerAnnotationProps {
     key: number;
@@ -130,7 +140,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
             const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
             const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            const distance = pointDistance(anchorPos, originPoints);
+            const distance = getScreenDistance(anchorPos, originPoints, props.stageRef.current);
 
             if (frame.spatialReference && frame.spatialTransformAST) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
@@ -143,11 +153,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                 }
                 anchorDragImagePoint.current = positionImageSpace;
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                if (!frame.isValidWcs) {
-                    region.setLength((distance * frame.zoomLevel) / imageRatio);
-                } else {
-                    region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
-                }
+                region.setLength(distance);
             }
         }
     };
@@ -161,8 +167,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         }
     };
 
-    const imageRatio = AppStore.Instance.imageRatio;
-    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+    const zoom = getEffectiveZoomLevel(frame);
     const wcsInfo = frame?.isValidWcs ? frame.wcsInfoForTransformation : 0;
     const approxPoints = region.getCompassApproximation(wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST || undefined);
     const northApproxPoints = approxPoints.northApproximatePoints;
@@ -171,7 +176,6 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const eastPointArray: number[] = [];
     const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    const targetStageLength = (region.length * imageRatio) / zoomLevel;
 
     const getCompassPointArray = (approxPoints: number[]) => {
         const canvasPoints: Point2D[] = [];
@@ -180,15 +184,17 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             canvasPoints.push(transformedImageToCanvasPos({x: approxPoints[i], y: approxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current));
         }
 
-        return getInterpolatedPathAtDistance(originPoints, canvasPoints, targetStageLength).flatMap(point => [point.x - mousePoint.current.x, point.y - mousePoint.current.y]);
+        return getCanvasPathAtScreenDistance(originPoints, canvasPoints, region.length, props.stageRef.current).flatMap(point => [point.x - mousePoint.current.x, point.y - mousePoint.current.y]);
     };
 
     if (!frame.isValidWcs) {
         const originX = originPoints.x - mousePoint.current.x;
         const originY = originPoints.y - mousePoint.current.y;
 
-        northPointArray.push(originX, originY, originX, originY - targetStageLength);
-        eastPointArray.push(originX, originY, originX - targetStageLength, originY);
+        const northOffset = getZoomInvariantCanvasOffset({x: 0, y: -region.length}, props.stageRef.current);
+        const eastOffset = getZoomInvariantCanvasOffset({x: -region.length, y: 0}, props.stageRef.current);
+        northPointArray.push(originX, originY, originX + northOffset.x, originY + northOffset.y);
+        eastPointArray.push(originX, originY, originX + eastOffset.x, originY + eastOffset.y);
     } else {
         northPointArray.push(...getCompassPointArray(northApproxPoints));
         eastPointArray.push(...getCompassPointArray(eastApproxPoints));
@@ -207,8 +213,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         const northDiffY = northPointArray[northPointArray.length - 3] - northPointArray[northPointArray.length - 1];
         const eastDiffX = eastPointArray[eastPointArray.length - 4] - eastPointArray[eastPointArray.length - 2];
         const eastDiffY = eastPointArray[eastPointArray.length - 3] - eastPointArray[eastPointArray.length - 1];
-        let northAngle = Math.atan(northDiffY / northDiffX);
-        let eastAngle = Math.atan(eastDiffY / eastDiffX);
+        const northAngle = Math.atan2(northDiffY, northDiffX);
+        const eastAngle = Math.atan2(eastDiffY, eastDiffX);
 
         let northXOffset = (northLabelRef?.current?.textWidth ?? 0) / 2;
         let northYOffset = (northLabelRef?.current?.textHeight ?? 0) / 2;
@@ -218,30 +224,26 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         const northTranslation = Math.min(northLabelRef?.current?.textWidth ?? 0, northLabelRef?.current?.textHeight ?? 0);
         const eastTranslation = Math.min(eastLabelRef?.current?.textWidth ?? 0, eastLabelRef?.current?.textHeight ?? 0);
 
-        if (northDiffX < 0) {
-            northAngle += Math.PI;
-        }
-
-        if (eastDiffX < 0) {
-            eastAngle += Math.PI;
-        }
-
         northXOffset += Math.cos(northAngle) * northTranslation;
         northYOffset += Math.sin(northAngle) * northTranslation;
         eastXOffset += Math.cos(eastAngle) * eastTranslation;
         eastYOffset += Math.sin(eastAngle) * eastTranslation;
 
-        region.setNorthTextOffset((northXOffset * zoomLevel) / imageRatio, true, true);
-        region.setNorthTextOffset((northYOffset * zoomLevel) / imageRatio, false, true);
-        region.setEastTextOffset((eastXOffset * zoomLevel) / imageRatio, true, true);
-        region.setEastTextOffset((eastYOffset * zoomLevel) / imageRatio, false, true);
+        region.setNorthTextOffset(northXOffset, true, true);
+        region.setNorthTextOffset(northYOffset, false, true);
+        region.setEastTextOffset(eastXOffset, true, true);
+        region.setEastTextOffset(eastYOffset, false, true);
     };
 
     React.useEffect(() => {
         updateOffset();
     }, []);
 
+    const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);
+    const eastArrowScales = getDirectionalStageScale(eastPointArray, props.stageRef.current);
+
     const generateProps = (isNorth: boolean) => {
+        const arrowScales = isNorth ? northArrowScales : eastArrowScales;
         return {
             stroke: region.color,
             fill: region.color,
@@ -252,8 +254,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             closed: false,
             perfectDrawEnabled: false,
             points: isNorth ? northPointArray : eastPointArray,
-            pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
-            pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
+            pointerWidth: region.pointerWidth / arrowScales.across,
+            pointerLength: region.pointerLength / arrowScales.along,
             hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
         };
     };
@@ -261,12 +263,13 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const textCommonProps = {
         stroke: region.color,
         fill: region.color,
-        strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
+        strokeWidth: region.lineWidth,
         strokeScaleEnabled: false,
         opacity: region.visualOpacity,
-        fontSize: (region.fontSize * imageRatio) / zoomLevel,
+        fontSize: region.fontSize,
         fontFamily: region.font,
-        fontStyle: region.fontStyle
+        fontStyle: region.fontStyle,
+        ...getZoomInvariantTransform(props.stageRef.current)
     };
 
     const areAnchorsInteractive = !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked;
@@ -276,6 +279,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         isRotator: false,
         interactive: areAnchorsInteractive && props.isFocused,
         opacity: anchorOpacity,
+        zoom,
         onMouseEnter: handleAnchorMouseEnter,
         onMouseOut: handleAnchorMouseOut,
         onDragStart: handleAnchorDragStart,
@@ -294,8 +298,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                     ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}
                     y={northPointArray[northPointArray.length - 1]}
-                    offsetX={(region.northTextOffset.x * imageRatio) / zoomLevel}
-                    offsetY={(region.northTextOffset.y * imageRatio) / zoomLevel}
+                    offsetX={region.northTextOffset.x}
+                    offsetY={region.northTextOffset.y}
                     text={region.northLabel}
                     {...textCommonProps}
                 />
@@ -303,8 +307,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                     ref={eastLabelRef}
                     x={eastPointArray[eastPointArray.length - 2]}
                     y={eastPointArray[eastPointArray.length - 1]}
-                    offsetX={(region.eastTextOffset.x * imageRatio) / zoomLevel}
-                    offsetY={(region.eastTextOffset.y * imageRatio) / zoomLevel}
+                    offsetX={region.eastTextOffset.x}
+                    offsetY={region.eastTextOffset.y}
                     text={region.eastLabel}
                     {...textCommonProps}
                 />
@@ -463,8 +467,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         return distString;
     };
 
-    const imageRatio = AppStore.Instance.imageRatio;
-    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+    const zoom = getEffectiveZoomLevel(frame);
+    const textTransform = getZoomInvariantTransform(props.stageRef.current);
     const secondaryImagePointStart = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const secondaryImagePointFinish = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[1], false) : region.controlPoints[1];
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
@@ -530,12 +534,12 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const anchorOpacity = areAnchorsInteractive ? region.visualOpacity : 0;
 
     React.useEffect(() => {
-        setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + (distanceTextRef?.current?.textWidth ?? 0) / 2);
+        setTextOffsetX(region.textOffset.x + (distanceTextRef?.current?.textWidth ?? 0) / 2);
         if (region.isAuxiliaryTextVisible) {
-            setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + (xTextRef?.current?.textWidth ?? 0) / 2);
-            setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + (yTextRef?.current?.textWidth ?? 0) / 2);
+            setXTextOffsetX(region.xTextOffset.x + (xTextRef?.current?.textWidth ?? 0) / 2);
+            setYTextOffsetX(region.yTextOffset.x + (yTextRef?.current?.textWidth ?? 0) / 2);
         }
-    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.isAuxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [region.fontSize, region.decimals, region.textOffset.x, region.isAuxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -594,16 +598,17 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     x={centerPoints.x}
                     y={centerPoints.y}
                     offsetX={textOffsetX}
-                    offsetY={(region.textOffset.y * imageRatio) / zoomLevel}
+                    offsetY={region.textOffset.y}
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}
-                    strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                    strokeWidth={0.5}
                     strokeScaleEnabled={false}
                     opacity={region.visualOpacity}
-                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                    fontSize={region.fontSize}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
+                    {...textTransform}
                 />
                 {region.isAuxiliaryTextVisible && (
                     <>
@@ -612,32 +617,34 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             x={xCenterPoints.x}
                             y={xCenterPoints.y}
                             offsetX={xTextOffsetX}
-                            offsetY={(region.xTextOffset.y * imageRatio) / zoomLevel}
+                            offsetY={region.xTextOffset.y}
                             text={xDistanceText}
                             stroke={region.color}
                             fill={region.color}
-                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeWidth={0.5}
                             strokeScaleEnabled={false}
                             opacity={region.isAuxiliaryTextVisible ? region.visualOpacity : 0}
-                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontSize={region.fontSize}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
+                            {...textTransform}
                         />
                         <Text
                             ref={yTextRef}
                             x={yCenterPoints.x}
                             y={yCenterPoints.y}
                             offsetX={yTextOffsetX}
-                            offsetY={(region.yTextOffset.y * imageRatio) / zoomLevel}
+                            offsetY={region.yTextOffset.y}
                             text={yDistanceText}
                             stroke={region.color}
                             fill={region.color}
-                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeWidth={0.5}
                             strokeScaleEnabled={false}
                             opacity={region.isAuxiliaryTextVisible ? region.visualOpacity : 0}
-                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontSize={region.fontSize}
                             fontFamily={region.font}
                             fontStyle={region.fontStyle}
+                            {...textTransform}
                         />
                     </>
                 )}
@@ -663,6 +670,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             onClick={handleAnchorClick}
                             isSelected={region.selectedPointIndex === 0}
                             selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                            zoom={zoom}
                         />
                         <Anchor
                             anchor={"finish"}
@@ -680,6 +688,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             onClick={handleAnchorClick}
                             isSelected={region.selectedPointIndex === 1}
                             selectionType={props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                            zoom={zoom}
                         />
                     </>
                 )}

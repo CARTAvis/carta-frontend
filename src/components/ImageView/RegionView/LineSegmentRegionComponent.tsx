@@ -13,7 +13,11 @@ import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "sto
 import {angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, getDirectionalStageScale, getEffectiveZoomLevel, transformedImageToCanvasPos} from "./shared";
+
+function getScreenLineRotation(start: Point2D, end: Point2D, stageScale: Point2D): number {
+    return (Math.atan2((end.y - start.y) * stageScale.y, (end.x - start.x) * stageScale.x) * 180) / Math.PI;
+}
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -292,18 +296,15 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 interactive={isInteractive}
                 opacity={this.props.region.visualOpacity}
                 selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                zoom={getEffectiveZoomLevel(this.props.frame)}
                 onMouseEnter={this.handleAnchorMouseEnter}
                 onMouseOut={this.handleAnchorMouseOut}
                 onDragStart={this.handleAnchorDragStart}
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
                 onClick={this.handleAnchorClick}
-                onDblClick={
-                    this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR
-                        ? undefined
-                        : this.handleAnchorDoubleClick
-                }
-                isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR}
+                onDblClick={this.props.region.isRotationSelectableLineLikeRegion ? undefined : this.handleAnchorDoubleClick}
+                isLineRegion={this.props.region.isRotationSelectableLineLikeRegion}
             />
         );
     }
@@ -311,11 +312,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         const rotation = frame.hasSquarePixels ? -region.rotation + 90.0 : (-Math.atan(Math.tan((region.rotation * Math.PI) / 180) * frame.aspectRatio) * 180) / Math.PI;
+        const isLineRegion = region.isRotationSelectableLineLikeRegion;
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
+        let anchorControlPoints: Point2D[];
         let anchors: React.ReactNode[] | null = null;
         let newAnchor: React.ReactNode | null = null;
         let pointArray: Array<number>;
@@ -323,6 +326,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
         /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
         const pixelRatio = AppStore.Instance.pixelRatio;
+        const stageScale = {x: this.props.stageRef.current?.scaleX() ?? zoom.x / imageRatio, y: this.props.stageRef.current?.scaleY() ?? zoom.y / imageRatio};
 
         if (frame.spatialReference && frame.spatialTransformAST) {
             const centerReferenceImage = average2D(controlPoints);
@@ -336,58 +340,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
-
-            // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                anchors = controlPoints.map((p, i) => {
-                    const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
-                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, false, this.props.isFocused);
-                });
-
-                if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
-                    // trigger rotation anchor re-render when zooming
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const zoomLevel = frame.spatialReference?.zoomLevel;
-                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
-                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
-                    const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, this.props.isFocused));
-                }
-            }
-
-            if (this.props.isFocused && this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
-                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
-            }
+            anchorControlPoints = controlPoints.map(point => transformedImageToCanvasPos(transformPoint(frame.spatialTransformAST!, point, false), frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current));
         } else {
             controlPoints = controlPoints.map(p => {
                 return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             });
+            anchorControlPoints = controlPoints;
             centerPointCanvasSpace = average2D(controlPoints);
-            // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                anchors = new Array<React.ReactNode>(controlPoints.length);
-                for (let i = 0; i < controlPoints.length; i++) {
-                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, false, this.props.isFocused);
-                }
-
-                if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
-                    // trigger rotation anchor re-render when zooming
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const zoomLevel = frame.zoomLevel;
-                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
-                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
-                    const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, this.props.isFocused));
-                }
-            }
-
-            if (this.props.isFocused && this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
-                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
-            }
 
             pointArray = new Array<number>(controlPoints.length * 2);
             for (let i = 0; i < pointArray.length / 2; i++) {
@@ -395,6 +354,35 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 pointArray[i * 2 + 1] = controlPoints[i].y - centerPointCanvasSpace.y;
             }
         }
+
+        if (this.props.selected && this.props.listening && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
+            const hasLineDirection = isLineRegion && anchorControlPoints.length > 1;
+            const lineRotation = hasLineDirection ? getScreenLineRotation(anchorControlPoints[0], anchorControlPoints[anchorControlPoints.length - 1], stageScale) : rotation;
+            const anchorRotation = hasLineDirection ? lineRotation + 90 : rotation;
+            anchors = anchorControlPoints.map((point, index) => this.anchorNode(point.x, point.y, anchorRotation, index, false, this.props.isFocused));
+
+            if (isLineRegion && frame.hasSquarePixels) {
+                const rotatorAngle = (lineRotation * Math.PI) / 180.0;
+                anchors.push(
+                    this.anchorNode(
+                        centerPointCanvasSpace.x + (ROTATOR_ANCHOR_HEIGHT * Math.sin(rotatorAngle)) / stageScale.x,
+                        centerPointCanvasSpace.y - (ROTATOR_ANCHOR_HEIGHT * Math.cos(rotatorAngle)) / stageScale.y,
+                        anchorRotation,
+                        2,
+                        true,
+                        this.props.isFocused
+                    )
+                );
+            }
+        }
+
+        if (this.props.isFocused && this.hoverIntersection && !region.isLocked && !AppStore.Instance.activeFrame?.regionSet.isLocked) {
+            const hoverImagePoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, this.hoverIntersection, false) : this.hoverIntersection;
+            const hoverCanvasPoint = transformedImageToCanvasPos(hoverImagePoint, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            newAnchor = <NonEditableAnchor x={hoverCanvasPoint.x} y={hoverCanvasPoint.y} rotation={rotation} zoom={zoom} />;
+        }
+
+        const arrowScales = region.regionType === CARTA.RegionType.ANNVECTOR ? getDirectionalStageScale(pointArray, this.props.stageRef.current) : undefined;
 
         const commonProps = {
             x: centerPointCanvasSpace.x,
@@ -420,12 +408,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         return (
             <Group>
                 {region.regionType === CARTA.RegionType.ANNVECTOR ? (
-                    <Arrow
-                        {...commonProps}
-                        fill={region.color}
-                        pointerWidth={((region as VectorAnnotationStore).pointerWidth * imageRatio) / zoomLevel}
-                        pointerLength={((region as VectorAnnotationStore).pointerLength * imageRatio) / zoomLevel}
-                    />
+                    <Arrow {...commonProps} fill={region.color} pointerWidth={(region as VectorAnnotationStore).pointerWidth / arrowScales!.across} pointerLength={(region as VectorAnnotationStore).pointerLength / arrowScales!.along} />
                 ) : (
                     <Line
                         {...commonProps}

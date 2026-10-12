@@ -19,6 +19,7 @@ import {
     getSimpleShapeAnchorSizeScale,
     isRectangleRegionType,
     isTextRegionType,
+    multiply2D,
     rotate2D,
     scale2D,
     subtract2D,
@@ -27,7 +28,7 @@ import {
 } from "utilities";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, transformedImageToCanvasPos} from "./shared";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -83,7 +84,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         const region = this.props.region;
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
+        const textScale = {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y};
 
         // Find center's canvas space position
         let centerImagePos = region.center;
@@ -121,10 +123,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
-        const relativeOppositeAnchorPoint = rotate2D(
-            scale2D(relativeOppositeAnchorPointUnrotated, this.props.region.regionType === CARTA.RegionType.ANNTEXT ? AppStore.Instance.imageRatio / zoomLevel : 1),
-            (this.props.region.rotation * Math.PI) / 180.0
-        );
+        let relativeOppositeAnchorPoint = rotate2D(relativeOppositeAnchorPointUnrotated, (this.props.region.rotation * Math.PI) / 180.0);
+        if (this.props.region.regionType === CARTA.RegionType.ANNTEXT) {
+            relativeOppositeAnchorPoint = multiply2D(relativeOppositeAnchorPoint, textScale);
+        }
         this.editOppositeAnchorPoint = add2D(this.editStartCenterPoint, relativeOppositeAnchorPoint);
 
         // Find opposite anchor's canvas space position for corner mode
@@ -140,7 +142,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         if (frame.spatialReference && frame.spatialTransformAST) {
@@ -154,14 +156,14 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             anchor,
             oppositeAnchorPoint: this.editOppositeAnchorPoint,
             newAnchorPoint,
-            textScale: AppStore.Instance.imageRatio / zoomLevel
+            textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
         });
         region.setControlPoints([edit.center, edit.size]);
     };
 
     private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, shouldKeepAspect: boolean) => {
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         if (frame.spatialReference && frame.spatialTransformAST) {
@@ -177,7 +179,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 anchor,
                 keepAspect: shouldKeepAspect,
                 newAnchorPoint,
-                textScale: AppStore.Instance.imageRatio / zoomLevel
+                textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
             })
         );
     };
@@ -295,7 +297,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private getDragBoundedAnchorPos = (region: RegionStore, anchorName: string, isCornerMode: boolean): Point2D | undefined => {
         // Handle drag bound of left/right/top/bottom anchors
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
@@ -310,7 +312,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else {
                 delta = {x: 0, y: size.y};
             }
-            const offset = rotate2D(scale2D(delta, getSimpleShapeAnchorSizeScale(region.regionType, AppStore.Instance.imageRatio / zoomLevel)), (-region.rotation * Math.PI) / 180.0);
+            let offset = rotate2D(scale2D(delta, getSimpleShapeAnchorSizeScale(region.regionType)), (-region.rotation * Math.PI) / 180.0);
+            if (isTextRegionType(region.regionType)) {
+                offset = multiply2D(offset, {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y});
+            }
             return isCornerMode ? add2D(this.editOppositeAnchorCanvasPos, scale2D(offset, 2)) : add2D(this.centerCanvasPos, offset);
         }
         return undefined;
@@ -319,10 +324,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private getDragBoundedDiagonalAnchorPos = (region: RegionStore, anchorName: string): Point2D | undefined => {
         // Handle keep-aspect drag bound of diagonal anchors
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
-            const offset = rotate2D(scale2D(size, getSimpleShapeAnchorSizeScale(region.regionType, AppStore.Instance.imageRatio / zoomLevel)), (region.rotation * Math.PI) / 180.0);
+            let offset = rotate2D(scale2D(size, getSimpleShapeAnchorSizeScale(region.regionType)), (region.rotation * Math.PI) / 180.0);
+            if (isTextRegionType(region.regionType)) {
+                offset = multiply2D(offset, {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y});
+            }
             if (anchorName === "top-left") {
                 return add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: -offset.y});
             } else if (anchorName === "bottom-left") {
@@ -385,15 +393,17 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private genAnchors = (isInteractive: boolean): React.ReactNode[] => {
         const region = this.props.region;
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
+
+        const isText = isTextRegionType(region.regionType);
+        const textRotation = frame.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation;
 
         // Ellipse has swapped axes
         let offset: Point2D;
         if (isRectangleRegionType(region.regionType)) {
             offset = {x: region.size.x / 2, y: region.size.y / 2};
-        } else if (isTextRegionType(region.regionType)) {
-            const transformScale = frame.spatialTransform?.scale ?? 1;
-            offset = {x: (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale), y: (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * transformScale)};
+        } else if (isText) {
+            offset = {x: ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2, y: region.size.y / devicePixelRatio / 2};
         } else {
             offset = {x: region.size.y, y: region.size.x};
         }
@@ -414,14 +424,22 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         return anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
-            const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
-            let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
+            const transformedCenter = frame.spatialReference && isText && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
+            let posCanvas: Point2D;
 
-            if (frame.spatialReference && region.regionType !== CARTA.RegionType.ANNTEXT && frame.spatialTransformAST) {
-                posImage = transformPoint(frame.spatialTransformAST, posImage, false);
+            if (isText) {
+                const centerCanvas = transformedImageToCanvasPos(transformedCenter, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const canvasOffset = getZoomInvariantCanvasOffset({x: config.offset.x, y: -config.offset.y}, this.props.stageRef.current, textRotation);
+                posCanvas = add2D(centerCanvas, canvasOffset);
+            } else {
+                let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
+
+                if (frame.spatialReference && frame.spatialTransformAST) {
+                    posImage = transformPoint(frame.spatialTransformAST, posImage, false);
+                }
+                posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             }
 
-            const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex);
             return (
                 <Anchor
@@ -429,12 +447,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     anchor={config.anchor}
                     x={posCanvas.x}
                     y={posCanvas.y}
-                    rotation={-region.rotation}
+                    rotation={isText ? textRotation : -region.rotation}
                     isRotator={config.anchor === "rotator"}
                     isSelected={isSelectedSimpleShapeAnchor}
                     interactive={isInteractive}
                     opacity={region.visualOpacity}
                     selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                    zoom={zoom}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}
                     onDragStart={this.handleAnchorDragStart}
@@ -448,7 +467,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private getTextProps = (region: TextAnnotationStore, centerPixelSpace: Point2D) => {
         const frame = this.props.frame;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const rotation = frame.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation;
+        const zoomInvariantTransform = getZoomInvariantTransform(this.props.stageRef.current, rotation);
         let align: string;
         let verticalAlign: string;
 
@@ -492,7 +512,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
 
         return {
-            rotation: frame.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation,
+            rotation,
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
@@ -508,20 +528,20 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             onContextMenu: this.handleContextMenu,
             perfectDrawEnabled: false,
             strokeScaleEnabled: false,
-            strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / zoomLevel,
-            width: ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / zoomLevel || undefined,
-            height: ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / zoomLevel || undefined,
-            offsetX: frame.spatialReference
-                ? ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / frame.spatialReference.zoomLevel / 2.0
-                : ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / zoomLevel / 2.0,
-            offsetY: frame.spatialReference
-                ? ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / frame.spatialReference.zoomLevel / 2.0
-                : ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / zoomLevel / 2.0,
+            strokeWidth: region.lineWidth,
+            width: (region.size.x / devicePixelRatio) * frame.aspectRatio || undefined,
+            height: region.size.y / devicePixelRatio || undefined,
+            offsetX: ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
+            offsetY: region.size.y / devicePixelRatio / 2.0,
+            scaleX: zoomInvariantTransform.scaleX,
+            scaleY: zoomInvariantTransform.scaleY,
+            skewX: zoomInvariantTransform.skewX,
+            skewY: zoomInvariantTransform.skewY,
             align,
             verticalAlign,
             text: region.text,
             fill: region.color,
-            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel,
+            fontSize: region.fontSize,
             fontFamily: region.font,
             fontStyle: region.fontStyle,
             hitStrokeWidth: 5
@@ -538,7 +558,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const pixelRatio = AppStore.Instance.pixelRatio;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference && frame.spatialTransformAST) {

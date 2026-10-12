@@ -20,10 +20,13 @@ export declare type CustomIconName =
     | "cursor"
     | "line"
     | "polyline"
+    | "lasso"
     | "imageFitting"
     | "lineFitting"
     | "vectorOverlay"
-    | "popout";
+    | "popout"
+    | "zoomAxisX"
+    | "zoomAxisY";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number; viewBox?: string}> {
     public static readonly SIZE_STANDARD = 16;
@@ -193,6 +196,13 @@ const POLYLINE_SVG = (
     />
 );
 
+const LASSO_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.4 9.7C1.2 8.2 1.8 5.5 4.5 3.5c2.7-2 8.1-2.1 9.8.2 1.8 2.3-.7 5.1-4.2 6.3-2.8 1-5.5 1.2-6.6-.3-.7-1-.1-2.3 1-2.7 1.2-.5 2.4.1 3.1.9" />
+        <path d="M3.4 9.7c1.6.5 2.5 1.3 2.6 2.3.2 1.1-.4 2.1-1.7 2.8" />
+    </g>
+);
+
 const PV_SVG = (
     <>
         <path
@@ -306,6 +316,20 @@ const POPOUT_SVG = (
     </>
 );
 
+const ZOOM_AXIS_X_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="0.25" y="2.25" width="15.5" height="11.5" rx="0.5" />
+        <path d="M4 6 2 8l2 2m8-4 2 2-2 2" />
+    </g>
+);
+
+const ZOOM_AXIS_Y_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2.25" y="0.25" width="11.5" height="15.5" rx="0.5" />
+        <path d="m6 4 2-2 2 2m-4 8 2 2 2-2" />
+    </g>
+);
+
 const ICONS = {
     contour: CONTOUR_SVG,
     center: CENTER_SVG,
@@ -320,9 +344,12 @@ const ICONS = {
     cursor: CURSOR_SVG,
     line: LINE_SVG,
     polyline: POLYLINE_SVG,
+    lasso: LASSO_SVG,
     pv: PV_SVG,
     imageFitting: IMAGE_FITTING_SVG,
     lineFitting: LINE_FITTING_SVG,
     vectorOverlay: VECTOR_OVERLAY_SVG,
-    popout: POPOUT_SVG
+    popout: POPOUT_SVG,
+    zoomAxisX: ZOOM_AXIS_X_SVG,
+    zoomAxisY: ZOOM_AXIS_Y_SVG
 };

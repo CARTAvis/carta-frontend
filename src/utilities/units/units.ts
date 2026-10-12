@@ -1,7 +1,7 @@
 import {AngularSizeUnit} from "enums";
 import {AngularSize} from "models";
 
-export const SPEED_OF_LIGHT = 299792458;
+import {SPEED_OF_LIGHT} from "../cosmology/cosmology";
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
@@ -183,6 +183,8 @@ export function getValueFromArcsecString(formattedString: string): number | null
 export function pixelToFluxDensityUnit(pixelUnit: string): string {
     if (pixelUnit === "K") {
         return "K*arcsec^2";
+    } else if (pixelUnit === "mK") {
+        return "mK*arcsec^2";
     }
     return pixelUnit.replace(/\/beam|\/arcsec\^2|\/arcsec2|\/sr|\/pixel/i, "");
 }

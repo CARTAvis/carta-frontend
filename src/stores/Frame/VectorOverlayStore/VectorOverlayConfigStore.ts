@@ -147,7 +147,7 @@ export class VectorOverlayConfigStore {
         this.isVisible = !this.isVisible;
     };
 
-    @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
+    @action applyConfig = (config: WorkspaceVectorOverlayConfig) => {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
         this.pixelAveraging = config.pixelAveraging;
@@ -177,5 +177,37 @@ export class VectorOverlayConfigStore {
         if (config.colormap) {
             this.colormap = config.colormap;
         }
+    };
+
+    public toConfig = (): WorkspaceVectorOverlayConfig | undefined => {
+        if (!this.isEnabled) {
+            return undefined;
+        }
+
+        return {
+            angularSource: this.angularSource,
+            intensitySource: this.intensitySource,
+            fractionalIntensity: this.isFractionalIntensity,
+            pixelAveraging: this.pixelAveraging,
+            thresholdEnabled: this.isThresholdEnabled,
+            threshold: this.threshold,
+            debiasing: this.isDebiasing,
+            qError: this.qError,
+            uError: this.uError,
+            thresholdOption: this.thresholdOption,
+            visible: this.isVisible,
+            thickness: this.thickness,
+            colormapEnabled: this.isColormapEnabled,
+            colormapInverted: this.isColormapInverted,
+            color: this.color,
+            colormap: this.colormap,
+            colormapContrast: this.colormapContrast,
+            colormapBias: this.colormapBias,
+            lengthMin: this.lengthMin,
+            lengthMax: this.lengthMax,
+            intensityMin: this.intensityMin,
+            intensityMax: this.intensityMax,
+            rotationOffset: this.rotationOffset
+        };
     };
 }

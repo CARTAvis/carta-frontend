@@ -113,6 +113,9 @@ export enum CatalogDisplayMode {
     WORLD = "Angular size"
 }
 
+/** Whether an authored angular size is the source's radius or its full diameter. */
+export type CatalogSourceRadiusMode = "diameter" | "radius";
+
 export enum CatalogSizeUnits {
     SCREENPIXEL = "screen px",
     IMAGEPIXEL = "image px",
@@ -120,6 +123,13 @@ export enum CatalogSizeUnits {
     ARCSEC = "arcsec",
     ARCMIN = "arcmin",
     DEG = "deg"
+}
+
+export enum ValueClip {
+    SIZE_MIN = "size-min",
+    SIZE_MAX = "size-max",
+    ANGLE_MIN = "angle-min",
+    ANGLE_MAX = "angle-max"
 }
 
 export enum HeaderTableColumnName {

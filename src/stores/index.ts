@@ -1,6 +1,7 @@
 export * from "./AlertStore/AlertStore";
 export * from "./AnimatorStore/AnimatorStore";
 export * from "./AppStore/AppStore";
+export * from "./Catalog/CatalogDisplayStore";
 export * from "./Catalog/CatalogProfileStore";
 export * from "./Catalog/CatalogStore";
 export * from "./CatalogOnlineQuery/CatalogOnlineQueryConfigStore";
@@ -25,5 +26,6 @@ export * from "./ProfileSmoothingStore/ProfileSmoothingStore";
 export * from "./Snippet/SnippetStore";
 export * from "./SpatialProfileStore/SpatialProfileStore";
 export * from "./SpectralProfileStore/SpectralProfileStore";
+export * from "./TimeSeriesStore/TimeSeriesStore";
 export * from "./Widgets";
 export * from "./Widgets/WidgetsStore";

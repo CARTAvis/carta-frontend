@@ -5,13 +5,12 @@ import * as _ from "lodash";
 import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {HelpType, Polarizations, TickType} from "enums";
-import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
+import {binarySearchByX, closeTo, getColorForTheme, getHistogramPlotData, type HistogramPlotData, toExponential, toFixed} from "utilities";
 
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
@@ -39,6 +38,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore | null = null;
     private currentLinePlotProps: LinePlotComponentProps;
+    private currentHistogram: CARTA.Histogram.$Properties | null = null;
 
     get widgetStore(): HistogramWidgetStore {
         return this.cachedWidgetStore;
@@ -68,52 +68,27 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return regionHistogramData?.histograms ?? null;
     }
 
-    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    get plotData(): HistogramPlotData | null {
         const histogram = this.histogramData;
-        if (histogram && histogram.bins && histogram.firstBinCenter !== null && histogram.firstBinCenter !== undefined && histogram.binWidth !== null && histogram.binWidth !== undefined) {
-            let minIndex = 0;
-            let maxIndex = histogram.bins.length - 1;
-
-            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
-                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
-            }
-
-            const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-            let yMin = histogram.bins[minIndex] ?? 0;
-            let yMax = yMin;
-
-            // Cache automatic settings for histogram min and max values
-            if (this.widgetStore.isCurrentAutoBounds) {
-                this.widgetStore.cacheBounds(xMin, xMax);
-                this.widgetStore.resetBounds();
-            }
-
-            // Cache automatic setting for the number of histogram bins
-            if (this.widgetStore.isCurrentAutoBins) {
-                this.widgetStore.cacheNumBins(histogram.bins.length);
-                this.widgetStore.resetNumBins();
-            }
-
-            let values: Array<{x: number; y: number}> = [];
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
-                values = new Array(maxIndex - minIndex);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                    const binValue = histogram.bins[i] ?? 0;
-                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: binValue};
-                    yMin = Math.min(yMin, binValue);
-                    yMax = Math.max(yMax, binValue);
-                }
-            }
-            return {values, xMin, xMax, yMin, yMax};
+        const {isAutoScaledX, minX, maxX} = this.widgetStore;
+        const plotData = getHistogramPlotData(histogram, !isAutoScaledX && minX != null && maxX != null ? {min: minX, max: maxX} : undefined);
+        if (!plotData || !histogram?.bins) {
+            return null;
         }
-        return null;
+
+        // Cache automatic settings for histogram min and max values
+        if (this.widgetStore.isCurrentAutoBounds) {
+            this.widgetStore.cacheBounds(plotData.xMin, plotData.xMax);
+            this.widgetStore.resetBounds();
+        }
+
+        // Cache automatic setting for the number of histogram bins
+        if (this.widgetStore.isCurrentAutoBins) {
+            this.widgetStore.cacheNumBins(histogram.bins.length);
+            this.widgetStore.resetNumBins();
+        }
+
+        return plotData;
     }
 
     @computed get exportHeaders(): string[] {
@@ -311,8 +286,11 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 testId: this.widgetId
             };
 
+            // the markers must follow the plot: no cached histogram when the plot is rebuilt without data
+            this.currentHistogram = null;
             if (frame.renderConfig?.histogram?.bins?.length) {
                 const currentPlotData = this.plotData;
+                this.currentHistogram = currentPlotData ? this.histogramData : null;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;
 
@@ -347,12 +325,14 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             this.currentLinePlotProps = linePlotProps;
         }
 
+        const markers = this.widgetStore.isMeanRmsVisible ? genMeanRmsMarkers(this.currentHistogram, appStore.isDarkTheme) : [];
+
         return (
             <div className="histogram-widget">
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
-                        <LinePlotComponent {...this.currentLinePlotProps} />
+                        <LinePlotComponent {...this.currentLinePlotProps} markers={markers} />
                     </div>
                     <div>
                         <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />

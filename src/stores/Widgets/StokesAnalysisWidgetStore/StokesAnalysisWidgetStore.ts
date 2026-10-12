@@ -50,7 +50,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable scatterChartArea: ChartArea | undefined = undefined;
     @observable statsType: CARTA.StatsType = CARTA.StatsType.Mean;
     @observable isFractionalPolVisible: boolean = DEFAULTS.fractionalPolVisible;
-    scatterOutRangePointsZIndex: Array<number>;
+    scatterOutRangePointsZIndex: Array<{min: number; max: number}>;
 
     // settings
     @observable plotType: PlotType = PlotType.STEPS;
@@ -376,7 +376,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
-    public init = (widgetSettings): void => {
+    public applyConfig = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

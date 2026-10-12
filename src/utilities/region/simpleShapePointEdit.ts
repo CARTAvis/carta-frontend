@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {type Point2D} from "models";
 
-import {add2D, rotate2D, scale2D, subtract2D} from "../math2d/math2d";
+import {add2D, divide2D, multiply2D, rotate2D, scale2D, subtract2D} from "../math2d/math2d";
 
 export const SIMPLE_SHAPE_TOP_POINT_INDEX = 0;
 export const SIMPLE_SHAPE_RIGHT_POINT_INDEX = 1;
@@ -52,7 +52,7 @@ interface SimpleShapePointEditInput {
     rotation: number;
     selectedPointIndex: number;
     delta: Point2D;
-    textScale: number;
+    textScale: Point2D;
 }
 
 interface SimpleShapePointEditResult {
@@ -67,7 +67,7 @@ interface SimpleShapeCornerResizeInput {
     anchor: string;
     oppositeAnchorPoint: Point2D;
     newAnchorPoint: Point2D;
-    textScale: number;
+    textScale: Point2D;
 }
 
 interface SimpleShapeCenterResizeInput {
@@ -78,7 +78,7 @@ interface SimpleShapeCenterResizeInput {
     anchor: string;
     keepAspect: boolean;
     newAnchorPoint: Point2D;
-    textScale: number;
+    textScale: Point2D;
 }
 
 /**
@@ -93,17 +93,21 @@ interface SimpleShapeCenterResizeInput {
  */
 export function getMovedSimpleShapeSide(input: SimpleShapePointEditInput): SimpleShapePointEditResult | null {
     const rotation = (input.rotation * Math.PI) / 180.0;
-    const localDelta = rotate2D(input.delta, -rotation);
-    const bounds = moveSimpleShapeBounds(getSimpleShapeBounds(input.regionType, input.size, input.textScale), localDelta, input.selectedPointIndex);
+    const isText = isTextRegionType(input.regionType);
+    const localDelta = rotate2D(isText ? divide2D(input.delta, input.textScale) : input.delta, -rotation);
+    const bounds = moveSimpleShapeBounds(getSimpleShapeBounds(input.regionType, input.size), localDelta, input.selectedPointIndex);
 
     if (!bounds) {
         return null;
     }
 
-    const centerOffset = rotate2D({x: (bounds.left + bounds.right) / 2, y: (bounds.bottom + bounds.top) / 2}, rotation);
+    let centerOffset = rotate2D({x: (bounds.left + bounds.right) / 2, y: (bounds.bottom + bounds.top) / 2}, rotation);
+    if (isText) {
+        centerOffset = multiply2D(centerOffset, input.textScale);
+    }
     return {
         center: {x: input.center.x + centerOffset.x, y: input.center.y + centerOffset.y},
-        size: getSimpleShapeSize(input.regionType, bounds, input.textScale)
+        size: getSimpleShapeSize(input.regionType, bounds)
     };
 }
 
@@ -144,18 +148,12 @@ export function getSimpleShapePointSelectionOrder(shouldIncludeRotator: boolean)
  * use radius-style dimensions.
  *
  * @param regionType - Region type being edited.
- * @param textScale - Text annotation scale factor.
  * @returns Multiplier used when deriving handle positions from stored size.
  */
-export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType, textScale: number): number {
-    if (isRectangleRegionType(regionType)) {
+export function getSimpleShapeAnchorSizeScale(regionType: CARTA.RegionType): number {
+    if (usesSimpleShapeBoxSize(regionType)) {
         return 0.5;
     }
-
-    if (isTextRegionType(regionType)) {
-        return 0.5 * textScale;
-    }
-
     return 1;
 }
 
@@ -182,8 +180,9 @@ export function getResizedSimpleShapeFromCorner(input: SimpleShapeCornerResizeIn
         h = input.size.x;
     }
 
+    const isText = isTextRegionType(input.regionType);
     let deltaAnchors = subtract2D(input.newAnchorPoint, input.oppositeAnchorPoint);
-    const deltaAnchorsUnrotated = rotate2D(deltaAnchors, (-input.rotation * Math.PI) / 180.0);
+    const deltaAnchorsUnrotated = rotate2D(isText ? divide2D(deltaAnchors, input.textScale) : deltaAnchors, (-input.rotation * Math.PI) / 180.0);
 
     if (input.anchor.includes("left") || input.anchor.includes("right")) {
         w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
@@ -197,9 +196,12 @@ export function getResizedSimpleShapeFromCorner(input: SimpleShapeCornerResizeIn
     }
 
     deltaAnchors = rotate2D(deltaAnchorsUnrotated, (input.rotation * Math.PI) / 180.0);
+    if (isText) {
+        deltaAnchors = multiply2D(deltaAnchors, input.textScale);
+    }
     return {
         center: add2D(input.oppositeAnchorPoint, scale2D(deltaAnchors, 0.5)),
-        size: getSimpleShapeSizeFromDimensions(input.regionType, w, h, input.textScale, input.anchor, false)
+        size: getSimpleShapeSizeFromDimensions(input.regionType, w, h)
     };
 }
 
@@ -224,7 +226,7 @@ export function getResizedSimpleShapeFromCenter(input: SimpleShapeCenterResizeIn
     }
 
     const deltaAnchorPoint = subtract2D(input.newAnchorPoint, input.center);
-    const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-input.rotation * Math.PI) / 180.0);
+    const deltaAnchorPointUnrotated = rotate2D(isTextRegionType(input.regionType) ? divide2D(deltaAnchorPoint, input.textScale) : deltaAnchorPoint, (-input.rotation * Math.PI) / 180.0);
 
     if (input.anchor.includes("left") || input.anchor.includes("right")) {
         w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
@@ -239,7 +241,7 @@ export function getResizedSimpleShapeFromCenter(input: SimpleShapeCenterResizeIn
         }
     }
 
-    return getSimpleShapeSizeFromDimensions(input.regionType, w, h, input.textScale, input.anchor, input.keepAspect);
+    return getSimpleShapeSizeFromDimensions(input.regionType, w, h);
 }
 
 /**
@@ -272,7 +274,7 @@ export function isTextRegionType(regionType: CARTA.RegionType): boolean {
     return regionType === CARTA.RegionType.ANNTEXT;
 }
 
-function getSimpleShapeBounds(regionType: CARTA.RegionType, size: Point2D, textScale: number): SimpleShapeBounds {
+function getSimpleShapeBounds(regionType: CARTA.RegionType, size: Point2D): SimpleShapeBounds {
     let halfWidth: number;
     let halfHeight: number;
 
@@ -280,8 +282,8 @@ function getSimpleShapeBounds(regionType: CARTA.RegionType, size: Point2D, textS
         halfWidth = size.x / 2;
         halfHeight = size.y / 2;
     } else if (isTextRegionType(regionType)) {
-        halfWidth = (size.x * textScale) / 2;
-        halfHeight = (size.y * textScale) / 2;
+        halfWidth = size.x / 2;
+        halfHeight = size.y / 2;
     } else {
         halfWidth = size.y;
         halfHeight = size.x;
@@ -314,7 +316,7 @@ function moveSimpleShapeBounds(bounds: SimpleShapeBounds, delta: Point2D, select
     return nextBounds;
 }
 
-function getSimpleShapeSize(regionType: CARTA.RegionType, bounds: SimpleShapeBounds, textScale: number): Point2D {
+function getSimpleShapeSize(regionType: CARTA.RegionType, bounds: SimpleShapeBounds): Point2D {
     const width = bounds.right - bounds.left;
     const height = bounds.top - bounds.bottom;
 
@@ -322,23 +324,14 @@ function getSimpleShapeSize(regionType: CARTA.RegionType, bounds: SimpleShapeBou
         return {x: width, y: height};
     }
     if (isTextRegionType(regionType)) {
-        return {x: width / textScale, y: height / textScale};
+        return {x: width, y: height};
     }
     return {x: height / 2, y: width / 2};
 }
 
-function getSimpleShapeSizeFromDimensions(regionType: CARTA.RegionType, width: number, height: number, textScale: number, anchor: string, shouldKeepAspect: boolean): Point2D {
-    if (isRectangleRegionType(regionType)) {
+function getSimpleShapeSizeFromDimensions(regionType: CARTA.RegionType, width: number, height: number): Point2D {
+    if (usesSimpleShapeBoxSize(regionType)) {
         return {x: Math.max(MIN_EDITED_REGION_DIMENSION, width), y: Math.max(MIN_EDITED_REGION_DIMENSION, height)};
-    }
-
-    if (isTextRegionType(regionType)) {
-        const isAnchorX = anchor === "left" || anchor === "right";
-        const isAnchorY = anchor === "top" || anchor === "bottom";
-        return {
-            x: Math.max(MIN_EDITED_REGION_DIMENSION, !shouldKeepAspect && isAnchorY ? width : width / textScale),
-            y: Math.max(MIN_EDITED_REGION_DIMENSION, !shouldKeepAspect && isAnchorX ? height : height / textScale)
-        };
     }
 
     return {y: Math.max(MIN_EDITED_REGION_DIMENSION, width), x: Math.max(MIN_EDITED_REGION_DIMENSION, height)};

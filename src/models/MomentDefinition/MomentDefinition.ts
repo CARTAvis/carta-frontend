@@ -15,3 +15,12 @@ export const MOMENT_TEXT = new Map<CARTA.Moment, {tag: string; text: string}>([
     [CARTA.Moment.MIN_OF_THE_SPECTRUM, {tag: "10", text: "Minimum value of the spectrum"}],
     [CARTA.Moment.COORD_OF_THE_MIN_OF_THE_SPECTRUM, {tag: "11", text: "Coordinate of the minimum value of the spectrum"}]
 ]);
+
+export const NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS: CARTA.Moment[] = [
+    CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM,
+    CARTA.Moment.INTENSITY_WEIGHTED_COORD,
+    CARTA.Moment.INTENSITY_WEIGHTED_DISPERSION_OF_THE_COORD,
+    CARTA.Moment.MEDIAN_COORDINATE,
+    CARTA.Moment.COORD_OF_THE_MAX_OF_THE_SPECTRUM,
+    CARTA.Moment.COORD_OF_THE_MIN_OF_THE_SPECTRUM
+];

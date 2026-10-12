@@ -3,8 +3,8 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AnimationMode, CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
-import {type CursorInfo, type ImageItem, Zoom} from "models";
+import {CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
+import {type CursorInfo, type ImageItem, type Point2D, Zoom} from "models";
 import {AppStore, type ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -76,7 +76,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.regionViewRef = ref;
     };
 
-    private onRegionViewZoom = (zoom: number) => {
+    private onRegionViewZoom = (zoom: number | Point2D) => {
         if (this.frame) {
             this.regionViewRef?.stageZoomToPoint(this.frame.renderWidth / 2, this.frame.renderHeight / 2, zoom);
         }
@@ -200,7 +200,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.isFrontendAnimationMode) && (
                         <ToolbarComponent
                             isDocked={this.props.docked}
                             isVisible={this.isImageToolbarVisible}

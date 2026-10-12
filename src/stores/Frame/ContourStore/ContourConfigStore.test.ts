@@ -40,7 +40,7 @@ describe("ContourConfigStore workspace colormap inversion", () => {
     test("uses the historical non-inverted behavior when a legacy workspace omits the setting", () => {
         const store = createStore(true);
 
-        store.updateFromWorkspace(createWorkspaceConfig());
+        store.applyConfig(createWorkspaceConfig());
 
         expect(store.isColormapInverted).toBe(false);
     });
@@ -48,8 +48,28 @@ describe("ContourConfigStore workspace colormap inversion", () => {
     test("restores an explicit inverted workspace setting", () => {
         const store = createStore(false);
 
-        store.updateFromWorkspace(createWorkspaceConfig(true));
+        store.applyConfig(createWorkspaceConfig(true));
 
         expect(store.isColormapInverted).toBe(true);
+    });
+});
+
+describe("ContourConfigStore workspace round trip", () => {
+    test("returns the applied config", () => {
+        const store = createStore(false);
+        store.setEnabled(true);
+        const config = createWorkspaceConfig(true);
+
+        store.applyConfig(config);
+
+        expect(store.toConfig()).toEqual({...config, color: store.color});
+    });
+
+    test("returns nothing when contours are disabled", () => {
+        const store = createStore(false);
+
+        store.applyConfig(createWorkspaceConfig(true));
+
+        expect(store.toConfig()).toBeUndefined();
     });
 });

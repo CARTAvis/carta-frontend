@@ -1,0 +1,55 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.animator-settings-panel {
+    width: 422px;
+    margin: 14px;
+    user-select: none;
+
+    .#{$ns}-form-group {
+        &:first-of-type {
+            margin-left: 0;
+        }
+
+        .#{$ns}-label {
+            min-width: 11em;
+            width: 11em;
+            text-align: right;
+        }
+
+        .#{$ns}-form-content {
+            flex: 1 1 auto;
+        }
+    }
+
+    .#{$ns}-html-select {
+        display: block;
+        width: 210px;
+
+        select {
+            width: 100%;
+        }
+    }
+
+    .#{$ns}-input-group,
+    .#{$ns}-numeric-input {
+        width: 210px;
+    }
+
+    .time-label-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin: 0 0 12px;
+        font-size: 12px;
+        line-height: 16px;
+    }
+}
+
+.iana-time-zone-select {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
+            max-height: 300px;
+            overflow: auto;
+        }
+    }
+}

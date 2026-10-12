@@ -20,6 +20,51 @@
         .#{$ns}-form-group .#{$ns}-label {
             min-width: 11em;
         }
+
+        .rest-frame-section {
+            margin-top: 1.5em;
+        }
+
+        .reference-frame-form-content {
+            min-width: 0;
+
+            .#{$ns}-form-helper-text {
+                white-space: normal;
+            }
+        }
+
+        .rest-frame-correction-switches {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35em;
+
+            .#{$ns}-switch {
+                margin-bottom: 0;
+            }
+
+            .rest-frame-correction-switch-with-info {
+                display: flex;
+                align-items: center;
+                gap: 0.35em;
+            }
+
+            .rest-frame-correction-info {
+                display: inline-flex;
+                cursor: help;
+                opacity: 0.8;
+                transform: translateY(0.4em);
+            }
+        }
+
+        .rest-frame-shift-input {
+            .#{$ns}-input-group input {
+                width: 10em;
+            }
+        }
+
+        .effective-redshift {
+            line-height: 30px;
+        }
     }
 
     .moment-tab-panel {
@@ -42,4 +87,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+}
+
+.rest-frame-correction-tooltip {
+    width: 20em;
+    max-width: calc(100vw - 2em);
+    white-space: normal;
 }

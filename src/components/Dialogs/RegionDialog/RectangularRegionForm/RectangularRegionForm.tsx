@@ -9,12 +9,21 @@ import {CoordinateMode, InputType} from "enums";
 import {IsValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, type TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, scale2D} from "utilities";
+import {closeTo, divide2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, multiply2D} from "utilities";
 
 import "./RectangularRegionForm.scss";
 
 @observer
 export class RectangularRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
+    private get textScale(): Point2D {
+        const zoom = (this.props.frame.spatialReference ?? this.props.frame).effectiveZoomLevel;
+        return {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y};
+    }
+
+    private getFixedScreenScale(isFixedScreenSize: boolean): Point2D {
+        return isFixedScreenSize ? this.textScale : {x: 1, y: 1};
+    }
+
     get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
@@ -22,7 +31,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
 
         const centerPoint = region.center;
-        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
+        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? multiply2D(region.size, this.textScale) : region.size;
         return {x: centerPoint.x + sizeDims.x / 2.0, y: centerPoint.y + sizeDims.y / 2.0};
     }
 
@@ -33,7 +42,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
 
         const centerPoint = region.center;
-        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
+        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? multiply2D(region.size, this.textScale) : region.size;
         return {x: centerPoint.x - sizeDims.x / 2.0, y: centerPoint.y - sizeDims.y / 2.0};
     }
 
@@ -43,7 +52,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
         }
-        const size = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
+        const size = region.regionType === CARTA.RegionType.ANNTEXT ? multiply2D(region.size, this.textScale) : region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
         if (IsValidWcsPoint(wcsSize)) {
             const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
@@ -129,9 +138,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
 
     private handleWidthChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.x;
-        const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+        const scale = this.getFixedScreenScale(isFixedScreenSize);
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
-            this.props.region.setSize({x: value / scale, y: this.props.region.size.y});
+            this.props.region.setSize({x: value / scale.x, y: this.props.region.size.y});
             return true;
         }
         return false;
@@ -142,9 +151,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (arcsecValue !== null) {
             const value = this.props.frame.getImageXValueFromArcsec(arcsecValue);
             const existingValue = this.props.region.size.x;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
-                this.props.region.setSize({x: value / scale, y: this.props.region.size.y});
+                this.props.region.setSize({x: value / scale.x, y: this.props.region.size.y});
                 return true;
             }
         }
@@ -153,9 +162,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
 
     private handleHeightChange = (value: number, isFixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.y;
-        const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+        const scale = this.getFixedScreenScale(isFixedScreenSize);
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value / scale});
+            this.props.region.setSize({x: this.props.region.size.x, y: value / scale.y});
             return true;
         }
         return false;
@@ -166,9 +175,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (arcsecValue !== null) {
             const value = this.props.frame.getImageYValueFromArcsec(arcsecValue);
             const existingValue = this.props.region.size.y;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
             if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
-                this.props.region.setSize({x: this.props.region.size.x, y: value / scale});
+                this.props.region.setSize({x: this.props.region.size.x, y: value / scale.y});
                 return true;
             }
         }
@@ -179,11 +188,11 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
-            const sizeDims = scale2D(region.size, scale);
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
+            const sizeDims = multiply2D(region.size, scale);
             const rightValue = centerPoint.x + sizeDims.x / 2.0;
             const newCenter = {x: (value + rightValue) / 2.0, y: centerPoint.y};
-            const newDims = {x: Math.abs(value - rightValue) / scale, y: sizeDims.y / scale};
+            const newDims = divide2D({x: Math.abs(value - rightValue), y: sizeDims.y}, scale);
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -213,11 +222,11 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
-            const sizeDims = scale2D(region.size, scale);
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
+            const sizeDims = multiply2D(region.size, scale);
             const topValue = centerPoint.y + sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
-            const newDims = {x: sizeDims.x / scale, y: Math.abs(value - topValue) / scale};
+            const newDims = divide2D({x: sizeDims.x, y: Math.abs(value - topValue)}, scale);
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -247,11 +256,11 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
-            const sizeDims = scale2D(region.size, scale);
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
+            const sizeDims = multiply2D(region.size, scale);
             const leftValue = centerPoint.x - sizeDims.x / 2.0;
             const newCenter = {x: (value + leftValue) / 2.0, y: centerPoint.y};
-            const newDims = {x: Math.abs(value - leftValue) / scale, y: sizeDims.y / scale};
+            const newDims = divide2D({x: Math.abs(value - leftValue), y: sizeDims.y}, scale);
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -281,11 +290,11 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.RegionPixelEps)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const scale = isFixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
-            const sizeDims = scale2D(region.size, scale);
+            const scale = this.getFixedScreenScale(isFixedScreenSize);
+            const sizeDims = multiply2D(region.size, scale);
             const bottomValue = centerPoint.y - sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + bottomValue) / 2.0};
-            const newDims = {x: sizeDims.x / scale, y: Math.abs(value - bottomValue) / scale};
+            const newDims = divide2D({x: sizeDims.x, y: Math.abs(value - bottomValue)}, scale);
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -424,7 +433,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : topRightWCSPoint ? WCSPoint2D.toString(topRightWCSPoint) : ""}` : `Image: ${Point2D.toString(this.topRightPoint, "px", 3)}`;
 
         // size
-        const size = isTextAnnotation ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
+        const size = isTextAnnotation ? multiply2D(region.size, this.textScale) : region.size;
         const sizeWCS = this.sizeWCS;
         const sizeWidthInput = (
             <CoordNumericInput
