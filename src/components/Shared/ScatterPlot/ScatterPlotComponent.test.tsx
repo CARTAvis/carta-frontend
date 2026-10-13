@@ -6,6 +6,24 @@ import {AppStore} from "stores";
 
 import {ScatterPlotComponent} from "./ScatterPlotComponent";
 
+test("does not redraw after unmounting with a pending chart-area update", () => {
+    jest.useFakeTimers();
+    const component = new ScatterPlotComponent({});
+    const forceUpdate = jest.spyOn(component, "forceUpdate").mockImplementation(() => {});
+
+    try {
+        component.updateChart({left: 20, right: 380, top: 10, bottom: 280, width: 360, height: 270});
+        component.componentWillUnmount();
+        jest.runOnlyPendingTimers();
+
+        expect(forceUpdate).not.toHaveBeenCalled();
+    } finally {
+        jest.clearAllTimers();
+        forceUpdate.mockRestore();
+        jest.useRealTimers();
+    }
+});
+
 test("initializes the scatter overlay with chart bounds without mouse interaction", () => {
     jest.useFakeTimers();
     const originalResizeObserver = window.ResizeObserver;
