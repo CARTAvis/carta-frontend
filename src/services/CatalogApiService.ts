@@ -41,7 +41,7 @@ export class CatalogApiService {
      * can be closed and the image changed while one is in flight, and the parameters read afterwards
      * would then describe a different query than the one that returned the data.
      *
-     * @returns undefined when the centre cannot be worked out, so that a query is left undescribed
+     * @returns undefined when the center cannot be worked out, so that a query is left undescribed
      * rather than described with a number that is not one.
      */
     public static captureQuery(type: "simbad" | "vizier"): WorkspaceCatalogQuerySource | undefined {
@@ -136,8 +136,8 @@ export class CatalogApiService {
      * workspace stops one that is already on its way: it would be loaded onto whichever image is
      * active by the time it lands, which by then belongs to the workspace being restored.
      *
-     * Each database is given a fresh token as it is cancelled, so that the queries the restore runs
-     * for its own catalogs are not issued against a token that has already been cancelled.
+     * Each database is given a fresh token as it is canceled, so that the queries the restore runs
+     * for its own catalogs are not issued against a token that has already been canceled.
      */
     public cancelPendingQueries(reason: string) {
         for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {

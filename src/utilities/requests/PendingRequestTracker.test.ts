@@ -117,7 +117,7 @@ describe("PendingRequestTracker", () => {
     test("stops accepting responses to a request that has ended", () => {
         tracker.start(1);
         tracker.attach(1, 10);
-        tracker.finish(1, false, "cancelled");
+        tracker.finish(1, false, "canceled");
 
         expect(tracker.accepts(1, 10)).toBe(false);
         // Nothing is being answered any more, so nothing that names a request is read either.

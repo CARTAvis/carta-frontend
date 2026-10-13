@@ -235,9 +235,9 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
     });
 
-    test("keeps the first restored image in front after rebuilding a colour-blended image", async () => {
+    test("keeps the first restored image in front after rebuilding a color-blended image", async () => {
         const {appStore} = createSession();
-        // A new colour-blended image is put in front, and the image in front is then its base.
+        // A new color-blended image is put in front, and the image in front is then its base.
         appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => {
             appStore.activeFrame = appStore.frames[1];
             return null;

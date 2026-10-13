@@ -130,7 +130,7 @@ export class CatalogWebGLService {
      * What the selected-source sampler reads for a catalog that has none of its own.
      *
      * That sampler is the shader's one `usampler2D`; every other one is a `sampler2D`. A sampler
-     * that is never assigned a texture unit stays on unit 0, which holds the colour map, and a draw
+     * that is never assigned a texture unit stays on unit 0, which holds the color map, and a draw
      * with two samplers of different types on one unit is rejected outright -- taking the whole
      * overlay down, not just the selection. So it is always given a unit, and always something to
      * read there.

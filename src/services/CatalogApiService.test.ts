@@ -117,7 +117,7 @@ describe("CatalogApiService.captureQuery", () => {
         expect(captured?.center).toEqual({x: 12.5, y: -30.25});
     });
 
-    test("describes nothing when the centre cannot be worked out", () => {
+    test("describes nothing when the center cannot be worked out", () => {
         configureDialog({x: undefined, y: undefined});
 
         expect(CatalogApiService.captureQuery("simbad")).toBeUndefined();
@@ -229,10 +229,10 @@ describe("CatalogApiService source-driven loading", () => {
         expect(query).not.toHaveBeenCalled();
     });
 
-    test("opens no catalog when its SIMBAD query is cancelled", async () => {
+    test("opens no catalog when its SIMBAD query is canceled", async () => {
         const service = new CatalogApiService();
         const {appStore} = configureSession();
-        jest.spyOn(service, "getSimbadCatalog").mockRejectedValue(new axios.CanceledError("query cancelled"));
+        jest.spyOn(service, "getSimbadCatalog").mockRejectedValue(new axios.CanceledError("query canceled"));
 
         await expect(service.loadSimbadCatalog(simbadSource)).resolves.toEqual({dataSize: 0, fileId: undefined});
         expect(jest.mocked(CatalogOnlineQueryProfileStore)).not.toHaveBeenCalled();

@@ -107,7 +107,7 @@ export class WorkspaceSnapshotter {
      *
      * A generated image has none, although the session registered it like any other. There is no
      * source to open it from again, so it is not saved -- and nothing that names it can be saved
-     * either. Answering with its registration would let a colour blend be written naming an image
+     * either. Answering with its registration would let a color blend be written naming an image
      * the workspace does not carry, which comes back quietly missing one of its layers.
      */
     private imageIdOf(frame: FrameStore | undefined | null): number | undefined {
@@ -217,7 +217,7 @@ export class WorkspaceSnapshotter {
         return {type: "file", directory, filename: name, hdu};
     }
 
-    /** Stage 2: the colour-blended images made up of the images just captured. */
+    /** Stage 2: the color-blended images made up of the images just captured. */
     private captureColorBlending(): void {
         for (const [id, colorBlending] of this.appStore.imageViewConfigStore.colorBlendingImageMap) {
             const index = this.appStore.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, id);
@@ -228,7 +228,7 @@ export class WorkspaceSnapshotter {
                 this.issues.push({
                     kind: WorkspaceItemKind.ColorBlending,
                     subject: "",
-                    message: "Could not save a colour-blended image: one of the images it is made of was not saved"
+                    message: "Could not save a color-blended image: one of the images it is made of was not saved"
                 });
                 continue;
             }

@@ -211,7 +211,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(issues).toContainEqual({kind: WorkspaceItemKind.Catalog, subject: "sources.vot", message: "Could not save the catalog sources.vot: the image it is overlaid on was not saved"});
     });
 
-    test("reports a colour blend made from a generated image instead of saving it without that layer", () => {
+    test("reports a color blend made from a generated image instead of saving it without that layer", () => {
         const generatedFrame = createFrame(2, {frameInfo: {fileId: 2, directory: "", hdu: "", fileInfo: {name: "moment.fits"}, generated: true}});
         const {appStore, frame} = createSession();
         appStore.frames.push(generatedFrame as never);
@@ -225,7 +225,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.ColorBlending,
             subject: "",
-            message: "Could not save a colour-blended image: one of the images it is made of was not saved"
+            message: "Could not save a color-blended image: one of the images it is made of was not saved"
         });
     });
 

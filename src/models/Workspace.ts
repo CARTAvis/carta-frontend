@@ -323,8 +323,8 @@ export interface WorkspaceCatalogFileSource {
     filename: string;
 }
 
-/** The parameters an online query is re-run from. The centre is in degrees, so that it does not
- * depend on the image the query was originally centred on. */
+/** The parameters an online query is re-run from. The center is in degrees, so that it does not
+ * depend on the image the query was originally centered on. */
 export interface WorkspaceCatalogQuerySource {
     type: "simbad" | "vizier";
     center: Point2D;

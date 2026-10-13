@@ -291,7 +291,7 @@ export class WorkspaceRestorer {
         }
     }
 
-    /** Stage 4: rebuild the colour-blended images made up of the images just opened. */
+    /** Stage 4: rebuild the color-blended images made up of the images just opened. */
     private restoreColorBlending(): void {
         if (!this.workspace.colorBlendingImages) {
             return;
@@ -318,7 +318,7 @@ export class WorkspaceRestorer {
     }
 
     /**
-     * Rebuilding a colour-blended image puts it in front, so put the image chosen for the front back
+     * Rebuilding a color-blended image puts it in front, so put the image chosen for the front back
      * there. This has to happen before the catalogs open: a change of the image in front moves the
      * catalog widgets onto that image's catalogs, and done after the widgets are restored it would
      * undo them.
