@@ -153,6 +153,8 @@ export abstract class AbstractCatalogProfileStore {
     @observable.shallow private _catalogData: Map<number, ProcessedColumnData>;
     /** Changes when a column object is updated without changing the shallow map itself. */
     @observable protected catalogDataVersion = 0;
+    /** Changes when rows are cleared, so cached ranges cannot be extended into a new query. */
+    @observable catalogDataGeneration = 0;
     /** Backing store for {@link getCoordinateEligibility}, by column name. */
     private _coordinateEligibility = new Map<string, CatalogAxisEligibilityResult>();
     public static readonly COORDINATE_SYSTEM_NAME = new Map<CatalogSystemType, string>([
@@ -201,8 +203,9 @@ export abstract class AbstractCatalogProfileStore {
         return this._systemCoordinateMap;
     }
 
-    clearData() {
+    @action clearData() {
         this.catalogData.clear();
+        this.catalogDataGeneration++;
     }
 
     /**

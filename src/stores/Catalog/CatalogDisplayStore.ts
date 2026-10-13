@@ -2050,7 +2050,9 @@ export class CatalogDisplayStore {
 
     private catalogDataState(profileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore): string {
         const sortingInfo = profileStore.sortingInfo;
-        return JSON.stringify([sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
+        // Restore applies the saved query before clearing the preview. Its replacement rows can
+        // share the same controls and outnumber the preview, but do not extend its cached range.
+        return JSON.stringify([profileStore.catalogDataGeneration, sortingInfo.columnName, sortingInfo.sortingType, Array.from(profileStore.catalogControlHeader.entries(), ([name, header]) => [name, header.filter, header.display])]);
     }
 
     /**

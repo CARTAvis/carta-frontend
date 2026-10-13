@@ -575,6 +575,71 @@ describe("CatalogDisplayStore display config", () => {
         expect(store.toConfig()).toEqual(before);
     });
 
+    test.each([false, true])("recomputes all mapped ranges after replacing preview rows, authored clips: %s", hasAuthoredClips => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        loadRows(profileStore, [71.6, 275.06]);
+        profileStore.setColumnFilter("50..100", "Fmag");
+        const axis = {mapColumn: "Fmag", columnMinClip: hasAuthoredClips ? 60 : undefined, columnMaxClip: hasAuthoredClips ? 90 : undefined};
+        expect(store.applyConfig({sizeAxis: axis, sizeMinorAxis: axis, colorAxis: axis, orientationAxis: axis})).toEqual({success: true, errors: []});
+
+        // Restore first derives ranges from the unfiltered preview, then reloads the saved query.
+        // Its first response can exceed the preview, with new extrema inside the replaced prefix.
+        runInAction(() => {
+            profileStore.resetFilterRequest();
+            profileStore.setUpdatingDataStream(true);
+            profileStore.updateCatalogData(
+                new CARTA.CatalogFilterResponse({subsetDataSize: 4, subsetEndIndex: 4, requestEndIndex: 4, filterDataSize: 4, progress: 1}),
+                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([50.47, 99.88, 73.4, 96.03])}]])
+            );
+            profileStore.setLoadingDataStatus(false);
+            profileStore.setUpdatingDataStream(false);
+        });
+
+        const bounds = [
+            [store.sizeColumnMin, store.sizeColumnMax],
+            [store.sizeMinorColumnMin, store.sizeMinorColumnMax],
+            [store.colorColumnMin, store.colorColumnMax],
+            [store.orientationMin, store.orientationMax]
+        ];
+        for (const [min, max] of bounds) {
+            expect(min.default).toBe(Math.fround(50.47));
+            expect(max.default).toBe(Math.fround(99.88));
+            expect(min.clipd).toBe(hasAuthoredClips ? 60 : Math.fround(50.47));
+            expect(max.clipd).toBe(hasAuthoredClips ? 90 : Math.fround(99.88));
+        }
+    });
+
+    test("keeps earlier mapped extrema when appending rows to a reloaded catalog", () => {
+        const store = createStore();
+        const profileStore = profileStoreOf(store);
+        loadRows(profileStore, [71.6, 275.06]);
+        store.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
+
+        runInAction(() => {
+            profileStore.resetFilterRequest();
+            profileStore.updateCatalogData(
+                new CARTA.CatalogFilterResponse({subsetDataSize: 3, subsetEndIndex: 3, requestEndIndex: 3, filterDataSize: 4, progress: 1}),
+                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([50.47, 99.88, 73.4])}]])
+            );
+            profileStore.setLoadingDataStatus(false);
+        });
+        expect(store.sizeColumnMin.clipd).toBe(Math.fround(50.47));
+        expect(store.sizeColumnMax.clipd).toBe(Math.fround(99.88));
+
+        runInAction(() => {
+            profileStore.setLoadingDataStatus(true);
+            profileStore.updateCatalogData(
+                new CARTA.CatalogFilterResponse({subsetDataSize: 1, subsetEndIndex: 4, requestEndIndex: 4, filterDataSize: 4, progress: 1}),
+                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([96.03])}]])
+            );
+            profileStore.setLoadingDataStatus(false);
+        });
+
+        expect(store.sizeColumnMin.clipd).toBe(Math.fround(50.47));
+        expect(store.sizeColumnMax.clipd).toBe(Math.fround(99.88));
+    });
+
     test("widens a data-derived clip when the rest of the catalog rows arrive", () => {
         const store = createStore();
         const profileStore = profileStoreOf(store);
