@@ -427,6 +427,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.logScaleY === "boolean") {
             this.isLogScaleY = widgetSettings.logScaleY;
         }
+        if (typeof widgetSettings.meanRmsVisible === "boolean") {
+            this.isMeanRmsVisible = widgetSettings.meanRmsVisible;
+        }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
@@ -450,6 +453,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
+            meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
             maxXVal: this.linePlotInitXYBoundaries.maxXVal,
