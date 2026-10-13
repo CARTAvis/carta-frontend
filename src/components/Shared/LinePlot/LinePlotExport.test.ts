@@ -26,11 +26,11 @@ describe("LinePlotComponent TSV export header", () => {
         expect(file.content).not.toContain("# Qz");
     });
 
-    test("keeps the existing header for plots without an export title", () => {
+    test("puts the image name first for plots without an export title", () => {
         const [single] = exportedFiles({data: [{x: 0, y: 1}], imageName: "cube.fits", plotName: "histogram"});
         expect(single.firstLine).toBe("# cube.fits histogram");
         const multiPlotPropsMap = new Map([["profile0", {imageName: "cube.fits", plotName: "Z-profile", data: [{x: 0, y: 1}], type: PlotType.STEPS}]]);
         const [multi] = exportedFiles({imageName: "cube.fits", plotName: "zProfile", multiPlotPropsMap});
-        expect(multi.firstLine).toBe("# Z-profile cube.fits");
+        expect(multi.firstLine).toBe("# cube.fits Z-profile");
     });
 });

@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
 * Displayed statistic names instead of internal IDs in the profile fitting export ([#2983](https://github.com/CARTAvis/carta-frontend/issues/2983)).
 * Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
-* Renamed the Stokes Analysis TSV exports to the `{image}-{content}-{timestamp}` pattern (e.g. `Q-profile`, `fractional-QU-scatter`), named the exported profile in their first header line (e.g. `Q/I profile`), and removed the redundant `Qz`/`Uz` lines ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
+* Renamed the Stokes Analysis TSV exports to the `{image}-{content}-{timestamp}` pattern (e.g. `Q-profile`, `fractional-QU-scatter`), named the exported profile in their first header line (e.g. `Q/I profile`), and removed the redundant `Qz`/`Uz` lines; the TSV exports of the Spectral Profiler, the Spatial Profiler smoothed line and the Render Configuration histogram now also start their first header line with the image name ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
 
 ## [6.0.0]
 

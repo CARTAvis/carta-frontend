@@ -761,9 +761,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
 
             const rows: string[] = [];
-            const plotName = multiPlotProp.imageName;
-            const imageName = multiPlotProp.plotName;
-            let comment = multiPlotProp.exportTitle ? `# ${multiPlotProp.imageName} ${multiPlotProp.exportTitle}` : `# ${imageName} ${plotName}`;
+            let comment = `# ${multiPlotProp.imageName} ${multiPlotProp.exportTitle ?? multiPlotProp.plotName}`;
             if (this.props.xLabel) {
                 comment += `\n# xLabel: ${this.props.xLabel}`;
             }
