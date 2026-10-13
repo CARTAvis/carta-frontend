@@ -1,3 +1,4 @@
+import {Regions} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
@@ -291,6 +292,33 @@ afterEach(() => {
 });
 
 describe("CatalogOverlayComponent", () => {
+    test.each([true, false])("scrolls once per request when selected-only mode is %s", isShowingSelectedData => {
+        const {component, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
+        });
+        displayStore.setShowSelectedData(isShowingSelectedData);
+        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        component["onCompleteRender"]();
+        expect(scrollToRegion).not.toHaveBeenCalled();
+
+        displayStore.setCatalogTableAutoScroll(true);
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(1);
+        expect(scrollToRegion).toHaveBeenLastCalledWith(undefined, Regions.row(isShowingSelectedData ? 0 : 100));
+        expect(displayStore.isCatalogTableAutoScrollEnabled).toBe(false);
+
+        // Scrolling the virtualized table renders more rows without requesting another auto-scroll.
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(1);
+
+        displayStore.setCatalogTableAutoScroll(true);
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(2);
+        expect(displayStore.isCatalogTableAutoScrollEnabled).toBe(false);
+    });
+
     describe("autoSelectAxes", () => {
         test.each([
             ["FK5", CatalogSystemType.FK5, [{name: "flux"}, {name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000"],

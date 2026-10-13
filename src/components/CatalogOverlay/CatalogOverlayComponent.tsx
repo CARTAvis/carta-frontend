@@ -1001,16 +1001,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private onCompleteRender = () => {
         const profileStore = this.profileStore;
         const displayStore = this.displayStore;
-        if (profileStore?.regionSelected) {
+        if (profileStore?.regionSelected && displayStore?.isCatalogTableAutoScrollEnabled) {
             if (displayStore?.isShowingSelectedData) {
                 // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
             } else {
-                if (displayStore?.isCatalogTableAutoScrollEnabled) {
-                    this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
-                    displayStore.setCatalogTableAutoScroll(false);
-                }
+                this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             }
+            displayStore.setCatalogTableAutoScroll(false);
         }
     };
 
