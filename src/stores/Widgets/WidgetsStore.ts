@@ -632,13 +632,22 @@ export class WidgetsStore {
         }
     };
 
+    /**
+     * A catalog plot is created by the plot type in its settings, or, in a layout saved before that,
+     * by the plotType beside them. Any other widget's plotType setting is a line style, as a layout
+     * saved by an earlier build may also carry beside its settings, and names no widget to create.
+     */
+    private widgetTypeToCreate = (widgetType: string, widgetSettings: any, legacyPlotType: unknown): string => {
+        if (widgetType !== CatalogPlotComponent.WidgetConfig.type) {
+            return widgetType;
+        }
+        const plotType = widgetSettings?.plotType ?? legacyPlotType;
+        return typeof plotType === "string" && plotType ? plotType : widgetType;
+    };
+
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
-            let savedConfigId = savedConfig.id;
-            if (savedConfig.plotType) {
-                savedConfigId = savedConfig.plotType;
-            }
-            const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
+            const id = this.addWidgetByType(this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType), savedConfig.widgetSettings);
             const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
@@ -657,10 +666,7 @@ export class WidgetsStore {
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
-                let componentConfigId = componentConfig.id;
-                if ("plotType" in componentConfig) {
-                    componentConfigId = componentConfig.plotType;
-                }
+                const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType);
                 // Pass the pre-assigned ID from the FlexLayout model so widget store IDs match tab node IDs
                 const preAssignedId = componentConfig.props.id || null;
                 const itemId = this.addWidgetByType(componentConfigId, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null, preAssignedId);

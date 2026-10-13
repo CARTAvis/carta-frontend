@@ -69,7 +69,7 @@ describe("FlexLayoutModelFactory", () => {
                         {
                             type: "stack",
                             width: 70,
-                            content: [{type: "component", id: "catalog-plot", plotType: "histogram"}]
+                            content: [{type: "component", id: "catalog-plot", widgetSettings: {plotType: "Histogram"}}]
                         }
                     ]
                 }

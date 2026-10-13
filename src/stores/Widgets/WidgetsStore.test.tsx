@@ -296,3 +296,45 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
         expect(widgetsStore.floatingWidgets).toHaveLength(1);
     });
 });
+
+describe("WidgetsStore initWidgets", () => {
+    beforeEach(() => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("creates a line plot by its widget type, even when a layout records its line style as a plot type", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        // An earlier build saved a line plot's plotType setting beside its widget type.
+        const componentConfig = {
+            id: "spatial-profiler",
+            props: {id: "spatial-profiler-1", docked: true},
+            widgetSettings: {coordinate: "y", plotType: "Steps"},
+            plotType: "Steps"
+        };
+
+        widgetsStore.initWidgets([componentConfig], [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}, plotType: "Steps"}]);
+
+        expect(widgetsStore.spatialProfileWidgets.get("spatial-profiler-1")?.coordinate).toBe("y");
+        expect(Array.from(widgetsStore.spatialProfileWidgets.values()).map(store => store.coordinate)).toEqual(["y", "y"]);
+    });
+
+    test("creates a catalog plot by the plot type in its settings", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], []);
+
+        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+
+    test("creates a catalog plot by the plot type beside its settings in a layout saved before they held it", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram}], []);
+
+        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+});

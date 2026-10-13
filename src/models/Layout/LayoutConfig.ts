@@ -140,7 +140,8 @@ export class LayoutConfig {
 
     /**
      * Recursively collects component configs from the abstract layout tree.
-     * Each component config has: id, props, widgetSettings, plotType.
+     * Each component config has: id, props, widgetSettings, and plotType for a catalog plot in a layout
+     * saved before its type moved into its widget settings.
      */
     private static collectComponentConfigs = (content: any[], componentConfigs: any[]) => {
         if (!content || !Array.isArray(content)) {
@@ -219,16 +220,6 @@ export class LayoutConfig {
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
-            // add plot type
-            if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
-                floatingConfig.plotType = widgetSettingsConfig.plotType;
-            } else {
-                const plotWidgetId = appStore.catalogStore.widgetBindings.displayedForWidget(config.id).widgetId;
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(plotWidgetId);
-                if (plotWidget) {
-                    floatingConfig.plotType = plotWidget.plotType;
-                }
-            }
             configToSave.floating.push(floatingConfig);
         });
 
@@ -254,15 +245,6 @@ export class LayoutConfig {
                 const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
-                }
-                if (widgetSettingsConfig && "plotType" in widgetSettingsConfig && widgetSettingsConfig.plotType) {
-                    child.plotType = widgetSettingsConfig.plotType;
-                } else {
-                    const plotWidgetId = appStore.catalogStore.widgetBindings.displayedForWidget(instanceId).widgetId;
-                    const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(plotWidgetId);
-                    if (plotWidget) {
-                        child.plotType = plotWidget.plotType;
-                    }
                 }
                 // Clean up internal field so it doesn't persist in saved layouts
                 delete child._instanceId;

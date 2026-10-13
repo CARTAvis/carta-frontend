@@ -235,12 +235,9 @@ function convertComponent(node: any): IJsonTabNode {
         tabNode.config = {...(tabNode.config || {}), imageViewWeight: getImageViewWeight()};
     }
 
-    // Carry over widget settings and plot type into config
+    // Carry over widget settings into config. A catalog plot's type is among them.
     if (node.widgetSettings) {
         tabNode.config = {...(tabNode.config || {}), widgetSettings: node.widgetSettings};
-    }
-    if (node.plotType) {
-        tabNode.config = {...(tabNode.config || {}), plotType: node.plotType};
     }
 
     return tabNode;
@@ -342,10 +339,6 @@ function extractTabNode(node: any): any {
     // Extract widget settings from config
     if (node.config?.widgetSettings) {
         result.widgetSettings = node.config.widgetSettings;
-    }
-
-    if (node.config?.plotType) {
-        result.plotType = node.config.plotType;
     }
 
     return result;

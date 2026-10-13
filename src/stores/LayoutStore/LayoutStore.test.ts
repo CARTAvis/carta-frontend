@@ -24,6 +24,7 @@ import {Model} from "flexlayout-react";
 import {runInAction} from "mobx";
 
 import {LayoutConfig, PresetLayout} from "models";
+import {findDeep} from "utilities";
 
 import {LayoutStore} from "./LayoutStore";
 
@@ -95,5 +96,19 @@ describe("LayoutStore layout configs", () => {
         expect(config).toMatchObject({layoutVersion: LayoutConfig.currentSchemaVersion, floating: []});
         expect(DockedComponentIds(config?.docked)).toEqual(DockedComponentIds(defaultConfig()!.docked));
         expect(LayoutConfig.prepareLayout(config)).toBeDefined();
+    });
+
+    test("records a widget's plot type only in its settings", () => {
+        layoutStore.applyLayoutConfig(defaultConfig());
+        MOCK_APP_STORE.widgetsStore.toWidgetSettingsConfig.mockImplementation((type: string) => (type === "spatial-profiler" ? {coordinate: "y", plotType: "Steps"} : undefined));
+
+        const profilers = findDeep(layoutStore.currentLayoutConfig()?.docked, (item: any) => item.id === "spatial-profiler");
+
+        expect(profilers.length).toBeGreaterThan(0);
+        profilers.forEach((profiler: any) => {
+            expect(profiler.widgetSettings).toEqual({coordinate: "y", plotType: "Steps"});
+            expect(profiler.plotType).toBeUndefined();
+        });
+        MOCK_APP_STORE.widgetsStore.toWidgetSettingsConfig.mockReset();
     });
 });
