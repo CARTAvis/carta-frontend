@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
+import {observable, runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, DragMode, WorkspaceItemKind} from "enums";
 import {type WorkspaceCatalogWidgetConfig} from "models";
@@ -216,6 +217,23 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(store.xColumnName).toBe("Fmag");
         expect(store.yColumnName).toBe(CatalogOverlay.NONE);
         expect(issues.map(issue => issue.message)).toEqual([expect.stringContaining("column Unsupported is unavailable")]);
+        component.componentWillUnmount();
+    });
+
+    test("shows the restored statistic once the catalog rows arrive", () => {
+        loadCatalog(11, "first.xml", FIRST_CATALOG_WORKSPACE_ID);
+        const rows = observable.box<Float32Array>(new Float32Array(), {deep: false});
+        (catalogStore.catalogProfileStores.get(11) as any).get1DPlotData = () => ({wcsData: rows.get()});
+        (catalogStore.catalogProfileStores.get(11) as any).getSortedIndices = (indices: number[]) => indices;
+        const {component, plotId} = restorePlot();
+
+        bindRestoredPlot(plotId, 11, {statisticColumnName: "Bmag"});
+        const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
+        expect(store.statisticString).toBe("");
+
+        runInAction(() => rows.set(new Float32Array([1, 3])));
+        expect(store.statistic).toEqual(expect.objectContaining({count: 2, validCount: 2, mean: 2, min: 1, max: 3}));
+        expect(store.statisticString).toContain("Bmag - count: 2");
         component.componentWillUnmount();
     });
 

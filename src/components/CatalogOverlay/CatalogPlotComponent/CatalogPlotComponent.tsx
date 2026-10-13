@@ -133,23 +133,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             })
         );
 
+        // A restored plot has its statistic column before its catalog rows arrive, so the statistic
+        // follows the rows as well as the column and the selection.
         this.disposers.push(
             reaction(
-                () => this.widgetStore?.statisticColumnName,
                 () => {
-                    if (this.widgetStore?.isStatisticEnabled) {
-                        this.updateStatistic();
-                    }
-                }
-            )
-        );
-
-        this.disposers.push(
-            reaction(
-                () => this.profileStore?.selectedPointIndices,
-                () => {
-                    this.updateStatistic();
-                }
+                    const widgetStore = this.widgetStore;
+                    const profileStore = this.profileStore;
+                    const column = widgetStore?.isStatisticEnabled ? widgetStore.statisticColumnName : undefined;
+                    return {
+                        widgetStore,
+                        column,
+                        selectedPointIndices: profileStore?.selectedPointIndices,
+                        wcsData: column ? profileStore?.get1DPlotData(column).wcsData : undefined
+                    };
+                },
+                () => this.updateStatistic(),
+                {fireImmediately: true}
             )
         );
 
@@ -373,7 +373,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
         const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
-        if (!coords.wcsData) {
+        // No rows yet, as while a restored catalog is still loading: nothing to report.
+        if (!coords.wcsData?.length) {
+            widgetStore.initStatistic();
             return;
         }
         const data: number[] = [];
