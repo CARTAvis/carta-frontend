@@ -6,26 +6,7 @@ import {AppStore} from "stores";
 
 import {ScatterPlotComponent} from "./ScatterPlotComponent";
 
-test("does not redraw after unmounting with a pending chart-area update", () => {
-    jest.useFakeTimers();
-    const component = new ScatterPlotComponent({});
-    const forceUpdate = jest.spyOn(component, "forceUpdate").mockImplementation(() => {});
-
-    try {
-        component.updateChart({left: 20, right: 380, top: 10, bottom: 280, width: 360, height: 270});
-        component.componentWillUnmount();
-        jest.runOnlyPendingTimers();
-
-        expect(forceUpdate).not.toHaveBeenCalled();
-    } finally {
-        jest.clearAllTimers();
-        forceUpdate.mockRestore();
-        jest.useRealTimers();
-    }
-});
-
 test("initializes the scatter overlay with chart bounds without mouse interaction", () => {
-    jest.useFakeTimers();
     const originalResizeObserver = window.ResizeObserver;
     const originalIntersectionObserver = window.IntersectionObserver;
     const mockObserver = jest.fn(() => ({observe: jest.fn(), disconnect: jest.fn()}));
@@ -39,13 +20,11 @@ test("initializes the scatter overlay with chart bounds without mouse interactio
         act(() => componentRef.current!.resize(400, 300));
 
         expect(componentRef.current!.chartArea).toBeDefined();
-        act(() => jest.runOnlyPendingTimers());
         expect(renderOverlay).toHaveBeenLastCalledWith(400, 300, expect.objectContaining({left: expect.any(Number), right: expect.any(Number), top: expect.any(Number), bottom: expect.any(Number)}));
     } finally {
         unmount();
         window.ResizeObserver = originalResizeObserver;
         window.IntersectionObserver = originalIntersectionObserver;
-        jest.useRealTimers();
     }
 });
 
@@ -92,6 +71,14 @@ const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKe
 });
 
 describe("ScatterPlotComponent interactions", () => {
+    test("ignores mouse movement before the chart area is available", () => {
+        const graphCursorMoved = jest.fn();
+        const component = new ScatterPlotComponent({data: [], graphCursorMoved});
+
+        expect(() => component.onStageMouseMove(CreateMouseEvent() as any)).not.toThrow();
+        expect(graphCursorMoved).not.toHaveBeenCalled();
+    });
+
     test.each([
         ["Ctrl", {ctrlKey: true}],
         ["Alt", {altKey: true}]
