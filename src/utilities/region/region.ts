@@ -2,9 +2,9 @@ import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
 import {PasteOffsetUnit, RegionId, RegionOpacity} from "enums";
-import {type Point2D, Transform2D} from "models";
+import {type Point2D, Transform2D, type WCSPoint2D} from "models";
 import {type RegionStore} from "stores/Frame";
-import {isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
+import {formattedArcsec, getFormattedWCSPoint, isAstBadPoint, scale2D, toFixed, transformPoint} from "utilities";
 
 import {
     add2D,
@@ -19,6 +19,7 @@ import {
     type LineSegment2D,
     midpoint2D,
     minMax2D,
+    multiply2D,
     type Rect2D,
     subtract2D
 } from "../math2d/math2d";
@@ -117,6 +118,60 @@ export function getRegionPixelProperties(regionType: CARTA.RegionType, controlPo
                 polylineProperties += index !== controlPoints.length - 1 ? ", " : "]";
             });
             return polylineProperties;
+        default:
+            return "Not Implemented";
+    }
+}
+
+export interface RegionWcsContext {
+    wcsInfo: AST.FrameSet;
+    system: string;
+    isDegreesX: boolean;
+    isDegreesY: boolean;
+    pixelUnitSizeArcsec: Point2D | null;
+    precision: number;
+    centerOverride?: Partial<WCSPoint2D>;
+}
+
+export function getRegionWcsProperties(regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, context: RegionWcsContext): string | undefined {
+    const centerPoint = controlPoints[CENTER_POINT_INDEX];
+    if (!centerPoint || !isFinite(centerPoint.x) || !isFinite(centerPoint.y)) {
+        return undefined;
+    }
+    const wcsCenter = getFormattedWCSPoint(context.wcsInfo, centerPoint);
+    if (!wcsCenter) {
+        return undefined;
+    }
+
+    const withUnit = (value: string | undefined, isDegrees: boolean) => (value === undefined || value === "Invalid" || !isDegrees ? `${value}` : `${value}deg`);
+    const formatPoint = (point: Partial<WCSPoint2D>) => `${withUnit(point.x, context.isDegreesX)}, ${withUnit(point.y, context.isDegreesY)}`;
+    const formatControlPoint = (point: Point2D) => {
+        const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(context.wcsInfo, point) : null;
+        return wcsPoint ? `[${formatPoint(wcsPoint)}]` : "[Invalid]";
+    };
+    const formatSize = (size: Point2D | undefined) => {
+        const arcsec = size && context.pixelUnitSizeArcsec ? multiply2D(size, context.pixelUnitSizeArcsec) : {x: NaN, y: NaN};
+        return `${formattedArcsec(arcsec.x, context.precision) ?? ""}, ${formattedArcsec(arcsec.y, context.precision) ?? ""}`;
+    };
+    const center = formatPoint(context.centerOverride ?? wcsCenter);
+    const system = context.system;
+
+    switch (regionType) {
+        case CARTA.RegionType.POINT:
+            return `Point (wcs:${system}) [${center}]`;
+        case CARTA.RegionType.LINE: {
+            const start = getFormattedWCSPoint(context.wcsInfo, controlPoints[0]) ?? {x: "Invalid", y: "Invalid"};
+            const end = getFormattedWCSPoint(context.wcsInfo, controlPoints[1]) ?? {x: "Invalid", y: "Invalid"};
+            return `Line (wcs:${system}) [[${formatPoint(start)}], [${formatPoint(end)}]]`;
+        }
+        case CARTA.RegionType.RECTANGLE:
+            return `rotbox(wcs:${system})[[${center}], [${formatSize(controlPoints[SIZE_POINT_INDEX])}], ${toFixed(rotation, 6)}deg]`;
+        case CARTA.RegionType.ELLIPSE:
+            return `ellipse(wcs:${system})[[${center}], [${formatSize(controlPoints[SIZE_POINT_INDEX])}], ${toFixed(rotation, 6)}deg]`;
+        case CARTA.RegionType.POLYGON:
+            return `poly(wcs:${system})[${controlPoints.map(formatControlPoint).join(", ")}]`;
+        case CARTA.RegionType.POLYLINE:
+            return `Polyline (wcs:${system})[${controlPoints.map(formatControlPoint).join(", ")}]`;
         default:
             return "Not Implemented";
     }

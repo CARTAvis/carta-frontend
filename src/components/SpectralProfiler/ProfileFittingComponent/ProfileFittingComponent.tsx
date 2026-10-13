@@ -9,7 +9,7 @@ import {FittingContinuum, FittingFunction, ImageType, RegionId} from "enums";
 import {StatsTypeString} from "models";
 import {AppStore, type ProfileFittingStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {exportTxtFile, getExportFileName} from "utilities";
 
 import "./ProfileFittingComponent.scss";
 
@@ -143,20 +143,16 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             headerString += `# image: ${frame.filename}\n`;
 
             const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             headerString += buildProfileFittingStatisticHeader(regionId, this.widgetStore.profileSelectionStore.selectedStatsTypes[0]);
             // region info
-            if (region) {
-                headerString += `# ${region.regionProperties}\n`;
-                if (frame.isValidWcs) {
-                    headerString += `# ${frame.getRegionWcsProperties(region)}\n`;
-                }
+            if (regionId !== null) {
+                frame.getRegionProperties(regionId).forEach(property => (headerString += `# ${property}\n`));
             }
         }
 
         const content = buildProfileFittingLogContent(headerString, this.widgetStore.restFrameCorrectionExportComments, this.fittingStore.resultLog);
-        const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
+        const fileName = getExportFileName(this.widgetStore.effectiveFrame?.filename ?? "unknown", "Profile_Fitting_Result_Log");
         exportTxtFile(fileName, content);
     };
 
