@@ -103,6 +103,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private previousClickTime: number;
     private previousClickPosition: Point2D | undefined;
     private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
+    private forceUpdateHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
     private stageClickStartY: number;
     private hasActiveStageInteraction = false;
@@ -139,6 +140,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     componentWillUnmount() {
         clearTimeout(this.pendingClickHandle);
         this.pendingClickHandle = undefined;
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = undefined;
         this.stopInteractionTracking();
     }
 
@@ -148,6 +151,12 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action updateChart = (chartArea: ChartArea) => {
         this.chartArea = chartArea;
+        // Chart.js layout runs in a React effect; defer the redraw so overlays receive the updated bounds.
+        clearTimeout(this.forceUpdateHandle);
+        this.forceUpdateHandle = setTimeout(() => {
+            this.forceUpdateHandle = undefined;
+            this.forceUpdate();
+        }, 0);
         if (this.props.updateChartArea) {
             this.props.updateChartArea(chartArea);
         }
