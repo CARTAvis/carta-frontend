@@ -41,6 +41,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private readonly disposers: IReactionDisposer[] = [];
     private catalogHeaderTableRef: Table | undefined = undefined;
     private catalogFileNames: Map<number, string>;
+    private lastAutoScrollProfileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined;
+    private lastAutoScrollSelectedIndices: number[] | undefined;
+    private didLastAutoScrollShowSelectedData: boolean = false;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -1001,13 +1004,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private onCompleteRender = () => {
         const profileStore = this.profileStore;
         const displayStore = this.displayStore;
-        if (profileStore?.regionSelected && displayStore?.isCatalogTableAutoScrollEnabled) {
-            if (displayStore?.isShowingSelectedData) {
-                // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
+        if (!profileStore || !displayStore) {
+            return;
+        }
+
+        const isShowingSelectedData = displayStore.isShowingSelectedData;
+        const selectedIndices = profileStore.selectedPointIndices;
+        const didSelectedDataChange = this.lastAutoScrollProfileStore !== profileStore || this.didLastAutoScrollShowSelectedData !== isShowingSelectedData || this.lastAutoScrollSelectedIndices !== selectedIndices;
+        this.lastAutoScrollProfileStore = profileStore;
+        this.didLastAutoScrollShowSelectedData = isShowingSelectedData;
+        this.lastAutoScrollSelectedIndices = selectedIndices;
+
+        if (profileStore.regionSelected && isShowingSelectedData) {
+            displayStore.setCatalogTableAutoScroll(false);
+            if (didSelectedDataChange) {
+                // Blueprint can show only the last row when the selected dataset is shorter than the current scroll position.
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
-            } else {
-                this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             }
+        } else if (profileStore.regionSelected && displayStore.isCatalogTableAutoScrollEnabled) {
+            this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             displayStore.setCatalogTableAutoScroll(false);
         }
     };
