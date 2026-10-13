@@ -44,6 +44,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private lastAutoScrollProfileStore: CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined;
     private lastAutoScrollSelectedIndices: number[] | undefined;
     private didLastAutoScrollShowSelectedData: boolean = false;
+    private lastAutoScrollRequestId: number = 0;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -1011,17 +1012,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const isShowingSelectedData = displayStore.isShowingSelectedData;
         const selectedIndices = profileStore.selectedPointIndices;
         const didSelectedDataChange = this.lastAutoScrollProfileStore !== profileStore || this.didLastAutoScrollShowSelectedData !== isShowingSelectedData || this.lastAutoScrollSelectedIndices !== selectedIndices;
+        const didAutoScrollRequestChange = this.lastAutoScrollRequestId !== displayStore.catalogTableAutoScrollRequestId;
         this.lastAutoScrollProfileStore = profileStore;
         this.didLastAutoScrollShowSelectedData = isShowingSelectedData;
         this.lastAutoScrollSelectedIndices = selectedIndices;
 
         if (profileStore.regionSelected && isShowingSelectedData) {
             displayStore.setCatalogTableAutoScroll(false);
-            if (didSelectedDataChange) {
+            this.lastAutoScrollRequestId = displayStore.catalogTableAutoScrollRequestId;
+            if (didSelectedDataChange || didAutoScrollRequestChange) {
                 // Blueprint can show only the last row when the selected dataset is shorter than the current scroll position.
                 this.scrollToRegion(this.catalogTableRef, Regions.row(0));
             }
-        } else if (profileStore.regionSelected && displayStore.isCatalogTableAutoScrollEnabled) {
+        } else if (profileStore.regionSelected && didAutoScrollRequestChange) {
+            this.lastAutoScrollRequestId = displayStore.catalogTableAutoScrollRequestId;
             this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             displayStore.setCatalogTableAutoScroll(false);
         }

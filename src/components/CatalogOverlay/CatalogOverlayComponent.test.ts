@@ -292,17 +292,45 @@ afterEach(() => {
 });
 
 describe("CatalogOverlayComponent", () => {
+    test("scrolls each catalog table when selected-only mode changes", () => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {
+            catalogFileId: first.catalogFileId,
+            profileStore: first.profileStore,
+            widgetStore: first.widgetStore
+        });
+        runInAction(() => {
+            first.profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
+        });
+        const displayStore = first.widgetStore;
+        displayStore.setShowSelectedData(false);
+        first.component["onCompleteRender"]();
+        second.component["onCompleteRender"]();
+
+        displayStore.setShowSelectedData(true);
+        displayStore.setCatalogTableAutoScroll(true);
+        const firstScroll = jest.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+        const secondScroll = jest.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        first.component["onCompleteRender"]();
+        second.component["onCompleteRender"]();
+
+        expect(firstScroll).toHaveBeenCalledWith(undefined, Regions.row(0));
+        expect(secondScroll).toHaveBeenCalledWith(undefined, Regions.row(0));
+    });
+
     test.each([true, false])("scrolls once per request when selected-only mode is %s", isShowingSelectedData => {
         const {component, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
         runInAction(() => {
             profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
         });
-        displayStore.setShowSelectedData(isShowingSelectedData);
+        displayStore.setShowSelectedData(false);
         const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
 
         component["onCompleteRender"]();
         expect(scrollToRegion).not.toHaveBeenCalled();
 
+        displayStore.setShowSelectedData(isShowingSelectedData);
         displayStore.setCatalogTableAutoScroll(true);
         component["onCompleteRender"]();
         expect(scrollToRegion).toHaveBeenCalledTimes(1);
