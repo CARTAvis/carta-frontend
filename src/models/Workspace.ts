@@ -414,6 +414,11 @@ export interface Workspace {
         raster?: number;
     };
     selectedFile?: number;
+    /**
+     * The color-blended image in front, when it is one, by the `imageListIndex` its entry in
+     * `colorBlendingImages` carries. `selectedFile` then names the image it is blended onto.
+     */
+    selectedColorBlending?: number;
     /** What each catalog table and plot widget shows, keyed by the widget's stable ID. */
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
     layout?: WorkspaceLayout;

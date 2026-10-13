@@ -1,7 +1,7 @@
-import {WorkspaceItemKind} from "enums";
+import {ImageType, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogProfileStore, type CatalogRestoreOutcome, restoreWorkspaceZoom} from "stores";
+import {AppStore, CatalogProfileStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
@@ -60,6 +60,8 @@ export class WorkspaceRestorer {
     private readonly catalogIds = new Map<number, number>();
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
+    /** The color-blended images rebuilt, by the image list index each was saved at. */
+    private readonly colorBlendings = new Map<number, ColorBlendingStore>();
 
     constructor(
         private readonly workspace: Workspace,
@@ -300,6 +302,9 @@ export class WorkspaceRestorer {
         this.workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
         for (const {imageListIndex, selectedFrameId, alpha} of this.workspace.colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
+            if (colorBlending) {
+                this.colorBlendings.set(imageListIndex, colorBlending);
+            }
             while (colorBlending?.selectedFrames.length) {
                 colorBlending.deleteSelectedFrame(0);
             }
@@ -318,13 +323,16 @@ export class WorkspaceRestorer {
     }
 
     /**
-     * Rebuilding a color-blended image puts it in front, so put the image chosen for the front back
-     * there. This has to happen before the catalogs open: a change of the image in front moves the
-     * catalog widgets onto that image's catalogs, and done after the widgets are restored it would
-     * undo them.
+     * Rebuilding a color-blended image puts it in front, so put the image saved in front back there,
+     * or else the image chosen for the front. This has to happen before the catalogs open: a change
+     * of the image in front moves the catalog widgets onto that image's catalogs, and done after the
+     * widgets are restored it would undo them.
      */
     private putFrontImageBack(): void {
-        if (this.frontFrame) {
+        const colorBlending = this.workspace.selectedColorBlending === undefined ? undefined : this.colorBlendings.get(this.workspace.selectedColorBlending);
+        if (colorBlending) {
+            this.appStore.updateActiveImage({type: ImageType.COLOR_BLENDING, store: colorBlending});
+        } else if (this.frontFrame) {
             this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
     }

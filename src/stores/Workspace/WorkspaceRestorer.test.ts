@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 
-import {CatalogSystemType, RadiusUnits, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, RadiusUnits, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
@@ -86,8 +86,13 @@ function createSession() {
         setRasterScalingMatchingEnabled: jest.fn(),
         setTimeSeriesMember: jest.fn(),
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
+        activeImage: undefined as unknown,
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
+            appStore.activeImage = {type: ImageType.FRAME, store: frame};
+        }),
+        updateActiveImage: jest.fn((image: unknown) => {
+            appStore.activeImage = image;
         }),
         reorderFrame: jest.fn(),
         spatialReference: undefined,
@@ -253,6 +258,30 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalled();
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
+    test("puts the color-blended image saved in front back there", async () => {
+        const {appStore} = createSession();
+        const colorBlendings = [{id: 0}, {id: 1}];
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => {
+            const colorBlending = colorBlendings.shift();
+            appStore.activeImage = {type: ImageType.COLOR_BLENDING, store: colorBlending};
+            return {...colorBlending, selectedFrames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+        });
+
+        await restore(
+            createWorkspace({
+                files: [IMAGE, {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}],
+                selectedFile: 1,
+                colorBlendingImages: [
+                    {imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1]},
+                    {imageListIndex: 3, selectedFrameId: [2], alpha: [1, 1]}
+                ],
+                selectedColorBlending: 2
+            })
+        );
+
+        expect(appStore.activeImage).toEqual({type: ImageType.COLOR_BLENDING, store: expect.objectContaining({id: 0})});
     });
 
     test("puts the image in front back before the catalogs open, so that it does not undo the restored widgets", async () => {

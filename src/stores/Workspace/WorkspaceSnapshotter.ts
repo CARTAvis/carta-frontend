@@ -337,6 +337,13 @@ export class WorkspaceSnapshotter {
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        const activeImage = this.appStore.activeImage;
+        if (activeImage?.type === ImageType.COLOR_BLENDING) {
+            const index = this.appStore.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, activeImage.store.id);
+            if (this.workspace.colorBlendingImages.some(colorBlending => colorBlending.imageListIndex === index)) {
+                this.workspace.selectedColorBlending = index;
+            }
+        }
     }
 
     /**

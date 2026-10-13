@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 
-import {CatalogSystemType, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, WorkspaceItemKind} from "enums";
 import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -227,6 +227,33 @@ describe("WorkspaceSnapshotter", () => {
             subject: "",
             message: "Could not save a color-blended image: one of the images it is made of was not saved"
         });
+    });
+
+    test("captures the color-blended image in front by the image list index it is saved at", () => {
+        const {appStore, frame} = createSession();
+        const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};
+        appStore.imageViewConfigStore.colorBlendingImageMap = new Map([[0, colorBlending]]) as never;
+        appStore.imageViewConfigStore.getImageListIndex = jest.fn(() => 1);
+        (appStore as any).activeImage = {type: ImageType.COLOR_BLENDING, store: colorBlending};
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.colorBlendingImages).toEqual([{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 0.5]}]);
+        expect(workspace.selectedColorBlending).toBe(1);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
+    });
+
+    test("names no color-blended image in front when the one there could not be saved", () => {
+        const generatedFrame = createFrame(2, {frameInfo: {fileId: 2, directory: "", hdu: "", fileInfo: {name: "moment.fits"}, generated: true}});
+        const {appStore, frame} = createSession();
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 2);
+        const colorBlending = {id: 0, selectedFrames: [frame, generatedFrame], alpha: [1, 0.5, 0.5]};
+        appStore.imageViewConfigStore.colorBlendingImageMap = new Map([[0, colorBlending]]) as never;
+        (appStore as any).activeImage = {type: ImageType.COLOR_BLENDING, store: colorBlending};
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.selectedColorBlending).toBeUndefined();
     });
 
     test("carries the arrangement the session was saved in", () => {
