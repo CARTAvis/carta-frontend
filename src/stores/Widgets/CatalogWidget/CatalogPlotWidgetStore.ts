@@ -31,6 +31,7 @@ export interface CatalogPlotWidgetConfig {
     isLogScaleY?: boolean;
     nBinX?: number;
     isFittingEnabled?: boolean;
+    cursor?: Point2D;
 }
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
@@ -52,6 +53,11 @@ export class CatalogPlotWidgetStore {
     @observable minMaxX: {minVal: number; maxVal: number} | null = null;
     @observable statisticColumnName: string = CatalogOverlay.NONE;
     @observable statistic: Statistic | null = null;
+    /**
+     * Whether {@link indicatorInfo} was put back by a workspace. It was read off rows that are still
+     * to be loaded, so their arriving does not clear it; the cursor or a change of column does.
+     */
+    private isIndicatorRestored = false;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         this.plotType = props.plotType;
@@ -73,7 +79,8 @@ export class CatalogPlotWidgetStore {
         statisticColumnName: this.statisticColumnName,
         isLogScaleY: this.isLogScaleY,
         nBinX: this.nBinX,
-        isFittingEnabled: this.isFittingEnabled
+        isFittingEnabled: this.isFittingEnabled,
+        cursor: this.indicatorInfo && Number.isFinite(this.indicatorInfo.x) && Number.isFinite(this.indicatorInfo.y) ? {x: this.indicatorInfo.x, y: this.indicatorInfo.y} : undefined
     });
 
     /**
@@ -88,6 +95,11 @@ export class CatalogPlotWidgetStore {
             if (column !== undefined && column !== CatalogOverlay.NONE && !hasColumn(column)) {
                 dropped.push(column);
                 this[key] = CatalogOverlay.NONE;
+                // A readout taken off a column the plot no longer draws reads nothing.
+                if (key !== "statisticColumnName") {
+                    this.indicatorInfo = undefined;
+                    this.isIndicatorRestored = false;
+                }
             }
         }
         return dropped;
@@ -126,6 +138,14 @@ export class CatalogPlotWidgetStore {
         if (typeof config.isFittingEnabled === "boolean") {
             this.isFittingEnabled = config.isFittingEnabled;
         }
+        if (config.cursor && Number.isFinite(config.cursor.x) && Number.isFinite(config.cursor.y)) {
+            this.indicatorInfo = {x: config.cursor.x, y: config.cursor.y};
+            this.isIndicatorRestored = true;
+        }
+    }
+
+    public get hasRestoredIndicator(): boolean {
+        return this.isIndicatorRestored;
     }
 
     @action setStatisticColumn(columnName: string) {
@@ -138,14 +158,17 @@ export class CatalogPlotWidgetStore {
 
     @action setColumnX(columnName: string) {
         this.xColumnName = columnName;
+        this.isIndicatorRestored = false;
     }
 
     @action setColumnY(columnName: string) {
         this.yColumnName = columnName;
+        this.isIndicatorRestored = false;
     }
 
     @action setIndicator(val: Point2D | undefined) {
         this.indicatorInfo = val;
+        this.isIndicatorRestored = false;
     }
 
     @action setScatterborder(border: Border) {

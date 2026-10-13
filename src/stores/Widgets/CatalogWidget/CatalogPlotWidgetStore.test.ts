@@ -11,6 +11,7 @@ describe("CatalogPlotWidgetStore config", () => {
         store.setScatterborder({xMin: 1, xMax: 10, yMin: 2, yMax: 11});
         store.setFitting({intercept: 1, slope: 2, cov00: 3, cov01: 4, cov11: 5, rss: 6});
         store.setMinMaxX({minVal: 2, maxVal: 8});
+        store.setIndicator({x: 202.518, y: 47.22244});
 
         const restored = new CatalogPlotWidgetStore({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter});
         restored.applyConfig(store.toConfig());
@@ -25,6 +26,37 @@ describe("CatalogPlotWidgetStore config", () => {
 
         expect(store.nBinX).toBeUndefined();
         expect(store.isLogScaleY).toBe(false);
+    });
+
+    test("keeps a restored cursor readout until the cursor or a column changes it", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+
+        store.applyConfig({cursor: {x: 1, y: 2}});
+        expect(store.indicatorInfo).toEqual({x: 1, y: 2});
+        expect(store.hasRestoredIndicator).toBe(true);
+
+        store.setColumnX("Vmag");
+        expect(store.hasRestoredIndicator).toBe(false);
+        expect(store.indicatorInfo).toEqual({x: 1, y: 2});
+    });
+
+    test("saves no cursor readout that is not a number", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+
+        store.setIndicator({x: NaN, y: 2});
+        expect(store.toConfig().cursor).toBeUndefined();
+
+        store.applyConfig({cursor: {x: Infinity, y: 2}});
+        expect(store.hasRestoredIndicator).toBe(false);
+    });
+
+    test("drops a restored cursor readout taken off a column the catalog lacks", () => {
+        const store = new CatalogPlotWidgetStore({xColumnName: "Fmag", yColumnName: "Bmag", plotType: CatalogPlotType.D2Scatter});
+        store.applyConfig({cursor: {x: 1, y: 2}});
+
+        store.resetUnknownColumns(column => column !== "Bmag");
+
+        expect(store.indicatorInfo).toBeUndefined();
     });
 
     test("normalizes legacy drag modes while preserving disabled drag", () => {

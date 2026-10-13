@@ -237,6 +237,20 @@ describe("CatalogPlotComponent restored plots", () => {
         component.componentWillUnmount();
     });
 
+    test("keeps the restored cursor readout while the catalog rows arrive", () => {
+        loadCatalog(11, "first.xml", FIRST_CATALOG_WORKSPACE_ID);
+        const rows = observable.box<number[]>([], {deep: false});
+        (catalogStore.catalogProfileStores.get(11) as any).get2DPlotData = () => ({wcsX: rows.get(), wcsY: rows.get()});
+        const {component, plotId} = restorePlot();
+
+        bindRestoredPlot(plotId, 11, {cursor: {x: 202.518, y: 47.22244}});
+        runInAction(() => rows.set([202.5, 202.518]));
+
+        const store = widgetsStore.catalogPlotWidgets.get(plotId)!;
+        expect(store.indicatorInfo).toEqual({x: 202.518, y: 47.22244});
+        component.componentWillUnmount();
+    });
+
     test("still resolves a remounted tab and its cleanup after its original catalog closes", () => {
         const {component, plotId} = restorePlot();
         loadCatalog(11, "second.xml");

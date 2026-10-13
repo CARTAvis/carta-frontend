@@ -381,6 +381,8 @@ export interface WorkspaceCatalogWidgetConfig {
     nBinX?: number;
     /** Whether a linear fit is drawn. The fit itself is recomputed from the rows the plot shows. */
     isFittingEnabled?: boolean;
+    /** The values the cursor last read off the plot: a scatter point, or a histogram bin's center and count. */
+    cursor?: Point2D;
 }
 
 /**

@@ -469,7 +469,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.cursorNearestScatterPoint = undefined;
         this.cursorNearestScatterPointIndex = undefined;
         this.scatterSpatialIndex.clear();
-        this.widgetStore?.setIndicator(undefined);
+        // A restored readout was read off rows still arriving, not off the data it replaces.
+        if (!this.widgetStore?.hasRestoredIndicator) {
+            this.widgetStore?.setIndicator(undefined);
+        }
     };
 
     private getNearestScatterPointIndex = (x: number, y: number) => {
