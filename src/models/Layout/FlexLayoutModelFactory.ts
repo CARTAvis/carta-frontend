@@ -20,7 +20,7 @@ const COMPONENT_CONFIG = new Map<string, IJsonTabNode>([
     ["render-config", {type: "tab", component: "render-config", name: "Render Configuration", id: "render-config"}],
     ["region-list", {type: "tab", component: "region-list", name: "Region List", id: "region-list"}],
     ["animator", {type: "tab", component: "animator", name: "Animator", id: "animator"}],
-    ["spatial-profiler", {type: "tab", component: "spatial-profiler", id: "spatial-profiler"}],
+    ["spatial-profiler", {type: "tab", component: "spatial-profiler", id: "spatial-profiler", name: "X Profile: Cursor"}],
     ["spectral-profiler", {type: "tab", component: "spectral-profiler", id: "spectral-profiler", name: "Z Profile: Cursor"}],
     ["stokes", {type: "tab", component: "stokes", id: "stokes", name: "Stokes Analysis"}],
     ["histogram", {type: "tab", component: "histogram", name: "Histogram", id: "histogram"}],
@@ -233,6 +233,12 @@ function convertComponent(node: any): IJsonTabNode {
     // Apply the image-view special height
     if (widgetType === "image-view") {
         tabNode.config = {...(tabNode.config || {}), imageViewWeight: getImageViewWeight()};
+    }
+
+    // A tab not shown in its tabset is not mounted, so its widget cannot name it; name it as the widget would.
+    const coordinate = node.widgetSettings?.coordinate;
+    if (widgetType === "spatial-profiler" && typeof coordinate === "string" && coordinate) {
+        tabNode.name = `${coordinate.toUpperCase()} Profile: Cursor`;
     }
 
     // Carry over widget settings into config. A catalog plot's type is among them.
