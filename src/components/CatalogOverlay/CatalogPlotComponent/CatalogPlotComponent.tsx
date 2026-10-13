@@ -484,7 +484,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const isChecked = changeEvent.target.checked;
         if (widgetsStore && catalogDisplayStore) {
             catalogDisplayStore.setShowSelectedData(isChecked);
-            catalogDisplayStore.setCatalogTableAutoScroll(true);
+            catalogDisplayStore.requestCatalogTableAutoScroll();
         }
     };
 
@@ -609,7 +609,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
         WidgetsStore.Instance.updateCatalogWidgetSelection(profileStore.catalogInfo.fileId);
         profileStore.setSelectedPointIndices(profileStore.getOriginIndices(rawIndices), true);
-        catalogDisplayStore.setCatalogTableAutoScroll(true);
+        catalogDisplayStore.requestCatalogTableAutoScroll();
     }
 
     private onScatterZoomedXY = (xMin: number, xMax: number, yMin: number, yMax: number) => {

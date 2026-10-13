@@ -292,6 +292,88 @@ afterEach(() => {
 });
 
 describe("CatalogOverlayComponent", () => {
+    test("a newly opened table ignores previous scroll requests", () => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            first.profileStore.selectedPointIndices = [100];
+        });
+        first.widgetStore.requestCatalogTableAutoScroll();
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {
+            catalogFileId: first.catalogFileId,
+            profileStore: first.profileStore,
+            widgetStore: first.widgetStore
+        });
+        const scrollToRegion = jest.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        second.component["onCompleteRender"]();
+
+        expect(scrollToRegion).not.toHaveBeenCalled();
+        expect(second.component["hasPendingAutoScroll"](first.widgetStore)).toBe(false);
+        expect(first.component["hasPendingAutoScroll"](first.widgetStore)).toBe(true);
+    });
+
+    test.each([false, true])("catalog switches ignore old requests and preserve a fresh request: %s", shouldRequestScroll => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            second.profileStore.selectedPointIndices = [100];
+        });
+        second.widgetStore.requestCatalogTableAutoScroll();
+        const scrollToRegion = jest.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        // Adoption and the selection request can happen within the same MobX action.
+        runInAction(() => {
+            WidgetsStore.Instance.setCatalogWidgetSelection(first.componentId, second.catalogFileId);
+            if (shouldRequestScroll) {
+                second.widgetStore.requestCatalogTableAutoScroll();
+            }
+        });
+        first.component["onCompleteRender"]();
+
+        if (shouldRequestScroll) {
+            expect(scrollToRegion).toHaveBeenCalledWith(undefined, Regions.row(100));
+        } else {
+            expect(scrollToRegion).not.toHaveBeenCalled();
+        }
+    });
+
+    test.each([false, true])("a late display store ignores old requests and preserves a fresh request: %s", shouldRequestScroll => {
+        const {component, catalogFileId, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            profileStore.selectedPointIndices = [100];
+            CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
+        });
+        displayStore.requestCatalogTableAutoScroll();
+        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        runInAction(() => {
+            CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore);
+            if (shouldRequestScroll) {
+                displayStore.requestCatalogTableAutoScroll();
+            }
+        });
+        component["onCompleteRender"]();
+
+        if (shouldRequestScroll) {
+            expect(scrollToRegion).toHaveBeenCalledWith(undefined, Regions.row(100));
+        } else {
+            expect(scrollToRegion).not.toHaveBeenCalled();
+        }
+    });
+
+    test("changing selected rows without a scroll request preserves the viewport", () => {
+        const {component, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        displayStore.setShowSelectedData(true);
+        runInAction(() => {
+            profileStore.selectedPointIndices = [100];
+        });
+        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        component["onCompleteRender"]();
+
+        expect(scrollToRegion).not.toHaveBeenCalled();
+    });
+
     test("scrolls each catalog table when selected-only mode changes", () => {
         const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
         const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {
@@ -308,7 +390,7 @@ describe("CatalogOverlayComponent", () => {
         second.component["onCompleteRender"]();
 
         displayStore.setShowSelectedData(true);
-        displayStore.setCatalogTableAutoScroll(true);
+        displayStore.requestCatalogTableAutoScroll();
         const firstScroll = jest.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
         const secondScroll = jest.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
 
@@ -331,20 +413,20 @@ describe("CatalogOverlayComponent", () => {
         expect(scrollToRegion).not.toHaveBeenCalled();
 
         displayStore.setShowSelectedData(isShowingSelectedData);
-        displayStore.setCatalogTableAutoScroll(true);
+        displayStore.requestCatalogTableAutoScroll();
         component["onCompleteRender"]();
         expect(scrollToRegion).toHaveBeenCalledTimes(1);
         expect(scrollToRegion).toHaveBeenLastCalledWith(undefined, Regions.row(isShowingSelectedData ? 0 : 100));
-        expect(displayStore.isCatalogTableAutoScrollEnabled).toBe(false);
+        expect(component["hasPendingAutoScroll"](displayStore)).toBe(false);
 
         // Scrolling the virtualized table renders more rows without requesting another auto-scroll.
         component["onCompleteRender"]();
         expect(scrollToRegion).toHaveBeenCalledTimes(1);
 
-        displayStore.setCatalogTableAutoScroll(true);
+        displayStore.requestCatalogTableAutoScroll();
         component["onCompleteRender"]();
         expect(scrollToRegion).toHaveBeenCalledTimes(2);
-        expect(displayStore.isCatalogTableAutoScrollEnabled).toBe(false);
+        expect(component["hasPendingAutoScroll"](displayStore)).toBe(false);
     });
 
     describe("autoSelectAxes", () => {
