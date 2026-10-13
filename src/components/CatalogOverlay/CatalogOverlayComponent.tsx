@@ -499,9 +499,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WidgetConfig.title ?? "", this.widgetId, CatalogOverlayComponent.WidgetConfig.type);
     };
 
+    private onTableViewportChange = () => {
+        // The selected rows alone are a different list, scrolled independently of the full table.
+        const viewportRect = this.catalogTableRef?.locator?.getViewportRect();
+        if (viewportRect && !this.displayStore?.isShowingSelectedData) {
+            this.profileStore?.setTableScrollPosition(viewportRect.left, viewportRect.top);
+        }
+    };
+
     private onCompleteRender = () => {
         const profileStore = this.profileStore;
         const displayStore = this.displayStore;
+        // Private in its typings; scrollToRegion above reaches it the same way.
+        const quadrantStack = (this.catalogTableRef as any)?.quadrantStackInstance;
+        if (profileStore && quadrantStack && !displayStore?.isShowingSelectedData) {
+            const scrollPosition = profileStore.takePendingTableScrollPosition();
+            if (scrollPosition) {
+                quadrantStack.scrollToPosition(scrollPosition.left, scrollPosition.top);
+                return;
+            }
+        }
         if (profileStore?.regionSelected) {
             if (displayStore?.isShowingSelectedData) {
                 // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
@@ -552,6 +569,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateTableRef: this.onCatalogDataTableRefUpdated,
             updateColumnFilter: profileStore.setColumnFilter,
             updateByInfiniteScroll: this.updateByInfiniteScroll,
+            onViewportChange: this.onTableViewportChange,
             updateTableColumnWidth: profileStore.setTableColumnWidth,
             updateSelectedRow: this.onCatalogTableDataSelected,
             updateSortRequest: this.updateSortRequest,

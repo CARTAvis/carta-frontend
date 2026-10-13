@@ -26,7 +26,7 @@ import {
     type TypedArray
 } from "utilities";
 
-import {type WorkspaceCatalogQuerySource, type WorkspaceCatalogTableConfig} from "../Workspace";
+import {type WorkspaceCatalogQuerySource, type WorkspaceCatalogScrollPosition, type WorkspaceCatalogTableConfig} from "../Workspace";
 
 export interface CatalogInfo {
     fileId: number;
@@ -144,6 +144,10 @@ export abstract class AbstractCatalogProfileStore {
      * edited freely and only takes effect when the rows are asked for again, so the two can differ.
      */
     private appliedFilters = new Map<string, string>();
+    /** Where the table is scrolled to, in pixels. */
+    private tableScrollPosition: WorkspaceCatalogScrollPosition = {left: 0, top: 0};
+    /** A saved scroll position the table has yet to go back to. */
+    private pendingTableScrollPosition: WorkspaceCatalogScrollPosition | undefined;
 
     /**
      * Shallow so that replacing a column marks the data as changed. Rows stream in a batch at a
@@ -654,9 +658,35 @@ export abstract class AbstractCatalogProfileStore {
             displayedColumns: this.displayedColumnHeaders.map(header => header.name),
             maxRows: this.isFileBasedCatalog ? this.maxRows : undefined,
             loadedRows: this.isFileBasedCatalog ? this.numVisibleRows : undefined,
+            scrollPosition: this.savedTableScrollPosition,
             columnSettings: Object.keys(columnSettings).length ? columnSettings : undefined,
             sorting: this.sortingInfo.columnName && this.sortingInfo.sortingType !== null ? {columnName: this.sortingInfo.columnName, sortingType: this.sortingInfo.sortingType} : undefined
         };
+    }
+
+    /** Record where the table is scrolled to, in pixels. */
+    public setTableScrollPosition(left: number, top: number) {
+        this.tableScrollPosition = {left, top};
+    }
+
+    /** Where a workspace saves the table as scrolled to. A restored table not yet shown is still where the workspace left it. */
+    private get savedTableScrollPosition(): WorkspaceCatalogScrollPosition | undefined {
+        const position = this.pendingTableScrollPosition ?? this.tableScrollPosition;
+        return position.left > 0 || position.top > 0 ? {...position} : undefined;
+    }
+
+    /**
+     * The saved scroll position to put the table back to, given once its rows have loaded, since
+     * a table holding fewer rows cannot be scrolled as far.
+     */
+    public takePendingTableScrollPosition(): WorkspaceCatalogScrollPosition | undefined {
+        const position = this.pendingTableScrollPosition;
+        if (!position || this.isLoadingData || this.numVisibleRows <= 0) {
+            return undefined;
+        }
+        this.pendingTableScrollPosition = undefined;
+        this.tableScrollPosition = position;
+        return position;
     }
 
     /**
@@ -685,6 +715,10 @@ export abstract class AbstractCatalogProfileStore {
         }
         if (config?.sorting && this.catalogControlHeader.has(config.sorting.columnName)) {
             this.setSortingInfo(config.sorting.columnName, config.sorting.sortingType);
+        }
+        const scrollPosition = config?.scrollPosition;
+        if (scrollPosition && Number.isFinite(scrollPosition.left) && Number.isFinite(scrollPosition.top) && (scrollPosition.left > 0 || scrollPosition.top > 0)) {
+            this.pendingTableScrollPosition = {left: Math.max(0, scrollPosition.left), top: Math.max(0, scrollPosition.top)};
         }
 
         this.catalogFilterRequest.filterConfigs = this.getUserFilters();

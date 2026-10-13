@@ -757,6 +757,31 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         expect(store.toTableConfig().columnSettings).toBeUndefined();
     });
 
+    test("saves where its table is scrolled to", () => {
+        const store = createProfileStore();
+        expect(store.toTableConfig().scrollPosition).toBeUndefined();
+
+        store.setTableScrollPosition(12.5, 437);
+
+        expect(store.toTableConfig().scrollPosition).toEqual({left: 12.5, top: 437});
+    });
+
+    test("scrolls a restored table back once its rows have loaded, and only once", () => {
+        const store = createProfileStore();
+        store.applyTableConfig({scrollPosition: {left: 12.5, top: 437}});
+        // Saved again before the table is shown, it keeps where the workspace left it.
+        expect(store.toTableConfig().scrollPosition).toEqual({left: 12.5, top: 437});
+
+        store.setLoadingDataStatus(true);
+        store.setNumVisibleRows(50);
+        expect(store.takePendingTableScrollPosition()).toBeUndefined();
+
+        store.setLoadingDataStatus(false);
+        expect(store.takePendingTableScrollPosition()).toEqual({left: 12.5, top: 437});
+        expect(store.takePendingTableScrollPosition()).toBeUndefined();
+        expect(store.toTableConfig().scrollPosition).toEqual({left: 12.5, top: 437});
+    });
+
     test("saves no loaded row count for an online catalog, which holds all of its rows", () => {
         const catalogHeader = [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "RA"})];
         const store = new CatalogOnlineQueryProfileStore({dataSize: 2, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "simbad"})}, catalogHeader, new Map(), CatalogType.SIMBAD);

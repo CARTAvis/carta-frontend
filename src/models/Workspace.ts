@@ -140,6 +140,12 @@ export interface WorkspaceCatalogSortingConfig {
     sortingType: CARTA.SortingType;
 }
 
+/** How far a catalog table is scrolled, in pixels from its top left. */
+export interface WorkspaceCatalogScrollPosition {
+    left: number;
+    top: number;
+}
+
 /**
  * Which rows and columns a catalog holds, and how its table shows them. Owned by the catalog's
  * profile store, which is what the table and the query behind it belong to.
@@ -154,6 +160,8 @@ export interface WorkspaceCatalogTableConfig {
      * plotting it, which its plots are drawn from. An online catalog holds all of its rows.
      */
     loadedRows?: number;
+    /** Where the table was scrolled to. */
+    scrollPosition?: WorkspaceCatalogScrollPosition;
     /** User-entered filters and widths, keyed by catalog column name. */
     columnSettings?: {[columnName: string]: WorkspaceCatalogColumnConfig};
     sorting?: WorkspaceCatalogSortingConfig;
