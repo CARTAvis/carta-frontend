@@ -113,7 +113,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable lassoPoints: number[] = [];
 
-    @observable chartArea: ChartArea;
+    // Initialize the field so MobX observes chart layout updates from the first render.
+    @observable.ref chartArea: ChartArea | undefined = undefined;
     @observable width = 0;
     @observable height = 0;
     @observable isMouseEntered = false;
@@ -223,7 +224,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const chartArea = this.chartArea;
         let borderRect: React.JSX.Element | null = null;
         const devicePixelRatio = window.devicePixelRatio || 1;
-        if (this.chartArea) {
+        if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -467,9 +468,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageMouseMove = ev => {
-        if (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0) {
+        const chartArea = this.chartArea;
+        if (chartArea && (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
-            const chartArea = this.chartArea;
             const mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
             const mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
             // Cursor move updates
