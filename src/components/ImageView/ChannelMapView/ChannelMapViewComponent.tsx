@@ -3,7 +3,7 @@ import {NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageType} from "enums";
+import {BeamOverlayMode, ImageType} from "enums";
 import {type CursorInfo, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 
@@ -127,7 +127,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={props.isDocked}
                     />
-                    {channelMapStore.shouldShowBeamOverlay && (shouldShowBeamForAllChannels || isBottomLeftChannel) && (
+                    {(shouldShowBeamForAllChannels || frame.overlayBeamSettings.channelMapMode === BeamOverlayMode.AllPanels || isBottomLeftChannel) && (
                         <BeamProfileOverlayComponent frame={frame} channel={channel} top={top} left={left} docked={props.isDocked} padding={10} />
                     )}
                 </div>

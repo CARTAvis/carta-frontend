@@ -5,7 +5,7 @@ import {action, autorun, type IReactionDisposer, makeObservable, observable, rea
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, RestFrameShiftMode, SystemType, VelocityConvention} from "enums";
+import {BeamOverlayMode, BeamType, CoordinateMode, HelpType, ImagePanelMode, ImageViewSettingsPanelTabs, InputType, LabelType, NumberFormatType, PreferenceKeys, RestFrameShiftMode, SystemType, VelocityConvention} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {ColorbarStore, type FrameStore} from "stores/Frame";
 import {NUMBER_FORMAT_LABEL, restFrameShiftValidationMessage, SWATCH_COLORS, toFixed} from "utilities";
@@ -92,6 +92,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const colorbar = overlaySettings.colorbar;
         const beam = overlaySettings.beam;
         const beamSettings = beam.settingsForDisplay;
+        const isPerPlaneBeamChannelMap = appStore.channelMapStore.isChannelMapEnabled && Boolean(appStore.channelMapStore.displayedFrame?.shouldShowBeamForAllChannels);
         const preferences = appStore.preferenceStore;
 
         const isInterior: boolean = global.labelType === LabelType.Interior;
@@ -723,6 +724,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <FormGroup inline={true} label="Visible">
                         <Switch checked={beamSettings.isVisible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
                     </FormGroup>
+                    {(beamSettings.isVisible || appStore.channelMapStore.isChannelMapEnabled) && (
+                        <FormGroup inline={true} label="Placement">
+                            <HTMLSelect
+                                options={[
+                                    {label: "Bottom-left panel only", value: BeamOverlayMode.BottomLeft, disabled: isPerPlaneBeamChannelMap},
+                                    {label: "All panels", value: BeamOverlayMode.AllPanels}
+                                ]}
+                                value={isPerPlaneBeamChannelMap ? BeamOverlayMode.AllPanels : beamSettings.channelMapMode}
+                                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => beamSettings.setChannelMapMode(event.currentTarget.value as BeamOverlayMode)}
+                            />
+                        </FormGroup>
+                    )}
                     <FormGroup inline={true} label="Color">
                         <AutoColorPickerComponent color={beamSettings.color} presetColors={SWATCH_COLORS} setColor={beamSettings.setColor} disableAlpha={true} />
                     </FormGroup>
