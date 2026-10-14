@@ -1,10 +1,32 @@
 import * as React from "react";
-import {render} from "@testing-library/react";
+import {act, render} from "@testing-library/react";
 
 import {DragMode, InteractionMode, ZoomMode} from "enums";
 import {AppStore} from "stores";
 
 import {ScatterPlotComponent} from "./ScatterPlotComponent";
+
+test("initializes the scatter overlay with chart bounds without mouse interaction", () => {
+    const originalResizeObserver = window.ResizeObserver;
+    const originalIntersectionObserver = window.IntersectionObserver;
+    const mockObserver = jest.fn(() => ({observe: jest.fn(), disconnect: jest.fn()}));
+    window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
+    window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
+    const componentRef = React.createRef<ScatterPlotComponent>();
+    const renderOverlay = jest.fn(() => null);
+    const {unmount} = render(<ScatterPlotComponent ref={componentRef} data={[]} xMin={0} xMax={10} yMin={0} yMax={10} renderOverlay={renderOverlay} />);
+
+    try {
+        act(() => componentRef.current!.resize(400, 300));
+
+        expect(componentRef.current!.chartArea).toBeDefined();
+        expect(renderOverlay).toHaveBeenLastCalledWith(400, 300, expect.objectContaining({left: expect.any(Number), right: expect.any(Number), top: expect.any(Number), bottom: expect.any(Number)}));
+    } finally {
+        unmount();
+        window.ResizeObserver = originalResizeObserver;
+        window.IntersectionObserver = originalIntersectionObserver;
+    }
+});
 
 test("exports the source overlay canvas from the mounted scatter container", () => {
     const originalResizeObserver = window.ResizeObserver;
@@ -49,6 +71,14 @@ const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKe
 });
 
 describe("ScatterPlotComponent interactions", () => {
+    test("ignores mouse movement before the chart area is available", () => {
+        const graphCursorMoved = jest.fn();
+        const component = new ScatterPlotComponent({data: [], graphCursorMoved});
+
+        expect(() => component.onStageMouseMove(CreateMouseEvent() as any)).not.toThrow();
+        expect(graphCursorMoved).not.toHaveBeenCalled();
+    });
+
     test.each([
         ["Ctrl", {ctrlKey: true}],
         ["Alt", {altKey: true}]
