@@ -570,20 +570,29 @@ export class FrameStore {
         return beams.filter(beam => beam !== undefined);
     };
 
+    private beamLookupFrameInfo: FrameInfo | undefined;
+    private beamLookup = new Map<string, CARTA.Beam.$Properties>();
+
     private getBeam = (channel: number, stokes: number): CARTA.Beam.$Properties | undefined => {
-        let beam: CARTA.Beam.$Properties | undefined;
         if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
-            beam = this.frameInfo.beamTable[0];
-        } else {
-            if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
-                beam = this.frameInfo.beamTable.find(beam => beam.channel === channel && beam.stokes === stokes);
-            } else if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
-                beam = this.frameInfo.beamTable.find(beam => beam.channel === channel);
-            } else if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
-                beam = this.frameInfo.beamTable.find(beam => beam.stokes === stokes);
-            }
+            return this.frameInfo.beamTable[0];
         }
-        return beam;
+        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
+        const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
+        if (!hasChannels && !hasStokes) {
+            return undefined;
+        }
+        if (this.beamLookupFrameInfo !== this.frameInfo) {
+            this.beamLookup.clear();
+            for (const beam of this.frameInfo.beamTable) {
+                const key = `${hasChannels ? beam.channel : -1}_${hasStokes ? beam.stokes : -1}`;
+                if (!this.beamLookup.has(key)) {
+                    this.beamLookup.set(key, beam);
+                }
+            }
+            this.beamLookupFrameInfo = this.frameInfo;
+        }
+        return this.beamLookup.get(`${hasChannels ? channel : -1}_${hasStokes ? stokes : -1}`);
     };
 
     @computed get hasVisibleBeam(): boolean {

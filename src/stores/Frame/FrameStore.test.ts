@@ -234,6 +234,39 @@ describe("FrameStore", () => {
             expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
             expect(beam).toHaveProperty("angle", 42.57808303833008);
         });
+
+        test.each([
+            [3, 2, 1, 2, 5],
+            [3, 1, 9, 2, 2],
+            [1, 2, 1, 9, 3]
+        ])("looks up beams with depth %i and stokes count %i", (depth, stokesCount, stokes, channel, beamIndex) => {
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth, stokes: stokesCount}
+            } as FrameInfo);
+            const expected = STOKES_CUBEFRAME_INFO.beamTable[beamIndex];
+            expect(frame.getBeamProperties(stokes, channel)).toMatchObject({majorAxis: expected.majorAxis, minorAxis: expected.minorAxis, angle: expected.pa});
+        });
+
+        test("returns a global beam for any channel and stokes", () => {
+            const beam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam]});
+            expect(frame.getBeamProperties(1, 2)).toHaveProperty("majorAxis", beam.majorAxis);
+        });
+
+        test("preserves the first duplicate beam and returns null for missing entries", () => {
+            const beam = STOKES_CUBEFRAME_INFO.beamTable[0];
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam, {...beam, majorAxis: 2}]});
+            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", beam.majorAxis);
+            expect(frame.getBeamProperties(0, 1)).toBeNull();
+        });
+
+        test("uses the new beam table after frame metadata is replaced", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
+            frame.setFrameInfo({...STOKES_CUBEFRAME_INFO, beamTable: [{...STOKES_CUBEFRAME_INFO.beamTable[0], majorAxis: 2}]});
+            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", 2);
+        });
     });
 
     describe("shouldShowBeamForAllChannels", () => {
