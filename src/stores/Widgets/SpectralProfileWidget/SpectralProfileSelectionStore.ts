@@ -10,7 +10,7 @@ import {
     type LineOption,
     POLARIZATION_LABELS,
     ShouldUseSumForFluxDensity,
-    STATISTICS_TEXT,
+    STATISTICS_NAME_MAP,
     StatsTypeString,
     SUPPORTED_STATISTICS_TYPES,
     VALID_COORDINATES
@@ -371,11 +371,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {
-            return a - b;
-        });
-        return sortedKeys?.map(key => {
-            return {value: key, label: STATISTICS_TEXT.get(key)};
+        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES].sort((a, b) => a - b);
+        return sortedKeys.map(key => {
+            return {value: key, label: STATISTICS_NAME_MAP.get(key)};
         });
     }
 
