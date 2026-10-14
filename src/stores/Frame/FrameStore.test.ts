@@ -257,17 +257,17 @@ describe("FrameStore", () => {
             expect(frame.getBeamProperties({stokes, channel})).toMatchObject({majorAxis: expected.majorAxis, minorAxis: expected.minorAxis, angle: expected.pa});
         });
 
-        test("returns a global beam for any channel and stokes", () => {
-            const beam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+        test.each([-1, 0])("returns a single beam with index %i for any channel and stokes", index => {
+            const beam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
             const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam]});
             expect(frame.getBeamProperties({stokes: 1, channel: 2})).toHaveProperty("majorAxis", beam.majorAxis);
         });
 
         test("preserves the first duplicate beam and returns null for missing entries", () => {
             const beam = STOKES_CUBEFRAME_INFO.beamTable[0];
-            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam, {...beam, majorAxis: 2}]});
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam, {...beam, majorAxis: 2}, {...beam, channel: 1}]});
             expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", beam.majorAxis);
-            expect(frame.getBeamProperties({stokes: 0, channel: 1})).toBeNull();
+            expect(frame.getBeamProperties({stokes: 0, channel: 2})).toBeNull();
         });
 
         test("uses the new beam table after frame metadata is replaced", () => {
@@ -314,6 +314,21 @@ describe("FrameStore", () => {
             expect(frame.shouldShowBeamForAllChannels).toBe(true);
         });
 
+        test.each([0, 1])("uses channel-0-only beams across the cube for Stokes index %i", stokes => {
+            const beamTable = STOKES_CUBEFRAME_INFO.beamTable.filter(beam => beam.channel === 0);
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth: 144}
+            } as FrameInfo);
+            frame.setChannels(143, stokes, false);
+
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+            expect(frame.getBeamProperties({channel: 143, stokes})).toHaveProperty("majorAxis", beamTable[stokes].majorAxis);
+            expect(frame.beamAllChannels).toEqual(Array(144).fill(beamTable[stokes]));
+            expect(frame.intensityConfig.bmaj).toEqual(Array(144).fill(beamTable[stokes].majorAxis));
+        });
+
         test("does not treat a Stokes-only beam table as per-channel", () => {
             const stokesOnlyBeams = STOKES_CUBEFRAME_INFO.beamTable.slice(0, 2).map(beam => ({...beam, channel: -1}));
             const frame = new FrameStore({
@@ -324,16 +339,21 @@ describe("FrameStore", () => {
             expect(frame.shouldShowBeamForAllChannels).toBe(false);
         });
 
-        test("does not treat a global beam as channel-indexed", () => {
-            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+        test.each([-1, 0])("does not force all panels for a single beam with index %i", index => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
             const frame = createFrame([globalBeam]);
             expect(frame.shouldShowBeamForAllChannels).toBe(false);
         });
     });
 
     describe("beamAllChannels", () => {
-        test.each([0, 1])("preserves global beam intensity conversions for Stokes index %i", stokes => {
-            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+        test.each([
+            [-1, 0],
+            [-1, 1],
+            [0, 0],
+            [0, 1]
+        ])("preserves single beam intensity conversions for beam index %i and Stokes index %i", (index, stokes) => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
             const frame = new FrameStore({
                 ...STOKES_CUBEFRAME_INFO,
                 beamTable: [globalBeam],

@@ -514,7 +514,7 @@ export class FrameStore {
     }
 
     @computed get shouldShowBeamForAllChannels(): boolean {
-        return this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.beamTable.some(beam => beam.channel != null && beam.channel >= 0);
+        return this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.beamTable.length > 1 && this.frameInfo.beamTable.some(beam => beam.channel != null && beam.channel > 0);
     }
 
     @computed get beamProperties(): BeamProperties | null {
@@ -564,11 +564,11 @@ export class FrameStore {
         }
 
         const globalBeam = this.frameInfo.beamTable[0];
-        if (this.frameInfo.beamTable.length === 1 && globalBeam.channel === -1 && globalBeam.stokes === -1) {
+        if (this.frameInfo.beamTable.length === 1) {
             return this.channelInfo.indexes.map(() => globalBeam);
         }
 
-        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
+        const hasChannels = this.shouldShowBeamForAllChannels;
         const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
         const beamLookup = this.beamLookup;
         const beams = this.channelInfo.indexes.map(channelIndex => beamLookup.get(this.getBeamKey(channelIndex, stokes, hasChannels, hasStokes)));
@@ -580,7 +580,7 @@ export class FrameStore {
     };
 
     @computed private get beamLookup(): Map<string, CARTA.Beam.$Properties> {
-        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
+        const hasChannels = this.shouldShowBeamForAllChannels;
         const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
         const beamLookup = new Map<string, CARTA.Beam.$Properties>();
         for (const beam of this.frameInfo.beamTable) {
@@ -593,13 +593,13 @@ export class FrameStore {
     }
 
     private getBeam = (channel: number, stokes: number): CARTA.Beam.$Properties | undefined => {
-        if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
+        if (this.frameInfo.beamTable.length === 1) {
             return this.frameInfo.beamTable[0];
         }
         if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
             return undefined;
         }
-        return this.beamLookup.get(this.getBeamKey(channel, stokes, this.frameInfo.fileInfoExtended.depth > 1, this.frameInfo.fileInfoExtended.stokes > 1));
+        return this.beamLookup.get(this.getBeamKey(channel, stokes, this.shouldShowBeamForAllChannels, this.frameInfo.fileInfoExtended.stokes > 1));
     };
 
     @computed get hasVisibleBeam(): boolean {
