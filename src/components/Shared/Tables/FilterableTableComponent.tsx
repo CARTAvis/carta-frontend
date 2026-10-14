@@ -28,6 +28,7 @@ export class FilterableTableComponentProps {
     updateTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
+    onViewportChange?: () => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
     updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType | null) => void;
@@ -290,6 +291,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     }
 
     private infiniteScroll = (rowIndices: RowIndices) => {
+        this.props.onViewportChange?.();
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.isLoadingCell && !this.props.shouldShowSelectedData) {
