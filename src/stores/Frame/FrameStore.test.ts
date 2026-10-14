@@ -332,6 +332,26 @@ describe("FrameStore", () => {
     });
 
     describe("beamAllChannels", () => {
+        test.each([0, 1])("preserves global beam intensity conversions for Stokes index %i", stokes => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable: [globalBeam],
+                fileInfoExtended: {
+                    ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
+                    headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, {name: "BUNIT", value: "Jy/beam"}]
+                }
+            } as FrameInfo);
+            frame.setChannels(0, stokes, false);
+
+            expect(frame.beamAllChannels).toEqual([globalBeam, globalBeam, globalBeam]);
+            const config = frame.intensityConfig;
+            expect(config.bmaj).toEqual(Array(3).fill(globalBeam.majorAxis));
+            expect(config.bmin).toEqual(Array(3).fill(globalBeam.minorAxis));
+            expect(config.freqGHz).toHaveLength(3);
+            expect(SpectralDefinition.GetIntensityOptions(config)).toEqual(expect.arrayContaining(["K", "MJy/sr"]));
+        });
+
         test("returns a list of beams from all channels with the current stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             let beams = frame.beamAllChannels;

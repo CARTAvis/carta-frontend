@@ -563,6 +563,11 @@ export class FrameStore {
             return [];
         }
 
+        const globalBeam = this.frameInfo.beamTable[0];
+        if (this.frameInfo.beamTable.length === 1 && globalBeam.channel === -1 && globalBeam.stokes === -1) {
+            return this.channelInfo.indexes.map(() => globalBeam);
+        }
+
         const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
         const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
         const beamLookup = this.beamLookup;

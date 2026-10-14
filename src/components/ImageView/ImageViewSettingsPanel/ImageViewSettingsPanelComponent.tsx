@@ -92,7 +92,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const colorbar = overlaySettings.colorbar;
         const beam = overlaySettings.beam;
         const beamSettings = beam.settingsForDisplay;
-        const isPerPlaneBeamChannelMap = appStore.channelMapStore.isChannelMapEnabled && Boolean(appStore.channelMapStore.displayedFrame?.shouldShowBeamForAllChannels);
+        const beamFrame = appStore.getFrame(beam.selectedFileId);
+        const isPerPlaneBeamChannelMap = appStore.channelMapStore.isChannelMapEnabled && Boolean(beamFrame?.shouldShowBeamForAllChannels);
         const preferences = appStore.preferenceStore;
 
         const isInterior: boolean = global.labelType === LabelType.Interior;
