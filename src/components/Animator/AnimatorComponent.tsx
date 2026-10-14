@@ -71,8 +71,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
     };
 
-    componentWillUnmount() {
+    private cancelPendingChannelChange = () => {
         this.throttledChannelChange.cancel();
+    };
+
+    componentWillUnmount() {
+        this.cancelPendingChannelChange();
     }
 
     onRangeChanged = (range: NumberRange) => {
@@ -110,6 +114,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onFirstClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -136,6 +141,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onLastClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -164,6 +170,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onNextClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -190,6 +197,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onPrevClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 

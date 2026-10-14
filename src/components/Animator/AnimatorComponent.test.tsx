@@ -1,7 +1,7 @@
 import * as React from "react";
 import {HTMLSelect} from "@blueprintjs/core";
 
-import {NumericInputType} from "enums/animation";
+import {AnimationMode, NumericInputType} from "enums/animation";
 import {AppStore} from "stores";
 
 import {AnimatorComponent} from "./AnimatorComponent";
@@ -70,6 +70,42 @@ describe("AnimatorComponent", () => {
         component.componentWillUnmount();
         jest.advanceTimersByTime(50);
         expect(frame.setChannel).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+        ["First", "onFirstClicked", 0],
+        ["Last", "onLastClicked", 99],
+        ["Next", "onNextClicked", 11],
+        ["Previous", "onPrevClicked", 9]
+    ])("keeps a later %s action after pending slider input", (_name, handler, expectedChannel) => {
+        let selectedChannel = 5;
+        const frame = {
+            frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            channel: 5,
+            stokes: 0,
+            polarizations: [0],
+            setChannel: jest.fn((channel: number) => {
+                selectedChannel = channel;
+            }),
+            setChannels: jest.fn((channel: number) => {
+                selectedChannel = channel;
+            }),
+            incrementChannels: jest.fn((delta: number) => {
+                selectedChannel = (selectedChannel + delta + 100) % 100;
+            })
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL}} as any);
+        const component = new AnimatorComponent({} as any);
+        component.onChannelChanged(10);
+        jest.advanceTimersByTime(20);
+        component.onChannelChanged(20);
+        jest.advanceTimersByTime(10);
+
+        (component as any)[handler]();
+        expect(selectedChannel).toBe(expectedChannel);
+        jest.advanceTimersByTime(50);
+        expect(selectedChannel).toBe(expectedChannel);
+        component.componentWillUnmount();
     });
 
     test.each([
