@@ -271,7 +271,8 @@ export class CatalogDisplayStore {
     @observable catalogFileId: number = 0;
     @observable dataTableColumnWidths: Array<number> = [];
     @observable isShowingSelectedData: boolean = false;
-    @observable isCatalogTableAutoScrollEnabled: boolean = false;
+    /** Scroll request sequence; each table remembers its own last handled value. */
+    @observable catalogTableAutoScrollRequestId: number = 0;
     @observable catalogPlotType: CatalogPlotType = CatalogPlotType.ImageOverlay;
     @observable hasAttemptedAutoSelectImageOverlayAxes: boolean = false;
     @observable catalogSize: number = 10.0; // in pixel
@@ -1179,8 +1180,9 @@ export class CatalogDisplayStore {
         this.isShowingSelectedData = isShowingSelectedData;
     }
 
-    @action setCatalogTableAutoScroll(isCatalogTableAutoScrollEnabled: boolean) {
-        this.isCatalogTableAutoScrollEnabled = isCatalogTableAutoScrollEnabled;
+    /** Request one auto-scroll in each table currently showing this catalog. */
+    @action requestCatalogTableAutoScroll() {
+        this.catalogTableAutoScrollRequestId++;
     }
 
     @action setCatalogPlotType(type: CatalogPlotType) {

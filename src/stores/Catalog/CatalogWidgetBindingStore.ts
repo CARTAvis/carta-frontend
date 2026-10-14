@@ -1,4 +1,4 @@
-import {action, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable, observe} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
@@ -64,6 +64,15 @@ export class CatalogWidgetBindingStore {
     public catalogOf(componentId: string): number | undefined {
         const state = this.plots.get(componentId);
         return state ? state.activeCatalogFileId : this.tableCatalogs.get(componentId);
+    }
+
+    /** Observe a table's catalog changes immediately, including changes within an action. */
+    public observeTableCatalog(componentId: string, onChange: (catalogFileId: number | undefined) => void): () => void {
+        return observe(this.tableCatalogs, change => {
+            if (change.name === componentId) {
+                onChange(change.type === "delete" ? undefined : change.newValue);
+            }
+        });
     }
 
     /** Show a loaded catalog in a table or plot widget. */

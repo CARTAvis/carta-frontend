@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@bluepri
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {type CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, observe} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
@@ -28,9 +28,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private prevPosition: number = 60;
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
-    private readonly disposers: IReactionDisposer[] = [];
+    private readonly disposers: (() => void)[] = [];
     private catalogHeaderTableRef: Table | undefined = undefined;
     private catalogFileNames: Map<number, string>;
+    private autoScrollDisplayStore: CatalogDisplayStore | undefined;
+    private autoScrollRequestId: number = 0;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -134,6 +136,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, CatalogStore.Instance.activeCatalogFiles[0]);
         this.catalogFileNames = new Map<number, string>();
 
+        const bindAutoScrollDisplayStore = (displayStore: CatalogDisplayStore | undefined) => {
+            this.autoScrollDisplayStore = displayStore;
+            this.autoScrollRequestId = displayStore?.catalogTableAutoScrollRequestId ?? 0;
+        };
+        bindAutoScrollDisplayStore(this.displayStore);
+        // Observe adoption immediately, even inside an action that also requests scrolling.
+        this.disposers.push(
+            CatalogStore.Instance.widgetBindings.observeTableCatalog(this.widgetId, catalogFileId => bindAutoScrollDisplayStore(catalogFileId === undefined ? undefined : CatalogStore.Instance.getCatalogDisplayStore(catalogFileId))),
+            observe(CatalogStore.Instance.catalogDisplayStores, change => {
+                if (change.name === this.catalogFileId) {
+                    bindAutoScrollDisplayStore(change.type === "delete" ? undefined : change.newValue);
+                }
+            })
+        );
+
         this.disposers.push(
             autorun(() => {
                 const appStore = AppStore.Instance;
@@ -186,7 +203,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         if (profileStore && this.catalogTableRef && catalogDisplayStore) {
             this.updateTableSize(this.catalogTableRef, this.props.docked);
-            if (profileStore.regionSelected && catalogDisplayStore.isCatalogTableAutoScrollEnabled && !catalogDisplayStore.isShowingSelectedData) {
+            if (profileStore.regionSelected && this.hasPendingAutoScroll(catalogDisplayStore) && !catalogDisplayStore.isShowingSelectedData) {
                 this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
             }
         }
@@ -519,18 +536,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 return;
             }
         }
-        if (profileStore?.regionSelected) {
-            if (displayStore?.isShowingSelectedData) {
-                // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
-                this.scrollToRegion(this.catalogTableRef, Regions.row(0));
-            } else {
-                if (displayStore?.isCatalogTableAutoScrollEnabled) {
-                    this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
-                    displayStore.setCatalogTableAutoScroll(false);
-                }
-            }
+        if (!profileStore || !displayStore || !this.hasPendingAutoScroll(displayStore)) {
+            return;
+        }
+
+        this.autoScrollRequestId = displayStore.catalogTableAutoScrollRequestId;
+        if (profileStore.regionSelected) {
+            this.scrollToRegion(this.catalogTableRef, displayStore.isShowingSelectedData ? Regions.row(0) : profileStore.autoScrollRowNumber);
         }
     };
+
+    private hasPendingAutoScroll(displayStore: CatalogDisplayStore): boolean {
+        return this.autoScrollDisplayStore === displayStore && this.autoScrollRequestId !== displayStore.catalogTableAutoScrollRequestId;
+    }
 
     public render() {
         const catalogDisplayStore = this.displayStore;
