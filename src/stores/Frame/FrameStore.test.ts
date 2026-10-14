@@ -1221,3 +1221,17 @@ describe("FrameStore.genRegionWcsProperties output", () => {
         ).toBe('ellipse(wcs:GALACTIC)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]');
     });
 });
+
+describe("FrameStore WCS header cards", () => {
+    test("does not send header entries without a keyword to AST", () => {
+        const putFits = AST.putFits as jest.Mock;
+        putFits.mockClear();
+        const headerEntries = [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries!, {name: "", value: "0", entryType: 1, numericValue: 0}, {name: "   ", value: "1"}];
+        new FrameStore({...STOKES_CUBEFRAME_INFO, fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, headerEntries}} as FrameInfo);
+
+        const cards = putFits.mock.calls.map(([, card]) => card as string);
+        expect(cards.length).toBeGreaterThan(0);
+        expect(cards.filter(card => /^\s*=/.test(card))).toEqual([]);
+        expect(cards.every(card => /^[A-Z0-9_-][A-Z0-9_ -]{7}=/.test(card))).toBe(true);
+    });
+});
