@@ -78,6 +78,29 @@ describe("AnimatorComponent", () => {
         component.componentWillUnmount();
     });
 
+    test.each([7, 10])("preserves a later panel selection of channel %i", channel => {
+        const frame = {
+            requiredChannel: 0,
+            channelSelectionToken: {},
+            frameInfo: {fileInfoExtended: {depth: 100}},
+            setChannel: jest.fn((selectedChannel: number) => {
+                frame.requiredChannel = selectedChannel;
+                frame.channelSelectionToken = {};
+            })
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
+        const component = new AnimatorComponent({} as any);
+        component.onChannelChanged(10);
+        component.onChannelChanged(20);
+        frame.setChannel(channel);
+
+        jest.advanceTimersByTime(50);
+
+        expect(frame.requiredChannel).toBe(channel);
+        expect(frame.setChannel).toHaveBeenCalledTimes(2);
+        component.componentWillUnmount();
+    });
+
     test("cancels the pending channel change on unmount", () => {
         const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);

@@ -242,6 +242,9 @@ export class FrameStore {
     @observable isOffsetCoord: boolean = false;
     @observable skyRefIs: SkyRefIs = SkyRefIs.Origin;
 
+    /** Identity token used to invalidate delayed channel input after a later selection. */
+    channelSelectionToken: object = {};
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName =
@@ -560,7 +563,10 @@ export class FrameStore {
             return [];
         }
 
-        const beams = this.channelInfo.indexes.map(channelIndex => this.getBeam(channelIndex, stokes));
+        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
+        const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
+        const beamLookup = this.beamLookup;
+        const beams = this.channelInfo.indexes.map(channelIndex => beamLookup.get(this.getBeamKey(channelIndex, stokes, hasChannels, hasStokes)));
         return beams.filter(beam => beam !== undefined);
     };
 
@@ -3183,6 +3189,7 @@ export class FrameStore {
         }
 
         this.requiredChannel = sanitizedChannel;
+        this.channelSelectionToken = {};
         this.requiredStokes = stokes;
 
         if (isRecursive) {

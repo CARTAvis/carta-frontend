@@ -58,8 +58,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         this.numericInputType = type;
     };
 
-    private throttledChannelChange = throttle((frame: FrameStore, val: number) => {
-        if (frame === AppStore.Instance.activeFrame) {
+    private throttledChannelChange = throttle((frame: FrameStore, val: number, selectionToken: object) => {
+        if (frame === AppStore.Instance.activeFrame && frame.channelSelectionToken === selectionToken) {
             frame.setChannel(this.wrapIndex(val, frame.frameInfo.fileInfoExtended.depth));
         }
     }, AnimatorComponent.ChannelChangeThrottleTime);
@@ -69,7 +69,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const frame = appStore.activeFrame;
         if (frame) {
             if (appStore.channelMapStore.isChannelMapEnabled) {
-                this.throttledChannelChange(frame, val);
+                this.throttledChannelChange(frame, val, frame.channelSelectionToken);
             } else {
                 this.cancelPendingChannelChange();
                 frame.setChannel(this.wrapIndex(val, frame.frameInfo.fileInfoExtended.depth));

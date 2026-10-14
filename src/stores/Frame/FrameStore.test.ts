@@ -181,6 +181,15 @@ describe("FrameStore", () => {
         });
     });
 
+    test("invalidates pending input when selecting the current channel again", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        const token = frame.channelSelectionToken;
+
+        frame.setChannel(frame.requiredChannel);
+
+        expect(frame.channelSelectionToken).not.toBe(token);
+    });
+
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
