@@ -199,7 +199,7 @@ describe("FrameStore", () => {
 
         test("returns beam properties for the requested stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
-            const beam = frame.getBeamProperties(1);
+            const beam = frame.getBeamProperties({stokes: 1});
             expect(beam).toHaveProperty("majorAxis", 0.931560754776001);
             expect(beam).toHaveProperty("minorAxis", 0.8433191776275635);
             expect(beam).toHaveProperty("angle", 42.579010009765625);
@@ -229,7 +229,7 @@ describe("FrameStore", () => {
 
         test("returns the beam for a specified channel", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
-            const beam = frame.getBeamProperties(undefined, 2);
+            const beam = frame.getBeamProperties({channel: 2});
             expect(beam).toHaveProperty("majorAxis", 0.9315680265426636);
             expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
             expect(beam).toHaveProperty("angle", 42.57808303833008);
@@ -245,52 +245,79 @@ describe("FrameStore", () => {
                 fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth, stokes: stokesCount}
             } as FrameInfo);
             const expected = STOKES_CUBEFRAME_INFO.beamTable[beamIndex];
-            expect(frame.getBeamProperties(stokes, channel)).toMatchObject({majorAxis: expected.majorAxis, minorAxis: expected.minorAxis, angle: expected.pa});
+            expect(frame.getBeamProperties({stokes, channel})).toMatchObject({majorAxis: expected.majorAxis, minorAxis: expected.minorAxis, angle: expected.pa});
         });
 
         test("returns a global beam for any channel and stokes", () => {
             const beam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
             const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam]});
-            expect(frame.getBeamProperties(1, 2)).toHaveProperty("majorAxis", beam.majorAxis);
+            expect(frame.getBeamProperties({stokes: 1, channel: 2})).toHaveProperty("majorAxis", beam.majorAxis);
         });
 
         test("preserves the first duplicate beam and returns null for missing entries", () => {
             const beam = STOKES_CUBEFRAME_INFO.beamTable[0];
             const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam, {...beam, majorAxis: 2}]});
-            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", beam.majorAxis);
-            expect(frame.getBeamProperties(0, 1)).toBeNull();
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", beam.majorAxis);
+            expect(frame.getBeamProperties({stokes: 0, channel: 1})).toBeNull();
         });
 
         test("uses the new beam table after frame metadata is replaced", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
-            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
             frame.setFrameInfo({...STOKES_CUBEFRAME_INFO, beamTable: [{...STOKES_CUBEFRAME_INFO.beamTable[0], majorAxis: 2}]});
-            expect(frame.getBeamProperties(0, 0)).toHaveProperty("majorAxis", 2);
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", 2);
+        });
+
+        test("rebuilds the lookup when a beam row and its channel key are changed in place", () => {
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: STOKES_CUBEFRAME_INFO.beamTable.map(beam => ({...beam}))});
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
+            runInAction(() => {
+                frame.frameInfo.beamTable[0] = {...frame.frameInfo.beamTable[0], majorAxis: 2};
+            });
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", 2);
+
+            runInAction(() => {
+                frame.frameInfo.beamTable[0].channel = 2;
+            });
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toBeNull();
+            expect(frame.getBeamProperties({stokes: 0, channel: 2})).toHaveProperty("majorAxis", 2);
         });
     });
 
     describe("shouldShowBeamForAllChannels", () => {
-        const createFrameWithHeaders = (...additionalHeaders: CARTA.HeaderEntry.$Properties[]) =>
+        const createFrame = (beamTable = STOKES_CUBEFRAME_INFO.beamTable, ...additionalHeaders: CARTA.HeaderEntry.$Properties[]) =>
             new FrameStore({
                 ...STOKES_CUBEFRAME_INFO,
+                beamTable,
                 fileInfoExtended: {
                     ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
                     headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, ...additionalHeaders]
                 }
             } as FrameInfo);
 
-        test("returns true for CASA per-channel beam metadata", () => {
-            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"});
+        test("returns true for channel-indexed beams without a CASA header marker", () => {
+            const frame = createFrame();
             expect(frame.shouldShowBeamForAllChannels).toBe(true);
         });
 
-        test("returns false without the CASA beam table marker", () => {
-            const frame = createFrameWithHeaders();
+        test("keeps channel-indexed beams visible with standard beam headers", () => {
+            const frame = createFrame(STOKES_CUBEFRAME_INFO.beamTable, {name: "BMAJ", value: "1"}, {name: "BMIN", value: "1"}, {name: "BPA", value: "0"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(true);
+        });
+
+        test("does not treat a Stokes-only beam table as per-channel", () => {
+            const stokesOnlyBeams = STOKES_CUBEFRAME_INFO.beamTable.slice(0, 2).map(beam => ({...beam, channel: -1}));
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable: stokesOnlyBeams,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth: 1}
+            } as FrameInfo);
             expect(frame.shouldShowBeamForAllChannels).toBe(false);
         });
 
-        test.each(["BMAJ", "BMIN", "BPA"])("returns false when %s is present", headerName => {
-            const frame = createFrameWithHeaders({name: "CASAMBM", value: "T"}, {name: headerName, value: "1"});
+        test("does not treat a global beam as channel-indexed", () => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: -1, stokes: -1};
+            const frame = createFrame([globalBeam]);
             expect(frame.shouldShowBeamForAllChannels).toBe(false);
         });
     });

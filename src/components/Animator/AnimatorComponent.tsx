@@ -65,9 +65,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     }, AnimatorComponent.ChannelChangeThrottleTime);
 
     onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame) {
-            this.throttledChannelChange(frame, val);
+            if (appStore.channelMapStore.isChannelMapEnabled) {
+                this.throttledChannelChange(frame, val);
+            } else {
+                this.cancelPendingChannelChange();
+                frame.setChannel(this.wrapIndex(val, frame.frameInfo.fileInfoExtended.depth));
+            }
         }
     };
 

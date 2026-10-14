@@ -511,21 +511,15 @@ export class FrameStore {
     }
 
     @computed get shouldShowBeamForAllChannels(): boolean {
-        const headerEntries = this.frameInfo?.fileInfoExtended?.headerEntries;
-        if (!headerEntries) {
-            return false;
-        }
-
-        const hasStandardBeamHeader = ["BMAJ", "BMIN", "BPA"].some(name => headerEntries.some(entry => entry.name === name));
-        const hasCasaBeamTable = headerEntries.some(entry => entry.name === "CASAMBM" && trimFitsComment(entry.value).trim().toUpperCase() === "T");
-        return hasCasaBeamTable && !hasStandardBeamHeader;
+        return this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.beamTable.some(beam => beam.channel != null && beam.channel >= 0);
     }
 
     @computed get beamProperties(): BeamProperties | null {
         return this.getBeamProperties();
     }
 
-    getBeamProperties = (stokes: number = this.requiredStokes, channel: number = this.requiredChannel): BeamProperties | null => {
+    getBeamProperties = (options: {stokes?: number; channel?: number} = {}): BeamProperties | null => {
+        const {stokes = this.requiredStokes, channel = this.requiredChannel} = options;
         const pixelUnitSizeArcsec = this.pixelUnitSizeArcsec;
         if (
             !this.isSwappedZ &&
@@ -570,29 +564,31 @@ export class FrameStore {
         return beams.filter(beam => beam !== undefined);
     };
 
-    private beamLookupFrameInfo: FrameInfo | undefined;
-    private beamLookup = new Map<string, CARTA.Beam.$Properties>();
+    private getBeamKey = (channel: number, stokes: number, hasChannels: boolean, hasStokes: boolean): string => {
+        return `${hasChannels ? channel : -1}_${hasStokes ? stokes : -1}`;
+    };
+
+    @computed private get beamLookup(): Map<string, CARTA.Beam.$Properties> {
+        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
+        const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
+        const beamLookup = new Map<string, CARTA.Beam.$Properties>();
+        for (const beam of this.frameInfo.beamTable) {
+            const key = this.getBeamKey(beam.channel ?? -1, beam.stokes ?? -1, hasChannels, hasStokes);
+            if (!beamLookup.has(key)) {
+                beamLookup.set(key, beam);
+            }
+        }
+        return beamLookup;
+    }
 
     private getBeam = (channel: number, stokes: number): CARTA.Beam.$Properties | undefined => {
         if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
             return this.frameInfo.beamTable[0];
         }
-        const hasChannels = this.frameInfo.fileInfoExtended.depth > 1;
-        const hasStokes = this.frameInfo.fileInfoExtended.stokes > 1;
-        if (!hasChannels && !hasStokes) {
+        if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
             return undefined;
         }
-        if (this.beamLookupFrameInfo !== this.frameInfo) {
-            this.beamLookup.clear();
-            for (const beam of this.frameInfo.beamTable) {
-                const key = `${hasChannels ? beam.channel : -1}_${hasStokes ? beam.stokes : -1}`;
-                if (!this.beamLookup.has(key)) {
-                    this.beamLookup.set(key, beam);
-                }
-            }
-            this.beamLookupFrameInfo = this.frameInfo;
-        }
-        return this.beamLookup.get(`${hasChannels ? channel : -1}_${hasStokes ? stokes : -1}`);
+        return this.beamLookup.get(this.getBeamKey(channel, stokes, this.frameInfo.fileInfoExtended.depth > 1, this.frameInfo.fileInfoExtended.stokes > 1));
     };
 
     @computed get hasVisibleBeam(): boolean {

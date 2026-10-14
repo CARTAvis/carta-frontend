@@ -56,7 +56,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
 
-        const beamProperties = frame.getBeamProperties(undefined, frame === this.props.frame ? this.props.channel : undefined);
+        const beamProperties = frame.getBeamProperties({channel: frame === this.props.frame ? this.props.channel : undefined});
         if (!beamProperties || !beamProperties.overlayBeamSettings.isVisible) {
             return null;
         }
