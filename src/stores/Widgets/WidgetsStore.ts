@@ -649,6 +649,10 @@ export class WidgetsStore {
         if (savedConfig.id) {
             const id = this.addWidgetByType(this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType), savedConfig.widgetSettings);
             const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
+            const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
+            if (catalogPlotWidgetStore) {
+                config.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
+            }
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;

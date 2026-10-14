@@ -1,7 +1,7 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -328,6 +328,27 @@ describe("WidgetsStore initWidgets", () => {
         widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], []);
 
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+
+    test.each([
+        ["histogram", CatalogPlotType.Histogram, HelpType.CATALOG_HISTOGRAM_PLOT],
+        ["scatter", CatalogPlotType.D2Scatter, HelpType.CATALOG_SCATTER_PLOT]
+    ])("restores the floating %s plot help button from current and legacy layout settings", (_label, plotType, expectedHelpType) => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets(
+            [],
+            [
+                {type: "component", id: "catalog-plot", widgetSettings: {plotType}},
+                {type: "component", id: "catalog-plot", plotType}
+            ]
+        );
+
+        expect(widgetsStore.floatingWidgets).toHaveLength(2);
+        widgetsStore.floatingWidgets.forEach(config => {
+            expect(widgetsStore.catalogPlotWidgets.get(config.id)?.plotType).toBe(plotType);
+            expect(config.helpType).toBe(expectedHelpType);
+        });
     });
 
     test("creates a catalog plot by the plot type beside its settings in a layout saved before they held it", () => {
