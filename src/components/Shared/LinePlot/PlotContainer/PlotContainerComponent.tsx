@@ -57,6 +57,7 @@ export class PlotContainerProps {
 export class MultiPlotProps {
     imageName: string;
     plotName: string;
+    exportTitle?: string;
     data: {x: number; y: number}[];
     type: PlotType;
     borderColor?: string;
