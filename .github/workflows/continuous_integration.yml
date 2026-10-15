@@ -50,7 +50,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container:
-      image: carta/frontend-builder
+      image: carta/frontend-builder-test
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
@@ -62,11 +62,22 @@ jobs:
         run: |
           chown -R $(id -u):$(id -g) $PWD
 
-      - name: Build libs
+      - name: Use precompiled WASM libraries
         shell: bash
         run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
+          set -e
+
+          cp -a /opt/carta/wasm_libs/built ./wasm_libs/
+
+          mkdir -p ./wasm_libs/zstd/build
+          cp /opt/carta/wasm_libs/zstd/build/standalone_zstd.a \
+             ./wasm_libs/zstd/build/
+
+          test -s ./wasm_libs/built/lib/libast.a
+          test -s ./wasm_libs/built/lib/libgsl.a
+          test -s ./wasm_libs/built/lib/libgslcblas.a
+          test -s ./wasm_libs/built/lib/libzfp.a
+          test -s ./wasm_libs/zstd/build/standalone_zstd.a
 
       - name: npm install with node 24
         shell: bash
@@ -90,7 +101,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container:
-      image: carta/frontend-builder
+      image: carta/frontend-builder-test
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
@@ -102,11 +113,22 @@ jobs:
         run: |
           chown -R $(id -u):$(id -g) $PWD
 
-      - name: Build libs
+      - name: Use precompiled WASM libraries
         shell: bash
         run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
+          set -e
+
+          cp -a /opt/carta/wasm_libs/built ./wasm_libs/
+
+          mkdir -p ./wasm_libs/zstd/build
+          cp /opt/carta/wasm_libs/zstd/build/standalone_zstd.a \
+             ./wasm_libs/zstd/build/
+
+          test -s ./wasm_libs/built/lib/libast.a
+          test -s ./wasm_libs/built/lib/libgsl.a
+          test -s ./wasm_libs/built/lib/libgslcblas.a
+          test -s ./wasm_libs/built/lib/libzfp.a
+          test -s ./wasm_libs/zstd/build/standalone_zstd.a
 
       - name: npm install with node 22
         shell: bash
