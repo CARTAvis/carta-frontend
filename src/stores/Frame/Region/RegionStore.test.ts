@@ -64,6 +64,21 @@ const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: numbe
     return region;
 };
 
+test.each([
+    {x: 5, y: 10},
+    {x: 10, y: 5}
+])("annulus rotation handle supports either major axis: %j", size => {
+    const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [{x: 10, y: 10}, size, {x: size.x / 2, y: size.y / 2}]);
+    annulus.selectPoint(SIMPLE_SHAPE_ROTATION_POINT_INDEX);
+    expect(annulus.hasSelectedRotationPoint).toBe(true);
+    annulus.setRotation(210);
+    expect(annulus.rotation).toBe(210);
+    expect(annulus.size).toEqual(size);
+    annulus.setSize({x: size.y, y: size.x});
+    expect(annulus.rotation).toBe(210);
+    expect(annulus.hasSelectedRotationPoint).toBe(true);
+});
+
 test("imported annulus retains its orientation on rectangular pixels", () => {
     const axes = [
         {x: 10, y: 10},
