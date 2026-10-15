@@ -79,6 +79,26 @@ test.each([
     expect(annulus.hasSelectedRotationPoint).toBe(true);
 });
 
+test("annulus annotation uses annulus editing and remains an annotation", () => {
+    const center = {x: 42, y: 73};
+    const annulus = MakeRegion(CARTA.RegionType.ANNANNULUS, [center, {x: 0, y: 0}, {x: 0, y: 0}]);
+    expect(RegionStore.AVAILABLE_ANNOTATION_TYPES.get(CARTA.RegionType.ANNANNULUS)).toBe("Annulus");
+    expect(RegionStore.AVAILABLE_REGION_TYPES.has(CARTA.RegionType.ANNANNULUS)).toBe(false);
+    expect(annulus.isAnnotation).toBe(true);
+    expect(annulus.isClosedRegion).toBe(false);
+    annulus.setSize({x: 10, y: 20});
+    annulus.setInnerSize({x: 5, y: 10});
+    expect(annulus.isValid).toBe(true);
+    expect(annulus.center).toEqual(center);
+    expect(annulus.innerSize).toEqual({x: 5, y: 10});
+    annulus.selectPoint(SIMPLE_SHAPE_ROTATION_POINT_INDEX);
+    expect(annulus.hasSelectedRotationPoint).toBe(true);
+    annulus.setRotation(210);
+    expect(annulus.rotation).toBe(210);
+    expect(RegionStore.regionIconString(annulus.regionType)).toBe("annulus");
+    expect(RegionStore.regionTypeString(annulus.regionType)).toBe("Annulus - Ann");
+});
+
 test("sizing a click-created annulus preserves its initial center", () => {
     const center = {x: 42, y: 73};
     const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [center, {x: 0, y: 0}, {x: 0, y: 0}]);

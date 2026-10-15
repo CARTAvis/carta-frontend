@@ -13,6 +13,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, getNextRegionOpacity, length2D, toFixed} from "utilities";
+import {isAnnulusRegionType} from "utilities/region/region";
 
 import "./RegionListComponent.scss";
 
@@ -561,22 +562,21 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
                     if (frame.isValidWcs) {
-                        sizeContent =
-                            region.regionType === CARTA.RegionType.ANNULUS ? (
-                                <React.Fragment>
-                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.x, WCS_PRECISION)}
-                                    <br />
-                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.y, WCS_PRECISION)}
-                                </React.Fragment>
-                            ) : region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                                formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
-                            ) : (
-                                <React.Fragment>
-                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
-                                    <br />
-                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
-                                </React.Fragment>
-                            );
+                        sizeContent = isAnnulusRegionType(region.regionType) ? (
+                            <React.Fragment>
+                                {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.x, WCS_PRECISION)}
+                                <br />
+                                {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.y, WCS_PRECISION)}
+                            </React.Fragment>
+                        ) : region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
+                            formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
+                        ) : (
+                            <React.Fragment>
+                                {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
+                                <br />
+                                {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
+                            </React.Fragment>
+                        );
                     } else {
                         sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size && length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
@@ -588,6 +588,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Semi-major and semi-minor axes";
                         break;
                     case CARTA.RegionType.ANNULUS:
+                    case CARTA.RegionType.ANNANNULUS:
                         tooltipContent = "Outer / inner axes";
                         break;
                     case CARTA.RegionType.LINE:

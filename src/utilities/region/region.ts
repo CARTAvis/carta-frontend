@@ -26,6 +26,10 @@ import {
 
 const CENTER_POINT_INDEX = 0;
 const SIZE_POINT_INDEX = 1;
+export function isAnnulusRegionType(regionType: CARTA.RegionType): boolean {
+    return regionType === CARTA.RegionType.ANNULUS || regionType === CARTA.RegionType.ANNANNULUS;
+}
+
 export const ANNULUS_SHAPE_TOLERANCE = 1e-5;
 
 /** Checks that an annulus's inner and outer ellipses have matching axis ratios. */
@@ -143,7 +147,8 @@ export function getRegionPixelProperties(regionType: CARTA.RegionType, controlPo
             const size = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
             return `ellipse[[${center}], [${size}], ${toFixed(rotation, 6)}deg]`;
         }
-        case CARTA.RegionType.ANNULUS: {
+        case CARTA.RegionType.ANNULUS:
+        case CARTA.RegionType.ANNANNULUS: {
             const outerSize = getSizePixelString(controlPoints[SIZE_POINT_INDEX]);
             const innerSize = controlPoints.length >= 3 ? getSizePixelString(controlPoints[2]) : outerSize;
             return `annulus[[${center}], [${innerSize}], [${outerSize}], ${toFixed(rotation, 6)}deg]`;
@@ -212,7 +217,8 @@ export function getRegionWcsProperties(regionType: CARTA.RegionType, controlPoin
             return `rotbox(wcs:${system})[[${center}], [${formatSize(controlPoints[SIZE_POINT_INDEX])}], ${toFixed(rotation, 6)}deg]`;
         case CARTA.RegionType.ELLIPSE:
             return `ellipse(wcs:${system})[[${center}], [${formatSize(controlPoints[SIZE_POINT_INDEX])}], ${toFixed(rotation, 6)}deg]`;
-        case CARTA.RegionType.ANNULUS: {
+        case CARTA.RegionType.ANNULUS:
+        case CARTA.RegionType.ANNANNULUS: {
             const angle = (rotation * Math.PI) / 180;
             const sine = Math.sin(angle);
             const cosine = Math.cos(angle);
@@ -261,7 +267,8 @@ export function getTransformedRegionProperties(region: RegionTransformSource, sp
                 rotation: region.rotation - (transform.rotation * 180) / Math.PI
             };
         }
-        case CARTA.RegionType.ANNULUS: {
+        case CARTA.RegionType.ANNULUS:
+        case CARTA.RegionType.ANNANNULUS: {
             return getTransformedAnnulusProperties(region, spatialTransformAST) ?? {controlPoints: [{x: NaN, y: NaN}, region.size, region.innerSize || region.size], rotation: region.rotation};
         }
         default:
@@ -402,7 +409,7 @@ export function getRegionSelectionPoints(region: RegionStore): Point2D[] {
     }
 
     const rotation = (region.rotation * Math.PI) / 180.0;
-    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE || region.regionType === CARTA.RegionType.ANNULUS) {
+    if (region.regionType === CARTA.RegionType.ELLIPSE || region.regionType === CARTA.RegionType.ANNELLIPSE || isAnnulusRegionType(region.regionType)) {
         // Ellipse size stores semi-major in y and semi-minor in x.
         return getRotatedBoxPoints(region.center, region.size.y, region.size.x, rotation);
     }
@@ -476,7 +483,7 @@ export function getRegionSelectionSegments(region: RegionStore, points: Point2D[
         return getPathSegments(points, isClosed);
     }
 
-    if (region.isSimpleShapeRegion || region.regionType === CARTA.RegionType.ANNULUS) {
+    if (region.isSimpleShapeRegion || isAnnulusRegionType(region.regionType)) {
         return getPathSegments(points, true);
     }
 
@@ -577,6 +584,7 @@ export function translateRegionPoints(points: Point2D[], regionType: CARTA.Regio
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE:
         case CARTA.RegionType.ANNULUS:
+        case CARTA.RegionType.ANNANNULUS:
         case CARTA.RegionType.ANNTEXT:
         case CARTA.RegionType.ANNCOMPASS:
             return points.map((point, index) => (index === CENTER_POINT_INDEX ? add2D(point, delta) : {...point}));

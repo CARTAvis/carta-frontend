@@ -123,6 +123,7 @@ export class RegionDialogComponent extends React.Component {
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     break;
                 case CARTA.RegionType.ANNULUS:
+                case CARTA.RegionType.ANNANNULUS:
                     configurationPanel = <AnnulusRegionForm region={region} frame={frame} wcsInfo={frame.isValidWcs ? frame.wcsInfoForTransformation : 0} />;
                     break;
                 case CARTA.RegionType.POLYGON:

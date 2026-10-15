@@ -27,6 +27,7 @@ import {
     transformPoint,
     usesSimpleShapeBoxSize
 } from "utilities";
+import {isAnnulusRegionType} from "utilities/region/region";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, projectedRegionPointsToCanvasOffsets, transformedImageToCanvasPos} from "./shared";
@@ -159,7 +160,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint,
             textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
         });
-        if (region.regionType === CARTA.RegionType.ANNULUS) {
+        if (isAnnulusRegionType(region.regionType)) {
             const ratio = region.size.y > 0 ? region.innerSize.y / region.size.y : 0.5;
             region.setAnnulusGeometry(edit.center, edit.size, ratio);
             return;
@@ -326,7 +327,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     @action private selectSimpleShapeAnchor = (anchor: string) => {
-        if (!this.props.region.isSimpleShapeRegion && this.props.region.regionType !== CARTA.RegionType.ANNULUS) {
+        if (!this.props.region.isSimpleShapeRegion && !isAnnulusRegionType(this.props.region.regionType)) {
             return;
         }
 
@@ -471,7 +472,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
 
-        if (region.regionType === CARTA.RegionType.ANNULUS) {
+        if (isAnnulusRegionType(region.regionType)) {
             anchorConfigs.push({anchor: "inner-radius", offset: {x: 0, y: region.innerSize.x}});
         }
 
@@ -622,7 +623,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             if (region.regionType === CARTA.RegionType.ANNTEXT) {
                 shapeNode = <Text {...this.getTextProps(region, centerPixelSpace)} />;
-            } else if (region.regionType === CARTA.RegionType.ANNULUS) {
+            } else if (isAnnulusRegionType(region.regionType)) {
                 const approx = region.getAnnulusApproximation(frame.spatialTransformAST);
                 const outerPoints = projectedRegionPointsToCanvasOffsets(approx.outer, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 const innerPoints = projectedRegionPointsToCanvasOffsets(approx.inner, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -715,7 +716,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
                 shapeNode = <Text ref={this.textRef} {...this.getTextProps(region, centerPixelSpace)} />;
-            } else if (region.regionType === CARTA.RegionType.ANNULUS) {
+            } else if (isAnnulusRegionType(region.regionType)) {
                 const innerWidth = region.innerSize.x / devicePixelRatio;
                 const innerHeight = region.innerSize.y / devicePixelRatio;
                 shapeNode = (

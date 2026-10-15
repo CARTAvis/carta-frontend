@@ -83,19 +83,32 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
         jest.useRealTimers();
     });
 
-    test("creates annulus inner and outer radii using independent axis zoom", () => {
+    test("starts annulus annotation creation at the clicked position", () => {
+        const center = {x: 42, y: 73};
+        jest.spyOn(component as any, "getCursorPosImageSpace").mockReturnValue(center);
+        const region = {beginCreating: jest.fn()};
+        const addAnnAnnulusRegion = jest.fn(() => region);
+        const frame = (component as any).frame;
+        frame.regionSet.newRegionType = CARTA.RegionType.ANNANNULUS;
+        frame.regionSet.addAnnAnnulusRegion = addAnnAnnulusRegion;
+        (component as any).regionCreationStart({offsetX: 100, offsetY: 100});
+        expect(addAnnAnnulusRegion).toHaveBeenCalledWith(center, 0, 0, 0, 0, true);
+        expect(region.beginCreating).toHaveBeenCalled();
+    });
+
+    test.each([CARTA.RegionType.ANNULUS, CARTA.RegionType.ANNANNULUS])("creates annulus %s radii using independent axis zoom", regionType => {
         jest.useFakeTimers();
         const frame = (component as any).frame;
         runInAction(() => {
             frame.effectiveZoomLevel = {x: 2, y: 4};
             frame.regionSet.mode = RegionMode.CREATING;
-            frame.regionSet.newRegionType = CARTA.RegionType.ANNULUS;
+            frame.regionSet.newRegionType = regionType;
         });
         expect((component as any).stageRef.current.scale).toHaveBeenCalledWith({x: 2, y: 4});
         frame.regionSet.selectSingleRegion = jest.fn();
         frame.regionSet.setMode = jest.fn();
         const region = {
-            regionType: CARTA.RegionType.ANNULUS,
+            regionType,
             controlPoints: [
                 {x: 0, y: 0},
                 {x: 0, y: 0},

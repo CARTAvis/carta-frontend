@@ -1,7 +1,6 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
 import type * as AST from "ast_wrapper";
-import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
@@ -10,6 +9,7 @@ import {IsValidWcsPoint, Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+import {isAnnulusRegionType} from "utilities/region/region";
 
 import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
@@ -212,7 +212,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const isImgCoordinates = overlaySettings.isImgCoordinates;
 
         const region = this.props.region;
-        if (!region || region.controlPoints.length < 3 || region.regionType !== CARTA.RegionType.ANNULUS) {
+        if (!region || region.controlPoints.length < 3 || !isAnnulusRegionType(region.regionType)) {
             return null;
         }
 

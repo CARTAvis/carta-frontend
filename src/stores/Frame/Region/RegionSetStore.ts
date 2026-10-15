@@ -482,6 +482,10 @@ export class RegionSetStore {
         return this.addRegion([center, {x: outerSemiMinor, y: outerSemiMajor}, {x: innerSemiMinor, y: innerSemiMajor}], 0, CARTA.RegionType.ANNULUS, isTemporary);
     };
 
+    @action addAnnAnnulusRegion = (center: Point2D, outerSemiMajor: number, outerSemiMinor: number, innerSemiMajor: number, innerSemiMinor: number, isTemporary: boolean = false) => {
+        return this.addRegion([center, {x: outerSemiMinor, y: outerSemiMajor}, {x: innerSemiMinor, y: innerSemiMajor}], 0, CARTA.RegionType.ANNANNULUS, isTemporary);
+    };
+
     @action addPolygonalRegion = (points: Point2D[], isTemporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, isTemporary);
     };
@@ -627,6 +631,7 @@ export class RegionSetStore {
             case CARTA.RegionType.ANNVECTOR:
                 return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNANNULUS:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.ANNPOLYLINE:
@@ -806,7 +811,8 @@ export class RegionSetStore {
                             newControlPoints = [centerNewFrame, size];
                         }
                         break;
-                    case CARTA.RegionType.ANNULUS: {
+                    case CARTA.RegionType.ANNULUS:
+                    case CARTA.RegionType.ANNANNULUS: {
                         const transformed = getTransformedAnnulusProperties(region, spatialTransformAST, isForward);
                         if (transformed) {
                             newControlPoints = transformed.controlPoints;
