@@ -12,6 +12,9 @@
  * If either of those is ever fixed, the "documents why AST is not the parser" block below starts
  * failing, which is the intended prompt to revisit the decision.
  */
+// Emscripten binds console.error when loading, so install the spy before requiring AST.
+const originalConsoleError = console.error.bind(console);
+const consoleError = jest.spyOn(console, "error").mockImplementation(originalConsoleError);
 const AST = require("./build/index.js");
 const {parseCoordinateValue} = require("../../src/utilities/catalog/coordinateFormat");
 
@@ -69,8 +72,12 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
-    AST.deleteObject(frameSet);
-    AST._free(valuePointer);
+    try {
+        AST.deleteObject(frameSet);
+        AST._free(valuePointer);
+    } finally {
+        consoleError.mockRestore();
+    }
 });
 
 describe("catalog coordinate parser against the AST oracle", () => {
@@ -115,8 +122,24 @@ describe("catalog coordinate parser against the AST oracle", () => {
     });
 
     test("agrees with AST that an out-of-range field is not a coordinate", () => {
-        expect(astUnformat(DEC_AXIS, "12:70:00")).toBeNaN();
-        expect(parseCoordinateValue("12:70:00", {kind: "sexagesimal", fieldUnit: "degree", source: "units"})).toBeNaN();
+        consoleError.mockImplementation((...args) => {
+            // AST emits these three diagnostics when rejecting the intentionally invalid arcminutes.
+            const message = args[0];
+            const isExpectedError =
+                (typeof message === "string" && /^!! AST: Error in routine unformat at line \d+ in file ast_wrapper\.cc\.$/.test(message)) ||
+                message === '!  Invalid arcminutes value in sky coordinate "12:70:00".' ||
+                message === '!  astUnformat(SkyFrame): Unable to read "Declination" value.';
+            if (!isExpectedError) {
+                originalConsoleError(...args);
+            }
+        });
+
+        try {
+            expect(astUnformat(DEC_AXIS, "12:70:00")).toBeNaN();
+            expect(parseCoordinateValue("12:70:00", {kind: "sexagesimal", fieldUnit: "degree", source: "units"})).toBeNaN();
+        } finally {
+            consoleError.mockImplementation(originalConsoleError);
+        }
     });
 });
 
