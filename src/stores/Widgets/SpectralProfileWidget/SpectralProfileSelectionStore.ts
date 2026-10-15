@@ -72,6 +72,7 @@ type Profile = {
         image: string | undefined;
         plot: string;
     };
+    exportName: string;
     intensityConfig: IntensityConfig;
     intensityUnit: string | undefined;
     isFluxDensityDerivedFromSum: boolean;
@@ -264,6 +265,7 @@ export class SpectralProfileSelectionStore {
                     data,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
+                    exportName: getProfilesPlotName([this.getPlotNameProfile(profileConfig)]).plot,
                     intensityConfig,
                     intensityUnit: frame.intensityUnit,
                     isFluxDensityDerivedFromSum
@@ -274,15 +276,17 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profilesPlotName(): {image: string; plot: string} {
-        return getProfilesPlotName(
-            this.profileConfigs.map(profileConfig => ({
-                imageName: AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)?.filename,
-                regionName: profileConfig.regionName,
-                statsType: profileConfig.statsType,
-                coordinate: profileConfig.coordinate
-            }))
-        );
+        return getProfilesPlotName(this.profileConfigs.map(this.getPlotNameProfile));
     }
+
+    private getPlotNameProfile = (profileConfig: ProfileConfig) => {
+        return {
+            imageName: AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)?.filename,
+            regionName: profileConfig.regionName,
+            statsType: profileConfig.statsType,
+            coordinate: profileConfig.coordinate
+        };
+    };
 
     @computed get profileOrderedKeys(): LineKey[] | undefined {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {
