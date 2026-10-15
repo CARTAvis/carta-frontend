@@ -259,7 +259,7 @@ export class SpectralProfileSelectionStore {
                 statTypes += `${index === 0 ? "" : ","}${StatsTypeString(profileConfig.statsType)}`;
             }
             if (prevCoordinate !== profileConfig.coordinate) {
-                coordinates += `${index === 0 ? "" : ","}${POLARIZATION_LABELS.get(profileConfig.coordinate.slice(0, profileConfig.coordinate.length - 1))}}`;
+                coordinates += `${index === 0 ? "" : ","}${POLARIZATION_LABELS.get(profileConfig.coordinate.slice(0, profileConfig.coordinate.length - 1))}`;
             }
             prevFileId = profileConfig.fileId;
             prevRegionId = profileConfig.regionId;
