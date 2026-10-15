@@ -646,7 +646,7 @@ export class RegionStore {
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else if (this.regionType === CARTA.RegionType.ANNULUS && this.controlPoints.length >= 3) {
             const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-            this.setAnnulusGeometry(this.center, p, ratio, shouldSkipUpdate);
+            this.setAnnulusGeometry(this.controlPoints[CENTER_POINT_INDEX], p, ratio, shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }

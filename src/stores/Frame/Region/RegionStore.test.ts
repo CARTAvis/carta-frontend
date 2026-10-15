@@ -79,6 +79,17 @@ test.each([
     expect(annulus.hasSelectedRotationPoint).toBe(true);
 });
 
+test("sizing a click-created annulus preserves its initial center", () => {
+    const center = {x: 42, y: 73};
+    const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [center, {x: 0, y: 0}, {x: 0, y: 0}]);
+    expect(annulus.isValid).toBe(false);
+    annulus.setSize({x: 10, y: 20});
+    annulus.setInnerSize({x: 5, y: 10});
+    expect(annulus.isValid).toBe(true);
+    expect(annulus.center).toEqual(center);
+    expect(annulus.controlPoints[0]).toEqual(center);
+});
+
 test("imported annulus retains its orientation on rectangular pixels", () => {
     const axes = [
         {x: 10, y: 10},
