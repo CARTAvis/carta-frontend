@@ -128,6 +128,16 @@ export function transformedImageToCanvasPos(imagePos: Point2D, frame: FrameStore
     return {x: 0, y: 0};
 }
 
+export function projectedRegionPointsToCanvasOffsets(points: Point2D[], center: Point2D, frame: FrameStore, layerWidth: number, layerHeight: number, stage: any): number[] {
+    const offsets = new Array<number>(points.length * 2);
+    for (let i = 0; i < points.length; i++) {
+        const canvasPoint = transformedImageToCanvasPos(points[i], frame, layerWidth, layerHeight, stage);
+        offsets[i * 2] = canvasPoint.x - center.x;
+        offsets[i * 2 + 1] = canvasPoint.y - center.y;
+    }
+    return offsets;
+}
+
 // Adjust the position in the stage of {origin: o', scale: z'} to the stage of {origin: (0, 0), scale: 1}.
 // If (x, y) in stage {origin: (0, 0), scale: 1} and (x', y') in stage {origin: o', scale: z'} are the same point,
 // the coordinate transformation between (x, y) and (x', y') would be x * 1 + 0 = x' * z' + o'
