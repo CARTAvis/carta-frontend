@@ -223,8 +223,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     private getInnerRadiusAnchorPosition = (region: RegionStore): Point2D => {
+        return this.getAnchorCanvasPosition(region, {x: 0, y: region.innerSize.x});
+    };
+
+    private getAnchorCanvasPosition = (region: RegionStore, offset: Point2D): Point2D => {
         const frame = this.props.frame;
-        let position = add2D(region.center, rotate2D({x: 0, y: region.innerSize.x}, (region.rotation * Math.PI) / 180.0));
+        let position = add2D(region.center, rotate2D(offset, (region.rotation * Math.PI) / 180.0));
         if (frame.spatialReference && frame.spatialTransformAST) {
             position = transformPoint(frame.spatialTransformAST, position, false);
         }
@@ -346,6 +350,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
+            if (isAnnulusRegionType(region.regionType)) {
+                return this.getAnchorCanvasPosition(region, {
+                    x: anchorName === "left" ? -region.size.y : anchorName === "right" ? region.size.y : 0,
+                    y: anchorName === "top" ? region.size.x : anchorName === "bottom" ? -region.size.x : 0
+                });
+            }
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
             const size = usesSimpleShapeBoxSize(region.regionType) ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
@@ -373,6 +383,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
+            if (isAnnulusRegionType(region.regionType)) {
+                return this.getAnchorCanvasPosition(region, {x: (anchorName.includes("left") ? -1 : 1) * region.size.y, y: (anchorName.includes("top") ? 1 : -1) * region.size.x});
+            }
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
             let offset = rotate2D(scale2D(size, getSimpleShapeAnchorSizeScale(region.regionType)), (region.rotation * Math.PI) / 180.0);
             if (isTextRegionType(region.regionType)) {
@@ -486,12 +499,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const canvasOffset = getZoomInvariantCanvasOffset({x: config.offset.x, y: -config.offset.y}, this.props.stageRef.current, textRotation);
                 posCanvas = add2D(centerCanvas, canvasOffset);
             } else {
-                let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
-
-                if (frame.spatialReference && frame.spatialTransformAST) {
-                    posImage = transformPoint(frame.spatialTransformAST, posImage, false);
-                }
-                posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                posCanvas = this.getAnchorCanvasPosition(region, config.offset);
             }
 
             const isSelectedSimpleShapeAnchor =

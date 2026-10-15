@@ -92,7 +92,16 @@ export function getTransformedAnnulusProperties(region: RegionTransformSource, s
     const minor = Math.sqrt(Math.max(0, (xx + yy - difference) / 2));
     const isFirstMajor = region.size.x > region.size.y;
     const size = isFirstMajor ? {x: major, y: minor} : {x: minor, y: major};
-    const rotation = ((Math.atan2(2 * xy, xx - yy) * 90) / Math.PI - (isFirstMajor ? 90 : 0) + 360) % 360;
+    let rotation = ((Math.atan2(2 * xy, xx - yy) * 90) / Math.PI - (isFirstMajor ? 90 : 0) + 360) % 360;
+    if (difference <= 1e-12 * (xx + yy)) {
+        rotation = ((Math.atan2(-firstAxis.x, firstAxis.y) * 180) / Math.PI + 360) % 360;
+    } else {
+        // Principal axes have two equivalent directions; retain the transformed first axis's direction.
+        const radians = (rotation * Math.PI) / 180;
+        if (-Math.sin(radians) * firstAxis.x + Math.cos(radians) * firstAxis.y < 0) {
+            rotation = (rotation + 180) % 360;
+        }
+    }
     const innerRatio = region.innerSize ? region.innerSize.x / region.size.x : 1;
     return {controlPoints: [center, size, scale2D(size, innerRatio)], rotation};
 }
