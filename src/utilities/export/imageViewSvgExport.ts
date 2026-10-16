@@ -6,6 +6,8 @@ import {type FrameView, type ImageViewItem, type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type Padding} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
+import {getBeamGeometry} from "utilities/region/beam";
+import {imageSizeToCanvas as imageSizeToCanvasSize, imageToCanvasPos} from "utilities/region/geometry";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "./beamSvgExport";
@@ -60,23 +62,7 @@ function getDestinationFrameView(frame: FrameStore): FrameView | null {
 }
 
 function imageToCanvasPoint(imagePoint: Point2D, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
-    const viewWidth = frameView.xMax - frameView.xMin;
-    const viewHeight = frameView.yMax - frameView.yMin;
-
-    return {
-        x: ((imagePoint.x - frameView.xMin) / viewWidth) * layerWidth,
-        y: layerHeight - ((imagePoint.y - frameView.yMin) / viewHeight) * layerHeight
-    };
-}
-
-function imageSizeToCanvasSize(sizeX: number, sizeY: number, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
-    const viewWidth = frameView.xMax - frameView.xMin;
-    const viewHeight = frameView.yMax - frameView.yMin;
-
-    return {
-        x: (sizeX / viewWidth) * layerWidth,
-        y: (sizeY / viewHeight) * layerHeight
-    };
+    return imageToCanvasPos(imagePoint.x, imagePoint.y, frameView, layerWidth, layerHeight);
 }
 
 function rgbColorToCss(color: {r: number; g: number; b: number; a?: number} | undefined): string {
@@ -157,67 +143,14 @@ function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
     return sampleSvgColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor, frame.vectorOverlayConfig.isColormapInverted);
 }
 
-function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
-    if (sourceFrame === destinationFrame) {
-        return point;
-    }
-
-    const controlMap = sourceFrame.getControlMap(destinationFrame);
-    return controlMap.transformPoint(point);
-}
-
-function transformContourPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
-    return transformFramePoint(point, sourceFrame, destinationFrame);
-}
-
-function transformFramePoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
-    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame);
-    if (!transformedPoint) {
-        return null;
-    }
-
-    if (destinationFrame.spatialReference) {
-        return destinationFrame.spatialTransform?.transformCoordinate(transformedPoint, true) ?? null;
-    }
-
-    return transformedPoint;
-}
-
-function transformContourVertexData(vertexDataArrays: (Float32Array | null)[], sourceFrame: FrameStore, destinationFrame: FrameStore, frameView: FrameView, layerWidth: number, layerHeight: number): (Float32Array | null)[] {
-    return vertexDataArrays.map(vertexData => {
-        if (!vertexData) {
-            return null;
-        }
-
-        const transformed = new Float32Array(vertexData);
-        for (let index = 0; index < transformed.length; index += 8) {
-            // Check for degenerate connecting pair BEFORE transformation.
-            // In a normal pair, both vertices are at the exact same image coordinate.
-            // In a degenerate pair connecting Polyline A to Polyline B, the first
-            // vertex is A's last point, and the second is B's first point.
-            // (If they are exactly the same point, drawing a line is harmless/invisible).
-            const isDegenerate = Math.abs(transformed[index] - transformed[index + 4]) > 1e-6 || Math.abs(transformed[index + 1] - transformed[index + 5]) > 1e-6;
-
-            if (isDegenerate) {
-                transformed[index] = Number.NaN;
-                transformed[index + 1] = Number.NaN;
-                continue;
-            }
-
-            const transformedPoint = transformContourPoint({x: transformed[index] - 0.5, y: transformed[index + 1] - 0.5}, sourceFrame, destinationFrame);
-            if (!transformedPoint) {
-                transformed[index] = Number.NaN;
-                transformed[index + 1] = Number.NaN;
-                continue;
-            }
-
-            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, layerWidth, layerHeight);
-            transformed[index] = canvasPoint.x;
-            transformed[index + 1] = canvasPoint.y;
-        }
-
-        return transformed;
-    });
+function createOverlayPointTransform(sourceFrame: FrameStore, destinationFrame: FrameStore, isCatalog = false): (point: Point2D) => Point2D | null {
+    const catalogMap = isCatalog && sourceFrame !== destinationFrame ? sourceFrame.getCatalogControlMap(destinationFrame) : null;
+    catalogMap?.updateCatalogBoundary();
+    const controlMap = sourceFrame !== destinationFrame ? (catalogMap ?? sourceFrame.getControlMap(destinationFrame)) : null;
+    return point => {
+        const mapped = controlMap ? controlMap.transformPoint(point) : point;
+        return mapped && destinationFrame.spatialReference ? (destinationFrame.spatialTransform?.transformCoordinate(mapped, true) ?? null) : mapped;
+    };
 }
 
 function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
@@ -236,6 +169,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
         if (!contourFrame.contourConfig.isVisible || !contourFrame.contourStores.size) {
             continue;
         }
+        const transformPoint = createOverlayPointTransform(contourFrame, frame);
 
         let minLevel = Infinity;
         let maxLevel = -Infinity;
@@ -245,12 +179,17 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
         });
         contourFrame.contourStores.forEach((contourStore, level) => {
             const contourSvg = renderContoursToSvg(
-                transformContourVertexData(contourStore.exportVertexData, contourFrame, frame, frameView, layerWidth, layerHeight),
+                contourStore.exportChunks,
                 getContourStrokeColor(contourFrame, level, minLevel, maxLevel),
                 getContourStrokeWidth(contourFrame, pixelRatio),
                 getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio),
                 padding.left * pixelRatio,
-                padding.top * pixelRatio
+                padding.top * pixelRatio,
+                point => {
+                    // Match vertex_shader_contours: server contour coordinates are pixel-edge based.
+                    const transformed = transformPoint({x: point.x - 0.5, y: point.y - 0.5});
+                    return transformed ? imageToCanvasPoint(transformed, frameView, layerWidth, layerHeight) : null;
+                }
             );
             group.appendChild(contourSvg);
         });
@@ -278,6 +217,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 
         const exportPositions: number[] = [];
         const strokeColors: string[] = [];
+        const transformPoint = createOverlayPointTransform(vectorFrame, frame);
         vectorFrame.vectorOverlayStore.tiles.forEach(tile => {
             for (let vectorIndex = 0; vectorIndex < tile.numVertices; vectorIndex++) {
                 const offset = vectorIndex * 4;
@@ -289,7 +229,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                     continue;
                 }
 
-                const transformedCenter = transformContourPoint(center, vectorFrame, frame);
+                const transformedCenter = transformPoint(center);
                 if (!transformedCenter) {
                     continue;
                 }
@@ -395,8 +335,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const profile = AppStore.Instance.catalogStore.catalogProfileStores?.get(fileId);
         const selectedIndices = new Set(profile?.getSortedIndices(profile.selectedPointIndices) ?? []);
         if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
-        const controlMap = sourceFrame !== frame ? sourceFrame.getCatalogControlMap(frame) : null;
-        controlMap?.updateCatalogBoundary();
+        const transformPoint = createOverlayPointTransform(sourceFrame, frame, true);
         const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio);
         const layerWidth = frame.renderWidth * pixelRatio;
         const layerHeight = frame.renderHeight * pixelRatio;
@@ -407,8 +346,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
             const isSelected = selectedIndices.has(index);
             if (catalogWidgetStore.isShowingSelectedData && !isSelected) continue;
             const point = {x: catalog.x[index], y: catalog.y[index]};
-            const mappedPoint = controlMap ? controlMap.transformPoint(point) : point;
-            const transformedPoint = mappedPoint && (frame.spatialReference ? frame.spatialTransform?.transformCoordinate(mappedPoint, true) : mappedPoint);
+            const transformedPoint = transformPoint(point);
             if (!transformedPoint) {
                 continue;
             }
@@ -501,9 +439,29 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     const panelGroup = svgGroupFromLayer(`panel-${column}-${row}`);
+    const defs = createSvgElement("defs", {});
+    const clipIds = new Map<string, string>();
+    const appendClippedLayer = (layer: SVGGElement | null, name: string, bounds?: {x: number; y: number; width: number; height: number}) => {
+        if (!layer) return;
+        if (bounds) {
+            const key = `${bounds.x},${bounds.y},${bounds.width},${bounds.height}`;
+            let clipId = clipIds.get(key);
+            if (!clipId) {
+                clipId = `${name}-clip-${column}-${row}`;
+                const clip = createSvgElement("clipPath", {id: clipId});
+                clip.appendChild(createSvgElement("rect", bounds));
+                defs.appendChild(clip);
+                clipIds.set(key, clipId);
+            }
+            layer.setAttribute("clip-path", `url(#${clipId})`);
+        }
+        panelGroup.appendChild(layer);
+    };
 
     // 1. Raster — embed as PNG <image>
     const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
+    const rasterBounds = {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio, height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio};
+    const localBounds = {...rasterBounds, x: 0, y: 0};
     if (rasterCanvas) {
         const rasterImage = embedRasterAsSvgImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio, rasterCanvas.width, rasterCanvas.height);
         panelGroup.appendChild(rasterImage);
@@ -516,23 +474,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         panelGroup.appendChild(channelMapAstSvg);
     }
     const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio, isChannelMap);
-    if (astSvg) {
-        const clipId = `ast-clip-${column}-${row}`;
-        const clipPath = createSvgElement("clipPath", {id: clipId});
-        clipPath.appendChild(
-            createSvgElement("rect", {
-                x: 0,
-                y: 0,
-                width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio,
-                height: viewHeight
-            })
-        );
-        const defs = createSvgElement("defs", {});
-        defs.appendChild(clipPath);
-        panelGroup.appendChild(defs);
-        astSvg.setAttribute("clip-path", `url(#${clipId})`);
-        panelGroup.appendChild(astSvg);
-    }
+    appendClippedLayer(astSvg, "ast", {x: 0, y: 0, width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio, height: viewHeight});
 
     // 3. Beam — vector SVG from store data
     const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
@@ -542,33 +484,11 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     // 4. Contour — vector SVG from store data
     const contoursSvg = isChannelMap ? null : buildContoursSvg(frame, padding, pixelRatio);
-    if (contoursSvg) {
-        if (rasterCanvas) {
-            const clipId = `contour-clip-${column}-${row}`;
-            const clipPath = createSvgElement("clipPath", {id: clipId});
-            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
-            const defs = createSvgElement("defs", {});
-            defs.appendChild(clipPath);
-            panelGroup.appendChild(defs);
-            contoursSvg.setAttribute("clip-path", `url(#${clipId})`);
-        }
-        panelGroup.appendChild(contoursSvg);
-    }
+    appendClippedLayer(contoursSvg, "contour", rasterCanvas ? rasterBounds : undefined);
 
     // 5. Vector overlay — vector SVG from store data
     const vectorOverlaySvg = isChannelMap ? null : buildVectorOverlaySvg(frame, padding, pixelRatio);
-    if (vectorOverlaySvg) {
-        if (rasterCanvas) {
-            const clipId = `vector-clip-${column}-${row}`;
-            const clipPath = createSvgElement("clipPath", {id: clipId});
-            clipPath.appendChild(createSvgElement("rect", {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas.width, height: rasterCanvas.height}));
-            const defs = createSvgElement("defs", {});
-            defs.appendChild(clipPath);
-            panelGroup.appendChild(defs);
-            vectorOverlaySvg.setAttribute("clip-path", `url(#${clipId})`);
-        }
-        panelGroup.appendChild(vectorOverlaySvg);
-    }
+    appendClippedLayer(vectorOverlaySvg, "vector", rasterCanvas ? rasterBounds : undefined);
 
     // 6. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
@@ -581,23 +501,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     // 7. Catalog — vector SVG from store data
     const catalogSvg = isChannelMap ? null : buildCatalogSvg(frame, padding, pixelRatio);
-    if (catalogSvg) {
-        const clipId = `catalog-clip-${column}-${row}`;
-        const clipPath = createSvgElement("clipPath", {id: clipId});
-        clipPath.appendChild(
-            createSvgElement("rect", {
-                x: 0,
-                y: 0,
-                width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
-                height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
-            })
-        );
-        const defs = createSvgElement("defs", {});
-        defs.appendChild(clipPath);
-        panelGroup.appendChild(defs);
-        catalogSvg.setAttribute("clip-path", `url(#${clipId})`);
-        panelGroup.appendChild(catalogSvg);
-    }
+    appendClippedLayer(catalogSvg, "catalog", localBounds);
 
     // 8. Channel map labels — SVG text
     const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
@@ -608,23 +512,14 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     // 9. Regions — vector SVG from store data
     const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio);
-    if (regionsSvg) {
-        const clipId = `regions-clip-${column}-${row}`;
-        const clipPath = createSvgElement("clipPath", {id: clipId});
-        clipPath.appendChild(
-            createSvgElement("rect", {
-                x: isChannelMap ? padding.left * pixelRatio : 0,
-                y: isChannelMap ? padding.top * pixelRatio : 0,
-                width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
-                height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
-            })
-        );
-        const defs = createSvgElement("defs", {});
-        defs.appendChild(clipPath);
-        panelGroup.appendChild(defs);
-        regionsSvg.setAttribute("clip-path", `url(#${clipId})`);
-        panelGroup.appendChild(regionsSvg);
-    }
+    appendClippedLayer(regionsSvg, "regions", isChannelMap ? rasterBounds : localBounds);
+
+    // Definitions are document-scoped; collect layer resources without changing draw order.
+    panelGroup.querySelectorAll("defs").forEach(layerDefs => {
+        while (layerDefs.firstChild) defs.appendChild(layerDefs.firstChild);
+        layerDefs.remove();
+    });
+    if (defs.childNodes.length) panelGroup.prepend(defs);
 
     return panelGroup;
 }
@@ -727,44 +622,20 @@ function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotPr
 
     const appStore = AppStore.Instance;
     const beamSettings = frame.overlayBeamSettings;
-    const zoomFrame = frame.spatialReference ?? frame;
-    const zoom = zoomFrame.effectiveZoomLevel ?? {x: zoomFrame.zoomLevel, y: zoomFrame.zoomLevel};
-    const zoomY = (zoom.y * (frame.spatialTransform?.scale ?? 1)) / appStore.imageRatio;
-    const scale = {x: zoom.x / zoom.y, y: 1};
+    const geometry = getBeamGeometry(frame, {imageRatio: appStore.imageRatio, devicePixelRatio, padding: 10, basePosition});
+    if (!geometry) return null;
     const color = getColorForTheme(beamSettings.color);
     const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
     const strokeWidth = beamSettings.width;
 
-    const semiMajor = ((frame.beamProperties.x / 2.0) * zoomY) / devicePixelRatio;
-    const semiMinor = ((frame.beamProperties.y / 2.0) * zoomY) / devicePixelRatio;
-    let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
-    if (frame.spatialTransform) {
-        theta -= frame.spatialTransform.rotation;
-    }
-
-    const sinTheta = Math.sin(theta);
-    const cosTheta = Math.cos(theta);
-    const boundingBox = {
-        x: 2 * scale.x * Math.sqrt(semiMajor * semiMajor * cosTheta * cosTheta + semiMinor * semiMinor * sinTheta * sinTheta),
-        y: 2 * Math.sqrt(semiMajor * semiMajor * sinTheta * sinTheta + semiMinor * semiMinor * cosTheta * cosTheta)
-    };
-
-    // Match the original BeamProfileOverlayComponent: padding prop is 10, scaled by devicePixelRatio
-    const beamPadding = 10;
-    const paddingOffset = beamPadding * devicePixelRatio;
-    const position = basePosition ?? {
-        x: boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX,
-        y: frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY
-    };
-
     const isFilled = beamSettings.type === BeamType.Solid;
 
     return {
-        position: {x: Math.min(position.x, frame.renderWidth - boundingBox.x / 2), y: Math.max(position.y, boundingBox.y / 2)},
-        scale,
-        semiMajor,
-        semiMinor,
-        rotationDegrees: (theta * 180.0) / Math.PI,
+        position: geometry.position,
+        scale: {x: geometry.scale.x / geometry.scale.y, y: 1},
+        semiMajor: geometry.a * geometry.scale.y,
+        semiMinor: geometry.b * geometry.scale.y,
+        rotationDegrees: (geometry.theta * 180.0) / Math.PI,
         color,
         axisColor,
         strokeWidth,

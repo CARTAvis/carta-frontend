@@ -59,3 +59,16 @@ export function configureAstOverlayWcs(wcs: AST.FrameSet, frame: FrameStore, set
     }
     if (settings.labels.hasCustomText) AST.set(wcs, 'Unit(1)="", Unit(2)=""');
 }
+
+export function getAstOverlayStyle(style: string, frame: FrameStore, settings: OverlaySettings, titleSource: {filename: string; titleCustomText?: string}): string {
+    if (!frame.isValidWcs) style = style.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
+    const title = settings.title.hasCustomText ? titleSource.titleCustomText : titleSource.filename;
+    style += title ? `, Title="${title.replace(/%/g, "%%%%").replace(/"/g, "”")}"` : ", Title=";
+    if (frame.isOffsetCoord) style += ", LabelUnits=1";
+    return style;
+}
+
+export function plotAstOverlay(plot: (style: string) => void, style: string): void {
+    plot(style);
+    if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) plot(style.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
+}

@@ -24,8 +24,8 @@ test("namespaces SVG resources and use references while removing duplicate layer
 
 describe("renderContoursToSvg", () => {
     test("renders contour paths with the supplied stroke styling", () => {
-        const vertexData = new Float32Array([10, 20, 0, 0, 0, 0, 0, 0, 30, 40, 0, 0, 0, 0, 0, 0]);
-        const group = renderContoursToSvg([vertexData], "#ff0000", 2, 4, 5, 7);
+        const chunk = {vertices: new Float32Array([10, 20, 30, 40]), indexOffsets: new Int32Array([0])};
+        const group = renderContoursToSvg([chunk], "#ff0000", 2, 4, 5, 7);
 
         const path = group.querySelector("path");
         expect(path).not.toBeNull();
@@ -36,57 +36,8 @@ describe("renderContoursToSvg", () => {
     });
 
     test("does not link separate enclosed contours", () => {
-        // Two polylines of 2 source vertices each, with a degenerate pair between them.
-        // Normal pairs: offset[2]=+len, offset[6]=-len (sum=0).
-        // Degenerate pair: offset[2]=cumLen from prev polyline, offset[6]=0 (sum≠0).
-        const vertexData = new Float32Array([
-            // Polyline 0, vertex 0: len=0
-            1,
-            2,
-            0,
-            0,
-            1,
-            2,
-            0,
-            0,
-            // Polyline 0, vertex 1: len=2.83
-            3,
-            4,
-            2.83,
-            0,
-            3,
-            4,
-            -2.83,
-            0,
-            // Degenerate pair: [lastPt] + [firstPt] → different coords, replaced with NaN
-            NaN,
-            NaN,
-            2.83,
-            0,
-            NaN,
-            NaN,
-            0,
-            0,
-            // Polyline 1, vertex 0: len=0
-            10,
-            20,
-            0,
-            0,
-            10,
-            20,
-            0,
-            0,
-            // Polyline 1, vertex 1: len=28.28
-            30,
-            40,
-            28.28,
-            0,
-            30,
-            40,
-            -28.28,
-            0
-        ]);
-        const group = renderContoursToSvg([vertexData], "#ffffff", 1, 0, 0, 0);
+        const chunk = {vertices: new Float32Array([1, 2, 3, 4, 10, 20, 30, 40]), indexOffsets: new Int32Array([0, 4])};
+        const group = renderContoursToSvg([chunk], "#ffffff", 1, 0, 0, 0);
 
         const path = group.querySelector("path");
         expect(path).not.toBeNull();
@@ -95,10 +46,25 @@ describe("renderContoursToSvg", () => {
     });
 
     test("closes enclosed contour subpaths", () => {
-        const vertexData = new Float32Array([10, 20, 0, 0, 10, 20, 0, 0, 30, 40, 0, 0, 30, 40, 0, 0, 10, 20, 0, 0, 10, 20, 0, 0]);
-        const path = renderContoursToSvg([vertexData], "#ffffff", 1, 0, 0, 0).querySelector("path");
+        const chunk = {vertices: new Float32Array([10, 20, 30, 40, 10, 20]), indexOffsets: new Int32Array([0])};
+        const path = renderContoursToSvg([chunk], "#ffffff", 1, 0, 0, 0).querySelector("path");
 
         expect(path).toHaveAttribute("d", "M10.00,20.00L30.00,40.00L10.00,20.00Z");
+    });
+
+    test("preserves exact polyline boundaries when adjacent contours share a point", () => {
+        const chunk = {vertices: new Float32Array([1, 2, 3, 4, 3, 4, 5, 6]), indexOffsets: new Int32Array([0, 4])};
+        const path = renderContoursToSvg([chunk], "#fff", 1, 0, 0, 0).querySelector("path");
+        expect(path).toHaveAttribute("d", "M1.00,2.00L3.00,4.00M3.00,4.00L5.00,6.00");
+    });
+
+    test("breaks a contour at invalid transformed points without mutating raw vertices", () => {
+        const chunk = {vertices: new Float32Array([1, 2, 3, 4, 5, 6, 7, 8]), indexOffsets: new Int32Array([0])};
+        const original = chunk.vertices.slice();
+        const path = renderContoursToSvg([chunk], "#fff", 1, 0, 0, 0, point => (point.x === 3 ? null : {x: point.x * 2, y: point.y * 2})).querySelector("path");
+        expect(path?.getAttribute("d")).toContain("M10.00,12.00L14.00,16.00");
+        expect(path?.getAttribute("d")).not.toContain("L10.00,12.00");
+        expect(chunk.vertices).toEqual(original);
     });
 });
 

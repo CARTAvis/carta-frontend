@@ -4,6 +4,11 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
+export interface ContourSourceChunk {
+    vertices: Float32Array;
+    indexOffsets: Int32Array;
+}
+
 export class ContourStore {
     @observable progress: number = 0;
     @observable numGeneratedVertices: number[] = [];
@@ -23,12 +28,8 @@ export class ContourStore {
         return this.sourceVertexData.length > 0;
     }
 
-    get exportIndexOffsets() {
-        return this.indexOffsets;
-    }
-
-    get exportVertexData() {
-        return this.sourceVertexData.map((sourceVertices, index) => CARTACompute.GenerateVertexData(sourceVertices, this.indexOffsets[index]).slice());
+    get exportChunks(): ContourSourceChunk[] {
+        return this.sourceVertexData.map((vertices, index) => ({vertices, indexOffsets: this.indexOffsets[index]}));
     }
 
     @computed get isComplete() {
@@ -65,9 +66,8 @@ export class ContourStore {
             this.numGeneratedVertices = [];
         }
 
-        // Slice to copy: GenerateVertexData returns a view into reusable WASM heap
-        // memory that gets overwritten by subsequent calls
-        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets).slice();
+        // The WASM view is uploaded synchronously before the next generation call.
+        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
         this.sourceVertexData.push(sourceVertices.slice());
         this.indexOffsets.push(indexOffsets.slice());
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));

@@ -4,7 +4,7 @@ import {Context as SvgContext} from "svgcanvas";
 import {ImageType} from "enums";
 import {type ImageViewItem} from "models";
 import {type OverlaySettings, type OverlayStore} from "stores";
-import {configureAstOverlayWcs} from "utilities/ast/overlay";
+import {configureAstOverlayWcs, getAstOverlayStyle, plotAstOverlay} from "utilities/ast/overlay";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -108,42 +108,10 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
 
             configureAstOverlayWcs(tempWcsInfo, frame, overlaySettings, effectiveAspectRatio);
 
-            let currentStyleString = overlayStore.styleString(frame);
-
-            if (!frame.isValidWcs) {
-                currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
-            }
-
-            if (!overlaySettings.title.hasCustomText) {
-                currentStyleString += `, Title="${image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "\u201C")}"`;
-            } else if (image?.store?.titleCustomText?.length) {
-                currentStyleString += `, Title="${image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "\u201C")}"`;
-            } else {
-                currentStyleString += `, Title=${""}`;
-            }
-
-            if (frame.isOffsetCoord) {
-                currentStyleString += `, LabelUnits=1`;
-            }
-
-            AST.plot(
-                tempWcsInfo,
-                frameView.xMin,
-                frameView.xMax,
-                frameView.yMin / effectiveAspectRatio,
-                frameView.yMax / effectiveAspectRatio,
-                viewWidth,
-                viewHeight,
-                padding.left * pixelRatio,
-                padding.right * pixelRatio,
-                padding.top * pixelRatio,
-                padding.bottom * pixelRatio,
-                currentStyleString
-            );
-
-            if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
+            const plotWcs = tempWcsInfo;
+            const plot = (style: string) =>
                 AST.plot(
-                    tempWcsInfo,
+                    plotWcs,
                     frameView.xMin,
                     frameView.xMax,
                     frameView.yMin / effectiveAspectRatio,
@@ -154,9 +122,9 @@ export function renderAstOverlayToSvg(overlayStore: OverlayStore, image: ImageVi
                     padding.right * pixelRatio,
                     padding.top * pixelRatio,
                     padding.bottom * pixelRatio,
-                    currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0")
+                    style
                 );
-            }
+            plotAstOverlay(plot, getAstOverlayStyle(overlayStore.styleString(frame), frame, overlaySettings, image.store));
         } catch (e) {
             console.error("Error during AST SVG plot:", e);
         } finally {

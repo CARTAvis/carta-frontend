@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {ImageType} from "enums";
 import {type ImageItem} from "models";
 import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
-import {configureAstOverlayWcs} from "utilities/ast/overlay";
+import {configureAstOverlayWcs, getAstOverlayStyle, plotAstOverlay} from "utilities/ast/overlay";
 
 import "./OverlayComponent.scss";
 
@@ -116,29 +116,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!frame.isValidWcs) {
-                //Remove system and format entries
-                currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
-            }
-
-            if (!settings.title.hasCustomText) {
-                currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
-            } else if (this.props.image?.store?.titleCustomText?.length) {
-                currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
-            } else {
-                currentStyleString += `, Title=${""}`;
-            }
-
-            if (frame.isOffsetCoord) {
-                currentStyleString += `, LabelUnits=1`;
-            }
-
-            plot(currentStyleString);
-
-            if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
-                // Try to re-plot without the grid
-                plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
-            }
+            plotAstOverlay(plot, getAstOverlayStyle(currentStyleString, frame, settings, this.props.image.store));
 
             AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();

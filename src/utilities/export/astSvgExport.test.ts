@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 
 import {ImageType, SkyRefIs} from "enums/imageView";
-import {configureAstOverlayWcs} from "utilities/ast/overlay";
+import {configureAstOverlayWcs, getAstOverlayStyle, plotAstOverlay} from "utilities/ast/overlay";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 
@@ -13,6 +13,7 @@ describe("AST export coordinate parity", () => {
     let settings: any;
     beforeEach(() => {
         jest.clearAllMocks();
+        jest.mocked(AST.getLastErrorMessage).mockReturnValue("");
         jest.mocked(AST.copy).mockReturnValue(1 as never);
         jest.mocked(AST.getString).mockImplementation((_wcs, attribute) => (attribute === "Nframe" ? "9" : "2"));
         frame = {
@@ -74,5 +75,23 @@ describe("AST export coordinate parity", () => {
         const image = {type: ImageType.FRAME, store: frame};
         expect(renderAstOverlayToSvg(store as never, image as never, settings, 2, true)).not.toBeNull();
         expect(AST.plot).toHaveBeenCalledWith(1, 10, 380, 26, 226, 400, 240, 10, 20, 14, 26, expect.any(String));
+    });
+
+    test("shares title escaping and invalid-WCS formatting cleanup", () => {
+        frame.isValidWcs = false;
+        frame.isOffsetCoord = true;
+        const style = getAstOverlayStyle("System=ICRS, Format(1)=hms, Grid=1", frame, settings, {filename: 'image "50%"'});
+        expect(style).not.toContain("System=");
+        expect(style).not.toContain("Format(");
+        expect(style).toContain('Title="image ”50%%%%”"');
+        expect(style).toContain("LabelUnits=1");
+    });
+
+    test("shares the fallback to border-only plotting when AST cannot draw grid curves", () => {
+        jest.mocked(AST.getLastErrorMessage).mockReturnValue("No grid curves can be drawn for axis 1");
+        const plot = jest.fn();
+        plotAstOverlay(plot, "Gap(1)=2, Gap(2)=3, Grid=1");
+        expect(plot).toHaveBeenNthCalledWith(1, "Gap(1)=2, Gap(2)=3, Grid=1");
+        expect(plot).toHaveBeenNthCalledWith(2, "Grid=0");
     });
 });

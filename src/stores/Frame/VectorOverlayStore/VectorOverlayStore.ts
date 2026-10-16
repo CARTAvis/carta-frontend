@@ -126,7 +126,7 @@ export class VectorOverlayStore {
                 }
             }
             // Resize vertex data before creating a texture
-            vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 4);
+            if (numVertices * 4 < vertexData.length) vertexData = vertexData.slice(0, numVertices * 4);
             const texture = this.gl ? createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4) : null;
             if (!this.tiles) {
                 this.tiles = [];

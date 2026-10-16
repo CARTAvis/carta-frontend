@@ -5,6 +5,8 @@ import {Text} from "konva/lib/shapes/Text";
 import {type FrameView, type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {imageSizeToCanvas, imageToCanvasPos as imageToCanvas} from "utilities/region/geometry";
+import {getRulerDistanceText} from "utilities/region/ruler";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
 import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
@@ -27,24 +29,6 @@ const SPATIAL_APPROXIMATION_REGION_TYPES = new Set<CARTA.RegionType>([
 function transformImagePoint(transform: AST.FrameSet | AST.Mapping, point: Point2D, isForward = true): Point2D {
     const transformed = AST.transformPoint(transform, point.x, point.y, isForward);
     return {x: transformed.x, y: transformed.y};
-}
-
-function imageToCanvas(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
-    const viewWidth = frameView.xMax - frameView.xMin;
-    const viewHeight = frameView.yMax - frameView.yMin;
-    return {
-        x: ((imageX - frameView.xMin) / viewWidth) * layerWidth,
-        y: layerHeight - ((imageY - frameView.yMin) / viewHeight) * layerHeight
-    };
-}
-
-function imageSizeToCanvas(sizeX: number, sizeY: number, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
-    const viewWidth = frameView.xMax - frameView.xMin;
-    const viewHeight = frameView.yMax - frameView.yMin;
-    return {
-        x: (sizeX / viewWidth) * layerWidth,
-        y: (sizeY / viewHeight) * layerHeight
-    };
 }
 
 function transformedImageToCanvas(point: Point2D, frame: FrameStore | undefined, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
@@ -397,14 +381,7 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
 
 function getDistanceText(wcsInfo: AST.FrameSet, start: Point2D, finish: Point2D, region: RulerAnnotationStore): string {
     try {
-        const distance = ((AST.geodesicDistance(wcsInfo, start.x, start.y, finish.x, finish.y) / 3600) * Math.PI) / 180.0;
-        const unit = AST.getString(wcsInfo, "Unit(1)");
-        if (unit.includes("degree") || unit.includes("hh:mm:s")) {
-            if (distance < Math.PI / 180.0 / 60.0) return `${(((distance * 180) / Math.PI) * 3600).toFixed(region.decimals)}\"`;
-            if (distance < Math.PI / 180.0) return `${(((distance * 180) / Math.PI) * 60).toFixed(region.decimals)}'`;
-            return `${((distance * 180) / Math.PI).toFixed(region.decimals)}°`;
-        }
-        return `${distance.toFixed(region.decimals)}${!unit || unit[0] === "\0" || unit.trim() === "" ? "pix" : ""}`;
+        return getRulerDistanceText(wcsInfo, start, finish, region.decimals);
     } catch {
         return "";
     }

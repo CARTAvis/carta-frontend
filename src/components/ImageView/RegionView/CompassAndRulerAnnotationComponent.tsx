@@ -1,6 +1,6 @@
 import React from "react";
 import {Arrow, Group, Line, Text} from "react-konva";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import type Konva from "konva";
 import {observer} from "mobx-react";
 
@@ -9,6 +9,7 @@ import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
 import {subtract2D, transformPoint} from "utilities";
+import {getRulerDistanceText} from "utilities/region/ruler";
 
 import {Anchor} from "./InvariantShapes";
 import {
@@ -456,27 +457,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     };
 
     const getDistanceText = (wcsInfo: AST.FrameSet, start: Point2D, finish: Point2D) => {
-        const distance = ((AST.geodesicDistance(wcsInfo, start.x, start.y, finish.x, finish.y) / 3600) * Math.PI) / 180.0;
-        const unit = AST.getString(wcsInfo, "Unit(1)");
-        let distString: string;
-        if (unit.includes("degree") || unit.includes("hh:mm:s")) {
-            if (distance < Math.PI / 180.0 / 60.0) {
-                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(region.decimals).toString();
-                distString += '"';
-            } else if (distance < Math.PI / 180.0) {
-                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(region.decimals).toString();
-                distString += "'";
-            } else {
-                distString = ((distance * 180.0) / Math.PI).toFixed(region.decimals).toString();
-                distString += "\u00B0";
-            }
-        } else {
-            distString = distance.toFixed(region.decimals).toString();
-            if (unit[0] === "\0" || unit.trim() === "") {
-                distString += "pix";
-            }
-        }
-        return distString;
+        return getRulerDistanceText(wcsInfo, start, finish, region.decimals);
     };
 
     const zoom = getEffectiveZoomLevel(frame);

@@ -74,7 +74,7 @@ describe("getPanelSvg", () => {
                 thickness: 2,
                 dashMode: ContourDashMode.Dashed
             },
-            contourStores: new Map([[1, {exportVertexData: [new Float32Array([10, 10, 0, 0, 10, 10, 0, 0, 20, 20, 0, 0, 20, 20, 0, 0])], exportIndexOffsets: [new Int32Array([2])]}]]),
+            contourStores: new Map([[1, {exportChunks: [{vertices: new Float32Array([10, 10, 20, 20]), indexOffsets: new Int32Array([0])}]}]]),
             vectorOverlayConfig: {
                 isVisible: true,
                 thickness: 2,
@@ -145,8 +145,8 @@ describe("getPanelSvg", () => {
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-width", "2");
         expect(panelSvg?.querySelector("#contours path")).toHaveAttribute("stroke-dasharray", "24,8");
         expect(panelSvg?.querySelector("#vector-overlay")).not.toBeNull();
-        expect(panelSvg?.querySelector("#vector-overlays")).toHaveAttribute("clip-path", "url(#vector-clip-0-0)");
-        const vectorClipRect = panelSvg?.querySelector("#vector-clip-0-0 rect");
+        expect(panelSvg?.querySelector("#vector-overlays")).toHaveAttribute("clip-path", "url(#contour-clip-0-0)");
+        const vectorClipRect = panelSvg?.querySelector("#contour-clip-0-0 rect");
         expect(vectorClipRect).toHaveAttribute("x", "5");
         expect(vectorClipRect).toHaveAttribute("y", "7");
         expect(vectorClipRect).toHaveAttribute("width", "100");
@@ -190,8 +190,8 @@ describe("getPanelSvg", () => {
 
         const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
 
-        expect(panelSvg?.querySelector("#regions")).toHaveAttribute("clip-path", "url(#regions-clip-0-0)");
-        const regionClipRect = panelSvg?.querySelector("#regions-clip-0-0 rect");
+        expect(panelSvg?.querySelector("#regions")).toHaveAttribute("clip-path", "url(#catalog-clip-0-0)");
+        const regionClipRect = panelSvg?.querySelector("#catalog-clip-0-0 rect");
         expect(regionClipRect).toHaveAttribute("x", "0");
         expect(regionClipRect).toHaveAttribute("y", "0");
         expect(regionClipRect).toHaveAttribute("width", "100");
@@ -251,16 +251,37 @@ describe("getPanelSvg", () => {
 
     test("maps only the vector center through a spatial control map", () => {
         const transformPoint = jest.fn(({x, y}) => ({x: x * 2, y: y * 2}));
-        const sourceFrame = {...frame, getControlMap: () => ({transformPoint})};
+        const getControlMap = jest.fn(() => ({transformPoint}));
+        const sourceFrame = {...frame, getControlMap};
+        sourceFrame.vectorOverlayStore = {tiles: [{numVertices: 2, vertexData: new Float32Array([20, 20, 1, 0, 30, 30, 1, 0])}]};
         sourceFrame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
         sourceFrame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
         mockAppStore.vectorOverlayFrames.set(frame, [sourceFrame]);
 
         const line = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
 
-        expect(transformPoint).toHaveBeenCalledTimes(1);
+        expect(transformPoint).toHaveBeenCalledTimes(2);
+        expect(getControlMap).toHaveBeenCalledTimes(1);
         expect(Number(line?.getAttribute("y2")) - Number(line?.getAttribute("y1"))).toBeCloseTo(10);
         expect(line).toHaveAttribute("x1", "40.00");
+    });
+
+    test("resolves a contour control map once across levels and raw vertices", () => {
+        const getControlMap = jest.fn(() => ({transformPoint: (point: {x: number; y: number}) => point}));
+        const chunk = {vertices: new Float32Array([10, 10, 20, 20]), indexOffsets: new Int32Array([0])};
+        const sourceFrame = {
+            ...frame,
+            getControlMap,
+            contourStores: new Map([
+                [1, {exportChunks: [chunk]}],
+                [2, {exportChunks: [chunk]}]
+            ])
+        };
+        mockAppStore.contourFrames.set(frame, [sourceFrame]);
+        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        expect(panel?.querySelectorAll("#contours path")).toHaveLength(2);
+        expect(getControlMap).toHaveBeenCalledTimes(1);
+        expect(panel?.querySelector("#contours path")).toHaveAttribute("d", "M14.50,77.50L24.50,67.50");
     });
 
     test("exports only selected catalog sources using their sorted position indices", () => {
@@ -423,7 +444,8 @@ describe("getPanelSvg", () => {
         const coordinateViewports = panelSvg?.querySelectorAll("#channel-map-coordinate-overlays > svg");
 
         expect(coordinateViewports).toHaveLength(4);
-        expect(panelSvg?.querySelectorAll("#channel-map-coordinate-overlays defs > #channel-map-coordinate-source-1")).toHaveLength(1);
+        expect(panelSvg?.querySelectorAll("defs > #channel-map-coordinate-source-1")).toHaveLength(1);
+        expect(panelSvg?.querySelectorAll("defs")).toHaveLength(1);
         expect(panelSvg?.querySelectorAll('#channel-map-coordinate-overlays use[href="#channel-map-coordinate-source-1"]')).toHaveLength(4);
         expect(coordinateViewports?.[0]).toHaveAttribute("x", "0");
         expect(coordinateViewports?.[0]).toHaveAttribute("y", "0");
