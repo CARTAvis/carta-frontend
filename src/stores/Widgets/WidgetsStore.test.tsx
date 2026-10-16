@@ -1,8 +1,10 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
 import {AppStore} from "stores/AppStore/AppStore";
+import {CatalogDisplayStore} from "stores/Catalog/CatalogDisplayStore";
+import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetsStore} from "./WidgetsStore";
@@ -27,6 +29,9 @@ describe("WidgetsStore PV preview test ids", () => {
         layoutModelMock.getNodeById.mockReset();
         layoutModelMock.doAction.mockReset();
         layoutModelMock.visitNodes.mockReset();
+        CatalogStore.Instance.catalogProfileStores.clear();
+        CatalogStore.Instance.catalogDisplayStores.clear();
+        Array.from(CatalogStore.Instance.catalogPlots.keys()).forEach(componentId => CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId));
     });
 
     afterEach(() => {
@@ -191,5 +196,278 @@ describe("WidgetsStore PV preview test ids", () => {
             relativeReferenceMjdUtc: 58000,
             relativeTimeUnit: RelativeTimeUnit.DAY
         });
+    });
+
+    test("persists catalog display settings alongside widget layout settings", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
+        const displayConfig = {color: "#123456", shape: "circle", size: 12, thickness: 3};
+        const displayStore = {getConfigForSerialization: () => displayConfig};
+        CatalogStore.Instance.catalogProfileStores.set(7, {catalogInfo: {fileId: 7, directory: "/catalogs", fileInfo: {name: "sources.xml"}}} as any);
+
+        CatalogStore.Instance.catalogDisplayStores.set(7, displayStore as any);
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toEqual({
+            ...displayConfig,
+            ...widgetStore.toLayoutSettings(),
+            catalogFileId: 7,
+            catalogDirectory: "/catalogs",
+            catalogFilename: "sources.xml"
+        });
+
+        CatalogStore.Instance.catalogDisplayStores.delete(7);
+    });
+
+    test("preserves deferred catalog display settings while the catalog is loading", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const catalogFileId = 7;
+        const profileStore = {
+            catalogInfo: {fileId: catalogFileId, directory: "/catalogs", fileInfo: {name: "sources.xml"}},
+            isLoadingOntoImage: true
+        };
+        const displayStore = new CatalogDisplayStore(catalogFileId);
+        const widgetSettings = {
+            catalogFileId,
+            catalogDirectory: "/catalogs",
+            catalogFilename: "sources.xml",
+            color: "#123456",
+            xAxis: "RA",
+            sizeAxis: {mapColumn: "Fmag"}
+        };
+
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, profileStore as any);
+        CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore);
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toMatchObject(widgetSettings);
+
+        displayStore.dispose();
+        CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
+    });
+
+    test("defers restored catalog display settings until this session selects a catalog", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {catalogFileId: 7, catalogColor: "#123456", catalogShape: "circle", catalogSize: 14, widgetPosition: "top"};
+
+        CatalogStore.Instance.catalogDisplayStores.set(1, displayStore as any);
+
+        expect((widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7")).toBe("catalog-overlay-7");
+        expect(CatalogStore.Instance.catalogDisplayStores.has(7)).toBe(false);
+        expect(displayStore.applyConfigWhenReady).not.toHaveBeenCalled();
+
+        widgetsStore.updateCatalogWidgetSelection(1);
+
+        expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith({
+            ...widgetSettings,
+            color: "#123456",
+            shape: "circle",
+            size: 14
+        });
+
+        CatalogStore.Instance.catalogDisplayStores.delete(1);
+    });
+
+    test("discards pending catalog display settings when manual selection does not match", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red"};
+        const catalogFileId = 12;
+
+        CatalogStore.Instance.catalogProfileStores.set(catalogFileId, {
+            catalogInfo: {fileId: catalogFileId, directory: "/catalogs", fileInfo: {name: "second.xml"}}
+        } as any);
+        CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore as any);
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-0");
+
+        expect(widgetsStore.setCatalogWidgetSelection("catalog-overlay-0", catalogFileId)).toBe(true);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(catalogFileId);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.getPendingDisplayConfig()).toBeUndefined();
+        expect(displayStore.applyConfigWhenReady).not.toHaveBeenCalled();
+    });
+
+    test("clears catalog widget restores left unmatched after workspace loading", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "missing.xml", color: "red"};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-0");
+        const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0");
+        expect(widgetStore?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(widgetStore?.getPendingDisplayConfig()).toBeDefined();
+
+        widgetsStore.clearUnmatchedPendingCatalogRestores();
+
+        expect(widgetStore?.getPendingDisplayConfig()).toBeUndefined();
+        expect(widgetStore?.getCatalogAssociation()).toBeUndefined();
+    });
+
+    test("writes restored display settings back out while the widget is still waiting", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "#123456", shape: "circle", size: 14, xAxis: "RA"};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-7")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-7")).toMatchObject({
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml",
+            color: "#123456",
+            shape: "circle",
+            size: 14,
+            xAxis: "RA"
+        });
+    });
+
+    test("binds a restored plot to a catalog from the current session", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag", catalogFileId: 3};
+
+        const widgetStoreId = (widgetsStore as any).initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", widgetSettings);
+        const pendingAssociation = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
+
+        expect(pendingAssociation.catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.bindPendingCatalogPlots(1);
+        const {catalogFileId, catalogPlotComponentId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
+
+        expect(catalogFileId).toBe(1);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetStoreId)).toEqual({
+            ...widgetsStore.catalogPlotWidgets.get(widgetStoreId)?.toConfig(),
+            catalogFileId: 1
+        });
+
+        if (catalogPlotComponentId) {
+            CatalogStore.Instance.clearCatalogPlotsByComponentId(catalogPlotComponentId);
+        }
+    });
+
+    test("restores a plot from a layout written before the catalog association was saved", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = {plotType: CatalogPlotType.D2Scatter, xColumnName: "Fmag", yColumnName: "Bmag"};
+
+        const widgetStoreId = (widgetsStore as any).initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-0", widgetSettings);
+        const {catalogFileId, catalogPlotComponentId} = CatalogStore.Instance.getAssociatedIdByWidgetId(widgetStoreId);
+
+        expect(catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(catalogPlotComponentId);
+    });
+
+    test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
+        const oldWidgetId = widgetsStore.addCatalogPlotWidget(props)!;
+        const componentId = "catalog-plot-component-retained";
+
+        CatalogStore.Instance.setCatalogPlots(componentId, 7, oldWidgetId);
+        CatalogStore.Instance.clearCatalogPlotsByFileId(7);
+
+        expect(widgetsStore.addCatalogPlotWidget(props)).toBe("catalog-plot-1");
+
+        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        widgetsStore.catalogPlotWidgets.clear();
+    });
+
+    test("restores catalog panels independently when matching catalogs load", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const firstSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red", settingsTabId: CatalogSettingsTabs.COLOR};
+        const secondSettings = {catalogFileId: 4, catalogDirectory: "/catalogs", catalogFilename: "second.xml", color: "blue"};
+        const firstDisplayStore = {applyConfigWhenReady: jest.fn()};
+        const secondDisplayStore = {applyConfigWhenReady: jest.fn()};
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(firstSettings, "catalog-overlay-0");
+        (widgetsStore as any).initializeCatalogOverlayWidget(secondSettings, "catalog-overlay-1");
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.catalogDisplayStores.set(11, firstDisplayStore as any);
+        widgetsStore.bindPendingCatalogWidgets(11, {directory: "/catalogs", fileInfo: {name: "first.xml"}});
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.selectedCatalogId).toBe(11);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")?.settingsTabId).toBe(CatalogSettingsTabs.COLOR);
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+        expect(firstDisplayStore.applyConfigWhenReady).toHaveBeenCalledWith(firstSettings);
+
+        CatalogStore.Instance.catalogDisplayStores.set(12, secondDisplayStore as any);
+        widgetsStore.bindPendingCatalogWidgets(12, {directory: "/catalogs", fileInfo: {name: "second.xml"}});
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")?.selectedCatalogId).toBe(12);
+        expect(secondDisplayStore.applyConfigWhenReady).toHaveBeenCalledWith(secondSettings);
+    });
+
+    test("restores catalog plots only to their matching catalogs", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
+        const firstPlotId = (widgetsStore as any).initializeCatalogPlotWidget(props, "catalog-plot-0", {
+            ...props,
+            xColumnName: "Fmag",
+            yColumnName: "Bmag",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "first.xml"
+        });
+        const secondPlotId = (widgetsStore as any).initializeCatalogPlotWidget(props, "catalog-plot-1", {
+            ...props,
+            xColumnName: "ra",
+            yColumnName: "dec",
+            catalogDirectory: "/catalogs",
+            catalogFilename: "second.xml"
+        });
+
+        CatalogStore.Instance.bindPendingCatalogPlots(11, {directory: "/catalogs", fileInfo: {name: "first.xml"}});
+
+        const firstPlotAssociation = CatalogStore.Instance.getAssociatedIdByWidgetId(firstPlotId);
+        expect(firstPlotAssociation.catalogFileId).toBe(11);
+        expect(firstPlotAssociation.catalogPlotComponentId).toBeDefined();
+        expect(CatalogStore.Instance.getCatalogPlotSelection(firstPlotAssociation.catalogPlotComponentId!)).toBe(11);
+        expect(CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId).catalogFileId).toBe(CatalogStore.PENDING_CATALOG_FILE_ID);
+
+        CatalogStore.Instance.bindPendingCatalogPlots(12, {directory: "/catalogs", fileInfo: {name: "second.xml"}});
+
+        const secondPlotAssociation = CatalogStore.Instance.getAssociatedIdByWidgetId(secondPlotId);
+        expect(secondPlotAssociation.catalogFileId).toBe(12);
+        expect(CatalogStore.Instance.getCatalogPlotSelection(secondPlotAssociation.catalogPlotComponentId!)).toBe(12);
+        expect(widgetsStore.catalogPlotWidgets.get(firstPlotId)?.xColumnName).toBe("Fmag");
+        expect(widgetsStore.catalogPlotWidgets.get(secondPlotId)?.xColumnName).toBe("ra");
+    });
+
+    test("clears the catalog widget store when a docked catalog tab is closed", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-7", 7);
+
+        layoutModelMock.getNodeById.mockReturnValue({
+            getType: () => "tab",
+            getComponent: () => "catalog-overlay",
+            getId: () => "catalog-overlay-7"
+        });
+
+        widgetsStore.onAction({type: Actions.DELETE_TAB, data: {node: "catalog-overlay-7"}});
+
+        expect(widgetsStore.catalogWidgets.has("catalog-overlay-7")).toBe(false);
+    });
+
+    test("prefers current catalog display fields over legacy fields when restoring", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const widgetSettings = {
+            catalogFileId: 7,
+            catalogColor: "#123456",
+            catalogShape: "circle",
+            catalogSize: 14,
+            color: "#abcdef",
+            shape: "box",
+            size: 9
+        };
+
+        CatalogStore.Instance.catalogDisplayStores.set(1, displayStore as any);
+
+        (widgetsStore as any).initializeCatalogOverlayWidget(widgetSettings, "catalog-overlay-7");
+        widgetsStore.updateCatalogWidgetSelection(1);
+
+        expect(displayStore.applyConfigWhenReady).toHaveBeenCalledWith(widgetSettings);
+
+        CatalogStore.Instance.catalogDisplayStores.delete(1);
     });
 });

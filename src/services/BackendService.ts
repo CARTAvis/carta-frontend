@@ -3,6 +3,7 @@ import {action, makeObservable, observable, runInAction} from "mobx";
 import {Subject, throwError} from "rxjs";
 
 import {ConnectionStatus, TelemetryAction} from "enums";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "models";
 import {ApiService, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type RegionStore} from "stores/Frame";
@@ -80,7 +81,7 @@ export class BackendService {
     readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
-    readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly catalogStream: Subject<CARTA.CatalogFilterResponse & {eventId?: number}>;
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
@@ -478,6 +479,9 @@ export class BackendService {
         restFreq?: number,
         shouldOverwrite: boolean = false
     ): Promise<CARTA.SaveFileAck.$Properties> {
+        if (AppStore.Instance.getFrame(fileId)?.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -577,11 +581,12 @@ export class BackendService {
     }
 
     @action("set catalog filter")
-    setCatalogFilterRequest(filterRequest: CARTA.CatalogFilterRequest.$Properties) {
+    setCatalogFilterRequest(filterRequest: CARTA.CatalogFilterRequest.$Properties): number | false {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterRequest, false);
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, requestId, filterRequest, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterRequest).finish())) {
-                return true;
+                return requestId;
             }
         }
         return false;
@@ -749,6 +754,9 @@ export class BackendService {
     };
 
     async requestMoment(message: CARTA.MomentRequest.$Properties): Promise<CARTA.MomentResponse.$Properties> {
+        if (AppStore.Instance.getFrame(message.fileId ?? NaN)?.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -792,6 +800,9 @@ export class BackendService {
     }
 
     async requestPV(message: CARTA.PvRequest.$Properties): Promise<CARTA.PvResponse.$Properties> {
+        if (AppStore.Instance.getFrame(message.fileId ?? NaN)?.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -1025,7 +1036,8 @@ export class BackendService {
         this.scriptingStream.next(scriptingRequest);
     }
 
-    private onStreamedCatalogData(_eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+    private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+        Object.defineProperty(catalogFilter, "eventId", {configurable: true, enumerable: false, value: eventId});
         this.catalogStream.next(catalogFilter);
     }
 

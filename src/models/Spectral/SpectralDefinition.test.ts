@@ -1,6 +1,172 @@
-import {IntensityUnitType} from "../../enums";
+import {IntensityUnitType, SpectralType, SpectralUnit} from "../../enums";
 
-import {FindIntensityUnitType, IsFrequencyDensityUnit} from "./SpectralDefinition";
+import {
+    FindIntensityUnitType,
+    GetComputedEntriesForDisplay,
+    GetFluxDensityFromSum,
+    GetInitialSpectralUnit,
+    GetSpectralTypeCode,
+    HasNonlinearSpectralAlgorithm,
+    HasNonlinearSpectralAxis,
+    IsFrequencyDensityUnit,
+    NONLINEAR_SPECTRAL_AXIS_MESSAGE,
+    ShouldUseSumForFluxDensity
+} from "./SpectralDefinition";
+
+const MakeFileInfo = (ctype3: string | undefined, spectral: number = 3) => ({
+    axesNumbers: {spatialX: 1, spatialY: 2, spectral, stokes: 0, depth: 3},
+    headerEntries: [{name: "CTYPE1", value: "RA---TAN"}, {name: "CTYPE2", value: "DEC--TAN"}, ...(ctype3 === undefined ? [] : [{name: "CTYPE3", value: ctype3}])],
+    computedEntries: [
+        {name: "Name", value: "cube.fits"},
+        {name: "Frequency range", value: "[100.0000, 200.0000] (GHz)"},
+        {name: "Velocity range", value: "[-10.0000, 10.0000] (km/s)"},
+        {name: "Pixel unit", value: "Jy/beam"}
+    ]
+});
+
+describe("nonlinear spectral axis of a file", () => {
+    test("is detected from the CTYPE of the spectral axis", () => {
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("WAVE-LOG"))).toBe(true);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("FREQ"))).toBe(false);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo(undefined))).toBe(false);
+        expect(HasNonlinearSpectralAxis(MakeFileInfo("WAVE-LOG", 0))).toBe(false);
+        expect(HasNonlinearSpectralAxis(undefined)).toBe(false);
+    });
+
+    test("replaces the backend-derived spectral ranges of the computed entries", () => {
+        const entries = GetComputedEntriesForDisplay(MakeFileInfo("WAVE-LOG"));
+        expect(entries.map(entry => [entry.name, entry.value])).toEqual([
+            ["Name", "cube.fits"],
+            ["Frequency range", NONLINEAR_SPECTRAL_AXIS_MESSAGE],
+            ["Velocity range", NONLINEAR_SPECTRAL_AXIS_MESSAGE],
+            ["Pixel unit", "Jy/beam"]
+        ]);
+    });
+
+    test("keeps the computed entries of a linear spectral axis", () => {
+        const fileInfo = MakeFileInfo("FREQ");
+        expect(GetComputedEntriesForDisplay(fileInfo)).toBe(fileInfo.computedEntries);
+        expect(GetComputedEntriesForDisplay(undefined)).toEqual([]);
+    });
+
+    test("prefers the frame's nonlinear-axis decision over the header when one is given", () => {
+        const linearHeader = MakeFileInfo("FREQ");
+        const fromFrame = GetComputedEntriesForDisplay(linearHeader, true);
+        expect(fromFrame.find(entry => entry.name === "Frequency range")?.value).toBe(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        expect(fromFrame.find(entry => entry.name === "Pixel unit")?.value).toBe("Jy/beam");
+
+        const nonlinearHeader = MakeFileInfo("WAVE-LOG");
+        expect(GetComputedEntriesForDisplay(nonlinearHeader, false)).toBe(nonlinearHeader.computedEntries);
+    });
+});
+
+describe("nonlinear spectral algorithm codes", () => {
+    test.each([
+        ["WAVE-LOG", true],
+        [" wave-log ", true],
+        ["FREQ-F2W", true],
+        ["WAVE-TAB", true],
+        ["AWAV-GRI", true],
+        ["FREQ", false],
+        ["WAVE", false],
+        ["VELO-LSR", false],
+        ["RA---TAN", false],
+        ["", false],
+        [undefined, false]
+    ])("classifies CTYPE %j as nonlinear: %s", (ctype, isNonlinear) => {
+        expect(HasNonlinearSpectralAlgorithm(ctype)).toBe(isNonlinear);
+    });
+});
+
+describe("initial spectral unit", () => {
+    test.each([
+        [SpectralType.WAVE, "Angstrom", SpectralUnit.ANGSTROM],
+        [SpectralType.AWAV, "um", SpectralUnit.UM],
+        [SpectralType.WAVE, "m", SpectralUnit.MM],
+        [SpectralType.FREQ, "Hz", SpectralUnit.GHZ],
+        [SpectralType.FREQ, "MHz", SpectralUnit.MHZ],
+        [SpectralType.VRAD, "m/s", SpectralUnit.KMS],
+        [SpectralType.VOPT, "km/s", SpectralUnit.KMS],
+        [SpectralType.WAVE, "micron", SpectralUnit.MM],
+        [SpectralType.VRAD, "Hz", SpectralUnit.KMS],
+        [SpectralType.FREQ, "km/s", SpectralUnit.GHZ],
+        [SpectralType.FREQ, undefined, SpectralUnit.GHZ]
+    ])("opens a %s axis in %j as %s", (type, headerUnit, expected) => {
+        expect(GetInitialSpectralUnit(type, headerUnit)).toBe(expected);
+    });
+});
+
+describe("spectral type codes", () => {
+    test.each([
+        ["WAVE-LOG", "WAVE"],
+        [" wave-log ", "WAVE"],
+        ["FREQ-F2W", "FREQ"],
+        ["AWAV-GRA", "AWAV"],
+        ["FREQ", "FREQ"],
+        ["VELO-LSR", "VELO-LSR"],
+        ["WAVE-TAB", "WAVE-TAB"],
+        ["RA---TAN", "RA---TAN"]
+    ])("resolves the coordinate type code of CTYPE %j as %s", (ctype, code) => {
+        expect(GetSpectralTypeCode(ctype)).toBe(code);
+    });
+
+    test("returns an empty code for a missing CTYPE", () => {
+        expect(GetSpectralTypeCode(undefined)).toBe("");
+    });
+});
+
+const PIXEL_SIZES_ARCSEC = {x: 2, y: 3};
+const ARCSEC_TO_RAD = Math.PI / 648000;
+
+const GetConfig = (nativeIntensityUnit: string) => ({
+    nativeIntensityUnit,
+    bmaj: [2],
+    bmin: [3],
+    cdelta1: PIXEL_SIZES_ARCSEC.x * ARCSEC_TO_RAD,
+    cdelta2: PIXEL_SIZES_ARCSEC.y * ARCSEC_TO_RAD,
+    freqGHz: [100]
+});
+
+describe("GetFluxDensityFromSum", () => {
+    it.each([
+        ["Jy/arcsec^2", 6],
+        ["K", 6],
+        ["MJy/sr", 6 * 2.350443e-11],
+        ["Jy/pixel", 1],
+        ["Jy/beam", (4 * Math.LN2) / Math.PI]
+    ])("integrates %s values with the correct pixel factor", (unitTo, expected) => {
+        const result = GetFluxDensityFromSum(new Float64Array([1]), GetConfig(unitTo), PIXEL_SIZES_ARCSEC, unitTo);
+        expect(result[0] / expected).toBeCloseTo(1, 7);
+    });
+
+    it.each([
+        ["Jy/pixel", 6],
+        ["MJy/sr", 6e-6]
+    ])("converts Jy/arcsec^2 sums to integrated %s values", (unitTo, expected) => {
+        const result = GetFluxDensityFromSum(new Float64Array([1]), GetConfig("Jy/arcsec^2"), PIXEL_SIZES_ARCSEC, unitTo);
+        expect(result[0] / expected).toBeCloseTo(1, 7);
+    });
+
+    it("converts K sums to integrated Jy/beam values", () => {
+        const result = GetFluxDensityFromSum(new Float64Array([1]), GetConfig("K"), PIXEL_SIZES_ARCSEC, "Jy/beam");
+        const expected = ((100 * 100 * 2 * 3) / 1.222e6) * ((4 * Math.LN2) / Math.PI);
+        expect(result[0] / expected).toBeCloseTo(1, 7);
+    });
+});
+
+describe("ShouldUseSumForFluxDensity", () => {
+    it("uses backend flux density for equivalent unit types", () => {
+        expect(ShouldUseSumForFluxDensity(GetConfig("Jy/beam"), "mJy/beam")).toBe(false);
+    });
+
+    it("uses sum values for different supported unit types", () => {
+        expect(ShouldUseSumForFluxDensity(GetConfig("Jy/beam"), "K")).toBe(true);
+    });
+
+    it("does not derive flux density for unsupported units", () => {
+        expect(ShouldUseSumForFluxDensity(GetConfig("Jy/beam"), "counts")).toBe(false);
+    });
+});
 
 describe("spectral intensity units", () => {
     test.each(["Jy", "JY", "jy", "mJy", "MJY", "uJY"])("recognizes bare Jansky unit %s regardless of case", unit => {

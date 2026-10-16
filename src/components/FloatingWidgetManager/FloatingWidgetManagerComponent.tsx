@@ -69,7 +69,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
         const widgetsStore = WidgetsStore.Instance;
         widgetsStore.removeFloatingWidgetComponent(componentId);
-        CatalogStore.Instance.catalogProfiles.delete(componentId);
+        widgetsStore.catalogWidgets.delete(componentId);
     };
 
     private removeCatalogPlotWidget = (componentId?: string) => {
