@@ -342,7 +342,8 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     return (index, isSelected) => {
         const mappedSize = mappedSizes[index];
         const hasMappedSize = isFinite(mappedSize);
-        let size = hasMappedSize ? getCatalogPointSize(frame, mappedSize, store.isImagePixelSize, pixelRatio) : defaultSize;
+        // Mapped screen sizes are already device-pixel dimensions in the shader's size texture.
+        let size = hasMappedSize ? (store.isImagePixelSize ? getCatalogPointSize(frame, mappedSize, true, pixelRatio) : mappedSize) : defaultSize;
         if (store.isSizeAreaMode) {
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
@@ -350,7 +351,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
         const mappedMinorSize = mappedMinorSizes[index];
         let minorSize: number | undefined;
         if (isFinite(mappedMinorSize)) {
-            minorSize = getCatalogPointSize(frame, mappedMinorSize, store.isImagePixelSize, pixelRatio);
+            minorSize = store.isImagePixelSize ? getCatalogPointSize(frame, mappedMinorSize, true, pixelRatio) : mappedMinorSize;
             if (store.isSizeMinorAreaMode) {
                 // The shader's minor-area branch uses the resolved major dimension and scaled minor value.
                 minorSize = getCatalogSizeFromArea(size, store.catalogShape, mappedMinorSize * areaScale);
@@ -386,7 +387,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const catalogWidgetStore = AppStore.Instance.catalogStore.getCatalogDisplayStore(fileId);
         const count = AppStore.Instance.catalogStore.catalogCounts.get(fileId) ?? 0;
         const sourceFrame = AppStore.Instance.getFrame(AppStore.Instance.catalogStore.getFrameIdByCatalogId(fileId));
-        if (!catalog || !catalogWidgetStore || !count || !sourceFrame) {
+        if (!catalog || !catalogWidgetStore?.isSourceSizeDefined || !count || !sourceFrame) {
             return;
         }
 

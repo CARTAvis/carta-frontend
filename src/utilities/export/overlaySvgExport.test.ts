@@ -252,6 +252,29 @@ describe("renderCatalogToSvg", () => {
         expect(ellipse).toHaveAttribute("stroke-width", "2");
     });
 
+    test.each([CatalogOverlayShape.TRIANGLE_LINED_UP, CatalogOverlayShape.TRIANGLE_LINED_DOWN, CatalogOverlayShape.HEXAGON_LINED, CatalogOverlayShape.HEXAGON_LINED_2, CatalogOverlayShape.RHOMB_LINED])(
+        "preserves polygon stroke width for shape %s",
+        shape => {
+            const group = renderCatalogToSvg(new Map([[11, new Float32Array([10, 20])]]), new Map([[11, shape]]), new Map([[11, 12]]), new Map([[11, "#123456"]]), 0, 0, new Map([[11, [{lineWidth: 4}]]]));
+            expect(group.querySelector("polygon")).toHaveAttribute("stroke-width", "4");
+        }
+    );
+
+    test.each([
+        CatalogOverlayShape.LineSegment_FILLED,
+        CatalogOverlayShape.BOX_LINED,
+        CatalogOverlayShape.CROSS_LINED,
+        CatalogOverlayShape.X_LINED,
+        CatalogOverlayShape.HEXAGON_LINED,
+        CatalogOverlayShape.RHOMB_LINED,
+        CatalogOverlayShape.TRIANGLE_LINED_UP,
+        CatalogOverlayShape.TRIANGLE_LINED_DOWN
+    ])("preserves mapped orientation for shape %s", shape => {
+        const group = renderCatalogToSvg(new Map([[11, new Float32Array([10, 20])]]), new Map([[11, shape]]), new Map([[11, 12]]), new Map([[11, "#123456"]]), 0, 0, new Map([[11, [{rotation: 45}]]]));
+        const isTriangle = shape === CatalogOverlayShape.TRIANGLE_LINED_UP || shape === CatalogOverlayShape.TRIANGLE_LINED_DOWN;
+        expect(group.firstElementChild).toHaveAttribute("transform", `${isTriangle ? "" : "rotate(90,10,20) "}rotate(-45,10,20)`);
+    });
+
     test("flips line-segment axes around the source center", () => {
         const group = renderCatalogToSvg(new Map([[11, new Float32Array([10, 20])]]), new Map([[11, CatalogOverlayShape.LineSegment_FILLED]]), new Map([[11, 12]]), new Map([[11, "#123456"]]), 0, 0);
 

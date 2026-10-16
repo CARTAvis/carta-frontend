@@ -114,7 +114,7 @@ describe("getPanelSvg", () => {
                 visibleCatalogFiles: new Map([[frame, [11]]]),
                 catalogGLData: new Map([[11, {x: new Float32Array([30]), y: new Float32Array([40])}]]),
                 catalogCounts: new Map([[11, 1]]),
-                getCatalogDisplayStore: jest.fn(() => ({catalogShape: 3, catalogSize: 6, catalogColor: "#00ff00", isImagePixelSize: false, shapeSettings: {diameterBase: 0}})),
+                getCatalogDisplayStore: jest.fn(() => ({isSourceSizeDefined: true, catalogShape: 3, catalogSize: 6, catalogColor: "#00ff00", isImagePixelSize: false, shapeSettings: {diameterBase: 0}})),
                 getFrameIdByCatalogId: jest.fn(() => 1)
             },
             getFrame: jest.fn(() => frame)
@@ -326,6 +326,26 @@ describe("getPanelSvg", () => {
         expect(Number(source?.getAttribute("ry"))).toBeCloseTo(Math.sqrt(100 / Math.PI));
     });
 
+    test.each([1, 2, 4])("preserves mapped screen-pixel diameters at pixel ratio %s", pixelRatio => {
+        mockAppStore.pixelRatio = pixelRatio;
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 11, sizeArray: () => new Float32Array([20]), sizeMinorArray: () => new Float32Array([10])});
+        const ellipse = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
+        expect(ellipse).toHaveAttribute("rx", "10");
+        expect(ellipse).toHaveAttribute("ry", "5");
+    });
+
+    test("omits catalogs without a defined source size until a size is selected", () => {
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        const sizeArray = jest.fn(() => new Float32Array([10]));
+        const store = {...displayStore, isSourceSizeDefined: false, isImagePixelSize: true, sizeArray};
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue(store);
+        expect(getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).toBeNull();
+        expect(sizeArray).not.toHaveBeenCalled();
+        store.isSourceSizeDefined = true;
+        expect(getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).not.toBeNull();
+    });
+
     test("skips style work when selected-only mode has no selection", () => {
         const sizeArray = jest.fn(() => new Float32Array([100]));
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
@@ -497,6 +517,7 @@ describe("getPanelSvg", () => {
         mockAppStore.imageRatio = 1;
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
             catalogShape: 1,
+            isSourceSizeDefined: true,
             catalogSize: 6,
             catalogColor: "#00ff00",
             isImagePixelSize: false,
@@ -515,6 +536,7 @@ describe("getPanelSvg", () => {
         mockAppStore.pixelRatio = 2;
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
             catalogShape: 2,
+            isSourceSizeDefined: true,
             catalogSize: 6,
             catalogColor: "#00ff00",
             isImagePixelSize: true,
@@ -531,6 +553,7 @@ describe("getPanelSvg", () => {
         mockAppStore.pixelRatio = 2;
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
             catalogShape: 11,
+            isSourceSizeDefined: true,
             catalogSize: 6,
             catalogColor: "#00ff00",
             isImagePixelSize: true,

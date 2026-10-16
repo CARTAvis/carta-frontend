@@ -116,7 +116,10 @@ export function renderCatalogToSvg(
 function createRotatedElement(element: SVGElement, x: number, y: number, rotation: number): SVGElement {
     // Catalog orientations are degrees in the WebGL image-space (y-up) convention.
     // SVG uses a y-down coordinate system, so invert the angle when rendering it.
-    if (rotation) element.setAttribute("transform", `rotate(${-rotation},${x},${y})`);
+    if (rotation) {
+        const transform = element.getAttribute("transform");
+        element.setAttribute("transform", `${transform ? `${transform} ` : ""}rotate(${-rotation},${x},${y})`);
+    }
     return element;
 }
 
@@ -128,6 +131,15 @@ function flipCatalogAxes(element: SVGElement, x: number, y: number): SVGElement 
 }
 
 function renderCatalogShape(x: number, y: number, size: number, color: string, shape: string | CatalogOverlayShape, minorSize?: number, rotation = 0, lineWidth = 1): SVGElement | null {
+    const element = createCatalogShape(x, y, size, color, shape, minorSize, lineWidth);
+    if (element) {
+        if (element.getAttribute("stroke") !== "none") element.setAttribute("stroke-width", `${lineWidth}`);
+        createRotatedElement(element, x, y, rotation);
+    }
+    return element;
+}
+
+function createCatalogShape(x: number, y: number, size: number, color: string, shape: string | CatalogOverlayShape, minorSize: number | undefined, lineWidth: number): SVGElement | null {
     const halfSize = size / 2;
     const shapeName = typeof shape === "number" ? CatalogOverlayShape[shape] : shape;
 
@@ -145,10 +157,10 @@ function renderCatalogShape(x: number, y: number, size: number, color: string, s
         case "BOX_LINED":
             return flipCatalogAxes(createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
         case "EllipseFilled":
-            return flipCatalogAxes(createRotatedElement(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: color, stroke: "none"}), x, y, rotation), x, y);
+            return flipCatalogAxes(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: color, stroke: "none"}), x, y);
         case "EllipseLined":
         case "ELLIPSE_LINED":
-            return flipCatalogAxes(createRotatedElement(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y, rotation), x, y);
+            return flipCatalogAxes(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
         case "Cross":
         case "CROSS_FILLED":
         case "CROSS_LINED":
