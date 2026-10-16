@@ -1,6 +1,11 @@
 import {runInAction} from "mobx";
 
+import {SpectralType} from "enums/spectral";
+import {getTransformedChannelList} from "utilities";
+
 import {ChannelMapStore} from "./ChannelMapStore";
+
+jest.mock("utilities", () => ({getTransformedChannelList: jest.fn()}));
 
 jest.mock("services", () => ({
     TileService: {
@@ -211,6 +216,28 @@ describe("ChannelMapStore", () => {
 
             baseFrame.spectralSiblings = [];
             setDisplayedImage(frameImage);
+        });
+
+        it("leaves cells empty when transformed channels round beyond the layer depth", () => {
+            const appStore = jest.requireMock("stores").AppStore.Instance;
+            const frameImage = appStore.imageViewConfigStore.visibleImages[0];
+            const baseFrame = frameImage.store;
+            const matchedFrame = {...baseFrame, frameInfo: {fileId: 2, fileInfoExtended: {depth: 3}}};
+            store.setNumColumns(2);
+            store.setNumRows(2);
+            store.setStartChannel(0);
+            jest.mocked(getTransformedChannelList).mockReturnValue([2.49, 2.5, 2.51, NaN]);
+            appStore.spectralMatchingType = SpectralType.FREQ;
+            baseFrame.spectralSiblings = [matchedFrame];
+            setDisplayedImage({type: 1, store: {frames: [baseFrame, matchedFrame]}});
+
+            try {
+                expect(store.getChannelsForFrame(matchedFrame)).toEqual([2, null, null, null]);
+            } finally {
+                appStore.spectralMatchingType = SpectralType.CHANNEL;
+                baseFrame.spectralSiblings = [];
+                setDisplayedImage(frameImage);
+            }
         });
 
         it("repeats an unmatched layer channel and requests it only once", () => {

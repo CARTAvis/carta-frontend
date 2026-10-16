@@ -353,7 +353,7 @@ export class ChannelMapStore {
         const transformedChannels = getTransformedChannelList(baseFrame.wcsInfo3D, frame.wcsInfo3D, AppStore.Instance.spectralMatchingType, firstChannel, lastChannel);
         return this.channelArray.map(channel => {
             const transformedChannel = transformedChannels[channel - firstChannel];
-            if (!isFinite(transformedChannel) || transformedChannel < -0.5 || transformedChannel > depth - 0.5) {
+            if (!isFinite(transformedChannel) || transformedChannel < -0.5 || transformedChannel >= depth - 0.5) {
                 return null;
             }
             return Math.round(transformedChannel);

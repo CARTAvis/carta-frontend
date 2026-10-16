@@ -341,7 +341,8 @@ export class TileService {
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
         const requiredChannel = frame.channel;
-        this.channelMapRequestedChannels.set(fileId, new Set(requestedChannels));
+        const requestedChannelSet = new Set(requestedChannels);
+        this.channelMapRequestedChannels.set(fileId, requestedChannelSet);
         const fullChannelRange = {min: Math.min(...requestedChannels), max: Math.max(...requestedChannels)};
         const currentTiles = tiles.map(tile => tile.encode());
 
@@ -357,7 +358,7 @@ export class TileService {
 
         const previousTiles = this.streamingTileRanges.get(fileId);
         if (previousTiles) {
-            this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, previousTiles);
+            this.clearQueueForChannelMap(this.pendingRequests, fileId, requestedChannelSet, currentTiles, previousTiles);
         }
 
         const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
@@ -464,7 +465,7 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}, currentTileRange: number[], previousTileRange: number[]) {
+    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, requestedChannels: ReadonlySet<number>, currentTileRange: number[], previousTileRange: number[]) {
         pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
@@ -485,7 +486,7 @@ export class TileService {
             const keyFileId = parseInt(splitKey[0]);
             const channel = parseInt(splitKey[splitKey.length - 1]);
             if (keyFileId === fileId && isFinite(channel) && channel >= 0) {
-                if (channel < currentChannelRange.min || channel > currentChannelRange.max) {
+                if (!requestedChannels.has(channel)) {
                     pendingRequests.delete(key);
                 }
             }
