@@ -3,7 +3,24 @@ import {CatalogOverlayShape} from "enums";
 import {renderCatalogToSvg} from "./catalogSvgExport";
 import {type ColorbarSvgOptions, renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
+import {namespaceSvgIds} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
+
+test("namespaces SVG resources and use references while removing duplicate layer IDs", () => {
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.innerHTML =
+        '<defs><linearGradient id="gradient"/><clipPath id="clip"><rect width="10" height="10"/></clipPath><g id="source"/></defs><g id="contours"><g id="contours"/></g><rect fill="url(#gradient)" clip-path="url(#clip)"/><use href="#source"/>';
+    const other = group.cloneNode(true) as SVGGElement;
+    namespaceSvgIds(group, "panel-0");
+    namespaceSvgIds(other, "panel-1");
+    const ids = [...group.querySelectorAll("[id]"), ...other.querySelectorAll("[id]")].map(element => element.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const panel of [group, other]) {
+        expect(panel.querySelector("rect[fill]")?.getAttribute("fill")).toBe(`url(#${panel.querySelector("linearGradient")?.id})`);
+        expect(panel.querySelector("rect[clip-path]")?.getAttribute("clip-path")).toBe(`url(#${panel.querySelector("clipPath")?.id})`);
+        expect(panel.querySelector("use")?.getAttribute("href")).toBe(`#${panel.querySelector("defs g")?.id}`);
+    }
+});
 
 describe("renderContoursToSvg", () => {
     test("renders contour paths with the supplied stroke styling", () => {

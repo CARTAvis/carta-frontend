@@ -11,6 +11,7 @@ export interface BeamPlotProps {
     axisColor: string;
     strokeWidth: number;
     isFilled: boolean;
+    scale?: Point2D;
 }
 
 /**
@@ -24,8 +25,14 @@ export function renderBeamToSvg(plotProps: BeamPlotProps, pixelRatio: number): S
     const strokeWidth = plotProps.strokeWidth * pixelRatio;
     const group = svgGroupFromLayer("beam-profile");
 
-    // Apply rotation to the whole group (ellipse + cross-hairs)
-    group.setAttribute("transform", `rotate(${plotProps.rotationDegrees},${positionX},${positionY})`);
+    // Screen-axis scaling must follow beam rotation, as in the viewer's outer Konva group.
+    const scale = plotProps.scale ?? {x: 1, y: 1};
+    const isScaled = scale.x !== 1 || scale.y !== 1;
+    const theta = (plotProps.rotationDegrees * Math.PI) / 180;
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+    if (!isScaled) group.setAttribute("transform", `rotate(${plotProps.rotationDegrees},${positionX},${positionY})`);
+    const axisPoint = (x: number, y: number): Point2D => (isScaled ? {x: positionX + scale.x * (x * cos - y * sin), y: positionY + scale.y * (x * sin + y * cos)} : {x: positionX + x, y: positionY + y});
 
     if (semiMajor > 0 && semiMinor > 0) {
         const ellipse = createSvgElement("ellipse", {
@@ -37,25 +44,40 @@ export function renderBeamToSvg(plotProps: BeamPlotProps, pixelRatio: number): S
             stroke: plotProps.color,
             "stroke-width": strokeWidth
         });
+        if (isScaled) {
+            // Resolve the scaled ellipse's principal axes. Keeping scale out of SVG
+            // transforms preserves Konva's fixed stroke width in svg2pdf as well.
+            const xx = scale.x ** 2 * ((semiMajor * cos) ** 2 + (semiMinor * sin) ** 2);
+            const yy = scale.y ** 2 * ((semiMajor * sin) ** 2 + (semiMinor * cos) ** 2);
+            const xy = scale.x * scale.y * (semiMajor ** 2 - semiMinor ** 2) * cos * sin;
+            const difference = Math.hypot(xx - yy, 2 * xy);
+            ellipse.setAttribute("rx", `${Math.sqrt((xx + yy + difference) / 2)}`);
+            ellipse.setAttribute("ry", `${Math.sqrt(Math.max(0, (xx + yy - difference) / 2))}`);
+            ellipse.setAttribute("transform", `rotate(${(Math.atan2(2 * xy, xx - yy) * 90) / Math.PI},${positionX},${positionY})`);
+        }
         group.appendChild(ellipse);
     }
 
     // Cross-hair axes (horizontal along semiMajor, vertical along semiMinor)
+    const hStart = axisPoint(-semiMajor, 0);
+    const hEnd = axisPoint(semiMajor, 0);
     const hLine = createSvgElement("line", {
-        x1: positionX - semiMajor,
-        y1: positionY,
-        x2: positionX + semiMajor,
-        y2: positionY,
+        x1: hStart.x,
+        y1: hStart.y,
+        x2: hEnd.x,
+        y2: hEnd.y,
         stroke: plotProps.axisColor,
         "stroke-width": strokeWidth
     });
     group.appendChild(hLine);
 
+    const vStart = axisPoint(0, -semiMinor);
+    const vEnd = axisPoint(0, semiMinor);
     const vLine = createSvgElement("line", {
-        x1: positionX,
-        y1: positionY - semiMinor,
-        x2: positionX,
-        y2: positionY + semiMinor,
+        x1: vStart.x,
+        y1: vStart.y,
+        x2: vEnd.x,
+        y2: vEnd.y,
         stroke: plotProps.axisColor,
         "stroke-width": strokeWidth
     });

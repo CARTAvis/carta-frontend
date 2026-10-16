@@ -1,4 +1,7 @@
+import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+
+import {AppStore} from "stores";
 
 import {renderRegionsToSvg} from "./regionSvgExport";
 
@@ -30,6 +33,60 @@ function baseRegion(regionType: CARTA.RegionType, controlPoints: {x: number; y: 
 }
 
 describe("renderRegionsToSvg", () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it.each([0, 0.25, 1])("preserves visual opacity %s for regions and composite annotations", opacity => {
+        const point = {...baseRegion(CARTA.RegionType.POINT, [{x: 50, y: 50}]), visualOpacity: opacity};
+        const text = {
+            ...baseRegion(CARTA.RegionType.ANNTEXT, [
+                {x: 50, y: 50},
+                {x: 100, y: 20}
+            ]),
+            text: "label",
+            fontSize: 12,
+            visualOpacity: opacity
+        };
+        const vector = {
+            ...baseRegion(CARTA.RegionType.ANNVECTOR, [
+                {x: 20, y: 20},
+                {x: 70, y: 60}
+            ]),
+            pointerWidth: 6,
+            pointerLength: 8,
+            visualOpacity: opacity
+        };
+        const group = renderRegionsToSvg([point, text, vector] as any, FRAME_VIEW, 1000, 1000, 0, 0);
+        expect(group.children).toHaveLength(3);
+        [...group.children].forEach(element => expect(element).toHaveAttribute("opacity", String(opacity)));
+    });
+
+    it.each([true, false])("uses viewer ruler WCS selection and centers two-point labels (WCS=%s)", isWcsCoordinates => {
+        const pixelWcs = 1;
+        const skyWcs = 2;
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({overlaySettings: {isWcsCoordinates}} as any);
+        jest.mocked(AST.getString).mockReturnValue("");
+        jest.mocked(AST.geodesicDistance).mockReturnValue((5 * 3600 * 180) / Math.PI);
+        const getCurveApproximation = jest.fn(() => ({xApproximatePoints: [20, 20, 70, 20], yApproximatePoints: [70, 20, 70, 60], hypotenuseApproximatePoints: [20, 20, 70, 60], corner: {x: 70, y: 20}}));
+        const ruler = {
+            ...baseRegion(CARTA.RegionType.ANNRULER, [
+                {x: 20, y: 20},
+                {x: 70, y: 60}
+            ]),
+            getCurveApproximation,
+            decimals: 2,
+            fontSize: 10,
+            textOffset: {x: 0, y: 0},
+            visualOpacity: 0.5
+        };
+        const frame = {isValidWcs: true, wcsInfo: pixelWcs, wcsInfoForTransformation: skyWcs};
+        const group = renderRegionsToSvg([ruler] as any, FRAME_VIEW, 1000, 1000, 0, 0, {frame: frame as any});
+        expect(getCurveApproximation).toHaveBeenCalledWith(isWcsCoordinates ? skyWcs : pixelWcs, undefined);
+        expect(group.querySelector("text")).toHaveTextContent("5.00pix");
+        expect(group.querySelector("text")).toHaveAttribute("x", "450");
+        expect(group.querySelector("text")).toHaveAttribute("y", "605");
+        expect(group.firstElementChild).toHaveAttribute("opacity", "0.5");
+    });
+
     it("preserves point annotation shape and screen size", () => {
         const region = {
             ...baseRegion(CARTA.RegionType.ANNPOINT, [{x: 50, y: 50}]),

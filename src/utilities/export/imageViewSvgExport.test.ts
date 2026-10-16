@@ -7,7 +7,7 @@ import * as colorUtils from "utilities/color/color";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
 import {renderColorbarToSvg} from "utilities/export/colorbarSvgExport";
 
-import {getPanelSvg} from "./imageViewSvgExport";
+import {getImageViewSvg, getPanelSvg} from "./imageViewSvgExport";
 
 jest.mock("utilities/export/astSvgExport", () => ({
     renderAstOverlayToSvg: jest.fn(() => null)
@@ -437,7 +437,7 @@ describe("getPanelSvg", () => {
         expect(coordinateViewports?.[3]).toHaveAttribute("x", "65");
         expect(coordinateViewports?.[3]).toHaveAttribute("y", "50");
         expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(1, frame.channelMapInnerOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
-        expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(2, frame.channelMapOuterOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1);
+        expect(renderAstOverlayToSvgMock).toHaveBeenNthCalledWith(2, frame.channelMapOuterOverlayStore, expect.anything(), mockAppStore.overlaySettings, 1, true);
         expect(renderColorbarToSvgMock).toHaveBeenCalledWith({
             colorscaleArray: expect.anything(),
             position: "right",
@@ -470,6 +470,94 @@ describe("getPanelSvg", () => {
         const beams = panelSvg?.querySelector("#beams");
 
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
+    });
+
+    test("renders clipped regions in every valid channel cell without unsupported overlays", () => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 4], numColumns: 2, numRows: 2};
+        frame.regionSet.regionsAndAnnotationsForRender = [{regionType: CARTA.RegionType.POINT, controlPoints: [{x: 50, y: 40}], color: "#fff", lineWidth: 1}];
+        frame.channelMapOuterOverlayStore.viewWidth = 140;
+        renderAstOverlayToSvgMock.mockImplementation(() => document.createElementNS("http://www.w3.org/2000/svg", "g"));
+
+        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const viewports = panel?.querySelectorAll("#channel-map-regions > svg");
+        expect(viewports).toHaveLength(3);
+        expect(viewports?.[0]).toHaveAttribute("x", "5");
+        expect(viewports?.[0]).toHaveAttribute("y", "7");
+        expect(viewports?.[1]).toHaveAttribute("x", "65");
+        expect(viewports?.[2]).toHaveAttribute("y", "57");
+        viewports?.forEach(viewport => {
+            expect(viewport).toHaveAttribute("width", "50");
+            expect(viewport).toHaveAttribute("height", "40");
+            expect(viewport).toHaveAttribute("overflow", "hidden");
+            expect(viewport.querySelector("use")).toHaveAttribute("href", "#channel-map-region-source-1");
+        });
+        expect(panel?.querySelector("#ast-clip-0-0 rect")).toHaveAttribute("width", "140");
+        expect(panel?.querySelector("#contours, #vector-overlays, #catalog-overlay")).toBeNull();
+    });
+
+    test("initializes a matched catalog control map once before sampling sources", () => {
+        let isReady = false;
+        const updateCatalogBoundary = jest.fn(() => {
+            isReady = true;
+        });
+        const transformPoint = jest.fn(point => (isReady ? point : null));
+        const getCatalogControlMap = jest.fn(() => ({updateCatalogBoundary, transformPoint}));
+        mockAppStore.getFrame.mockReturnValue({...frame, getCatalogControlMap});
+        mockAppStore.catalogStore.catalogCounts.set(11, 2);
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([30, 50]), y: new Float32Array([40, 40])});
+
+        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+        expect(catalog?.querySelectorAll("circle")).toHaveLength(2);
+        expect(getCatalogControlMap).toHaveBeenCalledTimes(1);
+        expect(updateCatalogBoundary).toHaveBeenCalledTimes(1);
+        expect(transformPoint).toHaveBeenCalledTimes(2);
+    });
+
+    test("scales beam geometry in screen axes after rotation for unequal zoom", () => {
+        frame.hasVisibleBeam = true;
+        frame.effectiveZoomLevel = {x: 4, y: 2};
+        frame.beamProperties = {x: 10, y: 6, angle: 45};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+        const beam = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#beam-profile");
+        const x = 2 * Math.sqrt((10 * 10) / 2 + (6 * 6) / 2) + 10;
+        const y = 80 - Math.sqrt((10 * 10) / 2 + (6 * 6) / 2) - 10;
+        const ellipse = beam?.querySelector("ellipse");
+        const rx = Number(ellipse?.getAttribute("rx"));
+        const ry = Number(ellipse?.getAttribute("ry"));
+        const theta = (Number(ellipse?.getAttribute("transform")?.match(/rotate\(([^,]+)/)?.[1]) * Math.PI) / 180;
+        expect(Number(ellipse?.getAttribute("cx"))).toBeCloseTo(x);
+        expect(Number(ellipse?.getAttribute("cy"))).toBeCloseTo(y);
+        expect(Math.hypot(rx * Math.cos(theta), ry * Math.sin(theta))).toBeCloseTo(2 * Math.sqrt(68));
+        expect(Math.hypot(rx * Math.sin(theta), ry * Math.cos(theta))).toBeCloseTo(Math.sqrt(68));
+        expect(ellipse).toHaveAttribute("stroke-width", "1");
+        expect(beam?.getAttribute("transform")).toBeNull();
+        expect(Number(beam?.querySelector("line")?.getAttribute("x1"))).toBeCloseTo(x - 20 / Math.SQRT2);
+        expect(Number(beam?.querySelector("line")?.getAttribute("y1"))).toBeCloseTo(y - 10 / Math.SQRT2);
+    });
+
+    test("scopes all IDs and references across multi-panel exports", () => {
+        const firstPanel = document.getElementById("image-panel-0-0");
+        const secondPanel = firstPanel?.cloneNode(true) as HTMLElement;
+        secondPanel.id = "image-panel-1-0";
+        document.body.appendChild(secondPanel);
+        mockAppStore.fullViewWidth = 240;
+        mockAppStore.fullViewHeight = 100;
+        mockAppStore.imageViewConfigStore = {
+            numImageColumns: 2,
+            visibleImages: [
+                {type: ImageType.FRAME, store: frame},
+                {type: ImageType.FRAME, store: frame}
+            ]
+        };
+        const svg = getImageViewSvg(padding);
+        const ids = [...(svg?.querySelectorAll("[id]") ?? [])].map(element => element.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ids.some(id => id.startsWith("panel-0-0-contours"))).toBe(true);
+        expect(ids.some(id => id.startsWith("panel-1-0-contours"))).toBe(true);
+        svg?.querySelectorAll("[clip-path]").forEach(element => {
+            const id = element.getAttribute("clip-path")?.slice(5, -1);
+            expect(ids).toContain(id);
+        });
     });
 
     test("renders vector overlays in front of the beam", () => {

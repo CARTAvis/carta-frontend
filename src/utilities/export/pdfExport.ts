@@ -2,9 +2,11 @@ import {jsPDF} from "jspdf";
 import {svg2pdf} from "svg2pdf.js";
 
 const PDF_FONT_FAMILIES: Record<string, string> = {
-    Helvetica: "helvetica",
-    Times: "times",
-    Courier: "courier"
+    helvetica: "helvetica",
+    times: "times",
+    courier: "courier",
+    "courier new": "courier",
+    palatino: "times"
 };
 
 export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
@@ -23,7 +25,12 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
         }
         textElement.removeAttribute("dominant-baseline");
 
-        const fontFamily = textElement.getAttribute("font-family");
+        const fontFamily = textElement
+            .getAttribute("font-family")
+            ?.split(",")[0]
+            .trim()
+            .replace(/^['"]|['"]$/g, "")
+            .toLowerCase();
         if (fontFamily && PDF_FONT_FAMILIES[fontFamily]) {
             textElement.setAttribute("font-family", PDF_FONT_FAMILIES[fontFamily]);
         }

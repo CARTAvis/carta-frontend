@@ -15,7 +15,7 @@ import {renderContoursToSvg} from "./contourSvgExport";
 import {findElementInAllDocuments} from "./imageExportDom";
 import {renderRegionsToSvg} from "./regionSvgExport";
 import {sampleSvgColormapColor} from "./svgColor";
-import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, svgGroupFromLayer} from "./svgExport";
+import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, namespaceSvgIds, svgGroupFromLayer} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
 export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
@@ -41,6 +41,7 @@ export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgb
             if (offsetX !== 0 || offsetY !== 0) {
                 panelSvg.setAttribute("transform", `translate(${offsetX},${offsetY})`);
             }
+            namespaceSvgIds(panelSvg, `panel-${column}-${row}`);
             svgDoc.appendChild(panelSvg);
         }
     });
@@ -156,21 +157,21 @@ function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
     return sampleSvgColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor, frame.vectorOverlayConfig.isColormapInverted);
 }
 
-function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore, shouldUseCatalogTransform: boolean = false): Point2D | null {
+function transformOverlayPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
     if (sourceFrame === destinationFrame) {
         return point;
     }
 
-    const controlMap = shouldUseCatalogTransform ? sourceFrame.getCatalogControlMap(destinationFrame) : sourceFrame.getControlMap(destinationFrame);
+    const controlMap = sourceFrame.getControlMap(destinationFrame);
     return controlMap.transformPoint(point);
 }
 
 function transformContourPoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
-    return transformFramePoint(point, sourceFrame, destinationFrame, false);
+    return transformFramePoint(point, sourceFrame, destinationFrame);
 }
 
-function transformFramePoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore, shouldUseCatalogTransform: boolean): Point2D | null {
-    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame, shouldUseCatalogTransform);
+function transformFramePoint(point: Point2D, sourceFrame: FrameStore, destinationFrame: FrameStore): Point2D | null {
+    const transformedPoint = transformOverlayPoint(point, sourceFrame, destinationFrame);
     if (!transformedPoint) {
         return null;
     }
@@ -394,6 +395,8 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const profile = AppStore.Instance.catalogStore.catalogProfileStores?.get(fileId);
         const selectedIndices = new Set(profile?.getSortedIndices(profile.selectedPointIndices) ?? []);
         if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
+        const controlMap = sourceFrame !== frame ? sourceFrame.getCatalogControlMap(frame) : null;
+        controlMap?.updateCatalogBoundary();
         const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio);
         const layerWidth = frame.renderWidth * pixelRatio;
         const layerHeight = frame.renderHeight * pixelRatio;
@@ -403,7 +406,9 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         for (let index = 0; index < count; index++) {
             const isSelected = selectedIndices.has(index);
             if (catalogWidgetStore.isShowingSelectedData && !isSelected) continue;
-            const transformedPoint = transformFramePoint({x: catalog.x[index], y: catalog.y[index]}, sourceFrame, frame, true);
+            const point = {x: catalog.x[index], y: catalog.y[index]};
+            const mappedPoint = controlMap ? controlMap.transformPoint(point) : point;
+            const transformedPoint = mappedPoint && (frame.spatialReference ? frame.spatialTransform?.transformCoordinate(mappedPoint, true) : mappedPoint);
             if (!transformedPoint) {
                 continue;
             }
@@ -510,7 +515,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     if (channelMapAstSvg) {
         panelGroup.appendChild(channelMapAstSvg);
     }
-    const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio);
+    const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio, isChannelMap);
     if (astSvg) {
         const clipId = `ast-clip-${column}-${row}`;
         const clipPath = createSvgElement("clipPath", {id: clipId});
@@ -518,7 +523,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
             createSvgElement("rect", {
                 x: 0,
                 y: 0,
-                width: frame.overlayStore.viewWidth * pixelRatio,
+                width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio,
                 height: viewHeight
             })
         );
@@ -536,7 +541,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     // 4. Contour — vector SVG from store data
-    const contoursSvg = buildContoursSvg(frame, padding, pixelRatio);
+    const contoursSvg = isChannelMap ? null : buildContoursSvg(frame, padding, pixelRatio);
     if (contoursSvg) {
         if (rasterCanvas) {
             const clipId = `contour-clip-${column}-${row}`;
@@ -551,7 +556,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     // 5. Vector overlay — vector SVG from store data
-    const vectorOverlaySvg = buildVectorOverlaySvg(frame, padding, pixelRatio);
+    const vectorOverlaySvg = isChannelMap ? null : buildVectorOverlaySvg(frame, padding, pixelRatio);
     if (vectorOverlaySvg) {
         if (rasterCanvas) {
             const clipId = `vector-clip-${column}-${row}`;
@@ -575,7 +580,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     // 7. Catalog — vector SVG from store data
-    const catalogSvg = buildCatalogSvg(frame, padding, pixelRatio);
+    const catalogSvg = isChannelMap ? null : buildCatalogSvg(frame, padding, pixelRatio);
     if (catalogSvg) {
         const clipId = `catalog-clip-${column}-${row}`;
         const clipPath = createSvgElement("clipPath", {id: clipId});
@@ -608,8 +613,8 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
         const clipPath = createSvgElement("clipPath", {id: clipId});
         clipPath.appendChild(
             createSvgElement("rect", {
-                x: 0,
-                y: 0,
+                x: isChannelMap ? padding.left * pixelRatio : 0,
+                y: isChannelMap ? padding.top * pixelRatio : 0,
                 width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio,
                 height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio
             })
@@ -722,13 +727,16 @@ function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotPr
 
     const appStore = AppStore.Instance;
     const beamSettings = frame.overlayBeamSettings;
-    const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / appStore.imageRatio;
+    const zoomFrame = frame.spatialReference ?? frame;
+    const zoom = zoomFrame.effectiveZoomLevel ?? {x: zoomFrame.zoomLevel, y: zoomFrame.zoomLevel};
+    const zoomY = (zoom.y * (frame.spatialTransform?.scale ?? 1)) / appStore.imageRatio;
+    const scale = {x: zoom.x / zoom.y, y: 1};
     const color = getColorForTheme(beamSettings.color);
     const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
     const strokeWidth = beamSettings.width;
 
-    const semiMajor = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
-    const semiMinor = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
+    const semiMajor = ((frame.beamProperties.x / 2.0) * zoomY) / devicePixelRatio;
+    const semiMinor = ((frame.beamProperties.y / 2.0) * zoomY) / devicePixelRatio;
     let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
     if (frame.spatialTransform) {
         theta -= frame.spatialTransform.rotation;
@@ -737,7 +745,7 @@ function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotPr
     const sinTheta = Math.sin(theta);
     const cosTheta = Math.cos(theta);
     const boundingBox = {
-        x: 2 * Math.sqrt(semiMajor * semiMajor * cosTheta * cosTheta + semiMinor * semiMinor * sinTheta * sinTheta),
+        x: 2 * scale.x * Math.sqrt(semiMajor * semiMajor * cosTheta * cosTheta + semiMinor * semiMinor * sinTheta * sinTheta),
         y: 2 * Math.sqrt(semiMajor * semiMajor * sinTheta * sinTheta + semiMinor * semiMinor * cosTheta * cosTheta)
     };
 
@@ -745,14 +753,15 @@ function getBeamPlotProps(frame: FrameStore, basePosition?: Point2D): BeamPlotPr
     const beamPadding = 10;
     const paddingOffset = beamPadding * devicePixelRatio;
     const position = basePosition ?? {
-        x: Math.min(frame.renderWidth - boundingBox.x / 2.0, boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX),
-        y: Math.max(boundingBox.y / 2.0, frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY)
+        x: boundingBox.x / 2.0 + paddingOffset + beamSettings.shiftX,
+        y: frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - beamSettings.shiftY
     };
 
     const isFilled = beamSettings.type === BeamType.Solid;
 
     return {
-        position,
+        position: {x: Math.min(position.x, frame.renderWidth - boundingBox.x / 2), y: Math.max(position.y, boundingBox.y / 2)},
+        scale,
         semiMajor,
         semiMinor,
         rotationDegrees: (theta * 180.0) / Math.PI,
@@ -861,5 +870,24 @@ function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         return null;
     }
 
+    if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
+        const inner = frame.channelMapInnerOverlayStore;
+        const outerPadding = frame.channelMapOuterOverlayStore.padding;
+        const channelMap = AppStore.Instance.channelMapStore;
+        const group = svgGroupFromLayer("channel-map-regions");
+        const source = renderRegionsToSvg(regions, frameView, inner.renderWidth * pixelRatio, inner.renderHeight * pixelRatio, 0, 0, {frame, pixelRatio});
+        source.id = `channel-map-region-source-${frame.frameInfo.fileId}`;
+        const defs = createSvgElement("defs", {});
+        defs.appendChild(source);
+        group.appendChild(defs);
+        channelMap.channelArray.forEach((channel, index) => {
+            if (channel >= frame.frameInfo.fileInfoExtended.depth) return;
+            const {left, top} = getChannelMapCell(index, {numColumns: channelMap.numColumns, outerPadding, tileWidth: inner.renderWidth, tileHeight: inner.renderHeight, gapX: inner.gapX, gapY: inner.gapY});
+            const viewport = createSvgElement("svg", {x: left * pixelRatio, y: top * pixelRatio, width: inner.renderWidth * pixelRatio, height: inner.renderHeight * pixelRatio, overflow: "hidden"});
+            viewport.appendChild(createSvgElement("use", {href: `#${source.id}`}));
+            group.appendChild(viewport);
+        });
+        return group;
+    }
     return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
 }

@@ -1,5 +1,25 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/** Scope layer and resource IDs to a panel, including references to SVG definitions. */
+export function namespaceSvgIds(root: SVGElement, prefix: string): void {
+    const elements = [root, ...root.querySelectorAll<SVGElement>("*")];
+    const replacements = new Map<string, string>();
+    let index = 0;
+    for (const element of elements) {
+        if (!element.id) continue;
+        const oldId = element.id;
+        element.id = `${prefix}-${oldId}-${index++}`;
+        if (!replacements.has(oldId)) replacements.set(oldId, element.id);
+    }
+    for (const element of elements) {
+        for (const attribute of [...element.attributes]) {
+            let value = attribute.value.replace(/url\((['"]?)#([^)'"\s]+)\1\)/g, (match, quote, id) => (replacements.has(id) ? `url(${quote}#${replacements.get(id)}${quote})` : match));
+            if (attribute.localName === "href" && value.startsWith("#")) value = `#${replacements.get(value.slice(1)) ?? value.slice(1)}`;
+            if (value !== attribute.value) element.setAttributeNS(attribute.namespaceURI, attribute.name, value);
+        }
+    }
+}
+
 export function buildSvgDocument(width: number, height: number, backgroundColor: string): SVGSVGElement {
     const svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("xmlns", SVG_NS);

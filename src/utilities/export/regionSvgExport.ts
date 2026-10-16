@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Text} from "konva/lib/shapes/Text";
 
 import {type FrameView, type Point2D} from "models";
+import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
@@ -403,7 +404,7 @@ function getDistanceText(wcsInfo: AST.FrameSet, start: Point2D, finish: Point2D,
             if (distance < Math.PI / 180.0) return `${(((distance * 180) / Math.PI) * 60).toFixed(region.decimals)}'`;
             return `${((distance * 180) / Math.PI).toFixed(region.decimals)}°`;
         }
-        return `${distance.toFixed(region.decimals)}${!unit || unit.trim() === "" ? "pix" : ""}`;
+        return `${distance.toFixed(region.decimals)}${!unit || unit[0] === "\0" || unit.trim() === "" ? "pix" : ""}`;
     } catch {
         return "";
     }
@@ -429,7 +430,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
         const frame = options.frame;
         try {
             const selectedWcsInfo = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
-            const wcsInfo = (frame.isValidWcs ? selectedWcsInfo : undefined) ?? frame.wcsInfo;
+            const wcsInfo = (frame.isValidWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? selectedWcsInfo : undefined) ?? frame.wcsInfo;
             const approx = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
             xPoints = toCanvasPoints(approx.xApproximatePoints, frameView, layerWidth, layerHeight, frame);
             yPoints = toCanvasPoints(approx.yApproximatePoints, frameView, layerWidth, layerHeight, frame);
@@ -447,8 +448,8 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
         }
     }
 
-    const line = (points: Point2D[], dashLength: number, opacity = 1) => {
-        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio), opacity};
+    const line = (points: Point2D[], dashLength: number) => {
+        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio)};
         if (dashLength > 0) attrs["stroke-dasharray"] = `${dashLength * options.pixelRatio},${dashLength * options.pixelRatio}`;
         return createSvgElement("polyline", attrs);
     };
@@ -458,7 +459,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
         group.appendChild(line(yPoints, region.auxiliaryLineDashLength));
     }
 
-    const midpoint = (points: Point2D[]): Point2D => points[Math.floor((points.length - 1) / 2)] ?? points[0];
+    const midpoint = (points: Point2D[]): Point2D => (points.length === 2 ? {x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2} : (points[Math.floor(points.length / 2)] ?? startCanvas));
     const addText = (text: string, position: Point2D, offset: Point2D) => {
         if (text) {
             const fontSize = (region.fontSize ?? 20) * options.pixelRatio;
@@ -528,6 +529,7 @@ export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView,
         if (!region.isTemporary && region.controlPoints.length > 0) {
             const svgElement = renderSingleRegion(region, frameView, layerWidth, layerHeight, renderOptions);
             if (svgElement) {
+                svgElement.setAttribute("opacity", `${region.visualOpacity ?? 1}`);
                 group.appendChild(svgElement);
             }
         }

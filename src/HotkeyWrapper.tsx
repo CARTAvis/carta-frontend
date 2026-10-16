@@ -623,16 +623,12 @@ export const HotkeysRegistrar = () => {
     // Handle global fallback shortcuts that need physical-key matching.
     React.useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
+            if (isEditableTarget(event.target)) return;
             // macOS may report Option+E as a dead key or accent, so match its physical key code.
-            if (event.code === "KeyE" && event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && !isEditableTarget(event.target)) {
+            if (AppStore.Instance.modifierString.trim() === "alt +" && event.code === "KeyE" && event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
                 event.preventDefault();
                 event.stopPropagation();
                 ExportImageAtDefaultResolution();
-                return;
-            }
-
-            // Only handle if not in an editable element
-            if (isEditableTarget(event.target)) {
                 return;
             }
 
@@ -671,10 +667,12 @@ function getForwardedKeyboardEventInit(event: KeyboardEvent): KeyboardEventInit 
 
 function isEditableTarget(target: EventTarget | null): boolean {
     const element = target as Element | null;
-    const editable = element?.closest?.("input, textarea, [contenteditable=true]") as HTMLElement | null;
+    if ((element as HTMLElement | null)?.isContentEditable) return true;
+    const editable = element?.closest?.("input, textarea, [contenteditable]") as HTMLElement | null;
     if (!editable) {
         return false;
     }
+    if (editable.getAttribute("contenteditable")?.toLowerCase() === "false") return false;
 
     if (editable.tagName.toLowerCase() === "input") {
         const inputType = editable.getAttribute("type")?.toLowerCase();
