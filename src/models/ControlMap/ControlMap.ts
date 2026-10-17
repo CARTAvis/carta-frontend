@@ -71,4 +71,50 @@ export class ControlMap {
     hasTextureForContext = (gl: WebGL2RenderingContext) => {
         return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
+
+    transformPoint = (point: Point2D): Point2D | null => {
+        if (!this.grid?.length) {
+            return null;
+        }
+
+        const widthRange = this.maxPoint.x - this.minPoint.x;
+        const heightRange = this.maxPoint.y - this.minPoint.y;
+        if (!isFinite(widthRange) || !isFinite(heightRange) || widthRange === 0 || heightRange === 0) {
+            return null;
+        }
+
+        // Keep the CPU path in lockstep with controlMapLookup() in the shader:
+        // texture coordinates are scaled by the texture dimensions and sampled
+        // with the same clamped bicubic kernel.
+        const normalizedX = ((point.x - this.minPoint.x) / widthRange) * this.width;
+        const normalizedY = ((point.y - this.minPoint.y) / heightRange) * this.height;
+        if (!isFinite(normalizedX) || !isFinite(normalizedY)) {
+            return null;
+        }
+
+        const x0 = Math.floor(normalizedX);
+        const y0 = Math.floor(normalizedY);
+        const tx = normalizedX - x0;
+        const ty = normalizedY - y0;
+        const sampleRow = (row: number, component: 0 | 1) =>
+            this.cubic(this.getGridComponent(x0 - 1, row, component), this.getGridComponent(x0, row, component), this.getGridComponent(x0 + 1, row, component), this.getGridComponent(x0 + 2, row, component), tx);
+        const x = this.cubic(sampleRow(y0 - 1, 0), sampleRow(y0, 0), sampleRow(y0 + 1, 0), sampleRow(y0 + 2, 0), ty);
+        const y = this.cubic(sampleRow(y0 - 1, 1), sampleRow(y0, 1), sampleRow(y0 + 1, 1), sampleRow(y0 + 2, 1), ty);
+        return isFinite(x) && isFinite(y) ? {x, y} : null;
+    };
+
+    private cubic = (a: number, b: number, c: number, d: number, t: number): number => {
+        return (-a / 2 + (3 * b) / 2 - (3 * c) / 2 + d / 2) * t * t * t + (a - (5 * b) / 2 + 2 * c - d / 2) * t * t + (-a / 2 + c / 2) * t + b;
+    };
+
+    private getGridComponent = (xIndex: number, yIndex: number, component: 0 | 1): number => {
+        xIndex = Math.min(Math.max(xIndex, 0), this.width - 1);
+        yIndex = Math.min(Math.max(yIndex, 0), this.height - 1);
+        const value = this.grid[(yIndex * this.width + xIndex) * 2 + component];
+        if (!isFinite(value)) {
+            return NaN;
+        }
+
+        return value;
+    };
 }

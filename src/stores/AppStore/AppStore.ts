@@ -83,6 +83,7 @@ import {
     Distinct,
     exportScreenshot,
     getColorForTheme,
+    GetExportBackgroundColor,
     getExportFileName,
     getPasteRegionOffset,
     GetRequiredTiles,
@@ -94,6 +95,8 @@ import {
     type RegionClipboardItem
 } from "utilities";
 import * as Utils from "utilities";
+import {getImageViewSvg} from "utilities/export/imageViewSvgExport";
+import {downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -3771,35 +3774,60 @@ export class AppStore {
         this.shouldMatchMoment = !this.shouldMatchMoment;
     };
 
-    exportImage = (imageRatio: number) => {
-        if (this.activeFrame) {
-            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
-            if (index === -1) {
-                return;
-            }
+    private getExportFilename = (extension: string): string => {
+        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+        return `${getExportFileName(joinedNames, "image")}.${extension}`;
+    };
 
-            this.setIsExportingImage(true);
+    private canExportActiveImage = (): boolean => {
+        return Boolean(this.activeFrame && this.imageViewConfigStore.visibleFrames.includes(this.activeFrame));
+    };
+
+    private runImageExport = async (imageRatio: number, exportFrame: (frame: FrameStore, backgroundColor: string) => void | Promise<void>): Promise<void> => {
+        if (this.isExportingImage || !this.canExportActiveImage()) return;
+        this.setIsExportingImage(true);
+        try {
             this.setImageRatio(imageRatio);
-            this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.hasTransparentImageBackground ? "rgba(255, 255, 255, 0)" : this.isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                if (this.activeFrame) {
-                    const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
-                    if (composedCanvas) {
-                        composedCanvas.toBlob(blob => {
-                            if (blob) {
-                                const link = document.createElement("a") as HTMLAnchorElement;
-                                const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                                link.download = `${getExportFileName(joinedNames, "image")}.png`;
-                                link.href = URL.createObjectURL(blob);
-                                link.dispatchEvent(new MouseEvent("click"));
-                            }
-                        }, "image/png");
-                    }
-                }
-                this.setIsExportingImage(false);
-            });
+            await this.waitForImageData();
+            if (this.activeFrame) await exportFrame(this.activeFrame, GetExportBackgroundColor(this.preferenceStore.exportBackgroundColor, this.isDarkTheme));
+        } finally {
+            this.setIsExportingImage(false);
         }
     };
+
+    exportImage = (imageRatio: number) =>
+        this.runImageExport(imageRatio, async (frame, backgroundColor) => {
+            const canvas = getImageViewCanvas(backgroundColor);
+            if (!canvas) return;
+            const filename = this.getExportFilename("png");
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            try {
+                const link = document.createElement("a");
+                link.download = filename;
+                link.href = url;
+                link.dispatchEvent(new MouseEvent("click"));
+            } finally {
+                URL.revokeObjectURL(url);
+            }
+        });
+
+    private exportVectorImage = (imageRatio: number, format: "svg" | "pdf") =>
+        this.runImageExport(imageRatio, async (_frame, backgroundColor) => {
+            const svgDoc = getImageViewSvg(backgroundColor);
+            if (!svgDoc) return;
+            const filename = this.getExportFilename(format);
+            if (format === "svg") downloadSvg(svgDoc, filename);
+            else {
+                const {downloadPdf} = await import("utilities/export/pdfExport");
+                await downloadPdf(svgDoc, filename);
+            }
+        });
+
+    exportSvgImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "svg");
+
+    exportPdfImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "pdf");
 
     updateLayerPixelRatio = layerRef => {
         const canvas = layerRef?.current?.getCanvas();
@@ -3823,7 +3851,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }
