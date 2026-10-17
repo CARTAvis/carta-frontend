@@ -6,8 +6,10 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {HelpType, ImageType} from "enums";
 import {type Point2D, Zoom} from "models";
-import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {toFixed} from "utilities";
+import {getColorbarStagePosition} from "utilities/colorbarLayout";
 import {findElementInAllDocuments} from "utilities/export/imageExportDom";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
@@ -15,7 +17,7 @@ import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
 
-export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function getImageViewCanvas(backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
 
@@ -37,7 +39,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor, image?.type === ImageType.COLOR_BLENDING);
+        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, frame, backgroundColor, image?.type === ImageType.COLOR_BLENDING);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
@@ -46,7 +48,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     return imageViewCanvas;
 }
 
-export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)", isColorBlending = false) {
+export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, frame: FrameStore, backgroundColor: string = "rgba(255, 255, 255, 0)", isColorBlending = false) {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -71,6 +73,8 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
 
     const appStore = AppStore.Instance;
+    const overlayStore = appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore : frame.overlayStore;
+    const padding = overlayStore.padding;
     const composedCanvas = ownerDoc.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = viewWidth;
     composedCanvas.height = viewHeight;
@@ -92,23 +96,16 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     }
 
     if (colorbarCanvas && !isColorBlending) {
-        let xPos, yPos;
-        switch (colorbarPosition) {
-            case "top":
-                xPos = 0;
-                yPos = padding.top * appStore.pixelRatio - colorbarCanvas.height;
-                break;
-            case "bottom":
-                xPos = 0;
-                yPos = viewHeight - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
-                break;
-            case "right":
-            default:
-                xPos = padding.left * appStore.pixelRatio + rasterCanvas.width;
-                yPos = 0;
-                break;
-        }
-        ctx.drawImage(colorbarCanvas, xPos, yPos);
+        const stagePosition = getColorbarStagePosition({
+            position: appStore.overlaySettings.colorbar.position,
+            viewHeight: viewHeight / appStore.pixelRatio,
+            renderWidth: overlayStore.renderWidth,
+            padding,
+            stageWidth: appStore.overlaySettings.colorbar.stageWidth,
+            hoverInfoHeight: appStore.overlaySettings.colorbarHoverInfoHeight,
+            isTitleVisible: appStore.overlaySettings.title.isShown
+        });
+        ctx.drawImage(colorbarCanvas, stagePosition.left * appStore.pixelRatio, stagePosition.top * appStore.pixelRatio);
     }
 
     if (beamProfileCanvas) {

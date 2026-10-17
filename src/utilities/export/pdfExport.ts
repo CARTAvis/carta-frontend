@@ -41,6 +41,9 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
     sources.forEach(source => {
         if (!referencedIds.has(source.id)) source.remove();
     });
+    pdfSvg.querySelectorAll("defs").forEach(definitions => {
+        if (!definitions.childNodes.length) definitions.remove();
+    });
     const baselineMap: Record<string, string> = {
         "text-before-edge": "text-top",
         "text-after-edge": "bottom",

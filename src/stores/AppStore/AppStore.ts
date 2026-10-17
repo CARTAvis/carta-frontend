@@ -3797,7 +3797,7 @@ export class AppStore {
 
     exportImage = (imageRatio: number) =>
         this.runImageExport(imageRatio, async (frame, backgroundColor) => {
-            const canvas = getImageViewCanvas(frame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+            const canvas = getImageViewCanvas(backgroundColor);
             if (!canvas) return;
             const filename = this.getExportFilename("png");
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
@@ -3851,7 +3851,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

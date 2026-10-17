@@ -170,9 +170,7 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
         case "X_FILLED":
             return flipCatalogAxes(createXShape(x, y, halfSize, color, lineWidth), x, y);
         case "X_LINED": {
-            const cross = createOutlinedCross(x, y, halfSize, color, lineWidth);
-            cross.setAttribute("transform", `rotate(45,${x},${y})`);
-            return flipCatalogAxes(cross, x, y);
+            return flipCatalogAxes(createOutlinedCross(x, y, halfSize, color, lineWidth, true), x, y);
         }
         case "TriangleFilled":
             return createTriangle(x, y, halfSize, color, true);
@@ -211,7 +209,7 @@ function createCrossShape(x: number, y: number, halfSize: number, color: string,
     });
 }
 
-function createOutlinedCross(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
+function createOutlinedCross(x: number, y: number, halfSize: number, color: string, lineWidth: number, isDiagonal = false): SVGElement {
     const arm = Math.min(halfSize, Math.max(lineWidth, halfSize * 0.2));
     const points = [
         [x - arm, y - arm],
@@ -227,7 +225,16 @@ function createOutlinedCross(x: number, y: number, halfSize: number, color: stri
         [x + arm, y - halfSize],
         [x - arm, y - halfSize]
     ];
-    const path = `M${points.map(point => point.join(",")).join("L")}Z`;
+    const path = `M${points
+        .map(([pointX, pointY]) => {
+            if (!isDiagonal) return `${pointX},${pointY}`;
+            const dx = pointX - x;
+            const dy = pointY - y;
+            const diagonalX = (dx - dy) * Math.SQRT1_2;
+            const diagonalY = (dx + dy) * Math.SQRT1_2;
+            return `${x + diagonalX},${y + diagonalY}`;
+        })
+        .join("L")}Z`;
     return createSvgElement("path", {d: path, fill: "none", stroke: color, "stroke-width": lineWidth});
 }
 

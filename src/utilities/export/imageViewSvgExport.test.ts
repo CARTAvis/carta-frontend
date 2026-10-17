@@ -445,12 +445,16 @@ describe("getPanelSvg", () => {
     });
 
     test("maps spatial contours into the reference frame before exporting", () => {
+        const transformedCoordinates: Array<{x: number; y: number}> = [];
         frame.spatialReference = {
             requiredFrameView: {xMin: 0, xMax: 100, yMin: 0, yMax: 80},
             zoomLevel: 2
         };
         frame.spatialTransform = {
-            transformCoordinate: jest.fn(({x, y}: {x: number; y: number}) => ({x: x + 10, y: y + 20})),
+            transformCoordinate: jest.fn(({x, y}: {x: number; y: number}) => {
+                transformedCoordinates.push({x, y});
+                return {x: x + 10, y: y + 20};
+            }),
             scale: 1
         };
         frame.vectorOverlayConfig.isVisible = false;
@@ -460,7 +464,7 @@ describe("getPanelSvg", () => {
         const path = panelSvg?.querySelector("#contours path");
 
         expect(path).toHaveAttribute("d", "M24.50,57.50L34.50,47.50");
-        expect(frame.spatialTransform.transformCoordinate).toHaveBeenCalledWith({x: 9.5, y: 9.5}, true);
+        expect(transformedCoordinates).toContainEqual({x: 9.5, y: 9.5});
     });
 
     test("places coordinate overlays in each channel map cell", () => {

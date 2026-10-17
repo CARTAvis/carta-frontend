@@ -180,6 +180,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
             maxLevel = Math.max(maxLevel, level);
         });
         contourFrame.contourStores.forEach((contourStore, level) => {
+            const pointScratch = {x: 0, y: 0};
             const contourSvg = renderContoursToSvg(
                 contourStore.exportChunks,
                 getContourStrokeColor(contourFrame, level, minLevel, maxLevel),
@@ -189,7 +190,9 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
                 padding.top * pixelRatio,
                 point => {
                     // Match vertex_shader_contours: server contour coordinates are pixel-edge based.
-                    const transformed = transformPoint({x: point.x - 0.5, y: point.y - 0.5});
+                    pointScratch.x = point.x - 0.5;
+                    pointScratch.y = point.y - 0.5;
+                    const transformed = transformPoint(pointScratch);
                     return transformed ? imageToCanvasPoint(transformed, frameView, layerWidth, layerHeight) : null;
                 }
             );
@@ -223,10 +226,12 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
         const lineWidth = pixelRatio * vectorFrame.vectorOverlayConfig.thickness;
         const featherWidth = pixelRatio / (frame.spatialTransform?.scale ?? 1);
         const isIntensityPlot = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
+        const centerScratch = {x: 0, y: 0};
         vectorFrame.vectorOverlayStore.tiles.forEach(tile => {
             for (let vectorIndex = 0; vectorIndex < tile.numVertices; vectorIndex++) {
                 const offset = vectorIndex * 4;
-                const center = {x: tile.vertexData[offset], y: tile.vertexData[offset + 1]};
+                centerScratch.x = tile.vertexData[offset];
+                centerScratch.y = tile.vertexData[offset + 1];
                 const intensity = tile.vertexData[offset + 2];
                 const rawAngleDegrees = tile.vertexData[offset + 3];
                 const lineLength = getVectorCanvasLength(vectorFrame, intensity, pixelRatio);
@@ -234,7 +239,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                     continue;
                 }
 
-                const transformedCenter = transformPoint(center);
+                const transformedCenter = transformPoint(centerScratch);
                 if (!transformedCenter) {
                     continue;
                 }
@@ -359,13 +364,15 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const layerWidth = frame.renderWidth * pixelRatio;
         const layerHeight = frame.renderHeight * pixelRatio;
         const featherWidth = (catalogWidgetStore.shapeSettings?.featherWidth ?? 0) * pixelRatio;
+        const pointScratch = {x: 0, y: 0};
         const points: number[] = [];
         const pointStyles: CatalogPointStyle[] = [];
         for (let index = 0; index < count; index++) {
             const isSelected = selectedIndices.has(index);
             if (catalogWidgetStore.isShowingSelectedData && !isSelected) continue;
-            const point = {x: catalog.x[index], y: catalog.y[index]};
-            const transformedPoint = transformPoint(point);
+            pointScratch.x = catalog.x[index];
+            pointScratch.y = catalog.y[index];
+            const transformedPoint = transformPoint(pointScratch);
             if (!transformedPoint) {
                 continue;
             }
@@ -570,15 +577,15 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSe
         padding,
         stageWidth: colorbarSettings.stageWidth,
         hoverInfoHeight: appStore.overlaySettings.colorbarHoverInfoHeight,
-        isTitleVisible: appStore.overlaySettings.title.isShown
+        isTitleVisible: Boolean(appStore.overlaySettings.title?.isShown)
     });
 
     if (isVertical) {
         barX = stagePosition.left * pixelRatio + offset;
-        barY = stagePosition.top * pixelRatio;
+        barY = (stagePosition.top + padding.top) * pixelRatio;
         barHeight = imageHeight;
     } else {
-        barX = stagePosition.left * pixelRatio;
+        barX = (stagePosition.left + padding.left) * pixelRatio;
         barHeight = barWidth;
         if (colorbarSettings.position === "top") {
             barY = (stagePosition.top + colorbarSettings.stageWidth - colorbarSettings.offset - colorbarSettings.width) * pixelRatio;

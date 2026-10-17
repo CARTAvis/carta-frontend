@@ -28,7 +28,9 @@ export function namespaceSvgIds(root: SVGElement, prefix: string): void {
         }
     };
     updateReferences(root);
-    root.querySelectorAll<SVGElement>("*").forEach(updateReferences);
+    root.querySelectorAll<SVGElement>(
+        "[clip-path],[fill*='url'],[stroke*='url'],[filter*='url'],[mask*='url'],[marker*='url'],[marker-start*='url'],[marker-mid*='url'],[marker-end*='url'],[style*='url'],[cursor*='url'],[color-profile*='url'],[href^='#'],[xlink\\:href^='#']"
+    ).forEach(updateReferences);
 }
 
 export function buildSvgDocument(width: number, height: number, backgroundColor: string): SVGSVGElement {

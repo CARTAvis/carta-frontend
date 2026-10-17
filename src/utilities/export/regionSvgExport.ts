@@ -361,7 +361,11 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
         const tip = points[points.length - 1];
         const arrowStart = hasArrowhead ? getArrowDirectionStart(points) : null;
         const linePoints = hasArrowhead ? trimPathForArrow(points, region.pointerLength * options.pixelRatio) : points;
-        group.appendChild(createSvgElement("polyline", {points: linePoints.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio)}));
+        const line =
+            linePoints.length === 2
+                ? renderLineRegion(linePoints[0], linePoints[1], region, options.pixelRatio)
+                : createSvgElement("polyline", {points: linePoints.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio)});
+        group.appendChild(line);
         if (hasArrowhead) {
             const arrowhead = arrowStart ? renderArrowhead(arrowStart, tip, region, options.pixelRatio, region.pointerLength * options.pixelRatio, region.pointerWidth * options.pixelRatio) : null;
             if (arrowhead) {
