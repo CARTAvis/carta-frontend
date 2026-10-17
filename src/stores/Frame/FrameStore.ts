@@ -2069,7 +2069,7 @@ export class FrameStore {
 
             for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
                 let name = entry.name;
-                if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
+                if (!name?.trim() || name.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                     continue;
                 }
 
@@ -2142,7 +2142,7 @@ export class FrameStore {
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name?.match(regSpectralNumber) || name === "HISTORY") {
+            if (!name?.trim() || name.match(regOtherAxes) || name?.match(regStokesNumber) || name?.match(regSpectralNumber) || name === "HISTORY") {
                 continue;
             }
 
@@ -2211,7 +2211,7 @@ export class FrameStore {
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
+            if (!name?.trim() || name.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
@@ -2280,7 +2280,7 @@ export class FrameStore {
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
+            if (!name?.trim() || name.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
