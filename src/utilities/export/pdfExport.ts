@@ -32,6 +32,15 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
         group.appendChild(content);
         use.replaceWith(group);
     });
+    const referencedIds = new Set(
+        [...pdfSvg.querySelectorAll<SVGUseElement>("use")]
+            .map(use => use.getAttribute("href") ?? use.getAttributeNS("http://www.w3.org/1999/xlink", "href"))
+            .filter((href): href is string => Boolean(href?.startsWith("#")))
+            .map(href => href.slice(1))
+    );
+    sources.forEach(source => {
+        if (!referencedIds.has(source.id)) source.remove();
+    });
     const baselineMap: Record<string, string> = {
         "text-before-edge": "text-top",
         "text-after-edge": "bottom",

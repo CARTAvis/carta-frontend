@@ -3,9 +3,10 @@ import {Colors} from "@blueprintjs/core";
 import {AstFonts} from "components/Shared";
 import {BeamType, CatalogOverlayShape, ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {type FrameView, type ImageViewItem, type Point2D} from "models";
-import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type Padding} from "stores";
+import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type OverlaySettings, type Padding} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
+import {getColorbarStagePosition} from "utilities/colorbarLayout";
 import {getBeamGeometry} from "utilities/region/beam";
 import {imageSizeToCanvas as imageSizeToCanvasSize, imageToCanvasPos} from "utilities/region/geometry";
 
@@ -23,6 +24,7 @@ import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
+    const catalogMappedArrays = new WeakMap<CatalogDisplayStore, CatalogMappedArrays>();
 
     const totalWidth = appStore.fullViewWidth * appStore.pixelRatio;
     const totalHeight = appStore.fullViewHeight * appStore.pixelRatio;
@@ -36,7 +38,7 @@ export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelSvg = getPanelSvg(column, row, viewHeight, image);
+        const panelSvg = getPanelSvg(column, row, viewHeight, image, catalogMappedArrays);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
             const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
@@ -268,11 +270,28 @@ function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: 
     return frameView ? imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x : size;
 }
 
-function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStore, pixelRatio: number): (index: number, isSelected: boolean) => CatalogPointStyle {
-    const mappedSizes = store.sizeArray?.() ?? new Float32Array();
-    const mappedMinorSizes = store.catalogShape === CatalogOverlayShape.ELLIPSE_LINED ? (store.sizeMinorArray?.() ?? new Float32Array()) : new Float32Array();
-    const mappedColors = store.colorArray?.() ?? new Float32Array();
-    const mappedOrientations = store.orientationArray?.() ?? new Float32Array();
+interface CatalogMappedArrays {
+    sizes: Float32Array;
+    minorSizes: Float32Array;
+    colors: Float32Array;
+    orientations: Float32Array;
+}
+
+function getCatalogMappedArrays(store: CatalogDisplayStore, cache: WeakMap<CatalogDisplayStore, CatalogMappedArrays>): CatalogMappedArrays {
+    const cached = cache.get(store);
+    if (cached) return cached;
+    const mapped = {
+        sizes: store.sizeArray?.() ?? new Float32Array(),
+        minorSizes: store.catalogShape === CatalogOverlayShape.ELLIPSE_LINED ? (store.sizeMinorArray?.() ?? new Float32Array()) : new Float32Array(),
+        colors: store.colorArray?.() ?? new Float32Array(),
+        orientations: store.orientationArray?.() ?? new Float32Array()
+    };
+    cache.set(store, mapped);
+    return mapped;
+}
+
+function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStore, pixelRatio: number, cache: WeakMap<CatalogDisplayStore, CatalogMappedArrays>): (index: number, isSelected: boolean) => CatalogPointStyle {
+    const {sizes: mappedSizes, minorSizes: mappedMinorSizes, colors: mappedColors, orientations: mappedOrientations} = getCatalogMappedArrays(store, cache);
     const shapeSize = store.isImagePixelSize ? store.catalogSize : store.catalogSize + (store.shapeSettings?.diameterBase ?? 0);
     const zoomFrame = frame.spatialReference ?? frame;
     const zoomY = zoomFrame.effectiveZoomLevel?.y ?? zoomFrame.zoomLevel;
@@ -310,7 +329,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     };
 }
 
-function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number): SVGGElement | null {
+function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number, mappedArrays: WeakMap<CatalogDisplayStore, CatalogMappedArrays>): SVGGElement | null {
     const catalogFileIds = AppStore.Instance.catalogStore.visibleCatalogFiles.get(frame);
     const frameView = getDestinationFrameView(frame);
     if (!catalogFileIds?.length || !frameView) {
@@ -336,7 +355,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const selectedIndices = new Set(profile?.getSortedIndices(profile.selectedPointIndices) ?? []);
         if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
         const transformPoint = createOverlayPointTransform(sourceFrame, frame, true);
-        const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio);
+        const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio, mappedArrays);
         const layerWidth = frame.renderWidth * pixelRatio;
         const layerHeight = frame.renderHeight * pixelRatio;
         const featherWidth = (catalogWidgetStore.shapeSettings?.featherWidth ?? 0) * pixelRatio;
@@ -376,7 +395,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio, styles);
 }
 
-function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: any, pixelRatio: number): SVGGElement | null {
+function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: OverlaySettings, pixelRatio: number): SVGGElement | null {
     const source = renderAstOverlayToSvg(frame.channelMapInnerOverlayStore, image, overlaySettings, pixelRatio);
     if (!source) {
         return null;
@@ -424,7 +443,7 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     return group.querySelector("use") ? group : null;
 }
 
-export function getPanelSvg(column: number, row: number, viewHeight: number, image: ImageViewItem): SVGGElement | null {
+export function getPanelSvg(column: number, row: number, viewHeight: number, image: ImageViewItem, catalogMappedArrays = new WeakMap<CatalogDisplayStore, CatalogMappedArrays>()): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -502,7 +521,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
     }
 
     // 7. Catalog — vector SVG from store data
-    const catalogSvg = isChannelMap ? null : buildCatalogSvg(frame, padding, pixelRatio);
+    const catalogSvg = isChannelMap ? null : buildCatalogSvg(frame, padding, pixelRatio, catalogMappedArrays);
     appendClippedLayer(catalogSvg, "catalog", localBounds);
 
     // 8. Channel map labels — SVG text
@@ -544,18 +563,27 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSe
     let barX: number, barY: number, barHeight: number;
     const imageWidth = rasterWidth ?? frame.renderWidth * pixelRatio;
     const imageHeight = rasterHeight ?? frame.renderHeight * pixelRatio;
+    const stagePosition = getColorbarStagePosition({
+        position: colorbarSettings.position,
+        viewHeight: viewHeight / pixelRatio,
+        renderWidth: imageWidth / pixelRatio,
+        padding,
+        stageWidth: colorbarSettings.stageWidth,
+        hoverInfoHeight: appStore.overlaySettings.colorbarHoverInfoHeight,
+        isTitleVisible: appStore.overlaySettings.title.isShown
+    });
 
     if (isVertical) {
-        barX = padding.left * pixelRatio + imageWidth + offset;
-        barY = padding.top * pixelRatio;
+        barX = stagePosition.left * pixelRatio + offset;
+        barY = stagePosition.top * pixelRatio;
         barHeight = imageHeight;
     } else {
-        barX = padding.left * pixelRatio;
+        barX = stagePosition.left * pixelRatio;
         barHeight = barWidth;
         if (colorbarSettings.position === "top") {
-            barY = padding.top * pixelRatio - barHeight - offset;
+            barY = (stagePosition.top + colorbarSettings.stageWidth - colorbarSettings.offset - colorbarSettings.width) * pixelRatio;
         } else {
-            barY = viewHeight - barHeight - offset - appStore.overlaySettings.colorbarHoverInfoHeight * pixelRatio;
+            barY = (stagePosition.top + colorbarSettings.offset) * pixelRatio;
         }
         barWidth = imageWidth;
     }
@@ -586,7 +614,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSe
             texts,
             visible: colorbarSettings.isTickVisible,
             color: resolveColor(colorbarSettings.hasTickCustomColor, colorbarSettings.tickColor),
-            width: colorbarSettings.tickWidth * pixelRatio,
+            width: colorbarSettings.tickWidth * appStore.imageRatio,
             length: colorbarSettings.tickLen * pixelRatio
         },
         numbers: {
@@ -612,7 +640,7 @@ function buildColorbarSvg(frame: FrameStore, colorbarSettings: OverlayColorbarSe
         border: {
             visible: colorbarSettings.isBorderVisible,
             color: resolveColor(colorbarSettings.hasBorderCustomColor, colorbarSettings.borderColor),
-            width: colorbarSettings.borderWidth * pixelRatio
+            width: colorbarSettings.borderWidth * appStore.imageRatio
         }
     });
 }

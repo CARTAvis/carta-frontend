@@ -163,12 +163,17 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
             return flipCatalogAxes(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
         case "Cross":
         case "CROSS_FILLED":
-        case "CROSS_LINED":
             return flipCatalogAxes(createCrossShape(x, y, halfSize, color, lineWidth), x, y);
+        case "CROSS_LINED":
+            return flipCatalogAxes(createOutlinedCross(x, y, halfSize, color, lineWidth), x, y);
         case "X":
         case "X_FILLED":
-        case "X_LINED":
             return flipCatalogAxes(createXShape(x, y, halfSize, color, lineWidth), x, y);
+        case "X_LINED": {
+            const cross = createOutlinedCross(x, y, halfSize, color, lineWidth);
+            cross.setAttribute("transform", `rotate(45,${x},${y})`);
+            return flipCatalogAxes(cross, x, y);
+        }
         case "TriangleFilled":
             return createTriangle(x, y, halfSize, color, true);
         case "TriangleLined":
@@ -206,6 +211,26 @@ function createCrossShape(x: number, y: number, halfSize: number, color: string,
     });
 }
 
+function createOutlinedCross(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
+    const arm = Math.min(halfSize, Math.max(lineWidth, halfSize * 0.2));
+    const points = [
+        [x - arm, y - arm],
+        [x - halfSize, y - arm],
+        [x - halfSize, y + arm],
+        [x - arm, y + arm],
+        [x - arm, y + halfSize],
+        [x + arm, y + halfSize],
+        [x + arm, y + arm],
+        [x + halfSize, y + arm],
+        [x + halfSize, y - arm],
+        [x + arm, y - arm],
+        [x + arm, y - halfSize],
+        [x - arm, y - halfSize]
+    ];
+    const path = `M${points.map(point => point.join(",")).join("L")}Z`;
+    return createSvgElement("path", {d: path, fill: "none", stroke: color, "stroke-width": lineWidth});
+}
+
 function createXShape(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
     return createSvgElement("path", {
         d: `M${x - halfSize},${y - halfSize}L${x + halfSize},${y + halfSize}M${x + halfSize},${y - halfSize}L${x - halfSize},${y + halfSize}`,
@@ -216,11 +241,13 @@ function createXShape(x: number, y: number, halfSize: number, color: string, lin
 }
 
 function createTriangle(x: number, y: number, halfSize: number, color: string, isFilled: boolean, isDownward: boolean = false): SVGElement {
-    const tip = `${x},${isDownward ? y + halfSize : y - halfSize}`;
-    const baseLeft = `${x - halfSize},${isDownward ? y - halfSize : y + halfSize}`;
-    const baseRight = `${x + halfSize},${isDownward ? y - halfSize : y + halfSize}`;
+    const startAngle = isDownward ? Math.PI / 2 : -Math.PI / 2;
+    const points = Array.from({length: 3}, (_, index) => {
+        const angle = startAngle + (Math.PI * 2 * index) / 3;
+        return `${x + halfSize * Math.cos(angle)},${y + halfSize * Math.sin(angle)}`;
+    });
     return createSvgElement("polygon", {
-        points: `${tip} ${baseLeft} ${baseRight}`,
+        points: points.join(" "),
         fill: isFilled ? color : "none",
         stroke: isFilled ? "none" : color,
         "stroke-width": isFilled ? 0 : 1

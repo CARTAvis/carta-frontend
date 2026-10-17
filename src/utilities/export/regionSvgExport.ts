@@ -6,6 +6,7 @@ import {type FrameView, type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {getScaledEllipseAxes, imageSizeToCanvas, imageToCanvasPos as imageToCanvas} from "utilities/region/geometry";
+import {getInterpolatedPathAtDistance} from "utilities/region/region";
 import {getRulerDistanceText} from "utilities/region/ruler";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
@@ -301,26 +302,9 @@ function toCanvasPoints(points: number[], frameView: FrameView, layerWidth: numb
     return canvasPoints;
 }
 
-function pointAtDistance(start: Point2D, points: Point2D[], distance: number): Point2D {
-    let previous = start;
-    let remaining = distance;
-    for (const point of points) {
-        const dx = point.x - previous.x;
-        const dy = point.y - previous.y;
-        const segmentLength = Math.hypot(dx, dy);
-        if (segmentLength >= remaining && segmentLength > 0) {
-            const fraction = remaining / segmentLength;
-            return {x: previous.x + dx * fraction, y: previous.y + dy * fraction};
-        }
-        remaining -= segmentLength;
-        previous = point;
-    }
-    return previous;
-}
-
-function getAnnotationPath(origin: Point2D, approximatePoints: number[], frameView: FrameView, layerWidth: number, layerHeight: number, length: number, frame?: FrameStore): [Point2D, Point2D] {
+function getAnnotationPath(origin: Point2D, approximatePoints: number[], frameView: FrameView, layerWidth: number, layerHeight: number, length: number, frame?: FrameStore): Point2D[] {
     const points = toCanvasPoints(approximatePoints, frameView, layerWidth, layerHeight, frame);
-    return [origin, pointAtDistance(origin, points, length)];
+    return getInterpolatedPathAtDistance(origin, points, length);
 }
 
 function renderAnnotationText(text: string, position: Point2D, region: RegionStore & {fontSize?: number; font?: string; fontStyle?: string}, pixelRatio: number): SVGTextElement {
@@ -356,44 +340,41 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     const originImage = options.frame?.spatialReference && options.frame.spatialTransformAST ? transformImagePoint(options.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const origin = secondaryImageToCanvas(originImage, options.frame, frameView, layerWidth, layerHeight);
     const length = region.length * options.pixelRatio;
-    let northEnd: Point2D;
-    let eastEnd: Point2D;
+    let northPath: Point2D[];
+    let eastPath: Point2D[];
 
     if (options.frame?.isValidWcs) {
         try {
             const approx = region.getCompassApproximation(options.frame.wcsInfoForTransformation, Boolean(options.frame.spatialReference), options.frame.spatialTransformAST || undefined);
-            [, northEnd] = getAnnotationPath(origin, approx.northApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
-            [, eastEnd] = getAnnotationPath(origin, approx.eastApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
+            northPath = getAnnotationPath(origin, approx.northApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
+            eastPath = getAnnotationPath(origin, approx.eastApproximatePoints, frameView, layerWidth, layerHeight, length, options.frame);
         } catch {
-            northEnd = {x: origin.x, y: origin.y - length};
-            eastEnd = {x: origin.x - length, y: origin.y};
+            northPath = [origin, {x: origin.x, y: origin.y - length}];
+            eastPath = [origin, {x: origin.x - length, y: origin.y}];
         }
     } else {
-        northEnd = {x: origin.x, y: origin.y - length};
-        eastEnd = {x: origin.x - length, y: origin.y};
+        northPath = [origin, {x: origin.x, y: origin.y - length}];
+        eastPath = [origin, {x: origin.x - length, y: origin.y}];
     }
 
-    const addArrow = (start: Point2D, end: Point2D, hasArrowhead: boolean) => {
-        const lineAttrs = {x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...getStrokeAttrs(region, options.pixelRatio)};
+    const addArrow = (points: Point2D[], hasArrowhead: boolean) => {
+        const tip = points[points.length - 1];
+        const arrowStart = hasArrowhead ? getArrowDirectionStart(points) : null;
+        const linePoints = hasArrowhead ? trimPathForArrow(points, region.pointerLength * options.pixelRatio) : points;
+        group.appendChild(createSvgElement("polyline", {points: linePoints.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio)}));
         if (hasArrowhead) {
-            const lineEnd = getArrowLineEnd(start, end, region.pointerLength * options.pixelRatio);
-            lineAttrs.x2 = lineEnd.x;
-            lineAttrs.y2 = lineEnd.y;
-        }
-        group.appendChild(createSvgElement("line", lineAttrs));
-        if (hasArrowhead) {
-            const arrowhead = renderArrowhead(start, end, region, options.pixelRatio, region.pointerLength * options.pixelRatio, region.pointerWidth * options.pixelRatio);
+            const arrowhead = arrowStart ? renderArrowhead(arrowStart, tip, region, options.pixelRatio, region.pointerLength * options.pixelRatio, region.pointerWidth * options.pixelRatio) : null;
             if (arrowhead) {
                 group.appendChild(arrowhead);
             }
         }
     };
 
-    addArrow(origin, northEnd, region.hasNorthArrowhead);
-    addArrow(origin, eastEnd, region.hasEastArrowhead);
+    addArrow(northPath, region.hasNorthArrowhead);
+    addArrow(eastPath, region.hasEastArrowhead);
 
-    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northEnd, region, options.pixelRatio, {x: 0, y: -1}), region, options.pixelRatio);
-    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastEnd, region, options.pixelRatio, {x: -1, y: 0}), region, options.pixelRatio);
+    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northPath[northPath.length - 1], region, options.pixelRatio, {x: 0, y: -1}), region, options.pixelRatio);
+    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastPath[eastPath.length - 1], region, options.pixelRatio, {x: -1, y: 0}), region, options.pixelRatio);
     group.append(northText, eastText);
     return group;
 }
