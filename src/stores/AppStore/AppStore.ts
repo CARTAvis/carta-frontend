@@ -3784,7 +3784,7 @@ export class AppStore {
     };
 
     private runImageExport = async (imageRatio: number, exportFrame: (frame: FrameStore, backgroundColor: string) => void | Promise<void>): Promise<void> => {
-        if (!this.canExportActiveImage()) return;
+        if (this.isExportingImage || !this.canExportActiveImage()) return;
         this.setIsExportingImage(true);
         try {
             this.setImageRatio(imageRatio);

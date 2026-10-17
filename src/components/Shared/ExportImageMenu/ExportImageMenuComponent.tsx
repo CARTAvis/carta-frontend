@@ -19,8 +19,12 @@ export const ExportImageMenuComponent = observer(() => {
                 <Radio label="400%" value="4" />
             </RadioGroup>
             <ButtonGroup fill={true} vertical={true}>
-                <Button text="PNG" onClick={() => appStore.exportImage(imageRatio)} />
-                {vectorGraphicFormat === VectorGraphicFormat.SVG ? <Button text="SVG" onClick={() => appStore.exportSvgImage(imageRatio)} /> : <Button text="PDF" onClick={() => appStore.exportPdfImage(imageRatio)} />}
+                <Button text="PNG" disabled={appStore.isExportingImage} onClick={() => appStore.exportImage(imageRatio)} />
+                {vectorGraphicFormat === VectorGraphicFormat.SVG ? (
+                    <Button text="SVG" disabled={appStore.isExportingImage} onClick={() => appStore.exportSvgImage(imageRatio)} />
+                ) : (
+                    <Button text="PDF" disabled={appStore.isExportingImage} onClick={() => appStore.exportPdfImage(imageRatio)} />
+                )}
             </ButtonGroup>
         </React.Fragment>
     );

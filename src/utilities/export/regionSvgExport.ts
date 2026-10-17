@@ -5,7 +5,7 @@ import {Text} from "konva/lib/shapes/Text";
 import {type FrameView, type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
-import {imageSizeToCanvas, imageToCanvasPos as imageToCanvas} from "utilities/region/geometry";
+import {getScaledEllipseAxes, imageSizeToCanvas, imageToCanvasPos as imageToCanvas} from "utilities/region/geometry";
 import {getRulerDistanceText} from "utilities/region/ruler";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
@@ -132,7 +132,25 @@ function renderLineRegion(start: Point2D, end: Point2D, region: RegionStore, pix
     });
 }
 
-function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number): SVGElement {
+function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number, axisScaleX: number): SVGElement {
+    if (rotation !== 0 && Math.abs(axisScaleX - 1) > 1e-10) {
+        const theta = (-rotation * Math.PI) / 180;
+        const cos = Math.cos(theta);
+        const sin = Math.sin(theta);
+        // The viewer rotates the local rectangle before the stage's independent zoom.
+        const halfWidth = size.x / axisScaleX / 2;
+        const halfHeight = size.y / 2;
+        const points = [
+            [-halfWidth, -halfHeight],
+            [halfWidth, -halfHeight],
+            [halfWidth, halfHeight],
+            [-halfWidth, halfHeight]
+        ].map(([x, y]) => ({
+            x: center.x + axisScaleX * (x * cos - y * sin),
+            y: center.y + x * sin + y * cos
+        }));
+        return renderPolygonRegion(points, region, true, pixelRatio);
+    }
     const rect = createSvgElement("rect", {
         x: center.x - size.x / 2,
         y: center.y - size.y / 2,
@@ -146,16 +164,17 @@ function renderRectangleRegion(center: Point2D, size: Point2D, rotation: number,
     return rect;
 }
 
-function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number): SVGElement {
+function renderEllipseRegion(center: Point2D, size: Point2D, rotation: number, region: RegionStore, pixelRatio: number, axisScaleX: number): SVGElement {
+    const axes = rotation !== 0 && Math.abs(axisScaleX - 1) > 1e-10 ? getScaledEllipseAxes(size.x / axisScaleX, size.y, -rotation, {x: axisScaleX, y: 1}) : {rx: size.x, ry: size.y, rotation: -rotation};
     const ellipse = createSvgElement("ellipse", {
         cx: center.x,
         cy: center.y,
-        rx: size.x,
-        ry: size.y,
+        rx: axes.rx,
+        ry: axes.ry,
         ...getStrokeAttrs(region, pixelRatio)
     });
-    if (rotation !== 0) {
-        ellipse.setAttribute("transform", `rotate(${-rotation},${center.x},${center.y})`);
+    if (axes.rotation !== 0) {
+        ellipse.setAttribute("transform", `rotate(${axes.rotation},${center.x},${center.y})`);
     }
     return ellipse;
 }
@@ -519,6 +538,10 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
     const cp = region.controlPoints;
     const frame = options.frame;
     const spatialPoints = frame && SPATIAL_APPROXIMATION_REGION_TYPES.has(region.regionType) ? getSpatialRegionCanvasPoints(region, frame, frameView, layerWidth, layerHeight) : null;
+    // Pixel aspect ratio belongs to the local shape; independent axis zoom is
+    // applied after rotation by the viewer's stage.
+    const screenScale = imageSizeToCanvas(1, 1, frameView, layerWidth, layerHeight);
+    const axisScaleX = screenScale.x / screenScale.y / (frame?.aspectRatio ?? 1);
 
     switch (region.regionType) {
         case CARTA.RegionType.POINT:
@@ -538,7 +561,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
             }
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             const size = imageSizeToCanvas(cp[1].x, cp[1].y, frameView, layerWidth, layerHeight);
-            return renderRectangleRegion(center, size, region.rotation, region, options.pixelRatio);
+            return renderRectangleRegion(center, size, region.rotation, region, options.pixelRatio, axisScaleX);
         }
         case CARTA.RegionType.ELLIPSE:
         case CARTA.RegionType.ANNELLIPSE: {
@@ -548,7 +571,7 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
             const center = imageToCanvas(cp[0].x, cp[0].y, frameView, layerWidth, layerHeight);
             // Ellipse control points store the vertical radius in x and the horizontal radius in y.
             const size = imageSizeToCanvas(cp[1].y, cp[1].x, frameView, layerWidth, layerHeight);
-            return renderEllipseRegion(center, size, region.rotation, region, options.pixelRatio);
+            return renderEllipseRegion(center, size, region.rotation, region, options.pixelRatio, axisScaleX);
         }
         case CARTA.RegionType.POLYGON:
         case CARTA.RegionType.ANNPOLYGON: {

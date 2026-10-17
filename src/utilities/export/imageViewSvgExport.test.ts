@@ -212,6 +212,60 @@ describe("getPanelSvg", () => {
         expect(indexOf("ast-overlay")).toBeLessThan(indexOf("vector-overlays"));
     });
 
+    test("culls offscreen vectors but retains segments and strokes crossing every viewer edge", () => {
+        frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        const centers = [
+            [-20, 40, 90],
+            [120, 40, 90],
+            [50, -20, 0],
+            [50, 100, 0],
+            [-4, 40, 90],
+            [104, 40, 90],
+            [50, -4, 0],
+            [50, 84, 0],
+            [-1.4, 40, 0],
+            [NaN, 40, 0]
+        ];
+        frame.vectorOverlayStore.tiles = [{numVertices: centers.length, vertexData: Float32Array.from(centers.flatMap(([x, y, angle]) => [x, y, 0.5, angle]))}];
+        const lines = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
+        expect(lines).toHaveLength(5);
+        expect(lines?.[0]).toHaveAttribute("x1", "-9.00");
+        expect(lines?.[1]).toHaveAttribute("x2", "109.00");
+        expect(lines?.[2]).toHaveAttribute("y2", "89.00");
+        expect(lines?.[3]).toHaveAttribute("y1", "-9.00");
+    });
+
+    test("retains intensity squares intersecting the viewport by their feathered extent", () => {
+        frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        frame.vectorOverlayConfig.angularSource = VectorOverlaySource.None;
+        const centers = [
+            [-5.4, 40],
+            [105.4, 40],
+            [50, -5.4],
+            [50, 85.4],
+            [-6, 40],
+            [106, 40],
+            [50, -6],
+            [50, 86]
+        ];
+        frame.vectorOverlayStore.tiles = [{numVertices: centers.length, vertexData: Float32Array.from(centers.flatMap(([x, y]) => [x, y, 0.5, 0]))}];
+        const squares = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay rect");
+        expect(squares).toHaveLength(4);
+        squares?.forEach(square => expect(square).toHaveAttribute("width", "11.00"));
+    });
+
+    test("omits wholly offscreen dense vector tiles from the SVG", () => {
+        frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
+        const data = new Float32Array(10000 * 4);
+        for (let index = 0; index < 10000; index++) data.set([-100, -100, 0.5, 45], index * 4);
+        frame.vectorOverlayStore.tiles = [
+            {numVertices: 10000, vertexData: data},
+            {numVertices: 1, vertexData: new Float32Array([20, 20, 0.5, 45])}
+        ];
+        const vectors = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
+        expect(vectors).toHaveLength(1);
+    });
+
     test("uses the vector overlay vertical axis as the zero-angle direction", () => {
         frame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
 

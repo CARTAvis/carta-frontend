@@ -3,8 +3,38 @@ import {CatalogOverlayShape} from "enums";
 import {renderCatalogToSvg} from "./catalogSvgExport";
 import {type ColorbarSvgOptions, renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
-import {namespaceSvgIds} from "./svgExport";
+import {embedRasterAsSvgImage, namespaceSvgIds} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
+
+test("serializes one full-resolution PNG reference that SVG 1.1 readers and svg2pdf can resolve", () => {
+    const canvas = document.createElement("canvas");
+    const dataUrl = `data:image/png;base64,${"A".repeat(4096)}`;
+    const encode = jest.spyOn(canvas, "toDataURL").mockReturnValue(dataUrl);
+    const image = embedRasterAsSvgImage(canvas, 5, 7, 400, 300);
+    const serializer = new XMLSerializer();
+    const serialized = serializer.serializeToString(image);
+    const parsed = new DOMParser().parseFromString(serialized, "image/svg+xml").documentElement;
+    expect(parsed.getAttributeNS("http://www.w3.org/1999/xlink", "href")).toBe(dataUrl);
+    // svg2pdf resolves xlink:href before falling back to href.
+    expect(image.getAttribute("xlink:href") || image.getAttribute("href")).toBe(dataUrl);
+    expect(serialized.split(dataUrl)).toHaveLength(2);
+    expect(image).toHaveAttribute("width", "400");
+    expect(image).toHaveAttribute("height", "300");
+    const duplicated = image.cloneNode(true) as SVGImageElement;
+    duplicated.setAttribute("href", dataUrl);
+    expect(serializer.serializeToString(duplicated).length - serialized.length).toBeGreaterThan(dataUrl.length);
+    encode.mockRestore();
+});
+
+test("catalog hexagon variants preserve the shader's quarter-turn difference", () => {
+    const render = (shape: CatalogOverlayShape) =>
+        renderCatalogToSvg(new Map([[1, new Float32Array([10, 20])]]), new Map([[1, shape]]), new Map([[1, 30]]), new Map([[1, "red"]]), 0, 0, new Map([[1, [{rotation: 25}]]])).querySelector("polygon")!;
+    const first = render(CatalogOverlayShape.HEXAGON_LINED);
+    const second = render(CatalogOverlayShape.HEXAGON_LINED_2);
+    expect(first).toHaveAttribute("transform", "rotate(90,10,20) rotate(-25,10,20)");
+    expect(second).toHaveAttribute("transform", "rotate(-25,10,20)");
+    expect(first.getAttribute("points")).toBe(second.getAttribute("points"));
+});
 
 test("namespaces SVG resources and use references while removing duplicate layer IDs", () => {
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");

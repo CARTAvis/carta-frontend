@@ -218,6 +218,9 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
         const exportPositions: number[] = [];
         const strokeColors: string[] = [];
         const transformPoint = createOverlayPointTransform(vectorFrame, frame);
+        const lineWidth = pixelRatio * vectorFrame.vectorOverlayConfig.thickness;
+        const featherWidth = pixelRatio / (frame.spatialTransform?.scale ?? 1);
+        const isIntensityPlot = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
         vectorFrame.vectorOverlayStore.tiles.forEach(tile => {
             for (let vectorIndex = 0; vectorIndex < tile.numVertices; vectorIndex++) {
                 const offset = vectorIndex * 4;
@@ -225,7 +228,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 const intensity = tile.vertexData[offset + 2];
                 const rawAngleDegrees = tile.vertexData[offset + 3];
                 const lineLength = getVectorCanvasLength(vectorFrame, intensity, pixelRatio);
-                if (lineLength <= 0) {
+                if (!isFinite(lineLength) || lineLength <= 0) {
                     continue;
                 }
 
@@ -234,23 +237,20 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                     continue;
                 }
                 const canvasCenter = imageToCanvasPoint(transformedCenter, frameView, layerWidth, layerHeight);
-                exportPositions.push(canvasCenter.x, canvasCenter.y, lineLength, getVectorCanvasAngle(vectorFrame, frame, rawAngleDegrees));
+                const angle = getVectorCanvasAngle(vectorFrame, frame, rawAngleDegrees);
+                if (!isFinite(canvasCenter.x) || !isFinite(canvasCenter.y) || !isFinite(angle)) continue;
+                // Retain edge-crossing geometry, including stroke/feather width.
+                // Allow for rounding when SVG coordinates are serialized.
+                const halfWidth = (isIntensityPlot ? (lineLength + featherWidth) / 2 : (Math.abs(Math.cos(angle)) * lineLength) / 2 + (lineWidth + featherWidth) / 2) + 0.01;
+                const halfHeight = (isIntensityPlot ? (lineLength + featherWidth) / 2 : (Math.abs(Math.sin(angle)) * lineLength) / 2 + (lineWidth + featherWidth) / 2) + 0.01;
+                if (canvasCenter.x + halfWidth < 0 || canvasCenter.x - halfWidth > layerWidth || canvasCenter.y + halfHeight < 0 || canvasCenter.y - halfHeight > layerHeight) continue;
+                exportPositions.push(canvasCenter.x, canvasCenter.y, lineLength, angle);
                 strokeColors.push(getVectorStrokeColor(vectorFrame, intensity));
             }
         });
 
         if (exportPositions.length) {
-            const vectorSvg = renderVectorOverlayToSvg(
-                Float32Array.from(exportPositions),
-                exportPositions.length / 4,
-                1,
-                pixelRatio * vectorFrame.vectorOverlayConfig.thickness,
-                strokeColors,
-                padding.left * pixelRatio,
-                padding.top * pixelRatio,
-                vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None,
-                pixelRatio / (frame.spatialTransform?.scale ?? 1)
-            );
+            const vectorSvg = renderVectorOverlayToSvg(Float32Array.from(exportPositions), exportPositions.length / 4, 1, lineWidth, strokeColors, padding.left * pixelRatio, padding.top * pixelRatio, isIntensityPlot, featherWidth);
             group.appendChild(vectorSvg);
         }
     }

@@ -180,8 +180,10 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
             return flipCatalogAxes(createHexagon(x, y, halfSize, color, true), x, y);
         case "HexagonLined":
         case "HEXAGON_LINED":
-        case "HEXAGON_LINED_2":
             return flipCatalogAxes(createHexagon(x, y, halfSize, color, false), x, y);
+        case "HEXAGON_LINED_2":
+            // The second shader variant rotates the hexagon by another quarter turn.
+            return createHexagon(x, y, halfSize, color, false);
         case "RhombFilled":
             return flipCatalogAxes(createRhomb(x, y, halfSize, color, true), x, y);
         case "RhombLined":

@@ -52,8 +52,16 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
 /** Converts an SVG document to a vector PDF and downloads it. */
 export async function downloadPdf(svgElement: SVGSVGElement, filename: string): Promise<void> {
     const pdfSvg = prepareSvgForPdf(svgElement);
-    const width = Number(pdfSvg.getAttribute("width"));
-    const height = Number(pdfSvg.getAttribute("height"));
+    const svgWidth = Number(pdfSvg.getAttribute("width"));
+    const svgHeight = Number(pdfSvg.getAttribute("height"));
+    // jsPDF limits page dimensions to 14,400 points. Scale the viewport, retaining
+    // the original viewBox and embedded PNG pixels for full-resolution rendering.
+    const scale = Math.min(1, 14400 / Math.max(svgWidth, svgHeight));
+    const width = svgWidth * scale;
+    const height = svgHeight * scale;
+    if (!pdfSvg.hasAttribute("viewBox")) pdfSvg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+    pdfSvg.setAttribute("width", `${width}`);
+    pdfSvg.setAttribute("height", `${height}`);
     const pdf = new jsPDF({
         orientation: width > height ? "landscape" : "portrait",
         unit: "pt",

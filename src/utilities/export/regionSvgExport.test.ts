@@ -1,5 +1,8 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {Group} from "konva/lib/Group";
+import {Ellipse} from "konva/lib/shapes/Ellipse";
+import {Rect} from "konva/lib/shapes/Rect";
 
 import {AppStore} from "stores";
 
@@ -34,6 +37,74 @@ function baseRegion(regionType: CARTA.RegionType, controlPoints: {x: number; y: 
 
 describe("renderRegionsToSvg", () => {
     afterEach(() => jest.restoreAllMocks());
+
+    it.each([
+        [2, 1, 1],
+        [1, 3, 1],
+        [2, 1, 1.5]
+    ])("matches rotated rectangle corners at zoom %s/%s and pixel aspect %s", (zoomX, zoomY, aspectRatio) => {
+        const region = {
+            ...baseRegion(CARTA.RegionType.RECTANGLE, [
+                {x: 50, y: 50},
+                {x: 20, y: 10}
+            ]),
+            rotation: 45
+        };
+        const group = renderRegionsToSvg([region as any], FRAME_VIEW, 100 * aspectRatio * zoomX, 100 * zoomY, 0, 0, {frame: {aspectRatio} as any});
+        const points = group
+            .querySelector("polygon")!
+            .getAttribute("points")!
+            .split(" ")
+            .map(point => point.split(",").map(Number));
+        const viewerStage = new Group({scaleX: zoomX, scaleY: zoomY});
+        const rectangle = new Rect({width: 20 * aspectRatio, height: 10, rotation: -45, offsetX: 10 * aspectRatio, offsetY: 5});
+        viewerStage.add(rectangle);
+        const transform = rectangle.getAbsoluteTransform();
+        [
+            [0, 0],
+            [20 * aspectRatio, 0],
+            [20 * aspectRatio, 10],
+            [0, 10]
+        ].forEach(([x, y], index) => {
+            const point = transform.point({x, y});
+            expect(points[index][0]).toBeCloseTo(50 * aspectRatio * zoomX + point.x, 2);
+            expect(points[index][1]).toBeCloseTo(50 * zoomY + point.y, 2);
+        });
+        expect(group.querySelector("polygon")).toHaveAttribute("stroke-width", "2");
+        viewerStage.destroy();
+    });
+
+    it.each([
+        [2, 1, 1],
+        [1, 3, 1],
+        [2, 1, 1.5]
+    ])("matches rotated ellipse geometry at zoom %s/%s and pixel aspect %s", (zoomX, zoomY, aspectRatio) => {
+        const region = {
+            ...baseRegion(CARTA.RegionType.ELLIPSE, [
+                {x: 50, y: 50},
+                {x: 2, y: 8}
+            ]),
+            rotation: 45
+        };
+        const group = renderRegionsToSvg([region as any], FRAME_VIEW, 100 * aspectRatio * zoomX, 100 * zoomY, 0, 0, {frame: {aspectRatio} as any});
+        const ellipse = group.querySelector("ellipse")!;
+        const rx = Number(ellipse.getAttribute("rx"));
+        const ry = Number(ellipse.getAttribute("ry"));
+        const theta = (Number(ellipse.getAttribute("transform")!.match(/rotate\(([^,]+)/)![1]) * Math.PI) / 180;
+        const viewerStage = new Group({scaleX: zoomX, scaleY: zoomY});
+        const viewerEllipse = new Ellipse({radiusX: 8 * aspectRatio, radiusY: 2, rotation: -45});
+        viewerStage.add(viewerEllipse);
+        const transform = viewerEllipse.getAbsoluteTransform();
+        for (let index = 0; index < 8; index++) {
+            const angle = (index * Math.PI) / 4;
+            const point = transform.point({x: 8 * aspectRatio * Math.cos(angle), y: 2 * Math.sin(angle)});
+            const x = point.x * Math.cos(theta) + point.y * Math.sin(theta);
+            const y = -point.x * Math.sin(theta) + point.y * Math.cos(theta);
+            expect((x / rx) ** 2 + (y / ry) ** 2).toBeCloseTo(1);
+        }
+        expect(ellipse).toHaveAttribute("stroke-width", "2");
+        viewerStage.destroy();
+    });
 
     it.each([0, 0.25, 1])("preserves visual opacity %s for regions and composite annotations", opacity => {
         const point = {...baseRegion(CARTA.RegionType.POINT, [{x: 50, y: 50}]), visualOpacity: opacity};

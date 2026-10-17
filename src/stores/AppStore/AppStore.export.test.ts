@@ -33,6 +33,7 @@ describe("AppStore image export lifecycle", () => {
             store.activeImage = oldImage;
         });
         store.setIsExportingImage(false);
+        store.setImageRatio(1);
         jest.restoreAllMocks();
     });
 
@@ -71,5 +72,29 @@ describe("AppStore image export lifecycle", () => {
         await store.exportSvgImage(1);
         expect(download).toHaveBeenCalledWith(svg, "test.svg");
         expect(store.isExportingImage).toBe(false);
+    });
+
+    test("ignores overlapping exports without changing the pending request's resolution or state", async () => {
+        let release!: () => void;
+        jest.mocked(store.waitForImageData).mockImplementation(
+            () =>
+                new Promise(resolve => {
+                    release = resolve;
+                })
+        );
+        const render = jest.spyOn(svgExport, "getImageViewSvg").mockReturnValue(null);
+        const first = store.exportSvgImage(4);
+        await store.exportImage(1);
+        await store.exportPdfImage(2);
+        expect(store.imageRatio).toBe(4);
+        expect(store.isExportingImage).toBe(true);
+        expect(store.waitForImageData).toHaveBeenCalledTimes(1);
+        release();
+        await first;
+        expect(render).toHaveBeenCalledTimes(1);
+        expect(store.isExportingImage).toBe(false);
+        jest.mocked(store.waitForImageData).mockResolvedValue();
+        await store.exportSvgImage(1);
+        expect(render).toHaveBeenCalledTimes(2);
     });
 });

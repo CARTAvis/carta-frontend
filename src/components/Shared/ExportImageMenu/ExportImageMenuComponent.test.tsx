@@ -18,7 +18,24 @@ describe("ExportImageMenuComponent", () => {
     });
 
     afterEach(() => {
+        act(() => AppStore.Instance.setIsExportingImage(false));
         jest.restoreAllMocks();
+    });
+
+    test.each([VectorGraphicFormat.SVG, VectorGraphicFormat.PDF])("disables PNG and %s export buttons while exporting", format => {
+        AppStore.Instance.preferenceStore.preferences.set(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT, format);
+        render(<ExportImageMenuComponent />);
+        act(() => AppStore.Instance.setIsExportingImage(true));
+        for (const button of screen.getAllByRole("button")) {
+            expect(button).toBeDisabled();
+            fireEvent.click(button);
+        }
+        expect(mockExportImage).not.toHaveBeenCalled();
+        expect(mockExportSvgImage).not.toHaveBeenCalled();
+        expect(mockExportPdfImage).not.toHaveBeenCalled();
+        act(() => AppStore.Instance.setIsExportingImage(false));
+        screen.getAllByRole("button").forEach(button => expect(button).toBeEnabled());
+        act(() => AppStore.Instance.preferenceStore.preferences.delete(PreferenceKeys.RENDER_CONFIG_VECTOR_GRAPHIC_FORMAT));
     });
 
     test("renders resolution radios and PNG/PDF buttons by default", () => {

@@ -1,4 +1,5 @@
 import {type Point2D} from "models";
+import {getScaledEllipseAxes} from "utilities/region/geometry";
 
 import {createSvgElement, svgGroupFromLayer} from "./svgExport";
 
@@ -47,13 +48,10 @@ export function renderBeamToSvg(plotProps: BeamPlotProps, pixelRatio: number): S
         if (isScaled) {
             // Resolve the scaled ellipse's principal axes. Keeping scale out of SVG
             // transforms preserves Konva's fixed stroke width in svg2pdf as well.
-            const xx = scale.x ** 2 * ((semiMajor * cos) ** 2 + (semiMinor * sin) ** 2);
-            const yy = scale.y ** 2 * ((semiMajor * sin) ** 2 + (semiMinor * cos) ** 2);
-            const xy = scale.x * scale.y * (semiMajor ** 2 - semiMinor ** 2) * cos * sin;
-            const difference = Math.hypot(xx - yy, 2 * xy);
-            ellipse.setAttribute("rx", `${Math.sqrt((xx + yy + difference) / 2)}`);
-            ellipse.setAttribute("ry", `${Math.sqrt(Math.max(0, (xx + yy - difference) / 2))}`);
-            ellipse.setAttribute("transform", `rotate(${(Math.atan2(2 * xy, xx - yy) * 90) / Math.PI},${positionX},${positionY})`);
+            const axes = getScaledEllipseAxes(semiMajor, semiMinor, plotProps.rotationDegrees, scale);
+            ellipse.setAttribute("rx", `${axes.rx}`);
+            ellipse.setAttribute("ry", `${axes.ry}`);
+            ellipse.setAttribute("transform", `rotate(${axes.rotation},${positionX},${positionY})`);
         }
         group.appendChild(ellipse);
     }

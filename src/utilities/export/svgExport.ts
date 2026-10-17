@@ -52,7 +52,8 @@ export function embedRasterAsSvgImage(canvas: HTMLCanvasElement, x: number, y: n
     image.setAttribute("width", `${width}`);
     image.setAttribute("height", `${height}`);
     const dataUrl = canvas.toDataURL("image/png");
-    image.setAttribute("href", dataUrl);
+    // A single SVG 1.1 reference works in SVG readers and svg2pdf without
+    // serializing the complete PNG payload twice.
     image.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
     return image;
 }
