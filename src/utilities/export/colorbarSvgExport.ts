@@ -1,7 +1,6 @@
 import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-let gradientCounter = 0;
 
 export type ColorbarPosition = "right" | "top" | "bottom";
 
@@ -42,7 +41,7 @@ export function renderColorbarToSvg({colorscaleArray, position, bar, ticks, numb
     // Create gradient from colorscale array
     // colorscaleArray is [offset, "rgb(...)", offset, "rgb(...)", ...]
     const isVertical = position === "right";
-    const gradientId = `colorbar-gradient-${gradientCounter++}`;
+    const gradientId = "colorbar-gradient";
     const gradient = createSvgElement(
         "linearGradient",
         isVertical ? {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x, y1: bar.y, x2: bar.x, y2: bar.y + bar.height} : {id: gradientId, gradientUnits: "userSpaceOnUse", x1: bar.x + bar.width, y1: bar.y, x2: bar.x, y2: bar.y}

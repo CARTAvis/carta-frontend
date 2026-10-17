@@ -1,7 +1,7 @@
 import {Colors} from "@blueprintjs/core";
 
 import {AstFonts} from "components/Shared";
-import {BeamType, ContourDashMode, ImageType, VectorOverlaySource} from "enums";
+import {BeamType, CatalogOverlayShape, ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {type FrameView, type ImageViewItem, type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type Padding} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -20,7 +20,7 @@ import {sampleSvgColormapColor} from "./svgColor";
 import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, namespaceSvgIds, svgGroupFromLayer} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
-export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
+export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
 
@@ -36,7 +36,7 @@ export function getImageViewSvg(padding: Padding, backgroundColor: string = "rgb
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelSvg = getPanelSvg(column, row, viewHeight, padding, image);
+        const panelSvg = getPanelSvg(column, row, viewHeight, image);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
             const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
@@ -270,7 +270,7 @@ function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: 
 
 function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStore, pixelRatio: number): (index: number, isSelected: boolean) => CatalogPointStyle {
     const mappedSizes = store.sizeArray?.() ?? new Float32Array();
-    const mappedMinorSizes = store.sizeMinorArray?.() ?? new Float32Array();
+    const mappedMinorSizes = store.catalogShape === CatalogOverlayShape.ELLIPSE_LINED ? (store.sizeMinorArray?.() ?? new Float32Array()) : new Float32Array();
     const mappedColors = store.colorArray?.() ?? new Float32Array();
     const mappedOrientations = store.orientationArray?.() ?? new Float32Array();
     const shapeSize = store.isImagePixelSize ? store.catalogSize : store.catalogSize + (store.shapeSettings?.diameterBase ?? 0);
@@ -424,7 +424,7 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     return group.querySelector("use") ? group : null;
 }
 
-export function getPanelSvg(column: number, row: number, viewHeight: number, padding: Padding, image: ImageViewItem): SVGGElement | null {
+export function getPanelSvg(column: number, row: number, viewHeight: number, image: ImageViewItem): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -437,6 +437,9 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     if (!frame) {
         return null;
     }
+
+    const isChannelMap = appStore.channelMapStore.isChannelMapEnabled;
+    const padding = (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).padding;
 
     const panelGroup = svgGroupFromLayer(`panel-${column}-${row}`);
     const defs = createSvgElement("defs", {});
@@ -468,7 +471,6 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
     }
 
     // 2. AST overlay — keep the coordinate grid beneath contours and vectors.
-    const isChannelMap = appStore.channelMapStore.isChannelMapEnabled;
     const channelMapAstSvg = isChannelMap ? buildChannelMapAstSvg(frame, image, appStore.overlaySettings, pixelRatio) : null;
     if (channelMapAstSvg) {
         panelGroup.appendChild(channelMapAstSvg);
@@ -512,7 +514,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, pad
 
     // 9. Regions — vector SVG from store data
     const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio);
-    appendClippedLayer(regionsSvg, "regions", isChannelMap ? rasterBounds : localBounds);
+    appendClippedLayer(regionsSvg, "regions", isChannelMap ? undefined : localBounds);
 
     // Definitions are document-scoped; collect layer resources without changing draw order.
     panelGroup.querySelectorAll("defs").forEach(layerDefs => {

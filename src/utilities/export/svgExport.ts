@@ -1,8 +1,9 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
+const SVG_REFERENCE_ATTRIBUTES = new Set(["clip-path", "fill", "stroke", "filter", "mask", "marker", "marker-start", "marker-mid", "marker-end", "style", "cursor", "color-profile"]);
 
 /** Scope layer and resource IDs to a panel, including references to SVG definitions. */
 export function namespaceSvgIds(root: SVGElement, prefix: string): void {
-    const elements = [root, ...root.querySelectorAll<SVGElement>("*")];
+    const elements = [root, ...root.querySelectorAll<SVGElement>("[id]")];
     const replacements = new Map<string, string>();
     let index = 0;
     for (const element of elements) {
@@ -11,13 +12,23 @@ export function namespaceSvgIds(root: SVGElement, prefix: string): void {
         element.id = `${prefix}-${oldId}-${index++}`;
         if (!replacements.has(oldId)) replacements.set(oldId, element.id);
     }
-    for (const element of elements) {
-        for (const attribute of [...element.attributes]) {
-            let value = attribute.value.replace(/url\((['"]?)#([^)'"\s]+)\1\)/g, (match, quote, id) => (replacements.has(id) ? `url(${quote}#${replacements.get(id)}${quote})` : match));
-            if (attribute.localName === "href" && value.startsWith("#")) value = `#${replacements.get(value.slice(1)) ?? value.slice(1)}`;
-            if (value !== attribute.value) element.setAttributeNS(attribute.namespaceURI, attribute.name, value);
+    if (!replacements.size) return;
+    const updateReferences = (element: SVGElement) => {
+        for (let index = 0; index < element.attributes.length; index++) {
+            const attribute = element.attributes[index];
+            if (attribute.localName !== "href" && !SVG_REFERENCE_ATTRIBUTES.has(attribute.localName)) continue;
+            const raw = attribute.value;
+            let value = raw;
+            if (attribute.localName === "href") {
+                if (raw.startsWith("#")) value = `#${replacements.get(raw.slice(1)) ?? raw.slice(1)}`;
+            } else if (raw.includes("url(")) {
+                value = raw.replace(/url\((['"]?)#([^)'"\s]+)\1\)/g, (match, quote, id) => (replacements.has(id) ? `url(${quote}#${replacements.get(id)}${quote})` : match));
+            }
+            if (value !== raw) element.setAttributeNS(attribute.namespaceURI, attribute.name, value);
         }
-    }
+    };
+    updateReferences(root);
+    root.querySelectorAll<SVGElement>("*").forEach(updateReferences);
 }
 
 export function buildSvgDocument(width: number, height: number, backgroundColor: string): SVGSVGElement {

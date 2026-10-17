@@ -1,6 +1,8 @@
 import {jsPDF} from "jspdf";
 import {svg2pdf} from "svg2pdf.js";
 
+import {createSvgElement, namespaceSvgIds} from "./svgExport";
+
 const PDF_FONT_FAMILIES: Record<string, string> = {
     helvetica: "helvetica",
     times: "times",
@@ -11,6 +13,25 @@ const PDF_FONT_FAMILIES: Record<string, string> = {
 
 export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
     const pdfSvg = svgElement.cloneNode(true) as SVGSVGElement;
+    // svg2pdf puts <use> targets in Form XObjects with inferred clipping bounds.
+    // Those bounds can omit line strokes, unmeasured text, and flipped AST grids.
+    // Inline our reusable groups instead, retaining the enclosing tile viewport.
+    const sources = new Map([...pdfSvg.querySelectorAll<SVGGElement>("defs > g[id]")].map(source => [source.id, source]));
+    pdfSvg.querySelectorAll<SVGUseElement>("use").forEach((use, index) => {
+        const href = use.getAttribute("href") ?? use.getAttributeNS("http://www.w3.org/1999/xlink", "href");
+        const source = href?.startsWith("#") ? sources.get(href.slice(1)) : undefined;
+        if (!source) return;
+        const content = source.cloneNode(true) as SVGGElement;
+        namespaceSvgIds(content, `pdf-use-${index}`);
+        const group = createSvgElement("g", {});
+        for (const attribute of Array.from(use.attributes)) {
+            if (!["href", "x", "y", "width", "height"].includes(attribute.localName)) group.setAttributeNS(attribute.namespaceURI, attribute.name, attribute.value);
+        }
+        const translation = `translate(${use.getAttribute("x") ?? 0},${use.getAttribute("y") ?? 0})`;
+        group.setAttribute("transform", `${use.getAttribute("transform") ?? ""} ${translation}`.trim());
+        group.appendChild(content);
+        use.replaceWith(group);
+    });
     const baselineMap: Record<string, string> = {
         "text-before-edge": "text-top",
         "text-after-edge": "bottom",

@@ -132,7 +132,7 @@ describe("getPanelSvg", () => {
     });
 
     test("keeps only the raster layer embedded as an image while vectorizing overlays", () => {
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panelSvg).not.toBeNull();
         expect(panelSvg?.querySelectorAll("image")).toHaveLength(1);
@@ -164,7 +164,7 @@ describe("getPanelSvg", () => {
         astOverlay.id = "ast-overlay";
         renderAstOverlayToSvgMock.mockReturnValue(astOverlay);
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panelSvg?.querySelector("#ast-overlay")).toHaveAttribute("clip-path", "url(#ast-clip-0-0)");
         const astClipRect = panelSvg?.querySelector("#ast-clip-0-0 rect");
@@ -188,7 +188,7 @@ describe("getPanelSvg", () => {
             }
         ];
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panelSvg?.querySelector("#regions")).toHaveAttribute("clip-path", "url(#catalog-clip-0-0)");
         const regionClipRect = panelSvg?.querySelector("#catalog-clip-0-0 rect");
@@ -203,7 +203,7 @@ describe("getPanelSvg", () => {
         astOverlay.id = "ast-overlay";
         renderAstOverlayToSvgMock.mockReturnValue(astOverlay);
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const children = [...(panelSvg?.children ?? [])];
         const indexOf = (id: string) => children.findIndex(child => child.id === id);
 
@@ -227,7 +227,7 @@ describe("getPanelSvg", () => {
             [NaN, 40, 0]
         ];
         frame.vectorOverlayStore.tiles = [{numVertices: centers.length, vertexData: Float32Array.from(centers.flatMap(([x, y, angle]) => [x, y, 0.5, angle]))}];
-        const lines = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
+        const lines = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
         expect(lines).toHaveLength(5);
         expect(lines?.[0]).toHaveAttribute("x1", "-9.00");
         expect(lines?.[1]).toHaveAttribute("x2", "109.00");
@@ -249,7 +249,7 @@ describe("getPanelSvg", () => {
             [50, 86]
         ];
         frame.vectorOverlayStore.tiles = [{numVertices: centers.length, vertexData: Float32Array.from(centers.flatMap(([x, y]) => [x, y, 0.5, 0]))}];
-        const squares = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay rect");
+        const squares = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay rect");
         expect(squares).toHaveLength(4);
         squares?.forEach(square => expect(square).toHaveAttribute("width", "11.00"));
     });
@@ -262,14 +262,14 @@ describe("getPanelSvg", () => {
             {numVertices: 10000, vertexData: data},
             {numVertices: 1, vertexData: new Float32Array([20, 20, 0.5, 45])}
         ];
-        const vectors = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
+        const vectors = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
         expect(vectors).toHaveLength(1);
     });
 
     test("uses the vector overlay vertical axis as the zero-angle direction", () => {
         frame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const line = panelSvg?.querySelector("#vector-overlay line");
 
         expect(line).toHaveAttribute("x1", "20.00");
@@ -283,7 +283,7 @@ describe("getPanelSvg", () => {
         frame.vectorOverlayStore.intensityMin = 0;
         frame.vectorOverlayStore.intensityMax = 0;
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const line = panelSvg?.querySelector("#vector-overlay line");
 
         expect(line).toHaveAttribute("stroke", "rgba(0, 10, 20, 1)");
@@ -296,7 +296,7 @@ describe("getPanelSvg", () => {
         frame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
         frame.vectorOverlayStore.tiles[0].vertexData[3] = angle;
 
-        const line = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
+        const line = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
         const dx = Number(line?.getAttribute("x2")) - Number(line?.getAttribute("x1"));
         const dy = Number(line?.getAttribute("y2")) - Number(line?.getAttribute("y1"));
 
@@ -312,7 +312,7 @@ describe("getPanelSvg", () => {
         sourceFrame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
         mockAppStore.vectorOverlayFrames.set(frame, [sourceFrame]);
 
-        const line = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
+        const line = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#vector-overlay line");
 
         expect(transformPoint).toHaveBeenCalledTimes(2);
         expect(getControlMap).toHaveBeenCalledTimes(1);
@@ -332,7 +332,7 @@ describe("getPanelSvg", () => {
             ])
         };
         mockAppStore.contourFrames.set(frame, [sourceFrame]);
-        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         expect(panel?.querySelectorAll("#contours path")).toHaveLength(2);
         expect(getControlMap).toHaveBeenCalledTimes(1);
         expect(panel?.querySelector("#contours path")).toHaveAttribute("d", "M14.50,77.50L24.50,67.50");
@@ -345,7 +345,7 @@ describe("getPanelSvg", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, isShowingSelectedData: true, highlightColor: "#ff00ff"});
 
-        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+        const catalog = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
 
         expect(catalog?.querySelectorAll("circle:not([data-selection-highlight])")).toHaveLength(1);
         expect(catalog?.querySelector("circle")).toHaveAttribute("cx", "50");
@@ -356,7 +356,7 @@ describe("getPanelSvg", () => {
         mockAppStore.catalogStore.catalogCounts.set(11, 3);
         mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([-100, -2, 30]), y: new Float32Array([40, 40, 40])});
 
-        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+        const catalog = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
 
         expect(catalog?.querySelectorAll("circle")).toHaveLength(2);
         expect(catalog?.querySelector("circle")).toHaveAttribute("cx", "-2");
@@ -367,17 +367,29 @@ describe("getPanelSvg", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 2, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
 
-        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
 
         // Mapped values are uploaded directly to the shader; area conversion precedes any SVG geometry.
         expect(Number(source?.getAttribute("r"))).toBeCloseTo(Math.sqrt(100 / Math.PI));
+    });
+
+    test("ignores stale minor-size maps after switching away from an ellipse", () => {
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        const sizeMinorArray = jest.fn(() => new Float32Array([1000]));
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([-100]), y: new Float32Array([40])});
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 3, sizeMinorArray});
+        expect(getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).toBeNull();
+        expect(sizeMinorArray).not.toHaveBeenCalled();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 11, sizeMinorArray});
+        expect(getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse")).not.toBeNull();
+        expect(sizeMinorArray).toHaveBeenCalledTimes(1);
     });
 
     test("converts mapped box areas using the shape's area formula", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 1, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
 
-        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay rect");
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay rect");
 
         expect(source).toHaveAttribute("width", "10");
     });
@@ -387,7 +399,7 @@ describe("getPanelSvg", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 2, isImagePixelSize: true, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
 
-        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
 
         expect(Number(source?.getAttribute("r"))).toBeCloseTo(Math.sqrt(200 / Math.PI));
     });
@@ -396,7 +408,7 @@ describe("getPanelSvg", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 11, isSizeMinorAreaMode: true, sizeArray: () => new Float32Array([100]), sizeMinorArray: () => new Float32Array([25])});
 
-        const source = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
 
         expect(Number(source?.getAttribute("ry"))).toBeCloseTo(Math.sqrt(100 / Math.PI));
     });
@@ -405,7 +417,7 @@ describe("getPanelSvg", () => {
         mockAppStore.pixelRatio = pixelRatio;
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 11, sizeArray: () => new Float32Array([20]), sizeMinorArray: () => new Float32Array([10])});
-        const ellipse = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
+        const ellipse = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
         expect(ellipse).toHaveAttribute("rx", "10");
         expect(ellipse).toHaveAttribute("ry", "5");
     });
@@ -415,10 +427,10 @@ describe("getPanelSvg", () => {
         const sizeArray = jest.fn(() => new Float32Array([10]));
         const store = {...displayStore, isSourceSizeDefined: false, isImagePixelSize: true, sizeArray};
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue(store);
-        expect(getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).toBeNull();
+        expect(getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).toBeNull();
         expect(sizeArray).not.toHaveBeenCalled();
         store.isSourceSizeDefined = true;
-        expect(getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).not.toBeNull();
+        expect(getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay")).not.toBeNull();
     });
 
     test("skips style work when selected-only mode has no selection", () => {
@@ -426,7 +438,7 @@ describe("getPanelSvg", () => {
         const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, isShowingSelectedData: true, sizeArray});
 
-        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
 
         expect(panel?.querySelector("#catalog-overlay")).toBeNull();
         expect(sizeArray).not.toHaveBeenCalled();
@@ -444,7 +456,7 @@ describe("getPanelSvg", () => {
         frame.vectorOverlayConfig.isVisible = false;
         mockAppStore.catalogStore.visibleCatalogFiles = new Map();
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const path = panelSvg?.querySelector("#contours path");
 
         expect(path).toHaveAttribute("d", "M24.50,57.50L34.50,47.50");
@@ -494,7 +506,7 @@ describe("getPanelSvg", () => {
             return group;
         });
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const coordinateViewports = panelSvg?.querySelectorAll("#channel-map-coordinate-overlays > svg");
 
         expect(coordinateViewports).toHaveLength(4);
@@ -531,7 +543,7 @@ describe("getPanelSvg", () => {
         frame.colorbarStore = {positions: [], texts: []};
         renderColorbarToSvgMock.mockClear();
 
-        getPanelSvg(0, 0, 100, padding, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame}} as never);
+        getPanelSvg(0, 0, 100, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame}} as never);
 
         expect(renderColorbarToSvgMock).not.toHaveBeenCalled();
     });
@@ -542,7 +554,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const beams = panelSvg?.querySelector("#beams");
 
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
@@ -554,7 +566,7 @@ describe("getPanelSvg", () => {
         frame.channelMapOuterOverlayStore.viewWidth = 140;
         renderAstOverlayToSvgMock.mockImplementation(() => document.createElementNS("http://www.w3.org/2000/svg", "g"));
 
-        const panel = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const viewports = panel?.querySelectorAll("#channel-map-regions > svg");
         expect(viewports).toHaveLength(3);
         expect(viewports?.[0]).toHaveAttribute("x", "5");
@@ -571,6 +583,28 @@ describe("getPanelSvg", () => {
         expect(panel?.querySelector("#contours, #vector-overlays, #catalog-overlay")).toBeNull();
     });
 
+    test.each([true, false])("clips channel-map regions only to their tile viewports (raster=%s)", hasRaster => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
+        // Ceil-rounded tiles extend beyond the raster by a pixel on the right/bottom.
+        const raster = document.querySelector(".raster-canvas") as HTMLCanvasElement;
+        raster.width = 109;
+        raster.height = 89;
+        if (!hasRaster) raster.remove();
+        frame.regionSet.regionsAndAnnotationsForRender = [{regionType: CARTA.RegionType.POINT, controlPoints: [{x: 99, y: 1}], color: "#fff", lineWidth: 1}];
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+        const regions = panel?.querySelector("#channel-map-regions");
+        expect(regions).not.toHaveAttribute("clip-path");
+        const viewports = regions?.querySelectorAll(":scope > svg");
+        expect(viewports).toHaveLength(4);
+        expect(viewports?.[3]).toHaveAttribute("x", "65");
+        expect(viewports?.[3]).toHaveAttribute("y", "57");
+        viewports?.forEach(viewport => {
+            expect(viewport).toHaveAttribute("width", "50");
+            expect(viewport).toHaveAttribute("height", "40");
+            expect(viewport).toHaveAttribute("overflow", "hidden");
+        });
+    });
+
     test("initializes a matched catalog control map once before sampling sources", () => {
         let isReady = false;
         const updateCatalogBoundary = jest.fn(() => {
@@ -582,7 +616,7 @@ describe("getPanelSvg", () => {
         mockAppStore.catalogStore.catalogCounts.set(11, 2);
         mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([30, 50]), y: new Float32Array([40, 40])});
 
-        const catalog = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
+        const catalog = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay");
         expect(catalog?.querySelectorAll("circle")).toHaveLength(2);
         expect(getCatalogControlMap).toHaveBeenCalledTimes(1);
         expect(updateCatalogBoundary).toHaveBeenCalledTimes(1);
@@ -594,7 +628,7 @@ describe("getPanelSvg", () => {
         frame.effectiveZoomLevel = {x: 4, y: 2};
         frame.beamProperties = {x: 10, y: 6, angle: 45};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
-        const beam = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#beam-profile");
+        const beam = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#beam-profile");
         const x = 2 * Math.sqrt((10 * 10) / 2 + (6 * 6) / 2) + 10;
         const y = 80 - Math.sqrt((10 * 10) / 2 + (6 * 6) / 2) - 10;
         const ellipse = beam?.querySelector("ellipse");
@@ -611,6 +645,42 @@ describe("getPanelSvg", () => {
         expect(Number(beam?.querySelector("line")?.getAttribute("y1"))).toBeCloseTo(y - 10 / Math.SQRT2);
     });
 
+    test("derives raster and region padding separately for each image panel", () => {
+        frame.regionSet.regionsAndAnnotationsForRender = [{regionType: CARTA.RegionType.POINT, controlPoints: [{x: 50, y: 40}], color: "#fff", lineWidth: 1}];
+        const secondPanel = document.getElementById("image-panel-0-0")!.cloneNode(true) as HTMLElement;
+        secondPanel.id = "image-panel-1-0";
+        document.body.appendChild(secondPanel);
+        const secondFrame = {...frame, overlayStore: {...frame.overlayStore, padding: {left: 13, right: 0, top: 17, bottom: 0}}};
+        mockAppStore.fullViewWidth = 240;
+        mockAppStore.fullViewHeight = 100;
+        mockAppStore.imageViewConfigStore = {
+            numImageColumns: 2,
+            visibleImages: [
+                {type: ImageType.FRAME, store: frame},
+                {type: ImageType.FRAME, store: secondFrame}
+            ]
+        };
+        const svg = getImageViewSvg();
+        const images = svg?.querySelectorAll("image");
+        expect(images).toHaveLength(2);
+        expect(images?.[0]).toHaveAttribute("x", "5");
+        expect(images?.[0]).toHaveAttribute("y", "7");
+        expect(images?.[1]).toHaveAttribute("x", "13");
+        expect(images?.[1]).toHaveAttribute("y", "17");
+        const regions = svg?.querySelectorAll('g[id*="-regions-"]');
+        expect(regions).toHaveLength(2);
+        expect(regions?.[0]).toHaveAttribute("transform", "translate(5,7)");
+        expect(regions?.[1]).toHaveAttribute("transform", "translate(13,17)");
+    });
+
+    test("uses outer overlay padding in channel-map mode", () => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0], numColumns: 1, numRows: 1};
+        frame.channelMapOuterOverlayStore.padding = {left: 13, right: 0, top: 17, bottom: 0};
+        const image = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("image");
+        expect(image).toHaveAttribute("x", "13");
+        expect(image).toHaveAttribute("y", "17");
+    });
+
     test("scopes all IDs and references across multi-panel exports", () => {
         const firstPanel = document.getElementById("image-panel-0-0");
         const secondPanel = firstPanel?.cloneNode(true) as HTMLElement;
@@ -625,7 +695,7 @@ describe("getPanelSvg", () => {
                 {type: ImageType.FRAME, store: frame}
             ]
         };
-        const svg = getImageViewSvg(padding);
+        const svg = getImageViewSvg();
         const ids = [...(svg?.querySelectorAll("[id]") ?? [])].map(element => element.id);
         expect(new Set(ids).size).toBe(ids.length);
         expect(ids.some(id => id.startsWith("panel-0-0-contours"))).toBe(true);
@@ -641,7 +711,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const children = [...(panelSvg?.children ?? [])];
         const indexOf = (id: string) => children.findIndex(child => child.id === id);
 
@@ -653,7 +723,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const children = [...(panelSvg?.children ?? [])];
         const indexOf = (id: string) => children.findIndex(child => child.id === id);
 
@@ -666,7 +736,7 @@ describe("getPanelSvg", () => {
         frame.beamProperties = {x: 10, y: 6, angle: 0};
         frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const beam = panelSvg?.querySelector("#beam-profile ellipse");
 
         expect(panelSvg?.querySelector("#beams")).toHaveAttribute("transform", "translate(10,14)");
@@ -689,7 +759,7 @@ describe("getPanelSvg", () => {
             shapeSettings: {diameterBase: 0}
         });
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const source = panelSvg?.querySelector("#catalog-overlay rect");
 
         expect(source).toHaveAttribute("width", "12");
@@ -707,7 +777,7 @@ describe("getPanelSvg", () => {
             shapeSettings: {diameterBase: 0}
         });
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const source = panelSvg?.querySelector("#catalog-overlay circle");
 
         expect(source).toHaveAttribute("r", "6");
@@ -725,7 +795,7 @@ describe("getPanelSvg", () => {
             shapeSettings: {diameterBase: 0}
         });
 
-        const panelSvg = getPanelSvg(0, 0, 100, padding, {type: ImageType.FRAME, store: frame} as never);
+        const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const source = panelSvg?.querySelector("#catalog-overlay ellipse");
 
         expect(source).toHaveAttribute("rx", "6");

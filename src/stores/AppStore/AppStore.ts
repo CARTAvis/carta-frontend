@@ -3814,8 +3814,8 @@ export class AppStore {
         });
 
     private exportVectorImage = (imageRatio: number, format: "svg" | "pdf") =>
-        this.runImageExport(imageRatio, async (frame, backgroundColor) => {
-            const svgDoc = getImageViewSvg(frame.overlayStore.padding, backgroundColor);
+        this.runImageExport(imageRatio, async (_frame, backgroundColor) => {
+            const svgDoc = getImageViewSvg(backgroundColor);
             if (!svgDoc) return;
             const filename = this.getExportFilename(format);
             if (format === "svg") downloadSvg(svgDoc, filename);

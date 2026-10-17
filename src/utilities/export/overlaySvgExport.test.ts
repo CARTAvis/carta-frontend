@@ -6,6 +6,27 @@ import {renderContoursToSvg} from "./contourSvgExport";
 import {embedRasterAsSvgImage, namespaceSvgIds} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
+test("namespaces quoted URL, inline style, and xlink references without reading path geometry", () => {
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.id = "panel";
+    group.innerHTML = `<defs><clipPath id="clip"/><linearGradient id="gradient"/><g id="source"/></defs><path d="M1,2L3,4" clip-path="url('#clip')" style='fill:url("#gradient");stroke:url(https://example.test/external.svg#gradient)'/><use/><image/>`;
+    const use = group.querySelector("use")!;
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#source");
+    const dataUrl = `data:image/png;base64,${"A".repeat(4096)}`;
+    group.querySelector("image")!.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
+    const path = group.querySelector("path")!;
+    const readGeometry = jest.spyOn(path.getAttributeNode("d")!, "value", "get");
+    namespaceSvgIds(group, "test");
+    expect(readGeometry).not.toHaveBeenCalled();
+    readGeometry.mockRestore();
+    expect(path).toHaveAttribute("clip-path", `url('#${group.querySelector("clipPath")!.id}')`);
+    expect(path.getAttribute("style")).toContain(`url("#${group.querySelector("linearGradient")!.id}")`);
+    expect(path.getAttribute("style")).toContain("url(https://example.test/external.svg#gradient)");
+    expect(use.getAttributeNS("http://www.w3.org/1999/xlink", "href")).toBe(`#${group.querySelector("defs g")!.id}`);
+    expect(group.querySelector("image")!.getAttributeNS("http://www.w3.org/1999/xlink", "href")).toBe(dataUrl);
+    expect(group.id).toBe("test-panel-0");
+});
+
 test("serializes one full-resolution PNG reference that SVG 1.1 readers and svg2pdf can resolve", () => {
     const canvas = document.createElement("canvas");
     const dataUrl = `data:image/png;base64,${"A".repeat(4096)}`;
@@ -146,6 +167,16 @@ describe("renderColorbarToSvg", () => {
         numbers: {visible: true, fontFamily: "sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: 700, color: "#fff", rotation: -90, gap: 10, width: 22},
         label: {text: "Jy/beam", fontFamily: "serif", fontSize: 12, fontStyle: "normal", fontWeight: 400, color: "#fff", rotation: -90},
         border: {visible: true, color: "#fff", width: 1}
+    });
+
+    test("uses deterministic gradient IDs that are scoped independently per panel", () => {
+        const first = renderColorbarToSvg(createOptions());
+        const second = renderColorbarToSvg(createOptions());
+        expect(first.outerHTML).toBe(second.outerHTML);
+        namespaceSvgIds(first, "panel-0");
+        namespaceSvgIds(second, "panel-1");
+        expect(first.querySelector("linearGradient")!.id).not.toBe(second.querySelector("linearGradient")!.id);
+        for (const panel of [first, second]) expect(panel.querySelector("rect")).toHaveAttribute("fill", `url(#${panel.querySelector("linearGradient")!.id})`);
     });
 
     test("uses the colorbar store's absolute tick positions", () => {
