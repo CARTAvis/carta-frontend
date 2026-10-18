@@ -3,8 +3,8 @@ import {type Point2D} from "models";
 /** Convert Konva's anchor offsets to the centered position used by SVG text. */
 export function getTextCenterFromOffset(anchor: Point2D, offset: Point2D, width: number, height: number, pixelRatio = 1): Point2D {
     return {
-        x: anchor.x - offset.x * pixelRatio + (width * pixelRatio) / 2,
-        y: anchor.y - offset.y * pixelRatio + (height * pixelRatio) / 2
+        x: anchor.x + (width / 2 - offset.x) * pixelRatio,
+        y: anchor.y + (height / 2 - offset.y) * pixelRatio
     };
 }
 
