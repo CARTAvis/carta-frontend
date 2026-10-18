@@ -365,7 +365,7 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
 
     const getLabelCenter = (text: string, tip: Point2D, offset: Point2D): Point2D => {
         const layout = new Text({text, fontSize: region.fontSize, fontFamily: region.font, fontStyle: region.fontStyle});
-        const center = getTextCenterFromOffset(tip, offset, layout.width() * options.pixelRatio, layout.height() * options.pixelRatio);
+        const center = getTextCenterFromOffset(tip, offset, layout.width(), layout.height(), options.pixelRatio);
         layout.destroy();
         return center;
     };
@@ -434,8 +434,8 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     const midpoint = (points: Point2D[]): Point2D => (points.length === 2 ? {x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2} : (points[Math.floor(points.length / 2)] ?? startCanvas));
     const addText = (text: string, position: Point2D, offset: Point2D) => {
         if (text) {
-            const fontSize = (region.fontSize ?? 20) * options.pixelRatio;
-            group.appendChild(renderAnnotationText(text, {x: position.x - offset.x * options.pixelRatio, y: position.y - offset.y * options.pixelRatio + fontSize / 2}, region, options.pixelRatio));
+            const center = getTextCenterFromOffset(position, offset, 0, region.fontSize ?? 20, options.pixelRatio);
+            group.appendChild(renderAnnotationText(text, center, region, options.pixelRatio));
         }
     };
     addText(distanceText, midpoint(hypotenusePoints), region.textOffset);

@@ -172,15 +172,23 @@ describe("renderRegionsToSvg", () => {
             getCurveApproximation,
             decimals: 2,
             fontSize: 10,
-            textOffset: {x: 0, y: 0},
+            dashLength: 8,
+            auxiliaryLineDashLength: 0,
+            isAuxiliaryLineVisible: true,
+            textOffset: {x: 10, y: 0},
             visualOpacity: 0.5
         };
         const frame = {isValidWcs: true, wcsInfo: pixelWcs, wcsInfoForTransformation: skyWcs};
         const group = renderRegionsToSvg([ruler] as any, FRAME_VIEW, 1000, 1000, 0, 0, {frame: frame as any});
         expect(getCurveApproximation).toHaveBeenCalledWith(isWcsCoordinates ? skyWcs : pixelWcs, undefined);
         expect(group.querySelector("text")).toHaveTextContent("5.00pix");
-        expect(group.querySelector("text")).toHaveAttribute("x", "450");
+        expect(group.querySelector("text")).toHaveAttribute("x", "440");
         expect(group.querySelector("text")).toHaveAttribute("y", "605");
+        const rulerLines = group.querySelectorAll("polyline");
+        expect(rulerLines).toHaveLength(3);
+        expect(rulerLines[0]).toHaveAttribute("stroke-dasharray", "8,8");
+        expect(rulerLines[1]).not.toHaveAttribute("stroke-dasharray");
+        expect(rulerLines[2]).not.toHaveAttribute("stroke-dasharray");
         expect(group.firstElementChild).toHaveAttribute("opacity", "0.5");
     });
 
@@ -380,8 +388,35 @@ describe("renderRegionsToSvg", () => {
         compassArrowheads.forEach(arrowhead => expect(arrowhead.getAttribute("points")?.trim().split(" ")).toHaveLength(3));
 
         const compassTexts = [...group.querySelectorAll("text")];
-        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(772.5);
-        expect(Number(compassTexts[1].getAttribute("x"))).toBeCloseTo(172.5);
-        expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(800);
+        expect(Number(compassTexts[0].getAttribute("x"))).toBeCloseTo(180.5);
+        expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(825);
+        expect(Number(compassTexts[1].getAttribute("x"))).toBeCloseTo(140.5);
+        expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(785);
+    });
+
+    it("scales stored compass label offsets with export resolution", () => {
+        const compass = {
+            ...baseRegion(CARTA.RegionType.ANNCOMPASS, [{x: 20, y: 20}]),
+            length: 20,
+            northLabel: "N",
+            eastLabel: "E",
+            fontSize: 10,
+            font: "Helvetica",
+            fontStyle: "Normal",
+            pointerWidth: 6,
+            pointerLength: 8,
+            northTextOffset: {x: 20, y: -40},
+            eastTextOffset: {x: 40, y: 20},
+            hasNorthArrowhead: true,
+            hasEastArrowhead: true
+        };
+        const renderAtRatio = (pixelRatio: number) => renderRegionsToSvg([compass as any], FRAME_VIEW, 1000 * pixelRatio, 1000 * pixelRatio, 0, 0, {pixelRatio});
+        const normalLabels = [...renderAtRatio(1).querySelectorAll("text")];
+        const retinaLabels = [...renderAtRatio(2).querySelectorAll("text")];
+
+        normalLabels.forEach((label, index) => {
+            expect(Number(retinaLabels[index].getAttribute("x"))).toBeCloseTo(Number(label.getAttribute("x")) * 2);
+            expect(Number(retinaLabels[index].getAttribute("y"))).toBeCloseTo(Number(label.getAttribute("y")) * 2);
+        });
     });
 });

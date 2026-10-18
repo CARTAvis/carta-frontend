@@ -8,7 +8,6 @@ import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
 import {getColorbarStagePosition} from "utilities/colorbarLayout";
 import {getBeamGeometry} from "utilities/region/beam";
-import {imageToCanvasPos} from "utilities/region/geometry";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "./beamSvgExport";
@@ -63,8 +62,15 @@ function getDestinationFrameView(frame: FrameStore): FrameView | null {
     return frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
 }
 
-function imageToCanvasPoint(imagePoint: Point2D, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
-    return imageToCanvasPos(imagePoint.x, imagePoint.y, frameView, layerWidth, layerHeight);
+function createImageToCanvasMapper(frameView: FrameView, layerWidth: number, layerHeight: number): (imagePoint: Point2D) => Point2D {
+    const scaleX = layerWidth / (frameView.xMax - frameView.xMin);
+    const scaleY = layerHeight / (frameView.yMax - frameView.yMin);
+    const canvasPoint = {x: 0, y: 0};
+    return imagePoint => {
+        canvasPoint.x = (imagePoint.x - frameView.xMin) * scaleX;
+        canvasPoint.y = layerHeight - (imagePoint.y - frameView.yMin) * scaleY;
+        return canvasPoint;
+    };
 }
 
 function rgbColorToCss(color: {r: number; g: number; b: number; a?: number} | undefined): string {
@@ -156,6 +162,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
 
     const layerWidth = frame.renderWidth * pixelRatio;
     const layerHeight = frame.renderHeight * pixelRatio;
+    const toCanvasPoint = createImageToCanvasMapper(frameView, layerWidth, layerHeight);
     const group = svgGroupFromLayer("contours");
 
     for (let frameIndex = contourFrames.length - 1; frameIndex >= 0; --frameIndex) {
@@ -185,7 +192,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
                     pointScratch.x = point.x - 0.5;
                     pointScratch.y = point.y - 0.5;
                     const transformed = transformPoint(pointScratch);
-                    return transformed ? imageToCanvasPoint(transformed, frameView, layerWidth, layerHeight) : null;
+                    return transformed ? toCanvasPoint(transformed) : null;
                 }
             );
             group.appendChild(contourSvg);
@@ -204,6 +211,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
 
     const layerWidth = frame.renderWidth * pixelRatio;
     const layerHeight = frame.renderHeight * pixelRatio;
+    const toCanvasPoint = createImageToCanvasMapper(frameView, layerWidth, layerHeight);
     const group = svgGroupFromLayer("vector-overlays");
 
     for (let frameIndex = vectorOverlayFrames.length - 1; frameIndex >= 0; --frameIndex) {
@@ -236,7 +244,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 if (!transformedCenter) {
                     continue;
                 }
-                const canvasCenter = imageToCanvasPoint(transformedCenter, frameView, layerWidth, layerHeight);
+                const canvasCenter = toCanvasPoint(transformedCenter);
                 const angle = style.getAngle(rawAngleDegrees);
                 if (!isFinite(canvasCenter.x) || !isFinite(canvasCenter.y) || !isFinite(angle)) continue;
                 // Retain edge-crossing geometry, including stroke/feather width.
@@ -328,6 +336,9 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     }
 
     const positionArrays = new Map<number, number[]>();
+    const layerWidth = frame.renderWidth * pixelRatio;
+    const layerHeight = frame.renderHeight * pixelRatio;
+    const toCanvasPoint = createImageToCanvasMapper(frameView, layerWidth, layerHeight);
     const shapes = new Map<number, string | number>();
     const sizes = new Map<number, number>();
     const colors = new Map<number, string>();
@@ -347,8 +358,6 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
         const transformPoint = createOverlayPointTransform(sourceFrame, frame, true);
         const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio, mappedArrays);
-        const layerWidth = frame.renderWidth * pixelRatio;
-        const layerHeight = frame.renderHeight * pixelRatio;
         const featherWidth = (catalogWidgetStore.shapeSettings?.featherWidth ?? 0) * pixelRatio;
         const pointScratch = {x: 0, y: 0};
         const points: number[] = [];
@@ -363,7 +372,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
                 continue;
             }
 
-            const canvasPoint = imageToCanvasPoint(transformedPoint, frameView, layerWidth, layerHeight);
+            const canvasPoint = toCanvasPoint(transformedPoint);
             const style = resolveStyle(index, isSelected);
             if (!isCatalogPointVisible(canvasPoint, style, layerWidth, layerHeight, featherWidth)) continue;
             points.push(canvasPoint.x, canvasPoint.y);
