@@ -177,6 +177,17 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
         });
         contourFrame.contourStores.forEach((contourStore, level) => {
             const pointScratch = {x: 0, y: 0};
+            const bounds =
+                contourFrame === frame && !frame.spatialReference
+                    ? {
+                          xMin: frameView.xMin,
+                          xMax: frameView.xMax,
+                          yMin: frameView.yMin,
+                          yMax: frameView.yMax,
+                          marginX: ((contourFrame.contourConfig.thickness * pixelRatio + 1) * (frameView.xMax - frameView.xMin)) / layerWidth,
+                          marginY: ((contourFrame.contourConfig.thickness * pixelRatio + 1) * (frameView.yMax - frameView.yMin)) / layerHeight
+                      }
+                    : undefined;
             const contourSvg = renderContoursToSvg(
                 contourStore.exportChunks,
                 getContourStrokeColor(contourFrame, level, minLevel, maxLevel),
@@ -190,7 +201,8 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
                     pointScratch.y = point.y - 0.5;
                     const transformed = transformPoint(pointScratch);
                     return transformed ? toCanvasPoint(transformed) : null;
-                }
+                },
+                bounds
             );
             group.appendChild(contourSvg);
         });
@@ -293,6 +305,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     // The catalog shader sizes glyphs with Y zoom and cancels X zoom/pixel aspect ratio.
     const imagePixelScale = frameView ? (frame.renderHeight * pixelRatio) / (frameView.yMax - frameView.yMin) : 1;
     const defaultSize = shapeSize * (store.isImagePixelSize ? imagePixelScale : pixelRatio);
+    const scaleDiameter = (size: number) => size * (store.isImagePixelSize && store.catalogShape === CatalogOverlayShape.ELLIPSE_LINED ? getCatalogSizeTuning(store.catalogShape) : 1);
     const lineWidth = (isFinite(store.thickness) ? store.thickness : 1) * (store.shapeSettings?.thicknessBase ?? 1) * pixelRatio;
 
     return (index, isSelected) => {
@@ -303,6 +316,8 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
         if (store.isSizeAreaMode) {
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
+        } else {
+            size = scaleDiameter(size);
         }
         size = getCatalogShapeSize(size, store.catalogShape, store.isImagePixelSize, store.isSizeAreaMode);
         const mappedMinorSize = mappedMinorSizes[index];
@@ -312,6 +327,8 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
             if (store.isSizeMinorAreaMode) {
                 // The shader's minor-area branch uses the resolved major dimension and scaled minor value.
                 minorSize = getCatalogSizeFromArea(size, store.catalogShape, mappedMinorSize * areaScale);
+            } else {
+                minorSize = scaleDiameter(minorSize);
             }
         }
         const mappedColor = mappedColors[index];

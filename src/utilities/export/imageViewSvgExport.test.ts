@@ -963,11 +963,11 @@ describe("getPanelSvg", () => {
         });
 
         const ellipse = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
-        expect(ellipse).toHaveAttribute("rx", "12");
-        expect(ellipse).toHaveAttribute("ry", "6");
+        expect(ellipse).toHaveAttribute("rx", "24");
+        expect(ellipse).toHaveAttribute("ry", "12");
     });
 
-    test("does not apply WebGL quad tuning to angular-size ellipses", () => {
+    test("applies ellipse diameter tuning to angular-size exports", () => {
         mockAppStore.pixelRatio = 2;
         mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
             catalogShape: 11,
@@ -982,6 +982,6 @@ describe("getPanelSvg", () => {
         const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const source = panelSvg?.querySelector("#catalog-overlay ellipse");
 
-        expect(source).toHaveAttribute("rx", "6");
+        expect(source).toHaveAttribute("rx", "12");
     });
 });
