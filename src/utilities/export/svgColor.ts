@@ -1,4 +1,5 @@
 import {getColorsForValues} from "utilities/color/color";
+import {clamp} from "utilities/math/math";
 
 type ColorMapLookup = ReturnType<typeof getColorsForValues>;
 interface CachedColorMap {
@@ -7,10 +8,6 @@ interface CachedColorMap {
 }
 
 const COLOR_MAP_LOOKUP_CACHE = new Map<string, CachedColorMap>();
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-}
 
 /** Samples a configured colormap using the same bias/contrast/inversion order as the overlay shaders. */
 export function sampleSvgColormapColor(colorMap: string, fraction: number, bias: number, contrast: number, fallbackColor: string, isInverted = false): string {

@@ -414,7 +414,7 @@ describe("getPanelSvg", () => {
 
         const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay rect");
 
-        expect(source).toHaveAttribute("width", "10");
+        expect(Number(source?.getAttribute("width"))).toBeCloseTo(10 / Math.SQRT2);
     });
 
     test("applies image-pixel zoom before converting a mapped area", () => {
@@ -425,6 +425,16 @@ describe("getPanelSvg", () => {
         const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
 
         expect(Number(source?.getAttribute("r"))).toBeCloseTo(Math.sqrt(200 / Math.PI));
+    });
+
+    test("applies the box sampling correction after image-pixel area conversion", () => {
+        frame.effectiveZoomLevel = {x: 4, y: 2};
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: 1, isImagePixelSize: true, isSizeAreaMode: true, sizeArray: () => new Float32Array([100])});
+
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay rect");
+
+        expect(Number(source?.getAttribute("width"))).toBeCloseTo(Math.sqrt(100 * Math.SQRT2 * 2) / Math.SQRT2);
     });
 
     test("matches the viewer's minor-area conversion for ellipses", () => {
@@ -898,7 +908,7 @@ describe("getPanelSvg", () => {
         const panelSvg = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
         const source = panelSvg?.querySelector("#catalog-overlay rect");
 
-        expect(source).toHaveAttribute("width", "12");
+        expect(Number(source?.getAttribute("width"))).toBeCloseTo(12 / Math.SQRT2);
         expect(source).toHaveAttribute("stroke-width", "4");
     });
 

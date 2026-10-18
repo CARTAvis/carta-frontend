@@ -5,7 +5,7 @@ import {BeamType, CatalogOverlayShape, ContourDashMode, ImageType, VectorOverlay
 import {type FrameView, type ImageViewItem, type Point2D} from "models";
 import {AppStore, type CatalogDisplayStore, type OverlayColorbarSettings, type OverlaySettings, type Padding} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
+import {ceilToPower, clamp, getChannelMapCell, getColorForTheme} from "utilities";
 import {getColorbarStagePosition} from "utilities/colorbarLayout";
 import {getBeamGeometry} from "utilities/region/beam";
 
@@ -53,10 +53,6 @@ export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0
 }
 
 const DEFAULT_CONTOUR_DASH_LENGTH = 8;
-
-function clampValue(value: number, minValue: number, maxValue: number): number {
-    return Math.min(Math.max(value, minValue), maxValue);
-}
 
 function getDestinationFrameView(frame: FrameStore): FrameView | null {
     return frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
@@ -128,7 +124,7 @@ function createVectorStyleResolver(sourceFrame: FrameStore, destinationFrame: Fr
     return {
         getLength: (intensity: number): number => {
             if (intensitySource === VectorOverlaySource.None || !hasIntensityRange) return lengthMax;
-            const scaledIntensity = clampValue((intensity - minIntensity) / intensityRange, 0, 1);
+            const scaledIntensity = clamp((intensity - minIntensity) / intensityRange, 0, 1);
             return lengthMin + (lengthMax - lengthMin) * scaledIntensity;
         },
         getAngle: (angleDegrees: number): number => {
@@ -308,7 +304,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
         }
-        size = getCatalogShapeSize(size, store.catalogShape, store.isImagePixelSize);
+        size = getCatalogShapeSize(size, store.catalogShape, store.isImagePixelSize, store.isSizeAreaMode);
         const mappedMinorSize = mappedMinorSizes[index];
         let minorSize: number | undefined;
         if (isFinite(mappedMinorSize)) {
@@ -356,8 +352,8 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         }
 
         const profile = AppStore.Instance.catalogStore.catalogProfileStores?.get(fileId);
-        const selectedIndices = new Set(profile?.getSortedIndices(profile.selectedPointIndices) ?? []);
-        if (catalogWidgetStore.isShowingSelectedData && !selectedIndices.size) return;
+        const selectedIndices = profile?.selectedPointIndices.length ? new Set(profile.getSortedIndices(profile.selectedPointIndices)) : undefined;
+        if (catalogWidgetStore.isShowingSelectedData && !selectedIndices?.size) return;
         const transformPoint = createOverlayPointTransform(sourceFrame, frame, true);
         const resolveStyle = createCatalogStyleResolver(catalogWidgetStore, frame, pixelRatio, mappedArrays);
         const featherWidth = (catalogWidgetStore.shapeSettings?.featherWidth ?? 0) * pixelRatio;
@@ -365,7 +361,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         const points: number[] = [];
         const pointStyles: CatalogPointStyle[] = [];
         for (let index = 0; index < count; index++) {
-            const isSelected = selectedIndices.has(index);
+            const isSelected = selectedIndices?.has(index) ?? false;
             if (catalogWidgetStore.isShowingSelectedData && !isSelected) continue;
             pointScratch.x = catalog.x[index];
             pointScratch.y = catalog.y[index];

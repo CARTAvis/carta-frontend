@@ -227,8 +227,10 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             const offsetName = isNorth ? "north" : "east";
             const previousAutomaticOffset = automaticLabelOffsets.current[offsetName];
             const currentOffset = isNorth ? region.northTextOffset : region.eastTextOffset;
+            const shouldPreserveInitialOffset = !previousAutomaticOffset && (currentOffset.x !== 0 || currentOffset.y !== 0);
             const userAdjustment = previousAutomaticOffset ? {x: currentOffset.x - previousAutomaticOffset.x, y: currentOffset.y - previousAutomaticOffset.y} : {x: 0, y: 0};
             automaticLabelOffsets.current[offsetName] = automaticOffset;
+            if (shouldPreserveInitialOffset) return currentOffset;
             return {x: automaticOffset.x + userAdjustment.x, y: automaticOffset.y + userAdjustment.y};
         };
 
@@ -255,11 +257,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         region.font,
         region.fontStyle,
         region.northLabel,
-        region.eastLabel,
-        region.northTextOffset.x,
-        region.northTextOffset.y,
-        region.eastTextOffset.x,
-        region.eastTextOffset.y
+        region.eastLabel
     ]);
 
     const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);
