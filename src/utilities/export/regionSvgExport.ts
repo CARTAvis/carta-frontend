@@ -5,6 +5,7 @@ import {Text} from "konva/lib/shapes/Text";
 import {type FrameView, type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {getTextCenterFromOffset} from "utilities/region/annotationTextPosition";
 import {getScaledEllipseAxes, imageSizeToCanvas, imageToCanvasPos as imageToCanvas} from "utilities/region/geometry";
 import {getInterpolatedPathAtDistance} from "utilities/region/region";
 import {getRulerDistanceText} from "utilities/region/ruler";
@@ -58,15 +59,15 @@ function getSpatialRegionCanvasPoints(region: RegionStore, frame: FrameStore, fr
     });
 }
 
-function getStrokeAttrs(region: RegionStore, pixelRatio = 1): Record<string, string | number> {
+function getStrokeAttrs(region: RegionStore, pixelRatio = 1, dashLength = region.dashLength): Record<string, string | number> {
     const attrs: Record<string, string | number> = {
         stroke: region.color,
         "stroke-width": region.lineWidth * pixelRatio,
         fill: "none"
     };
-    if (region.dashLength > 0) {
-        const dashLength = region.dashLength * pixelRatio;
-        attrs["stroke-dasharray"] = `${dashLength},${dashLength}`;
+    if (dashLength > 0) {
+        const scaledDashLength = dashLength * pixelRatio;
+        attrs["stroke-dasharray"] = `${scaledDashLength},${scaledDashLength}`;
     }
     return attrs;
 }
@@ -320,21 +321,6 @@ function renderAnnotationText(text: string, position: Point2D, region: RegionSto
     });
 }
 
-function getCompassLabelPosition(origin: Point2D, tip: Point2D, region: CompassAnnotationStore, pixelRatio: number, fallbackDirection: Point2D): Point2D {
-    let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
-    const length = Math.hypot(direction.x, direction.y);
-    if (length === 0) {
-        direction = fallbackDirection;
-    } else {
-        direction = {x: direction.x / length, y: direction.y / length};
-    }
-    const labelGap = Math.max(4, (region.fontSize ?? 20) * 0.75) * pixelRatio;
-    return {
-        x: tip.x + direction.x * labelGap,
-        y: tip.y + direction.y * labelGap
-    };
-}
-
 function renderCompassAnnotation(region: CompassAnnotationStore, frameView: FrameView, layerWidth: number, layerHeight: number, options: RegionSvgOptions): SVGGElement {
     const group = document.createElementNS(SVG_NS, "g");
     const originImage = options.frame?.spatialReference && options.frame.spatialTransformAST ? transformImagePoint(options.frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
@@ -377,8 +363,14 @@ function renderCompassAnnotation(region: CompassAnnotationStore, frameView: Fram
     addArrow(northPath, region.hasNorthArrowhead);
     addArrow(eastPath, region.hasEastArrowhead);
 
-    const northText = renderAnnotationText(region.northLabel, getCompassLabelPosition(origin, northPath[northPath.length - 1], region, options.pixelRatio, {x: 0, y: -1}), region, options.pixelRatio);
-    const eastText = renderAnnotationText(region.eastLabel, getCompassLabelPosition(origin, eastPath[eastPath.length - 1], region, options.pixelRatio, {x: -1, y: 0}), region, options.pixelRatio);
+    const getLabelCenter = (text: string, tip: Point2D, offset: Point2D): Point2D => {
+        const layout = new Text({text, fontSize: region.fontSize, fontFamily: region.font, fontStyle: region.fontStyle});
+        const center = getTextCenterFromOffset(tip, offset, layout.width() * options.pixelRatio, layout.height() * options.pixelRatio);
+        layout.destroy();
+        return center;
+    };
+    const northText = renderAnnotationText(region.northLabel, getLabelCenter(region.northLabel, northPath[northPath.length - 1], region.northTextOffset), region, options.pixelRatio);
+    const eastText = renderAnnotationText(region.eastLabel, getLabelCenter(region.eastLabel, eastPath[eastPath.length - 1], region.eastTextOffset), region, options.pixelRatio);
     group.append(northText, eastText);
     return group;
 }
@@ -430,8 +422,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     }
 
     const line = (points: Point2D[], dashLength: number) => {
-        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio)};
-        if (dashLength > 0) attrs["stroke-dasharray"] = `${dashLength * options.pixelRatio},${dashLength * options.pixelRatio}`;
+        const attrs: Record<string, string | number> = {points: points.map(point => `${point.x},${point.y}`).join(" "), ...getStrokeAttrs(region, options.pixelRatio, dashLength)};
         return createSvgElement("polyline", attrs);
     };
     group.appendChild(line(hypotenusePoints, region.dashLength));
@@ -444,7 +435,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     const addText = (text: string, position: Point2D, offset: Point2D) => {
         if (text) {
             const fontSize = (region.fontSize ?? 20) * options.pixelRatio;
-            group.appendChild(renderAnnotationText(text, {x: position.x + offset.x * options.pixelRatio, y: position.y - offset.y * options.pixelRatio + fontSize / 2}, region, options.pixelRatio));
+            group.appendChild(renderAnnotationText(text, {x: position.x - offset.x * options.pixelRatio, y: position.y - offset.y * options.pixelRatio + fontSize / 2}, region, options.pixelRatio));
         }
     };
     addText(distanceText, midpoint(hypotenusePoints), region.textOffset);

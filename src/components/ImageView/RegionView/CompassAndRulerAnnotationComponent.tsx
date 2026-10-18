@@ -9,6 +9,7 @@ import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
 import {subtract2D, transformPoint} from "utilities";
+import {getTextOffsetForCenter} from "utilities/region/annotationTextPosition";
 import {getRulerDistanceText} from "utilities/region/ruler";
 
 import {Anchor} from "./InvariantShapes";
@@ -220,10 +221,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             const length = Math.hypot(direction.x, direction.y);
             direction = length ? {x: direction.x / length, y: direction.y / length} : fallbackDirection;
             const labelGap = Math.max(4, region.fontSize * 0.75);
-            return {
-                x: (label.current?.textWidth ?? 0) / 2 - direction.x * labelGap,
-                y: (label.current?.textHeight ?? 0) / 2 - direction.y * labelGap
-            };
+            const center = {x: tip.x + direction.x * labelGap, y: tip.y + direction.y * labelGap};
+            return getTextOffsetForCenter(tip, center, label.current?.textWidth ?? 0, label.current?.textHeight ?? 0);
         };
 
         const northOffset = getLabelOffset(northPointArray, northLabelRef, {x: 0, y: -1});
