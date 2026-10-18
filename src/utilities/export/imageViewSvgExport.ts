@@ -288,18 +288,20 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     const shapeSize = store.isImagePixelSize ? store.catalogSize : store.catalogSize + (store.shapeSettings?.diameterBase ?? 0);
     const zoomFrame = frame.spatialReference ?? frame;
     const zoomY = zoomFrame.effectiveZoomLevel?.y ?? zoomFrame.zoomLevel;
-    const areaScale = store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) * zoomY : 1;
+    const sizeTuning = store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) : 1;
+    const areaScale = store.isImagePixelSize ? sizeTuning * zoomY : 1;
     const frameView = getDestinationFrameView(frame);
     // The catalog shader sizes glyphs with Y zoom and cancels X zoom/pixel aspect ratio.
     const imagePixelScale = frameView ? (frame.renderHeight * pixelRatio) / (frameView.yMax - frameView.yMin) : 1;
-    const defaultSize = shapeSize * (store.isImagePixelSize ? imagePixelScale : pixelRatio);
+    const imagePixelSizeScale = imagePixelScale * sizeTuning;
+    const defaultSize = shapeSize * (store.isImagePixelSize ? imagePixelSizeScale : pixelRatio);
     const lineWidth = (isFinite(store.thickness) ? store.thickness : 1) * (store.shapeSettings?.thicknessBase ?? 1) * pixelRatio;
 
     return (index, isSelected) => {
         const mappedSize = mappedSizes[index];
         const hasMappedSize = isFinite(mappedSize);
         // Mapped screen sizes are already device-pixel dimensions in the shader's size texture.
-        let size = hasMappedSize ? mappedSize * (store.isImagePixelSize ? imagePixelScale : 1) : defaultSize;
+        let size = hasMappedSize ? mappedSize * (store.isImagePixelSize ? imagePixelSizeScale : 1) : defaultSize;
         if (store.isSizeAreaMode) {
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
@@ -308,7 +310,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
         const mappedMinorSize = mappedMinorSizes[index];
         let minorSize: number | undefined;
         if (isFinite(mappedMinorSize)) {
-            minorSize = mappedMinorSize * (store.isImagePixelSize ? imagePixelScale : 1);
+            minorSize = mappedMinorSize * (store.isImagePixelSize ? imagePixelSizeScale : 1);
             if (store.isSizeMinorAreaMode) {
                 // The shader's minor-area branch uses the resolved major dimension and scaled minor value.
                 minorSize = getCatalogSizeFromArea(size, store.catalogShape, mappedMinorSize * areaScale);

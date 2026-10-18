@@ -72,7 +72,7 @@ function getStrokeAttrs(region: RegionStore, pixelRatio = 1, dashLength = region
     return attrs;
 }
 
-function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: number): SVGElement {
+function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: number, rotation = 0): SVGElement {
     const point = region as RegionStore & {pointShape?: CARTA.PointAnnotationShape; pointWidth?: number};
     const width = (point.pointWidth || 6) * pixelRatio;
     const halfWidth = width / 2;
@@ -121,6 +121,9 @@ function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: num
             break;
     }
 
+    if (rotation !== 0) {
+        element.setAttribute("transform", `rotate(${rotation},${center.x},${center.y})`);
+    }
     return element;
 }
 
@@ -525,7 +528,8 @@ function renderSingleRegion(region: RegionStore, frameView: FrameView, layerWidt
         case CARTA.RegionType.POINT:
         case CARTA.RegionType.ANNPOINT: {
             const center = spatialPoints?.[0] ?? transformedImageToCanvas(cp[0], frame, frameView, layerWidth, layerHeight);
-            return renderPointRegion(center, region, options.pixelRatio);
+            const rotation = frame?.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI : 0;
+            return renderPointRegion(center, region, options.pixelRatio, rotation);
         }
         case CARTA.RegionType.LINE:
         case CARTA.RegionType.ANNLINE: {

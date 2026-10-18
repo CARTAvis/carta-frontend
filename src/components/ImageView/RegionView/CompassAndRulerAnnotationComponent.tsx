@@ -39,12 +39,12 @@ interface CompassRulerAnnotationProps {
 }
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
+const AUTOMATIC_LABEL_OFFSETS = new WeakMap<CompassAnnotationStore, {north: Point2D; east: Point2D}>();
 
 export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) => {
     const shapeRef = React.useRef<Konva.Group>(null);
     const northLabelRef = React.useRef<Konva.Text>(null);
     const eastLabelRef = React.useRef<Konva.Text>(null);
-    const automaticLabelOffsets = React.useRef<{north: Point2D | null; east: Point2D | null}>({north: null, east: null});
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
     const mousePoint = React.useRef({x: 0, y: 0});
@@ -216,6 +216,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const stageScaleY = stage?.scaleY() ?? 1;
     const updateOffset = () => {
         const origin = adjustPosToUnityStage({x: originPoints.x - mousePoint.current.x, y: originPoints.y - mousePoint.current.y}, stage);
+        const previousAutomaticOffsets = AUTOMATIC_LABEL_OFFSETS.get(region);
+        const nextAutomaticOffsets = {north: {x: 0, y: 0}, east: {x: 0, y: 0}};
         const getLabelOffset = (points: number[], label: React.RefObject<Konva.Text | null>, fallbackDirection: Point2D, isNorth: boolean): Point2D => {
             const tip = adjustPosToUnityStage({x: points[points.length - 2], y: points[points.length - 1]}, stage);
             let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
@@ -225,17 +227,18 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             const center = {x: tip.x + direction.x * labelGap, y: tip.y + direction.y * labelGap};
             const automaticOffset = getTextOffsetForCenter(tip, center, label.current?.textWidth ?? 0, label.current?.textHeight ?? 0);
             const offsetName = isNorth ? "north" : "east";
-            const previousAutomaticOffset = automaticLabelOffsets.current[offsetName];
+            const previousAutomaticOffset = previousAutomaticOffsets?.[offsetName];
             const currentOffset = isNorth ? region.northTextOffset : region.eastTextOffset;
             const shouldPreserveInitialOffset = !previousAutomaticOffset && (currentOffset.x !== 0 || currentOffset.y !== 0);
             const userAdjustment = previousAutomaticOffset ? {x: currentOffset.x - previousAutomaticOffset.x, y: currentOffset.y - previousAutomaticOffset.y} : {x: 0, y: 0};
-            automaticLabelOffsets.current[offsetName] = automaticOffset;
+            nextAutomaticOffsets[offsetName] = automaticOffset;
             if (shouldPreserveInitialOffset) return currentOffset;
             return {x: automaticOffset.x + userAdjustment.x, y: automaticOffset.y + userAdjustment.y};
         };
 
         const northOffset = getLabelOffset(northPointArray, northLabelRef, {x: 0, y: -1}, true);
         const eastOffset = getLabelOffset(eastPointArray, eastLabelRef, {x: -1, y: 0}, false);
+        AUTOMATIC_LABEL_OFFSETS.set(region, nextAutomaticOffsets);
         region.setNorthTextOffset(northOffset.x, true, true);
         region.setNorthTextOffset(northOffset.y, false, true);
         region.setEastTextOffset(eastOffset.x, true, true);
