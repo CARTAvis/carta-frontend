@@ -8,7 +8,7 @@ import {type FrameStore} from "stores/Frame";
 import {ceilToPower, getChannelMapCell, getColorForTheme} from "utilities";
 import {getColorbarStagePosition} from "utilities/colorbarLayout";
 import {getBeamGeometry} from "utilities/region/beam";
-import {imageSizeToCanvas as imageSizeToCanvasSize, imageToCanvasPos} from "utilities/region/geometry";
+import {imageToCanvasPos} from "utilities/region/geometry";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "./beamSvgExport";
@@ -101,48 +101,40 @@ function getContourStrokeColor(frame: FrameStore, level: number, minLevel: numbe
     return sampleSvgColormapColor(frame.contourConfig.colormap, fraction, frame.contourConfig.colormapBias, frame.contourConfig.colormapContrast, fallbackColor, frame.contourConfig.isColormapInverted);
 }
 
-function getVectorCanvasLength(frame: FrameStore, intensity: number, pixelRatio: number): number {
-    const config = frame.vectorOverlayConfig;
-    const intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
-    const intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+function createVectorStyleResolver(sourceFrame: FrameStore, destinationFrame: FrameStore, pixelRatio: number) {
+    const config = sourceFrame.vectorOverlayConfig;
+    const {angularSource, intensitySource, isColormapEnabled, colormap, colormapBias, colormapContrast, isColormapInverted} = config;
+    const intensityMin = intensitySource === VectorOverlaySource.None ? 0 : isFinite(config.intensityMin ?? NaN) ? config.intensityMin : sourceFrame.vectorOverlayStore.intensityMin;
+    const intensityMax = intensitySource === VectorOverlaySource.None ? 1 : isFinite(config.intensityMax ?? NaN) ? config.intensityMax : sourceFrame.vectorOverlayStore.intensityMax;
+    const hasIntensityRange = isFinite(intensityMin ?? NaN) && isFinite(intensityMax ?? NaN) && intensityMin !== intensityMax;
+    const minIntensity = intensityMin ?? 0;
+    const intensityRange = (intensityMax ?? minIntensity) - minIntensity;
     const lengthMin = config.lengthMin * pixelRatio;
     const lengthMax = config.lengthMax * pixelRatio;
-
-    if (config.intensitySource === VectorOverlaySource.None) {
-        return lengthMax;
-    }
-
-    if (!isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax) {
-        return lengthMax;
-    }
-
-    const minIntensity = intensityMin ?? 0;
-    const maxIntensity = intensityMax ?? minIntensity;
-    const scaledIntensity = clampValue((intensity - minIntensity) / (maxIntensity - minIntensity), 0, 1);
-    return lengthMin + (lengthMax - lengthMin) * scaledIntensity;
-}
-
-function getVectorCanvasAngle(sourceFrame: FrameStore, destinationFrame: FrameStore, angleDegrees: number): number {
-    const config = sourceFrame.vectorOverlayConfig;
     const rotationOffset = isFinite(config.rotationOffset) ? config.rotationOffset : 0;
-    const angle = config.angularSource === VectorOverlaySource.None ? 0 : ((-angleDegrees - rotationOffset) * Math.PI) / 180;
     const zoomFrame = destinationFrame.spatialReference ?? destinationFrame;
     const zoom = zoomFrame.effectiveZoomLevel ?? {x: zoomFrame.zoomLevel, y: zoomFrame.zoomLevel};
-    // The shader maps the center, then normalizes this screen-space direction.
-    return Math.atan2(Math.cos(angle) * zoom.y, -Math.sin(angle) * zoom.x * (sourceFrame.aspectRatio ?? 1));
-}
+    const scaleX = zoom.x * (sourceFrame.aspectRatio ?? 1);
+    const scaleY = zoom.y;
+    const fallbackColor = rgbColorToCss(config.color);
 
-function getVectorStrokeColor(frame: FrameStore, intensity: number): string {
-    const fallbackColor = rgbColorToCss(frame.vectorOverlayConfig.color);
-    if (!frame.vectorOverlayConfig.isColormapEnabled) {
-        return fallbackColor;
-    }
-
-    const intensityMin = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None ? 0 : isFinite(frame.vectorOverlayConfig.intensityMin ?? NaN) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
-    const intensityMax = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None ? 1 : isFinite(frame.vectorOverlayConfig.intensityMax ?? NaN) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
-    const fraction = !isFinite(intensityMin ?? NaN) || !isFinite(intensityMax ?? NaN) || intensityMin === intensityMax ? 1 : (intensity - (intensityMin ?? 0)) / ((intensityMax ?? 0) - (intensityMin ?? 0));
-
-    return sampleSvgColormapColor(frame.vectorOverlayConfig.colormap, fraction, frame.vectorOverlayConfig.colormapBias, frame.vectorOverlayConfig.colormapContrast, fallbackColor, frame.vectorOverlayConfig.isColormapInverted);
+    return {
+        getLength: (intensity: number): number => {
+            if (intensitySource === VectorOverlaySource.None || !hasIntensityRange) return lengthMax;
+            const scaledIntensity = clampValue((intensity - minIntensity) / intensityRange, 0, 1);
+            return lengthMin + (lengthMax - lengthMin) * scaledIntensity;
+        },
+        getAngle: (angleDegrees: number): number => {
+            const angle = angularSource === VectorOverlaySource.None ? 0 : ((-angleDegrees - rotationOffset) * Math.PI) / 180;
+            // The shader maps the center, then normalizes this screen-space direction.
+            return Math.atan2(Math.cos(angle) * scaleY, -Math.sin(angle) * scaleX);
+        },
+        getColor: (intensity: number): string => {
+            if (!isColormapEnabled) return fallbackColor;
+            const fraction = hasIntensityRange ? (intensity - minIntensity) / intensityRange : 1;
+            return sampleSvgColormapColor(colormap, fraction, colormapBias, colormapContrast, fallbackColor, isColormapInverted);
+        }
+    };
 }
 
 function createOverlayPointTransform(sourceFrame: FrameStore, destinationFrame: FrameStore, isCatalog = false): (point: Point2D) => Point2D | null {
@@ -223,6 +215,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
         const exportPositions: number[] = [];
         const strokeColors: string[] = [];
         const transformPoint = createOverlayPointTransform(vectorFrame, frame);
+        const style = createVectorStyleResolver(vectorFrame, frame, pixelRatio);
         const lineWidth = pixelRatio * vectorFrame.vectorOverlayConfig.thickness;
         const featherWidth = pixelRatio / (frame.spatialTransform?.scale ?? 1);
         const isIntensityPlot = vectorFrame.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
@@ -234,7 +227,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 centerScratch.y = tile.vertexData[offset + 1];
                 const intensity = tile.vertexData[offset + 2];
                 const rawAngleDegrees = tile.vertexData[offset + 3];
-                const lineLength = getVectorCanvasLength(vectorFrame, intensity, pixelRatio);
+                const lineLength = style.getLength(intensity);
                 if (!isFinite(lineLength) || lineLength <= 0) {
                     continue;
                 }
@@ -244,7 +237,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                     continue;
                 }
                 const canvasCenter = imageToCanvasPoint(transformedCenter, frameView, layerWidth, layerHeight);
-                const angle = getVectorCanvasAngle(vectorFrame, frame, rawAngleDegrees);
+                const angle = style.getAngle(rawAngleDegrees);
                 if (!isFinite(canvasCenter.x) || !isFinite(canvasCenter.y) || !isFinite(angle)) continue;
                 // Retain edge-crossing geometry, including stroke/feather width.
                 // Allow for rounding when SVG coordinates are serialized.
@@ -252,7 +245,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
                 const halfHeight = (isIntensityPlot ? (lineLength + featherWidth) / 2 : (Math.abs(Math.sin(angle)) * lineLength) / 2 + (lineWidth + featherWidth) / 2) + 0.01;
                 if (canvasCenter.x + halfWidth < 0 || canvasCenter.x - halfWidth > layerWidth || canvasCenter.y + halfHeight < 0 || canvasCenter.y - halfHeight > layerHeight) continue;
                 exportPositions.push(canvasCenter.x, canvasCenter.y, lineLength, angle);
-                strokeColors.push(getVectorStrokeColor(vectorFrame, intensity));
+                strokeColors.push(style.getColor(intensity));
             }
         });
 
@@ -263,16 +256,6 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
     }
 
     return group.childNodes.length ? group : null;
-}
-
-function getCatalogPointSize(frame: FrameStore, size: number, isImagePixelSize: boolean, pixelRatio: number): number {
-    if (!isImagePixelSize) {
-        // SVG coordinates are device pixels; pixelRatio includes both Retina and export-resolution scaling.
-        return size * pixelRatio;
-    }
-
-    const frameView = getDestinationFrameView(frame);
-    return frameView ? imageSizeToCanvasSize(size, size, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio).x : size;
 }
 
 interface CatalogMappedArrays {
@@ -301,14 +284,17 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     const zoomFrame = frame.spatialReference ?? frame;
     const zoomY = zoomFrame.effectiveZoomLevel?.y ?? zoomFrame.zoomLevel;
     const areaScale = store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) * zoomY : 1;
-    const defaultSize = getCatalogPointSize(frame, shapeSize, store.isImagePixelSize, pixelRatio);
+    const frameView = getDestinationFrameView(frame);
+    // The catalog shader sizes glyphs with Y zoom and cancels X zoom/pixel aspect ratio.
+    const imagePixelScale = frameView ? (frame.renderHeight * pixelRatio) / (frameView.yMax - frameView.yMin) : 1;
+    const defaultSize = shapeSize * (store.isImagePixelSize ? imagePixelScale : pixelRatio);
     const lineWidth = (isFinite(store.thickness) ? store.thickness : 1) * (store.shapeSettings?.thicknessBase ?? 1) * pixelRatio;
 
     return (index, isSelected) => {
         const mappedSize = mappedSizes[index];
         const hasMappedSize = isFinite(mappedSize);
         // Mapped screen sizes are already device-pixel dimensions in the shader's size texture.
-        let size = hasMappedSize ? (store.isImagePixelSize ? getCatalogPointSize(frame, mappedSize, true, pixelRatio) : mappedSize) : defaultSize;
+        let size = hasMappedSize ? mappedSize * (store.isImagePixelSize ? imagePixelScale : 1) : defaultSize;
         if (store.isSizeAreaMode) {
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
@@ -316,7 +302,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
         const mappedMinorSize = mappedMinorSizes[index];
         let minorSize: number | undefined;
         if (isFinite(mappedMinorSize)) {
-            minorSize = store.isImagePixelSize ? getCatalogPointSize(frame, mappedMinorSize, true, pixelRatio) : mappedMinorSize;
+            minorSize = mappedMinorSize * (store.isImagePixelSize ? imagePixelScale : 1);
             if (store.isSizeMinorAreaMode) {
                 // The shader's minor-area branch uses the resolved major dimension and scaled minor value.
                 minorSize = getCatalogSizeFromArea(size, store.catalogShape, mappedMinorSize * areaScale);
@@ -506,9 +492,8 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
 
     // 3. Beam — vector SVG from store data
     const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
-    if (beamGroup) {
-        panelGroup.appendChild(beamGroup);
-    }
+    const beamView = isChannelMap ? frame.channelMapInnerOverlayStore : frame;
+    appendClippedLayer(beamGroup, "beam", {x: 0, y: 0, width: beamView.renderWidth * pixelRatio, height: beamView.renderHeight * pixelRatio});
 
     // 4. Contour — vector SVG from store data
     const contoursSvg = isChannelMap ? null : buildContoursSvg(frame, padding, pixelRatio);

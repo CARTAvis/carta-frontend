@@ -106,7 +106,7 @@ describe("renderRegionsToSvg", () => {
         viewerStage.destroy();
     });
 
-    it.each([0, 0.25, 1])("preserves visual opacity %s for regions and composite annotations", opacity => {
+    it.each([0.25, 1])("preserves visual opacity %s for regions and composite annotations", opacity => {
         const point = {...baseRegion(CARTA.RegionType.POINT, [{x: 50, y: 50}]), visualOpacity: opacity};
         const text = {
             ...baseRegion(CARTA.RegionType.ANNTEXT, [
@@ -129,6 +129,32 @@ describe("renderRegionsToSvg", () => {
         const group = renderRegionsToSvg([point, text, vector] as any, FRAME_VIEW, 1000, 1000, 0, 0);
         expect(group.children).toHaveLength(3);
         [...group.children].forEach(element => expect(element).toHaveAttribute("opacity", String(opacity)));
+    });
+
+    it("skips hidden matched-frame geometry and text while preserving visible regions", () => {
+        const points = [
+            {x: 10, y: 10},
+            {x: 40, y: 20}
+        ];
+        const getRegionApproximation = jest.fn(() => points);
+        const hiddenVector = {
+            ...baseRegion(CARTA.RegionType.ANNVECTOR, points),
+            visualOpacity: 0,
+            getRegionApproximation
+        };
+        const hiddenText = {...baseRegion(CARTA.RegionType.ANNTEXT, [{x: 50, y: 50}]), visualOpacity: 0, text: "hidden", fontSize: 12};
+        const temporaryVector = {...hiddenVector, isTemporary: true, visualOpacity: 0.5};
+        const visibleLine = {...baseRegion(CARTA.RegionType.LINE, points), visualOpacity: 0.5, getRegionApproximation: () => points};
+        const frame = matchedFrame();
+        const transformPoint = jest.spyOn(AST, "transformPoint");
+
+        const group = renderRegionsToSvg([hiddenVector, hiddenText, temporaryVector, visibleLine] as any, FRAME_VIEW, 1000, 1000, 0, 0, {frame: frame as any});
+
+        expect(getRegionApproximation).not.toHaveBeenCalled();
+        expect(transformPoint).not.toHaveBeenCalled();
+        expect(group.children).toHaveLength(1);
+        expect(group.querySelector("polyline")).toHaveAttribute("points", "100.00,900.00 400.00,800.00");
+        expect(group.firstElementChild).toHaveAttribute("opacity", "0.5");
     });
 
     it.each([true, false])("uses viewer ruler WCS selection and centers two-point labels (WCS=%s)", isWcsCoordinates => {

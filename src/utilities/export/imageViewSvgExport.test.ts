@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
 import {AstFonts} from "components/Shared";
-import {ContourDashMode, ImageType, VectorOverlaySource} from "enums";
+import {CatalogOverlayShape, ContourDashMode, ImageType, VectorOverlaySource} from "enums";
 import {AppStore} from "stores";
 import * as colorUtils from "utilities/color/color";
 import {renderAstOverlayToSvg} from "utilities/export/astSvgExport";
@@ -289,6 +289,29 @@ describe("getPanelSvg", () => {
         expect(line).toHaveAttribute("stroke", "rgba(0, 10, 20, 1)");
     });
 
+    test.each([
+        {range: "configured", min: 0, max: 1, storeMin: -1, storeMax: 1, lengths: [2, 6, 10], hasRange: true},
+        {range: "store fallback", min: undefined, max: NaN, storeMin: 0, storeMax: 1, lengths: [2, 6, 10], hasRange: true},
+        {range: "degenerate", min: 1, max: 1, storeMin: 0, storeMax: 1, lengths: [10, 10, 10], hasRange: false},
+        {range: "unavailable", min: undefined, max: NaN, storeMin: undefined, storeMax: undefined, lengths: [10, 10, 10], hasRange: false}
+    ])("preserves vector lengths, colors and rotation with a $range intensity range", ({min, max, storeMin, storeMax, lengths, hasRange}) => {
+        Object.assign(frame.vectorOverlayConfig, {intensityMin: min, intensityMax: max, lengthMin: 2, rotationOffset: 90, isColormapEnabled: true});
+        frame.vectorOverlayStore = {
+            intensityMin: storeMin,
+            intensityMax: storeMax,
+            tiles: [{numVertices: 3, vertexData: new Float32Array([20, 20, 0, 0, 40, 20, 0.5, 0, 60, 20, 1, 0])}]
+        };
+
+        const lines = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
+
+        expect(lines).toHaveLength(3);
+        lines?.forEach((line, index) => {
+            expect(Number(line.getAttribute("x2")) - Number(line.getAttribute("x1"))).toBeCloseTo(lengths[index]);
+            expect(line.getAttribute("y2")).toBe(line.getAttribute("y1"));
+            expect(line).toHaveAttribute("stroke", hasRange && index === 0 ? "rgba(0, 10, 20, 1)" : "rgba(100, 110, 120, 1)");
+        });
+    });
+
     test.each([0, 45, 90])("preserves screen vector length at angle %s under unequal axis zoom", angle => {
         frame.zoomLevel = 4;
         frame.effectiveZoomLevel = {x: 4, y: 2};
@@ -564,6 +587,26 @@ describe("getPanelSvg", () => {
         expect(beams).toHaveAttribute("transform", "translate(5,57)");
     });
 
+    test.each([1, 2])("clips oversized channel-map beams to their bottom-left tile at pixel ratio %s", pixelRatio => {
+        mockAppStore.pixelRatio = pixelRatio;
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
+        frame.renderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+        frame.renderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 200, y: 200, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+        const beams = panel?.querySelector("#beams");
+        expect(beams).toHaveAttribute("transform", `translate(${5 * pixelRatio},${57 * pixelRatio})`);
+        expect(beams).toHaveAttribute("clip-path", "url(#beam-clip-0-0)");
+        const clip = panel?.querySelector("#beam-clip-0-0 rect");
+        expect(clip).toHaveAttribute("x", "0");
+        expect(clip).toHaveAttribute("y", "0");
+        expect(clip).toHaveAttribute("width", `${50 * pixelRatio}`);
+        expect(clip).toHaveAttribute("height", `${40 * pixelRatio}`);
+    });
+
     test("renders clipped regions in every valid channel cell without unsupported overlays", () => {
         mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 4], numColumns: 2, numRows: 2};
         frame.regionSet.regionsAndAnnotationsForRender = [{regionType: CARTA.RegionType.POINT, controlPoints: [{x: 50, y: 40}], color: "#fff", lineWidth: 1}];
@@ -750,6 +793,28 @@ describe("getPanelSvg", () => {
         expect(beam).toHaveAttribute("ry", "12");
     });
 
+    test.each([
+        [0, 1],
+        [1, 2]
+    ])("clips oversized beams within panel %s at pixel ratio %s", (column, pixelRatio) => {
+        mockAppStore.pixelRatio = pixelRatio;
+        const panelElement = document.getElementById("image-panel-0-0")!;
+        panelElement.id = `image-panel-${column}-0`;
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 200, y: 200, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+
+        const panel = getPanelSvg(column, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+        const ellipse = panel?.querySelector("#beam-profile ellipse");
+        expect(Number(ellipse?.getAttribute("cx")) - Number(ellipse?.getAttribute("rx"))).toBeLessThan(0);
+        expect(panel?.querySelector("#beams")).toHaveAttribute("clip-path", `url(#beam-clip-${column}-0)`);
+        const clip = panel?.querySelector(`#beam-clip-${column}-0 rect`);
+        expect(clip).toHaveAttribute("x", "0");
+        expect(clip).toHaveAttribute("y", "0");
+        expect(clip).toHaveAttribute("width", `${100 * pixelRatio}`);
+        expect(clip).toHaveAttribute("height", `${80 * pixelRatio}`);
+    });
+
     test("scales screen-pixel catalog source dimensions on Retina displays", () => {
         mockAppStore.pixelRatio = 2;
         mockAppStore.imageRatio = 1;
@@ -785,6 +850,44 @@ describe("getPanelSvg", () => {
         const source = panelSvg?.querySelector("#catalog-overlay circle");
 
         expect(source).toHaveAttribute("r", "6");
+    });
+
+    test.each([
+        {zoomX: 4, aspectRatio: 1, pixelRatio: 1},
+        {zoomX: 2, aspectRatio: 2, pixelRatio: 1},
+        {zoomX: 4, aspectRatio: 2, pixelRatio: 2},
+        {zoomX: 4, aspectRatio: 1, pixelRatio: 4}
+    ])("sizes image-pixel catalogs using Y zoom with $zoomX X zoom, $aspectRatio aspect ratio and $pixelRatio pixel ratio", ({zoomX, aspectRatio, pixelRatio}) => {
+        mockAppStore.pixelRatio = pixelRatio;
+        frame.effectiveZoomLevel = {x: zoomX, y: 2};
+        frame.aspectRatio = aspectRatio;
+        frame.requiredFrameView = {xMin: 0, xMax: 100 / (zoomX * aspectRatio), yMin: 0, yMax: 40};
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([10]), y: new Float32Array([10])});
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({...displayStore, catalogShape: CatalogOverlayShape.CIRCLE_FILLED, isImagePixelSize: true});
+
+        const source = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay circle");
+        expect(source).toHaveAttribute("r", `${6 * pixelRatio}`);
+    });
+
+    test("sizes mapped angular ellipse axes using the matched reference view's Y scale", () => {
+        mockAppStore.pixelRatio = 2;
+        frame.spatialReference = {requiredFrameView: {xMin: 0, xMax: 25, yMin: 0, yMax: 40}, effectiveZoomLevel: {x: 4, y: 2}, zoomLevel: 2};
+        frame.spatialTransform = {scale: 1, rotation: 0, transformCoordinate: (point: {x: number; y: number}) => point};
+        mockAppStore.catalogStore.catalogGLData.set(11, {x: new Float32Array([10]), y: new Float32Array([10])});
+        const displayStore = mockAppStore.catalogStore.getCatalogDisplayStore();
+        mockAppStore.catalogStore.getCatalogDisplayStore.mockReturnValue({
+            ...displayStore,
+            catalogShape: CatalogOverlayShape.ELLIPSE_LINED,
+            isImagePixelSize: true,
+            isAngularSize: true,
+            sizeArray: () => new Float32Array([6]),
+            sizeMinorArray: () => new Float32Array([3])
+        });
+
+        const ellipse = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelector("#catalog-overlay ellipse");
+        expect(ellipse).toHaveAttribute("rx", "12");
+        expect(ellipse).toHaveAttribute("ry", "6");
     });
 
     test("does not apply WebGL quad tuning to angular-size ellipses", () => {

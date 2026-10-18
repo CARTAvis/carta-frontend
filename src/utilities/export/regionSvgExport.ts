@@ -508,9 +508,11 @@ export function renderRegionsToSvg(regions: RegionStore[], frameView: FrameView,
 
     for (const region of regions) {
         if (!region.isTemporary && region.controlPoints.length > 0) {
+            const opacity = region.visualOpacity ?? 1;
+            if (opacity === 0) continue;
             const svgElement = renderSingleRegion(region, frameView, layerWidth, layerHeight, renderOptions);
             if (svgElement) {
-                svgElement.setAttribute("opacity", `${region.visualOpacity ?? 1}`);
+                svgElement.setAttribute("opacity", `${opacity}`);
                 group.appendChild(svgElement);
             }
         }
