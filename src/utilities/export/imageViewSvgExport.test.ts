@@ -575,6 +575,73 @@ describe("getPanelSvg", () => {
         expect(renderColorbarToSvgMock).not.toHaveBeenCalled();
     });
 
+    test.each([
+        [true, true],
+        [false, true],
+        [true, false],
+        [false, false]
+    ])("honors color-blending contour (%s) and vector (%s) visibility without exporting beams", (isContourVisible, isVectorOverlayVisible) => {
+        frame.hasVisibleBeam = true;
+        frame.beamProperties = {x: 10, y: 6, angle: 0};
+        frame.overlayBeamSettings = {isVisible: true, color: "#fff", width: 1, shiftX: 0, shiftY: 0};
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame, isContourVisible, isVectorOverlayVisible}} as never);
+
+        expect(panel?.querySelectorAll("#contours path")).toHaveLength(isContourVisible ? 1 : 0);
+        expect(panel?.querySelectorAll("#vector-overlay line")).toHaveLength(isVectorOverlayVisible ? 1 : 0);
+        expect(panel?.querySelector("#beams, #beam-profile, [id^='beam-clip']")).toBeNull();
+    });
+
+    test("exports clipped color-blending overlays when the raster is hidden", () => {
+        document.querySelector(".raster-canvas")?.remove();
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame, isRasterVisible: false, isContourVisible: true, isVectorOverlayVisible: true}} as never);
+
+        expect(panel?.querySelector("image")).toBeNull();
+        expect(panel?.querySelector("#contours")).toHaveAttribute("clip-path", "url(#contour-clip-0-0)");
+        expect(panel?.querySelector("#vector-overlays")).toHaveAttribute("clip-path", "url(#contour-clip-0-0)");
+        expect(panel?.querySelector("#contour-clip-0-0 rect")).toHaveAttribute("width", "100");
+        expect(panel?.querySelector("#contour-clip-0-0 rect")).toHaveAttribute("height", "80");
+    });
+
+    test("omits a hidden color-blending raster even if its canvas is still mounted", () => {
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.COLOR_BLENDING, store: {baseFrame: frame, isRasterVisible: false}} as never);
+
+        expect(panel?.querySelector("image")).toBeNull();
+        expect(panel?.querySelector("#contours path")).not.toBeNull();
+    });
+
+    test.each([false, true])("omits resources for fully filtered regions (channel map=%s)", isChannelMapEnabled => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
+        mockAppStore.catalogStore.visibleCatalogFiles = new Map();
+        frame.contourConfig.isVisible = false;
+        frame.vectorOverlayConfig.isVisible = false;
+        frame.regionSet.regionsAndAnnotationsForRender = [
+            {regionType: CARTA.RegionType.POINT, controlPoints: [{x: 50, y: 40}], visualOpacity: 0},
+            {regionType: CARTA.RegionType.POINT, controlPoints: [{x: 10, y: 10}], isTemporary: true}
+        ];
+
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panel?.querySelector("#regions, #channel-map-regions, defs, clipPath, use")).toBeNull();
+    });
+
+    test("omits channel-map region resources when no channel cell is valid", () => {
+        mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [4, 5], numColumns: 2, numRows: 1};
+        frame.regionSet.regionsAndAnnotationsForRender = [{regionType: CARTA.RegionType.POINT, controlPoints: [{x: 50, y: 40}], color: "#fff", lineWidth: 1}];
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panel?.querySelector("#regions, #channel-map-regions, defs, use")).toBeNull();
+    });
+
+    test("omits empty beam groups and clips when all beam plots are unavailable", () => {
+        frame.hasVisibleBeam = true;
+        const contourFrame = {...frame, beamProperties: {x: 10, y: 6, angle: 0}, overlayBeamSettings: {isVisible: false}, contourStores: new Map()};
+        mockAppStore.contourFrames.set(frame, [frame, contourFrame]);
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never);
+
+        expect(panel?.querySelector("#beams, #beam-profile, [id^='beam-clip']")).toBeNull();
+        expect(panel?.querySelector("#contours path")).not.toBeNull();
+    });
+
     test("places the beam in the bottom-left channel map cell", () => {
         mockAppStore.channelMapStore = {isChannelMapEnabled: true, channelArray: [0, 1, 2, 3], numColumns: 2, numRows: 2};
         frame.hasVisibleBeam = true;

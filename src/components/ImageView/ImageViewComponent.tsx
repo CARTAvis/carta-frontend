@@ -63,7 +63,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     const catalogCanvas = panelElement.querySelector(".catalog-canvas") as HTMLCanvasElement;
     const vectorOverlayCanvas = panelElement.querySelector(".vector-overlay-canvas") as HTMLCanvasElement;
 
-    if (!rasterCanvas || !overlayCanvasArray?.length) {
+    if ((!rasterCanvas && !isColorBlending) || !overlayCanvasArray?.length) {
         return null;
     }
 
@@ -85,7 +85,9 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     }
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-    ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    if (rasterCanvas) {
+        ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    }
 
     if (contourCanvas) {
         ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);

@@ -103,6 +103,21 @@ describe("renderContoursToSvg", () => {
         expect(path).toHaveAttribute("d", "M10.00,20.00L30.00,40.00L10.00,20.00Z");
     });
 
+    test.each([true, false])("preserves open and closed contours when transforms reuse their input (%s)", shouldReuseInput => {
+        const chunk = {vertices: new Float32Array([1, 2, 3, 4, 1, 2, 10, 20, 30, 40]), indexOffsets: new Int32Array([0, 6])};
+        const original = chunk.vertices.slice();
+        const output = {x: 0, y: 0};
+        const path = renderContoursToSvg([chunk], "#fff", 1, 0, 0, 0, point => {
+            const result = shouldReuseInput ? point : output;
+            result.x = point.x * 2;
+            result.y = point.y * 3;
+            return result;
+        }).querySelector("path");
+
+        expect(path).toHaveAttribute("d", "M2.00,6.00L6.00,12.00L2.00,6.00ZM20.00,60.00L60.00,120.00");
+        expect(chunk.vertices).toEqual(original);
+    });
+
     test("preserves exact polyline boundaries when adjacent contours share a point", () => {
         const chunk = {vertices: new Float32Array([1, 2, 3, 4, 3, 4, 5, 6]), indexOffsets: new Int32Array([0, 4])};
         const path = renderContoursToSvg([chunk], "#fff", 1, 0, 0, 0).querySelector("path");
@@ -120,8 +135,11 @@ describe("renderContoursToSvg", () => {
 });
 
 describe("renderVectorOverlayToSvg", () => {
-    test("renders vector lines with per-vector colors", () => {
-        const group = renderVectorOverlayToSvg(new Float32Array([10, 20, 8, 0, 30, 40, 6, Math.PI / 2]), 2, 1, 3, ["#00ff00", "#ff00ff"], 2, 4);
+    test.each([
+        {type: "number array", positions: [10, 20, 8, 0, 30, 40, 6, Math.PI / 2]},
+        {type: "typed array", positions: new Float32Array([10, 20, 8, 0, 30, 40, 6, Math.PI / 2])}
+    ])("renders vector lines with per-vector colors from a $type", ({positions}) => {
+        const group = renderVectorOverlayToSvg(positions, 2, 1, 3, ["#00ff00", "#ff00ff"], 2, 4);
 
         const lines = group.querySelectorAll("line");
         expect(group).toHaveAttribute("transform", "translate(2,4)");
@@ -266,8 +284,11 @@ describe("renderColorbarToSvg", () => {
 });
 
 describe("renderCatalogToSvg", () => {
-    test("renders enum-backed catalog shapes", () => {
-        const group = renderCatalogToSvg(new Map([[11, new Float32Array([5, 6, 15, 16])]]), new Map([[11, CatalogOverlayShape.CIRCLE_LINED]]), new Map([[11, 8]]), new Map([[11, "#123456"]]), 3, 4);
+    test.each([
+        {type: "number array", positions: [5, 6, 15, 16]},
+        {type: "typed array", positions: new Float32Array([5, 6, 15, 16])}
+    ])("renders enum-backed catalog shapes from a $type", ({positions}) => {
+        const group = renderCatalogToSvg(new Map([[11, positions]]), new Map([[11, CatalogOverlayShape.CIRCLE_LINED]]), new Map([[11, 8]]), new Map([[11, "#123456"]]), 3, 4);
 
         const circles = group.querySelectorAll("circle");
         expect(group).toHaveAttribute("transform", "translate(3,4)");

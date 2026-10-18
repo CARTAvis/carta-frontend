@@ -5,7 +5,7 @@ import {createSvgElement, svgGroupFromLayer} from "./svgExport";
  * Each vector has position (x, y), intensity, and angle.
  */
 export function renderVectorOverlayToSvg(
-    positions: Float32Array | null,
+    positions: ArrayLike<number> | null,
     numVectors: number,
     lengthScale: number,
     lineWidth: number,

@@ -250,7 +250,7 @@ function buildVectorOverlaySvg(frame: FrameStore, padding: Padding, pixelRatio: 
         });
 
         if (exportPositions.length) {
-            const vectorSvg = renderVectorOverlayToSvg(Float32Array.from(exportPositions), exportPositions.length / 4, 1, lineWidth, strokeColors, padding.left * pixelRatio, padding.top * pixelRatio, isIntensityPlot, featherWidth);
+            const vectorSvg = renderVectorOverlayToSvg(exportPositions, exportPositions.length / 4, 1, lineWidth, strokeColors, padding.left * pixelRatio, padding.top * pixelRatio, isIntensityPlot, featherWidth);
             group.appendChild(vectorSvg);
         }
     }
@@ -327,7 +327,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
         return null;
     }
 
-    const positionArrays = new Map<number, Float32Array>();
+    const positionArrays = new Map<number, number[]>();
     const shapes = new Map<number, string | number>();
     const sizes = new Map<number, number>();
     const colors = new Map<number, string>();
@@ -374,7 +374,7 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
             return;
         }
 
-        positionArrays.set(fileId, Float32Array.from(points));
+        positionArrays.set(fileId, points);
         shapes.set(fileId, catalogWidgetStore.catalogShape);
         sizes.set(fileId, pointStyles[0].size ?? 0);
         colors.set(fileId, catalogWidgetStore.catalogColor);
@@ -388,6 +388,18 @@ function buildCatalogSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     return renderCatalogToSvg(positionArrays, shapes, sizes, colors, padding.left * pixelRatio, padding.top * pixelRatio, styles);
 }
 
+function getFrameChannelMapLayout(frame: FrameStore) {
+    const inner = frame.channelMapInnerOverlayStore;
+    return {
+        numColumns: AppStore.Instance.channelMapStore.numColumns,
+        outerPadding: frame.channelMapOuterOverlayStore.padding,
+        tileWidth: inner.renderWidth,
+        tileHeight: inner.renderHeight,
+        gapX: inner.gapX,
+        gapY: inner.gapY
+    };
+}
+
 function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlaySettings: OverlaySettings, pixelRatio: number): SVGGElement | null {
     const source = renderAstOverlayToSvg(frame.channelMapInnerOverlayStore, image, overlaySettings, pixelRatio);
     if (!source) {
@@ -396,16 +408,8 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
 
     const channelMapStore = AppStore.Instance.channelMapStore;
     const overlayStore = frame.channelMapInnerOverlayStore;
-    const outerPadding = frame.channelMapOuterOverlayStore.padding;
     const innerPadding = overlayStore.padding;
-    const channelMapLayout = {
-        numColumns: channelMapStore.numColumns,
-        outerPadding,
-        tileWidth: overlayStore.renderWidth,
-        tileHeight: overlayStore.renderHeight,
-        gapX: overlayStore.gapX,
-        gapY: overlayStore.gapY
-    };
+    const channelMapLayout = getFrameChannelMapLayout(frame);
     const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
     const {row: lastRow, column: columnOfLastFrame} = lastCell;
     const group = svgGroupFromLayer("channel-map-coordinate-overlays");
@@ -445,6 +449,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
     const appStore = AppStore.Instance;
     const pixelRatio = appStore.pixelRatio;
     const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
+    const colorBlendingStore = image?.type === ImageType.COLOR_BLENDING ? image.store : null;
     const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
     if (!frame) {
         return null;
@@ -474,7 +479,7 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
     };
 
     // 1. Raster — embed as PNG <image>
-    const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
+    const rasterCanvas = colorBlendingStore?.isRasterVisible === false ? null : (panelElement.querySelector(".raster-canvas") as HTMLCanvasElement);
     const rasterBounds = {x: padding.left * pixelRatio, y: padding.top * pixelRatio, width: rasterCanvas?.width ?? frame.renderWidth * pixelRatio, height: rasterCanvas?.height ?? frame.renderHeight * pixelRatio};
     const localBounds = {...rasterBounds, x: 0, y: 0};
     if (rasterCanvas) {
@@ -491,17 +496,17 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
     appendClippedLayer(astSvg, "ast", {x: 0, y: 0, width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio, height: viewHeight});
 
     // 3. Beam — vector SVG from store data
-    const beamGroup = buildBeamsSvg(frame, padding, pixelRatio);
+    const beamGroup = isColorBlending ? null : buildBeamsSvg(frame, padding, pixelRatio);
     const beamView = isChannelMap ? frame.channelMapInnerOverlayStore : frame;
     appendClippedLayer(beamGroup, "beam", {x: 0, y: 0, width: beamView.renderWidth * pixelRatio, height: beamView.renderHeight * pixelRatio});
 
     // 4. Contour — vector SVG from store data
-    const contoursSvg = isChannelMap ? null : buildContoursSvg(frame, padding, pixelRatio);
-    appendClippedLayer(contoursSvg, "contour", rasterCanvas ? rasterBounds : undefined);
+    const contoursSvg = isChannelMap || colorBlendingStore?.isContourVisible === false ? null : buildContoursSvg(frame, padding, pixelRatio);
+    appendClippedLayer(contoursSvg, "contour", rasterBounds);
 
     // 5. Vector overlay — vector SVG from store data
-    const vectorOverlaySvg = isChannelMap ? null : buildVectorOverlaySvg(frame, padding, pixelRatio);
-    appendClippedLayer(vectorOverlaySvg, "vector", rasterCanvas ? rasterBounds : undefined);
+    const vectorOverlaySvg = isChannelMap || colorBlendingStore?.isVectorOverlayVisible === false ? null : buildVectorOverlaySvg(frame, padding, pixelRatio);
+    appendClippedLayer(vectorOverlaySvg, "vector", rasterBounds);
 
     // 6. Colorbar — vector SVG from store data
     const colorbarSettings = appStore.overlaySettings.colorbar;
@@ -680,20 +685,11 @@ function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number):
     let beamPadding = padding;
     let beamOffsetY = 0;
     if (appStore.channelMapStore.isChannelMapEnabled) {
-        const outerOverlay = frame.channelMapOuterOverlayStore;
-        const innerOverlay = frame.channelMapInnerOverlayStore;
         const channelMapStore = appStore.channelMapStore;
-        const channelMapLayout = {
-            numColumns: channelMapStore.numColumns,
-            outerPadding: outerOverlay.padding,
-            tileWidth: innerOverlay.renderWidth,
-            tileHeight: innerOverlay.renderHeight,
-            gapX: innerOverlay.gapX,
-            gapY: innerOverlay.gapY
-        };
+        const channelMapLayout = getFrameChannelMapLayout(frame);
         const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
 
-        beamPadding = outerOverlay.padding;
+        beamPadding = channelMapLayout.outerPadding;
         beamOffsetY = lastCell.top - beamPadding.top;
     }
     group.setAttribute("transform", `translate(${beamPadding.left * pixelRatio},${(beamPadding.top + beamOffsetY) * pixelRatio})`);
@@ -712,7 +708,7 @@ function buildBeamsSvg(frame: FrameStore, padding: Padding, pixelRatio: number):
         }
     });
 
-    return group;
+    return group.childNodes.length ? group : null;
 }
 
 function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanElement>, pixelRatio: number): SVGGElement {
@@ -764,23 +760,24 @@ function buildRegionsSvg(frame: FrameStore, padding: Padding, pixelRatio: number
     }
 
     if (AppStore.Instance.channelMapStore.isChannelMapEnabled) {
-        const inner = frame.channelMapInnerOverlayStore;
-        const outerPadding = frame.channelMapOuterOverlayStore.padding;
         const channelMap = AppStore.Instance.channelMapStore;
+        const channelMapLayout = getFrameChannelMapLayout(frame);
         const group = svgGroupFromLayer("channel-map-regions");
-        const source = renderRegionsToSvg(regions, frameView, inner.renderWidth * pixelRatio, inner.renderHeight * pixelRatio, 0, 0, {frame, pixelRatio});
+        const source = renderRegionsToSvg(regions, frameView, channelMapLayout.tileWidth * pixelRatio, channelMapLayout.tileHeight * pixelRatio, 0, 0, {frame, pixelRatio});
+        if (!source.childNodes.length) return null;
         source.id = `channel-map-region-source-${frame.frameInfo.fileId}`;
         const defs = createSvgElement("defs", {});
         defs.appendChild(source);
         group.appendChild(defs);
         channelMap.channelArray.forEach((channel, index) => {
             if (channel >= frame.frameInfo.fileInfoExtended.depth) return;
-            const {left, top} = getChannelMapCell(index, {numColumns: channelMap.numColumns, outerPadding, tileWidth: inner.renderWidth, tileHeight: inner.renderHeight, gapX: inner.gapX, gapY: inner.gapY});
-            const viewport = createSvgElement("svg", {x: left * pixelRatio, y: top * pixelRatio, width: inner.renderWidth * pixelRatio, height: inner.renderHeight * pixelRatio, overflow: "hidden"});
+            const {left, top} = getChannelMapCell(index, channelMapLayout);
+            const viewport = createSvgElement("svg", {x: left * pixelRatio, y: top * pixelRatio, width: channelMapLayout.tileWidth * pixelRatio, height: channelMapLayout.tileHeight * pixelRatio, overflow: "hidden"});
             viewport.appendChild(createSvgElement("use", {href: `#${source.id}`}));
             group.appendChild(viewport);
         });
-        return group;
+        return group.querySelector("use") ? group : null;
     }
-    return renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
+    const group = renderRegionsToSvg(regions, frameView, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio, padding.left * pixelRatio, padding.top * pixelRatio, {frame, pixelRatio});
+    return group.childNodes.length ? group : null;
 }

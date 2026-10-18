@@ -59,10 +59,10 @@ export function isCatalogPointVisible(point: Point2D, style: CatalogPointStyle, 
 
 /**
  * Converts catalog overlay data to SVG elements.
- * Catalog positions are stored as Float32Array pairs (x, y) in canvas pixel space.
+ * Catalog positions are pairs (x, y) in canvas pixel space.
  */
 export function renderCatalogToSvg(
-    positionArrays: Map<number, Float32Array>,
+    positionArrays: Map<number, ArrayLike<number>>,
     shapes: Map<number, string | CatalogOverlayShape>,
     sizes: Map<number, number>,
     colors: Map<number, string>,
