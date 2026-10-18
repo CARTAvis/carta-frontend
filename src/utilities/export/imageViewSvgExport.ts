@@ -11,7 +11,7 @@ import {getBeamGeometry} from "utilities/region/beam";
 
 import {renderAstOverlayToSvg} from "./astSvgExport";
 import {type BeamPlotProps, renderBeamToSvg} from "./beamSvgExport";
-import {type CatalogPointStyle, getCatalogSizeFromArea, getCatalogSizeTuning, isCatalogPointVisible, renderCatalogToSvg} from "./catalogSvgExport";
+import {type CatalogPointStyle, getCatalogShapeSize, getCatalogSizeFromArea, getCatalogSizeTuning, isCatalogPointVisible, renderCatalogToSvg} from "./catalogSvgExport";
 import {renderColorbarToSvg} from "./colorbarSvgExport";
 import {renderContoursToSvg} from "./contourSvgExport";
 import {findElementInAllDocuments} from "./imageExportDom";
@@ -66,6 +66,7 @@ function createImageToCanvasMapper(frameView: FrameView, layerWidth: number, lay
     const scaleX = layerWidth / (frameView.xMax - frameView.xMin);
     const scaleY = layerHeight / (frameView.yMax - frameView.yMin);
     const canvasPoint = {x: 0, y: 0};
+    // The returned point is borrowed and reused; callers must consume or copy its coordinates immediately.
     return imagePoint => {
         canvasPoint.x = (imagePoint.x - frameView.xMin) * scaleX;
         canvasPoint.y = layerHeight - (imagePoint.y - frameView.yMin) * scaleY;
@@ -307,6 +308,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
             const area = hasMappedSize ? mappedSize * areaScale : shapeSize * (store.isImagePixelSize ? areaScale : pixelRatio);
             size = getCatalogSizeFromArea(area, store.catalogShape);
         }
+        size = getCatalogShapeSize(size, store.catalogShape, store.isImagePixelSize);
         const mappedMinorSize = mappedMinorSizes[index];
         let minorSize: number | undefined;
         if (isFinite(mappedMinorSize)) {
@@ -746,7 +748,7 @@ function buildChannelMapLabelsSvg(channelMapLabelArray: NodeListOf<HTMLSpanEleme
                     "font-weight": fontWeight,
                     "font-style": fontStyle,
                     "font-size": fontSize,
-                    "dominant-baseline": "auto"
+                    "dominant-baseline": "text-after-edge"
                 });
                 group.appendChild(textEl);
                 line++;

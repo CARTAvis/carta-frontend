@@ -49,6 +49,11 @@ export function getCatalogSizeTuning(shape: CatalogOverlayShape): number {
     }
 }
 
+/** Convert the shader's point size to the visible box side after its 45-degree sampling rotation. */
+export function getCatalogShapeSize(size: number, shape: CatalogOverlayShape, isImagePixelSize: boolean): number {
+    return shape === CatalogOverlayShape.BOX_LINED && !isImagePixelSize ? size / Math.SQRT2 : size;
+}
+
 export function isCatalogPointVisible(point: Point2D, style: CatalogPointStyle, width: number, height: number, featherWidth: number): boolean {
     const size = style.size ?? 0;
     if (!isFinite(point.x) || !isFinite(point.y) || !isFinite(size) || size <= 0) return false;

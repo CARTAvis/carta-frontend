@@ -44,6 +44,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const shapeRef = React.useRef<Konva.Group>(null);
     const northLabelRef = React.useRef<Konva.Text>(null);
     const eastLabelRef = React.useRef<Konva.Text>(null);
+    const automaticLabelOffsets = React.useRef<{north: Point2D | null; east: Point2D | null}>({north: null, east: null});
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
     const mousePoint = React.useRef({x: 0, y: 0});
@@ -215,18 +216,24 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const stageScaleY = stage?.scaleY() ?? 1;
     const updateOffset = () => {
         const origin = adjustPosToUnityStage({x: originPoints.x - mousePoint.current.x, y: originPoints.y - mousePoint.current.y}, stage);
-        const getLabelOffset = (points: number[], label: React.RefObject<Konva.Text | null>, fallbackDirection: Point2D): Point2D => {
+        const getLabelOffset = (points: number[], label: React.RefObject<Konva.Text | null>, fallbackDirection: Point2D, isNorth: boolean): Point2D => {
             const tip = adjustPosToUnityStage({x: points[points.length - 2], y: points[points.length - 1]}, stage);
             let direction = {x: tip.x - origin.x, y: tip.y - origin.y};
             const length = Math.hypot(direction.x, direction.y);
             direction = length ? {x: direction.x / length, y: direction.y / length} : fallbackDirection;
             const labelGap = Math.max(4, region.fontSize * 0.75);
             const center = {x: tip.x + direction.x * labelGap, y: tip.y + direction.y * labelGap};
-            return getTextOffsetForCenter(tip, center, label.current?.textWidth ?? 0, label.current?.textHeight ?? 0);
+            const automaticOffset = getTextOffsetForCenter(tip, center, label.current?.textWidth ?? 0, label.current?.textHeight ?? 0);
+            const offsetName = isNorth ? "north" : "east";
+            const previousAutomaticOffset = automaticLabelOffsets.current[offsetName];
+            const currentOffset = isNorth ? region.northTextOffset : region.eastTextOffset;
+            const userAdjustment = previousAutomaticOffset ? {x: currentOffset.x - previousAutomaticOffset.x, y: currentOffset.y - previousAutomaticOffset.y} : {x: 0, y: 0};
+            automaticLabelOffsets.current[offsetName] = automaticOffset;
+            return {x: automaticOffset.x + userAdjustment.x, y: automaticOffset.y + userAdjustment.y};
         };
 
-        const northOffset = getLabelOffset(northPointArray, northLabelRef, {x: 0, y: -1});
-        const eastOffset = getLabelOffset(eastPointArray, eastLabelRef, {x: -1, y: 0});
+        const northOffset = getLabelOffset(northPointArray, northLabelRef, {x: 0, y: -1}, true);
+        const eastOffset = getLabelOffset(eastPointArray, eastLabelRef, {x: -1, y: 0}, false);
         region.setNorthTextOffset(northOffset.x, true, true);
         region.setNorthTextOffset(northOffset.y, false, true);
         region.setEastTextOffset(eastOffset.x, true, true);
@@ -248,7 +255,11 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         region.font,
         region.fontStyle,
         region.northLabel,
-        region.eastLabel
+        region.eastLabel,
+        region.northTextOffset.x,
+        region.northTextOffset.y,
+        region.eastTextOffset.x,
+        region.eastTextOffset.y
     ]);
 
     const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);

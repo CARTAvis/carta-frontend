@@ -1,8 +1,12 @@
 import {getColorsForValues} from "utilities/color/color";
 
 type ColorMapLookup = ReturnType<typeof getColorsForValues>;
+interface CachedColorMap {
+    lookup: ColorMapLookup;
+    cssColors: string[];
+}
 
-const COLOR_MAP_LOOKUP_CACHE = new Map<string, ColorMapLookup>();
+const COLOR_MAP_LOOKUP_CACHE = new Map<string, CachedColorMap>();
 
 function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
@@ -10,15 +14,23 @@ function clamp(value: number, min: number, max: number): number {
 
 /** Samples a configured colormap using the same bias/contrast/inversion order as the overlay shaders. */
 export function sampleSvgColormapColor(colorMap: string, fraction: number, bias: number, contrast: number, fallbackColor: string, isInverted = false): string {
-    let lookup = COLOR_MAP_LOOKUP_CACHE.get(colorMap);
-    if (!lookup) {
-        lookup = getColorsForValues(colorMap);
+    let cachedColorMap = COLOR_MAP_LOOKUP_CACHE.get(colorMap);
+    if (!cachedColorMap) {
+        const lookup = getColorsForValues(colorMap);
         // A one-entry transparent result means the colormap image has not loaded yet.
         if (lookup.size > 1) {
-            COLOR_MAP_LOOKUP_CACHE.set(colorMap, lookup);
+            const cssColors = Array.from({length: lookup.size}, (_, index) => {
+                const offset = index * 4;
+                return `rgba(${lookup.color[offset]}, ${lookup.color[offset + 1]}, ${lookup.color[offset + 2]}, ${(lookup.color[offset + 3] ?? 255) / 255})`;
+            });
+            cachedColorMap = {lookup, cssColors};
+            COLOR_MAP_LOOKUP_CACHE.set(colorMap, cachedColorMap);
+        } else {
+            cachedColorMap = {lookup, cssColors: []};
         }
     }
 
+    const {lookup, cssColors} = cachedColorMap;
     if (!lookup.size || lookup.color.length < 4) {
         return fallbackColor;
     }
@@ -30,6 +42,7 @@ export function sampleSvgColormapColor(colorMap: string, fraction: number, bias:
     }
 
     const colorIndex = clamp(Math.round(sampledFraction * (lookup.size - 1)), 0, lookup.size - 1);
+    if (cssColors.length) return cssColors[colorIndex];
     const offset = colorIndex * 4;
     return `rgba(${lookup.color[offset]}, ${lookup.color[offset + 1]}, ${lookup.color[offset + 2]}, ${(lookup.color[offset + 3] ?? 255) / 255})`;
 }
