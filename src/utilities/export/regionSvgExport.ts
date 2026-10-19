@@ -411,6 +411,9 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
             xPoints = toCanvasPoints(approx.xApproximatePoints, frameView, layerWidth, layerHeight, frame);
             yPoints = toCanvasPoints(approx.yApproximatePoints, frameView, layerWidth, layerHeight, frame);
             hypotenusePoints = toCanvasPoints(approx.hypotenuseApproximatePoints, frameView, layerWidth, layerHeight, frame);
+            if (hypotenusePoints.length && yPoints.length) hypotenusePoints.push(yPoints[0]);
+            if (xPoints.length && hypotenusePoints.length) xPoints.push(hypotenusePoints[0]);
+            if (yPoints.length && xPoints.length) yPoints.push(xPoints[0]);
             corner = approx.corner;
             const transformedStart = frame.spatialReference && frame.spatialTransformAST ? transformImagePoint(frame.spatialTransformAST, start, false) : start;
             const transformedFinish = frame.spatialReference && frame.spatialTransformAST ? transformImagePoint(frame.spatialTransformAST, finish, false) : finish;
