@@ -15,8 +15,7 @@ export class ContourStore {
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
 
-    private indexOffsets: Int32Array[] = [];
-    private sourceVertexData: Float32Array[] = [];
+    private exportChunkData: ContourSourceChunk[] = [];
     private vertexBuffers: WebGLBuffer[] = [];
 
     private gl: WebGL2RenderingContext | null;
@@ -25,11 +24,11 @@ export class ContourStore {
     private static vertexDataElements = 8;
 
     get hasValidData() {
-        return this.sourceVertexData.length > 0;
+        return this.exportChunkData.length > 0;
     }
 
     get exportChunks(): ContourSourceChunk[] {
-        return this.sourceVertexData.map((vertices, index) => ({vertices, indexOffsets: this.indexOffsets[index]}));
+        return this.exportChunkData;
     }
 
     @computed get isComplete() {
@@ -59,20 +58,16 @@ export class ContourStore {
             return;
         }
 
-        if (!this.indexOffsets) {
-            this.indexOffsets = [];
-        }
         if (!this.numGeneratedVertices) {
             this.numGeneratedVertices = [];
         }
 
         // The WASM view is uploaded synchronously before the next generation call.
         const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
-        this.sourceVertexData.push(sourceVertices.slice());
-        this.indexOffsets.push(indexOffsets.slice());
+        this.exportChunkData.push({vertices: sourceVertices, indexOffsets});
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
-        const index = this.sourceVertexData.length - 1;
+        const index = this.exportChunkData.length - 1;
         this.generateBuffers(index, vertexData);
 
         this.vertexCount += numVertices;
@@ -98,8 +93,7 @@ export class ContourStore {
     }
 
     @action clearData = () => {
-        this.indexOffsets = [];
-        this.sourceVertexData = [];
+        this.exportChunkData = [];
         this.numGeneratedVertices = [];
         this.vertexCount = 0;
         this.chunkCount = 0;

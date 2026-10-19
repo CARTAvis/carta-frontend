@@ -6,7 +6,7 @@ import {type ImageViewItem} from "models";
 import {type OverlaySettings, type OverlayStore} from "stores";
 import {configureAstOverlayWcs, getAstOverlayStyle, plotAstOverlay} from "utilities/ast/overlay";
 
-const SVG_NS = "http://www.w3.org/2000/svg";
+import {SVG_NS} from "./svgExport";
 
 /**
  * Renders the AST overlay (coordinate grid, labels, ticks, title, border) to SVG

@@ -29,6 +29,7 @@ describe("AppStore image export lifecycle", () => {
         jest.spyOn(store as any, "getExportFilename").mockImplementation((extension: unknown) => `test.${extension}`);
     });
     afterEach(() => {
+        jest.useRealTimers();
         runInAction(() => {
             store.activeImage = oldImage;
         });
@@ -37,7 +38,7 @@ describe("AppStore image export lifecycle", () => {
         jest.restoreAllMocks();
     });
 
-    test("keeps PNG export active through encoding and releases its blob URL", async () => {
+    test("keeps PNG export active through encoding and delays blob URL cleanup", async () => {
         let encode: BlobCallback | undefined;
         const canvas = document.createElement("canvas");
         jest.spyOn(canvas, "toBlob").mockImplementation(callback => {
@@ -46,13 +47,17 @@ describe("AppStore image export lifecycle", () => {
         jest.spyOn(imageView, "getImageViewCanvas").mockReturnValue(canvas);
         const create = jest.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
         const revoke = jest.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-        jest.spyOn(HTMLAnchorElement.prototype, "dispatchEvent").mockReturnValue(true);
+        const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+        jest.useFakeTimers();
         const exportResult = store.exportImage(1);
         await Promise.resolve();
         expect(store.isExportingImage).toBe(true);
         encode?.(new Blob(["png"]));
         await exportResult;
         expect(create).toHaveBeenCalledTimes(1);
+        expect(click).toHaveBeenCalledTimes(1);
+        expect(revoke).not.toHaveBeenCalled();
+        jest.advanceTimersByTime(1000);
         expect(revoke).toHaveBeenCalledWith("blob:test");
         expect(store.isExportingImage).toBe(false);
     });

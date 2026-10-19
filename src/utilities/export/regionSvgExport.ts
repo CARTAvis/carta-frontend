@@ -11,10 +11,9 @@ import {getInterpolatedPathAtDistance} from "utilities/region/region";
 import {getRulerDistanceText} from "utilities/region/ruler";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
-import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
+import {createSvgElement, createSvgText, SVG_NS, svgGroupFromLayer} from "./svgExport";
 import {createCircleMarker, createCrossMarker, createDiamondMarker, createRectMarker} from "./svgMarkerPrimitives";
 
-const SVG_NS = "http://www.w3.org/2000/svg";
 const SPATIAL_APPROXIMATION_REGION_TYPES = new Set<CARTA.RegionType>([
     CARTA.RegionType.LINE,
     CARTA.RegionType.ANNLINE,

@@ -1,5 +1,13 @@
-const SVG_NS = "http://www.w3.org/2000/svg";
+export const SVG_NS = "http://www.w3.org/2000/svg";
 const SVG_REFERENCE_ATTRIBUTES = new Set(["clip-path", "fill", "stroke", "filter", "mask", "marker", "marker-start", "marker-mid", "marker-end", "style", "cursor", "color-profile"]);
+const SVG_REFERENCE_SELECTOR = [...SVG_REFERENCE_ATTRIBUTES]
+    .map(attribute => `[${attribute}*='url']`)
+    .concat(["[href^='#']", "[xlink\\:href^='#']"])
+    .join(",");
+
+function setSvgAttributes(element: SVGElement, attrs: Record<string, string | number>): void {
+    for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, `${value}`);
+}
 
 /** Scope layer and resource IDs to a panel, including references to SVG definitions. */
 export function namespaceSvgIds(root: SVGElement, prefix: string): void {
@@ -28,9 +36,7 @@ export function namespaceSvgIds(root: SVGElement, prefix: string): void {
         }
     };
     updateReferences(root);
-    root.querySelectorAll<SVGElement>(
-        "[clip-path],[fill*='url'],[stroke*='url'],[filter*='url'],[mask*='url'],[marker*='url'],[marker-start*='url'],[marker-mid*='url'],[marker-end*='url'],[style*='url'],[cursor*='url'],[color-profile*='url'],[href^='#'],[xlink\\:href^='#']"
-    ).forEach(updateReferences);
+    root.querySelectorAll<SVGElement>(SVG_REFERENCE_SELECTOR).forEach(updateReferences);
 }
 
 export function buildSvgDocument(width: number, height: number, backgroundColor: string): SVGSVGElement {
@@ -75,19 +81,24 @@ export function downloadSvg(svgElement: SVGSVGElement, filename: string): void {
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgElement);
     const blob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+    downloadBlob(blob, filename);
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
     const link = document.createElement("a");
     link.download = filename;
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.dispatchEvent(new MouseEvent("click"));
-    URL.revokeObjectURL(url);
+    try {
+        link.click();
+    } finally {
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 }
 
 export function createSvgElement(tag: string, attrs: Record<string, string | number>): SVGElement {
     const el = document.createElementNS(SVG_NS, tag);
-    for (const [key, value] of Object.entries(attrs)) {
-        el.setAttribute(key, `${value}`);
-    }
+    setSvgAttributes(el, attrs);
     return el;
 }
 
@@ -95,9 +106,7 @@ export function createSvgText(text: string, x: number, y: number, attrs: Record<
     const el = document.createElementNS(SVG_NS, "text") as SVGTextElement;
     el.setAttribute("x", `${x}`);
     el.setAttribute("y", `${y}`);
-    for (const [key, value] of Object.entries(attrs)) {
-        el.setAttribute(key, `${value}`);
-    }
+    setSvgAttributes(el, attrs);
     el.textContent = text;
     return el;
 }

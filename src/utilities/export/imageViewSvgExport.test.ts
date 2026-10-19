@@ -93,6 +93,7 @@ describe("getPanelSvg", () => {
             },
             vectorOverlayStore: {
                 tiles: [{numVertices: 1, vertexData: new Float32Array([20, 20, 0.5, 45])}],
+                getExportVertexData: (tile: {vertexData?: Float32Array}) => tile.vertexData ?? new Float32Array(),
                 intensityMin: 0,
                 intensityMax: 1
             },
@@ -299,7 +300,8 @@ describe("getPanelSvg", () => {
         frame.vectorOverlayStore = {
             intensityMin: storeMin,
             intensityMax: storeMax,
-            tiles: [{numVertices: 3, vertexData: new Float32Array([20, 20, 0, 0, 40, 20, 0.5, 0, 60, 20, 1, 0])}]
+            tiles: [{numVertices: 3, vertexData: new Float32Array([20, 20, 0, 0, 40, 20, 0.5, 0, 60, 20, 1, 0])}],
+            getExportVertexData: (tile: {vertexData?: Float32Array}) => tile.vertexData ?? new Float32Array()
         };
 
         const lines = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never)?.querySelectorAll("#vector-overlay line");
@@ -330,7 +332,10 @@ describe("getPanelSvg", () => {
         const transformPoint = jest.fn(({x, y}) => ({x: x * 2, y: y * 2}));
         const getControlMap = jest.fn(() => ({transformPoint}));
         const sourceFrame = {...frame, getControlMap};
-        sourceFrame.vectorOverlayStore = {tiles: [{numVertices: 2, vertexData: new Float32Array([20, 20, 1, 0, 30, 30, 1, 0])}]};
+        sourceFrame.vectorOverlayStore = {
+            tiles: [{numVertices: 2, vertexData: new Float32Array([20, 20, 1, 0, 30, 30, 1, 0])}],
+            getExportVertexData: (tile: {vertexData?: Float32Array}) => tile.vertexData ?? new Float32Array()
+        };
         sourceFrame.vectorOverlayConfig.intensitySource = VectorOverlaySource.None;
         sourceFrame.vectorOverlayStore.tiles[0].vertexData[3] = 0;
         mockAppStore.vectorOverlayFrames.set(frame, [sourceFrame]);

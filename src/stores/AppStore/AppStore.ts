@@ -26,6 +26,7 @@ import {
     SpectralType,
     SystemType,
     TelemetryAction,
+    VectorGraphicFormat,
     WCSMatchingType
 } from "enums";
 import * as Enums from "enums";
@@ -95,14 +96,15 @@ import {
     type RegionClipboardItem
 } from "utilities";
 import * as Utils from "utilities";
-import {getImageViewSvg} from "utilities/export/imageViewSvgExport";
-import {downloadSvg} from "utilities/export/svgExport";
+import {downloadBlob, downloadSvg} from "utilities/export/svgExport";
 
 import GitCommit from "../../static/gitInfo";
 
 interface FrameOption extends OptionProps {
     hasZAxis: boolean;
 }
+
+type ExportFormat = "png" | VectorGraphicFormat;
 
 interface ViewUpdate {
     tiles: TileCoordinate[];
@@ -3774,7 +3776,7 @@ export class AppStore {
         this.shouldMatchMoment = !this.shouldMatchMoment;
     };
 
-    private getExportFilename = (extension: string): string => {
+    private getExportFilename = (extension: ExportFormat): string => {
         const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
         return `${getExportFileName(joinedNames, "image")}.${extension}`;
     };
@@ -3802,32 +3804,25 @@ export class AppStore {
             const filename = this.getExportFilename("png");
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
             if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            try {
-                const link = document.createElement("a");
-                link.download = filename;
-                link.href = url;
-                link.dispatchEvent(new MouseEvent("click"));
-            } finally {
-                URL.revokeObjectURL(url);
-            }
+            downloadBlob(blob, filename);
         });
 
-    private exportVectorImage = (imageRatio: number, format: "svg" | "pdf") =>
+    private exportVectorImage = (imageRatio: number, format: VectorGraphicFormat) =>
         this.runImageExport(imageRatio, async (_frame, backgroundColor) => {
+            const {getImageViewSvg} = await import("utilities/export/imageViewSvgExport");
             const svgDoc = getImageViewSvg(backgroundColor);
             if (!svgDoc) return;
             const filename = this.getExportFilename(format);
-            if (format === "svg") downloadSvg(svgDoc, filename);
+            if (format === VectorGraphicFormat.SVG) downloadSvg(svgDoc, filename);
             else {
                 const {downloadPdf} = await import("utilities/export/pdfExport");
                 await downloadPdf(svgDoc, filename);
             }
         });
 
-    exportSvgImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "svg");
+    exportSvgImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, VectorGraphicFormat.SVG);
 
-    exportPdfImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, "pdf");
+    exportPdfImage = (imageRatio: number = 1) => this.exportVectorImage(imageRatio, VectorGraphicFormat.PDF);
 
     updateLayerPixelRatio = layerRef => {
         const canvas = layerRef?.current?.getCanvas();

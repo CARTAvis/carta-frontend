@@ -1,6 +1,4 @@
-import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
-
-const SVG_NS = "http://www.w3.org/2000/svg";
+import {createSvgElement, createSvgText, SVG_NS, svgGroupFromLayer} from "./svgExport";
 
 export type ColorbarPosition = "right" | "top" | "bottom";
 

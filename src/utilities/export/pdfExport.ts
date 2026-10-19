@@ -60,12 +60,17 @@ export function prepareSvgForPdf(svgElement: SVGSVGElement): SVGSVGElement {
 
         const fontFamily = textElement
             .getAttribute("font-family")
-            ?.split(",")[0]
-            .trim()
-            .replace(/^['"]|['"]$/g, "")
-            .toLowerCase();
-        if (fontFamily && PDF_FONT_FAMILIES[fontFamily]) {
-            textElement.setAttribute("font-family", PDF_FONT_FAMILIES[fontFamily]);
+            ?.split(",")
+            .map(family =>
+                family
+                    .trim()
+                    .replace(/^['"]|['"]$/g, "")
+                    .toLowerCase()
+            )
+            .map(family => PDF_FONT_FAMILIES[family])
+            .find(Boolean);
+        if (fontFamily) {
+            textElement.setAttribute("font-family", fontFamily);
         }
     });
 
