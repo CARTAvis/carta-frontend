@@ -1,7 +1,7 @@
 import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {VectorOverlayWebGLService} from "services";
+import {TILE_SIZE, VectorOverlayWebGLService} from "services";
 import {type FrameStore} from "stores/Frame";
 import {createTextureFromArray, equalIfBothFinite} from "utilities";
 
@@ -16,6 +16,13 @@ export interface VectorOverlayTile {
     sourceMip?: number;
     sourceX?: number;
     sourceY?: number;
+}
+
+function getVectorTileOffset(mip: number, tileX: number, tileY: number) {
+    return {
+        x: mip * (tileX * TILE_SIZE + 0.5) - 0.5,
+        y: mip * (tileY * TILE_SIZE + 0.5) - 0.5
+    };
 }
 
 export class VectorOverlayStore {
@@ -43,8 +50,7 @@ export class VectorOverlayStore {
         if (!sourceIntensityData || !sourceAngleData || sourceWidth === undefined || sourceHeight === undefined) return new Float32Array();
 
         const vertexData = new Float32Array(tile.numVertices * 4);
-        const offsetX = sourceMip * (sourceX * 256 + 0.5) - 0.5;
-        const offsetY = sourceMip * (sourceY * 256 + 0.5) - 0.5;
+        const {x: offsetX, y: offsetY} = getVectorTileOffset(sourceMip, sourceX, sourceY);
         let numVertices = 0;
         for (let y = 0; y < sourceHeight; y++) {
             for (let x = 0; x < sourceWidth; x++) {
@@ -139,8 +145,7 @@ export class VectorOverlayStore {
             let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            const offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
-            const offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
+            const {x: offsetX, y: offsetY} = getVectorTileOffset(tileMip ?? 1, tileX ?? 0, tileY ?? 0);
             for (let j = 0; j < tileHeight; j++) {
                 for (let i = 0; i < tileWidth; i++) {
                     const index = i + tileWidth * j;

@@ -2,7 +2,10 @@ import {VectorOverlayWebGLService} from "services";
 
 import {VectorOverlayStore} from "./VectorOverlayStore";
 
-jest.mock("services", () => ({VectorOverlayWebGLService: Object.defineProperty({}, "Instance", {configurable: true, get: () => ({gl: null})})}));
+jest.mock("services", () => ({
+    TILE_SIZE: 256,
+    VectorOverlayWebGLService: Object.defineProperty({}, "Instance", {configurable: true, get: () => ({gl: null})})
+}));
 jest.mock("utilities", () => ({equalIfBothFinite: jest.requireActual("utilities/math/math").equalIfBothFinite, createTextureFromArray: jest.fn()}));
 
 test("retains only the valid vector vertices in sparse tile buffers", () => {

@@ -64,6 +64,7 @@ export class ContourStore {
 
         // The WASM view is uploaded synchronously before the next generation call.
         const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
+        // ProtobufProcessing copies the raw and decoded arrays, so retain those owned arrays without another large copy.
         this.exportChunkData.push({vertices: sourceVertices, indexOffsets});
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.vertexDataElements / 2));
 
