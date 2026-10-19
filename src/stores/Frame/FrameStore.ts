@@ -2575,6 +2575,21 @@ export class FrameStore {
         return {x: NaN, y: NaN};
     }
 
+    public getAnnulusWcsAxisScale(rotation: number): Point2D {
+        const scale = this.pixelUnitSizeArcsec;
+        if (!scale) {
+            return {x: NaN, y: NaN};
+        }
+        const angle = (rotation * Math.PI) / 180;
+        const sine = Math.sin(angle);
+        const cosine = Math.cos(angle);
+        return {x: Math.hypot(scale.x * sine, scale.y * cosine), y: Math.hypot(scale.x * cosine, scale.y * sine)};
+    }
+
+    public getAnnulusWcsSizeInArcsec(size: Point2D, rotation: number): Point2D {
+        return multiply2D(size, this.getAnnulusWcsAxisScale(rotation));
+    }
+
     public getImageXValueFromArcsec(arcsecValue: number): number {
         if (isFinite(arcsecValue) && this.pixelUnitSizeArcsec && isFinite(this.pixelUnitSizeArcsec.x)) {
             return arcsecValue / this.pixelUnitSizeArcsec.x;

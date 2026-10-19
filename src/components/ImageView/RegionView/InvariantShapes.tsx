@@ -26,6 +26,8 @@ const ACTIVE_ANCHOR_FILL_COLOR = "white";
 const ACTIVE_ANCHOR_STROKE_COLOR = "black";
 const SECONDARY_ANCHOR_FILL_COLOR = "#b5b5b5";
 const SECONDARY_ANCHOR_STROKE_COLOR = "#8a9ba8";
+const INNER_RADIUS_ANCHOR_FILL_COLOR = "#ff3333";
+const INNER_RADIUS_ANCHOR_STROKE_COLOR = "#880000";
 
 const ApplyZoomInvariantTransform = (ctx: Konva.Context, shape: Konva.Shape, rotation: number) => {
     const stage = shape.getStage();
@@ -161,6 +163,8 @@ interface AnchorProps {
     onClick: (ev) => void;
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
+    isInnerRadius?: boolean;
+    dragBoundFunc?: (position: Point2D) => Point2D;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -190,8 +194,8 @@ export const Anchor = (props: AnchorProps) => {
     // - Secondary-selected anchors: gray fill/stroke
     const isSecondary = props.selectionType === SelectionType.Secondary;
     // Secondary anchors use a slightly darker gray fill for visibility
-    const fillColor = props.isSelected ? SELECTED_ANCHOR_FILL_COLOR : isSecondary ? SECONDARY_ANCHOR_FILL_COLOR : ACTIVE_ANCHOR_FILL_COLOR;
-    const strokeColor = props.isSelected ? SELECTED_ANCHOR_STROKE_COLOR : isSecondary ? SECONDARY_ANCHOR_STROKE_COLOR : ACTIVE_ANCHOR_STROKE_COLOR;
+    const fillColor = props.isInnerRadius && !props.isSelected ? INNER_RADIUS_ANCHOR_FILL_COLOR : props.isSelected ? SELECTED_ANCHOR_FILL_COLOR : isSecondary ? SECONDARY_ANCHOR_FILL_COLOR : ACTIVE_ANCHOR_FILL_COLOR;
+    const strokeColor = props.isInnerRadius && !props.isSelected ? INNER_RADIUS_ANCHOR_STROKE_COLOR : props.isSelected ? SELECTED_ANCHOR_STROKE_COLOR : isSecondary ? SECONDARY_ANCHOR_STROKE_COLOR : ACTIVE_ANCHOR_STROKE_COLOR;
     const strokeWidth = props.isSelected ? 2 : 1;
 
     return (
@@ -205,6 +209,7 @@ export const Anchor = (props: AnchorProps) => {
             strokeScaleEnabled={false}
             opacity={props.opacity}
             draggable={props.interactive}
+            dragBoundFunc={props.dragBoundFunc}
             listening={props.interactive}
             key={props.anchor}
             id={props.anchor}
