@@ -49,9 +49,9 @@ export function getCatalogSizeTuning(shape: CatalogOverlayShape): number {
     }
 }
 
-/** Convert the shader's point size to the visible geometry after its 45-degree sampling rotation. */
+/** Correct SVG geometry whose visible bounds shrink after the shader's 45-degree sampling rotation. */
 export function getCatalogShapeSize(size: number, shape: CatalogOverlayShape): number {
-    return shape === CatalogOverlayShape.BOX_LINED || shape === CatalogOverlayShape.X_FILLED || shape === CatalogOverlayShape.X_LINED ? size / Math.SQRT2 : size;
+    return shape === CatalogOverlayShape.BOX_LINED || shape === CatalogOverlayShape.X_FILLED ? size / Math.SQRT2 : size;
 }
 
 export function isCatalogPointVisible(point: Point2D, style: CatalogPointStyle, width: number, height: number, featherWidth: number): boolean {
@@ -77,6 +77,7 @@ export function renderCatalogToSvg(
 ): SVGGElement {
     const group = svgGroupFromLayer("catalog-overlay");
     const highlights: SVGElement[] = [];
+    const selectedShapes: SVGElement[] = [];
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
     }
@@ -97,17 +98,14 @@ export function renderCatalogToSvg(
 
             const style = styles?.get(fileId)?.[i];
             const element = renderCatalogShape(x, y, style?.size ?? size, style?.color ?? color, shape, style?.minorSize, style?.rotation, style?.lineWidth);
-            if (element) {
+            if (element && !style?.highlightColor) {
                 group.appendChild(element);
             }
             if (style?.highlightColor) {
-                const highlight = renderCatalogShape(x, y, style.size ?? size, style.highlightColor, shape, style.minorSize, style.rotation, style.lineWidth);
-                if (highlight) {
-                    highlight.setAttribute("fill", "none");
-                    highlight.setAttribute("stroke", style.highlightColor);
-                    highlight.setAttribute("stroke-width", `${style.lineWidth ?? 1}`);
-                    highlight.setAttribute("data-selection-highlight", "true");
-                    highlights.push(highlight);
+                const outline = createCatalogSelectionOutline(x, y, style, shape, size);
+                if (outline && element) {
+                    highlights.push(outline);
+                    selectedShapes.push(element);
                 }
             }
         }
@@ -115,7 +113,20 @@ export function renderCatalogToSvg(
 
     // Selected outlines have foreground depth in the WebGL renderer.
     highlights.forEach(highlight => group.appendChild(highlight));
+    selectedShapes.forEach(shape => group.appendChild(shape));
     return group;
+}
+
+function createCatalogSelectionOutline(x: number, y: number, style: CatalogPointStyle, shape: string | CatalogOverlayShape, fallbackSize: number): SVGElement | null {
+    if (!style.highlightColor) return null;
+    const lineWidth = style.lineWidth ?? 1;
+    const outline = renderCatalogShape(x, y, style.size ?? fallbackSize, style.highlightColor, shape, style.minorSize, style.rotation, lineWidth);
+    if (!outline) return null;
+    outline.setAttribute("fill", "none");
+    outline.setAttribute("stroke", style.highlightColor);
+    outline.setAttribute("stroke-width", `${lineWidth * 2}`);
+    outline.setAttribute("data-selection-highlight", "true");
+    return outline;
 }
 
 function createRotatedElement(element: SVGElement, x: number, y: number, rotation: number): SVGElement {

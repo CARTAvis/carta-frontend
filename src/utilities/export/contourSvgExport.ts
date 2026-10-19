@@ -62,6 +62,7 @@ export function renderContoursToSvg(
                 if (maxX < bounds.xMin - bounds.marginX || minX > bounds.xMax + bounds.marginX || maxY < bounds.yMin - bounds.marginY || minY > bounds.yMax + bounds.marginY) continue;
             }
             for (let index = indexOffsets[line]; index < end; index += 2) {
+                // The transform callback receives borrowed scratch storage; it may mutate this point.
                 vertexScratch.x = vertices[index];
                 vertexScratch.y = vertices[index + 1];
                 const point = transformPoint(vertexScratch);

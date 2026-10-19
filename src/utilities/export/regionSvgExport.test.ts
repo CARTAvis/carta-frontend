@@ -163,7 +163,17 @@ describe("renderRegionsToSvg", () => {
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({overlaySettings: {isWcsCoordinates}} as any);
         jest.mocked(AST.getString).mockReturnValue("");
         jest.mocked(AST.geodesicDistance).mockReturnValue((5 * 3600 * 180) / Math.PI);
-        const getCurveApproximation = jest.fn(() => ({xApproximatePoints: [20, 20, 70, 20], yApproximatePoints: [70, 20, 70, 60], hypotenuseApproximatePoints: [20, 20, 70, 60], corner: {x: 70, y: 20}}));
+        const approximateCurve = (start: {x: number; y: number}, finish: {x: number; y: number}) =>
+            Array.from({length: 201}, (_, index) => {
+                const fraction = index / 201;
+                return [start.x + (finish.x - start.x) * fraction, start.y + (finish.y - start.y) * fraction];
+            }).flat();
+        const getCurveApproximation = jest.fn(() => ({
+            xApproximatePoints: approximateCurve({x: 70, y: 20}, {x: 20, y: 20}),
+            yApproximatePoints: approximateCurve({x: 70, y: 60}, {x: 70, y: 20}),
+            hypotenuseApproximatePoints: approximateCurve({x: 20, y: 20}, {x: 70, y: 60}),
+            corner: {x: 70, y: 20}
+        }));
         const ruler = {
             ...baseRegion(CARTA.RegionType.ANNRULER, [
                 {x: 20, y: 20},
@@ -182,10 +192,13 @@ describe("renderRegionsToSvg", () => {
         const group = renderRegionsToSvg([ruler] as any, FRAME_VIEW, 1000, 1000, 0, 0, {frame: frame as any});
         expect(getCurveApproximation).toHaveBeenCalledWith(isWcsCoordinates ? skyWcs : pixelWcs, undefined);
         expect(group.querySelector("text")).toHaveTextContent("5.00pix");
-        expect(group.querySelector("text")).toHaveAttribute("x", "440");
-        expect(group.querySelector("text")).toHaveAttribute("y", "605");
+        expect(Number(group.querySelector("text")?.getAttribute("x"))).toBeCloseTo(441.24, 1);
+        expect(Number(group.querySelector("text")?.getAttribute("y"))).toBeCloseTo(604.0, 1);
         const rulerLines = group.querySelectorAll("polyline");
         expect(rulerLines).toHaveLength(3);
+        expect(rulerLines[0].getAttribute("points")?.split(" ").at(-1)).toBe("700,400");
+        expect(rulerLines[1].getAttribute("points")?.split(" ").at(-1)).toBe("200,800");
+        expect(rulerLines[2].getAttribute("points")?.split(" ").at(-1)).toBe("700,800");
         expect(rulerLines[0]).toHaveAttribute("stroke-dasharray", "8,8");
         expect(rulerLines[1]).not.toHaveAttribute("stroke-dasharray");
         expect(rulerLines[2]).not.toHaveAttribute("stroke-dasharray");
