@@ -199,6 +199,46 @@ describe("getPanelSvg", () => {
         expect(regionClipRect).toHaveAttribute("height", "80");
     });
 
+    test("keeps unsupported PDF annotation text readable using the viewer canvas", () => {
+        const regionStage = document.createElement("div");
+        regionStage.className = "region-stage";
+        regionStage.style.left = "5px";
+        regionStage.style.top = "7px";
+        Object.defineProperties(regionStage, {offsetLeft: {value: 5}, offsetTop: {value: 7}});
+        const regionCanvas = document.createElement("canvas");
+        regionCanvas.width = 100;
+        regionCanvas.height = 80;
+        regionStage.appendChild(regionCanvas);
+        document.getElementById("image-panel-0-0")!.appendChild(regionStage);
+        frame.regionSet.regionsAndAnnotationsForRender = [
+            {
+                regionType: CARTA.RegionType.ANNTEXT,
+                controlPoints: [
+                    {x: 50, y: 40},
+                    {x: 80, y: 20}
+                ],
+                isTemporary: false,
+                color: "#00ffff",
+                lineWidth: 2,
+                rotation: 0,
+                visualOpacity: 1,
+                text: "Flux μJy/beam 中文",
+                fontSize: 12,
+                font: "Helvetica",
+                fontStyle: "Normal",
+                position: CARTA.TextAnnotationPosition.CENTER
+            }
+        ];
+
+        const panel = getPanelSvg(0, 0, 100, {type: ImageType.FRAME, store: frame} as never, new WeakMap(), true);
+
+        expect(panel?.querySelector("#regions text")).toBeNull();
+        const exportedAnnotation = [...panel!.querySelectorAll("image")].find(image => image.getAttribute("width") === "100");
+        expect(exportedAnnotation).toHaveAttribute("x", "5");
+        expect(exportedAnnotation).toHaveAttribute("y", "7");
+        expect(exportedAnnotation).toHaveAttribute("height", "80");
+    });
+
     test("renders the AST grid below contours and vector overlays", () => {
         const astOverlay = document.createElementNS("http://www.w3.org/2000/svg", "g");
         astOverlay.id = "ast-overlay";

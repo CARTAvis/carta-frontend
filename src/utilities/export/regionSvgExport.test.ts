@@ -401,10 +401,30 @@ describe("renderRegionsToSvg", () => {
         compassArrowheads.forEach(arrowhead => expect(arrowhead.getAttribute("points")?.trim().split(" ")).toHaveLength(3));
 
         const compassTexts = [...group.querySelectorAll("text")];
+        compassTexts.forEach(text => {
+            expect(text).toHaveAttribute("stroke", "#00ffff");
+            expect(text).toHaveAttribute("stroke-width", "2");
+        });
         expect(Number(compassTexts[0].getAttribute("x"))).toBeCloseTo(180.5);
         expect(Number(compassTexts[0].getAttribute("y"))).toBeCloseTo(825);
         expect(Number(compassTexts[1].getAttribute("x"))).toBeCloseTo(140.5);
         expect(Number(compassTexts[1].getAttribute("y"))).toBeCloseTo(785);
+    });
+
+    it("matches the viewer stroke on text annotations and scales it with export resolution", () => {
+        const textRegion = {
+            ...baseRegion(CARTA.RegionType.ANNTEXT, [
+                {x: 50, y: 50},
+                {x: 100, y: 30}
+            ]),
+            text: "Outlined label",
+            fontSize: 12,
+            lineWidth: 3
+        };
+        const text = renderRegion(textRegion, 2).querySelector("text");
+        expect(text).toHaveAttribute("stroke", "#00ffff");
+        expect(text).toHaveAttribute("stroke-width", "6");
+        expect(text).toHaveAttribute("fill", "#00ffff");
     });
 
     it("scales stored compass label offsets with export resolution", () => {

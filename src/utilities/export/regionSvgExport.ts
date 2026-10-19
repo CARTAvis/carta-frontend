@@ -295,17 +295,37 @@ function getAnnotationPath(origin: Point2D, approximatePoints: number[], frameVi
     return getInterpolatedPathAtDistance(origin, points, length);
 }
 
-function renderAnnotationText(text: string, position: Point2D, region: RegionStore & {fontSize?: number; font?: string; fontStyle?: string}, pixelRatio: number): SVGTextElement {
-    const fontStyle = region.fontStyle?.toLowerCase() ?? "";
-    return createSvgText(text, position.x, position.y, {
+function renderAnnotationText(text: string, position: Point2D, region: RegionStore & {fontSize?: number; font?: string; fontStyle?: string}, pixelRatio: number, strokeWidth = region.lineWidth): SVGTextElement {
+    return createSvgText(
+        text,
+        position.x,
+        position.y,
+        getAnnotationTextAttrs(
+            region,
+            pixelRatio,
+            {
+                "font-size": region.fontSize ?? 20,
+                "font-family": region.font ?? "Helvetica",
+                "font-style": region.fontStyle ?? "normal",
+                "text-anchor": "middle",
+                "dominant-baseline": "central"
+            },
+            strokeWidth
+        )
+    );
+}
+
+function getAnnotationTextAttrs(region: RegionStore, pixelRatio: number, attrs: Record<string, string | number>, strokeWidth = region.lineWidth): Record<string, string | number> {
+    const fontStyle = `${attrs["font-style"] ?? ""}`.toLowerCase();
+    return {
         fill: region.color,
-        "font-size": (region.fontSize ?? 20) * pixelRatio,
-        "font-family": region.font ?? "Helvetica",
+        stroke: region.color,
+        "stroke-width": strokeWidth * pixelRatio,
+        ...attrs,
+        "font-size": Number(attrs["font-size"]) * pixelRatio,
         "font-style": fontStyle.includes("italic") ? "italic" : "normal",
-        "font-weight": fontStyle.includes("bold") ? "bold" : "normal",
-        "text-anchor": "middle",
-        "dominant-baseline": "central"
-    });
+        "font-weight": fontStyle.includes("bold") ? "bold" : "normal"
+    };
 }
 
 function renderCompassAnnotation(region: CompassAnnotationStore, frameView: FrameView, layerWidth: number, layerHeight: number, options: RegionSvgOptions): SVGGElement {
@@ -425,7 +445,7 @@ function renderRulerAnnotation(region: RulerAnnotationStore, frameView: FrameVie
     const addText = (text: string, position: Point2D, offset: Point2D) => {
         if (text) {
             const center = getTextCenterFromOffset(position, offset, 0, region.fontSize ?? 20, options.pixelRatio);
-            group.appendChild(renderAnnotationText(text, center, region, options.pixelRatio));
+            group.appendChild(renderAnnotationText(text, center, region, options.pixelRatio, 0.5));
         }
     };
     addText(distanceText, midpoint(hypotenusePoints), region.textOffset);
@@ -450,17 +470,15 @@ function renderTextAnnotation(center: Point2D, size: Point2D, region: RegionStor
     const alignmentOffset = verticalAlign === "top" ? 0 : verticalAlign === "bottom" ? spareHeight : spareHeight / 2;
     const firstY = center.y - height / 2 + alignmentOffset + lineHeight / 2;
     const attrs = {
-        fill: region.color,
-        "font-size": layout.fontSize() * pixelRatio,
+        "font-size": layout.fontSize(),
         "font-family": layout.fontFamily(),
-        "font-style": layout.fontStyle().toLowerCase().includes("italic") ? "italic" : "normal",
-        "font-weight": layout.fontStyle().toLowerCase().includes("bold") ? "bold" : "normal",
         "text-anchor": align === "left" ? "start" : align === "right" ? "end" : "middle",
         "dominant-baseline": "central"
     };
+    const textAttrs = getAnnotationTextAttrs(region, pixelRatio, {...attrs, "font-style": layout.fontStyle()});
     layout.destroy();
 
-    const text = createSvgText("", textX, firstY, attrs);
+    const text = createSvgText("", textX, firstY, textAttrs);
     if (lines.length === 1) {
         text.textContent = lines[0];
     } else {

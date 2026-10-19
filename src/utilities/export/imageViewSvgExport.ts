@@ -21,7 +21,7 @@ import {sampleSvgColormapColor} from "./svgColor";
 import {buildSvgDocument, createSvgElement, createSvgText, embedRasterAsSvgImage, namespaceSvgIds, svgGroupFromLayer} from "./svgExport";
 import {renderVectorOverlayToSvg} from "./vectorOverlaySvgExport";
 
-export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0)"): SVGSVGElement | null {
+export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0)", isPdfExport = false): SVGSVGElement | null {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
     const catalogMappedArrays = new WeakMap<CatalogDisplayStore, CatalogMappedArrays>();
@@ -38,7 +38,7 @@ export function getImageViewSvg(backgroundColor: string = "rgba(255, 255, 255, 0
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const viewHeight = (appStore.channelMapStore.isChannelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
-        const panelSvg = getPanelSvg(column, row, viewHeight, image, catalogMappedArrays);
+        const panelSvg = getPanelSvg(column, row, viewHeight, image, catalogMappedArrays, isPdfExport);
         if (panelSvg) {
             const offsetX = frame.overlayStore.viewWidth * column * appStore.pixelRatio;
             const offsetY = frame.overlayStore.viewHeight * row * appStore.pixelRatio;
@@ -304,7 +304,23 @@ function buildChannelMapAstSvg(frame: FrameStore, image: ImageViewItem, overlayS
     return group.querySelector("use") ? group : null;
 }
 
-export function getPanelSvg(column: number, row: number, viewHeight: number, image: ImageViewItem, catalogMappedArrays = new WeakMap<CatalogDisplayStore, CatalogMappedArrays>()): SVGGElement | null {
+function containsUnsupportedPdfText(layer: SVGElement | null): boolean {
+    return Boolean(layer && [...layer.querySelectorAll("text")].some(text => /[^\u0000-\u00ff]/u.test(text.textContent ?? "")));
+}
+
+function appendRasterizedCanvases(panel: HTMLElement, canvasSelector: string, wrapperSelector: string, pixelRatio: number, target: SVGGElement): boolean {
+    const canvases = [...panel.querySelectorAll<HTMLCanvasElement>(canvasSelector)];
+    if (!canvases.length) return false;
+    canvases.forEach(canvas => {
+        const wrapper = canvas.closest<HTMLElement>(wrapperSelector);
+        const left = wrapper?.offsetLeft ?? canvas.offsetLeft;
+        const top = wrapper?.offsetTop ?? canvas.offsetTop;
+        target.appendChild(embedRasterAsSvgImage(canvas, left * pixelRatio, top * pixelRatio, canvas.width, canvas.height));
+    });
+    return true;
+}
+
+export function getPanelSvg(column: number, row: number, viewHeight: number, image: ImageViewItem, catalogMappedArrays = new WeakMap<CatalogDisplayStore, CatalogMappedArrays>(), isPdfExport = false): SVGGElement | null {
     const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
@@ -353,11 +369,13 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
 
     // 2. AST overlay — keep the coordinate grid beneath contours and vectors.
     const channelMapAstSvg = isChannelMap ? buildChannelMapAstSvg(frame, image, appStore.overlaySettings, pixelRatio) : null;
-    if (channelMapAstSvg) {
-        panelGroup.appendChild(channelMapAstSvg);
-    }
     const astSvg = renderAstOverlayToSvg(isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore, image, appStore.overlaySettings, pixelRatio, isChannelMap);
-    appendClippedLayer(astSvg, "ast", {x: 0, y: 0, width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio, height: viewHeight});
+    if (isPdfExport && (containsUnsupportedPdfText(channelMapAstSvg) || containsUnsupportedPdfText(astSvg)) && appendRasterizedCanvases(panelElement, ".overlay-canvas", ".overlay-canvas", pixelRatio, panelGroup)) {
+        // Keep AST labels with glyphs outside the PDF base fonts readable with the viewer's font fallback.
+    } else {
+        if (channelMapAstSvg) panelGroup.appendChild(channelMapAstSvg);
+        appendClippedLayer(astSvg, "ast", {x: 0, y: 0, width: (isChannelMap ? frame.channelMapOuterOverlayStore : frame.overlayStore).viewWidth * pixelRatio, height: viewHeight});
+    }
 
     // 3. Beam — vector SVG from store data
     const beamGroup = isColorBlending ? null : buildBeamsSvg(frame, padding, pixelRatio);
@@ -376,7 +394,9 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
     const colorbarSettings = appStore.overlaySettings.colorbar;
     if (!isColorBlending && colorbarSettings.isVisible && frame.renderConfig?.colorscaleArray?.length) {
         const colorbarSvg = buildColorbarSvg(frame, colorbarSettings, viewHeight, padding, pixelRatio, rasterCanvas?.width, rasterCanvas?.height);
-        if (colorbarSvg) {
+        if (isPdfExport && containsUnsupportedPdfText(colorbarSvg) && appendRasterizedCanvases(panelElement, ".colorbar-stage canvas", ".colorbar-stage", pixelRatio, panelGroup)) {
+            // Keep Unicode colorbar labels readable with the viewer's font fallback.
+        } else if (colorbarSvg) {
             panelGroup.appendChild(colorbarSvg);
         }
     }
@@ -394,7 +414,11 @@ export function getPanelSvg(column: number, row: number, viewHeight: number, ima
 
     // 9. Regions — vector SVG from store data
     const regionsSvg = buildRegionsSvg(frame, padding, pixelRatio);
-    appendClippedLayer(regionsSvg, "regions", isChannelMap ? undefined : localBounds);
+    if (isPdfExport && containsUnsupportedPdfText(regionsSvg) && appendRasterizedCanvases(panelElement, ".region-stage canvas", ".region-stage", pixelRatio, panelGroup)) {
+        // Keep the rest of the image vector-based while these labels use the viewer's font fallback.
+    } else {
+        appendClippedLayer(regionsSvg, "regions", isChannelMap ? undefined : localBounds);
+    }
 
     // Definitions are document-scoped; collect layer resources without changing draw order.
     panelGroup.querySelectorAll("defs").forEach(layerDefs => {
