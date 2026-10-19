@@ -50,7 +50,7 @@ describe("CatalogPlotComponent catalog selection", () => {
             setSelectedPointIndices: jest.fn()
         };
         const catalogDisplayStore = {
-            setCatalogTableAutoScroll: jest.fn()
+            requestCatalogTableAutoScroll: jest.fn()
         };
         const widgetStore = {
             dragMode: DragMode.Lasso,
@@ -77,7 +77,7 @@ describe("CatalogPlotComponent catalog selection", () => {
         expect(widget.selectedCatalogId).toBe(7);
         expect(profileStore.getOriginIndices).toHaveBeenCalledWith([3]);
         expect(profileStore.setSelectedPointIndices).toHaveBeenCalledWith([12], true);
-        expect(catalogDisplayStore.setCatalogTableAutoScroll).toHaveBeenCalledWith(true);
+        expect(catalogDisplayStore.requestCatalogTableAutoScroll).toHaveBeenCalledTimes(1);
     });
 
     test("clears the selection when a plot selection contains no sources", () => {

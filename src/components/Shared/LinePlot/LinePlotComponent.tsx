@@ -10,7 +10,7 @@ import {ResizeDetector} from "components/Shared";
 import {InteractionMode, LinePlotSelectingMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {type MultiPlotProps, PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
@@ -82,6 +82,7 @@ export class LinePlotComponentProps {
     isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
+    exportTitle?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     markers?: LineMarker[];
@@ -715,8 +716,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.toBlob(blob => {
             if (blob) {
                 const link = ownerDoc.createElement("a") as HTMLAnchorElement;
-                // Trim filename before timestamp to 200 characters to prevent browser errors
-                link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.download = `${getExportFileName(imageName, plotName)}.png`;
                 link.href = ownerWindow.URL.createObjectURL(blob);
                 link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }
@@ -733,7 +733,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             let rows: string[] = [];
             const plotName = this.props.plotName || "unknown";
             const imageName = this.props.imageName || "unknown";
-            let comment = `# ${imageName} ${plotName}`;
+            let comment = `# ${imageName} ${this.props.exportTitle ?? plotName}`;
             if (this.props.xLabel) {
                 comment += `\n# xLabel: ${this.props.xLabel}`;
             }
@@ -761,9 +761,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
 
             const rows: string[] = [];
-            const plotName = multiPlotProp.imageName;
-            const imageName = multiPlotProp.plotName;
-            let comment = `# ${imageName} ${plotName}`;
+            let comment = `# ${multiPlotProp.imageName} ${multiPlotProp.exportTitle ?? multiPlotProp.plotName}`;
             if (this.props.xLabel) {
                 comment += `\n# xLabel: ${this.props.xLabel}`;
             }

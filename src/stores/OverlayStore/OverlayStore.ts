@@ -2,10 +2,9 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
-import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
+import {ASTSettingsString, clamp, getColorForTheme, getDefaultWcsFormats, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -917,27 +916,9 @@ export class OverlaySettings {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (PreferenceStore.Instance.wcsType) {
-                case WCSType.DEGREES:
-                    this.numbers.setDefaultFormatX(NumberFormatType.Degrees);
-                    this.numbers.setDefaultFormatY(NumberFormatType.Degrees);
-                    break;
-                case WCSType.SEXAGESIMAL:
-                    this.numbers.setDefaultFormatX(NumberFormatType.HMS);
-                    this.numbers.setDefaultFormatY(NumberFormatType.DMS);
-                    break;
-                case WCSType.AUTOMATIC:
-                default:
-                    if (this.global.explicitSystem && [SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
-                        this.numbers.setDefaultFormatX(NumberFormatType.HMS);
-                        this.numbers.setDefaultFormatY(NumberFormatType.DMS);
-                    } else {
-                        // Fall back to degrees by default
-                        this.numbers.setDefaultFormatX(NumberFormatType.Degrees);
-                        this.numbers.setDefaultFormatY(NumberFormatType.Degrees);
-                    }
-                    break;
-            }
+            const formats = getDefaultWcsFormats(PreferenceStore.Instance.wcsType, this.global.explicitSystem);
+            this.numbers.setDefaultFormatX(formats.x);
+            this.numbers.setDefaultFormatY(formats.y);
         }
 
         // Set starting values for custom format only if format is not already custom

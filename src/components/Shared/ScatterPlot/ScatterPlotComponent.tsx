@@ -11,7 +11,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {DragMode, InteractionMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 
 import "./ScatterPlotComponent.scss";
 
@@ -36,6 +36,7 @@ export class ScatterPlotComponentProps {
     isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
+    exportTitle?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     shouldShowTopAxis?: boolean;
@@ -80,7 +81,6 @@ export class ScatterPlotComponentProps {
     extraPluginOptions?: ChartOptions<"scatter">["plugins"];
     customExportImage?: () => void;
     customExportData?: () => void;
-    exportFileName?: string;
     exportRightPadding?: number;
 }
 
@@ -114,7 +114,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable lassoPoints: number[] = [];
 
-    @observable chartArea: ChartArea;
+    // Initialize the field so MobX observes chart layout updates from the first render.
+    @observable.ref chartArea: ChartArea | undefined = undefined;
     @observable width = 0;
     @observable height = 0;
     @observable isMouseEntered = false;
@@ -224,7 +225,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const chartArea = this.chartArea;
         let borderRect: React.JSX.Element | null = null;
         const devicePixelRatio = window.devicePixelRatio || 1;
-        if (this.chartArea) {
+        if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -421,8 +422,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (blob) {
                     const link = ownerDocument.createElement("a") as HTMLAnchorElement;
                     // Trim filename before timestamp to 200 characters to prevent browser errors
-                    const fileName = this.props.exportFileName ?? `${imageName}-${plotName.replace(" ", "-")}`;
-                    link.download = fileName.substring(0, 200) + `-${getTimestamp()}.png`;
+                    link.download = `${getExportFileName(imageName, plotName)}.png`;
                     link.href = ownerWindow.URL.createObjectURL(blob);
                     link.dispatchEvent(new ownerWindow.MouseEvent("click"));
                 }
@@ -438,7 +438,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
-        let comment = `# ${imageName} ${plotName}`;
+        let comment = `# ${imageName} ${this.props.exportTitle ?? plotName}`;
         if (this.props.xLabel) {
             comment += `\n# xLabel: ${this.props.xLabel}`;
         }
@@ -469,9 +469,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageMouseMove = ev => {
-        if (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0) {
+        const chartArea = this.chartArea;
+        if (chartArea && (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
-            const chartArea = this.chartArea;
             const mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
             const mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
             // Cursor move updates
@@ -829,7 +829,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     render() {
         return (
-            <ResizeDetector onResize={this.resize} throttleTime={33}>
+            <ResizeDetector onResize={this.resize} throttleTime={33} targetRef={this.containerRef}>
                 <div
                     ref={this.containerRef}
                     className={"scatter-plot-component"}
