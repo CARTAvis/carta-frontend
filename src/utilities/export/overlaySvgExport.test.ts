@@ -132,6 +132,14 @@ describe("renderContoursToSvg", () => {
         expect(path?.getAttribute("d")).not.toContain("L10.00,12.00");
         expect(chunk.vertices).toEqual(original);
     });
+
+    test("culls transformed polylines outside the export viewport and keeps crossing lines", () => {
+        const chunk = {vertices: new Float32Array([100, 100, 110, 110, -5, 5, 5, 5]), indexOffsets: new Int32Array([0, 4])};
+        const group = renderContoursToSvg([chunk], "#fff", 1, 0, 0, 0, undefined, undefined, {width: 10, height: 10, margin: 1});
+
+        expect(group.querySelectorAll("path")).toHaveLength(1);
+        expect(group.querySelector("path")).toHaveAttribute("d", "M-5.00,5.00L5.00,5.00");
+    });
 });
 
 describe("renderVectorOverlayToSvg", () => {
@@ -315,6 +323,29 @@ describe("renderCatalogToSvg", () => {
         expect(ellipse).toHaveAttribute("ry", "3");
         expect(ellipse).toHaveAttribute("transform", "rotate(90,10,20) rotate(-45,10,20)");
         expect(ellipse).toHaveAttribute("stroke-width", "2");
+    });
+
+    test("keeps each selected outline adjacent to its source glyph", () => {
+        const group = renderCatalogToSvg(
+            new Map([[11, new Float32Array([10, 20, 30, 40])]]),
+            new Map([[11, CatalogOverlayShape.CIRCLE_LINED]]),
+            new Map([[11, 8]]),
+            new Map([[11, "#123456"]]),
+            0,
+            0,
+            new Map([
+                [
+                    11,
+                    [
+                        {highlightColor: "#ff00ff", lineWidth: 1},
+                        {highlightColor: "#00ffff", lineWidth: 2}
+                    ]
+                ]
+            ])
+        );
+
+        expect(Array.from(group.children, element => element.getAttribute("data-selection-highlight"))).toEqual(["true", null, "true", null]);
+        expect(Array.from(group.children, element => element.getAttribute("stroke"))).toEqual(["#ff00ff", "#123456", "#00ffff", "#123456"]);
     });
 
     test.each([CatalogOverlayShape.TRIANGLE_LINED_UP, CatalogOverlayShape.TRIANGLE_LINED_DOWN, CatalogOverlayShape.HEXAGON_LINED, CatalogOverlayShape.HEXAGON_LINED_2, CatalogOverlayShape.RHOMB_LINED])(

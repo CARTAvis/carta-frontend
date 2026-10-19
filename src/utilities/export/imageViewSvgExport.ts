@@ -144,8 +144,9 @@ function createOverlayPointTransform(sourceFrame: FrameStore, destinationFrame: 
     const catalogMap = isCatalog && sourceFrame !== destinationFrame ? sourceFrame.getCatalogControlMap(destinationFrame) : null;
     catalogMap?.updateCatalogBoundary();
     const controlMap = sourceFrame !== destinationFrame ? (catalogMap ?? sourceFrame.getControlMap(destinationFrame)) : null;
+    const mappedScratch = {x: 0, y: 0};
     return point => {
-        const mapped = controlMap ? controlMap.transformPoint(point) : point;
+        const mapped = controlMap ? controlMap.transformPoint(point, mappedScratch) : point;
         return mapped && destinationFrame.spatialReference ? (destinationFrame.spatialTransform?.transformCoordinate(mapped, true) ?? null) : mapped;
     };
 }
@@ -176,6 +177,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
             maxLevel = Math.max(maxLevel, level);
         });
         contourFrame.contourStores.forEach((contourStore, level) => {
+            const lineWidth = getContourStrokeWidth(contourFrame, pixelRatio);
             const bounds =
                 contourFrame === frame && !frame.spatialReference
                     ? {
@@ -190,7 +192,7 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
             const contourSvg = renderContoursToSvg(
                 contourStore.exportChunks,
                 getContourStrokeColor(contourFrame, level, minLevel, maxLevel),
-                getContourStrokeWidth(contourFrame, pixelRatio),
+                lineWidth,
                 getContourDashLength(frame, contourFrame.contourConfig.dashMode, level, pixelRatio),
                 padding.left * pixelRatio,
                 padding.top * pixelRatio,
@@ -201,7 +203,8 @@ function buildContoursSvg(frame: FrameStore, padding: Padding, pixelRatio: numbe
                     const transformed = transformPoint(point);
                     return transformed ? toCanvasPoint(transformed) : null;
                 },
-                bounds
+                bounds,
+                {width: layerWidth, height: layerHeight, margin: lineWidth / 2 + 1}
             );
             group.appendChild(contourSvg);
         });
@@ -301,7 +304,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
     const zoomY = zoomFrame.effectiveZoomLevel?.y ?? zoomFrame.zoomLevel;
     const areaScale = store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) * zoomY : 1;
     const frameView = getDestinationFrameView(frame);
-    // The catalog shader sizes glyphs with Y zoom and cancels X zoom/pixel aspect ratio.
+    // Screen-pixel dimensions follow the exported frame view; image-pixel areas follow shader Y zoom.
     const imagePixelScale = frameView ? (frame.renderHeight * pixelRatio) / (frameView.yMax - frameView.yMin) : 1;
     const defaultSize = shapeSize * (store.isImagePixelSize ? imagePixelScale : pixelRatio);
     const scaleDiameter = (size: number) => size * (store.isImagePixelSize ? getCatalogSizeTuning(store.catalogShape) : 1);

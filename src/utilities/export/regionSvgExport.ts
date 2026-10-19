@@ -12,6 +12,7 @@ import {getRulerDistanceText} from "utilities/region/ruler";
 import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
 import {createSvgElement, createSvgText, svgGroupFromLayer} from "./svgExport";
+import {createCircleMarker, createCrossMarker, createDiamondMarker, createRectMarker} from "./svgMarkerPrimitives";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SPATIAL_APPROXIMATION_REGION_TYPES = new Set<CARTA.RegionType>([
@@ -84,40 +85,24 @@ function renderPointRegion(center: Point2D, region: RegionStore, pixelRatio: num
     switch (shape) {
         case CARTA.PointAnnotationShape.CIRCLE:
         case CARTA.PointAnnotationShape.CIRCLE_LINED:
-            element = createSvgElement("circle", {cx: center.x, cy: center.y, r: halfWidth, ...strokeAttrs});
+            element = createCircleMarker(center, halfWidth, strokeAttrs.fill, strokeAttrs.stroke, strokeAttrs["stroke-width"]);
             break;
         case CARTA.PointAnnotationShape.DIAMOND:
         case CARTA.PointAnnotationShape.DIAMOND_LINED:
-            element = createSvgElement("polygon", {
-                points: `${center.x},${center.y - halfWidth} ${center.x + halfWidth},${center.y} ${center.x},${center.y + halfWidth} ${center.x - halfWidth},${center.y}`,
-                ...strokeAttrs
-            });
+            element = createDiamondMarker(center, halfWidth, strokeAttrs.fill, strokeAttrs.stroke, strokeAttrs["stroke-width"]);
             break;
         case CARTA.PointAnnotationShape.CROSS:
         case CARTA.PointAnnotationShape.X: {
             const isDiagonal = shape === CARTA.PointAnnotationShape.X;
-            const group = document.createElementNS(SVG_NS, "g");
-            const lines = isDiagonal
-                ? [
-                      [center.x - halfWidth, center.y - halfWidth, center.x + halfWidth, center.y + halfWidth],
-                      [center.x + halfWidth, center.y - halfWidth, center.x - halfWidth, center.y + halfWidth]
-                  ]
-                : [
-                      [center.x, center.y - halfWidth, center.x, center.y + halfWidth],
-                      [center.x - halfWidth, center.y, center.x + halfWidth, center.y]
-                  ];
-            for (const [x1, y1, x2, y2] of lines) {
-                group.appendChild(createSvgElement("line", {x1, y1, x2, y2, ...strokeAttrs}));
-            }
-            element = group;
+            element = createCrossMarker(center, halfWidth, isDiagonal, region.color, region.lineWidth * pixelRatio);
             break;
         }
         case CARTA.PointAnnotationShape.BOX:
-            element = createSvgElement("rect", {x: center.x - halfWidth, y: center.y - halfWidth, width, height: width, ...strokeAttrs});
+            element = createRectMarker(center, width, width, strokeAttrs.fill, strokeAttrs.stroke, strokeAttrs["stroke-width"]);
             break;
         case CARTA.PointAnnotationShape.SQUARE:
         default:
-            element = createSvgElement("rect", {x: center.x - halfWidth, y: center.y - halfWidth, width, height: width, fill: region.color, stroke: region.color, "stroke-width": region.lineWidth * pixelRatio});
+            element = createRectMarker(center, width, width, region.color, region.color, region.lineWidth * pixelRatio);
             break;
     }
 

@@ -2,6 +2,7 @@ import {CatalogOverlayShape} from "enums";
 import {type Point2D} from "models";
 
 import {createSvgElement, svgGroupFromLayer} from "./svgExport";
+import {createCircleMarker, createCrossMarker, createDiamondMarker, createRectMarker} from "./svgMarkerPrimitives";
 
 export interface CatalogPointStyle {
     size?: number;
@@ -76,8 +77,7 @@ export function renderCatalogToSvg(
     styles?: Map<number, CatalogPointStyle[]>
 ): SVGGElement {
     const group = svgGroupFromLayer("catalog-overlay");
-    const highlights: SVGElement[] = [];
-    const selectedShapes: SVGElement[] = [];
+    const selectedElements: SVGElement[] = [];
     if (offsetX !== 0 || offsetY !== 0) {
         group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
     }
@@ -104,16 +104,14 @@ export function renderCatalogToSvg(
             if (style?.highlightColor) {
                 const outline = createCatalogSelectionOutline(x, y, style, shape, size);
                 if (outline && element) {
-                    highlights.push(outline);
-                    selectedShapes.push(element);
+                    selectedElements.push(outline, element);
                 }
             }
         }
     });
 
-    // Selected outlines have foreground depth in the WebGL renderer.
-    highlights.forEach(highlight => group.appendChild(highlight));
-    selectedShapes.forEach(shape => group.appendChild(shape));
+    // Keep each selected outline and its source glyph together in foreground order.
+    selectedElements.forEach(element => group.appendChild(element));
     return group;
 }
 
@@ -162,16 +160,16 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
     switch (shapeName) {
         case "CircleFilled":
         case "CIRCLE_FILLED":
-            return flipCatalogAxes(createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: color, stroke: "none"}), x, y);
+            return flipCatalogAxes(createCircleMarker({x, y}, halfSize, color, "none", 0), x, y);
         case "CircleLined":
         case "CIRCLE_LINED":
             // The catalog shader draws outlined circles inward from the requested radius.
-            return flipCatalogAxes(createSvgElement("circle", {cx: x, cy: y, r: Math.max(0, halfSize - lineWidth), fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
+            return flipCatalogAxes(createCircleMarker({x, y}, Math.max(0, halfSize - lineWidth), "none", color, lineWidth), x, y);
         case "BoxFilled":
-            return flipCatalogAxes(createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: color, stroke: "none"}), x, y);
+            return flipCatalogAxes(createRectMarker({x, y}, size, size, color, "none", 0), x, y);
         case "BoxLined":
         case "BOX_LINED":
-            return flipCatalogAxes(createSvgElement("rect", {x: x - halfSize, y: y - halfSize, width: size, height: size, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
+            return flipCatalogAxes(createRectMarker({x, y}, size, size, "none", color, lineWidth), x, y);
         case "EllipseFilled":
             return flipCatalogAxes(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: color, stroke: "none"}), x, y);
         case "EllipseLined":
@@ -179,12 +177,12 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
             return flipCatalogAxes(createSvgElement("ellipse", {cx: x, cy: y, rx: halfSize, ry: (minorSize ?? size * 0.6) / 2, fill: "none", stroke: color, "stroke-width": lineWidth}), x, y);
         case "Cross":
         case "CROSS_FILLED":
-            return flipCatalogAxes(createCrossShape(x, y, halfSize, color, lineWidth), x, y);
+            return flipCatalogAxes(createCrossMarker({x, y}, halfSize, false, color, lineWidth), x, y);
         case "CROSS_LINED":
             return flipCatalogAxes(createOutlinedCross(x, y, halfSize, color, lineWidth), x, y);
         case "X":
         case "X_FILLED":
-            return flipCatalogAxes(createXShape(x, y, halfSize, color, lineWidth), x, y);
+            return flipCatalogAxes(createCrossMarker({x, y}, halfSize, true, color, lineWidth), x, y);
         case "X_LINED": {
             return flipCatalogAxes(createOutlinedCross(x, y, halfSize, color, lineWidth, true), x, y);
         }
@@ -204,25 +202,16 @@ function createCatalogShape(x: number, y: number, size: number, color: string, s
             // The second shader variant rotates the hexagon by another quarter turn.
             return createHexagon(x, y, halfSize, color, false);
         case "RhombFilled":
-            return flipCatalogAxes(createRhomb(x, y, halfSize, color, true), x, y);
+            return flipCatalogAxes(createDiamondMarker({x, y}, halfSize, color, "none", 0), x, y);
         case "RhombLined":
         case "RHOMB_LINED":
-            return flipCatalogAxes(createRhomb(x, y, halfSize, color, false), x, y);
+            return flipCatalogAxes(createDiamondMarker({x, y}, halfSize, "none", color, 1), x, y);
         case "LineSegment":
         case "LineSegment_FILLED":
             return flipCatalogAxes(createSvgElement("line", {x1: x - halfSize, y1: y, x2: x + halfSize, y2: y, stroke: color, "stroke-width": lineWidth}), x, y);
         default:
             return flipCatalogAxes(createSvgElement("circle", {cx: x, cy: y, r: halfSize, fill: color, stroke: "none"}), x, y);
     }
-}
-
-function createCrossShape(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
-    return createSvgElement("path", {
-        d: `M${x - halfSize},${y}L${x + halfSize},${y}M${x},${y - halfSize}L${x},${y + halfSize}`,
-        stroke: color,
-        "stroke-width": lineWidth,
-        fill: "none"
-    });
 }
 
 function createOutlinedCross(x: number, y: number, halfSize: number, color: string, lineWidth: number, isDiagonal = false): SVGElement {
@@ -254,15 +243,6 @@ function createOutlinedCross(x: number, y: number, halfSize: number, color: stri
     return createSvgElement("path", {d: path, fill: "none", stroke: color, "stroke-width": lineWidth});
 }
 
-function createXShape(x: number, y: number, halfSize: number, color: string, lineWidth: number): SVGElement {
-    return createSvgElement("path", {
-        d: `M${x - halfSize},${y - halfSize}L${x + halfSize},${y + halfSize}M${x + halfSize},${y - halfSize}L${x - halfSize},${y + halfSize}`,
-        stroke: color,
-        "stroke-width": lineWidth,
-        fill: "none"
-    });
-}
-
 function createTriangle(x: number, y: number, halfSize: number, color: string, isFilled: boolean, isDownward: boolean = false): SVGElement {
     const startAngle = isDownward ? Math.PI / 2 : -Math.PI / 2;
     const points = Array.from({length: 3}, (_, index) => {
@@ -285,15 +265,6 @@ function createHexagon(x: number, y: number, halfSize: number, color: string, is
     }
     return createSvgElement("polygon", {
         points: points.join(" "),
-        fill: isFilled ? color : "none",
-        stroke: isFilled ? "none" : color,
-        "stroke-width": isFilled ? 0 : 1
-    });
-}
-
-function createRhomb(x: number, y: number, halfSize: number, color: string, isFilled: boolean): SVGElement {
-    return createSvgElement("polygon", {
-        points: `${x},${y - halfSize} ${x + halfSize},${y} ${x},${y + halfSize} ${x - halfSize},${y}`,
         fill: isFilled ? color : "none",
         stroke: isFilled ? "none" : color,
         "stroke-width": isFilled ? 0 : 1

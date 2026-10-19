@@ -72,7 +72,7 @@ export class ControlMap {
         return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
 
-    transformPoint = (point: Point2D): Point2D | null => {
+    transformPoint = (point: Point2D, output?: Point2D): Point2D | null => {
         if (!this.grid?.length) {
             return null;
         }
@@ -100,7 +100,13 @@ export class ControlMap {
             this.cubic(this.getGridComponent(x0 - 1, row, component), this.getGridComponent(x0, row, component), this.getGridComponent(x0 + 1, row, component), this.getGridComponent(x0 + 2, row, component), tx);
         const x = this.cubic(sampleRow(y0 - 1, 0), sampleRow(y0, 0), sampleRow(y0 + 1, 0), sampleRow(y0 + 2, 0), ty);
         const y = this.cubic(sampleRow(y0 - 1, 1), sampleRow(y0, 1), sampleRow(y0 + 1, 1), sampleRow(y0 + 2, 1), ty);
-        return isFinite(x) && isFinite(y) ? {x, y} : null;
+        if (!isFinite(x) || !isFinite(y)) return null;
+        if (output) {
+            output.x = x;
+            output.y = y;
+            return output;
+        }
+        return {x, y};
     };
 
     private cubic = (a: number, b: number, c: number, d: number, t: number): number => {
