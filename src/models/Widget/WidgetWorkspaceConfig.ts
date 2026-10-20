@@ -3,6 +3,7 @@ import {
     type WorkspaceCatalogOverlayConfig,
     type WorkspaceCatalogPlotConfig,
     type WorkspaceHistogramWidgetConfig,
+    type WorkspaceRenderConfigWidgetConfig,
     type WorkspaceSpatialProfileWidgetConfig,
     type WorkspaceSpectralProfileWidgetConfig,
     type WorkspaceStatsWidgetConfig,
@@ -17,6 +18,7 @@ import {
 export interface WidgetWorkspaceConfigs {
     "catalog-overlay": WorkspaceCatalogOverlayConfig;
     "catalog-plot": WorkspaceCatalogPlotConfig;
+    "render-config": WorkspaceRenderConfigWidgetConfig;
     "spatial-profiler": WorkspaceSpatialProfileWidgetConfig;
     "spectral-profiler": WorkspaceSpectralProfileWidgetConfig;
     histogram: WorkspaceHistogramWidgetConfig;
