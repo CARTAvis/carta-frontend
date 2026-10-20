@@ -765,6 +765,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.issues.push(...this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this));
     }
 
+    public wasActiveImageRestored(): boolean {
+        return this.workspace.selectedFile === undefined || this.frameIds.has(this.workspace.selectedFile);
+    }
+
     /** The file ID a workspace image has in this session, if it was restored. */
     public fileIdOf(workspaceImageId: number): number | undefined {
         return this.frameIds.get(workspaceImageId);

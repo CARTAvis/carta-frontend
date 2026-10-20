@@ -62,13 +62,11 @@ export class RegionWidgetStore {
     @action protected applyWorkspaceBindingOf(binding: WorkspaceWidgetBinding, ids: WorkspaceIdReader): string[] {
         const problems: string[] = [];
         let fileId = ACTIVE_FILE_ID;
-        if (binding.imageId !== undefined) {
-            const restoredFileId = ids.fileIdOf(binding.imageId);
-            if (restoredFileId === undefined) {
-                problems.push("the image it showed was not restored, so it shows the active image");
-            } else {
-                fileId = restoredFileId;
-            }
+        const restoredFileId = binding.imageId === undefined ? undefined : ids.fileIdOf(binding.imageId);
+        if (binding.imageId === undefined ? !ids.wasActiveImageRestored() : restoredFileId === undefined) {
+            problems.push("the image it showed was not restored, so it shows the active image");
+        } else if (restoredFileId !== undefined) {
+            fileId = restoredFileId;
         }
         this.setFileId(fileId);
 
@@ -81,7 +79,7 @@ export class RegionWidgetStore {
             const regionId = ids.regionIdOf(saved.imageId, saved.regionId);
             if (regionId !== undefined) {
                 this.setRegionId(regionFileId, regionId);
-            } else if (regionFileId === fileId) {
+            } else if (regionFileId === fileId && !problems.length) {
                 problems.push("the region it showed was not restored, so it shows the active region");
             }
         }
