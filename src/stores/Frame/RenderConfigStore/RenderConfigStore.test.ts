@@ -240,6 +240,16 @@ describe("RenderConfigStore workspace restore", () => {
         expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
     });
 
+    test("keeps the range of the polarization it is told to, as a custom one", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [99.5, 100], scaleMin: [-1, -2], scaleMax: [9, 8]});
+
+        renderConfig.keepRangeWithoutCubeHistogram(1);
+
+        expect(renderConfig.selectedPercentile).toEqual([99.5, -1]);
+        expect(renderConfig.scaleMax).toEqual([9, 8]);
+    });
+
     test("forgets that the cube histogram was asked for once it is cleared", () => {
         const renderConfig = createRenderConfig();
 

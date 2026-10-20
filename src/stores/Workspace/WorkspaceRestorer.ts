@@ -327,7 +327,7 @@ export class WorkspaceRestorer {
                 // Taken over by a later load that kept these images: leave none of them waiting on a
                 // cube histogram nobody will ask for.
                 if (isOpen()) {
-                    frame.renderConfig.keepRangeWithoutCubeHistogram();
+                    frame.renderConfig.keepRangeWithoutCubeHistogram(frame.requiredPolarizationIndex);
                 }
                 continue;
             }
@@ -341,7 +341,7 @@ export class WorkspaceRestorer {
             this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
             const isComplete = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
             if (!isComplete && isOpen()) {
-                frame.renderConfig.keepRangeWithoutCubeHistogram();
+                frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
                 if (this.isCurrent) {
                     this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range`);
