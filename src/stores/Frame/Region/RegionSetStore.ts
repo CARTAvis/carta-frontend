@@ -568,6 +568,16 @@ export class RegionSetStore {
     };
 
     /**
+     * {@link addExistingRegion}, resolving once the backend has answered with the ID the region
+     * keeps from then on, which need not be the one it was added with.
+     */
+    addExistingRegionAsync = async (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], annotationStyles?: any): Promise<RegionStore> => {
+        const region = this.addExistingRegion(points, rotation, regionType, regionId, name, color, lineWidth, dashes, true, annotationStyles);
+        await this.requestSetRegion(this.frame.frameInfo.fileId, region);
+        return region;
+    };
+
+    /**
      * Adds a new region and returns the corresponding RegionStore object.
      *
      * @param regionType - Type of the region.
