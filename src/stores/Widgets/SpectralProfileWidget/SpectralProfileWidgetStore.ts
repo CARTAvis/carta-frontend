@@ -54,6 +54,8 @@ import {
     velocityFromRedshift
 } from "utilities";
 
+import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
+
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
@@ -86,10 +88,6 @@ export interface SpectralProfileWidgetConfig {
     linePlotPointSize: number;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number | undefined;
-    maxXVal: number | undefined;
-    minYVal: number | undefined;
-    maxYVal: number | undefined;
     restFrameShiftMode: RestFrameShiftMode;
     restFrameVelocityConvention: VelocityConvention;
 }
@@ -1261,18 +1259,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
         this.isRestFrameShiftInputValid = true;
         if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
             this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
@@ -1308,7 +1294,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             ...(category === MultiProfileCategory.IMAGE && this.intensityUnit !== undefined ? {intensityUnit: this.intensityUnit} : {}),
             restFrameRedshift: this.restFrameRedshift,
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
-            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
+            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
+            ...toWorkspacePlotRange(this)
         };
     };
 
@@ -1367,6 +1354,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (typeof config.yAxisRestFrameEnabled === "boolean") {
             this.isYAxisRestFrameEnabled = config.yAxisRestFrameEnabled;
         }
+        // Last: pointing the widget at a region clears the range it was zoomed to.
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
         return problems;
     };
 
@@ -1378,10 +1369,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             linePlotPointSize: this.linePlotPointSize,
             meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal,
             restFrameShiftMode: this.restFrameShiftMode,
             restFrameVelocityConvention: this.restFrameVelocityConvention
         };

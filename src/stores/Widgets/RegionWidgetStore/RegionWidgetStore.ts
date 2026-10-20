@@ -14,6 +14,8 @@ export class RegionWidgetStore {
     @observable fileId: number = ACTIVE_FILE_ID;
     @observable regionIdMap: Map<number, number> = new Map<number, number>();
     @observable type: RegionsType;
+    /** Whether a restore pointed the widget at the data it was saved showing, so that what it showed of that data still applies. */
+    protected isShowingWorkspaceData = true;
 
     constructor(type: RegionsType) {
         this.appStore = AppStore.Instance;
@@ -83,6 +85,7 @@ export class RegionWidgetStore {
                 problems.push("the region it showed was not restored, so it shows the active region");
             }
         }
+        this.isShowingWorkspaceData = problems.length === 0;
         return problems;
     }
 
