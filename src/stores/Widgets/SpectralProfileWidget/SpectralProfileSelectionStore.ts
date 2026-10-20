@@ -842,7 +842,9 @@ export class SpectralProfileSelectionStore {
 
         const remainingSelections = this.selectedStatsTypes.filter(type => !disabledSelections.includes(type));
         this.selectedStatsTypes = remainingSelections.length ? remainingSelections : [CARTA.StatsType.Mean];
-        disabledSelections.forEach(type => this.widgetStore.removeProfileColor(type));
+        if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
+            disabledSelections.forEach(type => this.widgetStore.removeProfileColor(type));
+        }
         if (this.activeProfileCategory === MultiProfileCategory.STATISTIC && !remainingSelections.length) {
             this.assignColor(CARTA.StatsType.Mean);
         }
