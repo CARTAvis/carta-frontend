@@ -1,7 +1,7 @@
 import {comparer, reaction} from "mobx";
 
 import {ImageType, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {describeCatalogSource, describeImageSource, isWidgetWorkspaceConfigOf, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -519,8 +519,7 @@ export class WorkspaceRestorer {
     /** The columns the saved plots of one catalog are drawn from. */
     private plotColumnsOf(workspaceCatalogId: number): string[] {
         return Object.values(this.workspace.catalogWidgets ?? {})
-            .filter(config => config.type === "catalog-plot" && config.catalogId === workspaceCatalogId)
-            .flatMap(config => [config.xColumnName, config.yColumnName, config.statisticColumnName])
+            .flatMap(config => (isWidgetWorkspaceConfigOf(config, "catalog-plot") && config.catalogId === workspaceCatalogId ? [config.xColumnName, config.yColumnName, config.statisticColumnName] : []))
             .filter((columnName): columnName is string => typeof columnName === "string");
     }
 

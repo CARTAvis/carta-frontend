@@ -18,6 +18,7 @@ import {
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
+import {type WidgetWorkspaceConfig} from "./Widget/WidgetWorkspaceConfig";
 
 /** The version written by this frontend, matching `workspace_schema_2.json`. */
 export const WORKSPACE_VERSION = 2;
@@ -362,18 +363,18 @@ export interface WorkspaceCatalog {
     selection?: WorkspaceCatalogSelection;
 }
 
-/**
- * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
- * and so is kept by the Workspace rather than the Layout (ADR-0005).
- */
-export interface WorkspaceCatalogWidgetConfig {
-    /** The kind of widget, which a restore needs to recreate one the layout does not have. */
-    type: "catalog-overlay" | "catalog-plot";
+/** What one catalog table widget shows. */
+export interface WorkspaceCatalogOverlayConfig {
     /** Workspace ID of the catalog the widget shows. */
     catalogId?: number;
-    /** Table widgets: the settings section each catalog was left on, by Workspace catalog ID. */
+    /** The settings section each catalog was left on, by Workspace catalog ID. */
     settingsTabs?: {[workspaceCatalogId: string]: number};
-    /** Plot widgets: what the plot is drawn from. */
+}
+
+/** What one catalog plot widget shows, and what it is drawn from. */
+export interface WorkspaceCatalogPlotConfig {
+    /** Workspace ID of the catalog the widget shows. */
+    catalogId?: number;
     xColumnName?: string;
     yColumnName?: string;
     statisticColumnName?: string;
@@ -384,6 +385,12 @@ export interface WorkspaceCatalogWidgetConfig {
     /** The values the cursor last read off the plot: a scatter point, or a histogram bin's center and count. */
     cursor?: Point2D;
 }
+
+/**
+ * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
+ * and so is kept by the Workspace rather than the Layout (ADR-0005).
+ */
+export type WorkspaceCatalogWidgetConfig = WidgetWorkspaceConfig<"catalog-overlay" | "catalog-plot">;
 
 /**
  * The arrangement a workspace was saved in, in the same form a saved layout takes.
