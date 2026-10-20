@@ -19,6 +19,10 @@ export interface HistogramWidgetConfig {
     logScaleY: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    settingsTabId: HistogramSettingsTabs;
+    autoBins: boolean;
+    /** The number of bins, when they are not chosen automatically. */
+    numBins?: number;
 }
 
 export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig> {
@@ -478,11 +482,21 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
+        if (Object.values(HistogramSettingsTabs).includes(widgetSettings.settingsTabId as HistogramSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as HistogramSettingsTabs;
+        }
+        if (widgetSettings.autoBins === false && typeof widgetSettings.numBins === "number" && Number.isInteger(widgetSettings.numBins) && widgetSettings.numBins > 0) {
+            this.setAutoBins(false);
+            this.setNumBins(widgetSettings.numBins);
+        }
     };
 
     public toConfig = (): HistogramWidgetConfig => {
         return {
             widgetId: this.widgetId,
+            settingsTabId: this.settingsTabId,
+            autoBins: this.isCurrentAutoBins,
+            ...(!this.isCurrentAutoBins && typeof this.currentNumBins === "number" ? {numBins: this.currentNumBins} : {}),
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
