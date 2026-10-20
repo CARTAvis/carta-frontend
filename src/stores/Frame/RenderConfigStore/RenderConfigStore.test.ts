@@ -8,6 +8,8 @@ import {type FrameStore} from "stores/Frame";
 
 import {RenderConfigStore} from "./RenderConfigStore";
 
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
+
 interface RenderConfigPreferenceOverrides {
     scalingAlphaLog: number;
     scalingAlphaPower: number;
@@ -130,6 +132,12 @@ describe("RenderConfigStore alpha validation", () => {
 });
 
 describe("RenderConfigStore workspace round trip", () => {
+    test("writes only fields the workspace schema declares", () => {
+        const renderConfig = createRenderConfig();
+
+        expect(Object.keys(renderConfig.toConfig()).filter(key => !(key in WORKSPACE_SCHEMA.definitions["render-config"].properties))).toEqual([]);
+    });
+
     test("returns the applied config", () => {
         const renderConfig = createRenderConfig();
         const config = {

@@ -6,6 +6,8 @@ import {type PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
 
 import {ContourConfigStore} from "./ContourConfigStore";
 
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
+
 function createStore(isDefaultInverted: boolean): ContourConfigStore {
     const preference = {
         contourSmoothingMode: CARTA.SmoothingMode.NoSmoothing,
@@ -55,6 +57,14 @@ describe("ContourConfigStore workspace colormap inversion", () => {
 });
 
 describe("ContourConfigStore workspace round trip", () => {
+    test("writes only fields the workspace schema declares", () => {
+        const store = createStore(false);
+        store.setEnabled(true);
+        store.applyConfig(createWorkspaceConfig(true));
+
+        expect(Object.keys(store.toConfig()!).filter(key => !(key in WORKSPACE_SCHEMA.definitions["contour-config"].properties))).toEqual([]);
+    });
+
     test("returns the applied config", () => {
         const store = createStore(false);
         store.setEnabled(true);
