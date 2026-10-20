@@ -46,6 +46,8 @@ export class RenderConfigStore {
     @observable isUsingCubeHistogram: boolean = false;
     @observable isUsingCubeHistogramContours: boolean = false;
     @observable cubeHistogramProgress: number = 0;
+    /** Whether the cube histogram has been asked for since it was last cleared, so that its progress means something. */
+    @observable isCubeHistogramRequested: boolean = false;
     @observable selectedPercentile: number[];
     @observable histChannel: number = 0;
     @observable stokesIndex: number = 0;
@@ -328,6 +330,9 @@ export class RenderConfigStore {
     @action updateCubeHistogram = (histogram: CARTA.Histogram.$Properties | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
+        if (!histogram) {
+            this.isCubeHistogramRequested = false;
+        }
         if (this.isAwaitingCompleteCubeHistogram) {
             if (progress < 1) {
                 return;
@@ -595,6 +600,11 @@ export class RenderConfigStore {
         this.isUsingCubeHistogram = config.useCubeHistogram ?? false;
         this.isUsingCubeHistogramContours = config.useCubeHistogramContours ?? false;
         this.updateSiblings();
+    };
+
+    /** Record that the cube histogram has been asked for. */
+    @action markCubeHistogramRequested = () => {
+        this.isCubeHistogramRequested = true;
     };
 
     /**

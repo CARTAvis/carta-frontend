@@ -1475,10 +1475,17 @@ export class AppStore {
         });
     };
 
-    @action requestCubeHistogram = (fileId: number = -1) => {
+    /**
+     * Ask the backend for an image's cube histogram.
+     *
+     * @param fileId - The image, or the active image if left out.
+     * @param coordinate - The polarization to compute it for, such as "Qz". Left out, the backend uses the Stokes it last showed the image in.
+     */
+    @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{coordinate, channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            frame.renderConfig.markCubeHistogramRequested();
             this.restartTaskProgress();
         }
     };

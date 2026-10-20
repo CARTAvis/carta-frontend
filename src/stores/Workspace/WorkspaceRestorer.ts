@@ -317,23 +317,35 @@ export class WorkspaceRestorer {
      * does not come keeps its saved range as a custom one.
      */
     private async restoreCubeHistograms(): Promise<void> {
-        for (const fileInfo of this.workspace.files ?? []) {
+        const pending = (this.workspace.files ?? []).flatMap(fileInfo => {
             const frame = this.frameOf(fileInfo.id);
+            return frame?.renderConfig.isUsingCubeHistogram ? [{fileInfo, frame}] : [];
+        });
+        for (const {fileInfo, frame} of pending) {
+            const isOpen = () => this.appStore.frames.includes(frame);
             if (!this.isCurrent) {
-                return;
-            }
-            if (!frame?.renderConfig.isUsingCubeHistogram) {
+                // Taken over by a later load that kept these images: leave none of them waiting on a
+                // cube histogram nobody will ask for.
+                if (isOpen()) {
+                    frame.renderConfig.keepRangeWithoutCubeHistogram();
+                }
                 continue;
             }
 
             const imageName = describeImageSource(fileInfo.source);
+            // The backend computes it in whichever Stokes it last showed the image in, which for an
+            // image not yet in view is not the one restored; name it, and file the result under it.
+            const stokesIndex = frame.requiredPolarizationIndex;
             frame.renderConfig.awaitCompleteCubeHistogram();
-            this.appStore.requestCubeHistogram(frame.frameInfo.fileId);
+            frame.renderConfig.setStokesIndex(stokesIndex);
+            this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
             const isComplete = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
-            if (!isComplete && this.isCurrent && this.appStore.frames.includes(frame)) {
+            if (!isComplete && isOpen()) {
                 frame.renderConfig.keepRangeWithoutCubeHistogram();
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
-                this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range`);
+                if (this.isCurrent) {
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range`);
+                }
             }
         }
         if (this.isCurrent) {
