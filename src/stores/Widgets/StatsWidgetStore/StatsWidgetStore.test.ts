@@ -1,5 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
+import {AppStore} from "stores";
+
 import {StatsWidgetStore} from "./StatsWidgetStore";
 
 jest.mock("enums", () => ({Polarizations: {}, RegionsType: {CLOSED: 0}}));
@@ -41,5 +43,23 @@ describe("StatsWidgetStore requirements", () => {
         ]);
 
         expect(StatsWidgetStore.diffStatsRequirements(originalRequirements, updatedRequirements)).toEqual([updatedRequirements.get(0)?.get(-1)]);
+    });
+
+    test("shares selected-statistic processing but gives each coordinate its own list", () => {
+        const previousStatistics = AppStore.Instance.preferenceStore.statistics;
+        Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, "SNR"]});
+        const frame = {frameInfo: {fileId: 0}, regionSet: {regions: []}};
+        const widgets = new Map([
+            ["a", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "z"} as any],
+            ["b", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "x"} as any]
+        ]);
+
+        const requirements = StatsWidgetStore.calculateRequirementsMap(widgets).get(0)?.get(-1)?.statsConfigs ?? [];
+
+        expect(requirements).toHaveLength(2);
+        expect(requirements[0].statsTypes).toEqual([CARTA.StatsType.NumPixels, CARTA.StatsType.Mean]);
+        expect(requirements[1].statsTypes).toEqual([CARTA.StatsType.NumPixels, CARTA.StatsType.Mean]);
+        expect(requirements[0].statsTypes).not.toBe(requirements[1].statsTypes);
+        Object.assign(AppStore.Instance.preferenceStore, {statistics: previousStatistics});
     });
 });

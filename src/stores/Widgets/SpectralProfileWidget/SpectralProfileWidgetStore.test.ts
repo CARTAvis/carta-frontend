@@ -133,6 +133,29 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
     });
 });
 
+describe("SpectralProfileWidgetStore spectral requirement diffs", () => {
+    test("compares statistic enums numerically without mutating either requirement", () => {
+        const original = new CARTA.SetSpectralRequirements({
+            fileId: 0,
+            regionId: 1,
+            spectralProfiles: [{coordinate: "z", statsTypes: [CARTA.StatsType.Extrema, CARTA.StatsType.Mean]}]
+        });
+        const updated = new CARTA.SetSpectralRequirements({
+            fileId: 0,
+            regionId: 1,
+            spectralProfiles: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean, CARTA.StatsType.Extrema]}]
+        });
+        const originalStats = [...original.spectralProfiles[0].statsTypes];
+        const updatedStats = [...updated.spectralProfiles[0].statsTypes];
+
+        const diff = SpectralProfileWidgetStore.diffSpectralRequirements(new Map([[0, new Map([[1, original]])]]), new Map([[0, new Map([[1, updated]])]]));
+
+        expect(diff).toEqual([]);
+        expect(original.spectralProfiles[0].statsTypes).toEqual(originalStats);
+        expect(updated.spectralProfiles[0].statsTypes).toEqual(updatedStats);
+    });
+});
+
 describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
 

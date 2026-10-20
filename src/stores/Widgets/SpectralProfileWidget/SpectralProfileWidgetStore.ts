@@ -1127,8 +1127,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
-                        const sortedConfigs = regionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
+                        const sortedUpdatedConfigs = [...updatedRegionRequirements.spectralProfiles].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
+                        const sortedConfigs = [...regionRequirements.spectralProfiles].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
@@ -1150,8 +1150,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                                 return;
                             }
 
-                            const sortedUpdatedStats = updatedConfig.statsTypes?.sort();
-                            const sortedStats = config.statsTypes?.sort();
+                            const sortedUpdatedStats = [...(updatedConfig.statsTypes ?? [])].sort((a, b) => a - b);
+                            const sortedStats = [...(config.statsTypes ?? [])].sort((a, b) => a - b);
                             for (let j = 0; j < updatedStatsCount; j++) {
                                 if (sortedUpdatedStats?.[j] !== sortedStats?.[j]) {
                                     diffList.push(updatedRegionRequirements);
