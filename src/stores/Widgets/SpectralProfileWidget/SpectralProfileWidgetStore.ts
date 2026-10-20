@@ -26,6 +26,7 @@ import {
     GetCommonIntensityOptions,
     GetIntensityConversion,
     GetIntensityOptions,
+    type IdentifiedWidgetStore,
     type IntensityConfig,
     IsFrequencyDensityUnit,
     IsIntensitySupported,
@@ -75,6 +76,8 @@ export type MultiPlotData = {
 
 /** What a spectral profiler widget saves of its plot and rest frame. */
 export interface SpectralProfileWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
@@ -91,7 +94,8 @@ export interface SpectralProfileWidgetConfig {
     yAxisRestFrameEnabled: boolean;
 }
 
-export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>> {
+export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -1238,6 +1242,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
             this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
@@ -1290,6 +1297,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
 
     public toConfig = (): SpectralProfileWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
