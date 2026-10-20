@@ -19,6 +19,7 @@ function createRenderConfig() {
         },
         applyConfig: jest.fn((config: {useCubeHistogram?: boolean}) => runInAction(() => (state.isUsingCubeHistogram = config.useCubeHistogram ?? false))),
         updateSiblings: jest.fn(),
+        setStokesIndex: jest.fn(),
         awaitCompleteCubeHistogram: jest.fn(),
         keepRangeWithoutCubeHistogram: jest.fn(),
         /** Report the cube histogram's progress, as the backend's messages do. */
@@ -28,13 +29,20 @@ function createRenderConfig() {
 
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
-    return {
+    const frame = {
         frameInfo: {fileId},
         center: {x: 0, y: 0},
         isAxisZoomable: false,
         zoomLevel: 1,
         spatialReference: undefined,
-        setChannels: jest.fn(),
+        setChannels: jest.fn((_channel: number, stokes: number) => {
+            frame.requiredPolarizationIndex = stokes;
+        }),
+        requiredPolarizationIndex: 0,
+        coordinateOptionsZ: [
+            {value: "Iz", label: "I"},
+            {value: "Qz", label: "Q"}
+        ],
         renderConfig: createRenderConfig(),
         contourConfig: {applyConfig: jest.fn()},
         vectorOverlayConfig: {applyConfig: jest.fn()},
@@ -42,6 +50,7 @@ function createFrame(fileId: number) {
         applyVectorOverlay: jest.fn(),
         regionSet: {addExistingRegion: jest.fn(), selectSingleRegion: jest.fn()}
     };
+    return frame;
 }
 
 /**
@@ -103,7 +112,7 @@ function createSession() {
             return Promise.resolve(10);
         }),
         getFrame: jest.fn((fileId: number) => frames.get(fileId)),
-        requestCubeHistogram: jest.fn((_fileId?: number) => {
+        requestCubeHistogram: jest.fn((_fileId?: number, _coordinate?: string) => {
             calls.push("requestCubeHistogram");
         }),
         cancelCubeHistogramRequest: jest.fn(),
@@ -609,7 +618,7 @@ describe("WorkspaceRestorer", () => {
 
         test("computes its cube histogram again while the catalogs open, and waits for it before the layout", async () => {
             const {appStore, calls} = createSession();
-            appStore.requestCubeHistogram.mockImplementation((fileId?: number) => {
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
                 calls.push("requestCubeHistogram");
                 const renderConfig = appStore.getFrame(fileId as number)!.renderConfig;
                 // Complete only once the catalogs have started opening.
@@ -627,12 +636,25 @@ describe("WorkspaceRestorer", () => {
             const frame = appStore.frames[0];
             expect(issues).toEqual([]);
             expect(frame.renderConfig.awaitCompleteCubeHistogram).toHaveBeenCalledTimes(1);
-            expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId);
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Iz");
             expect(calls.indexOf("requestCubeHistogram")).toBeLessThan(calls.indexOf("appendCatalog"));
             expect(calls.indexOf("cubeHistogramComplete")).toBeLessThan(calls.indexOf("applyLayout"));
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5});
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
+        });
+
+        test("asks for the cube histogram of the Stokes it is restored in, and files the result under it", async () => {
+            const {appStore} = createSession();
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
+                setTimeout(() => appStore.getFrame(fileId as number)!.renderConfig.reportCubeHistogramProgress(1), 0);
+            });
+
+            await restore(createWorkspace({files: [{...cubeImage, stokes: 1}]}));
+
+            const frame = appStore.frames[0];
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Qz");
+            expect(frame.renderConfig.setStokesIndex).toHaveBeenCalledWith(1);
         });
 
         test("asks for nothing when only its contours were taken from the cube histogram", async () => {
@@ -641,6 +663,25 @@ describe("WorkspaceRestorer", () => {
             await restore(createWorkspace({files: [{...IMAGE, renderConfig: {useCubeHistogramContours: true}}]}));
 
             expect(appStore.requestCubeHistogram).not.toHaveBeenCalled();
+        });
+
+        test("leaves no image waiting on its cube histogram once a later load has taken over without clearing the session", async () => {
+            jest.useFakeTimers();
+            const {appStore} = createSession();
+
+            const pending = restoreIssues(createWorkspace({files: [cubeImage, {...cubeImage, id: 2}]}));
+            await jest.advanceTimersByTimeAsync(0);
+            // A later load claims the session, then fails to fetch its workspace, so these images stay.
+            WorkspaceRestorer.claimGeneration();
+            await jest.advanceTimersByTimeAsync(60_000);
+            const issues = await pending;
+
+            const [first, second] = appStore.frames;
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
+            expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(issues).toEqual([]);
         });
 
         test("keeps its saved range as a custom one when the backend stops reporting progress", async () => {
