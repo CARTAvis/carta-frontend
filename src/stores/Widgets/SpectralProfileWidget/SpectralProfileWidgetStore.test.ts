@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -82,6 +82,20 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
         expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Median)).toBe(false);
         expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Mean)).toBe(true);
+    });
+
+    test("assigns a color to Mean when disabled extras leave it as the multi-profile fallback", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
+        selection.selectStatMultiMode(CARTA.StatsType.Median);
+        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        selection.setActiveProfileCategory(MultiProfileCategory.STATISTIC);
+
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
+        expect(widgetStore.getProfileColor(CARTA.StatsType.Mean)).toBeDefined();
     });
 
     test("keeps every moment available and selected on a linear spectral axis", () => {
