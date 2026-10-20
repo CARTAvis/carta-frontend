@@ -7,8 +7,10 @@ import {AppStore} from "stores";
 
 import {HistogramWidgetStore} from "./HistogramWidgetStore/HistogramWidgetStore";
 import {ACTIVE_FILE_ID} from "./RegionWidgetStore/RegionWidgetStore";
+import {RenderConfigWidgetStore} from "./RenderConfigWidgetStore/RenderConfigWidgetStore";
 import {SpatialProfileWidgetStore} from "./SpatialProfileWidgetStore/SpatialProfileWidgetStore";
 import {StatsWidgetStore} from "./StatsWidgetStore/StatsWidgetStore";
+import {StokesAnalysisWidgetStore} from "./StokesAnalysisWidgetStore/StokesAnalysisWidgetStore";
 
 /** A session holding two images with Stokes I and Q, the first of them in front. */
 function createSession() {
@@ -134,5 +136,77 @@ describe("what a widget shows of its image, in a workspace", () => {
         expect(restored.applyWorkspaceConfig(config)).toEqual([]);
         expect(restored.coordinate).toBe("Qz");
         expect(restored.applyWorkspaceConfig({coordinate: "Wz"})).toEqual(["it cannot be taken in the Stokes Wz"]);
+    });
+});
+
+describe("the range a widget was zoomed to, in a workspace", () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("a spatial profiler is zoomed back to the range it was saved at, on each axis that was zoomed", () => {
+        createSession();
+        const store = new SpatialProfileWidgetStore();
+        store.setXBounds(1, 2);
+        const config = store.toWorkspaceConfig(WRITER);
+
+        const restored = new SpatialProfileWidgetStore();
+        restored.applyWorkspaceBinding(config, READER);
+        restored.applyWorkspaceConfig(config);
+
+        expect(config).toEqual(expect.objectContaining({minX: 1, maxX: 2}));
+        expect(config).not.toHaveProperty("minY");
+        expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([1, 2, undefined, undefined]);
+    });
+
+    test("a widget that could not be pointed at the image it was saved showing is not zoomed to that image's range", () => {
+        createSession();
+        const store = new SpatialProfileWidgetStore();
+
+        store.applyWorkspaceBinding({imageId: 4, minX: 1, maxX: 2}, READER);
+        store.applyWorkspaceConfig({imageId: 4, minX: 1, maxX: 2});
+
+        expect([store.minX, store.maxX]).toEqual([undefined, undefined]);
+    });
+
+    test("a histogram is computed between the pixel values it was saved with", () => {
+        createSession();
+        const store = new HistogramWidgetStore();
+        store.setAutoBounds(false);
+        store.setMinPix(-1);
+        store.setMaxPix(5);
+        const config = store.toWorkspaceConfig(WRITER);
+
+        const restored = new HistogramWidgetStore();
+        restored.applyWorkspaceConfig(config);
+
+        expect(config.pixelBounds).toEqual({min: -1, max: 5});
+        expect([restored.isCurrentAutoBounds, restored.currentMinPix, restored.currentMaxPix]).toEqual([false, -1, 5]);
+    });
+
+    test("a Stokes analysis widget's plots are zoomed back to the bounds they were saved at", () => {
+        createSession();
+        const store = new StokesAnalysisWidgetStore();
+        store.setSharedXBounds(1, 2);
+        store.setPolAngleYBounds(-90, 90);
+        const config = store.toWorkspaceConfig(WRITER);
+
+        const restored = new StokesAnalysisWidgetStore();
+        restored.applyWorkspaceConfig(config);
+
+        expect(config.ranges).toEqual({sharedMinX: 1, sharedMaxX: 2, polAngleMinY: -90, polAngleMaxY: 90});
+        expect([restored.sharedMinX, restored.sharedMaxX, restored.polAngleMinY, restored.polAngleMaxY, restored.quMinY]).toEqual([1, 2, -90, 90, undefined]);
+    });
+
+    test("a render config widget's histogram is zoomed back to the range it was saved at", () => {
+        createSession();
+        const store = new RenderConfigWidgetStore();
+        store.setXBounds(0, 10);
+        store.setYBounds(1, 100);
+
+        const restored = new RenderConfigWidgetStore();
+        restored.applyWorkspaceConfig(store.toWorkspaceConfig());
+
+        expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([0, 10, 1, 100]);
     });
 });
