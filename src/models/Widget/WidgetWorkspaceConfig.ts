@@ -57,12 +57,15 @@ export interface WorkspaceIdReader {
 /**
  * A widget's store that keeps Widget Config in a workspace.
  *
- * A restore applies it in two steps, letting what the widget does when it is pointed at other data
- * settle in between: first which image and region the widget shows, then the rest. Each step
- * answers what it could not bring back, as sentences about the widget.
+ * A restore applies it in three steps, letting what the widget does when it is pointed at other
+ * data settle in between: first which image and region the widget shows, then what it shows of
+ * them, and last the range it was zoomed to, which changing any of that resets. The first two answer
+ * what they could not bring back, as sentences about the widget; the range is left out when they
+ * could not.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;
     applyWorkspaceBinding(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceConfig(config: TConfig, ids: WorkspaceIdReader): string[];
+    applyWorkspaceView(config: TConfig): void;
 }

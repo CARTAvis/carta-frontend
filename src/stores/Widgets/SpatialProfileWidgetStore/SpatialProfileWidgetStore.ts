@@ -361,7 +361,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceSpatialProfileWidgetConfig => ({
         ...this.toWorkspaceBinding(ids),
         ...(this.selectedStokes !== DEFAULT_STOKES ? {stokes: this.selectedStokes} : {}),
-        ...toWorkspacePlotRange(this)
+        ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
     });
 
     public applyWorkspaceBinding = (config: WorkspaceSpatialProfileWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
@@ -375,10 +375,13 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
                 problems.push(`the image it shows has no Stokes ${config.stokes}, so it shows the current one`);
             }
         }
+        return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceSpatialProfileWidgetConfig): void => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }
-        return problems;
     };
 
     public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {

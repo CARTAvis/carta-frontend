@@ -751,9 +751,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Stage 8: point the widgets and plots at the catalogs, images and regions just restored.
      *
-     * A profile, analysis or statistics widget is pointed at its image and region first, and given
-     * the rest of what it showed only once it has settled: pointing a widget at another image resets
-     * what it shows of it.
+     * A profile, analysis or statistics widget is pointed at its image and region first, given the
+     * rest of what it showed once it has settled, and zoomed last: pointing a widget at another image
+     * resets what it shows of it, and changing what it shows resets its zoom.
      */
     private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
@@ -763,6 +763,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.issues.push(...this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this));
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return;
+        }
+        this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
     }
 
     public wasActiveImageRestored(): boolean {
