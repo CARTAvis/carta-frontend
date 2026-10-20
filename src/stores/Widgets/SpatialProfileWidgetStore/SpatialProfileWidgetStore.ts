@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
 import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceSpatialProfileWidgetConfig} from "models";
-import {AppStore, ProfileSmoothingStore} from "stores";
+import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
@@ -25,6 +25,9 @@ export interface SpatialProfileWidgetConfig {
     wcsAxisVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    markerTextVisible: boolean;
+    settingsTabId: SpatialProfilerSettingsTabs;
+    smoothing: ProfileSmoothingConfig;
 }
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig> {
@@ -406,11 +409,23 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (Object.values(SpatialProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpatialProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpatialProfilerSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
+        }
     };
 
     public toConfig = (): SpatialProfileWidgetConfig => {
         return {
             widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig(),
             coordinate: this.coordinate,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
