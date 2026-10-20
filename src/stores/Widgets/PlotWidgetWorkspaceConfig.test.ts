@@ -154,10 +154,26 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         const restored = new SpatialProfileWidgetStore();
         restored.applyWorkspaceBinding(config, READER);
         restored.applyWorkspaceConfig(config);
+        restored.applyWorkspaceView(config);
 
         expect(config).toEqual(expect.objectContaining({minX: 1, maxX: 2}));
         expect(config).not.toHaveProperty("minY");
         expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([1, 2, undefined, undefined]);
+    });
+
+    test("leaves out the range of an image the workspace does not carry", () => {
+        createSession();
+        const store = new HistogramWidgetStore();
+        store.setFileId(7);
+        store.setXBounds(1, 2);
+        store.setAutoBounds(false);
+        store.setMinPix(-1);
+        store.setMaxPix(5);
+
+        const config = store.toWorkspaceConfig(WRITER);
+
+        expect(config).not.toHaveProperty("minX");
+        expect(config).not.toHaveProperty("pixelBounds");
     });
 
     test("a widget that could not be pointed at the image it was saved showing is not zoomed to that image's range", () => {
@@ -165,7 +181,7 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         const store = new SpatialProfileWidgetStore();
 
         store.applyWorkspaceBinding({imageId: 4, minX: 1, maxX: 2}, READER);
-        store.applyWorkspaceConfig({imageId: 4, minX: 1, maxX: 2});
+        store.applyWorkspaceView({imageId: 4, minX: 1, maxX: 2});
 
         expect([store.minX, store.maxX]).toEqual([undefined, undefined]);
     });
@@ -176,7 +192,7 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         const config = {minX: 1, maxX: 2, pixelBounds: {min: -1, max: 5}};
 
         const problems = store.applyWorkspaceBinding(config, {...READER, wasActiveImageRestored: () => false});
-        store.applyWorkspaceConfig(config);
+        store.applyWorkspaceView(config);
 
         expect(problems).toEqual(["the image it showed was not restored, so it shows the active image"]);
         expect([store.minX, store.isCurrentAutoBounds]).toEqual([undefined, true]);
@@ -191,7 +207,7 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         const config = store.toWorkspaceConfig(WRITER);
 
         const restored = new HistogramWidgetStore();
-        restored.applyWorkspaceConfig(config);
+        restored.applyWorkspaceView(config);
 
         expect(config.pixelBounds).toEqual({min: -1, max: 5});
         expect([restored.isCurrentAutoBounds, restored.currentMinPix, restored.currentMaxPix]).toEqual([false, -1, 5]);
@@ -205,7 +221,7 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         const config = store.toWorkspaceConfig(WRITER);
 
         const restored = new StokesAnalysisWidgetStore();
-        restored.applyWorkspaceConfig(config);
+        restored.applyWorkspaceView(config);
 
         expect(config.ranges).toEqual({sharedMinX: 1, sharedMaxX: 2, polAngleMinY: -90, polAngleMaxY: 90});
         expect([restored.sharedMinX, restored.sharedMaxX, restored.polAngleMinY, restored.polAngleMaxY, restored.quMinY]).toEqual([1, 2, -90, 90, undefined]);
@@ -218,8 +234,9 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         store.setYBounds(1, 100);
 
         const restored = new RenderConfigWidgetStore();
-        restored.applyWorkspaceBinding(store.toWorkspaceConfig(), READER);
-        restored.applyWorkspaceConfig(store.toWorkspaceConfig());
+        const config = store.toWorkspaceConfig(WRITER);
+        restored.applyWorkspaceBinding(config, READER);
+        restored.applyWorkspaceView(config);
 
         expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([0, 10, 1, 100]);
     });

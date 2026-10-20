@@ -496,6 +496,14 @@ export class WidgetsStore {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
     }
 
+    /** Zoom each profile, analysis and statistics widget back to the range a workspace saved, once what it shows has settled. */
+    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
+        this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
+            widgetStore.applyWorkspaceView(config);
+            return [];
+        });
+    }
+
     private restorePlotWidgetsBy(
         plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined,
         apply: (widgetStore: WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig>, config: WorkspacePlotWidgetConfig) => string[]
