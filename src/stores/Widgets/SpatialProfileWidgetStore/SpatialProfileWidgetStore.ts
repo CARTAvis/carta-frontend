@@ -128,9 +128,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
     };
 
     @action setLineRegionSampleWidth = (val: number) => {
-        if (this.effectiveRegion) {
-            this.effectiveRegion.lineRegionSampleWidth = val;
-        }
+        this.effectiveRegion?.setLineRegionSampleWidth(val);
     };
 
     constructor(coordinate: string = "x") {

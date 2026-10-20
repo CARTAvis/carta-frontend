@@ -32,6 +32,9 @@ import {
 } from "utilities";
 
 export const CURSOR_REGION_ID = 0;
+/** The widths a spatial profile along a line region can sample, in pixels. */
+export const LINE_REGION_SAMPLE_WIDTH_MIN = 1;
+export const LINE_REGION_SAMPLE_WIDTH_MAX = 20;
 export const FOCUS_REGION_RATIO = 0.4;
 
 export const CENTER_POINT_INDEX = 0;
@@ -764,6 +767,10 @@ export class RegionStore {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.isLocked = !this.isLocked;
         }
+    };
+
+    @action setLineRegionSampleWidth = (width: number) => {
+        this.lineRegionSampleWidth = width;
     };
 
     @action setLocked = (isLocked: boolean) => {
