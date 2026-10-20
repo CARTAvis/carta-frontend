@@ -259,7 +259,10 @@ describe("WidgetsStore PV preview test ids", () => {
         const saved = widgetsStore.savedPlotWidgets({imageIdOf: () => undefined});
         expect(saved).toEqual({"stats-0": {type: "stats", coordinate: "Qz"}, "stats-1": {type: "stats", coordinate: "z"}});
 
-        const issues = widgetsStore.restorePlotWidgets({"stats-1": {type: "stats", coordinate: "Uz"}, "stats-9": {type: "stats", coordinate: "Vz"}}, {fileIdOf: () => undefined, regionIdOf: () => undefined});
+        const issues = widgetsStore.restorePlotWidgets(
+            {"stats-1": {type: "stats", coordinate: "Uz"}, "stats-9": {type: "stats", coordinate: "Vz"}},
+            {fileIdOf: () => undefined, regionIdOf: () => undefined, wasActiveImageRestored: () => true}
+        );
         expect(issues).toEqual([]);
         expect(widgetsStore.statsWidgets.get("stats-4")!.coordinate).toBe("Uz");
         expect(widgetsStore.statsWidgets.get("stats-3")!.coordinate).toBe("Qz");
@@ -269,7 +272,7 @@ describe("WidgetsStore PV preview test ids", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-0"});
 
-        const issues = widgetsStore.restorePlotWidgetBindings({"stats-0": {type: "stats", imageId: 4}}, {fileIdOf: () => undefined, regionIdOf: () => undefined});
+        const issues = widgetsStore.restorePlotWidgetBindings({"stats-0": {type: "stats", imageId: 4}}, {fileIdOf: () => undefined, regionIdOf: () => undefined, wasActiveImageRestored: () => true});
 
         expect(issues).toEqual([{kind: WorkspaceItemKind.PlotWidget, subject: "stats-0", message: "Could not fully restore the widget stats-0: the image it showed was not restored, so it shows the active image"}]);
     });

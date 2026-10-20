@@ -50,6 +50,8 @@ export interface WorkspaceIdReader {
      * @param workspaceImageId - the image it was saved on; none for the image that was in front.
      */
     regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined;
+    /** Whether the image saved in front was restored, which a widget following the active image was showing. */
+    wasActiveImageRestored(): boolean;
 }
 
 /**
