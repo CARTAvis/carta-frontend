@@ -36,6 +36,7 @@ export * from "./Wcs/WCSType";
 export * from "./Wcs/WCSValidation";
 export * from "./Widget/Widget";
 export * from "./Widget/WidgetButton";
+export * from "./Widget/WidgetWorkspaceConfig";
 export * from "./Workspace";
 export * from "./zindex/zindex";
 export * from "./Zoom/Zoom";
