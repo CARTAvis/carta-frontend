@@ -206,6 +206,8 @@ export interface WorkspaceRegion {
     dashes?: number[];
     locked?: boolean;
     annotationStyles?: any;
+    /** Line and polyline regions: how many pixels wide a spatial profile along the region samples. */
+    lineRegionSampleWidth?: number;
 }
 
 export interface WorkspaceColorBlending {
@@ -264,6 +266,12 @@ export interface WorkspaceFile {
     zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
+    /** The spectral coordinate the spectral axis is shown in, and its secondary one, as the spectral settings name them. */
+    spectralCoordinate?: string;
+    spectralCoordinateSecondary?: string;
+    spectralSystem?: string;
+    /** The unit a spectral profile of the image shows its intensity in. */
+    intensityUnit?: string;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
