@@ -28,7 +28,7 @@ import {
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
 import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {type ConfigurableStore, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap, type Persisted} from "models";
+import {type ConfigurableStore, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap, type IdentifiedWidgetStore, type Persisted} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
@@ -431,6 +431,27 @@ export class WidgetsStore {
     private static isDisposable = (store: unknown): store is Disposable => {
         return typeof (store as Disposable | undefined)?.dispose === "function";
     };
+
+    private static isIdentified = (store: unknown): store is IdentifiedWidgetStore => {
+        return typeof (store as IdentifiedWidgetStore | undefined)?.widgetId === "string";
+    };
+
+    /** A widget ID no other widget with one of its own has, starting from the one preferred. */
+    private uniqueWidgetId(preferredId: string): string {
+        const taken = new Set<string>();
+        this.widgetsMap.forEach(widgets =>
+            widgets.forEach(widgetStore => {
+                if (WidgetsStore.isIdentified(widgetStore)) {
+                    taken.add(widgetStore.widgetId);
+                }
+            })
+        );
+        let widgetId = preferredId;
+        for (let index = 1; taken.has(widgetId); index++) {
+            widgetId = `${preferredId}-${index}`;
+        }
+        return widgetId;
+    }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {
         const configurable = store as Partial<ConfigurableStore<object, Persisted<object>>> | undefined;
@@ -1399,6 +1420,9 @@ export class WidgetsStore {
             const widgetStore = createStore();
             if (widgetSettings && WidgetsStore.isConfigurable(widgetStore)) {
                 widgetStore.applyConfig(widgetSettings);
+            }
+            if (WidgetsStore.isIdentified(widgetStore)) {
+                widgetStore.widgetId = this.uniqueWidgetId(widgetStore.widgetId || id);
             }
             widgets.set(id, widgetStore);
         }

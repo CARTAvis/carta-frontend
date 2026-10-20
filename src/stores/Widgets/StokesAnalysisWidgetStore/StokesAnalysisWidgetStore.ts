@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {type ConfigurableStore, type Persisted} from "models";
+import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
@@ -27,6 +27,8 @@ const DEFAULTS = {
 
 /** What a Stokes analysis widget saves of its plots. */
 export interface StokesAnalysisWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     secondaryLineColor: string;
     lineWidth: number;
@@ -38,7 +40,8 @@ export interface StokesAnalysisWidgetConfig {
     equalAxes: boolean;
 }
 
-export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>> {
+export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable sharedMinX: number | undefined = undefined;
     @observable sharedMaxX: number | undefined = undefined;
     @observable quMinY: number | undefined = undefined;
@@ -394,6 +397,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -425,6 +431,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
 
     public toConfig = (): StokesAnalysisWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             secondaryLineColor: this.secondaryLineColor,
             lineWidth: this.lineWidth,

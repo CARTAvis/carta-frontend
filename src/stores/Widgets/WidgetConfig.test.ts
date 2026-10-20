@@ -12,11 +12,12 @@ import {HistogramWidgetStore} from "./HistogramWidgetStore/HistogramWidgetStore"
 import {RenderConfigWidgetStore} from "./RenderConfigWidgetStore/RenderConfigWidgetStore";
 import {SpatialProfileWidgetStore} from "./SpatialProfileWidgetStore/SpatialProfileWidgetStore";
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidget/SpectralProfileWidgetStore";
+import {StatsWidgetStore} from "./StatsWidgetStore/StatsWidgetStore";
 import {StokesAnalysisWidgetStore} from "./StokesAnalysisWidgetStore/StokesAnalysisWidgetStore";
 
 const LAYOUT_SCHEMA = require("carta-schemas/layout_schema_2.json");
 
-const PLOT = {primaryLineColor: "#112233", lineWidth: 2, linePlotPointSize: 3, plotType: PlotType.POINTS};
+const PLOT = {widgetId: "plot-a", primaryLineColor: "#112233", lineWidth: 2, linePlotPointSize: 3, plotType: PlotType.POINTS};
 const RANGE = {minXVal: 1, maxXVal: 2, minYVal: 3, maxYVal: 4};
 
 const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, object][] = [
@@ -37,7 +38,8 @@ const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, obje
             yAxisRestFrameEnabled: true
         }
     ],
-    ["Stokes analysis", () => new StokesAnalysisWidgetStore(), {...PLOT, secondaryLineColor: "#445566", colorMap: "viridis", scatterPlotPointSize: 4, pointTransparency: 0.5, equalAxes: false}]
+    ["Stokes analysis", () => new StokesAnalysisWidgetStore(), {...PLOT, secondaryLineColor: "#445566", colorMap: "viridis", scatterPlotPointSize: 4, pointTransparency: 0.5, equalAxes: false}],
+    ["statistics", () => new StatsWidgetStore(), {widgetId: "stats-a"}]
 ];
 
 describe("widget config round trip", () => {
@@ -49,7 +51,7 @@ describe("widget config round trip", () => {
         expect(store.toConfig()).toEqual(config);
     });
 
-    test.each(WIDGETS)("a %s widget keeps its line color when the saved one is not a string", (_, createStore) => {
+    test.each(WIDGETS.filter(([, , config]) => "primaryLineColor" in config))("a %s widget keeps its line color when the saved one is not a string", (_, createStore) => {
         const store = createStore();
         const color = (store.toConfig() as {primaryLineColor: string}).primaryLineColor;
 
@@ -66,7 +68,8 @@ const LAYOUT_WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>
     ["spatial-profiler", () => new SpatialProfileWidgetStore()],
     ["spectral-profiler", () => new SpectralProfileWidgetStore()],
     ["stokes", () => new StokesAnalysisWidgetStore()],
-    ["animator", () => new AnimatorWidgetStore()]
+    ["animator", () => new AnimatorWidgetStore()],
+    ["stats", () => new StatsWidgetStore()]
 ];
 
 describe("widget config in a layout", () => {

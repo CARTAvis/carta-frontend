@@ -2,11 +2,18 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {Polarizations, RegionsType} from "enums";
-import {VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
-export class StatsWidgetStore extends RegionWidgetStore {
+/** What a statistics widget saves. */
+export interface StatsWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
+}
+
+export class StatsWidgetStore extends RegionWidgetStore implements ConfigurableStore<StatsWidgetConfig, Persisted<StatsWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable coordinate: string = "z";
 
     @action setCoordinate = (coordinate: string) => {
@@ -28,6 +35,14 @@ export class StatsWidgetStore extends RegionWidgetStore {
         super(RegionsType.CLOSED);
         makeObservable(this);
     }
+
+    public applyConfig = (widgetSettings: Persisted<StatsWidgetConfig>): void => {
+        if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
+    };
+
+    public toConfig = (): StatsWidgetConfig => ({widgetId: this.widgetId});
 
     public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
