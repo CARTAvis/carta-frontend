@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 import {ImageType, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
@@ -141,6 +143,15 @@ export class WorkspaceSnapshotter {
             };
         }
 
+        if (frame.spectralCoordsSupported?.has(frame.spectralCoordinate)) {
+            workspaceFile.spectralCoordinate = frame.spectralCoordinate;
+        }
+        if (frame.spectralCoordsSupported?.has(frame.spectralCoordinateSecondary)) {
+            workspaceFile.spectralCoordinateSecondary = frame.spectralCoordinateSecondary;
+        }
+        workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
+        workspaceFile.intensityUnit = frame.intensityUnit;
+
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
         const zoomFrame = frame.spatialReference ?? frame;
@@ -187,7 +198,8 @@ export class WorkspaceSnapshotter {
                 locked: region.isLocked,
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
-                annotationStyles: (region as any).getAnnotationStyles?.()
+                annotationStyles: (region as any).getAnnotationStyles?.(),
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
             }));
     }
 
