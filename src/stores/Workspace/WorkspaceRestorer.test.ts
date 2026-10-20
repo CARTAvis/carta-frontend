@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {observable, runInAction} from "mobx";
 
-import {CatalogSystemType, ImageType, RadiusUnits, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, RadiusUnits, RegionId, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
@@ -27,6 +27,9 @@ function createRenderConfig() {
     };
 }
 
+/** The ID the backend gives a restored region: one of its own, unrelated to the one it was saved with. */
+const RegisterRegion = jest.fn((savedRegionId: number): Promise<number> => Promise.resolve(savedRegionId + 100));
+
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
     const frame = {
@@ -48,7 +51,10 @@ function createFrame(fileId: number) {
         vectorOverlayConfig: {applyConfig: jest.fn()},
         applyContours: jest.fn(),
         applyVectorOverlay: jest.fn(),
-        regionSet: {addExistingRegion: jest.fn(), selectSingleRegion: jest.fn()}
+        regionSet: {
+            addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({regionId: await RegisterRegion(savedRegionId), setLocked: jest.fn()})),
+            selectSingleRegion: jest.fn()
+        }
     };
     return frame;
 }
@@ -176,6 +182,17 @@ async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
         step = generator.next(await step.value);
     }
     return step.value;
+}
+
+/** Drive the restore to its end, and hand back the restorer to ask what it mapped. */
+async function restored(workspace: Workspace): Promise<WorkspaceRestorer> {
+    const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration());
+    const generator = restorer.restore();
+    let step = generator.next();
+    while (!step.done) {
+        step = generator.next(await step.value);
+    }
+    return restorer;
 }
 
 /** What a restore reports, as the sentences a person reads. */
@@ -606,6 +623,63 @@ describe("WorkspaceRestorer", () => {
             kind: WorkspaceItemKind.Layout,
             subject: "",
             message: "Could not restore the layout the workspace was saved in"
+        });
+    });
+
+    describe("the regions of an image", () => {
+        const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
+
+        test("maps each region's saved ID to the one the backend gave it", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), region(2)]}}]}));
+
+            expect(restorer.regionIdOf(1, 1)).toBe(101);
+            expect(restorer.regionIdOf(1, 2)).toBe(102);
+        });
+
+        test("waits for the backend to give the regions their IDs before restoring the layout", async () => {
+            const {calls} = createSession();
+            RegisterRegion.mockImplementationOnce(
+                savedRegionId =>
+                    new Promise(resolve =>
+                        setTimeout(() => {
+                            calls.push("regionRegistered");
+                            resolve(savedRegionId + 100);
+                        }, 0)
+                    )
+            );
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}], layout: LAYOUT}));
+
+            expect(calls.indexOf("regionRegistered")).toBeGreaterThanOrEqual(0);
+            expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("regionRegistered"));
+        });
+
+        test("keeps the cursor, the whole image and the other fixed region IDs as they are", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace());
+
+            expect([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE].map(regionId => restorer.regionIdOf(1, regionId))).toEqual([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE]);
+        });
+
+        test("gives no ID for a region that was not restored", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}]}));
+
+            expect(restorer.regionIdOf(1, 2)).toBeUndefined();
+            expect(restorer.regionIdOf(7, 1)).toBeUndefined();
+        });
+
+        test("finds a matched image's region among the regions of the image it was matched to", async () => {
+            createSession();
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}, matched]}));
+
+            expect(restorer.regionIdOf(2, 1)).toBe(101);
         });
     });
 
