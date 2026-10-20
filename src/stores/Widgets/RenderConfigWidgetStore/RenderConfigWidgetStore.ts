@@ -2,11 +2,13 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, type Persisted} from "models";
+import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted} from "models";
 import {isAutoColor} from "utilities";
 
 /** What a render config widget saves of its histogram plot. */
 export interface RenderConfigWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
@@ -20,7 +22,8 @@ export interface RenderConfigWidgetConfig {
     maxYVal: number;
 }
 
-export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>> {
+export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -128,6 +131,9 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -165,6 +171,7 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
 
     public toConfig = (): RenderConfigWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
