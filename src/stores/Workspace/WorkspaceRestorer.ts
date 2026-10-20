@@ -1,3 +1,5 @@
+import {comparer, reaction} from "mobx";
+
 import {ImageType, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
@@ -5,6 +7,12 @@ import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWo
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
+
+/**
+ * How long a cube histogram may go without progress before a restore gives up on it, in
+ * milliseconds. The backend reports its progress every two seconds while it computes.
+ */
+const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
@@ -109,6 +117,8 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         this.configureImages();
+        // Computed on the backend while the catalogs open, and waited for before the layout.
+        const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
         yield* this.openCatalogs();
@@ -116,6 +126,10 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         yield* this.configureCatalogs();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        yield* awaited(cubeHistograms);
         if (!this.isCurrent) {
             return this.issues;
         }
@@ -291,6 +305,70 @@ export class WorkspaceRestorer {
                 }
             }
         }
+    }
+
+    /**
+     * Stage 3a: compute again the cube histograms that images' percentile ranges were taken from.
+     *
+     * A workspace is a snapshot, so an image restored with such a range keeps following the cube
+     * histogram. The backend computes one cube histogram at a time for a session, so they are asked
+     * for one after another. The range applied in stage 3 stays until a cube histogram is complete,
+     * and for an unchanged file the percentile then gives it again. An image whose cube histogram
+     * does not come keeps its saved range as a custom one.
+     */
+    private async restoreCubeHistograms(): Promise<void> {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            if (!this.isCurrent) {
+                return;
+            }
+            if (!frame?.renderConfig.isUsingCubeHistogram) {
+                continue;
+            }
+
+            const imageName = describeImageSource(fileInfo.source);
+            frame.renderConfig.awaitCompleteCubeHistogram();
+            this.appStore.requestCubeHistogram(frame.frameInfo.fileId);
+            const isComplete = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
+            if (!isComplete && this.isCurrent && this.appStore.frames.includes(frame)) {
+                frame.renderConfig.keepRangeWithoutCubeHistogram();
+                this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range`);
+            }
+        }
+        if (this.isCurrent) {
+            this.appStore.setWorkspaceLoadingStep(undefined);
+        }
+    }
+
+    /**
+     * Resolve to whether an image's cube histogram completes. It does not if the image is closed,
+     * which a later workspace load does to every image, or if the backend stops reporting progress.
+     */
+    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<boolean> {
+        return new Promise(resolve => {
+            let stallTimer: ReturnType<typeof setTimeout> | undefined;
+            const finish = (isComplete: boolean, dispose: () => void) => {
+                clearTimeout(stallTimer);
+                dispose();
+                resolve(isComplete);
+            };
+            const disposeReaction = reaction(
+                () => ({progress: frame.renderConfig.cubeHistogramProgress, isOpen: this.appStore.frames.includes(frame)}),
+                ({progress, isOpen}, _previous, self) => {
+                    if (!isOpen || progress >= 1) {
+                        finish(isOpen, () => self.dispose());
+                        return;
+                    }
+                    if (this.isCurrent) {
+                        this.appStore.setWorkspaceLoadingStep({description, progress});
+                    }
+                    clearTimeout(stallTimer);
+                    stallTimer = setTimeout(() => finish(false, disposeReaction), CUBE_HISTOGRAM_STALL_TIMEOUT);
+                },
+                {fireImmediately: true, equals: comparer.structural}
+            );
+        });
     }
 
     /** Stage 4: rebuild the color-blended images made up of the images just opened. */
