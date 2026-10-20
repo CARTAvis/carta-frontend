@@ -4,6 +4,7 @@ export * from "./AnimationPlayback/AnimationPlayback";
 export * from "./CARTAInfo/CARTAInfo";
 export * from "./ChannelInfo/ChannelInfo";
 export * from "./CompressionQuality/CompressionQuality";
+export * from "./Config/ConfigurableStore";
 export * from "./ControlMap/CatalogControlMap";
 export * from "./ControlMap/ControlMap";
 export * from "./Ctype/CtypeDefinition";

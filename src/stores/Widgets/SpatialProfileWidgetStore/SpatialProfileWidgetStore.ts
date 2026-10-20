@@ -4,7 +4,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
-import {type LineOption, VALID_XY_COORDINATES} from "models";
+import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
@@ -13,7 +13,22 @@ import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 const DEFAULT_STOKES = "current";
 
-export class SpatialProfileWidgetStore extends RegionWidgetStore {
+/** What a spatial profiler widget saves of its plot. */
+export interface SpatialProfileWidgetConfig {
+    coordinate: string;
+    primaryLineColor: string;
+    lineWidth: number;
+    linePlotPointSize: number;
+    wcsAxisVisible: boolean;
+    meanRmsVisible: boolean;
+    plotType: PlotType;
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
+}
+
+export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>> {
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
     @observable minX: number | undefined = undefined;
@@ -342,15 +357,14 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.selectedStokes = stokes;
     };
 
-    public applyConfig = (widgetSettings): void => {
+    public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
         if (typeof widgetSettings.coordinate === "string" && VALID_XY_COORDINATES.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
-        const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
@@ -382,7 +396,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    public toConfig = () => {
+    public toConfig = (): SpatialProfileWidgetConfig => {
         return {
             coordinate: this.coordinate,
             primaryLineColor: this.primaryLineColor,

@@ -21,7 +21,19 @@ import {
     TelemetryAction,
     VelocityConvention
 } from "enums";
-import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D} from "models";
+import {
+    type ConfigurableStore,
+    GetCommonIntensityOptions,
+    GetIntensityConversion,
+    GetIntensityOptions,
+    type IntensityConfig,
+    IsFrequencyDensityUnit,
+    IsIntensitySupported,
+    type LineKey,
+    NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
+    type Persisted,
+    type Point2D
+} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -61,7 +73,25 @@ export type MultiPlotData = {
     progress: number;
 };
 
-export class SpectralProfileWidgetStore extends RegionWidgetStore {
+/** What a spectral profiler widget saves of its plot and rest frame. */
+export interface SpectralProfileWidgetConfig {
+    primaryLineColor: string;
+    lineWidth: number;
+    linePlotPointSize: number;
+    meanRmsVisible: boolean;
+    plotType: PlotType;
+    minXVal: number | undefined;
+    maxXVal: number | undefined;
+    minYVal: number | undefined;
+    maxYVal: number | undefined;
+    xAxisRestFrameEnabled: boolean;
+    restFrameRedshift: number;
+    restFrameShiftMode: RestFrameShiftMode;
+    restFrameVelocityConvention: VelocityConvention;
+    yAxisRestFrameEnabled: boolean;
+}
+
+export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>> {
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -1204,12 +1234,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    public applyConfig = (widgetSettings): void => {
+    public applyConfig = (widgetSettings: Persisted<SpectralProfileWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
-        const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
             this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
         }
@@ -1259,7 +1288,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.profileSelectionStore.selectFrame(fileId);
     };
 
-    public toConfig = () => {
+    public toConfig = (): SpectralProfileWidgetConfig => {
         return {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
