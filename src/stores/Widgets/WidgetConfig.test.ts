@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {PlotType, RestFrameShiftMode, VelocityConvention} from "enums";
+import {HistogramSettingsTabs, PlotType, RestFrameShiftMode, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
@@ -17,12 +17,30 @@ import {StokesAnalysisWidgetStore} from "./StokesAnalysisWidgetStore/StokesAnaly
 
 const LAYOUT_SCHEMA = require("carta-schemas/layout_schema_2.json");
 
+const SMOOTHING = {
+    type: SmoothingType.GAUSSIAN,
+    lineColor: "#123123",
+    lineType: PlotType.LINES,
+    lineWidth: 2,
+    pointRadius: 2,
+    isOverlayOn: true,
+    boxcarSize: 4,
+    gaussianSigma: 2.5,
+    hanningSize: 5,
+    decimationWidth: 4,
+    binWidth: 3,
+    savitzkyGolaySize: 7,
+    savitzkyGolayOrder: 2,
+    selectedLine: "q",
+    lineColors: {q: "#ff0000"}
+};
+
 const PLOT = {widgetId: "plot-a", primaryLineColor: "#112233", lineWidth: 2, linePlotPointSize: 3, plotType: PlotType.POINTS};
 
 const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, object][] = [
     ["render config", () => new RenderConfigWidgetStore(), {...PLOT, logScaleY: false, markerTextVisible: false, meanRmsVisible: false}],
-    ["histogram", () => new HistogramWidgetStore(), {...PLOT, logScaleY: false, meanRmsVisible: true}],
-    ["spatial profiler", () => new SpatialProfileWidgetStore(), {...PLOT, coordinate: "y", wcsAxisVisible: false, meanRmsVisible: true}],
+    ["histogram", () => new HistogramWidgetStore(), {...PLOT, logScaleY: false, meanRmsVisible: true, settingsTabId: HistogramSettingsTabs.STYLING, autoBins: false, numBins: 40}],
+    ["spatial profiler", () => new SpatialProfileWidgetStore(), {...PLOT, coordinate: "y", wcsAxisVisible: false, meanRmsVisible: true, markerTextVisible: true, settingsTabId: SpatialProfilerSettingsTabs.SMOOTHING, smoothing: SMOOTHING}],
     [
         "spectral profiler",
         () => new SpectralProfileWidgetStore(),
@@ -30,10 +48,30 @@ const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, obje
             ...PLOT,
             meanRmsVisible: true,
             restFrameShiftMode: RestFrameShiftMode.REDSHIFT,
-            restFrameVelocityConvention: VelocityConvention.OPTICAL
+            restFrameVelocityConvention: VelocityConvention.OPTICAL,
+            markerTextVisible: true,
+            secondaryAxisCursorInfoVisible: true,
+            settingsTabId: SpectralProfilerSettingsTabs.SMOOTHING,
+            smoothing: SMOOTHING
         }
     ],
-    ["Stokes analysis", () => new StokesAnalysisWidgetStore(), {...PLOT, secondaryLineColor: "#445566", colorMap: "viridis", scatterPlotPointSize: 4, pointTransparency: 0.5, equalAxes: false}],
+    [
+        "Stokes analysis",
+        () => new StokesAnalysisWidgetStore(),
+        {
+            ...PLOT,
+            secondaryLineColor: "#445566",
+            colorMap: "viridis",
+            scatterPlotPointSize: 4,
+            pointTransparency: 0.5,
+            equalAxes: false,
+            invertedColorMap: true,
+            fractionalPolVisible: true,
+            referenceAxesVisible: false,
+            settingsTabId: StokesAnalysisSettingsTabs.SMOOTHING,
+            smoothing: SMOOTHING
+        }
+    ],
     ["statistics", () => new StatsWidgetStore(), {widgetId: "stats-a"}]
 ];
 
@@ -80,5 +118,26 @@ describe("widget config in a layout", () => {
         const widget = JSON.parse(JSON.stringify({type: "component", id, widgetSettings: createStore().toConfig()}));
 
         expect(validateWidget(widget)).toBe(true);
+    });
+});
+
+describe("smoothing and Stokes settings in a layout", () => {
+    test("keeps each smoothing setting a layout saved that the controls would not accept", () => {
+        const store = new SpatialProfileWidgetStore();
+        const defaults = store.smoothingStore.toConfig();
+
+        store.applyConfig({smoothing: {type: "Median", boxcarSize: 1.5, savitzkyGolayOrder: 6, lineColors: {q: 7}}});
+
+        expect(store.smoothingStore.toConfig()).toEqual(defaults);
+    });
+
+    test("draws a Stokes analysis scatter plot in the colormap a layout saved", () => {
+        const store = new StokesAnalysisWidgetStore();
+        const defaultColors = store.colorPixel;
+
+        store.applyConfig({colorMap: "viridis"});
+
+        expect(store.colorMap).toBe("viridis");
+        expect(store.colorPixel).not.toBe(defaultColors);
     });
 });
