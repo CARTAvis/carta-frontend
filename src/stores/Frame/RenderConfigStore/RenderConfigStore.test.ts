@@ -240,6 +240,17 @@ describe("RenderConfigStore workspace restore", () => {
         expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
     });
 
+    test("forgets that the cube histogram was asked for once it is cleared", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.markCubeHistogramRequested();
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+        expect(renderConfig.isCubeHistogramRequested).toBe(true);
+
+        renderConfig.updateCubeHistogram(null, 0);
+        expect(renderConfig.isCubeHistogramRequested).toBe(false);
+    });
+
     test("keeps a restored custom range when a histogram arrives", () => {
         const renderConfig = createRenderConfig();
 
