@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStokesAnalysisWidgetConfig} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
@@ -40,7 +40,7 @@ export interface StokesAnalysisWidgetConfig {
     equalAxes: boolean;
 }
 
-export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, IdentifiedWidgetStore {
+export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceStokesAnalysisWidgetConfig> {
     widgetId: string = "";
     @observable sharedMinX: number | undefined = undefined;
     @observable sharedMaxX: number | undefined = undefined;
@@ -392,6 +392,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
     @computed get referenceAxesColor() {
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
+
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStokesAnalysisWidgetConfig => this.toWorkspaceBinding(ids);
+
+    public applyWorkspaceBinding = (config: WorkspaceStokesAnalysisWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (): string[] => [];
 
     public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
         if (!widgetSettings) {

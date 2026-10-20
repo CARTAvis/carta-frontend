@@ -3,7 +3,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
-import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted, VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceHistogramWidgetConfig, type WorkspaceIdReader, type WorkspaceIdWriter} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -24,7 +24,7 @@ export interface HistogramWidgetConfig {
     maxYVal: number;
 }
 
-export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, IdentifiedWidgetStore {
+export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig> {
     widgetId: string = "";
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
@@ -68,6 +68,21 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
     private cachedMinPix: number;
     private cachedMaxPix: number;
     private cachedNumBins: number;
+
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceHistogramWidgetConfig => ({...this.toWorkspaceBinding(ids), coordinate: this.coordinate});
+
+    public applyWorkspaceBinding = (config: WorkspaceHistogramWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (config: WorkspaceHistogramWidgetConfig): string[] => {
+        if (config.coordinate === undefined || config.coordinate === this.coordinate) {
+            return [];
+        }
+        if (!VALID_COORDINATES.includes(config.coordinate)) {
+            return [`it cannot be taken in the Stokes ${config.coordinate}`];
+        }
+        this.setCoordinate(config.coordinate);
+        return [];
+    };
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
