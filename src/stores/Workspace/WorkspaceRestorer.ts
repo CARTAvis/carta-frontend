@@ -1,10 +1,21 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, RegionId, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, describeImageSource, isWidgetWorkspaceConfigOf, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {ImageType, RegionId, type SpectralSystem, WorkspaceItemKind} from "enums";
+import {
+    describeCatalogSource,
+    describeImageSource,
+    GetIntensityOptions,
+    isWidgetWorkspaceConfigOf,
+    type Workspace,
+    type WorkspaceCatalog,
+    type WorkspaceCatalogSource,
+    type WorkspaceFile,
+    type WorkspaceImageSource,
+    type WorkspaceIssue
+} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
-import {type FrameStore} from "stores/Frame";
+import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
 
@@ -257,6 +268,8 @@ export class WorkspaceRestorer {
                 }
             }
 
+            this.restoreSpectralSettings(frame, fileInfo);
+
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
                 frame.applyContours();
@@ -282,6 +295,35 @@ export class WorkspaceRestorer {
             this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
         return Promise.all(regions);
+    }
+
+    /**
+     * The spectral coordinates, spectral system and intensity unit the image was shown in, set on
+     * the image alone: an image spectrally matched to another was saved with that one's.
+     */
+    private restoreSpectralSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const imageName = describeImageSource(fileInfo.source);
+        const unsupported: string[] = [];
+        if (fileInfo.spectralCoordinate !== undefined && !frame.setSpectralCoordinate(fileInfo.spectralCoordinate, false)) {
+            unsupported.push(`the spectral coordinate ${fileInfo.spectralCoordinate}`);
+        }
+        if (fileInfo.spectralCoordinateSecondary !== undefined && !frame.setSpectralCoordinateSecondary(fileInfo.spectralCoordinateSecondary, false)) {
+            unsupported.push(`the secondary spectral coordinate ${fileInfo.spectralCoordinateSecondary}`);
+        }
+        if (fileInfo.spectralSystem !== undefined && !frame.setSpectralSystem(fileInfo.spectralSystem as SpectralSystem, false)) {
+            unsupported.push(`the spectral system ${fileInfo.spectralSystem}`);
+        }
+        const intensityUnit = fileInfo.intensityUnit;
+        if (intensityUnit !== undefined) {
+            if (intensityUnit === frame.headerUnit || GetIntensityOptions(frame.intensityConfig).includes(intensityUnit)) {
+                frame.setIntensityUnit(intensityUnit);
+            } else {
+                unsupported.push(`the intensity unit ${intensityUnit}`);
+            }
+        }
+        if (unsupported.length) {
+            this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} in ${unsupported.join(", ")}`);
+        }
     }
 
     /**
@@ -314,6 +356,10 @@ export class WorkspaceRestorer {
                 );
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
+                const sampleWidth = regionInfo.lineRegionSampleWidth;
+                if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
+                    region.setLineRegionSampleWidth(sampleWidth);
+                }
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }

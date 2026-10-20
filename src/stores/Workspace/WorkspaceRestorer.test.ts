@@ -51,8 +51,18 @@ function createFrame(fileId: number) {
         vectorOverlayConfig: {applyConfig: jest.fn()},
         applyContours: jest.fn(),
         applyVectorOverlay: jest.fn(),
+        headerUnit: "Jy/beam",
+        intensityConfig: {nativeIntensityUnit: "Jy/beam"},
+        setSpectralCoordinate: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
+        setSpectralCoordinateSecondary: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
+        setSpectralSystem: jest.fn((system: string, _shouldAlignSiblings?: boolean) => system !== "Unsupported"),
+        setIntensityUnit: jest.fn(),
         regionSet: {
-            addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({regionId: await RegisterRegion(savedRegionId), setLocked: jest.fn()})),
+            addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({
+                regionId: await RegisterRegion(savedRegionId),
+                setLocked: jest.fn(),
+                setLineRegionSampleWidth: jest.fn()
+            })),
             selectSingleRegion: jest.fn()
         }
     };
@@ -626,6 +636,28 @@ describe("WorkspaceRestorer", () => {
         });
     });
 
+    test("shows an image in the spectral coordinates, spectral system and intensity unit it was saved in, without aligning other images", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Radio velocity (km/s)", spectralCoordinateSecondary: "Channel", spectralSystem: "LSRK", intensityUnit: "Jy/beam"}]}));
+
+        const frame = appStore.frames[0];
+        expect(problems).toEqual([]);
+        expect(frame.setSpectralCoordinate).toHaveBeenCalledWith("Radio velocity (km/s)", false);
+        expect(frame.setSpectralCoordinateSecondary).toHaveBeenCalledWith("Channel", false);
+        expect(frame.setSpectralSystem).toHaveBeenCalledWith("LSRK", false);
+        expect(frame.setIntensityUnit).toHaveBeenCalledWith("Jy/beam");
+    });
+
+    test("reports the spectral settings an image can no longer be shown in", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Unsupported", spectralSystem: "Unsupported", intensityUnit: "K"}]}));
+
+        expect(problems).toEqual(["Could not show image.fits in the spectral coordinate Unsupported, the spectral system Unsupported, the intensity unit K"]);
+        expect(appStore.frames[0].setIntensityUnit).not.toHaveBeenCalled();
+    });
+
     describe("the regions of an image", () => {
         const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
 
@@ -671,6 +703,29 @@ describe("WorkspaceRestorer", () => {
 
             expect(restorer.regionIdOf(1, 2)).toBeUndefined();
             expect(restorer.regionIdOf(7, 1)).toBeUndefined();
+        });
+
+        test("puts back the sample width of a line region, and ignores one no control allows", async () => {
+            const {appStore} = createSession();
+
+            await restore(
+                createWorkspace({
+                    files: [
+                        {
+                            ...IMAGE,
+                            regionsSet: {
+                                regions: [
+                                    {...region(1), lineRegionSampleWidth: 7},
+                                    {...region(2), lineRegionSampleWidth: 50}
+                                ]
+                            }
+                        }
+                    ]
+                })
+            );
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setLineRegionSampleWidth: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setLineRegionSampleWidth.mock.calls)).toEqual([[[7]], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {
