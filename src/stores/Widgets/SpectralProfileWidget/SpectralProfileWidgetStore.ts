@@ -1322,6 +1322,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     @action public applyWorkspaceBinding = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         const category = Object.values(MultiProfileCategory).find(value => value === config.profileCategory) ?? MultiProfileCategory.NONE;
         this.profileSelectionStore.applyWorkspaceSelection({category});
+        // The rest frame here too: a change of its Y scale resets the Y range, which the second step restores.
+        if (typeof config.restFrameRedshift === "number" && isValidRedshift(config.restFrameRedshift)) {
+            this.restFrameRedshift = config.restFrameRedshift;
+        }
+        if (typeof config.xAxisRestFrameEnabled === "boolean") {
+            this.isXAxisRestFrameEnabled = config.xAxisRestFrameEnabled;
+        }
+        if (typeof config.yAxisRestFrameEnabled === "boolean") {
+            this.isYAxisRestFrameEnabled = config.yAxisRestFrameEnabled;
+        }
         return this.applyWorkspaceBindingOf(config, ids);
     };
 
@@ -1361,17 +1371,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (config.intensityUnit !== undefined) {
             this.setMultiProfileIntensityUnit(config.intensityUnit);
         }
-        if (typeof config.restFrameRedshift === "number" && isValidRedshift(config.restFrameRedshift)) {
-            this.restFrameRedshift = config.restFrameRedshift;
-        }
-        if (typeof config.xAxisRestFrameEnabled === "boolean") {
-            this.isXAxisRestFrameEnabled = config.xAxisRestFrameEnabled;
-        }
-        if (typeof config.yAxisRestFrameEnabled === "boolean") {
-            this.isYAxisRestFrameEnabled = config.yAxisRestFrameEnabled;
-        }
-        // Last: pointing the widget at a region clears the range it was zoomed to.
-        if (this.isShowingWorkspaceData) {
+        // Last: pointing the widget at a region clears the range it was zoomed to. A range is of the
+        // profiles shown, so it is not kept when some of them could not be.
+        if (this.isShowingWorkspaceData && !problems.length) {
             applyWorkspacePlotRange(this, config);
         }
         return problems;
