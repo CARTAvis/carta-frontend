@@ -3,13 +3,15 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
-import {type ConfigurableStore, type Persisted, VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type IdentifiedWidgetStore, type Persisted, VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 /** What a histogram widget saves of its plot. */
 export interface HistogramWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
@@ -22,7 +24,8 @@ export interface HistogramWidgetConfig {
     maxYVal: number;
 }
 
-export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>> {
+export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
@@ -428,6 +431,9 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -462,6 +468,7 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
 
     public toConfig = (): HistogramWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
