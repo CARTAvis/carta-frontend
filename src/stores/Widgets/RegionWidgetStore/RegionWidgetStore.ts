@@ -53,6 +53,12 @@ export class RegionWidgetStore {
         return {...(typeof imageId === "number" ? {imageId} : {}), ...(regions.length ? {regions} : {})};
     }
 
+    /** Whether the image the widget shows is one the workspace carries, so that what it shows of it can be saved. */
+    protected isShowingSavedImage(ids: WorkspaceIdWriter): boolean {
+        const fileId = this.effectiveFrame?.frameInfo.fileId;
+        return fileId !== undefined && ids.imageIdOf(fileId) !== undefined;
+    }
+
     /**
      * Point the widget at the image and region a workspace says it showed, falling back to the
      * active ones for those that were not restored.

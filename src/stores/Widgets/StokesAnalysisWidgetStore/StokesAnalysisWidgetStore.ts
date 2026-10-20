@@ -413,7 +413,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
 
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStokesAnalysisWidgetConfig => {
         const ranges: Partial<Record<WorkspaceStokesAnalysisRange, number>> = {};
-        for (const [min, max] of STOKES_ANALYSIS_RANGES) {
+        for (const [min, max] of this.isShowingSavedImage(ids) ? STOKES_ANALYSIS_RANGES : []) {
             if (isWorkspaceRange(this[min], this[max])) {
                 ranges[min] = this[min];
                 ranges[max] = this[max];
@@ -424,7 +424,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
 
     public applyWorkspaceBinding = (config: WorkspaceStokesAnalysisWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
 
-    @action public applyWorkspaceConfig = (config: WorkspaceStokesAnalysisWidgetConfig): string[] => {
+    public applyWorkspaceConfig = (): string[] => [];
+
+    @action public applyWorkspaceView = (config: WorkspaceStokesAnalysisWidgetConfig): void => {
         if (this.isShowingWorkspaceData) {
             for (const [min, max] of STOKES_ANALYSIS_RANGES) {
                 if (isWorkspaceRange(config.ranges?.[min], config.ranges?.[max])) {
@@ -433,7 +435,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
                 }
             }
         }
-        return [];
     };
 
     public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
