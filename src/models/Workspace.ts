@@ -395,6 +395,37 @@ export interface WorkspaceCatalogPlotConfig {
 }
 
 /**
+ * Which image and region a widget shows, each by the ID the workspace saved it with. An image left
+ * out is the active one.
+ */
+export interface WorkspaceWidgetBinding {
+    /** Workspace ID of the image the widget shows, when it is not the active one. */
+    imageId?: number;
+    /** The region the widget shows of an image, by the ID the region was saved with. */
+    regions?: {imageId?: number; regionId: number}[];
+}
+
+export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding {
+    /** The Stokes the profile is taken in, when it is not the image's current one. */
+    stokes?: string;
+}
+
+export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding {
+    /** The Stokes the histogram is taken in. */
+    coordinate?: string;
+}
+
+export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
+    /** The Stokes the statistics are taken in. */
+    coordinate?: string;
+}
+
+export type WorkspaceStokesAnalysisWidgetConfig = WorkspaceWidgetBinding;
+
+/** What one profile, analysis or statistics widget shows: Widget Config (ADR-0005). */
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"spatial-profiler" | "histogram" | "stats" | "stokes">;
+
+/**
  * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
  * and so is kept by the Workspace rather than the Layout (ADR-0005).
  */
@@ -436,6 +467,8 @@ export interface Workspace {
     selectedColorBlending?: number;
     /** What each catalog table and plot widget shows, keyed by the widget's stable ID. */
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
+    /** What each profile, analysis and statistics widget shows, keyed by the widget's stable ID. */
+    plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;

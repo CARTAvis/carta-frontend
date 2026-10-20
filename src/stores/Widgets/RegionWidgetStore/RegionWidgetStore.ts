@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {RegionId, RegionsType} from "enums";
+import {type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceWidgetBinding} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 
@@ -35,6 +36,55 @@ export class RegionWidgetStore {
     @action setFileId = (fileId: number) => {
         this.fileId = fileId;
     };
+
+    /**
+     * Which image and region the widget shows, as a workspace names them. An image the workspace
+     * does not carry is left out, and the widget comes back showing the active one (ADR-0006).
+     */
+    protected toWorkspaceBinding(ids: WorkspaceIdWriter): WorkspaceWidgetBinding {
+        const imageIdOf = (fileId: number): number | undefined | null => (fileId === ACTIVE_FILE_ID ? undefined : (ids.imageIdOf(fileId) ?? null));
+        const imageId = imageIdOf(this.fileId);
+        const regions = Array.from(this.regionIdMap.entries()).flatMap(([fileId, regionId]) => {
+            const regionImageId = imageIdOf(fileId);
+            return regionImageId === null ? [] : [regionImageId === undefined ? {regionId} : {imageId: regionImageId, regionId}];
+        });
+        return {...(typeof imageId === "number" ? {imageId} : {}), ...(regions.length ? {regions} : {})};
+    }
+
+    /**
+     * Point the widget at the image and region a workspace says it showed, falling back to the
+     * active ones for those that were not restored.
+     *
+     * @returns what could not be pointed at.
+     */
+    @action protected applyWorkspaceBindingOf(binding: WorkspaceWidgetBinding, ids: WorkspaceIdReader): string[] {
+        const problems: string[] = [];
+        let fileId = ACTIVE_FILE_ID;
+        if (binding.imageId !== undefined) {
+            const restoredFileId = ids.fileIdOf(binding.imageId);
+            if (restoredFileId === undefined) {
+                problems.push("the image it showed was not restored, so it shows the active image");
+            } else {
+                fileId = restoredFileId;
+            }
+        }
+        this.setFileId(fileId);
+
+        this.clearRegionMap();
+        for (const saved of binding.regions ?? []) {
+            const regionFileId = saved.imageId === undefined ? ACTIVE_FILE_ID : ids.fileIdOf(saved.imageId);
+            if (regionFileId === undefined) {
+                continue;
+            }
+            const regionId = ids.regionIdOf(saved.imageId, saved.regionId);
+            if (regionId !== undefined) {
+                this.setRegionId(regionFileId, regionId);
+            } else if (regionFileId === fileId) {
+                problems.push("the region it showed was not restored, so it shows the active region");
+            }
+        }
+        return problems;
+    }
 
     @computed get effectiveFrame(): FrameStore | null | undefined {
         if (this.appStore.activeFrame && this.appStore.frames?.length > 0) {

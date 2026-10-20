@@ -170,7 +170,9 @@ function createSession() {
         },
         widgetsStore: {
             catalogWidgets: new Map(),
-            catalogPlotWidgets: new Map()
+            catalogPlotWidgets: new Map(),
+            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -600,6 +602,33 @@ describe("WorkspaceRestorer", () => {
         await restore(createWorkspace({catalogs: [CATALOG], catalogWidgets}));
 
         expect(appStore.catalogStore.widgetBindings.restore).toHaveBeenCalledWith(catalogWidgets, [CATALOG], new Map([[1, 10]]));
+    });
+
+    test("points the profile and analysis widgets at their images and regions, and gives them the rest once they have settled", async () => {
+        const {appStore, calls} = createSession();
+        const plotWidgets = {"stats-0": {type: "stats" as const, imageId: 1}};
+        let didSettleBeforeTheRest = false;
+        appStore.widgetsStore.restorePlotWidgetBindings.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetBindings");
+            Promise.resolve().then(() => (didSettleBeforeTheRest = !calls.includes("restorePlotWidgets")));
+            return [];
+        });
+        appStore.widgetsStore.restorePlotWidgets.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgets");
+            return [];
+        });
+
+        const restorer = new WorkspaceRestorer(createWorkspace({layout: LAYOUT, plotWidgets}), WorkspaceRestorer.claimGeneration());
+        const generator = restorer.restore();
+        let step = generator.next();
+        while (!step.done) {
+            step = generator.next(await step.value);
+        }
+
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets"]);
+        expect(didSettleBeforeTheRest).toBe(true);
+        expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
+        expect(restorer.fileIdOf(1)).toBe(appStore.frames[0].frameInfo.fileId);
     });
 
     test("reports what the catalog widgets could not be pointed at", async () => {

@@ -10,6 +10,7 @@ import {
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
     type WorkspaceFile,
+    type WorkspaceIdReader,
     type WorkspaceImageSource,
     type WorkspaceIssue
 } from "models";
@@ -48,7 +49,7 @@ interface CatalogConfigRequest {
  * owns it: a frame's own config stores, a catalog's profile store for its table and query, and its
  * display store for how it is drawn.
  */
-export class WorkspaceRestorer {
+export class WorkspaceRestorer implements WorkspaceIdReader {
     /** How many workspace loads have been started, so that a later one can take over from an earlier. */
     private static generationCounter = 0;
 
@@ -149,7 +150,10 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         this.restoreLayout();
-        this.restoreViews();
+        yield* this.restoreViews();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.settle();
         return this.issues;
     }
@@ -373,13 +377,17 @@ export class WorkspaceRestorer {
      * The cursor, the whole image and the other fixed region IDs are the same in every session. A
      * region of an image matched to another is one of that image's.
      *
-     * @param workspaceImageId - the workspace ID of the image the region was saved on.
+     * @param workspaceImageId - the workspace ID of the image the region was saved on; none for the
+     *                           image saved in front.
      * @param savedRegionId - the ID the region was saved with.
      * @returns nothing for a region that was not restored.
      */
-    public regionIdOf(workspaceImageId: number, savedRegionId: number): number | undefined {
+    public regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined {
         if (savedRegionId <= RegionId.CURSOR) {
             return savedRegionId;
+        }
+        if (workspaceImageId === undefined) {
+            return this.workspace.selectedFile === undefined ? undefined : this.regionIdOf(this.workspace.selectedFile, savedRegionId);
         }
         const fileInfo = this.workspace.files?.find(file => file.id === workspaceImageId);
         const ownerId = fileInfo?.references?.spatial ?? workspaceImageId;
@@ -740,9 +748,26 @@ export class WorkspaceRestorer {
         }
     }
 
-    /** Stage 8: point the widgets and plots that show a catalog at the catalogs just loaded. */
-    private restoreViews(): void {
+    /**
+     * Stage 8: point the widgets and plots at the catalogs, images and regions just restored.
+     *
+     * A profile, analysis or statistics widget is pointed at its image and region first, and given
+     * the rest of what it showed only once it has settled: pointing a widget at another image resets
+     * what it shows of it.
+     */
+    private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
+        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgetBindings(this.workspace.plotWidgets, this));
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return;
+        }
+        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this));
+    }
+
+    /** The file ID a workspace image has in this session, if it was restored. */
+    public fileIdOf(workspaceImageId: number): number | undefined {
+        return this.frameIds.get(workspaceImageId);
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */

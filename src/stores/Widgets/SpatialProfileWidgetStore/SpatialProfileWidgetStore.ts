@@ -4,7 +4,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
-import {type ConfigurableStore, type IdentifiedWidgetStore, type LineOption, type Persisted, VALID_XY_COORDINATES} from "models";
+import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceSpatialProfileWidgetConfig} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
@@ -30,7 +30,7 @@ export interface SpatialProfileWidgetConfig {
     maxYVal: number;
 }
 
-export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, IdentifiedWidgetStore {
+export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig> {
     widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
@@ -356,6 +356,24 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
 
     @action setSelectedStokes = (stokes: string) => {
         this.selectedStokes = stokes;
+    };
+
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceSpatialProfileWidgetConfig => ({
+        ...this.toWorkspaceBinding(ids),
+        ...(this.selectedStokes !== DEFAULT_STOKES ? {stokes: this.selectedStokes} : {})
+    });
+
+    public applyWorkspaceBinding = (config: WorkspaceSpatialProfileWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (config: WorkspaceSpatialProfileWidgetConfig): string[] => {
+        if (config.stokes === undefined) {
+            return [];
+        }
+        if (!this.stokesOptions.some(option => option.value === config.stokes)) {
+            return [`the image it shows has no Stokes ${config.stokes}, so it shows the current one`];
+        }
+        this.setSelectedStokes(config.stokes);
+        return [];
     };
 
     public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
