@@ -172,7 +172,8 @@ function createSession() {
             catalogWidgets: new Map(),
             catalogPlotWidgets: new Map(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
+            restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined)
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -617,6 +618,9 @@ describe("WorkspaceRestorer", () => {
             calls.push("restorePlotWidgets");
             return [];
         });
+        appStore.widgetsStore.restorePlotWidgetViews.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetViews");
+        });
 
         const restorer = new WorkspaceRestorer(createWorkspace({layout: LAYOUT, plotWidgets}), WorkspaceRestorer.claimGeneration());
         const generator = restorer.restore();
@@ -625,7 +629,7 @@ describe("WorkspaceRestorer", () => {
             step = generator.next(await step.value);
         }
 
-        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets"]);
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews"]);
         expect(didSettleBeforeTheRest).toBe(true);
         expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
         expect(restorer.fileIdOf(1)).toBe(appStore.frames[0].frameInfo.fileId);

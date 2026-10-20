@@ -1311,7 +1311,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             restFrameRedshift: this.restFrameRedshift,
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
-            ...toWorkspacePlotRange(this)
+            ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
         };
     };
 
@@ -1371,12 +1371,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (config.intensityUnit !== undefined) {
             this.setMultiProfileIntensityUnit(config.intensityUnit);
         }
-        // Last: pointing the widget at a region clears the range it was zoomed to. A range is of the
-        // profiles shown, so it is not kept when some of them could not be.
-        if (this.isShowingWorkspaceData && !problems.length) {
-            applyWorkspacePlotRange(this, config);
+        // A range is of the profiles shown, so it is not kept when some of them could not be.
+        if (problems.length) {
+            this.isShowingWorkspaceData = false;
         }
         return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
     };
 
     public toConfig = (): SpectralProfileWidgetConfig => {

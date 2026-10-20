@@ -20,6 +20,8 @@ export class StatsWidgetStore extends RegionWidgetStore implements ConfigurableS
 
     public applyWorkspaceBinding = (config: WorkspaceStatsWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
 
+    public applyWorkspaceView = (): void => {};
+
     public applyWorkspaceConfig = (config: WorkspaceStatsWidgetConfig): string[] => {
         if (config.coordinate === undefined || config.coordinate === this.coordinate) {
             return [];

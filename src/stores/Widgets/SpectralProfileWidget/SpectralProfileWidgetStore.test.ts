@@ -726,6 +726,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
 
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect([widgetStore.minY, widgetStore.maxY]).toEqual([1, 2]);
@@ -737,6 +738,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         const problems = runInAction(() => widgetStore.applyWorkspaceConfig(config, {...WORKSPACE_IDS, regionIdOf: () => undefined}));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
 
         expect(problems).toEqual(["some of the regions whose profiles it showed were not restored"]);
         expect(widgetStore.minX).toBeUndefined();
@@ -748,9 +750,10 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
 
         expect([widgetStore.minX, widgetStore.maxX, widgetStore.minY, widgetStore.maxY]).toEqual([100, 110, 1, 2]);
-        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
+        expect(widgetStore.toWorkspaceConfig({imageIdOf: () => 1})).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
     });
 
     test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {
