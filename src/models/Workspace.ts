@@ -422,8 +422,27 @@ export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
 
 export type WorkspaceStokesAnalysisWidgetConfig = WorkspaceWidgetBinding;
 
+export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding {
+    /** What several profiles shown together differ in; none when one profile is shown. */
+    profileCategory?: string;
+    /** The images whose profiles are shown together, by workspace image ID. */
+    imageIds?: number[];
+    /** The regions whose profiles are shown, by the IDs they were saved with, on the image shown. */
+    regionIds?: number[];
+    statsTypes?: number[];
+    coordinates?: string[];
+    /** The colour of each profile shown together, by what it is the profile of: a workspace image ID, a saved region ID, a statistic or a Stokes. */
+    profileColors?: {key: number | string; color: string}[];
+    /** The unit profiles of several images are shown in together. */
+    intensityUnit?: string;
+    /** The source's redshift, and whether the axes are shown in its rest frame. */
+    restFrameRedshift?: number;
+    xAxisRestFrameEnabled?: boolean;
+    yAxisRestFrameEnabled?: boolean;
+}
+
 /** What one profile, analysis or statistics widget shows: Widget Config (ADR-0005). */
-export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"spatial-profiler" | "histogram" | "stats" | "stokes">;
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
 
 /**
  * What one catalog table or plot widget shows: Widget Config, which means nothing against other data

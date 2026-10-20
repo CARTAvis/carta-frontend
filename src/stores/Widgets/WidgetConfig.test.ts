@@ -31,11 +31,8 @@ const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, obje
             ...PLOT,
             ...RANGE,
             meanRmsVisible: true,
-            xAxisRestFrameEnabled: true,
-            restFrameRedshift: 0.25,
             restFrameShiftMode: RestFrameShiftMode.REDSHIFT,
-            restFrameVelocityConvention: VelocityConvention.OPTICAL,
-            yAxisRestFrameEnabled: true
+            restFrameVelocityConvention: VelocityConvention.OPTICAL
         }
     ],
     ["Stokes analysis", () => new StokesAnalysisWidgetStore(), {...PLOT, secondaryLineColor: "#445566", colorMap: "viridis", scatterPlotPointSize: 4, pointTransparency: 0.5, equalAxes: false}],
