@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, WorkspaceItemKind} from "enums";
+import {ImageType, RegionId, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, isWidgetWorkspaceConfigOf, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
@@ -66,6 +66,8 @@ export class WorkspaceRestorer {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
+    /** Workspace image ID to the IDs its regions were saved with, each to the ID the backend gave the region restored from it. */
+    private readonly regionIds = new Map<number, Map<number, number>>();
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
@@ -116,8 +118,9 @@ export class WorkspaceRestorer {
         if (!this.isCurrent) {
             return this.issues;
         }
-        this.configureImages();
-        // Computed on the backend while the catalogs open, and waited for before the layout.
+        // Registered with the backend, and the cube histograms computed, while the catalogs open;
+        // both are waited for before the layout.
+        const regions = this.configureImages();
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
@@ -130,6 +133,7 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         yield* awaited(cubeHistograms);
+        yield* awaited(regions);
         if (!this.isCurrent) {
             return this.issues;
         }
@@ -221,7 +225,8 @@ export class WorkspaceRestorer {
     }
 
     /** Stage 3: apply what each image is displayed with, now that all of them exist. */
-    private configureImages(): void {
+    private configureImages(): Promise<unknown> {
+        const regions: Promise<void>[] = [];
         for (const fileInfo of this.workspace.files ?? []) {
             const frame = this.frameOf(fileInfo.id);
             if (!frame) {
@@ -266,7 +271,7 @@ export class WorkspaceRestorer {
             }
             restoreWorkspaceZoom(frame, fileInfo);
 
-            this.restoreRegions(frame, fileInfo);
+            regions.push(this.restoreRegions(frame, fileInfo));
         }
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
@@ -276,35 +281,63 @@ export class WorkspaceRestorer {
         if (!savedFrontFrame && this.frontFrame) {
             this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
+        return Promise.all(regions);
     }
 
-    /** Regions are only the image's own while it is not matched to another one. */
-    private restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): void {
+    /**
+     * Regions are only the image's own while it is not matched to another one.
+     *
+     * The backend gives each restored region an ID of its own, so the ID each was saved with is
+     * mapped to it once the backend has answered.
+     */
+    private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
             return;
         }
 
         const preferenceStore = this.appStore.preferenceStore;
-        for (const regionInfo of fileInfo.regionsSet.regions) {
-            const region = frame.regionSet.addExistingRegion(
-                regionInfo.points,
-                regionInfo.rotation,
-                regionInfo.type,
-                regionInfo.id,
-                regionInfo.name ?? "",
-                regionInfo.color ?? preferenceStore.regionColor,
-                regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                false,
-                regionInfo.annotationStyles
-            );
-            if (region) {
+        const regionIds = new Map<number, number>();
+        this.regionIds.set(fileInfo.id, regionIds);
+        const selectedRegion = fileInfo.regionsSet.selectedRegion;
+        await Promise.all(
+            fileInfo.regionsSet.regions.map(async regionInfo => {
+                const region = await frame.regionSet.addExistingRegionAsync(
+                    regionInfo.points,
+                    regionInfo.rotation,
+                    regionInfo.type,
+                    regionInfo.id,
+                    regionInfo.name ?? "",
+                    regionInfo.color ?? preferenceStore.regionColor,
+                    regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
+                    regionInfo.dashes ?? [preferenceStore.regionDashLength],
+                    regionInfo.annotationStyles
+                );
+                regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
-                if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
+                if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }
-            }
+            })
+        );
+    }
+
+    /**
+     * The ID a region a workspace names has in this session.
+     *
+     * The cursor, the whole image and the other fixed region IDs are the same in every session. A
+     * region of an image matched to another is one of that image's.
+     *
+     * @param workspaceImageId - the workspace ID of the image the region was saved on.
+     * @param savedRegionId - the ID the region was saved with.
+     * @returns nothing for a region that was not restored.
+     */
+    public regionIdOf(workspaceImageId: number, savedRegionId: number): number | undefined {
+        if (savedRegionId <= RegionId.CURSOR) {
+            return savedRegionId;
         }
+        const fileInfo = this.workspace.files?.find(file => file.id === workspaceImageId);
+        const ownerId = fileInfo?.references?.spatial ?? workspaceImageId;
+        return this.regionIds.get(ownerId)?.get(savedRegionId);
     }
 
     /**
