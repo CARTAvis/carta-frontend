@@ -2,7 +2,8 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {AppStore} from "stores";
 import {isAutoColor} from "utilities";
 
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
@@ -126,7 +127,10 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
     }
 
     /** What the widget shows of the image in front: only the range its histogram was zoomed to. */
-    public toWorkspaceConfig = (): WorkspaceRenderConfigWidgetConfig => toWorkspacePlotRange(this);
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceRenderConfigWidgetConfig => {
+        const fileId = AppStore.Instance.activeFrame?.frameInfo.fileId;
+        return fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {};
+    };
 
     /** Whether a restore found the image in front the widget was saved showing, so that the range it was zoomed to still applies. */
     private isShowingWorkspaceData = true;
@@ -136,11 +140,12 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         return this.isShowingWorkspaceData ? [] : ["the image it showed was not restored, so it shows the active image"];
     };
 
-    public applyWorkspaceConfig = (config: WorkspaceRenderConfigWidgetConfig): string[] => {
+    public applyWorkspaceConfig = (): string[] => [];
+
+    public applyWorkspaceView = (config: WorkspaceRenderConfigWidgetConfig): void => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }
-        return [];
     };
 
     public applyConfig = (widgetSettings: Persisted<RenderConfigWidgetConfig>): void => {

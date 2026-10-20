@@ -73,8 +73,8 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceHistogramWidgetConfig => ({
         ...this.toWorkspaceBinding(ids),
         coordinate: this.coordinate,
-        ...toWorkspacePlotRange(this),
-        ...(!this.isCurrentAutoBounds && isWorkspaceRange(this.currentMinPix, this.currentMaxPix) ? {pixelBounds: {min: this.currentMinPix!, max: this.currentMaxPix!}} : {})
+        ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {}),
+        ...(this.isShowingSavedImage(ids) && !this.isCurrentAutoBounds && isWorkspaceRange(this.currentMinPix, this.currentMaxPix) ? {pixelBounds: {min: this.currentMinPix!, max: this.currentMaxPix!}} : {})
     });
 
     public applyWorkspaceBinding = (config: WorkspaceHistogramWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
@@ -88,6 +88,10 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
                 problems.push(`it cannot be taken in the Stokes ${config.coordinate}`);
             }
         }
+        return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceHistogramWidgetConfig): void => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
             if (isWorkspaceRange(config.pixelBounds?.min, config.pixelBounds?.max)) {
@@ -96,7 +100,6 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
                 this.setMaxPix(config.pixelBounds!.max);
             }
         }
-        return problems;
     };
 
     @action setCoordinate = (coordinate: string) => {
