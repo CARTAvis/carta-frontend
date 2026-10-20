@@ -7,6 +7,7 @@ import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type Workspac
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {applyWorkspacePlotRange, isWorkspaceRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 /** What a histogram widget saves of its plot. */
 export interface HistogramWidgetConfig {
@@ -18,10 +19,6 @@ export interface HistogramWidgetConfig {
     logScaleY: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number;
-    maxXVal: number;
-    minYVal: number;
-    maxYVal: number;
 }
 
 export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig> {
@@ -69,19 +66,33 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
     private cachedMaxPix: number;
     private cachedNumBins: number;
 
-    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceHistogramWidgetConfig => ({...this.toWorkspaceBinding(ids), coordinate: this.coordinate});
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceHistogramWidgetConfig => ({
+        ...this.toWorkspaceBinding(ids),
+        coordinate: this.coordinate,
+        ...toWorkspacePlotRange(this),
+        ...(!this.isCurrentAutoBounds && isWorkspaceRange(this.currentMinPix, this.currentMaxPix) ? {pixelBounds: {min: this.currentMinPix!, max: this.currentMaxPix!}} : {})
+    });
 
     public applyWorkspaceBinding = (config: WorkspaceHistogramWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
 
     public applyWorkspaceConfig = (config: WorkspaceHistogramWidgetConfig): string[] => {
-        if (config.coordinate === undefined || config.coordinate === this.coordinate) {
-            return [];
+        const problems: string[] = [];
+        if (config.coordinate !== undefined && config.coordinate !== this.coordinate) {
+            if (VALID_COORDINATES.includes(config.coordinate)) {
+                this.setCoordinate(config.coordinate);
+            } else {
+                problems.push(`it cannot be taken in the Stokes ${config.coordinate}`);
+            }
         }
-        if (!VALID_COORDINATES.includes(config.coordinate)) {
-            return [`it cannot be taken in the Stokes ${config.coordinate}`];
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+            if (isWorkspaceRange(config.pixelBounds?.min, config.pixelBounds?.max)) {
+                this.setAutoBounds(false);
+                this.setMinPix(config.pixelBounds!.min);
+                this.setMaxPix(config.pixelBounds!.max);
+            }
         }
-        this.setCoordinate(config.coordinate);
-        return [];
+        return problems;
     };
 
     @action setCoordinate = (coordinate: string) => {
@@ -467,18 +478,6 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
     };
 
     public toConfig = (): HistogramWidgetConfig => {
@@ -489,11 +488,7 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            plotType: this.plotType
         };
     };
 }
