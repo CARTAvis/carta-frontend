@@ -569,9 +569,8 @@ export class RenderConfigStore {
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }
-        if (config.customColormapHexEnd) {
-            this.setCustomHexEnd(config.customColormapHexEnd);
-        }
+        this.customColormapHexStart = config.customColormapHexStart || this.customColormapHexStart;
+        this.customColormapHexEnd = config.customColormapHexEnd || this.customColormapHexEnd;
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, config.gamma ?? this.gamma, this.gamma);
@@ -594,6 +593,8 @@ export class RenderConfigStore {
         return {
             scaling: this.scaling,
             colorMap: this.colorMap,
+            customColormapHexStart: this.customColormapHexStart,
+            customColormapHexEnd: this.customColormapHexEnd,
             bias: this.bias,
             contrast: this.contrast,
             gamma: this.gamma,
