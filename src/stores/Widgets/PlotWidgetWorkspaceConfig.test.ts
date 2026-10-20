@@ -42,7 +42,8 @@ const WRITER: WorkspaceIdWriter = {imageIdOf: fileId => (fileId === 3 ? 2 : unde
 /** A workspace being restored in which image 2 came back as file ID 7, with its region 5 as region 15. */
 const READER: WorkspaceIdReader = {
     fileIdOf: imageId => (imageId === 2 ? 7 : undefined),
-    regionIdOf: (imageId, regionId) => (regionId <= RegionId.CURSOR ? regionId : imageId === 2 && regionId === 5 ? 15 : undefined)
+    regionIdOf: (imageId, regionId) => (regionId <= RegionId.CURSOR ? regionId : imageId === 2 && regionId === 5 ? 15 : undefined),
+    wasActiveImageRestored: () => true
 };
 
 describe("which image and region a widget shows, in a workspace", () => {
@@ -169,6 +170,18 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         expect([store.minX, store.maxX]).toEqual([undefined, undefined]);
     });
 
+    test("a widget following the active image is not zoomed to the range of an image in front that was not restored", () => {
+        createSession();
+        const store = new HistogramWidgetStore();
+        const config = {minX: 1, maxX: 2, pixelBounds: {min: -1, max: 5}};
+
+        const problems = store.applyWorkspaceBinding(config, {...READER, wasActiveImageRestored: () => false});
+        store.applyWorkspaceConfig(config);
+
+        expect(problems).toEqual(["the image it showed was not restored, so it shows the active image"]);
+        expect([store.minX, store.isCurrentAutoBounds]).toEqual([undefined, true]);
+    });
+
     test("a histogram is computed between the pixel values it was saved with", () => {
         createSession();
         const store = new HistogramWidgetStore();
@@ -205,6 +218,7 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         store.setYBounds(1, 100);
 
         const restored = new RenderConfigWidgetStore();
+        restored.applyWorkspaceBinding(store.toWorkspaceConfig(), READER);
         restored.applyWorkspaceConfig(store.toWorkspaceConfig());
 
         expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([0, 10, 1, 100]);

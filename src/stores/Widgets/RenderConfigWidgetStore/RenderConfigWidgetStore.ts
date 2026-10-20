@@ -2,7 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceRenderConfigWidgetConfig} from "models";
 import {isAutoColor} from "utilities";
 
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
@@ -128,10 +128,18 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
     /** What the widget shows of the image in front: only the range its histogram was zoomed to. */
     public toWorkspaceConfig = (): WorkspaceRenderConfigWidgetConfig => toWorkspacePlotRange(this);
 
-    public applyWorkspaceBinding = (): string[] => [];
+    /** Whether a restore found the image in front the widget was saved showing, so that the range it was zoomed to still applies. */
+    private isShowingWorkspaceData = true;
+
+    public applyWorkspaceBinding = (_config: WorkspaceRenderConfigWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        this.isShowingWorkspaceData = ids.wasActiveImageRestored();
+        return this.isShowingWorkspaceData ? [] : ["the image it showed was not restored, so it shows the active image"];
+    };
 
     public applyWorkspaceConfig = (config: WorkspaceRenderConfigWidgetConfig): string[] => {
-        applyWorkspacePlotRange(this, config);
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
         return [];
     };
 
