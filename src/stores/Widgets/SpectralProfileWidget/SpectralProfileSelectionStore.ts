@@ -12,6 +12,7 @@ import {
     POLARIZATION_LABELS,
     ShouldUseSumForFluxDensity,
     STATISTICS_NAME_MAP,
+    type StatsDisplayType,
     StatsTypeString,
     SUPPORTED_STATISTICS_TYPES,
     VALID_COORDINATES
@@ -825,7 +826,24 @@ export class SpectralProfileSelectionStore {
                 }
             )
         );
+
+        this.disposers.push(
+            autorun(() => {
+                this.reconcileStatisticSelections(AppStore.Instance.preferenceStore.statistics);
+            })
+        );
     }
+
+    @action private reconcileStatisticSelections = (enabledStatistics: StatsDisplayType[]) => {
+        const disabledSelections = this.selectedStatsTypes.filter(type => EXTRA_STATISTICS_TYPES.includes(type) && !enabledStatistics.includes(type));
+        if (!disabledSelections.length) {
+            return;
+        }
+
+        const remainingSelections = this.selectedStatsTypes.filter(type => !disabledSelections.includes(type));
+        this.selectedStatsTypes = remainingSelections.length ? remainingSelections : [CARTA.StatsType.Mean];
+        disabledSelections.forEach(type => this.widgetStore.removeProfileColor(type));
+    };
 
     public dispose = () => {
         this.disposers.forEach(disposer => disposer());
