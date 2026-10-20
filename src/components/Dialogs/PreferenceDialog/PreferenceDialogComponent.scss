@@ -43,17 +43,18 @@
             display: flex;
             flex-wrap: wrap;
             box-sizing: content-box;
-            .log-event-checkbox {
-                width: 265px;
-                margin-bottom: 0;
-            }
         }
     }
 
-    .statistics-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(130px, 1fr));
-        gap: 8px 24px;
+    .log-event-checkbox,
+    .statistics-checkbox {
+        width: 265px;
+        margin-bottom: 0;
+    }
+
+    .statistics-panel > .#{$ns}-label {
+        min-width: 0;
+        text-align: left;
     }
 
     .wcs-matching {

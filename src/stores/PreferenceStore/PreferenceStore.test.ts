@@ -17,8 +17,8 @@ describe("PreferenceStore statistics", () => {
         expect(preferenceStore.statistics).toEqual(DEFAULT_STATS_DISPLAY_TYPES);
     });
 
-    test.each([[], [CARTA.StatsType.Median], [CARTA.StatsType.Mean, NUM_BEAMS_STATS_TYPE]].map(selection => ({selection})))("preserves valid stored selection $selection", ({selection}) => {
+    test.each([[], [CARTA.StatsType.Median], [CARTA.StatsType.Mean, NUM_BEAMS_STATS_TYPE]].map(selection => ({selection})))("keeps standard quantities visible with stored selection $selection", ({selection}) => {
         runInAction(() => preferenceStore.preferences.set(PreferenceKeys.STATISTICS, selection));
-        expect(preferenceStore.statistics).toEqual(selection);
+        expect(preferenceStore.statistics).toEqual(Array.from(new Set([...DEFAULT_STATS_DISPLAY_TYPES, ...selection])));
     });
 });

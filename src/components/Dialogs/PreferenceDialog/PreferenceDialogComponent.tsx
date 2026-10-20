@@ -22,7 +22,7 @@ import {
     ScrollShadow
 } from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
-import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, STATISTICS_NAME_MAP, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorPosition, Event, EXTRA_STATISTICS_TYPES, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, STATISTICS_NAME_MAP, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
@@ -992,10 +992,10 @@ export class PreferenceDialogComponent extends React.Component {
         );
 
         const statisticsPanel = (
-            <FormGroup className="statistics-panel" label="Displayed quantities" helperText="Median and quartile quantities may be slower for large regions." inline={true}>
+            <FormGroup className="statistics-panel" label="Extra quantities">
                 <div className="statistics-list">
-                    {Array.from(STATISTICS_NAME_MAP, ([type, name]) => (
-                        <Checkbox key={type} checked={preference.statistics.includes(type)} label={name} onChange={() => preference.toggleStatistic(type)} />
+                    {EXTRA_STATISTICS_TYPES.map(type => (
+                        <Checkbox className="statistics-checkbox" key={type} checked={preference.statistics.includes(type)} label={STATISTICS_NAME_MAP.get(type)} onChange={() => preference.toggleStatistic(type)} />
                     ))}
                 </div>
             </FormGroup>

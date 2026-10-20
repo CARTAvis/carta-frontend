@@ -17,6 +17,8 @@ export const SUPPORTED_STATISTICS_TYPES = [
     CARTA.StatsType.Extrema
 ];
 
+export const EXTRA_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.MedAbsDevMed, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
+
 export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
     [CARTA.StatsType.NumPixels, "NumPixels"],
     [NUM_BEAMS_STATS_TYPE, "NumBeams"],
@@ -33,14 +35,12 @@ export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
     [CARTA.StatsType.SumSq, "SumSq"],
     [CARTA.StatsType.Median, "Median"],
     [CARTA.StatsType.MedAbsDevMed, "MedAbsDevMed"],
-    [CARTA.StatsType.Quartile, "Quartile"],
+    [CARTA.StatsType.Quartile, "Quartile (Q3-Q1)"],
     [CARTA.StatsType.Q1, "Q1"],
     [CARTA.StatsType.Q3, "Q3"]
 ]);
 
-export const DEFAULT_STATS_DISPLAY_TYPES = Array.from(STATISTICS_NAME_MAP.keys()).filter(
-    type => ![CARTA.StatsType.Median, CARTA.StatsType.MedAbsDevMed, CARTA.StatsType.Quartile, CARTA.StatsType.Q1, CARTA.StatsType.Q3].includes(type as CARTA.StatsType)
-);
+export const DEFAULT_STATS_DISPLAY_TYPES = Array.from(STATISTICS_NAME_MAP.keys()).filter(type => !EXTRA_STATISTICS_TYPES.includes(type as CARTA.StatsType));
 
 export const StatsTypeString = (statsType: CARTA.StatsType): string => {
     return STATISTICS_NAME_MAP.get(statsType) ?? "Not Implemented";

@@ -46,6 +46,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}}
         });
         const appStore = {
+            preferenceStore: PreferenceStore.Instance,
             activeFrame: frame,
             focusedRegion: undefined,
             frameNames: [],
@@ -64,7 +65,23 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
 
     afterEach(() => {
         widgetStore?.dispose();
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
         jest.restoreAllMocks();
+    });
+
+    test("adds enabled extra statistics to the menu and accepts them in single and multi modes", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Median)).toBe(false);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Quartile, label: "Quartile (Q3-Q1)"});
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median]);
+        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median, CARTA.StatsType.Quartile]);
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Median)).toBe(false);
+        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Mean)).toBe(true);
     });
 
     test("keeps every moment available and selected on a linear spectral axis", () => {
@@ -161,6 +178,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         };
         const appStore = {
             activeFrame: frame,
+            preferenceStore: PreferenceStore.Instance,
             focusedRegion: undefined,
             frameNames: [],
             frames: [frame],

@@ -3,6 +3,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
 import {
+    EXTRA_STATISTICS_TYPES,
     GetFluxDensityFromSum,
     GetIntensityOptions,
     type IntensityConfig,
@@ -390,7 +391,8 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES].sort((a, b) => a - b);
+        const enabledExtras = EXTRA_STATISTICS_TYPES.filter(type => AppStore.Instance.preferenceStore.statistics.includes(type));
+        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES, ...enabledExtras].sort((a, b) => a - b);
         return sortedKeys.map(key => {
             return {value: key, label: STATISTICS_NAME_MAP.get(key)};
         });
@@ -665,7 +667,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType)) {
             this.selectedStatsTypes = [statsType];
         }
     };
@@ -697,7 +699,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
