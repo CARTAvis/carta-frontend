@@ -663,7 +663,7 @@ export class WidgetsStore {
                 const offset = this.getFloatingWidgetOffset();
                 config.setDefaultPosition(offset, offset);
             }
-            this.floatingWidgets.push(config);
+            this.addFloatingWidget(config);
         }
     };
 

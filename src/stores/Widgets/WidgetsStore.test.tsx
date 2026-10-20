@@ -2,6 +2,7 @@ import type React from "react";
 import {Actions} from "flexlayout-react";
 
 import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
@@ -304,6 +305,25 @@ describe("WidgetsStore initWidgets", () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    test("brings a restored floating histogram to the front when selected", () => {
+        const zIndexManager = new FloatingObjzIndexManager();
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([], [{id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.Histogram}, defaultX: 40, defaultY: 60}]);
+
+        expect(widgetsStore.floatingWidgets).toHaveLength(1);
+        const widget = widgetsStore.floatingWidgets[0];
+        const id = widget.componentId || widget.id;
+        expect(zIndexManager.findIndex(id)).toBe(1);
+
+        zIndexManager.assignIndex("workspace-dialog");
+        zIndexManager.updateIndexOnSelect(id);
+
+        expect(zIndexManager.findIndex(id)).toBe(2);
+        expect(zIndexManager.findIndex("workspace-dialog")).toBe(1);
     });
 
     test("creates a line plot by its widget type, even when a layout records its line style as a plot type", () => {

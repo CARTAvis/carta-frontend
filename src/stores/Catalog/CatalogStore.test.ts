@@ -747,6 +747,31 @@ describe("CatalogProfileStore.ensureColumnsRequested", () => {
         expect(store.toTableConfig().columnSettings).toEqual({Name: {filter: "> 2", width: undefined}});
     });
 
+    test.each([
+        ["file", CatalogType.FILE],
+        ["online", CatalogType.SIMBAD]
+    ])("restores an applied %s catalog filter without a pending table update", (_label, catalogType) => {
+        const profileStoreConstructor = catalogType === CatalogType.FILE ? CatalogProfileStore : CatalogOnlineQueryProfileStore;
+        const store = new profileStoreConstructor(
+            {dataSize: 3, directory: "", fileId: 1, fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})},
+            [new CARTA.CatalogHeader({columnIndex: 0, dataType: CARTA.ColumnType.Double, name: "Name"})],
+            new Map([[0, {dataType: CARTA.ColumnType.Double, data: [1, 3, 5]}]]),
+            catalogType
+        );
+        store.setHeaderDisplay(true, "Name");
+
+        store.applyTableConfig({columnSettings: {Name: {filter: "> 2"}}, maxRows: 3});
+
+        expect(store.hasFilter).toBe(true);
+        expect(store.shouldUpdateTableView).toBe(false);
+        expect(store.toTableConfig().columnSettings).toEqual({Name: {filter: "> 2", width: undefined}});
+
+        store.setColumnFilter("> 4", "Name");
+
+        expect(store.shouldUpdateTableView).toBe(true);
+        expect(store.toTableConfig().columnSettings).toEqual({Name: {filter: "> 2", width: undefined}});
+    });
+
     test("saves no filter once its filters are reset", () => {
         const store = createProfileStore();
         store.setColumnFilter("> 2", "Name");

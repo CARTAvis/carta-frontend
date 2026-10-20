@@ -730,6 +730,7 @@ export abstract class AbstractCatalogProfileStore {
         if (!this.isFileBasedCatalog) {
             this.resetFilterRequest(this.getUserFilters());
         }
+        this.updateTableStatus(false);
     }
 
     @action setUpdateMode(mode: CatalogUpdateMode) {
