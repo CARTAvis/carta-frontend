@@ -80,7 +80,13 @@ function createSession(overrides: Record<string, any> = {}) {
             getCatalogDisplayStore: jest.fn(() => displayStore),
             widgetBindings: {savedCatalogWidgets: jest.fn((_savedCatalogIds: ReadonlySet<number>): Record<string, unknown> => ({}))}
         },
-        widgetsStore: {catalogWidgets: new Map()},
+        widgetsStore: {
+            catalogWidgets: new Map(),
+            savedPlotWidgets: jest.fn(
+                (ids: {imageIdOf: (fileId: number) => number | undefined}): Record<string, unknown> => ({"stats-0": {type: "stats", imageId: ids.imageIdOf(0), coordinate: "z"}, "stats-1": {type: "stats", imageId: ids.imageIdOf(5)}})
+            )
+        },
+        getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
@@ -201,6 +207,15 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.catalogWidgets).toEqual({"widget-a": {type: "catalog-overlay", catalogId: 1}});
         expect(appStore.catalogStore.widgetBindings.savedCatalogWidgets).toHaveBeenCalledWith(new Set(workspace.catalogs?.map(catalog => catalog.id)));
+    });
+
+    test("saves what each profile and analysis widget shows, naming only the images the workspace carries", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.plotWidgets).toEqual({"stats-0": {type: "stats", imageId: 1, coordinate: "z"}, "stats-1": {type: "stats"}});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("saves no catalog widgets when no widget shows a loaded catalog", () => {

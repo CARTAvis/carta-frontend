@@ -333,6 +333,18 @@ export class WorkspaceSnapshotter {
         if (Object.keys(catalogWidgets).length > 0) {
             this.workspace.catalogWidgets = catalogWidgets;
         }
+
+        // Likewise only the images stage 1 saved.
+        const savedImageIds = new Set(this.workspace.files.map(file => file.id));
+        const plotWidgets = this.appStore.widgetsStore.savedPlotWidgets({
+            imageIdOf: fileId => {
+                const imageId = this.imageIdOf(this.appStore.getFrame(fileId));
+                return imageId !== undefined && savedImageIds.has(imageId) ? imageId : undefined;
+            }
+        });
+        if (Object.keys(plotWidgets).length > 0) {
+            this.workspace.plotWidgets = plotWidgets;
+        }
     }
 
     /**
