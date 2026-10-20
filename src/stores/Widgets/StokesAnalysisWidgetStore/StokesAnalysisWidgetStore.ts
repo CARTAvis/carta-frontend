@@ -5,11 +5,12 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStokesAnalysisWidgetConfig} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStokesAnalysisRange, type WorkspaceStokesAnalysisWidgetConfig} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {isWorkspaceRange} from "../WorkspacePlotRange";
 
 const DEFAULTS = {
     fractionalPolVisible: false,
@@ -26,6 +27,18 @@ const DEFAULTS = {
 };
 
 /** What a Stokes analysis widget saves of its plots. */
+/** The pairs of bounds the plots of a Stokes analysis widget are zoomed to. */
+const STOKES_ANALYSIS_RANGES: [WorkspaceStokesAnalysisRange, WorkspaceStokesAnalysisRange][] = [
+    ["sharedMinX", "sharedMaxX"],
+    ["quMinY", "quMaxY"],
+    ["polIntensityMinY", "polIntensityMaxY"],
+    ["polAngleMinY", "polAngleMaxY"],
+    ["quScatterMinX", "quScatterMaxX"],
+    ["quScatterMinY", "quScatterMaxY"],
+    ["quScatterEqualXmin", "quScatterEqualXmax"],
+    ["quScatterEqualYmin", "quScatterEqualYmax"]
+];
+
 export interface StokesAnalysisWidgetConfig {
     /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
     widgetId: string;
@@ -393,11 +406,30 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
-    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStokesAnalysisWidgetConfig => this.toWorkspaceBinding(ids);
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStokesAnalysisWidgetConfig => {
+        const ranges: Partial<Record<WorkspaceStokesAnalysisRange, number>> = {};
+        for (const [min, max] of STOKES_ANALYSIS_RANGES) {
+            if (isWorkspaceRange(this[min], this[max])) {
+                ranges[min] = this[min];
+                ranges[max] = this[max];
+            }
+        }
+        return {...this.toWorkspaceBinding(ids), ...(Object.keys(ranges).length ? {ranges} : {})};
+    };
 
     public applyWorkspaceBinding = (config: WorkspaceStokesAnalysisWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
 
-    public applyWorkspaceConfig = (): string[] => [];
+    @action public applyWorkspaceConfig = (config: WorkspaceStokesAnalysisWidgetConfig): string[] => {
+        if (this.isShowingWorkspaceData) {
+            for (const [min, max] of STOKES_ANALYSIS_RANGES) {
+                if (isWorkspaceRange(config.ranges?.[min], config.ranges?.[max])) {
+                    this[min] = config.ranges![min];
+                    this[max] = config.ranges![max];
+                }
+            }
+        }
+        return [];
+    };
 
     public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
         if (!widgetSettings) {

@@ -10,6 +10,7 @@ import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 const DEFAULT_STOKES = "current";
 
@@ -24,10 +25,6 @@ export interface SpatialProfileWidgetConfig {
     wcsAxisVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number;
-    maxXVal: number;
-    minYVal: number;
-    maxYVal: number;
 }
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig> {
@@ -360,20 +357,25 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
 
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceSpatialProfileWidgetConfig => ({
         ...this.toWorkspaceBinding(ids),
-        ...(this.selectedStokes !== DEFAULT_STOKES ? {stokes: this.selectedStokes} : {})
+        ...(this.selectedStokes !== DEFAULT_STOKES ? {stokes: this.selectedStokes} : {}),
+        ...toWorkspacePlotRange(this)
     });
 
     public applyWorkspaceBinding = (config: WorkspaceSpatialProfileWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
 
     public applyWorkspaceConfig = (config: WorkspaceSpatialProfileWidgetConfig): string[] => {
-        if (config.stokes === undefined) {
-            return [];
+        const problems: string[] = [];
+        if (config.stokes !== undefined) {
+            if (this.stokesOptions.some(option => option.value === config.stokes)) {
+                this.setSelectedStokes(config.stokes);
+            } else {
+                problems.push(`the image it shows has no Stokes ${config.stokes}, so it shows the current one`);
+            }
         }
-        if (!this.stokesOptions.some(option => option.value === config.stokes)) {
-            return [`the image it shows has no Stokes ${config.stokes}, so it shows the current one`];
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
         }
-        this.setSelectedStokes(config.stokes);
-        return [];
+        return problems;
     };
 
     public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
@@ -404,18 +406,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
     };
 
     public toConfig = (): SpatialProfileWidgetConfig => {
@@ -427,11 +417,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.isWcsAxisVisible,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            plotType: this.plotType
         };
     };
 }

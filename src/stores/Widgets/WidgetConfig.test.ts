@@ -18,18 +18,16 @@ import {StokesAnalysisWidgetStore} from "./StokesAnalysisWidgetStore/StokesAnaly
 const LAYOUT_SCHEMA = require("carta-schemas/layout_schema_2.json");
 
 const PLOT = {widgetId: "plot-a", primaryLineColor: "#112233", lineWidth: 2, linePlotPointSize: 3, plotType: PlotType.POINTS};
-const RANGE = {minXVal: 1, maxXVal: 2, minYVal: 3, maxYVal: 4};
 
 const WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>, object][] = [
-    ["render config", () => new RenderConfigWidgetStore(), {...PLOT, ...RANGE, logScaleY: false, markerTextVisible: false, meanRmsVisible: false}],
-    ["histogram", () => new HistogramWidgetStore(), {...PLOT, ...RANGE, logScaleY: false, meanRmsVisible: true}],
-    ["spatial profiler", () => new SpatialProfileWidgetStore(), {...PLOT, ...RANGE, coordinate: "y", wcsAxisVisible: false, meanRmsVisible: true}],
+    ["render config", () => new RenderConfigWidgetStore(), {...PLOT, logScaleY: false, markerTextVisible: false, meanRmsVisible: false}],
+    ["histogram", () => new HistogramWidgetStore(), {...PLOT, logScaleY: false, meanRmsVisible: true}],
+    ["spatial profiler", () => new SpatialProfileWidgetStore(), {...PLOT, coordinate: "y", wcsAxisVisible: false, meanRmsVisible: true}],
     [
         "spectral profiler",
         () => new SpectralProfileWidgetStore(),
         {
             ...PLOT,
-            ...RANGE,
             meanRmsVisible: true,
             restFrameShiftMode: RestFrameShiftMode.REDSHIFT,
             restFrameVelocityConvention: VelocityConvention.OPTICAL

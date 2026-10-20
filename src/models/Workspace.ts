@@ -405,14 +405,26 @@ export interface WorkspaceWidgetBinding {
     regions?: {imageId?: number; regionId: number}[];
 }
 
-export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding {
+/** The range a line plot was zoomed to, on each axis that was zoomed, in the units it was shown in. */
+export interface WorkspacePlotRange {
+    minX?: number;
+    maxX?: number;
+    minY?: number;
+    maxY?: number;
+}
+
+export type WorkspaceRenderConfigWidgetConfig = WorkspacePlotRange;
+
+export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
     /** The Stokes the profile is taken in, when it is not the image's current one. */
     stokes?: string;
 }
 
-export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding {
+export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
     /** The Stokes the histogram is taken in. */
     coordinate?: string;
+    /** The pixel values the histogram is computed between, when they are not the image's own. */
+    pixelBounds?: {min: number; max: number};
 }
 
 export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
@@ -420,9 +432,30 @@ export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
     coordinate?: string;
 }
 
-export type WorkspaceStokesAnalysisWidgetConfig = WorkspaceWidgetBinding;
+/** The bounds a Stokes analysis widget's plots were zoomed to. */
+export type WorkspaceStokesAnalysisRange =
+    | "sharedMinX"
+    | "sharedMaxX"
+    | "quMinY"
+    | "quMaxY"
+    | "polIntensityMinY"
+    | "polIntensityMaxY"
+    | "polAngleMinY"
+    | "polAngleMaxY"
+    | "quScatterMinX"
+    | "quScatterMaxX"
+    | "quScatterMinY"
+    | "quScatterMaxY"
+    | "quScatterEqualXmin"
+    | "quScatterEqualXmax"
+    | "quScatterEqualYmin"
+    | "quScatterEqualYmax";
 
-export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding {
+export interface WorkspaceStokesAnalysisWidgetConfig extends WorkspaceWidgetBinding {
+    ranges?: Partial<Record<WorkspaceStokesAnalysisRange, number>>;
+}
+
+export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
     /** What several profiles shown together differ in; none when one profile is shown. */
     profileCategory?: string;
     /** The images whose profiles are shown together, by workspace image ID. */
@@ -442,7 +475,7 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
 }
 
 /** What one profile, analysis or statistics widget shows: Widget Config (ADR-0005). */
-export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"render-config" | "spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
 
 /**
  * What one catalog table or plot widget shows: Widget Config, which means nothing against other data

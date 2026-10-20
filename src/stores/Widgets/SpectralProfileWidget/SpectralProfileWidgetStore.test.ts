@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -713,6 +713,17 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.profileSelectionStore.activeProfileCategory).toBe(MultiProfileCategory.REGION);
         expect(widgetStore.profileSelectionStore.selectedRegionIds).toEqual([15, 16]);
         expect([widgetStore.getProfileColor(15), widgetStore.getProfileColor(16)]).toEqual(["#ff0000", "#00ff00"]);
+    });
+
+    test("is zoomed back to the range it was saved at, though pointing it at its region again clears the range", () => {
+        const {widgetStore} = createWidgetStore();
+        const config = {regions: [{regionId: RegionId.ACTIVE}], minX: 100, maxX: 110, minY: 1, maxY: 2};
+
+        runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
+
+        expect([widgetStore.minX, widgetStore.maxX, widgetStore.minY, widgetStore.maxY]).toEqual([100, 110, 1, 2]);
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
     });
 
     test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {
