@@ -1,7 +1,7 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
 
-import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode, WorkspaceItemKind} from "enums";
 import {getWidgetMap} from "models/Widget/Widget";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {AppStore} from "stores/AppStore/AppStore";
@@ -248,6 +248,30 @@ describe("WidgetsStore PV preview test ids", () => {
         const id = widgetsStore.addWidget("stats", "stats-1", {widgetId: "stats-0"})!;
 
         expect(widgetsStore.toWidgetSettingsConfig("stats", id)).toEqual({widgetId: "stats-0-1"});
+    });
+
+    test("saves what each statistics widget shows under its widget ID, and restores it to the widget with that ID", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-0"});
+        widgetsStore.addWidget("stats", "stats-4", {widgetId: "stats-1"});
+        widgetsStore.statsWidgets.get("stats-3")!.setCoordinate("Qz");
+
+        const saved = widgetsStore.savedPlotWidgets({imageIdOf: () => undefined});
+        expect(saved).toEqual({"stats-0": {type: "stats", coordinate: "Qz"}, "stats-1": {type: "stats", coordinate: "z"}});
+
+        const issues = widgetsStore.restorePlotWidgets({"stats-1": {type: "stats", coordinate: "Uz"}, "stats-9": {type: "stats", coordinate: "Vz"}}, {fileIdOf: () => undefined, regionIdOf: () => undefined});
+        expect(issues).toEqual([]);
+        expect(widgetsStore.statsWidgets.get("stats-4")!.coordinate).toBe("Uz");
+        expect(widgetsStore.statsWidgets.get("stats-3")!.coordinate).toBe("Qz");
+    });
+
+    test("reports what a widget could not be pointed at, naming the widget", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-0"});
+
+        const issues = widgetsStore.restorePlotWidgetBindings({"stats-0": {type: "stats", imageId: 4}}, {fileIdOf: () => undefined, regionIdOf: () => undefined});
+
+        expect(issues).toEqual([{kind: WorkspaceItemKind.PlotWidget, subject: "stats-0", message: "Could not fully restore the widget stats-0: the image it showed was not restored, so it shows the active image"}]);
     });
 
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {

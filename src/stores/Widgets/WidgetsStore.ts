@@ -27,8 +27,21 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {type ConfigurableStore, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap, type IdentifiedWidgetStore, type Persisted} from "models";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
+import {
+    type ConfigurableStore,
+    CreateWidgetButton,
+    type DefaultWidgetConfig,
+    FlexLayoutDomMarker,
+    getWidgetMap,
+    type IdentifiedWidgetStore,
+    type Persisted,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceIssue,
+    type WorkspacePlotWidgetConfig
+} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
@@ -451,6 +464,51 @@ export class WidgetsStore {
             widgetId = `${preferredId}-${index}`;
         }
         return widgetId;
+    }
+
+    private static isWorkspaceConfigurable = (store: unknown): store is WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig> => {
+        return WidgetsStore.isIdentified(store) && typeof (store as Partial<WorkspaceConfigurableWidget<unknown>>).toWorkspaceConfig === "function";
+    };
+
+    /** What each profile, analysis and statistics widget shows, keyed by its widget ID. */
+    public savedPlotWidgets(ids: WorkspaceIdWriter): Record<string, WorkspacePlotWidgetConfig> {
+        const saved: Record<string, WorkspacePlotWidgetConfig> = {};
+        this.widgetsMap.forEach((widgets, widgetType) =>
+            widgets.forEach(widgetStore => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore)) {
+                    saved[widgetStore.widgetId] = {...widgetStore.toWorkspaceConfig(ids), type: widgetType} as WorkspacePlotWidgetConfig;
+                }
+            })
+        );
+        return saved;
+    }
+
+    /**
+     * Point each profile, analysis and statistics widget at the image and region a workspace says it
+     * showed. The rest follows with {@link restorePlotWidgets}, once the widgets have settled.
+     */
+    @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids));
+    }
+
+    /** Give each profile, analysis and statistics widget the rest of what a workspace says it showed. */
+    @action public restorePlotWidgets(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
+    }
+
+    private restorePlotWidgetsBy(
+        plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined,
+        apply: (widgetStore: WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig>, config: WorkspacePlotWidgetConfig) => string[]
+    ): WorkspaceIssue[] {
+        const issues: WorkspaceIssue[] = [];
+        Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
+            this.widgetsMap.get(config.type)?.forEach(widgetStore => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
+                    apply(widgetStore, config).forEach(problem => issues.push({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`}));
+                }
+            });
+        });
+        return issues;
     }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {

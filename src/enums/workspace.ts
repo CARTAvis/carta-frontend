@@ -12,6 +12,7 @@ export enum WorkspaceItemKind {
     CatalogSelection = "catalog-selection",
     CatalogWidget = "catalog-widget",
     CatalogPlot = "catalog-plot",
+    PlotWidget = "plot-widget",
     Layout = "layout"
 }
 
