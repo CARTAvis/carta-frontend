@@ -56,6 +56,8 @@ export class RenderConfigStore {
     @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
+    /** Set while a restore waits for the cube histogram, so that its partial results leave the saved range alone. */
+    private isAwaitingCompleteCubeHistogram = false;
 
     private frame: FrameStore;
 
@@ -326,6 +328,12 @@ export class RenderConfigStore {
     @action updateCubeHistogram = (histogram: CARTA.Histogram.$Properties | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
+        if (this.isAwaitingCompleteCubeHistogram) {
+            if (progress < 1) {
+                return;
+            }
+            this.isAwaitingCompleteCubeHistogram = false;
+        }
         if (this.selectedPercentile[this.stokesIndex] > 0 && this.isUsingCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
@@ -583,10 +591,30 @@ export class RenderConfigStore {
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;
-        // TODO: Handle cube histograms properly. For now, default to false
-        this.isUsingCubeHistogram = false;
-        this.isUsingCubeHistogramContours = false;
+        // Set as saved without asking for anything: the cube histogram is the restore's to ask for.
+        this.isUsingCubeHistogram = config.useCubeHistogram ?? false;
+        this.isUsingCubeHistogramContours = config.useCubeHistogramContours ?? false;
         this.updateSiblings();
+    };
+
+    /**
+     * Keep the range as it is until the cube histogram is complete, then take the percentile from it.
+     * A restore asks for this, since the range it applied is already what the cube histogram will give.
+     */
+    @action awaitCompleteCubeHistogram = () => {
+        this.isAwaitingCompleteCubeHistogram = true;
+    };
+
+    /**
+     * Give up on the cube histogram, and keep the range as a custom one, so that it no longer
+     * follows a histogram that is not coming.
+     */
+    @action keepRangeWithoutCubeHistogram = () => {
+        this.isAwaitingCompleteCubeHistogram = false;
+        this.isUsingCubeHistogram = false;
+        if (this.selectedPercentile[this.stokesIndex] > 0) {
+            this.selectedPercentile[this.stokesIndex] = -1;
+        }
     };
 
     public toConfig = (): WorkspaceRenderConfig => {

@@ -187,18 +187,49 @@ describe("RenderConfigStore workspace restore", () => {
         expect(renderConfig.customColormapHexEnd).toBe("#FFFFFF");
     });
 
-    test("restores a cube histogram percentile as a channel histogram one", () => {
+    test("restores a cube histogram percentile as saved, without taking it from the channel histogram", () => {
         const renderConfig = createRenderConfig();
 
         renderConfig.applyConfig({useCubeHistogram: true, useCubeHistogramContours: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
-
-        expect(renderConfig.isUsingCubeHistogram).toBe(false);
-        expect(renderConfig.isUsingCubeHistogramContours).toBe(false);
-        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
-
         renderConfig.updateChannelHistogram(HISTOGRAM);
 
+        expect(renderConfig.isUsingCubeHistogram).toBe(true);
+        expect(renderConfig.isUsingCubeHistogramContours).toBe(true);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
+    });
+
+    test("keeps a restored range while the cube histogram streams, and takes the percentile from the complete one", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+
+        renderConfig.awaitCompleteCubeHistogram();
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
+
+        renderConfig.updateCubeHistogram(HISTOGRAM, 1);
         expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([0, 5]);
+    });
+
+    test("follows a streaming cube histogram when no restore is waiting for it", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([0, 5]);
+    });
+
+    test("keeps a restored range as a custom one when its cube histogram does not come", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+        renderConfig.awaitCompleteCubeHistogram();
+
+        renderConfig.keepRangeWithoutCubeHistogram();
+        renderConfig.updateChannelHistogram(HISTOGRAM);
+
+        expect(renderConfig.isUsingCubeHistogram).toBe(false);
+        expect(renderConfig.selectedPercentileVal).toBe(-1);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
     });
 
     test("keeps a restored custom range when a histogram arrives", () => {

@@ -371,6 +371,8 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
+    /** What a workspace load is waiting for, when it is a long task with progress of its own. */
+    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -2749,6 +2751,12 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.workspaceLoadingStep = undefined;
+    };
+
+    /** Say what a workspace load is waiting for, or that it is no longer waiting on anything. */
+    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+        this.workspaceLoadingStep = step;
     };
 
     @flow.bound
