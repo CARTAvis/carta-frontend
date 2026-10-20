@@ -151,7 +151,7 @@ describe("RenderConfigStore workspace round trip", () => {
 
         renderConfig.applyConfig(config);
 
-        expect(renderConfig.toConfig()).toEqual({...config, useCubeHistogram: false, useCubeHistogramContours: false});
+        expect(renderConfig.toConfig()).toEqual({...config, customColormapHexStart: "#000000", customColormapHexEnd: "#FFFFFF", useCubeHistogram: false, useCubeHistogramContours: false});
     });
 });
 
@@ -159,27 +159,32 @@ describe("RenderConfigStore workspace round trip", () => {
 const HISTOGRAM = {numBins: 4, binWidth: 1, firstBinCenter: 0.5, bins: [1, 1, 1, 1], mean: 2, stdDev: 1};
 
 describe("RenderConfigStore workspace restore", () => {
-    test("saves a custom colormap by name only, without its colors", () => {
+    test("saves the colors of a custom colormap", () => {
         const renderConfig = createRenderConfig();
         renderConfig.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM);
         renderConfig.setCustomHexStart("#112233");
         renderConfig.setCustomHexEnd("#445566");
 
-        const config = renderConfig.toConfig();
-
-        expect(config.colorMap).toBe(RenderConfigStore.COLOR_MAPS_CUSTOM);
-        expect(config).not.toHaveProperty("customColormapHexStart");
-        expect(config).not.toHaveProperty("customColormapHexEnd");
+        expect(renderConfig.toConfig()).toEqual(expect.objectContaining({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM, customColormapHexStart: "#112233", customColormapHexEnd: "#445566"}));
     });
 
-    test("restores only the end color of a custom colormap", () => {
+    test("restores both colors of a custom colormap", () => {
         const renderConfig = createRenderConfig();
 
         renderConfig.applyConfig({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM, customColormapHexStart: "#112233", customColormapHexEnd: "#445566"});
 
         expect(renderConfig.colorMap).toBe(RenderConfigStore.COLOR_MAPS_CUSTOM);
-        expect(renderConfig.customColormapHexStart).toBe("#000000");
+        expect(renderConfig.customColormapHexStart).toBe("#112233");
         expect(renderConfig.customColormapHexEnd).toBe("#445566");
+    });
+
+    test("keeps its own custom colormap colors when a workspace saved none", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.applyConfig({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM});
+
+        expect(renderConfig.customColormapHexStart).toBe("#000000");
+        expect(renderConfig.customColormapHexEnd).toBe("#FFFFFF");
     });
 
     test("restores a cube histogram percentile as a channel histogram one", () => {
