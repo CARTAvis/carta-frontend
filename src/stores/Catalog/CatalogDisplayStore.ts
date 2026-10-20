@@ -17,7 +17,15 @@ import {
     ColorMap,
     FrameScaling
 } from "enums";
-import {FACTOR_TO_ARCSEC, type WorkspaceCatalogAxisConfig, type WorkspaceCatalogColorAxisConfig, type WorkspaceCatalogConfig, type WorkspaceCatalogOrientationAxisConfig, type WorkspaceCatalogSizeAxisConfig} from "models";
+import {
+    type ConfigurableStore,
+    FACTOR_TO_ARCSEC,
+    type WorkspaceCatalogAxisConfig,
+    type WorkspaceCatalogColorAxisConfig,
+    type WorkspaceCatalogConfig,
+    type WorkspaceCatalogOrientationAxisConfig,
+    type WorkspaceCatalogSizeAxisConfig
+} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
 import {
@@ -225,7 +233,7 @@ function getDefaultRange(column: Float32Array): {minVal: number; maxVal: number}
     return {minVal: isFinite(result.minVal) ? result.minVal : 0, maxVal: isFinite(result.maxVal) ? result.maxVal : 0};
 }
 
-export class CatalogDisplayStore {
+export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogConfig, WorkspaceCatalogConfig | undefined | null> {
     public static readonly MIN_OVERLAY_SIZE = 1;
     public static readonly MAX_OVERLAY_SIZE = 50;
     public static readonly MAX_AREA_SIZE = 4000;
