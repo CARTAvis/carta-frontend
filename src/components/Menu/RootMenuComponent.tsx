@@ -64,7 +64,7 @@ export class RootMenuComponent extends React.Component {
         if (floatingAnimator) {
             widgetsStore.selectFloatingWidget(floatingAnimator.id);
         } else {
-            widgetsStore.createFloatingAnimatorWidget();
+            widgetsStore.createFloatingWidgetOfType(animatorType);
         }
     };
 
