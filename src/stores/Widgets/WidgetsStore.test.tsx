@@ -2,6 +2,7 @@ import type React from "react";
 import {Actions} from "flexlayout-react";
 
 import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {getWidgetMap} from "models/Widget/Widget";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
@@ -173,7 +174,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("persists Animator time label settings in widget config", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        widgetsStore.addAnimatorWidget("animator-7", {
+        widgetsStore.addWidget("animator", "animator-7", {
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Pacific/Honolulu",
@@ -196,6 +197,31 @@ describe("WidgetsStore PV preview test ids", () => {
             relativeReferenceMjdUtc: 58000,
             relativeTimeUnit: RelativeTimeUnit.DAY
         });
+    });
+
+    test.each(Array.from(getWidgetMap()).filter(([, registration]) => registration.createStore))("creates a store for a %s widget from its registration", widgetType => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({...appStoreMock, widgetsStore} as any);
+
+        const firstId = widgetsStore.addWidget(widgetType);
+        const secondId = widgetsStore.addWidget(widgetType);
+
+        expect(firstId).toEqual(expect.stringContaining(widgetType));
+        expect(secondId).not.toBe(firstId);
+    });
+
+    test("creates no store for a widget whose registration has none", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        expect(widgetsStore.addWidget("image-view")).toBeNull();
+        expect(widgetsStore.addWidget("catalog-overlay")).toBeNull();
+    });
+
+    test("saves no settings for a widget whose store has none", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const id = widgetsStore.addWidget("stats")!;
+
+        expect(widgetsStore.toWidgetSettingsConfig("stats", id)).toBeUndefined();
     });
 
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
