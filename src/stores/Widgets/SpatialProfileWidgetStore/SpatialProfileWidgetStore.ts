@@ -4,7 +4,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
-import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES} from "models";
+import {type ConfigurableStore, type IdentifiedWidgetStore, type LineOption, type Persisted, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
@@ -15,6 +15,8 @@ const DEFAULT_STOKES = "current";
 
 /** What a spatial profiler widget saves of its plot. */
 export interface SpatialProfileWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     coordinate: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -28,7 +30,8 @@ export interface SpatialProfileWidgetConfig {
     maxYVal: number;
 }
 
-export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>> {
+export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, IdentifiedWidgetStore {
+    widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
     @observable minX: number | undefined = undefined;
@@ -359,6 +362,9 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.coordinate === "string" && VALID_XY_COORDINATES.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
@@ -396,6 +402,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
 
     public toConfig = (): SpatialProfileWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             coordinate: this.coordinate,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
