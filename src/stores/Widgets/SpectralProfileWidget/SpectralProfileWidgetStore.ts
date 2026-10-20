@@ -39,7 +39,7 @@ import {
     type WorkspaceSpectralProfileWidgetConfig
 } from "models";
 import {TelemetryService} from "services";
-import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
+import {AppStore, PreferenceStore, ProfileFittingStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {
     clamp,
@@ -90,6 +90,10 @@ export interface SpectralProfileWidgetConfig {
     plotType: PlotType;
     restFrameShiftMode: RestFrameShiftMode;
     restFrameVelocityConvention: VelocityConvention;
+    markerTextVisible: boolean;
+    secondaryAxisCursorInfoVisible: boolean;
+    settingsTabId: SpectralProfilerSettingsTabs;
+    smoothing: ProfileSmoothingConfig;
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpectralProfileWidgetConfig> {
@@ -1266,6 +1270,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (typeof widgetSettings.restFrameVelocityConvention === "string" && Object.values(VelocityConvention).includes(widgetSettings.restFrameVelocityConvention as VelocityConvention)) {
             this.restFrameVelocityConvention = widgetSettings.restFrameVelocityConvention as VelocityConvention;
         }
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (typeof widgetSettings.secondaryAxisCursorInfoVisible === "boolean") {
+            this.isSecondaryAxisCursorInfoVisible = widgetSettings.secondaryAxisCursorInfoVisible;
+        }
+        if (Object.values(SpectralProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpectralProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpectralProfilerSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
+        }
     };
 
     public selectFrame = (fileId: number) => {
@@ -1364,6 +1380,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     public toConfig = (): SpectralProfileWidgetConfig => {
         return {
             widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            secondaryAxisCursorInfoVisible: this.isSecondaryAxisCursorInfoVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig(),
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
