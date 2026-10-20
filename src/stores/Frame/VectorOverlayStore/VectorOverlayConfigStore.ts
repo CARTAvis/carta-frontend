@@ -1,14 +1,14 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
-import type {WorkspaceVectorOverlayConfig} from "models";
+import type {ConfigurableStore, WorkspaceVectorOverlayConfig} from "models";
 import tinycolor from "tinycolor2";
 
 import {VectorOverlaySource} from "enums";
 import {type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
-export class VectorOverlayConfigStore {
+export class VectorOverlayConfigStore implements ConfigurableStore<WorkspaceVectorOverlayConfig | undefined, WorkspaceVectorOverlayConfig> {
     // Generator config
     @observable isEnabled: boolean = false;
     @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
