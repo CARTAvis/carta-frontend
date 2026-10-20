@@ -618,12 +618,15 @@ export class RenderConfigStore {
     /**
      * Give up on the cube histogram, and keep the range as a custom one, so that it no longer
      * follows a histogram that is not coming.
+     *
+     * @param stokesIndex - The polarization whose range to keep: the one the image is in, which an
+     * image not yet in view may not have reported to this store.
      */
-    @action keepRangeWithoutCubeHistogram = () => {
+    @action keepRangeWithoutCubeHistogram = (stokesIndex: number = this.stokesIndex) => {
         this.isAwaitingCompleteCubeHistogram = false;
         this.isUsingCubeHistogram = false;
-        if (this.selectedPercentile[this.stokesIndex] > 0) {
-            this.selectedPercentile[this.stokesIndex] = -1;
+        if (this.selectedPercentile[stokesIndex] > 0) {
+            this.selectedPercentile[stokesIndex] = -1;
         }
     };
 

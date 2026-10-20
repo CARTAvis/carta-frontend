@@ -669,7 +669,7 @@ describe("WorkspaceRestorer", () => {
             jest.useFakeTimers();
             const {appStore} = createSession();
 
-            const pending = restoreIssues(createWorkspace({files: [cubeImage, {...cubeImage, id: 2}]}));
+            const pending = restoreIssues(createWorkspace({files: [cubeImage, {...cubeImage, id: 2, stokes: 1}]}));
             await jest.advanceTimersByTimeAsync(0);
             // A later load claims the session, then fails to fetch its workspace, so these images stay.
             WorkspaceRestorer.claimGeneration();
@@ -678,9 +678,10 @@ describe("WorkspaceRestorer", () => {
 
             const [first, second] = appStore.frames;
             expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(1);
-            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(0);
             expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
-            expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            // Never asked for, and restored in Q: the range kept is Q's.
+            expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(1);
             expect(issues).toEqual([]);
         });
 
