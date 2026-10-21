@@ -1,6 +1,6 @@
 import {PENDING_SCHEMA_FIELDS, undeclaredFields} from "./pendingSchemaFields";
 
-const SCHEMAS: Record<string, {definitions: Record<string, {properties?: object}>}> = {
+const SCHEMAS: Record<string, {definitions: Record<string, {properties?: {widgetSettings?: {properties?: object}}}>}> = {
     workspace: require("carta-schemas/workspace_schema_2.json"),
     layout: require("carta-schemas/layout_schema_2.json")
 };
@@ -8,7 +8,9 @@ const SCHEMAS: Record<string, {definitions: Record<string, {properties?: object}
 describe("fields the schemas do not declare yet", () => {
     test.each(Object.entries(PENDING_SCHEMA_FIELDS))("%s lists only fields its schema still leaves undeclared", (definitionId, fields) => {
         const [schema, definition] = definitionId.split("/");
-        const declared = SCHEMAS[schema].definitions[definition]?.properties ?? {};
+        const properties = SCHEMAS[schema].definitions[definition]?.properties;
+        // a layout keeps a widget's settings under widgetSettings, beside the widget's type and ID
+        const declared = (schema === "layout" ? properties?.widgetSettings?.properties : properties) ?? {};
 
         expect(fields.filter(field => field in declared)).toEqual([]);
     });
