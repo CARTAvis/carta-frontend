@@ -25,6 +25,7 @@ import {
     CursorPosition,
     DEFAULT_STATS_DISPLAY_TYPES,
     Event,
+    EXTRA_STATISTICS_TYPES,
     getEventList,
     PresetLayout,
     RegionCreationMode,
@@ -704,6 +705,12 @@ export class PreferenceStore {
         const isSelected = this.statistics.includes(type);
         const statistics = Array.from(STATISTICS_NAME_MAP.keys()).filter(item => (item === type ? !isSelected : this.statistics.includes(item)));
         this.setPreference(PreferenceKeys.STATISTICS, statistics);
+    };
+
+    @action toggleAllExtraStatistics = () => {
+        const shouldSelectAll = !EXTRA_STATISTICS_TYPES.every(type => this.statistics.includes(type));
+        const statistics = this.statistics.filter(type => !EXTRA_STATISTICS_TYPES.includes(type as CARTA.StatsType));
+        this.setPreference(PreferenceKeys.STATISTICS, shouldSelectAll ? [...statistics, ...EXTRA_STATISTICS_TYPES] : statistics);
     };
 
     // getters for telemetry

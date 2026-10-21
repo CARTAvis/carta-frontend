@@ -993,6 +993,13 @@ export class PreferenceDialogComponent extends React.Component {
 
         const statisticsPanel = (
             <FormGroup className="statistics-panel" label="Extra quantities">
+                <Checkbox
+                    className="statistics-checkbox"
+                    label="Select all"
+                    checked={EXTRA_STATISTICS_TYPES.every(type => preference.statistics.includes(type))}
+                    indeterminate={EXTRA_STATISTICS_TYPES.some(type => preference.statistics.includes(type)) && !EXTRA_STATISTICS_TYPES.every(type => preference.statistics.includes(type))}
+                    onChange={preference.toggleAllExtraStatistics}
+                />
                 <div className="statistics-list">
                     {EXTRA_STATISTICS_TYPES.map(type => (
                         <Checkbox className="statistics-checkbox" key={type} checked={preference.statistics.includes(type)} label={STATISTICS_NAME_MAP.get(type)} onChange={() => preference.toggleStatistic(type)} />
