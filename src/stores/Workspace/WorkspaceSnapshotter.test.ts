@@ -82,9 +82,10 @@ function createSession(overrides: Record<string, any> = {}) {
         },
         widgetsStore: {
             catalogWidgets: new Map(),
-            savedPlotWidgets: jest.fn(
-                (ids: {imageIdOf: (fileId: number) => number | undefined}): Record<string, unknown> => ({"stats-0": {type: "stats", imageId: ids.imageIdOf(0), coordinate: "z"}, "stats-1": {type: "stats", imageId: ids.imageIdOf(5)}})
-            )
+            savedPlotWidgets: jest.fn((ids: {imageIdOf: (fileId: number) => number | undefined}): Record<string, unknown> => ({
+                "stats-0": {type: "stats", imageId: ids.imageIdOf(0), coordinate: "z"},
+                "stats-1": {type: "stats", imageId: ids.imageIdOf(5)}
+            }))
         },
         getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
