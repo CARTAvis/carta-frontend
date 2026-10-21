@@ -17,9 +17,9 @@ export const SUPPORTED_STATISTICS_TYPES = [
     CARTA.StatsType.Extrema
 ];
 
-export const EXTRA_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.MedAbsDevMed, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
-
 export const QUANTILE_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
+
+export const EXTRA_STATISTICS_TYPES = [...QUANTILE_STATISTICS_TYPES, CARTA.StatsType.MedAbsDevMed];
 
 export const ExpandQuantileStatistics = (types: CARTA.StatsType[]): CARTA.StatsType[] => {
     return QUANTILE_STATISTICS_TYPES.some(type => types.includes(type)) ? Array.from(new Set([...types, ...QUANTILE_STATISTICS_TYPES])) : [...types];
@@ -40,10 +40,10 @@ export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
     [CARTA.StatsType.RMS, "RMS"],
     [CARTA.StatsType.SumSq, "SumSq"],
     [CARTA.StatsType.Median, "Median"],
-    [CARTA.StatsType.MedAbsDevMed, "MedAbsDevMed"],
-    [CARTA.StatsType.Quartile, "Quartile (Q3-Q1)"],
     [CARTA.StatsType.Q1, "Q1"],
-    [CARTA.StatsType.Q3, "Q3"]
+    [CARTA.StatsType.Q3, "Q3"],
+    [CARTA.StatsType.Quartile, "Quartile (Q3-Q1)"],
+    [CARTA.StatsType.MedAbsDevMed, "MedAbsDevMed"]
 ]);
 
 export const DEFAULT_STATS_DISPLAY_TYPES = Array.from(STATISTICS_NAME_MAP.keys()).filter(type => !EXTRA_STATISTICS_TYPES.includes(type as CARTA.StatsType));
