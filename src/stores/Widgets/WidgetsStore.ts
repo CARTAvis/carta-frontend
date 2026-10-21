@@ -576,7 +576,6 @@ export class WidgetsStore {
     private addWidgetByType = (widgetType: string, widgetSettings: object | null = null, preAssignedId: string | null = null): string | null => {
         switch (widgetType) {
             case ImageViewComponent.WidgetConfig.type:
-                AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
                 return ImageViewComponent.WidgetConfig.id;
             case CatalogOverlayComponent.WidgetConfig.type:
                 return this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId);
@@ -723,6 +722,12 @@ export class WidgetsStore {
     };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
+        // The grid is the session's, not one widget's: apply it once, from the first image view that saved one.
+        const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
+        if (imageViews.length) {
+            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+        }
+
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
                 const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType);
