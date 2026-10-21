@@ -146,6 +146,7 @@ describe("WorkspaceSnapshotter", () => {
             restFreqStore: {headerRestFreq: {value: 1.42, unit: "GHz"}, customRestFreq: {value: 230.5, unit: "GHz"}, isInvalidInput: false},
             isRestFrameSupported: true,
             isRestFrameEnabled: true,
+            isRestFrameShiftInputValid: true,
             restFrameRedshift: 0.01,
             restFrameShiftMode: "redshift",
             restFrameVelocityConvention: "optical",
@@ -166,6 +167,15 @@ describe("WorkspaceSnapshotter", () => {
             offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
         });
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("saves the rest frame as not applied while the shift entered for it is one the controls rejected", () => {
+        const frame = createFrame(0, {isRestFrameSupported: true, isRestFrameEnabled: true, isRestFrameShiftInputValid: false, restFrameRedshift: 0.01, restFrameShiftMode: "redshift", restFrameVelocityConvention: "optical"});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].restFrame).toEqual({enabled: false, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"});
     });
 
     test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and hidden offset coordinates", () => {

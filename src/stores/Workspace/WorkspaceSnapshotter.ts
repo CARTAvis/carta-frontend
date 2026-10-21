@@ -158,7 +158,8 @@ export class WorkspaceSnapshotter {
         }
         if (frame.isRestFrameSupported) {
             workspaceFile.restFrame = {
-                enabled: frame.isRestFrameEnabled,
+                // a shift the controls rejected leaves the axis uncorrected, as it is saved
+                enabled: frame.isRestFrameEnabled && frame.isRestFrameShiftInputValid,
                 redshift: frame.restFrameRedshift,
                 shiftMode: frame.restFrameShiftMode,
                 velocityConvention: frame.restFrameVelocityConvention
