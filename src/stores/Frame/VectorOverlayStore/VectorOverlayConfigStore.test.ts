@@ -4,6 +4,7 @@ import {VectorOverlaySource} from "enums/vector";
 import {type WorkspaceVectorOverlayConfig} from "models/Workspace";
 import {type FrameStore} from "stores/Frame/FrameStore";
 import {type PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {VectorOverlayConfigStore} from "./VectorOverlayConfigStore";
 
@@ -75,7 +76,7 @@ describe("VectorOverlayConfigStore workspace round trip", () => {
         store.setEnabled(true);
         store.applyConfig(createWorkspaceConfig(true));
 
-        expect(Object.keys(store.toConfig()!).filter(key => !(key in WORKSPACE_SCHEMA.definitions["vector-overlay-config"].properties))).toEqual([]);
+        expect(undeclaredFields("workspace/vector-overlay-config", WORKSPACE_SCHEMA.definitions["vector-overlay-config"].properties, store.toConfig()!)).toEqual([]);
     });
 
     test("returns the applied config", () => {
