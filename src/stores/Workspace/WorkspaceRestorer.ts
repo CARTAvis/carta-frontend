@@ -1,4 +1,4 @@
-import {comparer, reaction, runInAction} from "mobx";
+import {comparer, reaction} from "mobx";
 
 import {BeamType, FrequencyUnit, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, type SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {
@@ -130,6 +130,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        // A new rest frequency reaches an image's WCS only once the step it was set in ends, and the
+        // images are matched with that WCS, so the step ends before they are configured.
+        this.restoreRestFrequencies();
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         // Registered with the backend, and the cube histograms computed, while the catalogs open;
         // both are waited for before the layout.
         const regions = this.configureImages();
@@ -256,9 +263,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.renderConfig.applyConfig(fileInfo.renderConfig);
             }
 
-            // A new rest frequency matches the image again, so it is set before the image is matched.
-            this.restoreRestFrequency(frame, fileInfo);
-
             if (this.workspace.references && fileInfo.references) {
                 // An image was matched only if it named the reference it was matched to. A
                 // workspace that names no reference -- because the session's own was an image it
@@ -294,6 +298,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
+
+        this.restoreOffsetCoordinates();
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
         // image the workspace does not carry. A session with images open has one in front.
@@ -334,30 +340,58 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** The rest frequency the image's spectral axis was converted with, when it was not the one in the header. */
-    private restoreRestFrequency(frame: FrameStore, fileInfo: WorkspaceFile): void {
-        const restFrequency = fileInfo.restFrequency;
-        if (!restFrequency) {
-            return;
-        }
-        const {value, unit} = restFrequency;
-        if (typeof value === "number" && isFinite(value) && value > 0 && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
-            // set together, so the image is converted and matched again once, with the saved frequency
-            runInAction(() => {
-                frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
-                frame.restFreqStore.setCustomVal(value);
-            });
-        } else {
-            const imageName = describeImageSource(fileInfo.source);
-            this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
+    /**
+     * The offset coordinates each image was shown in. They were saved only on an image not matched to
+     * another one, and are passed on to the images matched to it as they would be from the controls.
+     * They are set once every image is matched: matching an image moves the offset centre of the one
+     * it is matched to.
+     */
+    private restoreOffsetCoordinates(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const offset = fileInfo.offsetCoordinates;
+            if (!frame || !offset || frame.spatialReference) {
+                continue;
+            }
+            const center = offset.center;
+            const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
+            if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
+                if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
+                    frame.setSkyRefIs(offset.skyRefIs);
+                }
+                if (!frame.isOffsetCoord) {
+                    frame.toggleOffsetCoord();
+                }
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
+            }
         }
     }
 
     /**
-     * The rest frame, beam and offset coordinates the image was shown with, set on the image alone.
-     * Offset coordinates were saved only on an image not matched to another one, and are passed on to
-     * the images matched to it as they would be from the controls.
+     * Stage 2a: the rest frequency each image's spectral axis was converted with, when it was not the
+     * one in the header.
      */
+    private restoreRestFrequencies(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const restFrequency = fileInfo.restFrequency;
+            if (!frame || !restFrequency) {
+                continue;
+            }
+            const {value, unit} = restFrequency;
+            if (typeof value === "number" && isFinite(value) && value > 0 && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+                frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
+                frame.restFreqStore.setCustomVal(value);
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
+            }
+        }
+    }
+
+    /** The rest frame and beam the image was shown with, set on the image alone. */
     private restoreImageViewSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
         const unsupported: string[] = [];
 
@@ -382,7 +416,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         const beam = fileInfo.beam;
-        if (beam && frame.beamProperties) {
+        if (beam && !frame.beamProperties) {
+            unsupported.push("its beam");
+        } else if (beam) {
             const beamSettings = frame.overlayBeamSettings;
             const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
             if (typeof beam.visible === "boolean") {
@@ -402,22 +438,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             if (isNumber(beam.shiftY)) {
                 beamSettings.setShiftY(beam.shiftY);
-            }
-        }
-
-        const offset = fileInfo.offsetCoordinates;
-        if (offset && !frame.spatialReference) {
-            const center = offset.center;
-            const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
-            if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
-                if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
-                    frame.setSkyRefIs(offset.skyRefIs);
-                }
-                if (!frame.isOffsetCoord) {
-                    frame.toggleOffsetCoord();
-                }
-            } else {
-                unsupported.push("offset coordinates");
             }
         }
 
