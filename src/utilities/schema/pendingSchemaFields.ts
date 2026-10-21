@@ -8,6 +8,9 @@
  * validation. Remove an entry once the schema declares the field.
  */
 export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
+    "layout/animator": ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"],
+    "layout/histogram": ["meanRmsVisible"],
+    "layout/spectral-profiler": ["restFrameRedshift", "restFrameShiftMode", "restFrameVelocityConvention", "xAxisRestFrameEnabled", "yAxisRestFrameEnabled"],
     "workspace/contour-config": ["colormapInverted"],
     "workspace/vector-overlay-config": ["colormapInverted", "thresholdOption"]
 };
