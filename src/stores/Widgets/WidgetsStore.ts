@@ -69,7 +69,14 @@ import {smoothStepOffset} from "utilities";
 export type {DefaultWidgetConfig} from "models";
 
 export class WidgetConfig implements DefaultWidgetConfig {
+    private static nextRenderKey = 0;
+
     id: string;
+    /**
+     * Unique to this config. A layout replaces each widget and its store under the same ID, so a
+     * floating widget keyed by this is mounted again and takes the new store its component caches.
+     */
+    readonly renderKey = `${WidgetConfig.nextRenderKey++}`;
     readonly type: string;
     readonly minWidth: number;
     readonly minHeight: number;
