@@ -6,11 +6,12 @@ jest.mock("services/CatalogWebGLService", () => ({
     }
 }));
 
+import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogType, ColorMap, FrameScaling, WorkspaceItemKind} from "enums";
-import {type WorkspaceCatalogConfig} from "models/Workspace";
+import {WORKSPACE_VERSION, type WorkspaceCatalogConfig} from "models/Workspace";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, CatalogWidgetStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
 
@@ -134,6 +135,69 @@ afterEach(() => {
 });
 
 describe("CatalogDisplayStore display config", () => {
+    test.each([
+        {finalMode: CatalogDisplayMode.WORLD, isMapped: false},
+        {finalMode: CatalogDisplayMode.CANVAS, isMapped: false},
+        {finalMode: CatalogDisplayMode.WORLD, isMapped: true},
+        {finalMode: CatalogDisplayMode.CANVAS, isMapped: true}
+    ])("keeps a workspace saveable after switching to angular size and then $finalMode, mapped: $isMapped", ({finalMode, isMapped}) => {
+        const store = createStore();
+        if (isMapped) {
+            store.setSizeMap("Fmag");
+            store.setSizeMinorMap("Bmag");
+            store.setOrientationMapColumn("PA");
+        }
+        store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+        store.setCatalogDisplayMode(finalMode);
+
+        const validate = new Ajv({strictTypes: false, allErrors: true}).compile(require("carta-schemas/workspace_schema_2.json"));
+        const workspace = {
+            workspaceVersion: WORKSPACE_VERSION,
+            frontendVersion: "6.1.0-dev",
+            files: [{id: 0, source: {type: "file", filename: "image.fits"}}],
+            catalogs: [{id: 1, source: {type: "file", filename: "sources.vot"}, associatedImageId: 0, displayConfig: store.toConfig()}]
+        };
+
+        validate(workspace);
+        expect(validate.errors).toBeNull();
+        expect(validate(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+        if (isMapped) {
+            expect(store.angleMin).toBe(0);
+            expect(store.angleMax).toBe(135);
+            if (finalMode === CatalogDisplayMode.WORLD) {
+                expect(store.sizeMinorMin.diameter).toBe(2);
+                expect(store.sizeMinorMax.diameter).toBe(11);
+            }
+        }
+    });
+
+    test("keeps angular size config saveable when mapped columns are cleared or contain only missing values", () => {
+        const store = createStore();
+        store.setSizeMap("Fmag");
+        store.setSizeMinorMap("Bmag");
+        store.setOrientationMapColumn("PA");
+        store.setCatalogDisplayMode(CatalogDisplayMode.WORLD);
+
+        store.setSizeMap(CatalogOverlay.NONE);
+        store.setSizeMinorMap(CatalogOverlay.NONE);
+        store.setOrientationMapColumn(CatalogOverlay.NONE);
+
+        const validate = new Ajv({strictTypes: false, allErrors: true}).compile({
+            $ref: "#/definitions/catalog-display-config",
+            definitions: require("carta-schemas/workspace_schema_2.json").definitions
+        });
+        expect(validate(store.toConfig())).toBe(true);
+        expect(validate(JSON.parse(JSON.stringify(store.toConfig())))).toBe(true);
+
+        loadRows(profileStoreOf(store), [NaN, NaN]);
+        store.setSizeMap("Fmag");
+        store.setSizeMinorMap("Fmag");
+        store.setOrientationMapColumn("Fmag");
+
+        expect(validate(store.toConfig())).toBe(true);
+        expect(validate(JSON.parse(JSON.stringify(store.toConfig())))).toBe(true);
+    });
+
     test("round-trips a configured store through another store", () => {
         const config = createConfiguredStore().toConfig();
 

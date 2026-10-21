@@ -712,7 +712,7 @@ export class CatalogDisplayStore {
             this.orientationMax = {default: undefined, clipd: undefined, isExplicit: false};
 
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.orientationMapData);
+                const result = getDefaultRange(this.orientationMapData);
                 this.setAngleMax(result.maxVal);
                 this.setAngleMin(result.minVal);
             }
@@ -956,7 +956,7 @@ export class CatalogDisplayStore {
             this.sizeColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
             this.sizeColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMapData);
+                const result = getDefaultRange(this.sizeMapData);
                 this.setSizeMax(result.maxVal);
                 this.setSizeMin(result.minVal);
             }
@@ -1112,7 +1112,7 @@ export class CatalogDisplayStore {
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined, isExplicit: false};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined, isExplicit: false};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMinorMapData);
+                const result = getDefaultRange(this.sizeMinorMapData);
                 this.setMinorSizeMax(result.maxVal);
                 this.setMinorSizeMin(result.minVal);
             }
@@ -1135,13 +1135,13 @@ export class CatalogDisplayStore {
         if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
             this.isSizeAreaMode = false;
 
-            const result = minMaxArray(this.sizeMapData);
+            const result = getDefaultRange(this.sizeMapData);
             this.setSizeMax(result.maxVal);
             this.setSizeMin(result.minVal);
-            const minorResult = minMaxArray(this.sizeMinorMapData);
+            const minorResult = getDefaultRange(this.sizeMinorMapData);
             this.setMinorSizeMax(minorResult.maxVal);
             this.setMinorSizeMin(minorResult.minVal);
-            const resultOrientation = minMaxArray(this.orientationMapData);
+            const resultOrientation = getDefaultRange(this.orientationMapData);
             this.setAngleMax(resultOrientation.maxVal);
             this.setAngleMin(resultOrientation.minVal);
 
