@@ -2,6 +2,7 @@ import Ajv from "ajv";
 
 import {PlotType, RestFrameShiftMode, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 // load the stores before the widget stores: importing one alone reaches ColormapComponent through a circular import before "utilities" is initialised
 import "stores";
@@ -72,9 +73,9 @@ describe("widget config in a layout", () => {
     const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/carta-widget", definitions: LAYOUT_SCHEMA.definitions});
 
     test.each(LAYOUT_WIDGETS)("a %s widget writes only fields the layout schema declares", (id, createStore) => {
-        const declared = LAYOUT_SCHEMA.definitions[id].properties.widgetSettings.properties;
+        const declared = LAYOUT_SCHEMA.definitions[id]?.properties.widgetSettings.properties;
 
-        expect(Object.keys(createStore().toConfig()).filter(key => !(key in declared))).toEqual([]);
+        expect(undeclaredFields(`layout/${id}`, declared, createStore().toConfig())).toEqual([]);
     });
 
     test.each(LAYOUT_WIDGETS)("a %s widget writes settings the layout schema accepts", (id, createStore) => {
