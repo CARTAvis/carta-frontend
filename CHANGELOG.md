@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed workspaces not restoring custom colormap colors and per-cube histogram percentile ranges ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 * Fixed workspaces not restoring the data, zoom and settings of profile, histogram, statistics and Stokes analysis widgets ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
 * Fixed layouts and workspaces not restoring the multi-panel grid of the image viewer, which a restored layout now applies to the session without changing the user's own default ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
+* Fixed workspaces not restoring an image's custom rest frequency, rest frame, beam overlay and offset coordinates, and hidden or semi-transparent regions coming back shown ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
