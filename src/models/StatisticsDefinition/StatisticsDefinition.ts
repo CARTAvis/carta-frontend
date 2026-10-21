@@ -19,6 +19,12 @@ export const SUPPORTED_STATISTICS_TYPES = [
 
 export const EXTRA_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.MedAbsDevMed, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
 
+export const QUANTILE_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
+
+export const ExpandQuantileStatistics = (types: CARTA.StatsType[]): CARTA.StatsType[] => {
+    return QUANTILE_STATISTICS_TYPES.some(type => types.includes(type)) ? Array.from(new Set([...types, ...QUANTILE_STATISTICS_TYPES])) : [...types];
+};
+
 export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
     [CARTA.StatsType.NumPixels, "NumPixels"],
     [NUM_BEAMS_STATS_TYPE, "NumBeams"],

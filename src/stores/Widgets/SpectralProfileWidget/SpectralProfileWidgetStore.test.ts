@@ -5,11 +5,31 @@ import {observable, runInAction} from "mobx";
 
 import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
+import {QUANTILE_STATISTICS_TYPES} from "../../../models/StatisticsDefinition/StatisticsDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
 import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
+
+describe("SpectralProfileWidgetStore quantile requirements", () => {
+    test.each(QUANTILE_STATISTICS_TYPES)("requests the quantile group once when initially selecting %s", type => {
+        let statsTypes = [type];
+        const widget = {
+            profileSelectionStore: {getFormattedSpectralConfigs: () => [{fileId: 0, regionId: 1, coordinate: "z", statsTypes}]}
+        } as unknown as SpectralProfileWidgetStore;
+        const widgets = new Map([["a", widget]]);
+        const original = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual(expect.arrayContaining(QUANTILE_STATISTICS_TYPES));
+        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).not.toContain(CARTA.StatsType.MedAbsDevMed);
+
+        statsTypes = [...QUANTILE_STATISTICS_TYPES];
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, SpectralProfileWidgetStore.calculateRequirementsMap(widgets))).toEqual([]);
+
+        statsTypes.push(CARTA.StatsType.MedAbsDevMed);
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, SpectralProfileWidgetStore.calculateRequirementsMap(widgets))).toHaveLength(1);
+    });
+});
 
 describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;

@@ -3,6 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {Polarizations, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
+import {ExpandQuantileStatistics} from "models/StatisticsDefinition/StatisticsDefinition";
 import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
@@ -32,7 +33,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
     public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
         const selectedStatistics = AppStore.Instance.preferenceStore.statistics;
-        const statsTypes = selectedStatistics.filter(type => typeof type === "number") as CARTA.StatsType[];
+        const statsTypes = ExpandQuantileStatistics(selectedStatistics.filter(type => typeof type === "number") as CARTA.StatsType[]);
         const hasDerivedStatistic = selectedStatistics.some(type => typeof type === "string");
         if (hasDerivedStatistic && !statsTypes.includes(CARTA.StatsType.NumPixels)) {
             statsTypes.unshift(CARTA.StatsType.NumPixels);
