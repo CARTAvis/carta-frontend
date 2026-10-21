@@ -8,7 +8,7 @@ import {AppStore} from "stores/AppStore/AppStore";
 import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
-import {WidgetsStore} from "./WidgetsStore";
+import {WidgetConfig, WidgetsStore} from "./WidgetsStore";
 
 describe("WidgetsStore PV preview test ids", () => {
     const originalSelectTab = Actions.selectTab;
@@ -374,6 +374,15 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
         expect(widgetsStore.catalogWidgets.size).toBe(0);
         expect(widgetsStore.floatingWidgets).toHaveLength(1);
+    });
+});
+
+describe("WidgetConfig", () => {
+    test("gives a widget a layout replaces under the same ID a new render key", () => {
+        const first = new WidgetConfig("stats-0", getWidgetMap().get("stats")!.config);
+        const replacement = new WidgetConfig("stats-0", getWidgetMap().get("stats")!.config);
+
+        expect(replacement.renderKey).not.toBe(first.renderKey);
     });
 });
 
