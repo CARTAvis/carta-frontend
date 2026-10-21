@@ -233,10 +233,10 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     const numFloatingObjs = zIndexManager.floatingObjsNum;
 
                     return (
-                        <div key={id}>
+                        <div key={`${id}-${w.renderKey}`}>
                             <FloatingWidgetComponent
                                 isSelected={zIndex === numFloatingObjs}
-                                key={id}
+                                key={`${id}-${w.renderKey}`}
                                 widgetConfig={w}
                                 zIndex={zIndex}
                                 shouldShowPinButton={shouldShowPinButton}
