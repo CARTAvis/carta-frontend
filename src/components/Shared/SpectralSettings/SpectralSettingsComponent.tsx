@@ -66,6 +66,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
                         onChange={event => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
+                        data-testid="spectral-profiler-system-dropdown"
                     />
                 </FormGroup>
             </React.Fragment>
