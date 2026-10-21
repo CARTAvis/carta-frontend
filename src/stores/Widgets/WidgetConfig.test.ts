@@ -2,6 +2,7 @@ import Ajv from "ajv";
 
 import {HistogramSettingsTabs, PlotType, RestFrameShiftMode, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
+import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 // load the stores before the widget stores: importing one alone reaches ColormapComponent through a circular import before "utilities" is initialised
@@ -118,6 +119,19 @@ describe("widget config in a layout", () => {
         const widget = JSON.parse(JSON.stringify({type: "component", id, widgetSettings: createStore().toConfig()}));
 
         expect(validateWidget(widget)).toBe(true);
+    });
+});
+
+describe("image view grid in a layout", () => {
+    const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/carta-widget", definitions: LAYOUT_SCHEMA.definitions});
+    const grid = () => ImageViewConfigStore.Instance.toConfig();
+
+    test("writes only fields the layout schema declares", () => {
+        expect(undeclaredFields("layout/image-view", LAYOUT_SCHEMA.definitions["image-view"]?.properties.widgetSettings.properties, grid())).toEqual([]);
+    });
+
+    test("writes settings the layout schema accepts", () => {
+        expect(validateWidget(JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: grid()})))).toBe(true);
     });
 });
 

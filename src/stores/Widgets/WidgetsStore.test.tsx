@@ -395,6 +395,28 @@ describe("WidgetsStore initWidgets", () => {
         jest.restoreAllMocks();
     });
 
+    test("applies the image view grid a layout saved, and saves the session's grid in a layout", () => {
+        const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => grid)};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], []);
+
+        expect(imageViewConfigStore.applyConfig).toHaveBeenCalledWith(grid);
+        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view")).toEqual(grid);
+    });
+
+    test("returns the image view grid to the user's preferences when a layout saved none", () => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}}], []);
+
+        expect(imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+    });
+
     test("brings a restored floating histogram to the front when selected", () => {
         const zIndexManager = new FloatingObjzIndexManager();
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager} as any);
