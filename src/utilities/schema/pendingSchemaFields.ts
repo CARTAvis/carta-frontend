@@ -9,6 +9,7 @@
 export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
     "layout/animator": ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"],
     "layout/histogram": ["widgetId", "meanRmsVisible", "settingsTabId", "autoBins"],
+    "layout/image-view": ["multiPanelEnabled", "panelMode", "panelColumns", "panelRows"],
     "layout/render-config": ["widgetId"],
     "layout/spatial-profiler": ["widgetId", "markerTextVisible", "settingsTabId", "smoothing"],
     "layout/spectral-profiler": ["widgetId", "restFrameShiftMode", "restFrameVelocityConvention", "markerTextVisible", "secondaryAxisCursorInfoVisible", "settingsTabId", "smoothing"],

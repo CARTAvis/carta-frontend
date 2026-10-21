@@ -93,6 +93,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const beam = overlaySettings.beam;
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
+        const imageViewConfig = appStore.imageViewConfigStore;
 
         const isInterior: boolean = global.labelType === LabelType.Interior;
 
@@ -201,34 +202,38 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
-                    <Switch checked={preferences.isImageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
+                    <Switch checked={imageViewConfig.isMultiPanelEnabled} onChange={ev => imageViewConfig.setMultiPanelEnabled(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.isImageMultiPanelEnabled}>
-                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.isImageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                <FormGroup inline={true} label="Multi-panel mode" disabled={!imageViewConfig.isMultiPanelEnabled}>
+                    <HTMLSelect
+                        value={imageViewConfig.multiPanelMode}
+                        disabled={!imageViewConfig.isMultiPanelEnabled}
+                        onChange={event => imageViewConfig.setMultiPanelMode(event.currentTarget.value as ImagePanelMode.Dynamic | ImagePanelMode.Fixed)}
+                    >
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.isImageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Columns" labelInfo={imageViewConfig.multiPanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!imageViewConfig.isMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Columns"
                         min={1}
-                        value={preferences.imagePanelColumns}
-                        disabled={!preferences.isImageMultiPanelEnabled}
+                        value={imageViewConfig.panelColumns}
+                        disabled={!imageViewConfig.isMultiPanelEnabled}
                         stepSize={1}
                         minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
+                        onValueChange={value => imageViewConfig.setPanelColumns(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.isImageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Rows" labelInfo={imageViewConfig.multiPanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!imageViewConfig.isMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Rows"
                         min={1}
-                        disabled={!preferences.isImageMultiPanelEnabled}
-                        value={preferences.imagePanelRows}
+                        disabled={!imageViewConfig.isMultiPanelEnabled}
+                        value={imageViewConfig.panelRows}
                         stepSize={1}
                         minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
+                        onValueChange={value => imageViewConfig.setPanelRows(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Overlay color">
