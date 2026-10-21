@@ -5,6 +5,7 @@ jest.mock("components/Shared", () => ({
 import {FrameScaling} from "enums";
 import {type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {RenderConfigStore} from "./RenderConfigStore";
 
@@ -135,7 +136,7 @@ describe("RenderConfigStore workspace round trip", () => {
     test("writes only fields the workspace schema declares", () => {
         const renderConfig = createRenderConfig();
 
-        expect(Object.keys(renderConfig.toConfig()).filter(key => !(key in WORKSPACE_SCHEMA.definitions["render-config"].properties))).toEqual([]);
+        expect(undeclaredFields("workspace/render-config", WORKSPACE_SCHEMA.definitions["render-config"].properties, renderConfig.toConfig())).toEqual([]);
     });
 
     test("returns the applied config", () => {
