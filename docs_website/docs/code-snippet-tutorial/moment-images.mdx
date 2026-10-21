@@ -13,7 +13,7 @@ The configuration for the generator is accessible via <ApiLink path="/stores/cla
 const file = await app.openFile("[filename]");
 
 // Create a spectral profile settings widget
-app.widgetsStore.createFloatingSpectralProfilerWidget();
+app.widgetsStore.createFloatingWidgetOfType("spectral-profiler");
 app.widgetsStore.createFloatingSettingsWidget("", "spectral-profiler-0", "spectral-profiler");
 
 // Get the SpectralProfileWidgetStore object
