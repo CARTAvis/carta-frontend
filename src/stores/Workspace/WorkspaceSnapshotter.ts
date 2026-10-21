@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {DialogId, ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {DialogId, ImageType, RegionOpacity, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     CARTA_INFO,
     type Workspace,
@@ -222,6 +222,28 @@ export class WorkspaceSnapshotter {
         }
         workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
         workspaceFile.intensityUnit = frame.intensityUnit;
+        const restFreqStore = frame.restFreqStore;
+        const restFreq = restFreqStore?.customRestFreq;
+        if (restFreq && !restFreqStore.isInvalidInput && (restFreq.value !== restFreqStore.headerRestFreq.value || restFreq.unit !== restFreqStore.headerRestFreq.unit)) {
+            workspaceFile.restFrequency = {value: restFreq.value, unit: restFreq.unit};
+        }
+        if (frame.isRestFrameSupported) {
+            workspaceFile.restFrame = {
+                enabled: frame.isRestFrameEnabled,
+                redshift: frame.restFrameRedshift,
+                shiftMode: frame.restFrameShiftMode,
+                velocityConvention: frame.restFrameVelocityConvention
+            };
+        }
+
+        if (frame.beamProperties) {
+            const beam = frame.overlayBeamSettings;
+            workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
+        }
+        // Like regions, offset coordinates are the image's own only while it is not matched to another one.
+        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        }
 
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
@@ -281,7 +303,8 @@ export class WorkspaceSnapshotter {
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
                 lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
-                coordinate: region.coordinate
+                coordinate: region.coordinate,
+                opacity: region.opacity === RegionOpacity.Visible ? undefined : region.opacity
             }));
     }
 
