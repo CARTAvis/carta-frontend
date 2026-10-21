@@ -30,6 +30,9 @@ function createRenderConfig() {
 /** The ID the backend gives a restored region: one of its own, unrelated to the one it was saved with. */
 const RegisterRegion = jest.fn((savedRegionId: number): Promise<number> => Promise.resolve(savedRegionId + 100));
 
+/** What a test changes about every image the restorer opens: whether it has a beam, supports a rest frame and so on. */
+let frameOverrides: Record<string, unknown> = {};
+
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
     const frame = {
@@ -57,14 +60,31 @@ function createFrame(fileId: number) {
         setSpectralCoordinateSecondary: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
         setSpectralSystem: jest.fn((system: string, _shouldAlignSiblings?: boolean) => system !== "Unsupported"),
         setIntensityUnit: jest.fn(),
+        restFreqStore: {setCustomUnit: jest.fn(), setCustomVal: jest.fn()},
+        isRestFrameSupported: true,
+        setRestFrameShiftMode: jest.fn(),
+        setRestFrameVelocityConvention: jest.fn(),
+        setRestFrameRedshift: jest.fn(),
+        setRestFrameEnabled: jest.fn(),
+        beamProperties: {},
+        overlayBeamSettings: {setVisible: jest.fn(), setColor: jest.fn(), setType: jest.fn(), setWidth: jest.fn(), setShiftX: jest.fn(), setShiftY: jest.fn()},
+        isPVImage: false,
+        isSwappedZ: false,
+        isUVImage: false,
+        isOffsetCoord: false,
+        setOffsetCenter: jest.fn((x: number, y: number) => isFinite(x) && isFinite(y)),
+        setSkyRefIs: jest.fn(),
+        toggleOffsetCoord: jest.fn(),
         regionSet: {
             addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({
                 regionId: await RegisterRegion(savedRegionId),
                 setLocked: jest.fn(),
-                setLineRegionSampleWidth: jest.fn()
+                setLineRegionSampleWidth: jest.fn(),
+                setOpacity: jest.fn()
             })),
             selectSingleRegion: jest.fn()
-        }
+        },
+        ...frameOverrides
     };
     return frame;
 }
@@ -224,6 +244,7 @@ function createWorkspace(overrides: Partial<Workspace> = {}): Workspace {
 describe("WorkspaceRestorer", () => {
     afterEach(() => {
         jest.restoreAllMocks();
+        frameOverrides = {};
     });
 
     test("restores nothing but reports no problems for an empty workspace", async () => {
@@ -691,6 +712,66 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.frames[0].setIntensityUnit).not.toHaveBeenCalled();
     });
 
+    describe("the rest frequency, rest frame, beam and offset coordinates of an image", () => {
+        const savedSettings = {
+            restFrequency: {value: 230.5, unit: "GHz"},
+            restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
+            beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+        };
+
+        test("shows the image with the ones it was saved with", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, ...savedSettings}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual([]);
+            expect(frame.restFreqStore.setCustomUnit).toHaveBeenCalledWith("GHz");
+            expect(frame.restFreqStore.setCustomVal).toHaveBeenCalledWith(230.5);
+            expect(frame.setRestFrameShiftMode).toHaveBeenCalledWith("redshift");
+            expect(frame.setRestFrameVelocityConvention).toHaveBeenCalledWith("optical");
+            expect(frame.setRestFrameRedshift).toHaveBeenCalledWith(0.01);
+            expect(frame.setRestFrameEnabled).toHaveBeenCalledWith(true);
+            const beam = frame.overlayBeamSettings;
+            expect([beam.setVisible, beam.setColor, beam.setType, beam.setWidth, beam.setShiftX, beam.setShiftY].map(setter => setter.mock.calls)).toEqual([[[false]], [["#00ff00"]], [["solid"]], [[2]], [[3]], [[-4]]]);
+            expect(frame.setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(frame.setSkyRefIs).toHaveBeenCalledWith(1);
+            expect(frame.toggleOffsetCoord).toHaveBeenCalledTimes(1);
+        });
+
+        test("reports a rest frame or offset coordinates the image no longer supports, and leaves a beam it lacks", async () => {
+            frameOverrides = {isRestFrameSupported: false, isPVImage: true, beamProperties: undefined};
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, ...savedSettings}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual(["Could not show image.fits with its rest frame or offset coordinates"]);
+            expect(frame.setRestFrameEnabled).not.toHaveBeenCalled();
+            expect(frame.toggleOffsetCoord).not.toHaveBeenCalled();
+            expect(frame.overlayBeamSettings.setVisible).not.toHaveBeenCalled();
+        });
+
+        test("reports a rest frequency it cannot convert with, and keeps the header's", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "parsec"}}]}));
+
+            expect(problems).toEqual(["Could not convert image.fits with the rest frequency 230.5 parsec"]);
+            expect(appStore.frames[0].restFreqStore.setCustomVal).not.toHaveBeenCalled();
+        });
+
+        test("ignores the settings of a beam no control would set", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, beam: {visible: "yes", color: "", type: "dotted", width: 0, shiftX: "1", shiftY: null} as any}]}));
+
+            const beam = appStore.frames[0].overlayBeamSettings;
+            expect([beam.setVisible, beam.setColor, beam.setType, beam.setWidth, beam.setShiftX, beam.setShiftY].every(setter => setter.mock.calls.length === 0)).toBe(true);
+        });
+    });
+
     describe("the regions of an image", () => {
         const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
 
@@ -759,6 +840,15 @@ describe("WorkspaceRestorer", () => {
 
             const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setLineRegionSampleWidth: jest.Mock}[];
             expect(restoredRegions.map(restoredRegion => restoredRegion.setLineRegionSampleWidth.mock.calls)).toEqual([[[7]], []]);
+        });
+
+        test("hides or dims a region as it was saved, and leaves one no control would set as shown", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), opacity: 0}, {...region(2), opacity: 0.5}, {...region(3), opacity: 0.3}, region(4)]}}]}));
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setOpacity: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setOpacity.mock.calls)).toEqual([[[0]], [[0.5]], [], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {

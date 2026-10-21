@@ -1,6 +1,6 @@
-import {comparer, reaction} from "mobx";
+import {comparer, reaction, runInAction} from "mobx";
 
-import {ImageType, RegionId, type SpectralSystem, WorkspaceItemKind} from "enums";
+import {BeamType, FrequencyUnit, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, type SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -18,7 +18,7 @@ import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /**
  * How long a cube histogram may go without progress before a restore gives up on it, in
@@ -256,6 +256,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.renderConfig.applyConfig(fileInfo.renderConfig);
             }
 
+            // A new rest frequency matches the image again, so it is set before the image is matched.
+            this.restoreRestFrequency(frame, fileInfo);
+
             if (this.workspace.references && fileInfo.references) {
                 // An image was matched only if it named the reference it was matched to. A
                 // workspace that names no reference -- because the session's own was an image it
@@ -273,6 +276,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
 
             this.restoreSpectralSettings(frame, fileInfo);
+            this.restoreImageViewSettings(frame, fileInfo);
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
@@ -330,6 +334,99 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
+    /** The rest frequency the image's spectral axis was converted with, when it was not the one in the header. */
+    private restoreRestFrequency(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const restFrequency = fileInfo.restFrequency;
+        if (!restFrequency) {
+            return;
+        }
+        const {value, unit} = restFrequency;
+        if (typeof value === "number" && isFinite(value) && value > 0 && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+            // set together, so the image is converted and matched again once, with the saved frequency
+            runInAction(() => {
+                frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
+                frame.restFreqStore.setCustomVal(value);
+            });
+        } else {
+            const imageName = describeImageSource(fileInfo.source);
+            this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
+        }
+    }
+
+    /**
+     * The rest frame, beam and offset coordinates the image was shown with, set on the image alone.
+     * Offset coordinates were saved only on an image not matched to another one, and are passed on to
+     * the images matched to it as they would be from the controls.
+     */
+    private restoreImageViewSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const unsupported: string[] = [];
+
+        const restFrame = fileInfo.restFrame;
+        if (restFrame) {
+            if (!frame.isRestFrameSupported) {
+                if (restFrame.enabled) {
+                    unsupported.push("its rest frame");
+                }
+            } else if (
+                Object.values(RestFrameShiftMode).includes(restFrame.shiftMode as RestFrameShiftMode) &&
+                Object.values(VelocityConvention).includes(restFrame.velocityConvention as VelocityConvention) &&
+                isValidRedshift(restFrame.redshift)
+            ) {
+                frame.setRestFrameShiftMode(restFrame.shiftMode as RestFrameShiftMode);
+                frame.setRestFrameVelocityConvention(restFrame.velocityConvention as VelocityConvention);
+                frame.setRestFrameRedshift(restFrame.redshift);
+                frame.setRestFrameEnabled(restFrame.enabled === true);
+            } else {
+                unsupported.push("its rest frame");
+            }
+        }
+
+        const beam = fileInfo.beam;
+        if (beam && frame.beamProperties) {
+            const beamSettings = frame.overlayBeamSettings;
+            const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+            if (typeof beam.visible === "boolean") {
+                beamSettings.setVisible(beam.visible);
+            }
+            if (typeof beam.color === "string" && beam.color) {
+                beamSettings.setColor(beam.color);
+            }
+            if (Object.values(BeamType).includes(beam.type as BeamType)) {
+                beamSettings.setType(beam.type as BeamType);
+            }
+            if (isNumber(beam.width) && beam.width > 0) {
+                beamSettings.setWidth(beam.width);
+            }
+            if (isNumber(beam.shiftX)) {
+                beamSettings.setShiftX(beam.shiftX);
+            }
+            if (isNumber(beam.shiftY)) {
+                beamSettings.setShiftY(beam.shiftY);
+            }
+        }
+
+        const offset = fileInfo.offsetCoordinates;
+        if (offset && !frame.spatialReference) {
+            const center = offset.center;
+            const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
+            if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
+                if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
+                    frame.setSkyRefIs(offset.skyRefIs);
+                }
+                if (!frame.isOffsetCoord) {
+                    frame.toggleOffsetCoord();
+                }
+            } else {
+                unsupported.push("offset coordinates");
+            }
+        }
+
+        if (unsupported.length) {
+            const imageName = describeImageSource(fileInfo.source);
+            this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with ${unsupported.join(" or ")}`);
+        }
+    }
+
     /**
      * Regions are only the image's own while it is not matched to another one.
      *
@@ -360,6 +457,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 );
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
+                if (regionInfo.opacity === RegionOpacity.SemiTransparent || regionInfo.opacity === RegionOpacity.Invisible) {
+                    region.setOpacity(regionInfo.opacity);
+                }
                 const sampleWidth = regionInfo.lineRegionSampleWidth;
                 if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
                     region.setLineRegionSampleWidth(sampleWidth);
