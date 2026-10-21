@@ -31,7 +31,7 @@ const DEFAULTS = {
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
         pixelGridColor: "#ffffff",
-        imageMultiPanelEnabled: false,
+        imageMultiPanelEnabled: true,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
@@ -652,7 +652,7 @@ export class PreferenceStore {
     }
 
     @computed get isImageMultiPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
+        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imageMultiPanelEnabled;
     }
 
     @computed get imagePanelMode(): ImagePanelMode {
