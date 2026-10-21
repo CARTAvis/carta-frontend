@@ -202,12 +202,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
-                    <Switch checked={imageViewConfig.isMultiPanelEnabled} onChange={ev => imageViewConfig.setMultiPanelEnabled(ev.currentTarget.checked)} />
+                    <Switch checked={imageViewConfig.isMultiPanelEnabled} onChange={ev => imageViewConfig.setMultiPanelEnabled(ev.currentTarget.checked)} data-testid="image-view-settings-multi-panel-toggle" />
                 </FormGroup>
                 <FormGroup inline={true} label="Multi-panel mode" disabled={!imageViewConfig.isMultiPanelEnabled}>
                     <HTMLSelect
                         value={imageViewConfig.multiPanelMode}
                         disabled={!imageViewConfig.isMultiPanelEnabled}
+                        data-testid="image-view-settings-multi-panel-mode-dropdown"
                         onChange={event => imageViewConfig.setMultiPanelMode(event.currentTarget.value as ImagePanelMode.Dynamic | ImagePanelMode.Fixed)}
                     >
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
@@ -223,6 +224,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         stepSize={1}
                         minorStepSize={null}
                         onValueChange={value => imageViewConfig.setPanelColumns(value)}
+                        data-testid="image-view-settings-multi-panel-columns-input"
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Rows" labelInfo={imageViewConfig.multiPanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!imageViewConfig.isMultiPanelEnabled}>
@@ -234,6 +236,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         stepSize={1}
                         minorStepSize={null}
                         onValueChange={value => imageViewConfig.setPanelRows(value)}
+                        data-testid="image-view-settings-multi-panel-rows-input"
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Overlay color">
