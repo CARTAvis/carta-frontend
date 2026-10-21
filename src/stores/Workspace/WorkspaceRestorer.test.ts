@@ -740,17 +740,48 @@ describe("WorkspaceRestorer", () => {
             expect(frame.toggleOffsetCoord).toHaveBeenCalledTimes(1);
         });
 
-        test("reports a rest frame or offset coordinates the image no longer supports, and leaves a beam it lacks", async () => {
+        test("reports a rest frame, beam or offset coordinates the image no longer has or supports", async () => {
             frameOverrides = {isRestFrameSupported: false, isPVImage: true, beamProperties: undefined};
             const {appStore} = createSession();
 
             const problems = await restore(createWorkspace({files: [{...IMAGE, ...savedSettings}]}));
 
             const frame = appStore.frames[0];
-            expect(problems).toEqual(["Could not show image.fits with its rest frame or offset coordinates"]);
+            expect(problems).toEqual(["Could not show image.fits with its rest frame or its beam", "Could not show image.fits with offset coordinates"]);
             expect(frame.setRestFrameEnabled).not.toHaveBeenCalled();
             expect(frame.toggleOffsetCoord).not.toHaveBeenCalled();
             expect(frame.overlayBeamSettings.setVisible).not.toHaveBeenCalled();
+        });
+
+        test("sets the rest frequency in a step of its own, before the images are matched with it", async () => {
+            const {appStore} = createSession();
+            appStore.spectralReference = {} as never;
+            const generator = new WorkspaceRestorer(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}}], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
+
+            let didMatchBeforeRestFrequency: boolean | undefined;
+            let step = generator.next();
+            while (!step.done) {
+                const restFreqStore = appStore.frames[0]?.restFreqStore;
+                if (didMatchBeforeRestFrequency === undefined && restFreqStore?.setCustomVal.mock.calls.length) {
+                    didMatchBeforeRestFrequency = appStore.setSpectralMatchingEnabled.mock.calls.length > 0;
+                }
+                step = generator.next(await step.value);
+            }
+
+            expect(didMatchBeforeRestFrequency).toBe(false);
+            expect(appStore.setSpectralMatchingEnabled).toHaveBeenCalled();
+        });
+
+        test("puts the offset coordinates back once every image is matched, since matching one moves them", async () => {
+            const {appStore} = createSession();
+            appStore.spatialReference = {} as never;
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
+
+            await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: savedSettings.offsetCoordinates, references: {spatial: 1}}, matched], references: {spatial: 1}}));
+
+            const setOffsetCenter = appStore.frames[0].setOffsetCenter;
+            expect(setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(setOffsetCenter.mock.invocationCallOrder[0]).toBeGreaterThan(Math.max(...appStore.setSpatialMatchingEnabled.mock.invocationCallOrder));
         });
 
         test("reports a rest frequency it cannot convert with, and keeps the header's", async () => {
