@@ -403,8 +403,19 @@ describe("WidgetsStore initWidgets", () => {
 
         widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], []);
 
-        expect(imageViewConfigStore.applyConfig).toHaveBeenCalledWith(grid);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
         expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view")).toEqual(grid);
+    });
+
+    test("keeps the image view grid a layout saved when another image view in it saved none", () => {
+        const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], [{type: "component", id: "image-view"}]);
+
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
     });
 
     test("returns the image view grid to the user's preferences when a layout saved none", () => {
