@@ -1,5 +1,10 @@
 import {CARTA} from "carta-protobuf";
 
+export const NUM_BEAMS_STATS_TYPE = "NumBeams";
+export const BEAM_AREA_STATS_TYPE = "BeamArea";
+export const BEAM_PIXELS_STATS_TYPE = "BeamAreaPixels";
+export type StatsDisplayType = CARTA.StatsType | typeof NUM_BEAMS_STATS_TYPE | typeof BEAM_AREA_STATS_TYPE | typeof BEAM_PIXELS_STATS_TYPE;
+
 export const SUPPORTED_STATISTICS_TYPES = [
     CARTA.StatsType.Sum,
     CARTA.StatsType.FluxDensity,
@@ -12,18 +17,37 @@ export const SUPPORTED_STATISTICS_TYPES = [
     CARTA.StatsType.Extrema
 ];
 
-export const STATISTICS_TEXT = new Map<CARTA.StatsType, string>([
+export const QUANTILE_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsType.Q1, CARTA.StatsType.Q3, CARTA.StatsType.Quartile];
+
+export const EXTRA_STATISTICS_TYPES = [...QUANTILE_STATISTICS_TYPES, CARTA.StatsType.MedAbsDevMed];
+
+export const ExpandQuantileStatistics = (types: CARTA.StatsType[]): CARTA.StatsType[] => {
+    return QUANTILE_STATISTICS_TYPES.some(type => types.includes(type)) ? Array.from(new Set([...types, ...QUANTILE_STATISTICS_TYPES])) : [...types];
+};
+
+export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
+    [CARTA.StatsType.NumPixels, "NumPixels"],
+    [NUM_BEAMS_STATS_TYPE, "NumBeams"],
+    [BEAM_AREA_STATS_TYPE, "BeamArea"],
+    [BEAM_PIXELS_STATS_TYPE, "BeamAreaPixels"],
     [CARTA.StatsType.Sum, "Sum"],
     [CARTA.StatsType.FluxDensity, "FluxDensity"],
     [CARTA.StatsType.Mean, "Mean"],
-    [CARTA.StatsType.RMS, "RMS"],
     [CARTA.StatsType.Sigma, "StdDev"],
-    [CARTA.StatsType.SumSq, "SumSq"],
     [CARTA.StatsType.Min, "Min"],
     [CARTA.StatsType.Max, "Max"],
-    [CARTA.StatsType.Extrema, "Extrema"]
+    [CARTA.StatsType.Extrema, "Extrema"],
+    [CARTA.StatsType.RMS, "RMS"],
+    [CARTA.StatsType.SumSq, "SumSq"],
+    [CARTA.StatsType.Median, "Median"],
+    [CARTA.StatsType.Q1, "Q1"],
+    [CARTA.StatsType.Q3, "Q3"],
+    [CARTA.StatsType.Quartile, "Quartile (Q3-Q1)"],
+    [CARTA.StatsType.MedAbsDevMed, "MedAbsDevMed"]
 ]);
 
+export const DEFAULT_STATS_DISPLAY_TYPES = Array.from(STATISTICS_NAME_MAP.keys()).filter(type => !EXTRA_STATISTICS_TYPES.includes(type as CARTA.StatsType));
+
 export const StatsTypeString = (statsType: CARTA.StatsType): string => {
-    return STATISTICS_TEXT.get(statsType) ?? "Not Implemented";
+    return STATISTICS_NAME_MAP.get(statsType) ?? "Not Implemented";
 };
