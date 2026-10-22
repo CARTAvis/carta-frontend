@@ -206,6 +206,8 @@ export interface WorkspaceRegion {
     dashes?: number[];
     locked?: boolean;
     annotationStyles?: any;
+    /** Line and polyline regions: how many pixels wide a spatial profile along the region samples. */
+    lineRegionSampleWidth?: number;
 }
 
 export interface WorkspaceColorBlending {
@@ -264,6 +266,12 @@ export interface WorkspaceFile {
     zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
+    /** The spectral coordinate the spectral axis is shown in, and its secondary one, as the spectral settings name them. */
+    spectralCoordinate?: string;
+    spectralCoordinateSecondary?: string;
+    spectralSystem?: string;
+    /** The unit a spectral profile of the image shows its intensity in. */
+    intensityUnit?: string;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -387,6 +395,89 @@ export interface WorkspaceCatalogPlotConfig {
 }
 
 /**
+ * Which image and region a widget shows, each by the ID the workspace saved it with. An image left
+ * out is the active one.
+ */
+export interface WorkspaceWidgetBinding {
+    /** Workspace ID of the image the widget shows, when it is not the active one. */
+    imageId?: number;
+    /** The region the widget shows of an image, by the ID the region was saved with. */
+    regions?: {imageId?: number; regionId: number}[];
+}
+
+/** The range a line plot was zoomed to, on each axis that was zoomed, in the units it was shown in. */
+export interface WorkspacePlotRange {
+    minX?: number;
+    maxX?: number;
+    minY?: number;
+    maxY?: number;
+}
+
+export type WorkspaceRenderConfigWidgetConfig = WorkspacePlotRange;
+
+export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** The Stokes the profile is taken in, when it is not the image's current one. */
+    stokes?: string;
+}
+
+export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** The Stokes the histogram is taken in. */
+    coordinate?: string;
+    /** The pixel values the histogram is computed between, when they are not the image's own. */
+    pixelBounds?: {min: number; max: number};
+}
+
+export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
+    /** The Stokes the statistics are taken in. */
+    coordinate?: string;
+}
+
+/** The bounds a Stokes analysis widget's plots were zoomed to. */
+export type WorkspaceStokesAnalysisRange =
+    | "sharedMinX"
+    | "sharedMaxX"
+    | "quMinY"
+    | "quMaxY"
+    | "polIntensityMinY"
+    | "polIntensityMaxY"
+    | "polAngleMinY"
+    | "polAngleMaxY"
+    | "quScatterMinX"
+    | "quScatterMaxX"
+    | "quScatterMinY"
+    | "quScatterMaxY"
+    | "quScatterEqualXmin"
+    | "quScatterEqualXmax"
+    | "quScatterEqualYmin"
+    | "quScatterEqualYmax";
+
+export interface WorkspaceStokesAnalysisWidgetConfig extends WorkspaceWidgetBinding {
+    ranges?: Partial<Record<WorkspaceStokesAnalysisRange, number>>;
+}
+
+export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** What several profiles shown together differ in; none when one profile is shown. */
+    profileCategory?: string;
+    /** The images whose profiles are shown together, by workspace image ID. */
+    imageIds?: number[];
+    /** The regions whose profiles are shown, by the IDs they were saved with, on the image shown. */
+    regionIds?: number[];
+    statsTypes?: number[];
+    coordinates?: string[];
+    /** The colour of each profile shown together, by what it is the profile of: a workspace image ID, a saved region ID, a statistic or a Stokes. */
+    profileColors?: {key: number | string; color: string}[];
+    /** The unit profiles of several images are shown in together. */
+    intensityUnit?: string;
+    /** The source's redshift, and whether the axes are shown in its rest frame. */
+    restFrameRedshift?: number;
+    xAxisRestFrameEnabled?: boolean;
+    yAxisRestFrameEnabled?: boolean;
+}
+
+/** What one profile, analysis or statistics widget shows: Widget Config (ADR-0005). */
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"render-config" | "spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
+
+/**
  * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
  * and so is kept by the Workspace rather than the Layout (ADR-0005).
  */
@@ -428,6 +519,8 @@ export interface Workspace {
     selectedColorBlending?: number;
     /** What each catalog table and plot widget shows, keyed by the widget's stable ID. */
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
+    /** What each profile, analysis and statistics widget shows, keyed by the widget's stable ID. */
+    plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;

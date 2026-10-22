@@ -32,10 +32,14 @@ import {
     type LineKey,
     NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Persisted,
-    type Point2D
+    type Point2D,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceSpectralProfileWidgetConfig
 } from "models";
 import {TelemetryService} from "services";
-import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
+import {AppStore, PreferenceStore, ProfileFittingStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {
     clamp,
@@ -49,6 +53,8 @@ import {
     restFrequencyFactorFromRedshift,
     velocityFromRedshift
 } from "utilities";
+
+import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -75,23 +81,23 @@ export type MultiPlotData = {
 
 /** What a spectral profiler widget saves of its plot and rest frame. */
 export interface SpectralProfileWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number | undefined;
-    maxXVal: number | undefined;
-    minYVal: number | undefined;
-    maxYVal: number | undefined;
-    xAxisRestFrameEnabled: boolean;
-    restFrameRedshift: number;
     restFrameShiftMode: RestFrameShiftMode;
     restFrameVelocityConvention: VelocityConvention;
-    yAxisRestFrameEnabled: boolean;
+    markerTextVisible: boolean;
+    secondaryAxisCursorInfoVisible: boolean;
+    settingsTabId: SpectralProfilerSettingsTabs;
+    smoothing: ProfileSmoothingConfig;
 }
 
-export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>> {
+export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpectralProfileWidgetConfig> {
+    widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -1238,6 +1244,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
             this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
@@ -1254,24 +1263,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
-        if (typeof widgetSettings.xAxisRestFrameEnabled === "boolean") {
-            this.isXAxisRestFrameEnabled = widgetSettings.xAxisRestFrameEnabled;
-        }
-        if (typeof widgetSettings.restFrameRedshift === "number" && isValidRedshift(widgetSettings.restFrameRedshift)) {
-            this.restFrameRedshift = widgetSettings.restFrameRedshift;
-        }
         this.isRestFrameShiftInputValid = true;
         if (typeof widgetSettings.restFrameShiftMode === "string" && Object.values(RestFrameShiftMode).includes(widgetSettings.restFrameShiftMode as RestFrameShiftMode)) {
             this.restFrameShiftMode = widgetSettings.restFrameShiftMode as RestFrameShiftMode;
@@ -1279,8 +1270,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (typeof widgetSettings.restFrameVelocityConvention === "string" && Object.values(VelocityConvention).includes(widgetSettings.restFrameVelocityConvention as VelocityConvention)) {
             this.restFrameVelocityConvention = widgetSettings.restFrameVelocityConvention as VelocityConvention;
         }
-        if (typeof widgetSettings.yAxisRestFrameEnabled === "boolean") {
-            this.isYAxisRestFrameEnabled = widgetSettings.yAxisRestFrameEnabled;
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (typeof widgetSettings.secondaryAxisCursorInfoVisible === "boolean") {
+            this.isSecondaryAxisCursorInfoVisible = widgetSettings.secondaryAxisCursorInfoVisible;
+        }
+        if (Object.values(SpectralProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpectralProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpectralProfilerSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
         }
     };
 
@@ -1288,22 +1288,116 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         this.profileSelectionStore.selectFrame(fileId);
     };
 
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceSpectralProfileWidgetConfig => {
+        const selection = this.profileSelectionStore;
+        const category = selection.activeProfileCategory;
+        const imageIds = selection.selectedFileIds.flatMap(fileId => ids.imageIdOf(fileId) ?? []);
+        const profileColors =
+            category === MultiProfileCategory.NONE
+                ? []
+                : Array.from(this.lineColorMap.entries()).flatMap(([key, color]) => {
+                      const savedKey = category === MultiProfileCategory.IMAGE ? (typeof key === "number" ? ids.imageIdOf(key) : undefined) : key;
+                      return savedKey === undefined ? [] : [{key: savedKey, color}];
+                  });
+        return {
+            ...this.toWorkspaceBinding(ids),
+            ...(category !== MultiProfileCategory.NONE ? {profileCategory: category} : {}),
+            ...(category === MultiProfileCategory.IMAGE && imageIds.length ? {imageIds} : {}),
+            regionIds: selection.selectedRegionIds,
+            statsTypes: selection.selectedStatsTypes,
+            coordinates: selection.selectedCoordinates,
+            ...(profileColors.length ? {profileColors} : {}),
+            ...(category === MultiProfileCategory.IMAGE && this.intensityUnit !== undefined ? {intensityUnit: this.intensityUnit} : {}),
+            restFrameRedshift: this.restFrameRedshift,
+            xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
+            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
+            ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
+        };
+    };
+
+    /**
+     * What several profiles shown together differ in, then the image and region shown. Choosing a
+     * category points the widget back at the active image and region, which the second step undoes.
+     */
+    @action public applyWorkspaceBinding = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        const category = Object.values(MultiProfileCategory).find(value => value === config.profileCategory) ?? MultiProfileCategory.NONE;
+        this.profileSelectionStore.applyWorkspaceSelection({category});
+        // The rest frame here too: a change of its Y scale resets the Y range, which the second step restores.
+        if (typeof config.restFrameRedshift === "number" && isValidRedshift(config.restFrameRedshift)) {
+            this.restFrameRedshift = config.restFrameRedshift;
+        }
+        if (typeof config.xAxisRestFrameEnabled === "boolean") {
+            this.isXAxisRestFrameEnabled = config.xAxisRestFrameEnabled;
+        }
+        if (typeof config.yAxisRestFrameEnabled === "boolean") {
+            this.isYAxisRestFrameEnabled = config.yAxisRestFrameEnabled;
+        }
+        return this.applyWorkspaceBindingOf(config, ids);
+    };
+
+    @action public applyWorkspaceConfig = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        // Pointing the widget at the same image and region again changes nothing, unless choosing the
+        // category undid it; what it could not be pointed at was said in the first step.
+        this.applyWorkspaceBindingOf(config, ids);
+
+        const selection = this.profileSelectionStore;
+        const category = selection.activeProfileCategory;
+        const fileIdOf = (imageId: number | string): number | undefined => (typeof imageId === "number" ? ids.fileIdOf(imageId) : undefined);
+        const regionIdOf = (regionId: number | string): number | undefined => (typeof regionId === "number" ? ids.regionIdOf(config.imageId, regionId) : undefined);
+        const problems: string[] = [];
+        const fileIds = (config.imageIds ?? []).flatMap(imageId => fileIdOf(imageId) ?? []);
+        if (fileIds.length < (config.imageIds?.length ?? 0)) {
+            problems.push("some of the images whose profiles it showed were not restored");
+        }
+        const regionIds = (config.regionIds ?? []).flatMap(regionId => regionIdOf(regionId) ?? []);
+        if (regionIds.length < (config.regionIds?.length ?? 0)) {
+            problems.push("some of the regions whose profiles it showed were not restored");
+        }
+        selection.applyWorkspaceSelection({fileIds, regionIds, statsTypes: config.statsTypes, coordinates: config.coordinates});
+
+        if (category === MultiProfileCategory.NONE) {
+            this.clearProfileColors();
+            this.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
+        } else if (config.profileColors?.length) {
+            this.clearProfileColors();
+            for (const {key, color} of config.profileColors) {
+                const lineKey = category === MultiProfileCategory.IMAGE ? fileIdOf(key) : category === MultiProfileCategory.REGION ? regionIdOf(key) : key;
+                if (lineKey !== undefined && typeof color === "string" && (tinycolor(color).isValid() || isAutoColor(color))) {
+                    this.setProfileColor(lineKey, color);
+                }
+            }
+        }
+
+        if (config.intensityUnit !== undefined) {
+            this.setMultiProfileIntensityUnit(config.intensityUnit);
+        }
+        // A range is of the profiles shown, so it is not kept when some of them could not be.
+        if (problems.length) {
+            this.isShowingWorkspaceData = false;
+        }
+        return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
+    };
+
     public toConfig = (): SpectralProfileWidgetConfig => {
         return {
+            widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            secondaryAxisCursorInfoVisible: this.isSecondaryAxisCursorInfoVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig(),
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal,
-            xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
-            restFrameRedshift: this.restFrameRedshift,
             restFrameShiftMode: this.restFrameShiftMode,
-            restFrameVelocityConvention: this.restFrameVelocityConvention,
-            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
+            restFrameVelocityConvention: this.restFrameVelocityConvention
         };
     };
 

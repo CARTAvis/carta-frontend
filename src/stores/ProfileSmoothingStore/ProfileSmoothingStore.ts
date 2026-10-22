@@ -1,10 +1,40 @@
 import * as GSL from "gsl_wrapper";
 import {action, computed, makeObservable, observable} from "mobx";
+import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, SmoothingType} from "enums";
-import {type Point2D} from "models";
+import {type ConfigurableStore, type Persisted, type Point2D} from "models";
+import {isAutoColor} from "utilities";
 
-export class ProfileSmoothingStore {
+/** How a profile is smoothed and the smoothed profile drawn, as a layout keeps it. */
+export interface ProfileSmoothingConfig {
+    type: SmoothingType;
+    lineColor: string;
+    lineType: PlotType;
+    lineWidth: number;
+    pointRadius: number;
+    isOverlayOn: boolean;
+    boxcarSize: number;
+    gaussianSigma: number;
+    hanningSize: number;
+    decimationWidth: number;
+    binWidth: number;
+    savitzkyGolaySize: number;
+    savitzkyGolayOrder: number;
+    /** The line whose smoothed colour is being edited, and the colour of each, by the line's name. */
+    selectedLine: string;
+    lineColors: {[line: string]: string};
+}
+
+function isColor(color: unknown): color is string {
+    return typeof color === "string" && (tinycolor(color).isValid() || isAutoColor(color));
+}
+
+function isIntegerAtLeast(value: unknown, min: number): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= min;
+}
+
+export class ProfileSmoothingStore implements ConfigurableStore<ProfileSmoothingConfig, Persisted<ProfileSmoothingConfig>> {
     @observable type: SmoothingType = SmoothingType.NONE;
     @observable lineColor: string = "auto-rose";
     @observable selectedLine: string = "";
@@ -87,6 +117,80 @@ export class ProfileSmoothingStore {
 
     @action setColorMap = (key: string, color: string) => {
         this.colorMap.set(key, color);
+    };
+
+    public toConfig = (): ProfileSmoothingConfig => ({
+        type: this.type,
+        lineColor: this.lineColor,
+        lineType: this.lineType,
+        lineWidth: this.lineWidth,
+        pointRadius: this.pointRadius,
+        isOverlayOn: this.isOverlayOn,
+        boxcarSize: this.boxcarSize,
+        gaussianSigma: this.gaussianSigma,
+        hanningSize: this.hanningSize,
+        decimationWidth: this.decimationWidth,
+        binWidth: this.binWidth,
+        savitzkyGolaySize: this.savitzkyGolaySize,
+        savitzkyGolayOrder: this.savitzkyGolayOrder,
+        selectedLine: this.selectedLine,
+        lineColors: Object.fromEntries(this.colorMap)
+    });
+
+    /** Take each setting a layout saved that the smoothing controls would accept, and keep the rest. */
+    @action applyConfig = (config: Persisted<ProfileSmoothingConfig>) => {
+        if (!config || typeof config !== "object") {
+            return;
+        }
+        if (Object.values(SmoothingType).includes(config.type as SmoothingType)) {
+            this.type = config.type as SmoothingType;
+        }
+        if (isColor(config.lineColor)) {
+            this.lineColor = config.lineColor;
+        }
+        if (Object.values(PlotType).includes(config.lineType as PlotType)) {
+            this.lineType = config.lineType as PlotType;
+        }
+        if (typeof config.lineWidth === "number") {
+            this.setLineWidth(config.lineWidth);
+        }
+        if (typeof config.pointRadius === "number") {
+            this.setPointRadius(config.pointRadius);
+        }
+        if (typeof config.isOverlayOn === "boolean") {
+            this.isOverlayOn = config.isOverlayOn;
+        }
+        if (isIntegerAtLeast(config.boxcarSize, 2)) {
+            this.boxcarSize = config.boxcarSize;
+        }
+        if (typeof config.gaussianSigma === "number" && config.gaussianSigma >= 1) {
+            this.gaussianSigma = config.gaussianSigma;
+        }
+        if (isIntegerAtLeast(config.hanningSize, 3)) {
+            this.hanningSize = config.hanningSize;
+        }
+        if (isIntegerAtLeast(config.decimationWidth, 2)) {
+            this.decimationWidth = config.decimationWidth;
+        }
+        if (isIntegerAtLeast(config.binWidth, 2)) {
+            this.binWidth = config.binWidth;
+        }
+        if (isIntegerAtLeast(config.savitzkyGolaySize, 5)) {
+            this.savitzkyGolaySize = config.savitzkyGolaySize;
+        }
+        if (isIntegerAtLeast(config.savitzkyGolayOrder, 0) && config.savitzkyGolayOrder <= 4) {
+            this.savitzkyGolayOrder = config.savitzkyGolayOrder;
+        }
+        if (typeof config.selectedLine === "string") {
+            this.selectedLine = config.selectedLine;
+        }
+        if (config.lineColors && typeof config.lineColors === "object") {
+            Object.entries(config.lineColors).forEach(([line, color]) => {
+                if (isColor(color)) {
+                    this.colorMap.set(line, color);
+                }
+            });
+        }
     };
 
     @computed get exportData() {

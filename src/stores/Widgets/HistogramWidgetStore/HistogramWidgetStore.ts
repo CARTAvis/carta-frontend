@@ -3,26 +3,30 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
-import {type ConfigurableStore, type Persisted, VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceHistogramWidgetConfig, type WorkspaceIdReader, type WorkspaceIdWriter} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {applyWorkspacePlotRange, isWorkspaceRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 /** What a histogram widget saves of its plot. */
 export interface HistogramWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
     logScaleY: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number;
-    maxXVal: number;
-    minYVal: number;
-    maxYVal: number;
+    settingsTabId: HistogramSettingsTabs;
+    autoBins: boolean;
+    /** The number of bins, when they are not chosen automatically. */
+    numBins?: number;
 }
 
-export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>> {
+export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig> {
+    widgetId: string = "";
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
@@ -65,6 +69,38 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
     private cachedMinPix: number;
     private cachedMaxPix: number;
     private cachedNumBins: number;
+
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceHistogramWidgetConfig => ({
+        ...this.toWorkspaceBinding(ids),
+        coordinate: this.coordinate,
+        ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {}),
+        ...(this.isShowingSavedImage(ids) && !this.isCurrentAutoBounds && isWorkspaceRange(this.currentMinPix, this.currentMaxPix) ? {pixelBounds: {min: this.currentMinPix!, max: this.currentMaxPix!}} : {})
+    });
+
+    public applyWorkspaceBinding = (config: WorkspaceHistogramWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (config: WorkspaceHistogramWidgetConfig): string[] => {
+        const problems: string[] = [];
+        if (config.coordinate !== undefined && config.coordinate !== this.coordinate) {
+            if (VALID_COORDINATES.includes(config.coordinate)) {
+                this.setCoordinate(config.coordinate);
+            } else {
+                problems.push(`it cannot be taken in the Stokes ${config.coordinate}`);
+            }
+        }
+        return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceHistogramWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+            if (isWorkspaceRange(config.pixelBounds?.min, config.pixelBounds?.max)) {
+                this.setAutoBounds(false);
+                this.setMinPix(config.pixelBounds!.min);
+                this.setMaxPix(config.pixelBounds!.max);
+            }
+        }
+    };
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -428,6 +464,9 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (!widgetSettings) {
             return;
         }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -446,32 +485,27 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        if (Object.values(HistogramSettingsTabs).includes(widgetSettings.settingsTabId as HistogramSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as HistogramSettingsTabs;
         }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        if (widgetSettings.autoBins === false && typeof widgetSettings.numBins === "number" && Number.isInteger(widgetSettings.numBins) && widgetSettings.numBins > 0) {
+            this.setAutoBins(false);
+            this.setNumBins(widgetSettings.numBins);
         }
     };
 
     public toConfig = (): HistogramWidgetConfig => {
         return {
+            widgetId: this.widgetId,
+            settingsTabId: this.settingsTabId,
+            autoBins: this.isCurrentAutoBins,
+            ...(!this.isCurrentAutoBins && typeof this.currentNumBins === "number" ? {numBins: this.currentNumBins} : {}),
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            plotType: this.plotType
         };
     };
 }

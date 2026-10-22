@@ -5,11 +5,12 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {type ConfigurableStore, type Persisted} from "models";
-import {AppStore, ProfileSmoothingStore} from "stores";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStokesAnalysisRange, type WorkspaceStokesAnalysisWidgetConfig} from "models";
+import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {isWorkspaceRange} from "../WorkspacePlotRange";
 
 const DEFAULTS = {
     fractionalPolVisible: false,
@@ -26,7 +27,21 @@ const DEFAULTS = {
 };
 
 /** What a Stokes analysis widget saves of its plots. */
+/** The pairs of bounds the plots of a Stokes analysis widget are zoomed to. */
+const STOKES_ANALYSIS_RANGES: [WorkspaceStokesAnalysisRange, WorkspaceStokesAnalysisRange][] = [
+    ["sharedMinX", "sharedMaxX"],
+    ["quMinY", "quMaxY"],
+    ["polIntensityMinY", "polIntensityMaxY"],
+    ["polAngleMinY", "polAngleMaxY"],
+    ["quScatterMinX", "quScatterMaxX"],
+    ["quScatterMinY", "quScatterMaxY"],
+    ["quScatterEqualXmin", "quScatterEqualXmax"],
+    ["quScatterEqualYmin", "quScatterEqualYmax"]
+];
+
 export interface StokesAnalysisWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     secondaryLineColor: string;
     lineWidth: number;
@@ -36,9 +51,15 @@ export interface StokesAnalysisWidgetConfig {
     scatterPlotPointSize: number;
     pointTransparency: number;
     equalAxes: boolean;
+    invertedColorMap: boolean;
+    fractionalPolVisible: boolean;
+    referenceAxesVisible: boolean;
+    settingsTabId: StokesAnalysisSettingsTabs;
+    smoothing: ProfileSmoothingConfig;
 }
 
-export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>> {
+export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceStokesAnalysisWidgetConfig> {
+    widgetId: string = "";
     @observable sharedMinX: number | undefined = undefined;
     @observable sharedMaxX: number | undefined = undefined;
     @observable quMinY: number | undefined = undefined;
@@ -390,9 +411,38 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStokesAnalysisWidgetConfig => {
+        const ranges: Partial<Record<WorkspaceStokesAnalysisRange, number>> = {};
+        for (const [min, max] of this.isShowingSavedImage(ids) ? STOKES_ANALYSIS_RANGES : []) {
+            if (isWorkspaceRange(this[min], this[max])) {
+                ranges[min] = this[min];
+                ranges[max] = this[max];
+            }
+        }
+        return {...this.toWorkspaceBinding(ids), ...(Object.keys(ranges).length ? {ranges} : {})};
+    };
+
+    public applyWorkspaceBinding = (config: WorkspaceStokesAnalysisWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (): string[] => [];
+
+    @action public applyWorkspaceView = (config: WorkspaceStokesAnalysisWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            for (const [min, max] of STOKES_ANALYSIS_RANGES) {
+                if (isWorkspaceRange(config.ranges?.[min], config.ranges?.[max])) {
+                    this[min] = config.ranges![min];
+                    this[max] = config.ranges![max];
+                }
+            }
+        }
+    };
+
     public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
+        }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
         }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
@@ -410,7 +460,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
             this.plotType = widgetSettings.plotType;
         }
         if (typeof widgetSettings.colorMap === "string") {
-            this.colorMap = widgetSettings.colorMap;
+            this.setColormap(widgetSettings.colorMap);
         }
         if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
@@ -421,10 +471,31 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.equalAxes === "boolean") {
             this.areAxesEqual = widgetSettings.equalAxes;
         }
+        if (typeof widgetSettings.invertedColorMap === "boolean") {
+            this.isInvertedColorMap = widgetSettings.invertedColorMap;
+        }
+        if (typeof widgetSettings.fractionalPolVisible === "boolean") {
+            this.isFractionalPolVisible = widgetSettings.fractionalPolVisible;
+        }
+        if (typeof widgetSettings.referenceAxesVisible === "boolean") {
+            this.shouldShowReferenceAxes = widgetSettings.referenceAxesVisible;
+        }
+        if (Object.values(StokesAnalysisSettingsTabs).includes(widgetSettings.settingsTabId as StokesAnalysisSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as StokesAnalysisSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
+        }
     };
 
     public toConfig = (): StokesAnalysisWidgetConfig => {
         return {
+            widgetId: this.widgetId,
+            invertedColorMap: this.isInvertedColorMap,
+            fractionalPolVisible: this.isFractionalPolVisible,
+            referenceAxesVisible: this.shouldShowReferenceAxes,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig(),
             primaryLineColor: this.primaryLineColor,
             secondaryLineColor: this.secondaryLineColor,
             lineWidth: this.lineWidth,

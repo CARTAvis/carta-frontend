@@ -14,3 +14,12 @@ export interface ConfigurableStore<TConfig, TInput = TConfig> {
     toConfig(): TConfig;
     applyConfig(config: TInput): void;
 }
+
+/**
+ * A widget's store that carries the widget's own ID: the key its Widget Config is kept under, which
+ * stays the same across sessions, unlike the ID the layout engine gives the widget each time an
+ * arrangement is applied (ADR-0005).
+ */
+export interface IdentifiedWidgetStore {
+    widgetId: string;
+}

@@ -4,17 +4,20 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
-import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES} from "models";
-import {AppStore, ProfileSmoothingStore} from "stores";
+import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceSpatialProfileWidgetConfig} from "models";
+import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 const DEFAULT_STOKES = "current";
 
 /** What a spatial profiler widget saves of its plot. */
 export interface SpatialProfileWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     coordinate: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -22,13 +25,13 @@ export interface SpatialProfileWidgetConfig {
     wcsAxisVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number;
-    maxXVal: number;
-    minYVal: number;
-    maxYVal: number;
+    markerTextVisible: boolean;
+    settingsTabId: SpatialProfilerSettingsTabs;
+    smoothing: ProfileSmoothingConfig;
 }
 
-export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>> {
+export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig> {
+    widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
     @observable minX: number | undefined = undefined;
@@ -128,9 +131,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
     };
 
     @action setLineRegionSampleWidth = (val: number) => {
-        if (this.effectiveRegion) {
-            this.effectiveRegion.lineRegionSampleWidth = val;
-        }
+        this.effectiveRegion?.setLineRegionSampleWidth(val);
     };
 
     constructor(coordinate: string = "x") {
@@ -357,9 +358,38 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         this.selectedStokes = stokes;
     };
 
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceSpatialProfileWidgetConfig => ({
+        ...this.toWorkspaceBinding(ids),
+        ...(this.selectedStokes !== DEFAULT_STOKES ? {stokes: this.selectedStokes} : {}),
+        ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
+    });
+
+    public applyWorkspaceBinding = (config: WorkspaceSpatialProfileWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceConfig = (config: WorkspaceSpatialProfileWidgetConfig): string[] => {
+        const problems: string[] = [];
+        if (config.stokes !== undefined) {
+            if (this.stokesOptions.some(option => option.value === config.stokes)) {
+                this.setSelectedStokes(config.stokes);
+            } else {
+                problems.push(`the image it shows has no Stokes ${config.stokes}, so it shows the current one`);
+            }
+        }
+        return problems;
+    };
+
+    public applyWorkspaceView = (config: WorkspaceSpatialProfileWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
+    };
+
     public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
+        }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
         }
         if (typeof widgetSettings.coordinate === "string" && VALID_XY_COORDINATES.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
@@ -382,33 +412,30 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
         }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        if (Object.values(SpatialProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpatialProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpatialProfilerSettingsTabs;
         }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
         }
     };
 
     public toConfig = (): SpatialProfileWidgetConfig => {
         return {
+            widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig(),
             coordinate: this.coordinate,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.isWcsAxisVisible,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            plotType: this.plotType
         };
     };
 }

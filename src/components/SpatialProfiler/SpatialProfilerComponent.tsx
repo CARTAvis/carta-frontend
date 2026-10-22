@@ -746,7 +746,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             <RegionSelectorComponent widgetStore={widgetStore} />
                             {widgetStore.effectiveFrame?.hasStokes && (
                                 <FormGroup label={"Polarization"} inline={true}>
-                                    <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} />
+                                    <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} data-testid="polarization-dropdown" />
                                 </FormGroup>
                             )}
                         </div>

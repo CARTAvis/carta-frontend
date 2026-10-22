@@ -2,12 +2,36 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {Polarizations, RegionsType} from "enums";
-import {VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStatsWidgetConfig} from "models";
 import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
-export class StatsWidgetStore extends RegionWidgetStore {
+/** What a statistics widget saves. */
+export interface StatsWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
+}
+
+export class StatsWidgetStore extends RegionWidgetStore implements ConfigurableStore<StatsWidgetConfig, Persisted<StatsWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceStatsWidgetConfig> {
+    widgetId: string = "";
     @observable coordinate: string = "z";
+
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStatsWidgetConfig => ({...this.toWorkspaceBinding(ids), coordinate: this.coordinate});
+
+    public applyWorkspaceBinding = (config: WorkspaceStatsWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    public applyWorkspaceView = (): void => {};
+
+    public applyWorkspaceConfig = (config: WorkspaceStatsWidgetConfig): string[] => {
+        if (config.coordinate === undefined || config.coordinate === this.coordinate) {
+            return [];
+        }
+        if (!VALID_COORDINATES.includes(config.coordinate)) {
+            return [`it cannot be taken in the Stokes ${config.coordinate}`];
+        }
+        this.setCoordinate(config.coordinate);
+        return [];
+    };
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -28,6 +52,14 @@ export class StatsWidgetStore extends RegionWidgetStore {
         super(RegionsType.CLOSED);
         makeObservable(this);
     }
+
+    public applyConfig = (widgetSettings: Persisted<StatsWidgetConfig>): void => {
+        if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
+    };
+
+    public toConfig = (): StatsWidgetConfig => ({widgetId: this.widgetId});
 
     public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();

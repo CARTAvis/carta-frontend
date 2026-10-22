@@ -2,11 +2,16 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, type Persisted} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {AppStore} from "stores";
 import {isAutoColor} from "utilities";
+
+import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 /** What a render config widget saves of its histogram plot. */
 export interface RenderConfigWidgetConfig {
+    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
@@ -14,13 +19,10 @@ export interface RenderConfigWidgetConfig {
     markerTextVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
-    minXVal: number;
-    maxXVal: number;
-    minYVal: number;
-    maxYVal: number;
 }
 
-export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>> {
+export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceRenderConfigWidgetConfig> {
+    widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -124,9 +126,34 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
+    /** What the widget shows of the image in front: only the range its histogram was zoomed to. */
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceRenderConfigWidgetConfig => {
+        const fileId = AppStore.Instance.activeFrame?.frameInfo.fileId;
+        return fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {};
+    };
+
+    /** Whether a restore found the image in front the widget was saved showing, so that the range it was zoomed to still applies. */
+    private isShowingWorkspaceData = true;
+
+    public applyWorkspaceBinding = (_config: WorkspaceRenderConfigWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        this.isShowingWorkspaceData = ids.wasActiveImageRestored();
+        return this.isShowingWorkspaceData ? [] : ["the image it showed was not restored, so it shows the active image"];
+    };
+
+    public applyWorkspaceConfig = (): string[] => [];
+
+    public applyWorkspaceView = (config: WorkspaceRenderConfigWidgetConfig): void => {
+        if (this.isShowingWorkspaceData) {
+            applyWorkspacePlotRange(this, config);
+        }
+    };
+
     public applyConfig = (widgetSettings: Persisted<RenderConfigWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
+        }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
         }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
@@ -149,33 +176,18 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
     };
 
     public toConfig = (): RenderConfigWidgetConfig => {
         return {
+            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
             markerTextVisible: this.isMarkerTextVisible,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType,
-            minXVal: this.linePlotInitXYBoundaries.minXVal,
-            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
-            minYVal: this.linePlotInitXYBoundaries.minYVal,
-            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+            plotType: this.plotType
         };
     };
 }

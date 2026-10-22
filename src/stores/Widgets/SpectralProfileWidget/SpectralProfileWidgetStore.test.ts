@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -115,6 +115,14 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
     });
 });
+
+/** A workspace that carries no image, and keeps every region under the ID it was saved with. */
+const WORKSPACE_IDS = {
+    imageIdOf: (): number | undefined => undefined,
+    fileIdOf: (): number | undefined => undefined,
+    regionIdOf: (_imageId: number | undefined, regionId: number): number | undefined => regionId,
+    wasActiveImageRestored: () => true
+};
 
 describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
@@ -638,12 +646,13 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.applyConfig({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+        runInAction(() => widgetStore.applyWorkspaceBinding({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}, WORKSPACE_IDS));
 
         expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
-        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRedshift");
 
         widgetStore.setRestFrameRedshift(-1);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
@@ -656,7 +665,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         expect(widgetStore.restFrameRedshift).toBeCloseTo(-0.0010001921, 10);
         expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300, 10);
-        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({restFrameRedshift: widgetStore.restFrameRedshift}));
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
@@ -671,8 +681,92 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         expect(widgetStore.restFrameRedshift).toBeCloseTo(expectedRedshift, 10);
         expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(velocityKms, 10);
-        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: convention, restFrameRedshift: widgetStore.restFrameRedshift}));
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: convention}));
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({restFrameRedshift: widgetStore.restFrameRedshift}));
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
+    });
+
+    test("takes the redshift from a workspace, not from a layout", () => {
+        const {widgetStore} = createWidgetStore();
+
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25, xAxisRestFrameEnabled: true} as never));
+
+        expect(widgetStore.restFrameRedshift).toBe(0);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(false);
+    });
+
+    test("shows the regions' profiles it was saved showing together, in the colours they were shown in", () => {
+        const {frame, widgetStore} = createWidgetStore();
+        const region = (regionId: number) => ({regionId, isTemporary: false, isClosedRegion: true, nameString: `region ${regionId}`});
+        frame.regionSet.regions = [region(15), region(16)] as never;
+        const config = {
+            profileCategory: MultiProfileCategory.REGION,
+            regions: [{regionId: 5}],
+            regionIds: [5, 6],
+            statsTypes: [CARTA.StatsType.Mean],
+            coordinates: ["z"],
+            profileColors: [
+                {key: 5, color: "#ff0000"},
+                {key: 6, color: "#00ff00"}
+            ]
+        };
+        const ids = {...WORKSPACE_IDS, regionIdOf: (_imageId: number | undefined, regionId: number): number | undefined => regionId + 10};
+
+        runInAction(() => widgetStore.applyWorkspaceBinding(config, ids));
+        runInAction(() => widgetStore.applyWorkspaceConfig(config, ids));
+
+        expect(widgetStore.profileSelectionStore.activeProfileCategory).toBe(MultiProfileCategory.REGION);
+        expect(widgetStore.profileSelectionStore.selectedRegionIds).toEqual([15, 16]);
+        expect([widgetStore.getProfileColor(15), widgetStore.getProfileColor(16)]).toEqual(["#ff0000", "#00ff00"]);
+    });
+
+    test("keeps the Y range it was saved at in the rest frame, though showing the rest frame resets the Y range", () => {
+        const {widgetStore} = createWidgetStore();
+        const config = {restFrameRedshift: 1, yAxisRestFrameEnabled: true, minY: 1, maxY: 2};
+
+        runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
+
+        expect(widgetStore.isYAxisRestFrameActive).toBe(true);
+        expect([widgetStore.minY, widgetStore.maxY]).toEqual([1, 2]);
+    });
+
+    test("is not zoomed to the range of profiles it could not show again", () => {
+        const {widgetStore} = createWidgetStore();
+        const config = {regionIds: [5], minX: 100, maxX: 110};
+
+        runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
+        const problems = runInAction(() => widgetStore.applyWorkspaceConfig(config, {...WORKSPACE_IDS, regionIdOf: () => undefined}));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
+
+        expect(problems).toEqual(["some of the regions whose profiles it showed were not restored"]);
+        expect(widgetStore.minX).toBeUndefined();
+    });
+
+    test("is zoomed back to the range it was saved at, though pointing it at its region again clears the range", () => {
+        const {widgetStore} = createWidgetStore();
+        const config = {regions: [{regionId: RegionId.ACTIVE}], minX: 100, maxX: 110, minY: 1, maxY: 2};
+
+        runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
+        runInAction(() => widgetStore.applyWorkspaceView(config));
+
+        expect([widgetStore.minX, widgetStore.maxX, widgetStore.minY, widgetStore.maxY]).toEqual([100, 110, 1, 2]);
+        expect(widgetStore.toWorkspaceConfig({imageIdOf: () => 1})).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
+    });
+
+    test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => {
+            widgetStore.profileSelectionStore.applyWorkspaceSelection({category: MultiProfileCategory.IMAGE, fileIds: [7, 8]});
+            widgetStore.setProfileColor(7, "#ff0000");
+            widgetStore.setProfileColor(8, "#00ff00");
+        });
+
+        const config = widgetStore.toWorkspaceConfig({imageIdOf: fileId => (fileId === 7 ? 2 : undefined)});
+
+        expect(config).toEqual(expect.objectContaining({profileCategory: MultiProfileCategory.IMAGE, imageIds: [2], profileColors: [{key: 2, color: "#ff0000"}]}));
     });
 
     test("keeps the previous canonical redshift when either input is invalid", () => {
@@ -710,12 +804,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("restores the shift mode while keeping legacy redshift configs valid", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.applyConfig({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+        runInAction(() => {
+            widgetStore.applyConfig({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY});
+            widgetStore.applyWorkspaceBinding({restFrameRedshift: -0.001}, WORKSPACE_IDS);
+        });
 
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300.093, 1);
 
-        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25}));
+        runInAction(() => widgetStore.applyWorkspaceBinding({restFrameRedshift: 0.25}, WORKSPACE_IDS));
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
     });
@@ -728,7 +825,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.restFrameRadialVelocity).toBe(0);
 
         const {widgetStore: legacyWidgetStore} = createWidgetStore();
-        runInAction(() => legacyWidgetStore.applyConfig({restFrameRedshift: 0.25}));
+        runInAction(() => legacyWidgetStore.applyWorkspaceBinding({restFrameRedshift: 0.25}, WORKSPACE_IDS));
         expect(legacyWidgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
         expect(legacyWidgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
     });
