@@ -1,6 +1,6 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {type BeamType} from "enums";
+import {BeamOverlayMode, type BeamType} from "enums";
 import {PreferenceStore} from "stores";
 
 export class OverlayBeamStore {
@@ -10,6 +10,7 @@ export class OverlayBeamStore {
     @observable width: number;
     @observable shiftX: number = 0;
     @observable shiftY: number = 0;
+    @observable channelMapMode: BeamOverlayMode = BeamOverlayMode.BottomLeft;
 
     constructor() {
         const preference = PreferenceStore.Instance;
@@ -42,5 +43,10 @@ export class OverlayBeamStore {
 
     @action setShiftY = (shift: number) => {
         this.shiftY = shift;
+    };
+
+    /** Sets the beam placement used in channel map mode. */
+    @action setChannelMapMode = (mode: BeamOverlayMode) => {
+        this.channelMapMode = mode;
     };
 }
