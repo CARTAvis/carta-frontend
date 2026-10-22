@@ -1,4 +1,5 @@
 import * as React from "react";
+import {rs} from "@rstest/core";
 import {act, render} from "@testing-library/react";
 
 import {DragMode, InteractionMode, ZoomMode} from "enums";
@@ -152,16 +153,23 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("does not route a mouseup after a rejected mousedown as a click", () => {
+        rs.useFakeTimers();
         const graphZoomReset = rs.fn();
         const component = new ScatterPlotComponent({graphZoomReset});
         component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
 
-        component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
-        component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
-        component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
-        component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+        try {
+            component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+            component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+            component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+            component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
 
-        expect(graphZoomReset).not.toHaveBeenCalled();
+            expect(graphZoomReset).not.toHaveBeenCalled();
+            rs.runOnlyPendingTimers();
+        } finally {
+            rs.clearAllTimers();
+            rs.useRealTimers();
+        }
     });
 
     test("does not zoom for thin XY drags", () => {

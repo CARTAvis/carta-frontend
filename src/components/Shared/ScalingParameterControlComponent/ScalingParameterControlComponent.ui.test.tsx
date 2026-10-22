@@ -1,16 +1,14 @@
 import * as React from "react";
 import {rs} from "@rstest/core";
-import {act, fireEvent, render, screen} from "@testing-library/react";
+import {fireEvent, render, screen} from "@testing-library/react";
 
 import {FrameScaling} from "enums";
 
 import {ScalingParameterControlComponent} from "./ScalingParameterControlComponent";
 
 describe("ScalingParameterControlComponent parameter isolation", () => {
-    test("renders an empty disabled parameter", async () => {
-        await act(async () => {
-            render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={rs.fn()} />);
-        });
+    test("renders an empty disabled parameter", () => {
+        render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={rs.fn()} />);
 
         expect(screen.getByRole("spinbutton")).toBeDisabled();
         expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe("");
