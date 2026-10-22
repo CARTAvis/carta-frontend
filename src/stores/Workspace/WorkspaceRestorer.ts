@@ -1,19 +1,26 @@
-import {comparer, reaction} from "mobx";
+import {CARTA} from "carta-protobuf";
+import {autorun, comparer, reaction} from "mobx";
 
-import {AnimationMode, BeamType, FrequencyUnit, ImageType, PlayMode, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, BeamType, FrequencyUnit, HipsCoord, HipsProjection, ImageType, PlayMode, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
+    MOMENT_TEXT,
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
     type WorkspaceFile,
+    type WorkspaceGeneratedImages,
+    type WorkspaceGenerationRequest,
+    type WorkspaceHipsRequest,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
-    type WorkspaceIssue
+    type WorkspaceIssue,
+    type WorkspaceMomentRequest,
+    type WorkspacePvRequest
 } from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
@@ -26,6 +33,9 @@ import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalo
  * milliseconds. The backend reports the progress every two seconds while it computes.
  */
 const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
+
+/** Which of the session's references an image is matched to. */
+type ReferenceKind = "spatial" | "spectral" | "raster";
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
@@ -85,11 +95,42 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
     private readonly colorBlendings = new Map<number, ColorBlendingStore>();
+    /** The requests for generated images the workspace carries, each with the images it made. */
+    private readonly generatedImages: WorkspaceGeneratedImages[];
+    /** Every image the workspace shows, opened or made again, by its workspace ID. */
+    private readonly images = new Map<number, WorkspaceFile>();
+    /** How each generated image is named to the user, by its workspace ID. */
+    private readonly generatedImageNames = new Map<number, string>();
+    /** Images that name a reference that is a generated image not made yet, to be matched once it is. */
+    private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
     constructor(
         private readonly workspace: Workspace,
         private readonly generation: number
-    ) {}
+    ) {
+        this.generatedImages = (Array.isArray(workspace.generatedImages) ? workspace.generatedImages : []).filter(
+            generated => typeof generated?.request?.type === "string" && Array.isArray(generated.images) && generated.images.every(image => typeof image?.id === "number")
+        );
+        for (const fileInfo of workspace.files ?? []) {
+            this.images.set(fileInfo.id, fileInfo);
+        }
+        for (const {images} of this.generatedImages) {
+            for (const image of images) {
+                this.images.set(image.id, image);
+                this.generatedImageNames.set(image.id, image.name || "a generated image");
+            }
+        }
+    }
+
+    /** Every image the workspace shows: the files it opens, then the images its requests make. */
+    private get allImages(): WorkspaceFile[] {
+        return Array.from(this.images.values());
+    }
+
+    /** How an image the workspace shows is named to the user. */
+    private nameOf(fileInfo: WorkspaceFile): string {
+        return this.generatedImageNames.get(fileInfo.id) ?? describeImageSource(fileInfo.source);
+    }
 
     /** Whether this restore is still the one the session is following. */
     private get isCurrent(): boolean {
@@ -132,16 +173,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        yield* this.openHipsImages();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         // End this step before the images are matched. A new rest frequency reaches the WCS of an
         // image only when the step that set it ends. Matching the images uses this WCS.
-        this.restoreRestFrequencies();
+        this.restoreRestFrequencies(this.allImages);
         yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
             return this.issues;
         }
         // The backend registers the regions and computes the cube histograms while the catalogs open.
         // The restore waits for both before it applies the layout.
-        const regions = this.configureImages();
+        const regions = this.configureImages(this.allImages);
+        yield* this.generateImages(regions);
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        this.restoreOffsetCoordinates();
+        this.chooseFrontImage();
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
@@ -344,26 +395,100 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`);
                 continue;
             }
+            this.adoptImage(fileInfo, frame);
+        }
+    }
 
-            this.frameIds.set(fileInfo.id, frame.frameInfo.fileId);
-            // The workspace is the authority on which image its own ID names.
-            WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Image, frame.frameInfo.fileId, fileInfo.id);
+    /** Take an image just opened or made again as the one the workspace names by its ID. */
+    private adoptImage(fileInfo: WorkspaceFile, frame: FrameStore): void {
+        this.frameIds.set(fileInfo.id, frame.frameInfo.fileId);
+        // The workspace is the authority on which image its own ID names.
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Image, frame.frameInfo.fileId, fileInfo.id);
 
-            frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
+        frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
 
-            // References have to be in place before any image can be matched against them.
-            if (this.workspace.references?.spatial === fileInfo.id) {
-                this.appStore.setSpatialReference(frame);
+        // References have to be in place before any image can be matched against them.
+        if (this.workspace.references?.spatial === fileInfo.id) {
+            this.appStore.setSpatialReference(frame);
+        }
+        if (this.workspace.references?.spectral === fileInfo.id) {
+            this.appStore.setSpectralReference(frame);
+        }
+        if (this.workspace.references?.raster === fileInfo.id) {
+            this.appStore.setRasterScalingReference(frame);
+        }
+        if (fileInfo.timeSeriesMember) {
+            this.appStore.setTimeSeriesMember(frame, true);
+        }
+    }
+
+    /**
+     * Stage 2b: query each HiPS image again. A query depends on nothing else in the session, so it
+     * is made with the images that are opened.
+     */
+    private *openHipsImages(): Generator<Promise<unknown>, void, any> {
+        for (const {request, images} of this.generatedImages) {
+            if (request.type !== "hips" || !images.length) {
+                continue;
             }
-            if (this.workspace.references?.spectral === fileInfo.id) {
-                this.appStore.setSpectralReference(frame);
+            if (!this.isCurrent) {
+                return;
             }
-            if (this.workspace.references?.raster === fileInfo.id) {
-                this.appStore.setRasterScalingReference(frame);
+            const subject = WorkspaceRestorer.describeRequest(request, "");
+            const query = WorkspaceRestorer.hipsQueryOf(request);
+            if (!query) {
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the query is not one this version can read`);
+                continue;
             }
-            if (fileInfo.timeSeriesMember) {
-                this.appStore.setTimeSeriesMember(frame, true);
+            let frame: FrameStore | undefined;
+            try {
+                frame = (yield* awaitedFlow<FrameStore | undefined | 0>(this.appStore.loadRemoteFile(query))) || undefined;
+            } catch (err) {
+                console.error(err);
             }
+            if (!this.isCurrent) {
+                this.closeSupersededImage(frame);
+                return;
+            }
+            if (!frame) {
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again`);
+                continue;
+            }
+            this.adoptImage(images[0], frame);
+        }
+    }
+
+    /** The query a saved HiPS request makes, or nothing if it is not one this version can make. */
+    private static hipsQueryOf(request: WorkspaceHipsRequest): CARTA.RemoteFileRequest.$Properties | undefined {
+        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+        const {survey, width, height, object, center, fov, coordsys, projection, rotationAngle} = request;
+        const hasPlace = (typeof object === "string" && object.length > 0) || (isNumber(center?.x) && isNumber(center?.y));
+        if (
+            typeof survey !== "string" ||
+            !survey ||
+            !isNumber(width) ||
+            !isNumber(height) ||
+            !isNumber(fov) ||
+            !isNumber(rotationAngle) ||
+            !hasPlace ||
+            !Object.values(HipsCoord).includes(coordsys as HipsCoord) ||
+            !Object.values(HipsProjection).includes(projection as HipsProjection)
+        ) {
+            return undefined;
+        }
+        const place = object ? {object} : {ra: center?.x, dec: center?.y};
+        return {hips: survey, width, height, ...place, fov, coordsys, projection, rotationAngle};
+    }
+
+    /** How a request is named to the user. */
+    private static describeRequest(request: WorkspaceGenerationRequest, sourceName: string): string {
+        switch (request.type) {
+            case "moment":
+                return `the moment images of ${sourceName}`;
+            case "pv":
+                return `the PV image of ${sourceName}`;
+            default:
+                return `the HiPS image of ${request.survey}`;
         }
     }
 
@@ -389,10 +514,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Stage 3: apply what each image is displayed with, now that all of them exist. */
-    private configureImages(): Promise<unknown> {
+    /**
+     * Stage 3: apply what each image is displayed with, once it exists: every image opened, then
+     * those each request makes again as it makes them.
+     */
+    private configureImages(images: WorkspaceFile[]): Promise<unknown> {
         const regions: Promise<void>[] = [];
-        for (const fileInfo of this.workspace.files ?? []) {
+        for (const fileInfo of images) {
             const frame = this.frameOf(fileInfo.id);
             if (!frame) {
                 continue;
@@ -406,20 +534,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.renderConfig.applyConfig(fileInfo.renderConfig);
             }
 
-            if (this.workspace.references && fileInfo.references) {
-                // An image was matched only if it named the reference it was matched to. A
-                // workspace that names no reference -- because the session's own was an image it
-                // could not save -- matches nothing, rather than every image that named none.
-                const wasMatchedTo = (imageId: number | undefined, referenceId: number | undefined): boolean => imageId !== undefined && imageId === referenceId;
-                if (this.appStore.spatialReference && wasMatchedTo(fileInfo.references.spatial, this.workspace.references.spatial)) {
-                    this.appStore.setSpatialMatchingEnabled(frame, true);
-                }
-                if (this.appStore.spectralReference && wasMatchedTo(fileInfo.references.spectral, this.workspace.references.spectral)) {
-                    this.appStore.setSpectralMatchingEnabled(frame, true);
-                }
-                if (this.appStore.rasterScalingReference && wasMatchedTo(fileInfo.references.raster, this.workspace.references.raster)) {
-                    this.appStore.setRasterScalingMatchingEnabled(frame, true);
-                }
+            for (const kind of ["spatial", "spectral", "raster"] as const) {
+                this.matchImage(frame, fileInfo, kind);
             }
 
             this.restoreSpectralSettings(frame, fileInfo);
@@ -441,17 +557,279 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
+        return Promise.all(regions);
+    }
 
-        this.restoreOffsetCoordinates();
+    /**
+     * Match an image to the reference it was matched to, if it named one.
+     *
+     * A workspace that names no reference -- because the session's own was an image it could not
+     * save -- matches nothing, rather than every image that named none, and an image is not matched
+     * to whichever image stands in for a reference that did not come back. A reference made again by
+     * a request is not there yet when the images opened are configured, so those wait for it.
+     */
+    private matchImage(frame: FrameStore, fileInfo: WorkspaceFile, kind: ReferenceKind): void {
+        const referenceId = this.workspace.references?.[kind];
+        if (referenceId === undefined || fileInfo.references?.[kind] !== referenceId) {
+            return;
+        }
+        const reference = this.frameOf(referenceId);
+        if (!reference) {
+            if (this.generatedImageNames.has(referenceId)) {
+                this.pendingMatches.push({frame, fileInfo, kind});
+            }
+            return;
+        }
+        if (kind === "spatial" && this.appStore.spatialReference === reference) {
+            this.appStore.setSpatialMatchingEnabled(frame, true);
+        } else if (kind === "spectral" && this.appStore.spectralReference === reference) {
+            this.appStore.setSpectralMatchingEnabled(frame, true);
+        } else if (kind === "raster" && this.appStore.rasterScalingReference === reference) {
+            this.appStore.setRasterScalingMatchingEnabled(frame, true);
+        }
+    }
 
-        // The image saved in front may not be back: it could not be opened, or it was a generated
-        // image the workspace does not carry. A session with images open has one in front.
+    /**
+     * Stage 3b: make the moment and PV images again, in the order they were saved in, each from its
+     * image and over its region as restored. A request can be made of an image or over a region of
+     * one an earlier request made, so each request's images are configured before the next is made.
+     */
+    private *generateImages(regions: Promise<unknown>): Generator<Promise<unknown>, void, any> {
+        const requests = this.generatedImages.filter(({request}) => request.type === "moment" || request.type === "pv");
+        if (!requests.length) {
+            return;
+        }
+        // A request is made over a region by the ID the backend gave it.
+        yield* awaited(regions);
+        for (const generated of requests) {
+            if (!this.isCurrent) {
+                return;
+            }
+            const frames = yield* this.makeImagesAgain(generated);
+            if (!this.isCurrent) {
+                frames.forEach(frame => this.closeSupersededImage(frame));
+                return;
+            }
+            const images = this.adoptGeneratedImages(generated, frames);
+            if (!images.length) {
+                continue;
+            }
+            this.restoreRestFrequencies(images);
+            yield* awaited(Promise.resolve());
+            if (!this.isCurrent) {
+                return;
+            }
+            yield* awaited(this.configureImages(images));
+        }
+    }
+
+    /**
+     * Run one saved moment or PV request again.
+     *
+     * @returns the images it made, none when it could not be made or was skipped.
+     */
+    private *makeImagesAgain({request}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[], any> {
+        if (request.type !== "moment" && request.type !== "pv") {
+            return [];
+        }
+        const sourceInfo = this.images.get(request.sourceImageId);
+        const subject = WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
+        const source = this.frameOf(request.sourceImageId);
+        if (!source) {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the image it is made from was not restored`);
+            return [];
+        }
+        const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
+        if (regionId === undefined) {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the region it is made over was not restored`);
+            return [];
+        }
+
+        let outcome: FrameStore[] | "skipped" | undefined;
+        if (request.type === "moment") {
+            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId);
+            if (message) {
+                source.resetMomentRequestState();
+                const made = (this.appStore.requestMoment(message, source) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                outcome = yield* awaited(
+                    this.waitForRequest(
+                        made,
+                        `making ${subject}`,
+                        () => source.requestingMomentsProgress,
+                        () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
+                    )
+                );
+            }
+        } else {
+            const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
+            if (message) {
+                source.resetPvRequestState();
+                const made = (this.appStore.requestPV(message, source, true) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                outcome = yield* awaited(
+                    this.waitForRequest(
+                        made,
+                        `making ${subject}`,
+                        () => source.requestingPVProgress,
+                        () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
+                    )
+                );
+            }
+        }
+
+        if (outcome === undefined) {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the request is not one this version can make`);
+            return [];
+        }
+        if (outcome === "skipped") {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject} again`);
+            return [];
+        }
+        if (!outcome.length) {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again`);
+        }
+        return outcome;
+    }
+
+    /** The request a saved moment request makes, or nothing if it is not one this version can make. */
+    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number): CARTA.MomentRequest.$Properties | undefined {
+        const {moments, channelRange, mask, pixelRange} = request;
+        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+        if (
+            !Array.isArray(moments) ||
+            !moments.length ||
+            !moments.every(moment => MOMENT_TEXT.has(moment)) ||
+            !Number.isInteger(channelRange?.min) ||
+            !Number.isInteger(channelRange?.max) ||
+            !Object.values(CARTA.MomentMask).includes(mask) ||
+            !isNumber(pixelRange?.min) ||
+            !isNumber(pixelRange?.max)
+        ) {
+            return undefined;
+        }
+        return {
+            fileId: source.frameInfo.fileId,
+            moments,
+            axis: CARTA.MomentAxis.SPECTRAL,
+            regionId,
+            spectralRange: {min: channelRange.min, max: channelRange.max},
+            mask,
+            pixelRange: new CARTA.FloatBounds({min: pixelRange.min, max: pixelRange.max}),
+            // the images of the other requests made of the same image stay
+            keep: true,
+            restFreq: source.restFreqStore?.restFreqInHz
+        };
+    }
+
+    /** The request a saved PV request makes, or nothing if it is not one this version can make. */
+    private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
+        const {width, channelRange} = request;
+        if (!Number.isInteger(width) || width < 1 || (channelRange !== undefined && (!Number.isInteger(channelRange?.min) || !Number.isInteger(channelRange?.max)))) {
+            return undefined;
+        }
+        return {
+            fileId: source.frameInfo.fileId,
+            regionId,
+            width,
+            spectralRange: channelRange ? {min: channelRange.min, max: channelRange.max} : null,
+            reverse: request.reverse === true,
+            keep: true
+        };
+    }
+
+    /**
+     * Wait for a request that makes images, showing its progress and letting the user skip it.
+     *
+     * Skipping asks the backend to stop, but does not wait for it to: the restore carries on at once,
+     * and images that still arrive for a skipped request are closed.
+     */
+    private waitForRequest(made: Promise<FrameStore[]>, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
+        return new Promise(resolve => {
+            let isSettled = false;
+            const settle = (outcome: FrameStore[] | "skipped"): boolean => {
+                if (isSettled) {
+                    return false;
+                }
+                isSettled = true;
+                disposeProgress();
+                if (this.isCurrent) {
+                    this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                resolve(outcome);
+                return true;
+            };
+            const skip = () => {
+                cancel();
+                settle("skipped");
+            };
+            const disposeProgress = autorun(() => {
+                const progress = progressOf();
+                if (this.isCurrent && !isSettled) {
+                    this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
+                }
+            });
+            made.then(
+                frames => {
+                    if (!settle(frames)) {
+                        frames.forEach(frame => this.closeSupersededImage(frame));
+                    }
+                },
+                err => {
+                    console.error(err);
+                    settle([]);
+                }
+            );
+        });
+    }
+
+    /**
+     * Take the images a request made again as the ones the workspace names, by which moment each is
+     * when the request made several.
+     *
+     * @returns the saved images that were made again.
+     */
+    private adoptGeneratedImages({request, images}: WorkspaceGeneratedImages, frames: FrameStore[]): WorkspaceFile[] {
+        const adopted: WorkspaceFile[] = [];
+        const unclaimed = [...frames];
+        for (const [index, image] of images.entries()) {
+            const frameIndex = request.type === "moment" && typeof image.moment === "number" ? unclaimed.findIndex(frame => frame.generation?.moment === image.moment) : unclaimed.indexOf(frames[index]);
+            const frame = frameIndex >= 0 ? unclaimed.splice(frameIndex, 1)[0] : undefined;
+            if (!frame) {
+                if (frames.length) {
+                    const imageName = this.nameOf(image);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName} again`);
+                }
+                continue;
+            }
+            this.adoptImage(image, frame);
+            // A moment image is matched to the image it was made of on its own; one saved unmatched stays so.
+            if (frame.spatialReference && image.references?.spatial === undefined) {
+                this.appStore.setSpatialMatchingEnabled(frame, false);
+            }
+            adopted.push(image);
+        }
+        // Images the workspace does not show are not left in the session.
+        unclaimed.forEach(frame => this.closeSupersededImage(frame));
+
+        // Images that wait for one of these as their reference are matched now.
+        const pending = this.pendingMatches.splice(0);
+        for (const match of pending) {
+            this.matchImage(match.frame, match.fileInfo, match.kind);
+        }
+        return adopted;
+    }
+
+    /**
+     * The image the session is left with in front: the one saved there, or else the first restored.
+     * The images a request made again were each put in front as they arrived.
+     */
+    private chooseFrontImage(): void {
+        // The image saved in front may not be back: it could not be opened or made again, or it was a
+        // generated image the workspace does not carry. A session with images open has one in front.
         const savedFrontFrame = this.workspace.selectedFile === undefined ? undefined : this.frameOf(this.workspace.selectedFile);
-        this.frontFrame = savedFrontFrame ?? (this.workspace.files ?? []).map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
-        if (!savedFrontFrame && this.frontFrame) {
+        this.frontFrame = savedFrontFrame ?? this.allImages.map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
+        if (this.frontFrame && this.appStore.activeFrame !== this.frontFrame) {
             this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
-        return Promise.all(regions);
     }
 
     /**
@@ -460,7 +838,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * that image.
      */
     private restoreSpectralSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
-        const imageName = describeImageSource(fileInfo.source);
+        const imageName = this.nameOf(fileInfo);
         const unsupported: string[] = [];
         if (fileInfo.spectralCoordinate !== undefined && !frame.setSpectralCoordinate(fileInfo.spectralCoordinate, false)) {
             unsupported.push(`the spectral coordinate ${fileInfo.spectralCoordinate}`);
@@ -492,7 +870,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * matched. Matching an image moves the offset center of the image that it is matched to.
      */
     private restoreOffsetCoordinates(): void {
-        for (const fileInfo of this.workspace.files ?? []) {
+        for (const fileInfo of this.allImages) {
             const frame = this.frameOf(fileInfo.id);
             const offset = fileInfo.offsetCoordinates;
             if (!frame || !offset || frame.spatialReference) {
@@ -508,7 +886,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     frame.toggleOffsetCoord();
                 }
             } else {
-                const imageName = describeImageSource(fileInfo.source);
+                const imageName = this.nameOf(fileInfo);
                 this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
             }
         }
@@ -518,8 +896,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Stage 2a: restore the rest frequency that converts the spectral axis of each image. Skip an
      * image whose rest frequency is the one in its header.
      */
-    private restoreRestFrequencies(): void {
-        for (const fileInfo of this.workspace.files ?? []) {
+    private restoreRestFrequencies(images: WorkspaceFile[]): void {
+        for (const fileInfo of images) {
             const frame = this.frameOf(fileInfo.id);
             const restFrequency = fileInfo.restFrequency;
             if (!frame || !restFrequency) {
@@ -530,7 +908,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
                 frame.restFreqStore.setCustomVal(value);
             } else {
-                const imageName = describeImageSource(fileInfo.source);
+                const imageName = this.nameOf(fileInfo);
                 this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
             }
         }
@@ -583,7 +961,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         if (unsupported.length) {
-            const imageName = describeImageSource(fileInfo.source);
+            const imageName = this.nameOf(fileInfo);
             this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with ${unsupported.join(" or ")}`);
         }
     }
@@ -662,7 +1040,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (workspaceImageId === undefined) {
             return this.workspace.selectedFile === undefined ? undefined : this.regionIdOf(this.workspace.selectedFile, savedRegionId);
         }
-        const fileInfo = this.workspace.files?.find(file => file.id === workspaceImageId);
+        const fileInfo = this.images.get(workspaceImageId);
         const ownerId = fileInfo?.references?.spatial ?? workspaceImageId;
         return this.regionIds.get(ownerId)?.get(savedRegionId);
     }
@@ -678,7 +1056,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * custom range.
      */
     private async restoreCubeHistograms(): Promise<void> {
-        const pending = (this.workspace.files ?? []).flatMap(fileInfo => {
+        const pending = this.allImages.flatMap(fileInfo => {
             const frame = this.frameOf(fileInfo.id);
             return frame?.renderConfig.isUsingCubeHistogram ? [{fileInfo, frame}] : [];
         });
@@ -693,7 +1071,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
 
-            const imageName = describeImageSource(fileInfo.source);
+            const imageName = this.nameOf(fileInfo);
             // Name the restored Stokes in the request, and store the result under that Stokes. Without a
             // coordinate, the backend uses the Stokes that the frontend last sent for the image. The
             // frontend sends it only while the image is in view, through a throttled update, so the

@@ -1,4 +1,5 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 
 import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
@@ -158,9 +159,15 @@ function createSession() {
         cancelCubeHistogramRequest: jest.fn(),
         setWorkspaceLoadingStep: jest.fn(),
         frameMap: frames,
-        setSpatialReference: jest.fn(),
-        setSpectralReference: jest.fn(),
-        setRasterScalingReference: jest.fn(),
+        setSpatialReference: jest.fn((frame: unknown) => {
+            appStore.spatialReference = frame as never;
+        }),
+        setSpectralReference: jest.fn((frame: unknown) => {
+            appStore.spectralReference = frame as never;
+        }),
+        setRasterScalingReference: jest.fn((frame: unknown) => {
+            appStore.rasterScalingReference = frame as never;
+        }),
         spectralMatchingType: "VRAD",
         setSpectralMatchingType: jest.fn((type: string) => {
             appStore.spectralMatchingType = type;
@@ -892,13 +899,13 @@ describe("WorkspaceRestorer", () => {
 
         test("sets the rest frequency in a step of its own, before the images are matched with it", async () => {
             const {appStore} = createSession();
-            appStore.spectralReference = {} as never;
-            const generator = new WorkspaceRestorer(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}}], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}};
+            const generator = new WorkspaceRestorer(createWorkspace({files: [IMAGE, matched], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
 
             let didMatchBeforeRestFrequency: boolean | undefined;
             let step = generator.next();
             while (!step.done) {
-                const restFreqStore = appStore.frames[0]?.restFreqStore;
+                const restFreqStore = appStore.frames[1]?.restFreqStore;
                 if (didMatchBeforeRestFrequency === undefined && restFreqStore?.setCustomVal.mock.calls.length) {
                     didMatchBeforeRestFrequency = appStore.setSpectralMatchingEnabled.mock.calls.length > 0;
                 }
@@ -911,7 +918,6 @@ describe("WorkspaceRestorer", () => {
 
         test("puts the offset coordinates back once every image is matched, since matching one moves them", async () => {
             const {appStore} = createSession();
-            appStore.spatialReference = {} as never;
             const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
 
             await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: savedSettings.offsetCoordinates, references: {spatial: 1}}, matched], references: {spatial: 1}}));
@@ -1148,6 +1154,125 @@ describe("WorkspaceRestorer", () => {
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
             expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
             expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
+        });
+    });
+
+    describe("generated images", () => {
+        const savedRegion = {id: 5, type: 3, rotation: 0, points: []};
+        const momentRequest = {
+            type: "moment" as const,
+            sourceImageId: 1,
+            regionId: 5,
+            moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+            channelRange: {min: 2, max: 8},
+            mask: CARTA.MomentMask.Include,
+            pixelRange: {min: 0.1, max: 1}
+        };
+
+        /** A session that makes generated images the way the backend answers: moment images in the order asked for. */
+        function createGeneratingSession(momentsMade?: Promise<unknown>) {
+            frameOverrides = {resetMomentRequestState: jest.fn(), resetPvRequestState: jest.fn(), requestingMomentsProgress: 0.5, requestingPVProgress: 0};
+            const session = createSession();
+            const {appStore} = session;
+            let nextFileId = 100;
+            const addFrame = (generation: unknown) => {
+                const frame = {...createFrame(++nextFileId), generation};
+                (appStore.frameMap as Map<number, unknown>).set(frame.frameInfo.fileId, frame);
+                appStore.frames.push(frame as never);
+                return frame;
+            };
+            const generating = {
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                cancelRequestingMoment: jest.fn(),
+                requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
+                cancelRequestingPV: jest.fn(),
+                loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({})))
+            };
+            Object.assign(appStore, generating);
+            return {...session, ...generating};
+        }
+
+        test("makes moment images again once the regions are back, over the ID the backend gave the region", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [
+                    {
+                        request: momentRequest,
+                        images: [
+                            {id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, renderConfig: {colorMap: "viridis"} as never},
+                            {id: 3, name: "image.fits.moment.integrated", moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}
+                        ]
+                    }
+                ]
+            });
+
+            const restorer = await restored(workspace);
+
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: true}), appStore.frames[0]);
+            // Each image is the moment it was saved as, whatever order the backend sent them in.
+            const maximum = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
+            expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+            expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
+            expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        });
+
+        test("reports a request the user skips, and what is made of its images", async () => {
+            const {appStore, cancelRequestingMoment, requestPV} = createGeneratingSession(new Promise(() => {}));
+            appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
+                if (step?.onSkip) {
+                    setTimeout(step.onSkip);
+                }
+            });
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [
+                    {request: momentRequest, images: [{id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                    {request: {type: "pv", sourceImageId: 2, regionId: RegionId.IMAGE, width: 3, reverse: false}, images: [{id: 3, name: "pv.fits"}]}
+                ]
+            });
+
+            const problems = await restore(workspace);
+
+            expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
+            expect(requestPV).not.toHaveBeenCalled();
+            expect(problems).toEqual(["Skipped making the moment images of image.fits again", "Could not make the PV image of image.fits.moment.maximum again: the image it is made from was not restored"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "making the moment images of image.fits", progress: 0.5}));
+        });
+
+        test("reports a request whose region did not come back, without making it", async () => {
+            const {requestMoment} = createGeneratingSession();
+
+            const problems = await restore(createWorkspace({generatedImages: [{request: {...momentRequest, regionId: 9}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(requestMoment).not.toHaveBeenCalled();
+            expect(problems).toEqual(["Could not make the moment images of image.fits again: the region it is made over was not restored"]);
+        });
+
+        test("queries a HiPS image again with the images opened, so an image can be matched to it", async () => {
+            const {appStore, loadRemoteFile} = createGeneratingSession();
+            const hips = {type: "hips" as const, survey: "CDS/P/DSS2/red", width: 100, height: 80, center: {x: 10, y: -20}, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0};
+
+            await restore(createWorkspace({files: [{...IMAGE, references: {spatial: 2}}], generatedImages: [{request: hips, images: [{id: 2, name: "DSS2.fits"}]}], references: {spatial: 2}}));
+
+            expect(loadRemoteFile).toHaveBeenCalledWith({hips: "CDS/P/DSS2/red", width: 100, height: 80, ra: 10, dec: -20, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0});
+            expect(appStore.spatialReference).toBe(appStore.frames[1]);
+            expect(appStore.setSpatialMatchingEnabled).toHaveBeenCalledWith(appStore.frames[0], true);
+        });
+
+        test("matches an image to a reference made again by a request once it is made", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+
+            await restore(
+                createWorkspace({
+                    files: [{...IMAGE, references: {spatial: 2}}],
+                    generatedImages: [{request: {...momentRequest, regionId: RegionId.IMAGE}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}],
+                    references: {spatial: 2}
+                })
+            );
+
+            expect(appStore.setSpatialMatchingEnabled).toHaveBeenCalledWith(appStore.frames[0], true);
+            expect(appStore.setSpatialMatchingEnabled.mock.invocationCallOrder[0]).toBeGreaterThan(requestMoment.mock.invocationCallOrder[0]);
         });
     });
 });

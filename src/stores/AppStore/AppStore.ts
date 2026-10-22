@@ -22,6 +22,7 @@ import {
     type FrameView,
     type ImageItem,
     type ImageViewItem,
+    momentsMade,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
     NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
@@ -61,7 +62,7 @@ import {
     TimeSeriesStore,
     WidgetsStore
 } from "stores";
-import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
@@ -136,6 +137,14 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
+}
+
+/** What a workspace load is waiting for. */
+export interface WorkspaceLoadingStep {
+    description: string;
+    progress: number;
+    /** Give up on this step and carry on with the rest of the load, when that is possible. */
+    onSkip?: () => void;
 }
 
 export class AppStore {
@@ -372,7 +381,7 @@ export class AppStore {
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
     /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
-    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
+    @observable.ref workspaceLoadingStep: WorkspaceLoadingStep | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -817,6 +826,12 @@ export class AppStore {
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+            }
+            const hipsImage = ack.openFileAck?.fileId ? this.getFrame(ack.openFileAck.fileId) : undefined;
+            if (hipsImage) {
+                const query = {...remoteRequest};
+                delete query.fileId;
+                hipsImage.generation = {request: {type: "hips", query}};
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -1505,7 +1520,7 @@ export class AppStore {
     @flow.bound
     *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore) {
         if (!message || !frame) {
-            return;
+            return [];
         }
         if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
@@ -1523,16 +1538,29 @@ export class AppStore {
 
         this.restartTaskProgress();
 
+        const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
             if (!ack.cancel && ack.openFileAcks) {
-                for (const openFileAck of ack.openFileAcks) {
+                const request: ImageGenerationRequest = {
+                    type: "moment",
+                    source: frame,
+                    regionId: message.regionId ?? RegionIdType.CURSOR,
+                    moments: message.moments ?? [],
+                    channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
+                    mask: message.mask ?? CARTA.MomentMask.None,
+                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0}
+                };
+                const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
+                for (const [index, openFileAck] of ack.openFileAcks.entries()) {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                         this.fileCounter++;
                         const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
                         if (!newMomentImage) {
                             continue;
                         }
+                        newMomentImage.generation = {request, moment: moments?.[index]};
+                        momentImages.push(newMomentImage);
                         frame.addMomentImage(newMomentImage);
                         if (frame === this.spatialReference && this.shouldMatchMoment) {
                             newMomentImage.setSpatialReference(this.spatialReference);
@@ -1549,6 +1577,7 @@ export class AppStore {
             this.endFileLoading();
             console.error(err);
         }
+        return momentImages;
     }
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
@@ -1561,7 +1590,7 @@ export class AppStore {
     @flow.bound
     *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean) {
         if (!message || !frame) {
-            return;
+            return undefined;
         }
         if (frame.isSpectralAxisNonlinear) {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
@@ -1578,6 +1607,7 @@ export class AppStore {
 
         this.restartTaskProgress();
 
+        let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
             if (!ack.cancel && ack.openFileAck) {
@@ -1585,6 +1615,18 @@ export class AppStore {
                     this.fileCounter++;
                     const newPVImage = this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId);
                     if (newPVImage) {
+                        const spectralRange = message.spectralRange;
+                        newPVImage.generation = {
+                            request: {
+                                type: "pv",
+                                source: frame,
+                                regionId: message.regionId ?? RegionIdType.NONE,
+                                width: message.width ?? 1,
+                                channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
+                                reverse: !!message.reverse
+                            }
+                        };
+                        pvImage = newPVImage;
                         frame.addPvImage(newPVImage);
                     }
                 } else {
@@ -1601,6 +1643,7 @@ export class AppStore {
             console.error(err);
             AppToaster.show(ErrorToast(err));
         }
+        return pvImage;
     }
 
     @flow.bound *requestPreviewPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, id: string) {
@@ -2771,7 +2814,7 @@ export class AppStore {
     };
 
     /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
-    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+    @action setWorkspaceLoadingStep = (step: WorkspaceLoadingStep | undefined) => {
         this.workspaceLoadingStep = step;
     };
 

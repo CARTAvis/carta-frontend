@@ -2,7 +2,7 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogSystemType, ImageType, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
 import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -444,6 +444,134 @@ describe("WorkspaceSnapshotter", () => {
         createSession({spectralMatchingType: "FREQ"});
 
         expect(new WorkspaceSnapshotter().capture().workspace.spectralMatchingType).toBe("FREQ");
+    });
+
+    describe("generated images", () => {
+        /** A moment image of the session's image, made over a region by the request given. */
+        function createMomentImage(fileId: number, request: object, moment: CARTA.Moment) {
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, fileId);
+            return createFrame(fileId, {
+                frameInfo: {fileId, directory: "", hdu: "", fileInfo: {name: `image0.fits.moment.${moment}`}, generated: true},
+                generation: {request, moment}
+            });
+        }
+
+        function momentRequestOf(source: unknown, regionId = 5) {
+            return {
+                type: "moment",
+                source,
+                regionId,
+                moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+                channelRange: {min: 2, max: 8},
+                mask: CARTA.MomentMask.Include,
+                pixelRange: {min: 0.1, max: 1}
+            };
+        }
+
+        test("saves the request once, naming its image and region by the IDs the workspace knows them by", () => {
+            const {appStore, frame} = createSession();
+            frame.regionSet = {regions: [{regionId: 5, regionType: CARTA.RegionType.RECTANGLE, controlPoints: [], rotation: 0, isTemporary: false}], focusedRegion: undefined} as never;
+            const request = momentRequestOf(frame);
+            appStore.frames.push(createMomentImage(3, request, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM) as never, createMomentImage(4, request, CARTA.Moment.MAX_OF_THE_SPECTRUM) as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues).toEqual([]);
+            expect(workspace.files?.map(file => file.id)).toEqual([1]);
+            expect(workspace.generatedImages).toEqual([
+                {
+                    request: {
+                        type: "moment",
+                        sourceImageId: 1,
+                        regionId: 5,
+                        moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+                        channelRange: {min: 2, max: 8},
+                        mask: CARTA.MomentMask.Include,
+                        pixelRange: {min: 0.1, max: 1}
+                    },
+                    images: [
+                        expect.objectContaining({id: 2, name: `image0.fits.moment.${CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}`, moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, renderConfig: {colorMap: "inferno", bias: 0, contrast: 1}}),
+                        expect.objectContaining({id: 3, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM})
+                    ]
+                }
+            ]);
+            expect(workspace.generatedImages?.[0].images[0]).not.toHaveProperty("source");
+            const validate = new Ajv().compile(WORKSPACE_SCHEMA);
+            validate(workspace);
+            expect(validate.errors).toBeNull();
+        });
+
+        test("saves only the moments whose images are still shown", () => {
+            const {appStore, frame} = createSession();
+            appStore.frames.push(createMomentImage(3, momentRequestOf(frame, RegionId.IMAGE), CARTA.Moment.MAX_OF_THE_SPECTRUM) as never);
+
+            const {workspace} = new WorkspaceSnapshotter().capture();
+
+            expect(workspace.generatedImages?.[0].request).toMatchObject({regionId: RegionId.IMAGE, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]});
+        });
+
+        test("reports a request whose region has been deleted, and saves nothing that names its images", () => {
+            const {appStore, frame} = createSession();
+            const momentImage = createMomentImage(3, momentRequestOf(frame), CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            appStore.frames.push(momentImage as never);
+            appStore.activeFrame = momentImage as never;
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues).toEqual([{kind: WorkspaceItemKind.GeneratedImage, subject: "the moment images of image0.fits", message: "Could not save the moment images of image0.fits: the region it was made over has been deleted"}]);
+            expect(workspace.generatedImages).toBeUndefined();
+            expect(workspace.selectedFile).toBeUndefined();
+        });
+
+        test("saves a request made of an image another request made after that one, whatever order the session lists them in", () => {
+            const {appStore} = createSession();
+            const hips = createFrame(6, {frameInfo: {fileId: 6, directory: "", hdu: "", fileInfo: {name: "DSS2.fits"}, generated: true}});
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 6);
+            const momentImage = createMomentImage(7, momentRequestOf(hips, RegionId.IMAGE), CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            (hips as any).generation = {request: {type: "hips", query: {hips: "CDS/P/DSS2/red", width: 100, height: 80, ra: 10, dec: -20, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0}}};
+            appStore.frames.push(momentImage as never, hips as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues).toEqual([]);
+            expect(workspace.generatedImages?.map(generated => generated.request)).toEqual([
+                {type: "hips", survey: "CDS/P/DSS2/red", width: 100, height: 80, object: undefined, center: {x: 10, y: -20}, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0},
+                expect.objectContaining({type: "moment", sourceImageId: 2})
+            ]);
+        });
+
+        test("reports a request made of a generated image there is no record of how to make", () => {
+            const {appStore} = createSession();
+            const fittedModel = createFrame(6, {frameInfo: {fileId: 6, directory: "", hdu: "", fileInfo: {name: "model.fits"}, generated: true}});
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 6);
+            appStore.frames.push(fittedModel as never, createMomentImage(7, momentRequestOf(fittedModel, RegionId.IMAGE), CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM) as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues.map(issue => issue.message)).toEqual([
+                "Could not save the moment images of model.fits: the image it was made from was not saved",
+                "The workspace contains generated files. These will not be preserved when reloading."
+            ]);
+            expect(workspace.generatedImages).toBeUndefined();
+        });
+
+        test("saves a PV request with the cut it was made along", () => {
+            const {appStore, frame} = createSession();
+            frame.regionSet = {regions: [{regionId: 4, regionType: CARTA.RegionType.LINE, controlPoints: [], isTemporary: false}], focusedRegion: undefined} as never;
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 3);
+            const pvImage = createFrame(3, {
+                frameInfo: {fileId: 3, directory: "", hdu: "", fileInfo: {name: "image0_pv.fits"}, generated: true},
+                generation: {request: {type: "pv", source: frame, regionId: 4, width: 3, channelRange: undefined, reverse: true}}
+            });
+            appStore.frames.push(pvImage as never);
+
+            const {workspace} = new WorkspaceSnapshotter().capture();
+
+            expect(workspace.generatedImages?.[0]).toEqual({
+                request: {type: "pv", sourceImageId: 1, regionId: 4, width: 3, channelRange: undefined, reverse: true},
+                images: [expect.objectContaining({id: 2, name: "image0_pv.fits"})]
+            });
+        });
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {
