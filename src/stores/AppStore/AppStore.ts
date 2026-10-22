@@ -1517,8 +1517,15 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request moment images of an image.
+     *
+     * @param isStillWanted - asked once the images are made; when it answers no, they are closed on
+     *                        the backend instead of being added to the session.
+     * @returns the moment images added to the session.
+     */
     @flow.bound
-    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
         if (!message || !frame) {
             return [];
         }
@@ -1541,7 +1548,9 @@ export class AppStore {
         const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
-            if (!ack.cancel && ack.openFileAcks) {
+            if (!ack.cancel && ack.openFileAcks && !isStillWanted()) {
+                this.discardGeneratedImages(ack.openFileAcks);
+            } else if (!ack.cancel && ack.openFileAcks) {
                 const request: ImageGenerationRequest = {
                     type: "moment",
                     source: frame,
@@ -1580,6 +1589,17 @@ export class AppStore {
         return momentImages;
     }
 
+    /** Close images the backend made that are no longer wanted, without showing them first. */
+    private discardGeneratedImages(openFileAcks: CARTA.OpenFileAck.$Properties[]) {
+        for (const openFileAck of openFileAcks) {
+            if (typeof openFileAck.fileId === "number") {
+                this.backendService.closeFile(openFileAck.fileId);
+            }
+            // the backend has handed the ID out, so it is not handed out again
+            this.fileCounter++;
+        }
+    }
+
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingMomentsProgress < 1.0) {
@@ -1587,8 +1607,15 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request a PV image of an image.
+     *
+     * @param isStillWanted - asked once the image is made; when it answers no, it is closed on the
+     *                        backend instead of being added to the session.
+     * @returns the PV image added to the session.
+     */
     @flow.bound
-    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
         if (!message || !frame) {
             return undefined;
         }
@@ -1610,7 +1637,9 @@ export class AppStore {
         let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
-            if (!ack.cancel && ack.openFileAck) {
+            if (!ack.cancel && ack.openFileAck && !isStillWanted()) {
+                this.discardGeneratedImages([ack.openFileAck]);
+            } else if (!ack.cancel && ack.openFileAck) {
                 if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                     this.fileCounter++;
                     const newPVImage = this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId);

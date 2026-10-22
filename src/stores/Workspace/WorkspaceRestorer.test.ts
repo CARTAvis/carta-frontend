@@ -1183,7 +1183,7 @@ describe("WorkspaceRestorer", () => {
                 return frame;
             };
             const generating = {
-                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _isStillWanted?: () => boolean) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
                 cancelRequestingMoment: jest.fn(),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
@@ -1222,7 +1222,7 @@ describe("WorkspaceRestorer", () => {
 
             const restorer = await restored(workspace);
 
-            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0]);
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
             // The backend is asked for a statistic of the region, which it has answered, before the moments.
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
                 {fileId: 1, regionId: 105, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]},
@@ -1253,7 +1253,7 @@ describe("WorkspaceRestorer", () => {
         });
 
         test("reports a request the user skips, and what is made of its images", async () => {
-            const {appStore, cancelRequestingMoment, requestPV} = createGeneratingSession(new Promise(() => {}));
+            const {appStore, cancelRequestingMoment, requestMoment, requestPV} = createGeneratingSession(new Promise(() => {}));
             appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
                 if (step?.onSkip) {
                     setTimeout(step.onSkip);
@@ -1270,6 +1270,9 @@ describe("WorkspaceRestorer", () => {
             const problems = await restore(workspace);
 
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
+            // Images the backend still makes for it are not wanted.
+            const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
+            expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits again", "Could not make the PV image of image.fits.moment.maximum again: the image it is made from was not restored"]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "making the moment images of image.fits", progress: 0.5}));

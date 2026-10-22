@@ -555,6 +555,19 @@ describe("WorkspaceSnapshotter", () => {
             expect(workspace.generatedImages).toBeUndefined();
         });
 
+        test("reports moment images it cannot tell apart once some of them are closed", () => {
+            const {appStore, frame} = createSession();
+            const request = {...momentRequestOf(frame, RegionId.IMAGE), moments: [CARTA.Moment.MEDIAN_COORDINATE, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]};
+            const momentImage = createMomentImage(3, request, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            (momentImage as any).generation = {request};
+            appStore.frames.push(momentImage as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues.map(issue => issue.message)).toEqual(["Could not save the moment images of image0.fits: it cannot tell which moment each of its remaining images is"]);
+            expect(workspace.generatedImages).toBeUndefined();
+        });
+
         test("saves a PV request with the cut it was made along", () => {
             const {appStore, frame} = createSession();
             frame.regionSet = {regions: [{regionId: 4, regionType: CARTA.RegionType.LINE, controlPoints: [], isTemporary: false}], focusedRegion: undefined} as never;
