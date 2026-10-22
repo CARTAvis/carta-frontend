@@ -1,10 +1,11 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
+import {Subject} from "rxjs";
 
 import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
-import {CatalogApiService} from "services";
+import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
@@ -1189,11 +1190,23 @@ describe("WorkspaceRestorer", () => {
                 loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({})))
             };
             Object.assign(appStore, generating);
-            return {...session, ...generating};
+            // The backend answers a statistics request for a region with that region's statistics.
+            const statsStream = new Subject<{fileId: number; regionId: number}>();
+            const backend = {
+                statsStream,
+                setStatsRequirements: jest.fn((message: {fileId: number; regionId: number; statsConfigs: unknown[]}) => {
+                    if (message.statsConfigs.length) {
+                        setTimeout(() => statsStream.next({fileId: message.fileId, regionId: message.regionId}));
+                    }
+                    return true;
+                })
+            };
+            jest.spyOn(BackendService, "Instance", "get").mockReturnValue(backend as never);
+            return {...session, ...generating, backend};
         }
 
         test("makes moment images again once the regions are back, over the ID the backend gave the region", async () => {
-            const {appStore, requestMoment} = createGeneratingSession();
+            const {appStore, requestMoment, backend} = createGeneratingSession();
             const workspace = createWorkspace({
                 files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
                 generatedImages: [
@@ -1209,12 +1222,34 @@ describe("WorkspaceRestorer", () => {
 
             const restorer = await restored(workspace);
 
-            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: true}), appStore.frames[0]);
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0]);
+            // The backend is asked for a statistic of the region, which it has answered, before the moments.
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
+                {fileId: 1, regionId: 105, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]},
+                {fileId: 1, regionId: 105, statsConfigs: []}
+            ]);
+            expect(backend.setStatsRequirements.mock.invocationCallOrder[1]).toBeLessThan(requestMoment.mock.invocationCallOrder[0]);
             // Each image is the moment it was saved as, whatever order the backend sent them in.
             const maximum = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
             expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
             expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
             expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        });
+
+        test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
+            const {requestMoment} = createGeneratingSession();
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+
+            await restore(
+                createWorkspace({
+                    generatedImages: [
+                        {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                        {request: {...wholeImage, moments: [CARTA.Moment.MIN_OF_THE_SPECTRUM]}, images: [{id: 3, moment: CARTA.Moment.MIN_OF_THE_SPECTRUM}]}
+                    ]
+                })
+            );
+
+            expect(requestMoment.mock.calls.map(([message]) => message.keep)).toEqual([false, true]);
         });
 
         test("reports a request the user skips, and what is made of its images", async () => {
