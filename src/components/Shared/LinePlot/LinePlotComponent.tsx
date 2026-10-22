@@ -10,7 +10,7 @@ import {ResizeDetector} from "components/Shared";
 import {InteractionMode, LinePlotSelectingMode, type PlotType, TickType, ZoomMode} from "enums";
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getExportFileName, toExponential} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 
 import {type MultiPlotProps, PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
@@ -32,6 +32,19 @@ export interface LineMarker {
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
     interactionMarker?: boolean;
+}
+
+export function genMeanRmsMarkers(histogram: {mean?: number | null; stdDev?: number | null} | null | undefined, isDarkTheme: boolean): LineMarker[] {
+    const mean = histogram?.mean;
+    const stdDev = histogram?.stdDev;
+    if (mean == null || !isFinite(mean) || stdDev == null || !(stdDev > 0)) {
+        return [];
+    }
+    const color = isDarkTheme ? Colors.GREEN4 : Colors.GREEN2;
+    return [
+        {value: mean, id: "marker-mean", draggable: false, horizontal: false, color, dash: [5]},
+        {value: mean, id: "marker-rms", draggable: false, horizontal: false, width: stdDev, opacity: 0.2, color}
+    ];
 }
 
 export interface LinePlotInsideBoxMarker {
@@ -69,6 +82,7 @@ export class LinePlotComponentProps {
     isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
+    exportTitle?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     markers?: LineMarker[];
@@ -667,15 +681,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ctx.setLineDash(meanRMS.mean.dash);
             ctx.strokeStyle = meanRMS.mean.color;
             ctx.lineWidth = 1;
-            ctx.moveTo(meanRMS.mean.xLeft, meanRMS.mean.y);
-            ctx.lineTo(meanRMS.mean.xRight, meanRMS.mean.y);
+            ctx.moveTo(meanRMS.mean.x1, meanRMS.mean.y1);
+            ctx.lineTo(meanRMS.mean.x2, meanRMS.mean.y2);
             ctx.stroke();
         }
         if (meanRMS?.RMS) {
             // plot RMS
             ctx.fillStyle = meanRMS.RMS.color;
             ctx.globalAlpha = meanRMS.RMS.opacity;
-            ctx.fillRect(meanRMS.RMS.xLeft, meanRMS.RMS.yTop, meanRMS.RMS.width, meanRMS.RMS.height);
+            ctx.fillRect(meanRMS.RMS.x, meanRMS.RMS.y, meanRMS.RMS.width, meanRMS.RMS.height);
             ctx.globalAlpha = 1.0;
         }
 
@@ -702,8 +716,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.toBlob(blob => {
             if (blob) {
                 const link = ownerDoc.createElement("a") as HTMLAnchorElement;
-                // Trim filename before timestamp to 200 characters to prevent browser errors
-                link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.download = `${getExportFileName(imageName, plotName)}.png`;
                 link.href = ownerWindow.URL.createObjectURL(blob);
                 link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }
@@ -720,7 +733,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             let rows: string[] = [];
             const plotName = this.props.plotName || "unknown";
             const imageName = this.props.imageName || "unknown";
-            let comment = `# ${imageName} ${plotName}`;
+            let comment = `# ${imageName} ${this.props.exportTitle ?? plotName}`;
             if (this.props.xLabel) {
                 comment += `\n# xLabel: ${this.props.xLabel}`;
             }
@@ -748,9 +761,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
 
             const rows: string[] = [];
-            const plotName = multiPlotProp.imageName;
-            const imageName = multiPlotProp.plotName;
-            let comment = `# ${imageName} ${plotName}`;
+            let comment = `# ${multiPlotProp.imageName} ${multiPlotProp.exportTitle ?? multiPlotProp.plotName}`;
             if (this.props.xLabel) {
                 comment += `\n# xLabel: ${this.props.xLabel}`;
             }
@@ -884,14 +895,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness1 = this.getPixelForValueX(marker.value + marker.width / 2.0);
-                const thickness2 = this.getPixelForValueX(marker.value - marker.width / 2.0);
-                if (thickness1 !== undefined && thickness2 !== undefined) {
-                    const thickness = thickness1 - thickness2;
-                    const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
-                    const upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
-                    const croppedThickness = upperBound - lowerBound;
-                    lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
+                const box = this.calcVerticalMarkerBox(marker);
+                if (box) {
+                    lineSegments = [<Rect listening={false} key={0} x={box.left - valueCanvasSpace} y={chartArea.top} width={box.width} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
                 }
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];
@@ -1117,40 +1123,68 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return insideTexts;
     };
 
+    private calcVerticalMarkerBox = (marker: LineMarker): {left: number; width: number} | undefined => {
+        if (!marker || !marker.width) {
+            return undefined;
+        }
+        const chartArea = this.chartArea;
+        const thickness1 = this.getPixelForValueX(marker.value + marker.width / 2.0);
+        const thickness2 = this.getPixelForValueX(marker.value - marker.width / 2.0);
+        const valueCanvasSpace = this.getCanvasSpaceX(marker.value);
+        if (thickness1 === undefined || thickness2 === undefined || isNaN(valueCanvasSpace)) {
+            return undefined;
+        }
+        const thickness = thickness1 - thickness2;
+        const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
+        const upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
+        return {left: lowerBound, width: upperBound - lowerBound};
+    };
+
     private genMeanRMSForPngPlot = (
         devicePixelRatio: number
     ): {
-        mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
-        RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
+        mean?: {color: string; dash: number[]; x1: number; y1: number; x2: number; y2: number};
+        RMS?: {color: string; opacity: number; x: number; y: number; width: number; height: number};
     } => {
         const meanRMS: {
-            mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
-            RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
+            mean?: {color: string; dash: number[]; x1: number; y1: number; x2: number; y2: number};
+            RMS?: {color: string; opacity: number; x: number; y: number; width: number; height: number};
         } = {};
         const chartArea = this.chartArea;
         if (chartArea) {
+            const left = chartArea.left * devicePixelRatio;
+            const right = chartArea.right * devicePixelRatio;
+            const top = chartArea.top * devicePixelRatio;
+            const bottom = chartArea.bottom * devicePixelRatio;
             this.props.markers?.forEach(marker => {
-                const canvasY = this.getCanvasSpaceY(marker.value);
-                if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
-                    meanRMS.mean = {
-                        color: marker?.color || Colors.GREEN4,
-                        dash: marker.dash || [2, 2],
-                        y: canvasY * devicePixelRatio,
-                        xLeft: chartArea.left * devicePixelRatio,
-                        xRight: chartArea.right * devicePixelRatio
-                    };
+                if (marker?.id.match(/^marker-mean/)) {
+                    const color = marker.color || Colors.GREEN4;
+                    const dash = marker.dash || [2, 2];
+                    if (marker.horizontal) {
+                        const canvasY = this.getCanvasSpaceY(marker.value);
+                        if (!isNaN(canvasY) && canvasY >= Math.floor(chartArea.top - 1) && canvasY <= Math.ceil(chartArea.bottom + 1)) {
+                            meanRMS.mean = {color, dash, x1: left, y1: canvasY * devicePixelRatio, x2: right, y2: canvasY * devicePixelRatio};
+                        }
+                    } else {
+                        const canvasX = this.getCanvasSpaceX(marker.value);
+                        if (!isNaN(canvasX) && canvasX >= Math.floor(chartArea.left - 1) && canvasX <= Math.ceil(chartArea.right + 1)) {
+                            meanRMS.mean = {color, dash, x1: canvasX * devicePixelRatio, y1: top, x2: canvasX * devicePixelRatio, y2: bottom};
+                        }
+                    }
                 }
-                if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
-                    const boxInfo = this.calcMarkerBox(marker);
-                    if (boxInfo?.lowerBound !== undefined && boxInfo?.height !== undefined) {
-                        meanRMS.RMS = {
-                            color: marker?.color || Colors.GREEN4,
-                            opacity: marker?.opacity ?? 0.15,
-                            xLeft: chartArea.left * devicePixelRatio,
-                            yTop: boxInfo.lowerBound * devicePixelRatio,
-                            width: (chartArea.right - chartArea.left) * devicePixelRatio,
-                            height: boxInfo.height * devicePixelRatio
-                        };
+                if (marker?.id.match(/^marker-rms/)) {
+                    const color = marker.color || Colors.GREEN4;
+                    const opacity = marker.opacity ?? 0.15;
+                    if (marker.horizontal) {
+                        const boxInfo = this.calcMarkerBox(marker);
+                        if (!isNaN(this.getCanvasSpaceY(marker.value)) && boxInfo?.lowerBound !== undefined && boxInfo?.height !== undefined) {
+                            meanRMS.RMS = {color, opacity, x: left, y: boxInfo.lowerBound * devicePixelRatio, width: right - left, height: boxInfo.height * devicePixelRatio};
+                        }
+                    } else {
+                        const boxInfo = this.calcVerticalMarkerBox(marker);
+                        if (boxInfo) {
+                            meanRMS.RMS = {color, opacity, x: boxInfo.left * devicePixelRatio, y: top, width: boxInfo.width * devicePixelRatio, height: bottom - top};
+                        }
                     }
                 }
             });

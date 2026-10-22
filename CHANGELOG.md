@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added an option to interpret catalog overlay angular-size columns as either diameters or radii ([#2679](https://github.com/CARTAvis/carta-frontend/issues/2679)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
+* Added support for using string-type coordinate columns in catalog overlays, covering sexagesimal, decimal degree, decimal hour, radian, compact HHMMSS, CASA dot-separated, and Unicode angle formats, detected from the column units or from its values ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -27,8 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect color mapping in the Stokes QU scatter plot after applying data smoothing ([#2851](https://github.com/CARTAvis/carta-frontend/issues/2851)).
 * Fixed workspaces failing to load images from a non-zeroth HDU with "does not exist" ([#2934](https://github.com/CARTAvis/carta-frontend/issues/2934)).
 * Fixed incorrect color, size, and orientation mapping of catalog overlay sources after replotting with a new column filter ([#2849](https://github.com/CARTAvis/carta-frontend/issues/2849)).
+* Fixed catalog overlay sources with a latitude beyond a pole being plotted at an arbitrary position instead of being dropped ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
+* Fixed numeric catalog coordinate columns that declare hour or radian units being plotted as though their values were degrees ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
+* Fixed a catalog's `COOSYS` declaration being misread when plotting its overlay: the standard VOTable ecliptic systems (`ecl_FK5`, `ecl_FK4`) were read as equatorial, and the declared equinox and epoch were ignored ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
+* Fixed the missing mean/RMS marker in the Histogram widget when the setting is enabled, and the marker being drawn in the wrong orientation in the exported PNG of histogram plots ([#2963](https://github.com/CARTAvis/carta-frontend/issues/2963)).
+* Fixed missing spectral coordinate conversions for images with a non-linear spectral axis such as `WAVE-LOG` in SDSS MaNGA cubes ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
+* Fixed the missing world-coordinate region definition in the header of the histogram TSV export, and the `Invalid` region line written by the region-based TSV exports in IMG display mode, which now give the world definition in the image's own coordinate system; region coordinates in the degrees format are now marked with `deg` ([#2981](https://github.com/CARTAvis/carta-frontend/issues/2981)).
+* Fixed the 2D image fitting text exports putting the timestamp before the content name, unlike the other exports, and named all TSV, PNG and text exports with one `{file name}-{content}-{timestamp}` rule, which adds the image name to the profile fitting log ([#2984](https://github.com/CARTAvis/carta-frontend/issues/2984)).
+* Fixed the misaligned column divider between the header and the rows of the Statistics widget for images with beam information ([#2979](https://github.com/CARTAvis/carta-frontend/issues/2979)).
+* Fixed the missing WCS for images whose FITS header contains an entry without a keyword ([#3024](https://github.com/CARTAvis/carta-frontend/issues/3024)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
+* Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
+* Displayed statistic names instead of internal IDs in the profile fitting export ([#2983](https://github.com/CARTAvis/carta-frontend/issues/2983)).
+* Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
+* Changed the naming of the Stokes Analysis TSV exports ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
 
 ## [6.0.0]
 

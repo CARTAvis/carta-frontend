@@ -3,7 +3,7 @@ import type {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
 import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
-import {ProtobufProcessing} from "utilities";
+import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
@@ -79,7 +79,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.ICRS},
-            get2DPlotData: rs.fn(),
+            get2DCoordinateData: rs.fn(),
             setLoadingDataStatus: rs.fn(),
             setProgress: rs.fn(),
             setUpdatingDataStream: rs.fn(),
@@ -109,7 +109,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
     });
@@ -118,12 +118,13 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: rs.fn(() => ({
+            get2DCoordinateData: rs.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
+            getCoordinateEligibility: rs.fn(() => ({status: CatalogAxisEligibility.Eligible})),
             setLoadingDataStatus: rs.fn(),
             setProgress: rs.fn(),
             setUpdatingDataStream: rs.fn(),
@@ -153,18 +154,61 @@ describe("AppStore.handleCatalogFilterStream", () => {
             subsetEndIndex: 1
         } as unknown as CARTA.CatalogFilterResponse);
 
-        expect(profileStore.get2DPlotData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
-        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", CatalogSystemType.FK5, 1, 1);
+        expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData);
+        expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.FK5}), 1, 1);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
         expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
         expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
+    });
+
+    test("updates Galactic overlays when coordinate columns have no units", () => {
+        const processedData = new Map<number, unknown>();
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
+            get2DCoordinateData: rs.fn(() => ({
+                wcsX: [150],
+                wcsY: [2.476567],
+                xHeaderInfo: {units: ""},
+                yHeaderInfo: {units: ""}
+            })),
+            getCoordinateEligibility: rs.fn(() => ({status: CatalogAxisEligibility.Eligible})),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        const widgetStore = {
+            setPlottedImageOverlayState: rs.fn(),
+            xAxis: "GLON1",
+            yAxis: "GLAT1"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
+
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            fileId: 1,
+            progress: 1,
+            subsetDataSize: 1,
+            subsetEndIndex: 1
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(convertSpy).toHaveBeenCalledWith(1, [150], [2.476567], "wcs", "", "", expect.objectContaining({system: CatalogSystemType.Galactic}), 1, 1);
+        expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("GLON1", "GLAT1", CatalogSystemType.Galactic);
     });
 
     test("does not replot for column-update responses", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DPlotData: rs.fn(() => ({
+            get2DCoordinateData: rs.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
@@ -202,9 +246,57 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
-        expect(profileStore.get2DPlotData).not.toHaveBeenCalled();
+        expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
+    });
+
+    test("backfills the accumulated prefix when a streamed coordinate format becomes known", () => {
+        const processedData = new Map<number, unknown>();
+        let isFormatKnown = false;
+        const accumulatedData = {prefix: "all rows"};
+        const profileStore = {
+            catalogCoordinateSystem: {system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"},
+            catalogData: accumulatedData,
+            get2DCoordinateData: jest
+                .fn()
+                .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
+                .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),
+            getCoordinateEligibility: rs.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(() => {
+                isFormatKnown = true;
+            }),
+            updateMode: CatalogUpdateMode.ViewUpdate
+        };
+        const widgetStore = {
+            setPlottedImageOverlayState: rs.fn(),
+            xAxis: "elon",
+            yAxis: "elat"
+        };
+
+        catalogStore.catalogProfileStores.set(1, profileStore as any);
+        catalogStore.catalogDisplayStores.set(1, widgetStore as any);
+
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const clearSpy = rs.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(rs.fn());
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
+
+        appStore.handleCatalogFilterStream({
+            columns: [],
+            fileId: 1,
+            progress: 1,
+            subsetDataSize: 1,
+            subsetEndIndex: 3
+        } as unknown as CARTA.CatalogFilterResponse);
+
+        expect(clearSpy).toHaveBeenCalledWith(1);
+        expect(profileStore.get2DCoordinateData).toHaveBeenNthCalledWith(2, "elon", "elat", accumulatedData, 3);
+        expect(convertSpy).toHaveBeenCalledWith(1, [1, 2, 3], [4, 5, 6], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"}), 0, 0);
     });
 
     test("completes a request when its profile store was removed before the final response", () => {

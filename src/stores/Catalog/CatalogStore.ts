@@ -6,7 +6,7 @@ import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {isCatalogAxisDataType, minMaxArray, setAstSystem} from "utilities";
+import {type CatalogCoordinateSystem, getDegreesPerCatalogUnit, isCatalogNumericDataType, minMaxArray, setAstCatalogSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -25,10 +25,6 @@ export class CatalogStore {
         }
         return CatalogStore.staticInstance;
     }
-
-    private static readonly DegreeUnits = ["deg", "degrees"];
-    private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
-    private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
     @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
     @observable catalogCounts: Map<number, number> = new Map();
@@ -146,12 +142,22 @@ export class CatalogStore {
         this.catalogCounts.set(fileId, 0);
     }
 
-    @action convertToImageCoordinate(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType, subsetEndIndex: number, subsetDataSize: number) {
+    @action convertToImageCoordinate(
+        fileId: number,
+        xData: Array<number>,
+        yData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogCoordinateSystem: CatalogCoordinateSystem,
+        subsetEndIndex: number,
+        subsetDataSize: number
+    ) {
         const catalog = this.catalogGLData.get(fileId);
         const position = new Float32Array(xData.length * 2);
         if (catalog && xData && yData) {
             const startIndex = subsetEndIndex - subsetDataSize;
-            switch (catalogFrame) {
+            switch (catalogCoordinateSystem.system) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
                         catalog.x[startIndex + i] = xData[i];
@@ -169,7 +175,7 @@ export class CatalogStore {
                     }
                     break;
                 default:
-                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
+                    const pixelData = CatalogStore.transformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogCoordinateSystem);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
                         catalog.x[startIndex + i] = pixelData.xImageCoords[i];
                         catalog.y[startIndex + i] = pixelData.yImageCoords[i];
@@ -178,7 +184,7 @@ export class CatalogStore {
                     }
                     break;
             }
-            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + xData.length);
+            this.catalogCounts.set(fileId, Math.max(this.catalogCounts.get(fileId) ?? 0, startIndex + xData.length));
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }
@@ -354,7 +360,7 @@ export class CatalogStore {
             plotStore
                 ?.resetUnknownColumns(column => {
                     const header = profileStore.getColumnHeader(column);
-                    return header !== undefined && isCatalogAxisDataType(header.dataType);
+                    return header !== undefined && isCatalogNumericDataType(header.dataType);
                 })
                 .forEach(column => dropped.add(column));
         });
@@ -518,31 +524,32 @@ export class CatalogStore {
         this.catalogDisplayStores.delete(fileId);
     }
 
+    /** Radians per unit of the column's declared units, for AST. Unknown units are degrees. */
     private static getFractionFromUnit(unit: string): number {
-        if (CatalogStore.ArcminUnits.includes(unit)) {
-            return Math.PI / 10800.0;
-        } else if (CatalogStore.ArcsecUnits.includes(unit)) {
-            return Math.PI / 648000.0;
-        } else {
-            // if unit is null, using deg as default
-            return Math.PI / 180.0;
-        }
+        return (getDegreesPerCatalogUnit(unit) * Math.PI) / 180.0;
     }
 
-    private static transformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
+    private static transformCatalogData(
+        xWcsData: Array<number>,
+        yWcsData: Array<number>,
+        wcsInfo: AST.FrameSet,
+        xUnit: string,
+        yUnit: string,
+        catalogCoordinateSystem: CatalogCoordinateSystem
+    ): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
-            const xFraction = CatalogStore.getFractionFromUnit(xUnit.toLocaleLowerCase());
-            const yFraction = CatalogStore.getFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.getFractionFromUnit(xUnit);
+            const yFraction = CatalogStore.getFractionFromUnit(yUnit);
 
             const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && overlay.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
 
-            setAstSystem(wcsCopy, catalogFrame, overlay.global);
+            setAstCatalogSystem(wcsCopy, catalogCoordinateSystem);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

@@ -1,15 +1,21 @@
+import {Regions} from "@blueprintjs/table";
 import {type Mock, rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogDisplayStore, CatalogProfileStore, CatalogStore, WidgetsStore} from "stores";
+import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
 import {CatalogOverlayComponent} from "./CatalogOverlayComponent";
 
 type MockColumn = {
     display?: boolean;
+    dataType?: CARTA.ColumnType;
     name: string;
+    units?: string;
+    /** Sample values. A unitless string column without them is Unknown, not eligible. */
+    data?: Array<string | number | null>;
 };
 
 type MockWidgetStore = {
@@ -23,6 +29,7 @@ type MockWidgetStore = {
     setAutoSelectImageOverlayAxesAttempted: Mock<(attempted: boolean) => void>;
     setxAxis: Mock<(axis: string) => void>;
     setyAxis: Mock<(axis: string) => void>;
+    setCatalogPlotType: Mock<(plotType: CatalogPlotType) => void>;
     xAxis: string;
     yAxis: string;
 };
@@ -31,13 +38,18 @@ type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
-    catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string}>;
+    catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
+    catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string; units?: string}>;
+    displayedNumericColumnNames: string[];
+    isNumericColumn: (columnName: string) => boolean;
     isFileBasedCatalog: boolean;
     maxRows: number;
     setCatalogCoordinateSystem: Mock<(system: CatalogSystemType) => void>;
     setIsUpdateColumn: Mock<(isUpdate: boolean) => void>;
     setHeaderDisplay: Mock<(display: boolean, column: string) => void>;
     setUpdateMode: Mock<(mode: CatalogUpdateMode) => void>;
+    shouldUpdateData?: boolean;
+    getCoordinateEligibility: Mock<(columnName: string) => CatalogAxisEligibilityResult>;
 };
 
 const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
@@ -63,6 +75,9 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
     } as MockWidgetStore;
 
     widgetStore.setxAxis = rs.fn((nextXAxis: string) => {
+        widgetStore.setCatalogPlotType = rs.fn((nextPlotType: CatalogPlotType) => {
+            widgetStore.catalogPlotType = nextPlotType;
+        });
         widgetStore.xAxis = nextXAxis;
     });
     widgetStore.setyAxis = rs.fn((nextYAxis: string) => {
@@ -77,6 +92,7 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
 
 const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): MockProfileStore => {
     const catalogControlHeader = new Map<string, {dataIndex: number; display: boolean; filter: string}>();
+    const catalogData = new Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>();
     const catalogHeader = columns.map((column, index) => {
         catalogControlHeader.set(column.name, {
             dataIndex: index,
@@ -84,25 +100,57 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
             filter: ""
         });
 
+        const dataType = column.dataType ?? CARTA.ColumnType.Double;
+        if (column.data) {
+            catalogData.set(index, {dataType, data: column.data});
+        }
+
         return {
             columnIndex: index,
-            dataType: CARTA.ColumnType.Double,
-            name: column.name
+            dataType,
+            name: column.name,
+            units: column.units
         };
     });
+
+    const isNumericColumn = (columnName: string): boolean => {
+        const controlHeader = catalogControlHeader.get(columnName);
+        return controlHeader !== undefined && isCatalogNumericDataType(catalogHeader[controlHeader.dataIndex]?.dataType);
+    };
 
     const profileStore = {
         activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
+        catalogData,
         catalogHeader,
+        get displayedNumericColumnNames(): string[] {
+            return Array.from(catalogControlHeader)
+                .filter(([columnName, header]) => header.display && isNumericColumn(columnName))
+                .map(([columnName]) => columnName);
+        },
+        isNumericColumn,
         isFileBasedCatalog: false,
         maxRows: 100,
         setCatalogCoordinateSystem: rs.fn(),
         setIsUpdateColumn: rs.fn(),
         setHeaderDisplay: rs.fn(),
-        setUpdateMode: rs.fn()
+        setUpdateMode: rs.fn(),
+        getCoordinateEligibility: rs.fn()
     } as MockProfileStore;
+
+    profileStore.getCoordinateEligibility.mockImplementation((columnName: string) => {
+        const controlHeader = profileStore.catalogControlHeader.get(columnName);
+        const headerInfo = controlHeader ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
+        const column = profileStore.catalogData.get(headerInfo?.columnIndex ?? NaN);
+        const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
+        const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
+        const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.isFileBasedCatalog && profileStore.shouldUpdateData) {
+            return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
+        }
+        return eligibility;
+    });
 
     profileStore.setCatalogCoordinateSystem.mockImplementation((nextSystem: CatalogSystemType) => {
         profileStore.catalogCoordinateSystem.system = nextSystem;
@@ -118,11 +166,11 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
     return profileStore;
 };
 
-const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[]): CatalogProfileStore => {
-    const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: CARTA.ColumnType.Double, name: column.name}));
+const CreateCatalogProfileStore = (catalogFileId: number, system: CatalogSystemType, columns: MockColumn[], dataSize = 0): CatalogProfileStore => {
+    const catalogHeader = columns.map((column, index) => new CARTA.CatalogHeader({columnIndex: index, dataType: column.dataType ?? CARTA.ColumnType.Double, name: column.name, units: column.units}));
     const profileStore = new CatalogProfileStore(
         {
-            dataSize: 0,
+            dataSize,
             directory: "",
             fileId: catalogFileId,
             fileInfo: new CARTA.CatalogFileInfo({name: "test-catalog"})
@@ -245,6 +293,143 @@ afterEach(() => {
 });
 
 describe("CatalogOverlayComponent", () => {
+    test("a newly opened table ignores previous scroll requests", () => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            first.profileStore.selectedPointIndices = [100];
+        });
+        first.widgetStore.requestCatalogTableAutoScroll();
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {
+            catalogFileId: first.catalogFileId,
+            profileStore: first.profileStore,
+            widgetStore: first.widgetStore
+        });
+        const scrollToRegion = rs.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        second.component["onCompleteRender"]();
+
+        expect(scrollToRegion).not.toHaveBeenCalled();
+        expect(second.component["hasPendingAutoScroll"](first.widgetStore)).toBe(false);
+        expect(first.component["hasPendingAutoScroll"](first.widgetStore)).toBe(true);
+    });
+
+    test.each([false, true])("catalog switches ignore old requests and preserve a fresh request: %s", shouldRequestScroll => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            second.profileStore.selectedPointIndices = [100];
+        });
+        second.widgetStore.requestCatalogTableAutoScroll();
+        const scrollToRegion = rs.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        // Adoption and the selection request can happen within the same MobX action.
+        runInAction(() => {
+            WidgetsStore.Instance.setCatalogWidgetSelection(first.componentId, second.catalogFileId);
+            if (shouldRequestScroll) {
+                second.widgetStore.requestCatalogTableAutoScroll();
+            }
+        });
+        first.component["onCompleteRender"]();
+
+        if (shouldRequestScroll) {
+            expect(scrollToRegion).toHaveBeenCalledWith(undefined, Regions.row(100));
+        } else {
+            expect(scrollToRegion).not.toHaveBeenCalled();
+        }
+    });
+
+    test.each([false, true])("a late display store ignores old requests and preserves a fresh request: %s", shouldRequestScroll => {
+        const {component, catalogFileId, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            profileStore.selectedPointIndices = [100];
+            CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
+        });
+        displayStore.requestCatalogTableAutoScroll();
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        runInAction(() => {
+            CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore);
+            if (shouldRequestScroll) {
+                displayStore.requestCatalogTableAutoScroll();
+            }
+        });
+        component["onCompleteRender"]();
+
+        if (shouldRequestScroll) {
+            expect(scrollToRegion).toHaveBeenCalledWith(undefined, Regions.row(100));
+        } else {
+            expect(scrollToRegion).not.toHaveBeenCalled();
+        }
+    });
+
+    test("changing selected rows without a scroll request preserves the viewport", () => {
+        const {component, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        displayStore.setShowSelectedData(true);
+        runInAction(() => {
+            profileStore.selectedPointIndices = [100];
+        });
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        component["onCompleteRender"]();
+
+        expect(scrollToRegion).not.toHaveBeenCalled();
+    });
+
+    test("scrolls each catalog table when selected-only mode changes", () => {
+        const first = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        const second = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {
+            catalogFileId: first.catalogFileId,
+            profileStore: first.profileStore,
+            widgetStore: first.widgetStore
+        });
+        runInAction(() => {
+            first.profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
+        });
+        const displayStore = first.widgetStore;
+        displayStore.setShowSelectedData(false);
+        first.component["onCompleteRender"]();
+        second.component["onCompleteRender"]();
+
+        displayStore.setShowSelectedData(true);
+        displayStore.requestCatalogTableAutoScroll();
+        const firstScroll = rs.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+        const secondScroll = rs.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+
+        first.component["onCompleteRender"]();
+        second.component["onCompleteRender"]();
+
+        expect(firstScroll).toHaveBeenCalledWith(undefined, Regions.row(0));
+        expect(secondScroll).toHaveBeenCalledWith(undefined, Regions.row(0));
+    });
+
+    test.each([true, false])("scrolls once per request when selected-only mode is %s", isShowingSelectedData => {
+        const {component, profileStore, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        runInAction(() => {
+            profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
+        });
+        displayStore.setShowSelectedData(false);
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+
+        component["onCompleteRender"]();
+        expect(scrollToRegion).not.toHaveBeenCalled();
+
+        displayStore.setShowSelectedData(isShowingSelectedData);
+        displayStore.requestCatalogTableAutoScroll();
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(1);
+        expect(scrollToRegion).toHaveBeenLastCalledWith(undefined, Regions.row(isShowingSelectedData ? 0 : 100));
+        expect(component["hasPendingAutoScroll"](displayStore)).toBe(false);
+
+        // Scrolling the virtualized table renders more rows without requesting another auto-scroll.
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(1);
+
+        displayStore.requestCatalogTableAutoScroll();
+        component["onCompleteRender"]();
+        expect(scrollToRegion).toHaveBeenCalledTimes(2);
+        expect(component["hasPendingAutoScroll"](displayStore)).toBe(false);
+    });
+
     describe("autoSelectAxes", () => {
         test.each([
             ["FK5", CatalogSystemType.FK5, [{name: "flux"}, {name: "_RAJ2000"}, {name: "_DEJ2000"}], "_RAJ2000", "_DEJ2000"],
@@ -299,10 +484,278 @@ describe("CatalogOverlayComponent", () => {
             expect(widgetStore.setyAxis).not.toHaveBeenCalled();
         });
 
+        test("ranks ecliptic longitude and latitude candidates onto their semantic axes", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.Ecliptic, [
+                {name: "ELON1", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: "ELAT1", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]},
+                {name: "ELON2", dataType: CARTA.ColumnType.String, units: "dms"},
+                {name: "ELAT2", dataType: CARTA.ColumnType.String, units: "dms"}
+            ]);
+
+            // Every column stays reachable; only the order differs between the two axes.
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "ELON1", "ELON2", "ELAT1", "ELAT2"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ELAT1", "ELAT2", "ELON1", "ELON2"]);
+        });
+
+        test("drops string columns whose values are not coordinates", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, units: "dms"},
+                {name: "label", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RA1", "DEC1"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEC1", "RA1"]);
+        });
+
+        test("offers a unitless string column but marks it unknown until its values are loaded", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "note", dataType: CARTA.ColumnType.String}
+            ]);
+
+            expect(component["xAxisOption"]).toContain("note");
+            expect(component["axisColumnEligibility"].get("note")?.status).toBe("unknown");
+            expect(component["axisColumnEligibility"].get("note")?.reason).toBeTruthy();
+        });
+
+        test("requests another streamed chunk while coordinate formats are unknown", () => {
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "ra", dataType: CARTA.ColumnType.String},
+                {name: "dec", dataType: CARTA.ColumnType.String}
+            ]);
+            Object.assign(profileStore, {
+                isFileBasedCatalog: true,
+                isLoadingData: false,
+                shouldUpdateData: true,
+                updateMode: CatalogUpdateMode.TableUpdate
+            });
+            component["updateByInfiniteScroll"] = rs.fn();
+
+            expect(component["autoSelectAxes"]()).toBe(true);
+            expect(component["updateByInfiniteScroll"]).toHaveBeenCalledTimes(1);
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
+        test("stops streaming once the coordinate sniff scan limit is loaded", () => {
+            const sample = new Array<string>(COORDINATE_SNIFF_SCAN_LIMIT).fill("not a coordinate");
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "ra", dataType: CARTA.ColumnType.String, data: sample},
+                {name: "dec", dataType: CARTA.ColumnType.String, data: sample}
+            ]);
+            Object.assign(profileStore, {
+                isFileBasedCatalog: true,
+                isLoadingData: false,
+                shouldUpdateData: true,
+                updateMode: CatalogUpdateMode.TableUpdate
+            });
+            component["updateByInfiniteScroll"] = rs.fn();
+
+            expect(component["autoSelectAxes"]()).toBe(false);
+            expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+        });
+
+        test("does not stream ordinary string columns while looking for axes", () => {
+            const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "object_name", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]},
+                {name: "description", dataType: CARTA.ColumnType.String, data: ["Taurus", "Monoceros"]}
+            ]);
+            Object.assign(profileStore, {
+                isFileBasedCatalog: true,
+                isLoadingData: false,
+                shouldUpdateData: true,
+                updateMode: CatalogUpdateMode.TableUpdate
+            });
+            component["updateByInfiniteScroll"] = rs.fn();
+
+            expect(component["autoSelectAxes"]()).toBe(false);
+            expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
+        test("refreshes column eligibility when catalog values arrive", () => {
+            const profileStore = CreateCatalogProfileStore(12345, CatalogSystemType.ICRS, [{name: "RA1", dataType: CARTA.ColumnType.String}]);
+            const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("unknown");
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]});
+            });
+
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("eligible");
+        });
+
+        test("refreshes column eligibility when a streamed update replaces an existing array", () => {
+            const profileStore = CreateCatalogProfileStore(12346, CatalogSystemType.ICRS, [{name: "RA1", dataType: CARTA.ColumnType.String}], 2);
+            const {component} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", ""]});
+            });
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("unknown");
+
+            profileStore.updateCatalogData({filterDataSize: 2, requestEndIndex: 2, subsetDataSize: 2, subsetEndIndex: 2} as CARTA.CatalogFilterResponse, new Map([[0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "13:00:00"]}]]));
+
+            expect(component["axisColumnEligibility"].get("RA1")?.status).toBe("eligible");
+        });
+
+        test("auto-selects hms and dms coordinate columns", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, units: "hms"},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, units: "dms"}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("auto-selects a unitless string column once its values can be sniffed", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, data: ["12:30:00", "10:15:30"]},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, data: ["-21:57:15", "+02:28:35"]}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("falls back to a string column whose values have not been loaded", () => {
+            // Nothing but the name says these are coordinates. Selecting them costs a round trip
+            // and may be wrong, so it happens only once every better-evidenced option is exhausted.
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String},
+                {name: "DEC1", dataType: CARTA.ColumnType.String}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("RA1");
+            expect(widgetStore.yAxis).toBe("DEC1");
+        });
+
+        test("prefers a column identified by its values over one identified only by its name", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RAJ2000", dataType: CARTA.ColumnType.String},
+                {name: "DEJ2000", dataType: CARTA.ColumnType.String},
+                {name: "ra", dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: "dec", dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
+            ]);
+
+            // "RAJ2000" ranks above "ra", but it is Unknown, so the eligible pair wins the pass.
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+        });
+
+        test("does not fall back to a column whose values rule it out", () => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [
+                {name: "RA1", dataType: CARTA.ColumnType.String, data: ["NGC 1333", "NGC 2264"]},
+                {name: "DEC1", dataType: CARTA.ColumnType.String, data: ["Taurus", "Monoceros"]}
+            ]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
+        test.each([
+            ["Galactic", CatalogSystemType.Galactic, "GLON1", "GLAT1"],
+            ["Ecliptic", CatalogSystemType.Ecliptic, "ELON1", "ELAT1"],
+            ["Pixel0", CatalogSystemType.Pixel0, "xcentroid", "ycentroid"],
+            ["Pixel1", CatalogSystemType.Pixel1, "X_IMAGE", "Y_IMAGE"]
+        ])("includes and auto-selects string %s coordinate columns", (_label, system, xColumn, yColumn) => {
+            const {component, widgetStore} = CreateComponentHarness(system, [
+                {name: xColumn, dataType: CARTA.ColumnType.String, data: ["12:30:00"]},
+                {name: yColumn, dataType: CARTA.ColumnType.String, data: ["-21:57:15"]}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, xColumn, yColumn]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, yColumn, xColumn]);
+
+            component["autoSelectAxes"]();
+
+            expect(widgetStore.xAxis).toBe(xColumn);
+            expect(widgetStore.yAxis).toBe(yColumn);
+        });
+
+        test("ranks an angular column below the pixel candidates without hiding it", () => {
+            const {component} = CreateComponentHarness(CatalogSystemType.Pixel0, [
+                {name: "GLON", dataType: CARTA.ColumnType.Double, units: "deg"},
+                {name: "xcentroid", dataType: CARTA.ColumnType.String, data: ["512.25"]},
+                {name: "ycentroid", dataType: CARTA.ColumnType.String, data: ["256.75"]}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "xcentroid", "GLON", "ycentroid"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "ycentroid", "GLON", "xcentroid"]);
+        });
+
+        test.each([CatalogPlotType.Histogram, CatalogPlotType.D2Scatter])("keeps numeric coordinate columns available for %s plots", catalogPlotType => {
+            const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "flux"}]);
+            widgetStore.catalogPlotType = catalogPlotType;
+
+            const expectedOptions = [CatalogOverlay.NONE, "ra", "dec", "flux"];
+            expect(component["xAxisOption"]).toEqual(expectedOptions);
+            expect(component["yAxisOption"]).toEqual(expectedOptions);
+        });
+
+        test.each([CatalogPlotType.Histogram, CatalogPlotType.D2Scatter])("clears string coordinate axes when changing from an image overlay to %s", plotType => {
+            const {component, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [
+                {name: "ra", dataType: CARTA.ColumnType.String, units: "hms", data: ["12:30:00"]},
+                {name: "dec", dataType: CARTA.ColumnType.String, units: "dms", data: ["-21:57:15"]},
+                {name: "flux"}
+            ]);
+            widgetStore.setxAxis("ra");
+            widgetStore.setyAxis("dec");
+
+            component["handlePlotTypeChange"](plotType);
+
+            expect(widgetStore.catalogPlotType).toBe(plotType);
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+        });
+
+        test("offers a hidden coordinate column once the user displays it by hand", () => {
+            // With auto-select off, nothing nominates a coordinate column that sits past the
+            // display cut, so displaying it by hand is the only way in. It has to reach the menu
+            // from there, both before its values arrive and after.
+            const {component, profileStore} = CreateComponentHarness(CatalogSystemType.FK5, [
+                {name: "flux"},
+                {name: "RAJ2000", dataType: CARTA.ColumnType.String, display: false},
+                {name: "DEJ2000", dataType: CARTA.ColumnType.String, display: false}
+            ]);
+
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "flux"]);
+
+            profileStore.setHeaderDisplay(true, "RAJ2000");
+            profileStore.setHeaderDisplay(true, "DEJ2000");
+
+            // Still unreadable -- no values have arrived yet -- but Unknown is not a verdict, so
+            // the columns must be selectable rather than hidden. RAJ2000 leads on the RA axis by
+            // name; the other two match nothing and keep their column order.
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE, "RAJ2000", "flux", "DEJ2000"]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE, "DEJ2000", "flux", "RAJ2000"]);
+            expect(component["axisColumnEligibility"].get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Unknown);
+
+            runInAction(() => profileStore.catalogData.set(1, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
+            expect(component["axisColumnEligibility"].get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Eligible);
+        });
+
         test("uses safe defaults when profile store is unavailable", () => {
             const {component, widgetStore} = CreateComponentWithoutProfileStore("ra", "dec");
 
-            expect(component.axisOption).toEqual([CatalogOverlay.NONE]);
+            expect(component["xAxisOption"]).toEqual([CatalogOverlay.NONE]);
+            expect(component["yAxisOption"]).toEqual([CatalogOverlay.NONE]);
             expect(component["getAutoSelectableAxisOptions"]()).toEqual([]);
             expect(() => component["autoSelectAxes"]()).not.toThrow();
             expect(widgetStore.xAxis).toBe("ra");
@@ -416,6 +869,69 @@ describe("CatalogOverlayComponent", () => {
     });
 
     describe("auto-select axes reaction", () => {
+        test("retries after a noisy streamed coordinate chunk becomes established", () => {
+            const profileStore = CreateCatalogProfileStore(
+                12346,
+                CatalogSystemType.ICRS,
+                [
+                    {name: "ra", dataType: CARTA.ColumnType.String},
+                    {name: "dec", dataType: CARTA.ColumnType.String}
+                ],
+                200
+            );
+            profileStore.setSubsetEndIndex(2);
+            const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--"]});
+                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--"]});
+            });
+
+            // The first chunk is deliberately inconclusive: one coordinate and one placeholder
+            // must not consume the one-shot auto-selection attempt.
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00", ...new Array(197).fill("14:00:00")]});
+                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00", ...new Array(197).fill("-23:00:00")]});
+                profileStore.setSubsetEndIndex(200);
+            });
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+        });
+
+        test("retries after a coordinate-system change leaves string axes unresolved", () => {
+            const profileStore = CreateCatalogProfileStore(12347, CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "GLON", dataType: CARTA.ColumnType.String}, {name: "GLAT", dataType: CARTA.ColumnType.String}], 200);
+            const {component, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
+            component["updateByInfiniteScroll"] = rs.fn();
+
+            expect(widgetStore.xAxis).toBe("ra");
+            expect(widgetStore.yAxis).toBe("dec");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+
+            component["handleCatalogSystemChange"](CatalogSystemType.Galactic);
+
+            expect(widgetStore.xAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.yAxis).toBe(CatalogOverlay.NONE);
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
+
+            runInAction(() => {
+                profileStore.catalogOriginalData.set(2, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("12:30:00")});
+                profileStore.catalogOriginalData.set(3, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("-21:57:15")});
+                profileStore.setSubsetEndIndex(200);
+            });
+
+            expect(widgetStore.xAxis).toBe("GLON");
+            expect(widgetStore.yAxis).toBe("GLAT");
+            expect(widgetStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(true);
+        });
+
         test("only attempts auto-selection once per catalog", () => {
             const {widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
 

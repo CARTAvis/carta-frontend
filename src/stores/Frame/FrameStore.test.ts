@@ -1,10 +1,12 @@
-import {afterAll, beforeAll, beforeEach, describe, expect, type Mock, rs, test} from "@rstest/core";
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, type Mock, rs, test} from "@rstest/core";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {Polarizations, PreferenceKeys, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../enums";
+import {NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
-import {type FrameInfo, FrameStore, PreferenceStore} from "../index";
+import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
@@ -116,6 +118,49 @@ const OBS_TIME_FRAME_INFO: FrameInfo = {
         ]
     } as any
 };
+
+// SDSS MaNGA LOGCUBE: log-wavelength spectral axis, no SPECSYS, no RESTFRQ (issue #2890)
+const LOG_WAVELENGTH_CUBEFRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["1"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
+        dimensions: 3,
+        width: 2,
+        height: 2,
+        depth: 3,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 3, stokes: 0, depth: 3},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---TAN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--TAN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "CTYPE3", value: "WAVE-LOG"},
+            {name: "CRVAL3", value: "3621.59598486", entryType: 1, numericValue: 3621.59598486},
+            {name: "CD3_3", value: "0.833903304339", entryType: 1, numericValue: 0.833903304339},
+            {name: "CRPIX3", value: "1", entryType: 1, numericValue: 1},
+            {name: "CUNIT3", value: "Angstrom"},
+            {name: "BUNIT", value: "1E-17 erg/s/cm^2/Angstrom/spaxel"}
+        ]
+    } as any
+};
+
+// The log-wavelength cube with its CTYPE3 (and optionally CUNIT3) card replaced, or removed when undefined
+const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | undefined, cunitEntry?: {name: string; value: string}): FrameInfo => ({
+    ...LOG_WAVELENGTH_CUBEFRAME_INFO,
+    fileInfoExtended: {
+        ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended,
+        headerEntries: LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries.flatMap(entry => {
+            if (entry.name === "CTYPE3") {
+                return ctypeEntry ? [ctypeEntry] : [];
+            }
+            if (entry.name === "CUNIT3" && cunitEntry) {
+                return [cunitEntry];
+            }
+            return [entry];
+        })
+    } as any
+});
 
 describe("FrameStore", () => {
     beforeEach(() => {
@@ -262,6 +307,121 @@ describe("FrameStore", () => {
 
             expect(config["bmaj"]).toEqual([0.931560754776001, 0.9315542578697205, 0.9315447807312012]);
             expect(config["bmin"]).toEqual([0.8433191776275635, 0.8433099985122681, 0.8433027863502502]);
+        });
+    });
+
+    describe("spectral axis with a non-linear algorithm code", () => {
+        test("recognizes a WAVE-LOG axis as a vacuum wavelength axis", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, ctype: "WAVE-LOG", specsys: ""}));
+            expect(frame.nativeSpectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+            expect(frame.spectralType).toBe(SpectralType.WAVE);
+            expect(frame.isSpectralCoordinateConvertible).toBe(true);
+        });
+
+        test("flags a WAVE-LOG axis as nonlinear and a linear FREQ axis as linear", () => {
+            expect(new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+            expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+        });
+
+        test("flags a spectral axis with non-uniform channel spacing as nonlinear", () => {
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
+            try {
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+                mockChannelInfo.mockImplementation(() => ({fromWCS: true, values: [1, 2, 3, 4], indexes: [0, 1, 2, 3]}) as any);
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("opens in the header unit when it is not the standard base unit of the axis", () => {
+            const logFrame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(logFrame.spectralUnit).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralUnitSecondary).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+
+            // a frequency axis in Hz keeps CARTA's default of GHz
+            const linearFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            expect(linearFrame.spectralUnit).toBe(SpectralUnit.GHZ);
+            expect(linearFrame.spectralCoordinate).toBe("Frequency (GHz)");
+        });
+
+        test("offers wavelength and frequency coordinates but no velocity or system conversion without RESTFRQ and SPECSYS", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            const coordinates = Array.from(frame.spectralCoordsSupported?.keys() ?? []);
+            expect(coordinates).toEqual(expect.arrayContaining(["Vacuum wavelength (Angstrom)", "Frequency (GHz)", "Air wavelength (nm)", "Channel"]));
+            expect(coordinates).not.toEqual(expect.arrayContaining(["Radio velocity (km/s)"]));
+            expect(frame.spectralSystemsSupported).toEqual([]);
+            expect(frame.isSpectralSystemConvertible).toBe(false);
+        });
+
+        test("shows an unknown spectral type as it is, with channel as the only alternative", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "LAMBDA"}));
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: false, ctype: "LAMBDA"}));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["LAMBDA (Angstrom)", "Channel"]);
+            expect(frame.spectralType).toBeNull();
+            expect(frame.spectralCoordinate).toBe("LAMBDA (Angstrom)");
+            expect(frame.spectralSystemsSupported).toEqual([]);
+        });
+
+        test.each([
+            ["empty", {name: "CTYPE3", value: ""}],
+            ["missing", undefined]
+        ])("shows a spectral axis with an %s CTYPE as channel only", (_, ctypeEntry) => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo(ctypeEntry));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["Channel"]);
+            expect(frame.spectralType).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralTypeSecondary).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralCoordinate).toBe("Channel");
+            expect(frame.spectralUnitStr).toBe("Channel");
+            expect(frame.isCoordChannel).toBe(true);
+        });
+
+        test("keeps the native values for a spectral axis without CTYPE that is not the depth axis", () => {
+            const mockIsSpectralChannel = rs.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
+            try {
+                const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: ""}));
+                expect(frame.spectralType).toBeNull();
+                expect(frame.isCoordChannel).toBe(false);
+                expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toContain("Channel");
+                expect(Array.from(frame.channelValues)).toEqual([3621.59598486, 3622.4300286, 3623.264263]);
+            } finally {
+                mockIsSpectralChannel.mockRestore();
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("falls back to the default unit when the header unit does not belong to the spectral type", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "Hz"}));
+            expect(frame.spectralUnit).toBe(SpectralUnit.KMS);
+            expect(frame.spectralCoordinate).toBe("Radio velocity (km/s)");
+            expect(frame.spectralCoordsSupported?.has(frame.spectralCoordinate)).toBe(true);
+        });
+
+        test("omits the missing spectral system from the converted cursor info of frequency and velocity axes", () => {
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
+            try {
+                // FREQ in Hz and VRAD in m/s take the conversion branches (unit differs from the default), with no SPECSYS to name
+                const frequencyFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+                expect(frequencyFrame.spectralSystem).toBeNull();
+                expect(frequencyFrame.getFreqWithChannel(0).spectralString).toMatch(/^Frequency: /);
+                const velocityFrame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "m/s"}));
+                expect(velocityFrame.getFreqWithChannel(0).spectralString).toMatch(/^Velocity: /);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("names the recognized type and omits the missing spectral system in the cursor info", () => {
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
+            try {
+                const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+                expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
         });
     });
 
@@ -781,5 +941,306 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO);
             expect(frame.obsTimeMjdUtc).toBeUndefined();
         });
+    });
+});
+
+describe("FrameStore.getRegionProperties", () => {
+    const ellipse = {
+        regionId: 1,
+        regionType: CARTA.RegionType.ELLIPSE,
+        controlPoints: [
+            {x: 320, y: 400},
+            {x: 100, y: 50}
+        ],
+        rotation: 30
+    };
+    const getProperties = (wcsProperties: string | undefined, isValidWcs: boolean = true): string[] =>
+        FrameStore.prototype.getRegionProperties.call(
+            {
+                isValidWcs,
+                getRegion: (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined),
+                getRegionFrameProperties: (region: typeof ellipse) => ({controlPoints: region.controlPoints, rotation: region.rotation}),
+                genRegionWcsProperties: () => wcsProperties
+            },
+            ellipse.regionId
+        );
+
+    test("returns the image and the world definition of the region", () => {
+        const world = 'ellipse(wcs:ICRS)[[18:20:21.0000000240, -16:12:10.0000000440], [40.0000000000", 20.0000000000"], 30.000000deg]';
+        const properties = getProperties(world);
+        expect(properties).toHaveLength(2);
+        expect(properties[0]).toMatch(/^ellipse\[\[320\.000000pix, 400\.000000pix\]/);
+        expect(properties[1]).toBe(world);
+    });
+
+    test("with the real generator, adds the world definition in IMG display mode in the image's default system", async () => {
+        const overlay = AppStore.Instance.overlaySettings.global;
+        const previousSystem = overlay.system;
+        const wcsCopy = {copy: true};
+        rs.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const deleteObject = rs.spyOn(AST, "deleteObject");
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            defaultWcsSystem: SystemType;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.defaultWcsSystem = SystemType.Galactic;
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        try {
+            await overlay.setSystem(SystemType.FK5);
+            const worldMode = frame.getRegionProperties(ellipse.regionId);
+            expect(worldMode).toHaveLength(2);
+            expect(worldMode[1]).toMatch(/^ellipse\(wcs:FK5\)\[\[/);
+
+            await overlay.setSystem(SystemType.Image);
+            expect(AppStore.Instance.overlaySettings.isImgCoordinates).toBe(true);
+            const imgMode = frame.getRegionProperties(ellipse.regionId);
+            expect(imgMode).toHaveLength(2);
+            expect(imgMode[0]).toBe(worldMode[0]);
+            expect(imgMode[1]).toMatch(/^ellipse\(wcs:GALACTIC\)\[\[0deg, 0deg\], /);
+            expect(deleteObject).toHaveBeenCalledWith(wcsCopy);
+        } finally {
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("marks coordinates in the degrees format with deg, per axis", async () => {
+        const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+        const previousSystem = overlay.system;
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        try {
+            await overlay.setSystem(SystemType.ICRS);
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0deg, 0deg\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.DMS);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0deg\], /);
+        } finally {
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            numbers.setCustomFormat(false);
+            numbers.setValidWcs(false);
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("returns no region lines for a region that does not exist", () => {
+        expect(new FrameStore(STOKES_CUBEFRAME_INFO).getRegionProperties(99)).toEqual([]);
+    });
+
+    test("omits the world definition when none can be generated, e.g. in IMG display mode", () => {
+        const properties = getProperties(undefined);
+        expect(properties).toHaveLength(1);
+        expect(properties[0]).toMatch(/^ellipse\[\[/);
+        expect(getProperties("unused", false)).toHaveLength(1);
+    });
+});
+
+describe("FrameStore.genRegionWcsProperties output", () => {
+    const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+    const badX = 999;
+    let previousSystem: SystemType;
+
+    const makeFrame = () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            pixelUnitSizeArcsec: {x: number; y: number};
+            cursorInfo: unknown;
+            genRegionWcsProperties: (regionType: CARTA.RegionType, controlPoints: {x: number; y: number}[], rotation: number, regionId?: number) => string;
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.pixelUnitSizeArcsec = {x: 2, y: 3};
+        runInAction(() => {
+            frame.cursorInfo = {infoWCS: {x: "1:00:00", y: "2:00:00"}};
+        });
+        return frame;
+    };
+
+    beforeEach(async () => {
+        previousSystem = overlay.system;
+        rs.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `${x}.5`, y: `${y}.25`}));
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        numbers.setFormatX(NumberFormatType.Degrees);
+        numbers.setFormatY(NumberFormatType.Degrees);
+        await overlay.setSystem(SystemType.ICRS);
+    });
+
+    afterEach(async () => {
+        rs.restoreAllMocks();
+        numbers.setCustomFormat(false);
+        numbers.setValidWcs(false);
+        await overlay.setSystem(previousSystem);
+        overlay.setValidWcs(false);
+    });
+
+    test("formats every region shape", () => {
+        const frame = makeFrame();
+        const center = {x: 10, y: 20};
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [center], 0)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [10.5deg, 20.25deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.RECTANGLE, [center, {x: 4, y: 6}], 15)).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 15.000000deg]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ELLIPSE, [center, {x: 4, y: 6}], 30)).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYGON,
+                [
+                    {x: 10, y: 20},
+                    {x: NaN, y: 5},
+                    {x: badX, y: 5},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"poly(wcs:ICRS)[[10.5deg, 20.25deg], [Invalid], [Invalid], [30.5deg, 40.25deg]]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYLINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Polyline (wcs:ICRS)[[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ANNTEXT, [center], 0)).toMatchInlineSnapshot(`"Not Implemented"`);
+    });
+
+    test("uses the cursor readout, placeholders and the per-axis units", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [1:00:00deg, 2:00:00deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: badX, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [Invalid, Invalid]]"`);
+        numbers.setFormatX(NumberFormatType.HMS);
+        numbers.setFormatY(NumberFormatType.DMS);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5, 20.25], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        frame.pixelUnitSizeArcsec = null as unknown as {x: number; y: number};
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.RECTANGLE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                0
+            )
+        ).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5, 20.25], [, ], 0.000000deg]"`);
+    });
+
+    test("has no world definition for an unusable center or an invalid WCS", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: NaN, y: 20}], 0)).toBeUndefined();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: badX, y: 20}], 0)).toBeUndefined();
+        frame.isValidWcs = false;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+    });
+
+    test("in IMG display mode, formats a temporary copy in the default system with the preference-derived format", async () => {
+        const frame = makeFrame() as ReturnType<typeof makeFrame> & {defaultWcsSystem: SystemType; defaultWcsEquinox: string; defaultWcsEpoch: string};
+        const shared = frame.wcsInfoForTransformation;
+        const wcsCopy = {copy: true};
+        rs.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const set = rs.spyOn(AST, "set");
+        const deleteObject = rs.spyOn(AST, "deleteObject");
+        await overlay.setSystem(SystemType.Image);
+
+        frame.defaultWcsSystem = undefined as unknown as SystemType;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+
+        frame.defaultWcsSystem = SystemType.FK5;
+        frame.defaultWcsEquinox = "J2000";
+        frame.defaultWcsEpoch = "";
+        set.mockClear();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(set.mock.calls.every(([target]) => target === wcsCopy)).toBe(true);
+        expect(set.mock.calls[0]?.[1]).toBe(`System=FK5, Equinox=J2000, Format(${(frame as unknown as FrameStore).dirX})=hms.10, Format(${(frame as unknown as FrameStore).dirY})=dms.10`);
+        expect(set.mock.calls.some(([target]) => target === shared)).toBe(false);
+        expect(deleteObject.mock.calls.filter(([target]) => target === wcsCopy)).toHaveLength(2);
+
+        frame.defaultWcsSystem = SystemType.Galactic;
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toBe('ellipse(wcs:GALACTIC)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]');
+    });
+});
+
+describe("FrameStore WCS header cards", () => {
+    test("does not send header entries without a keyword to AST", () => {
+        const putFits = AST.putFits as Mock;
+        putFits.mockClear();
+        const headerEntries = [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries!, {name: "", value: "0", entryType: 1, numericValue: 0}, {name: "   ", value: "1"}];
+        new FrameStore({...STOKES_CUBEFRAME_INFO, fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, headerEntries}} as FrameInfo);
+
+        const cards = putFits.mock.calls.map(([, card]) => card as string);
+        expect(cards.length).toBeGreaterThan(0);
+        expect(cards.filter(card => /^\s*=/.test(card))).toEqual([]);
+        expect(cards.every(card => /^[A-Z0-9_-][A-Z0-9_ -]{7}=/.test(card))).toBe(true);
     });
 });

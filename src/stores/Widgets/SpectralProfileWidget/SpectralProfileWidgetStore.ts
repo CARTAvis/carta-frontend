@@ -21,7 +21,7 @@ import {
     TelemetryAction,
     VelocityConvention
 } from "enums";
-import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, type Point2D} from "models";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -50,6 +50,7 @@ export type MultiPlotData = {
     fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
     colors: (string | undefined)[];
     labels: {image: string | undefined; plot: string}[];
+    exportNames: string[];
     plotName: {image: string; plot: string};
     xMin: number | undefined;
     xMax: number | undefined;
@@ -304,7 +305,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
      * @param selected - Moment in {@link CARTA.Moment}.
      */
     @action selectMoment = (selected: CARTA.Moment) => {
-        if (!this.selectedMoments.includes(selected)) {
+        if (this.isMomentSupported(selected) && !this.selectedMoments.includes(selected)) {
             this.selectedMoments.push(selected);
         }
     };
@@ -334,12 +335,31 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectedMoments.includes(momentType);
     };
 
+    @computed get unsupportedMoments(): CARTA.Moment[] {
+        return this.effectiveFrame?.isSpectralAxisNonlinear ? NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS : [];
+    }
+
+    isMomentSupported = (momentType: CARTA.Moment): boolean => {
+        return !this.unsupportedMoments.includes(momentType);
+    };
+
+    @computed get supportedSelectedMoments(): CARTA.Moment[] {
+        return this.selectedMoments.filter(momentType => this.isMomentSupported(momentType));
+    }
+
+    @action removeUnsupportedMoments = () => {
+        if (this.selectedMoments.some(momentType => !this.isMomentSupported(momentType))) {
+            this.selectedMoments = this.selectedMoments.filter(momentType => this.isMomentSupported(momentType));
+        }
+    };
+
     /**
      * Request the moment maps.
      */
     @action requestMoment = () => {
         const frame = this.effectiveFrame;
-        if (frame && this.isMomentRegionValid) {
+        const moments = this.supportedSelectedMoments;
+        if (frame && this.isMomentRegionValid && moments.length) {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
             if (channelIndex1 !== undefined && channelIndex2 !== undefined && isFinite(channelIndex1) && isFinite(channelIndex2)) {
@@ -350,7 +370,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.focusedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
                 const requestMessage: CARTA.MomentRequest.$Properties = {
                     fileId: frame.frameInfo.fileId,
-                    moments: this.selectedMoments,
+                    moments,
                     axis: CARTA.MomentAxis.SPECTRAL,
                     regionId: regionId,
                     spectralRange: channelIndexRange,
@@ -488,6 +508,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
+
+        this.disposers.push(
+            reaction(
+                () => this.unsupportedMoments,
+                () => this.removeUnsupportedMoments(),
+                {fireImmediately: true}
+            )
+        );
 
         this.disposers.push(
             reaction(
@@ -759,6 +787,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const smoothedData: Point2D[][] = [];
         const colors: (string | undefined)[] = [];
         const labels: {image: string | undefined; plot: string}[] = [];
+        const exportNames: string[] = [];
         const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
@@ -775,6 +804,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const profileColor = profileColorMap.get(profile.colorKey ?? "");
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
+                exportNames.push(profile.exportName);
 
                 const intensityValues = this.getDisplayIntensityValues(profile.data.values, profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit, profile.isFluxDensityDerivedFromSum);
                 const displayChannelValues = this.convertObservedArrayToDisplay(profile.channelValues);
@@ -853,6 +883,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             fittingData,
             colors,
             labels,
+            exportNames,
             plotName: this.profileSelectionStore.profilesPlotName,
             xMin,
             xMax,

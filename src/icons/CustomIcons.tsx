@@ -20,6 +20,7 @@ export declare type CustomIconName =
     | "cursor"
     | "line"
     | "polyline"
+    | "lasso"
     | "imageFitting"
     | "lineFitting"
     | "vectorOverlay"
@@ -195,6 +196,13 @@ const POLYLINE_SVG = (
     />
 );
 
+const LASSO_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.4 9.7C1.2 8.2 1.8 5.5 4.5 3.5c2.7-2 8.1-2.1 9.8.2 1.8 2.3-.7 5.1-4.2 6.3-2.8 1-5.5 1.2-6.6-.3-.7-1-.1-2.3 1-2.7 1.2-.5 2.4.1 3.1.9" />
+        <path d="M3.4 9.7c1.6.5 2.5 1.3 2.6 2.3.2 1.1-.4 2.1-1.7 2.8" />
+    </g>
+);
+
 const PV_SVG = (
     <>
         <path
@@ -336,6 +344,7 @@ const ICONS = {
     cursor: CURSOR_SVG,
     line: LINE_SVG,
     polyline: POLYLINE_SVG,
+    lasso: LASSO_SVG,
     pv: PV_SVG,
     imageFitting: IMAGE_FITTING_SVG,
     lineFitting: LINE_FITTING_SVG,

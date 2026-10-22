@@ -9,7 +9,7 @@ import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapCompon
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, FrameScaling, HelpType, ValueClip} from "enums";
 import {AppStore, CatalogDisplayStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogWidgetStore} from "stores/Widgets";
-import {getColorForTheme, getScalingParameterConfig, isCatalogAxisDataType, SWATCH_COLORS} from "utilities";
+import {getColorForTheme, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -104,19 +104,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
-    @computed get axisOption() {
-        const profileStore = this.profileStore;
-        const axisOptions: string[] = [];
-        axisOptions.push(CatalogOverlay.NONE);
-        profileStore?.catalogControlHeader?.forEach((header, columnName) => {
-            if (header.dataIndex !== undefined) {
-                const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
-                if (isCatalogAxisDataType(dataType) && header.display) {
-                    axisOptions.push(columnName);
-                }
-            }
-        });
-        return axisOptions;
+    @computed get axisOption(): string[] {
+        return [CatalogOverlay.NONE, ...(this.profileStore?.displayedNumericColumnNames ?? [])];
     }
 
     constructor(props: WidgetProps) {

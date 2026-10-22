@@ -1,0 +1,193 @@
+import * as React from "react";
+import {act, render} from "@testing-library/react";
+
+import {DragMode, InteractionMode, ZoomMode} from "enums";
+import {AppStore} from "stores";
+
+import {ScatterPlotComponent} from "./ScatterPlotComponent";
+
+test("initializes the scatter overlay with chart bounds without mouse interaction", () => {
+    const originalResizeObserver = window.ResizeObserver;
+    const originalIntersectionObserver = window.IntersectionObserver;
+    const mockObserver = rs.fn(() => ({observe: rs.fn(), disconnect: rs.fn()}));
+    window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
+    window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
+    const componentRef = React.createRef<ScatterPlotComponent>();
+    const renderOverlay = rs.fn(() => null);
+    const {unmount} = render(<ScatterPlotComponent ref={componentRef} data={[]} xMin={0} xMax={10} yMin={0} yMax={10} renderOverlay={renderOverlay} />);
+
+    try {
+        act(() => componentRef.current!.resize(400, 300));
+
+        expect(componentRef.current!.chartArea).toBeDefined();
+        expect(renderOverlay).toHaveBeenLastCalledWith(400, 300, expect.objectContaining({left: expect.any(Number), right: expect.any(Number), top: expect.any(Number), bottom: expect.any(Number)}));
+    } finally {
+        unmount();
+        window.ResizeObserver = originalResizeObserver;
+        window.IntersectionObserver = originalIntersectionObserver;
+    }
+});
+
+test("exports the source overlay canvas from the mounted scatter container", () => {
+    const originalResizeObserver = window.ResizeObserver;
+    const originalIntersectionObserver = window.IntersectionObserver;
+    const mockObserver = rs.fn(() => ({observe: rs.fn(), disconnect: rs.fn()}));
+    window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
+    window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
+    const componentRef = React.createRef<ScatterPlotComponent>();
+    const {container, unmount} = render(<ScatterPlotComponent ref={componentRef} />);
+    const chartCanvas = document.createElement("canvas");
+    const overlayCanvas = document.createElement("canvas");
+    overlayCanvas.dataset.overlay = "true";
+    container.querySelector(".scatter-plot-component")!.appendChild(overlayCanvas);
+    componentRef.current!.onPlotRefUpdated({canvas: chartCanvas});
+    const drawImage = rs.fn();
+    const appStore = rs.spyOn(AppStore, "Instance", "get").mockReturnValue({preferenceStore: {hasTransparentImageBackground: false}} as AppStore);
+    const getContext = rs.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({fillRect: rs.fn(), drawImage} as unknown as CanvasRenderingContext2D);
+    const toBlob = rs.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(() => {});
+
+    try {
+        componentRef.current!.exportImage();
+
+        expect(drawImage).toHaveBeenCalledWith(chartCanvas, 0, 0);
+        expect(drawImage).toHaveBeenCalledWith(overlayCanvas, 0, 0);
+    } finally {
+        unmount();
+        appStore.mockRestore();
+        getContext.mockRestore();
+        toBlob.mockRestore();
+        window.ResizeObserver = originalResizeObserver;
+        window.IntersectionObserver = originalIntersectionObserver;
+    }
+});
+
+const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKey" | "shiftKey" | "button">> = {}) => ({
+    evt: {
+        offsetX: 10,
+        offsetY: 20,
+        button: 0,
+        ...modifiers
+    }
+});
+
+describe("ScatterPlotComponent interactions", () => {
+    test("ignores mouse movement before the chart area is available", () => {
+        const graphCursorMoved = rs.fn();
+        const component = new ScatterPlotComponent({data: [], graphCursorMoved});
+
+        expect(() => component.onStageMouseMove(CreateMouseEvent() as any)).not.toThrow();
+        expect(graphCursorMoved).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        ["Ctrl", {ctrlKey: true}],
+        ["Alt", {altKey: true}]
+    ])("supports %s-drag panning for legacy consumers", (_modifier, modifiers) => {
+        const component = new ScatterPlotComponent({});
+        const startPanning = rs.spyOn(component, "startPanning");
+
+        component.onStageMouseDown(CreateMouseEvent(modifiers) as any);
+
+        expect(startPanning).toHaveBeenCalledWith(10, 20);
+        expect(component.interactionMode).toBe(InteractionMode.PANNING);
+    });
+
+    test("does not start an interaction when drag mode is disabled", () => {
+        const component = new ScatterPlotComponent({dragAction: false});
+        const startSelection = rs.spyOn(component, "startSelection");
+        const startPanning = rs.spyOn(component, "startPanning");
+
+        component.onStageMouseDown(CreateMouseEvent({shiftKey: true}) as any);
+
+        expect(startSelection).not.toHaveBeenCalled();
+        expect(startPanning).not.toHaveBeenCalled();
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+    });
+
+    test("ends an interaction when the pointer is released outside the stage", () => {
+        const onBoxSelected = rs.fn();
+        const component = new ScatterPlotComponent({dragAction: DragMode.Select, onBoxSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
+        component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
+
+        component.onStageMouseDown(CreateMouseEvent() as any);
+        component.updateSelection(40, 50);
+        expect(component.interactionMode).toBe(InteractionMode.SELECTING);
+
+        window.dispatchEvent(new MouseEvent("mouseup", {clientX: 40, clientY: 50}));
+
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+        expect(onBoxSelected).toHaveBeenCalledTimes(1);
+    });
+
+    test("ignores non-primary mouse buttons", () => {
+        const component = new ScatterPlotComponent({});
+        const startSelection = rs.spyOn(component, "startSelection");
+
+        component.onStageMouseDown(CreateMouseEvent({button: 2}) as any);
+
+        expect(startSelection).not.toHaveBeenCalled();
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+    });
+
+    test("ignores interaction starts outside the chart area", () => {
+        const component = new ScatterPlotComponent({});
+        component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
+
+        component.onStageMouseDown({evt: {offsetX: 10, offsetY: 20}} as any);
+
+        expect(component.interactionMode).toBe(InteractionMode.NONE);
+    });
+
+    test("completes a lasso when it closes near its starting point", () => {
+        const onLassoSelected = rs.fn();
+        const component = new ScatterPlotComponent({dragAction: DragMode.Lasso, onLassoSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
+        component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
+
+        component.onStageMouseDown({evt: {offsetX: 10, offsetY: 10, button: 0}} as any);
+        component.updateLassoSelection(90, 10);
+        component.updateLassoSelection(90, 90);
+        component.onStageMouseUp({evt: {offsetX: 11, offsetY: 11, button: 0}} as any);
+
+        expect(onLassoSelected).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not route a mouseup after a rejected mousedown as a click", () => {
+        const graphZoomReset = rs.fn();
+        const component = new ScatterPlotComponent({graphZoomReset});
+        component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
+
+        component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+        component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+        component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+        component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+
+        expect(graphZoomReset).not.toHaveBeenCalled();
+    });
+
+    test("does not zoom for thin XY drags", () => {
+        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: rs.fn()});
+        component.selectionBoxStart = {x: 0, y: 0};
+        component.selectionBoxEnd = {x: 5, y: 25};
+
+        expect(component.zoomMode).toBe(ZoomMode.NONE);
+    });
+
+    test("uses XY zoom for meaningful XY drags", () => {
+        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: rs.fn()});
+        component.selectionBoxStart = {x: 0, y: 0};
+        component.selectionBoxEnd = {x: 25, y: 25};
+
+        expect(component.zoomMode).toBe(ZoomMode.XY);
+    });
+
+    test("appends lasso points without replacing the path", () => {
+        const component = new ScatterPlotComponent({});
+        component.startLassoSelection(1, 2);
+        const points = component.lassoPoints;
+
+        component.updateLassoSelection(3, 4);
+
+        expect(component.lassoPoints).toEqual([1, 2, 3, 4]);
+        expect(component.lassoPoints).toBe(points);
+    });
+});

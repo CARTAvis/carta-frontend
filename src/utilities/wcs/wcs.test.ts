@@ -1,7 +1,7 @@
 import {type Mock, rs} from "@rstest/core";
 import * as AST from "ast_wrapper";
 
-import {SpectralSystem, SpectralType, SpectralUnit} from "../../enums";
+import {NumberFormatType, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "../../enums";
 
 rs.mock("ast_wrapper", () => ({
     __esModule: true,
@@ -13,7 +13,8 @@ rs.mock("ast_wrapper", () => ({
 rs.mock("models", () => ({
     __esModule: true,
     SPECTRAL_DEFAULT_UNIT: new Map(),
-    SPECTRAL_TYPE_STRING: new Map([["FREQ", "Frequency"]])
+    SPECTRAL_TYPE_STRING: new Map([["FREQ", "Frequency"]]),
+    WCSType: rs.requireActual("models/Wcs/WCSType").WCSType
 }));
 
 rs.mock("stores", () => ({
@@ -34,7 +35,7 @@ rs.mock("stores/Frame", () => ({
     CURSOR_REGION_ID: 0
 }));
 
-import {buildSwappedZWcsSettings, convertFreqMHzToSettingWCS, convertFreqMHzToSettingWCSArray, convertSettingWCSToFreqMHz, convertSettingWCSToFreqMHzArray, convertToNativeWCS, getSwappedDirAxisInfo} from "./wcs";
+import {buildSwappedZWcsSettings, convertFreqMHzToSettingWCS, convertFreqMHzToSettingWCSArray, convertSettingWCSToFreqMHz, convertSettingWCSToFreqMHzArray, convertToNativeWCS, getDefaultWcsFormats, getSwappedDirAxisInfo} from "./wcs";
 
 describe("spectral WCS conversion helpers", () => {
     beforeEach(() => {
@@ -169,5 +170,24 @@ describe("buildSwappedZWcsSettings", () => {
         });
 
         expect(settings).toBe('Format(2)=hms.*,Unit(2)="",System(1)=FREQ,RestFreq=1420405751 Hz');
+    });
+});
+
+describe("getDefaultWcsFormats", () => {
+    const sexagesimal = {x: NumberFormatType.HMS, y: NumberFormatType.DMS};
+    const degrees = {x: NumberFormatType.Degrees, y: NumberFormatType.Degrees};
+
+    test("uses sexagesimal for equatorial systems and degrees otherwise in the automatic mode", () => {
+        for (const system of [SystemType.FK4, SystemType.FK5, SystemType.ICRS]) {
+            expect(getDefaultWcsFormats("automatic", system)).toEqual(sexagesimal);
+        }
+        for (const system of [SystemType.Galactic, SystemType.Ecliptic, SystemType.Image, undefined]) {
+            expect(getDefaultWcsFormats("automatic", system)).toEqual(degrees);
+        }
+    });
+
+    test("follows an explicit degrees or sexagesimal preference for any system", () => {
+        expect(getDefaultWcsFormats("degrees", SystemType.ICRS)).toEqual(degrees);
+        expect(getDefaultWcsFormats("sexagesimal", SystemType.Galactic)).toEqual(sexagesimal);
     });
 });

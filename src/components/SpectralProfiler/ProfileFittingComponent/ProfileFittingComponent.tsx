@@ -1,19 +1,28 @@
 import * as React from "react";
 import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, PopoverNext, Pre, Switch, Text, Tooltip} from "@blueprintjs/core";
+import {type CARTA} from "carta-protobuf";
 import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, Slider} from "components/Shared";
-import {FittingContinuum, FittingFunction, ImageType} from "enums";
+import {FittingContinuum, FittingFunction, ImageType, RegionId} from "enums";
+import {StatsTypeString} from "models";
 import {AppStore, type ProfileFittingStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {exportTxtFile, getExportFileName} from "utilities";
 
 import "./ProfileFittingComponent.scss";
 
 export interface ProfileFittingComponentProps {
     fittingStore: ProfileFittingStore;
     widgetStore: SpectralProfileWidgetStore;
+}
+
+export function buildProfileFittingStatisticHeader(regionId: number | null, statsType: CARTA.StatsType | undefined): string {
+    if (regionId === RegionId.CURSOR || statsType === undefined) {
+        return "";
+    }
+    return `# statistic: ${StatsTypeString(statsType)}\n`;
 }
 
 export function buildProfileFittingLogContent(header: string, restFrameComments: string[], resultLog: string): string {
@@ -134,23 +143,16 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             headerString += `# image: ${frame.filename}\n`;
 
             const regionId = this.widgetStore.effectiveRegionId;
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
-            // statistic type, ignore when region == cursor
-            if (regionId !== 0) {
-                headerString += `# statistic: ${this.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
-            }
+            headerString += buildProfileFittingStatisticHeader(regionId, this.widgetStore.profileSelectionStore.selectedStatsTypes[0]);
             // region info
-            if (region) {
-                headerString += `# ${region.regionProperties}\n`;
-                if (frame.isValidWcs) {
-                    headerString += `# ${frame.getRegionWcsProperties(region)}\n`;
-                }
+            if (regionId !== null) {
+                frame.getRegionProperties(regionId).forEach(property => (headerString += `# ${property}\n`));
             }
         }
 
         const content = buildProfileFittingLogContent(headerString, this.widgetStore.restFrameCorrectionExportComments, this.fittingStore.resultLog);
-        const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
+        const fileName = getExportFileName(this.widgetStore.effectiveFrame?.filename ?? "unknown", "Profile_Fitting_Result_Log");
         exportTxtFile(fileName, content);
     };
 
