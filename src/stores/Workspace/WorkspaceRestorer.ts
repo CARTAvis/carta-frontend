@@ -677,6 +677,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
                 }
             });
+            // A skipped request's images are closed before they are shown; this catches any that are not.
             made.then(
                 frames => {
                     if (!settle(frames)) {
