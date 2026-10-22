@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceItemKind} from "enums";
 import {
     type ConfigurableStore,
     CreateWidgetButton,
@@ -43,7 +43,7 @@ import {
     type WorkspacePlotWidgetConfig
 } from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
+import {AppStore, CatalogStore, HelpStore, LayoutStore} from "stores";
 import {
     ACTIVE_FILE_ID,
     type AnimatorWidgetStore,
@@ -722,6 +722,12 @@ export class WidgetsStore {
     };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
+        // The grid is the session's, not one widget's: apply it once, from the first image view that saved one.
+        const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
+        if (imageViews.length) {
+            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+        }
+
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
                 const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType);
@@ -1172,6 +1178,8 @@ export class WidgetsStore {
         }
 
         switch (widgetType) {
+            case ImageViewComponent.WidgetConfig.type:
+                return AppStore.Instance.imageViewConfigStore.toConfig();
             case CatalogOverlayComponent.WidgetConfig.type:
                 return this.catalogWidgets.get(widgetID)?.toLayoutSettings(CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
             case CatalogPlotComponent.WidgetConfig.type:
@@ -1370,16 +1378,13 @@ export class WidgetsStore {
         if (channelMapStore.isChannelMapEnabled) {
             channelMapStore.setChannelMapEnabled(false);
         } else {
-            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.isImageMultiPanelEnabled);
+            const imageViewConfig = AppStore.Instance.imageViewConfigStore;
+            imageViewConfig.setMultiPanelEnabled(!imageViewConfig.isMultiPanelEnabled);
         }
     };
 
     onChannelMapButtonClick = () => {
         AppStore.Instance.channelMapStore.setChannelMapEnabled(!AppStore.Instance.channelMapStore.isChannelMapEnabled);
-    };
-
-    setImageMultiPanelEnabled = (isMultiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, isMultiPanelEnabled);
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
