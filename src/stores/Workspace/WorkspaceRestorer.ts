@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, RegionId, type SpectralSystem, WorkspaceItemKind} from "enums";
+import {BeamType, FrequencyUnit, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, type SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -18,7 +18,7 @@ import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /**
  * How long a cube histogram may go without progress before a restore gives up on it, in
@@ -127,6 +127,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         this.clearSession();
         yield* this.openImages();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        // A new rest frequency reaches an image's WCS only once the step it was set in ends, and the
+        // images are matched with that WCS, so the step ends before they are configured.
+        this.restoreRestFrequencies();
+        yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
             return this.issues;
         }
@@ -273,6 +280,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
 
             this.restoreSpectralSettings(frame, fileInfo);
+            this.restoreImageViewSettings(frame, fileInfo);
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
@@ -290,6 +298,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
+
+        this.restoreOffsetCoordinates();
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
         // image the workspace does not carry. A session with images open has one in front.
@@ -331,6 +341,113 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
+     * The offset coordinates each image was shown in. They were saved only on an image not matched to
+     * another one, and are passed on to the images matched to it as they would be from the controls.
+     * They are set once every image is matched: matching an image moves the offset centre of the one
+     * it is matched to.
+     */
+    private restoreOffsetCoordinates(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const offset = fileInfo.offsetCoordinates;
+            if (!frame || !offset || frame.spatialReference) {
+                continue;
+            }
+            const center = offset.center;
+            const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
+            if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
+                if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
+                    frame.setSkyRefIs(offset.skyRefIs);
+                }
+                if (!frame.isOffsetCoord) {
+                    frame.toggleOffsetCoord();
+                }
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
+            }
+        }
+    }
+
+    /**
+     * Stage 2a: the rest frequency each image's spectral axis was converted with, when it was not the
+     * one in the header.
+     */
+    private restoreRestFrequencies(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const restFrequency = fileInfo.restFrequency;
+            if (!frame || !restFrequency) {
+                continue;
+            }
+            const {value, unit} = restFrequency;
+            if (typeof value === "number" && isFinite(value) && value > 0 && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+                frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
+                frame.restFreqStore.setCustomVal(value);
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
+            }
+        }
+    }
+
+    /** The rest frame and beam the image was shown with, set on the image alone. */
+    private restoreImageViewSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const unsupported: string[] = [];
+
+        const restFrame = fileInfo.restFrame;
+        if (restFrame) {
+            if (!frame.isRestFrameSupported) {
+                if (restFrame.enabled) {
+                    unsupported.push("its rest frame");
+                }
+            } else if (
+                Object.values(RestFrameShiftMode).includes(restFrame.shiftMode as RestFrameShiftMode) &&
+                Object.values(VelocityConvention).includes(restFrame.velocityConvention as VelocityConvention) &&
+                isValidRedshift(restFrame.redshift)
+            ) {
+                frame.setRestFrameShiftMode(restFrame.shiftMode as RestFrameShiftMode);
+                frame.setRestFrameVelocityConvention(restFrame.velocityConvention as VelocityConvention);
+                frame.setRestFrameRedshift(restFrame.redshift);
+                frame.setRestFrameEnabled(restFrame.enabled === true);
+            } else {
+                unsupported.push("its rest frame");
+            }
+        }
+
+        const beam = fileInfo.beam;
+        if (beam && !frame.beamProperties) {
+            unsupported.push("its beam");
+        } else if (beam) {
+            const beamSettings = frame.overlayBeamSettings;
+            const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+            if (typeof beam.visible === "boolean") {
+                beamSettings.setVisible(beam.visible);
+            }
+            if (typeof beam.color === "string" && beam.color) {
+                beamSettings.setColor(beam.color);
+            }
+            if (Object.values(BeamType).includes(beam.type as BeamType)) {
+                beamSettings.setType(beam.type as BeamType);
+            }
+            if (isNumber(beam.width) && beam.width > 0) {
+                beamSettings.setWidth(beam.width);
+            }
+            if (isNumber(beam.shiftX)) {
+                beamSettings.setShiftX(beam.shiftX);
+            }
+            if (isNumber(beam.shiftY)) {
+                beamSettings.setShiftY(beam.shiftY);
+            }
+        }
+
+        if (unsupported.length) {
+            const imageName = describeImageSource(fileInfo.source);
+            this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with ${unsupported.join(" or ")}`);
+        }
+    }
+
+    /**
      * Regions are only the image's own while it is not matched to another one.
      *
      * The backend gives each restored region an ID of its own, so the ID each was saved with is
@@ -360,6 +477,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 );
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
+                if (regionInfo.opacity === RegionOpacity.SemiTransparent || regionInfo.opacity === RegionOpacity.Invisible) {
+                    region.setOpacity(regionInfo.opacity);
+                }
                 const sampleWidth = regionInfo.lineRegionSampleWidth;
                 if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
                     region.setLineRegionSampleWidth(sampleWidth);

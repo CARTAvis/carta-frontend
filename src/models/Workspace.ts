@@ -208,6 +208,8 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** Line and polyline regions: how many pixels wide a spatial profile along the region samples. */
     lineRegionSampleWidth?: number;
+    /** How opaque the region is drawn: 1 shown, 0.5 semi-transparent, 0 hidden. Left out when shown. */
+    opacity?: number;
 }
 
 export interface WorkspaceColorBlending {
@@ -272,6 +274,14 @@ export interface WorkspaceFile {
     spectralSystem?: string;
     /** The unit a spectral profile of the image shows its intensity in. */
     intensityUnit?: string;
+    /** The rest frequency the spectral axis is converted with, when it is not the one in the header. */
+    restFrequency?: {value: number; unit: string};
+    /** How the beam is drawn over an image that has one. */
+    beam?: {visible: boolean; color: string; type: string; width: number; shiftX: number; shiftY: number};
+    /** Offset coordinates, when shown: their centre in image pixels, and whether it is the origin or the pole. */
+    offsetCoordinates?: {center: Point2D; skyRefIs: number};
+    /** The rest frame the spectral axis of an image that supports one is shown in. */
+    restFrame?: {enabled: boolean; redshift: number; shiftMode: string; velocityConvention: string};
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
