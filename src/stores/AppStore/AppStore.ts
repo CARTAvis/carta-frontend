@@ -371,6 +371,8 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
+    /** What a workspace load is waiting for, when it is a long task with progress of its own. */
+    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1473,10 +1475,19 @@ export class AppStore {
         });
     };
 
-    @action requestCubeHistogram = (fileId: number = -1) => {
+    /**
+     * Ask the backend for an image's cube histogram.
+     *
+     * @param fileId - The image, or the active image if left out.
+     * @param coordinate - The polarization to compute it for, such as "Qz". Left out, the backend uses the Stokes it last showed the image in.
+     *
+     * Nothing is sent while one already asked for is still being computed, since the backend would compute it twice.
+     */
+    @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
-        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0 && !frame.renderConfig.isCubeHistogramRequested) {
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{coordinate, channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            frame.renderConfig.markCubeHistogramRequested();
             this.restartTaskProgress();
         }
     };
@@ -2749,6 +2760,12 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.workspaceLoadingStep = undefined;
+    };
+
+    /** Say what a workspace load is waiting for, or that it is no longer waiting on anything. */
+    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+        this.workspaceLoadingStep = step;
     };
 
     @flow.bound

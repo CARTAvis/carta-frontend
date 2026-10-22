@@ -4,8 +4,11 @@ import {VectorOverlaySource} from "enums/vector";
 import {type WorkspaceVectorOverlayConfig} from "models/Workspace";
 import {type FrameStore} from "stores/Frame/FrameStore";
 import {type PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {VectorOverlayConfigStore} from "./VectorOverlayConfigStore";
+
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
 function createStore(isDefaultInverted: boolean): VectorOverlayConfigStore {
     const preference = {
@@ -68,6 +71,14 @@ describe("VectorOverlayConfigStore workspace colormap inversion", () => {
 });
 
 describe("VectorOverlayConfigStore workspace round trip", () => {
+    test("writes only fields the workspace schema declares", () => {
+        const store = createStore(false);
+        store.setEnabled(true);
+        store.applyConfig(createWorkspaceConfig(true));
+
+        expect(undeclaredFields("workspace/vector-overlay-config", WORKSPACE_SCHEMA.definitions["vector-overlay-config"].properties, store.toConfig()!)).toEqual([]);
+    });
+
     test("returns the applied config", () => {
         const store = createStore(false);
         store.setEnabled(true);
