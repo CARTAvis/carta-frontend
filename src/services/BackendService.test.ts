@@ -8,11 +8,11 @@ describe("BackendService guards for a nonlinear spectral axis", () => {
     const fileId = 5;
 
     const mockFrame = (isSpectralAxisNonlinear: boolean) => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({getFrame: (id: number) => (id === fileId ? {isSpectralAxisNonlinear} : undefined)} as unknown as AppStore);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({getFrame: (id: number) => (id === fileId ? {isSpectralAxisNonlinear} : undefined)} as unknown as AppStore);
     };
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("rejects a moment request with a coordinate-dependent moment", async () => {

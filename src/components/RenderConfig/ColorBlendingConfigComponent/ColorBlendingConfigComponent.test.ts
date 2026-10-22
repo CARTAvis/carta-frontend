@@ -1,5 +1,7 @@
-jest.mock("components/Shared", () => ({ColormapBlock: jest.fn(), ColormapComponent: jest.fn(), SafeNumericInput: jest.fn()}));
-jest.mock("stores", () => ({AppStore: {Instance: {}}, ColorBlendingStore: class {}}));
+import {rs} from "@rstest/core";
+
+rs.mock("components/Shared", () => ({ColormapBlock: rs.fn(), ColormapComponent: rs.fn(), SafeNumericInput: rs.fn()}));
+rs.mock("stores", () => ({AppStore: {Instance: {}}, ColorBlendingStore: class {}}));
 
 import {ColormapSet} from "enums";
 import {type ColorBlendingStore, type RenderConfigStore} from "stores";
@@ -10,8 +12,8 @@ function createRenderConfig(colorMap: string = "inferno", customColormapHexEnd: 
     const renderConfig = {
         colorMap,
         customColormapHexEnd,
-        setColorMap: jest.fn((newColormap: string) => (renderConfig.colorMap = newColormap)),
-        setCustomHexEnd: jest.fn((hex: string) => (renderConfig.customColormapHexEnd = hex))
+        setColorMap: rs.fn((newColormap: string) => (renderConfig.colorMap = newColormap)),
+        setCustomHexEnd: rs.fn((hex: string) => (renderConfig.customColormapHexEnd = hex))
     };
     return renderConfig as unknown as RenderConfigStore;
 }
@@ -19,7 +21,7 @@ function createRenderConfig(colorMap: string = "inferno", customColormapHexEnd: 
 function createColorBlendingStore(renderConfigs: RenderConfigStore[]): ColorBlendingStore {
     const store = {
         frames: renderConfigs.map(renderConfig => ({renderConfig, rasterScalingReference: null})),
-        applyColormapSet: jest.fn((set: ColormapSet) => {
+        applyColormapSet: rs.fn((set: ColormapSet) => {
             renderConfigs.forEach(renderConfig => {
                 renderConfig.setCustomHexEnd(`#${set}`);
                 renderConfig.setColorMap(set);

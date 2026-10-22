@@ -1,7 +1,9 @@
+import {rs} from "@rstest/core";
+
 import {SplatalogueService} from "services";
 
-const MockAxiosPost = jest.fn();
-jest.mock("axios", () => {
+const MockAxiosPost = rs.fn();
+rs.mock("axios", () => {
     return {
         create: () => {
             return {

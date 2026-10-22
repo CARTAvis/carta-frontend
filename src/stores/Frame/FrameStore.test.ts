@@ -1,4 +1,4 @@
-import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, type Mock, rs, test} from "@rstest/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
@@ -164,14 +164,23 @@ const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | u
 
 describe("FrameStore", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.useFakeTimers();
+    });
+
+    afterEach(() => {
+        rs.clearAllTimers();
+        rs.useRealTimers();
+    });
+
+    beforeEach(() => {
+        rs.clearAllMocks();
     });
 
     describe("offset coordinates", () => {
         test("rebuilds the offset frameset with the selected sky reference mode", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             frame.setOffsetCenter(1, 2);
-            (AST.createOffsetFrameset as jest.Mock).mockClear();
+            (AST.createOffsetFrameset as Mock).mockClear();
 
             frame.toggleOffsetCoord();
             frame.setSkyRefIs(SkyRefIs.Pole);
@@ -247,15 +256,15 @@ describe("FrameStore", () => {
     });
 
     describe("intensityConfig", () => {
-        let mockBeamAllChannels: ReturnType<typeof jest.spyOn>;
-        let mockSpectralAxis: ReturnType<typeof jest.spyOn>;
-        let mockChannelInfo: ReturnType<typeof jest.spyOn>;
-        let mockGetFreqInGHz: ReturnType<typeof jest.spyOn>;
+        let mockBeamAllChannels: ReturnType<typeof rs.spyOn>;
+        let mockSpectralAxis: ReturnType<typeof rs.spyOn>;
+        let mockChannelInfo: ReturnType<typeof rs.spyOn>;
+        let mockGetFreqInGHz: ReturnType<typeof rs.spyOn>;
         beforeAll(() => {
-            mockBeamAllChannels = jest.spyOn(FrameStore.prototype, "beamAllChannels", "get");
-            mockSpectralAxis = jest.spyOn(FrameStore.prototype, "spectralAxis", "get");
-            mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get");
-            mockGetFreqInGHz = jest.spyOn(SpectralDefinition, "GetFreqInGHz");
+            mockBeamAllChannels = rs.spyOn(FrameStore.prototype, "beamAllChannels", "get");
+            mockSpectralAxis = rs.spyOn(FrameStore.prototype, "spectralAxis", "get");
+            mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get");
+            mockGetFreqInGHz = rs.spyOn(SpectralDefinition, "GetFreqInGHz");
         });
 
         afterAll(() => {
@@ -287,7 +296,7 @@ describe("FrameStore", () => {
         });
 
         test("returns the beam config for the requested polarization", () => {
-            const mockStokesOptions = jest.spyOn(FrameStore.prototype, "stokesOptions", "get").mockReturnValue([
+            const mockStokesOptions = rs.spyOn(FrameStore.prototype, "stokesOptions", "get").mockReturnValue([
                 {value: Polarizations.I, label: "Stokes I"},
                 {value: Polarizations.Q, label: "Stokes Q"}
             ]);
@@ -316,7 +325,7 @@ describe("FrameStore", () => {
         });
 
         test("flags a spectral axis with non-uniform channel spacing as nonlinear", () => {
-            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
             try {
                 expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
                 mockChannelInfo.mockImplementation(() => ({fromWCS: true, values: [1, 2, 3, 4], indexes: [0, 1, 2, 3]}) as any);
@@ -370,8 +379,8 @@ describe("FrameStore", () => {
         });
 
         test("keeps the native values for a spectral axis without CTYPE that is not the depth axis", () => {
-            const mockIsSpectralChannel = jest.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
-            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
+            const mockIsSpectralChannel = rs.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
             try {
                 const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: ""}));
                 expect(frame.spectralType).toBeNull();
@@ -392,7 +401,7 @@ describe("FrameStore", () => {
         });
 
         test("omits the missing spectral system from the converted cursor info of frequency and velocity axes", () => {
-            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
             try {
                 // FREQ in Hz and VRAD in m/s take the conversion branches (unit differs from the default), with no SPECSYS to name
                 const frequencyFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
@@ -406,7 +415,7 @@ describe("FrameStore", () => {
         });
 
         test("names the recognized type and omits the missing spectral system in the cursor info", () => {
-            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
+            const mockChannelInfo = rs.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
             try {
                 const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
                 expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
@@ -418,8 +427,8 @@ describe("FrameStore", () => {
 
     describe("swapped spectral WCS updates", () => {
         beforeEach(() => {
-            jest.clearAllMocks();
-            (AST.makeSwappedFrameSet as jest.Mock).mockReturnValue(1);
+            rs.clearAllMocks();
+            (AST.makeSwappedFrameSet as Mock).mockReturnValue(1);
         });
 
         test("reapplies spectral unit and system when the swapped WCS is rebuilt", () => {
@@ -440,7 +449,7 @@ describe("FrameStore", () => {
             expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true}));
             frame.updateSpectralVsDirectionWcs();
 
-            const lastSettings = (AST.set as jest.Mock).mock.calls.at(-1)?.[1];
+            const lastSettings = (AST.set as Mock).mock.calls.at(-1)?.[1];
             expect(lastSettings).toContain("Format(1)=dms.*");
             expect(lastSettings).toContain('Unit(1)=""');
             expect(lastSettings).toContain("Unit(2)=GHz");
@@ -527,7 +536,7 @@ describe("FrameStore", () => {
                     height: 2
                 }
             } as any);
-            const decompressPreviewRasterData = jest.spyOn(TileService.prototype, "decompressPreviewRasterData").mockImplementation(() => undefined);
+            const decompressPreviewRasterData = rs.spyOn(TileService.prototype, "decompressPreviewRasterData").mockImplementation(() => undefined);
             const generator = frame.updatePreviewData({} as any);
 
             try {
@@ -557,7 +566,7 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["spectralFrame"] = 1;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+            (AST.transformSpectralPoint as Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
 
             expect(frame.convertSettingWCSToFreqMHz(500, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
             expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500, false);
@@ -568,7 +577,7 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["spectralFrame"] = 1;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+            (AST.transformSpectralPoint as Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
 
             expect(frame.convertFreqMHzToSettingWCS(100, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
             expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 100, false);
@@ -579,7 +588,7 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["spectralFrame"] = 1;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+            (AST.transformSpectralPointArray as Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
 
             expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
             expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000], false);
@@ -590,7 +599,7 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["spectralFrame"] = 1;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+            (AST.transformSpectralPointArray as Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
 
             expect(frame.convertFreqMHzToSettingWCSArray([100, 200], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
             expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, [100, 200], false);
@@ -601,7 +610,7 @@ describe("FrameStore", () => {
             const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
             frame["spectralFrame"] = 1;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([NaN, NaN]));
+            (AST.transformSpectralPointArray as Mock).mockReturnValueOnce(new Float64Array([NaN, NaN]));
 
             expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toBeUndefined();
             expect(AST.transformSpectralPointArray).toHaveBeenCalledTimes(1);
@@ -646,7 +655,7 @@ describe("FrameStore", () => {
         const configureFrameSetIndexMocks = (initialNframe: number = 2, initialCurrent: number = 2) => {
             let nframe = initialNframe;
             let current = initialCurrent;
-            (AST.getString as jest.Mock).mockImplementation((_object: unknown, attribute: string) => {
+            (AST.getString as Mock).mockImplementation((_object: unknown, attribute: string) => {
                 if (attribute === "Current") {
                     return `${current}`;
                 }
@@ -655,7 +664,7 @@ describe("FrameStore", () => {
                 }
                 return "mock";
             });
-            (AST.addFrame as jest.Mock).mockImplementation(() => {
+            (AST.addFrame as Mock).mockImplementation(() => {
                 current = ++nframe;
             });
         };
@@ -752,10 +761,10 @@ describe("FrameStore", () => {
             frame["spectralType"] = SpectralType.VRAD;
             frame["spectralUnit"] = SpectralUnit.KMS;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.scaleMap2D as jest.Mock).mockClear();
-            (AST.shiftMap2D as jest.Mock).mockClear();
-            (AST.addFrame as jest.Mock).mockClear();
-            (AST.setI as jest.Mock).mockClear();
+            (AST.scaleMap2D as Mock).mockClear();
+            (AST.shiftMap2D as Mock).mockClear();
+            (AST.addFrame as Mock).mockClear();
+            (AST.setI as Mock).mockClear();
 
             frame.setRestFrameRedshift(0.5);
             frame.setRestFrameEnabled(true);
@@ -772,24 +781,24 @@ describe("FrameStore", () => {
             frame["spectralUnit"] = SpectralUnit.KMS;
             frame["spectralSystem"] = SpectralSystem.LSRK;
             frame["restFreqStore"] = {restFreqInHz: 1.3e9};
-            (AST.set as jest.Mock).mockClear();
-            (AST.getSpectralFrame as jest.Mock).mockClear();
+            (AST.set as Mock).mockClear();
+            (AST.getSpectralFrame as Mock).mockClear();
 
             frame.applyPVWcsSettings();
 
-            const restFreqCallIndex = (AST.set as jest.Mock).mock.calls.findIndex(call => `${call[1]}`.includes("RestFreq=1300000000 Hz"));
-            const spectralFrameCallOrder = (AST.getSpectralFrame as jest.Mock).mock.invocationCallOrder.at(-1);
+            const restFreqCallIndex = (AST.set as Mock).mock.calls.findIndex(call => `${call[1]}`.includes("RestFreq=1300000000 Hz"));
+            const spectralFrameCallOrder = (AST.getSpectralFrame as Mock).mock.invocationCallOrder.at(-1);
             expect(restFreqCallIndex).toBeGreaterThanOrEqual(0);
             expect(spectralFrameCallOrder).toBeDefined();
-            expect((AST.set as jest.Mock).mock.invocationCallOrder[restFreqCallIndex]).toBeLessThan(spectralFrameCallOrder as number);
+            expect((AST.set as Mock).mock.invocationCallOrder[restFreqCallIndex]).toBeLessThan(spectralFrameCallOrder as number);
             expect(frame["spectralFrame"]).toBe(1);
         });
 
         test("releases the PV FitsChan after building a FrameSet", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             const fitsChan = 41;
-            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
-            (AST.deleteObject as jest.Mock).mockClear();
+            (AST.emptyFitsChan as Mock).mockReturnValue(fitsChan);
+            (AST.deleteObject as Mock).mockClear();
 
             frame["initPVFrame"]();
 
@@ -799,11 +808,11 @@ describe("FrameStore", () => {
         test("releases the PV FitsChan when building a FrameSet fails", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             const fitsChan = 42;
-            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
-            (AST.getFrameFromFitsChan as jest.Mock).mockImplementationOnce(() => {
+            (AST.emptyFitsChan as Mock).mockReturnValue(fitsChan);
+            (AST.getFrameFromFitsChan as Mock).mockImplementationOnce(() => {
                 throw new Error("failed to parse PV WCS");
             });
-            (AST.deleteObject as jest.Mock).mockClear();
+            (AST.deleteObject as Mock).mockClear();
 
             expect(() => frame["initPVFrame"]()).toThrow("failed to parse PV WCS");
             expect(AST.deleteObject).toHaveBeenCalledWith(fitsChan);
@@ -817,8 +826,8 @@ describe("FrameStore", () => {
             frame["isRestFrameEnabled"] = true;
             frame["restFrameRedshift"] = 0.5;
             configureFrameSetIndexMocks(3, 2);
-            (AST.addFrame as jest.Mock).mockClear();
-            (AST.setI as jest.Mock).mockClear();
+            (AST.addFrame as Mock).mockClear();
+            (AST.setI as Mock).mockClear();
 
             frame["addRestFrameWcsFrames"](1);
 
@@ -833,14 +842,14 @@ describe("FrameStore", () => {
             frame["spectralUnit"] = SpectralUnit.NM;
             frame["spectralSystem"] = SpectralSystem.LSRK;
             configureFrameSetIndexMocks(3, 2);
-            (AST.getSpectralFrame as jest.Mock).mockClear();
-            (AST.getSpectralFrame as jest.Mock).mockReturnValueOnce(101).mockReturnValueOnce(102).mockReturnValueOnce(103);
-            (AST.createRestFrameMapping2D as jest.Mock).mockClear();
-            (AST.scaleMap2D as jest.Mock).mockClear();
-            (AST.shiftMap2D as jest.Mock).mockClear();
-            (AST.addFrame as jest.Mock).mockClear();
-            (AST.setI as jest.Mock).mockClear();
-            (AST.deleteObject as jest.Mock).mockClear();
+            (AST.getSpectralFrame as Mock).mockClear();
+            (AST.getSpectralFrame as Mock).mockReturnValueOnce(101).mockReturnValueOnce(102).mockReturnValueOnce(103);
+            (AST.createRestFrameMapping2D as Mock).mockClear();
+            (AST.scaleMap2D as Mock).mockClear();
+            (AST.shiftMap2D as Mock).mockClear();
+            (AST.addFrame as Mock).mockClear();
+            (AST.setI as Mock).mockClear();
+            (AST.deleteObject as Mock).mockClear();
 
             frame.setRestFrameRedshift(1);
             frame.setRestFrameEnabled(true);
@@ -860,7 +869,7 @@ describe("FrameStore", () => {
             frame["spectralUnit"] = SpectralUnit.KMS;
             frame["spectralSystem"] = SpectralSystem.LSRK;
             const redshift = -0.999999999999;
-            (AST.scaleMap2D as jest.Mock).mockClear();
+            (AST.scaleMap2D as Mock).mockClear();
 
             frame.setRestFrameRedshift(redshift);
             frame.setRestFrameEnabled(true);
@@ -873,8 +882,8 @@ describe("FrameStore", () => {
             frame["spectralType"] = SpectralType.VRAD;
             frame["spectralUnit"] = SpectralUnit.KMS;
             frame["spectralSystem"] = SpectralSystem.LSRK;
-            (AST.set as jest.Mock).mockClear();
-            (AST.getString as jest.Mock).mockImplementation((...args: unknown[]) => {
+            (AST.set as Mock).mockClear();
+            (AST.getString as Mock).mockImplementation((...args: unknown[]) => {
                 switch (args[1]) {
                     case "Label(1)":
                         return "Offset";
@@ -920,8 +929,8 @@ describe("FrameStore", () => {
                     headerEntries: (OBS_TIME_FRAME_INFO.fileInfoExtended.headerEntries as any[]).filter(entry => entry.name !== "MJD-OBS")
                 } as any
             };
-            (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.25);
-            (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+            (AST.parseDateToMJD as Mock).mockReturnValue(59000.25);
+            (AST.convertMJD as Mock).mockImplementation(mjd => mjd);
 
             const frame = new FrameStore(frameInfo);
             expect(frame.obsTimeMjdUtc).toBe(59000.25);
@@ -968,8 +977,8 @@ describe("FrameStore.getRegionProperties", () => {
         const overlay = AppStore.Instance.overlaySettings.global;
         const previousSystem = overlay.system;
         const wcsCopy = {copy: true};
-        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
-        const deleteObject = jest.spyOn(AST, "deleteObject");
+        rs.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const deleteObject = rs.spyOn(AST, "deleteObject");
         const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
             isValidWcs: boolean;
             wcsInfoForTransformation: unknown;
@@ -1075,9 +1084,9 @@ describe("FrameStore.genRegionWcsProperties output", () => {
 
     beforeEach(async () => {
         previousSystem = overlay.system;
-        jest.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
-        jest.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
-        jest.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `${x}.5`, y: `${y}.25`}));
+        rs.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `${x}.5`, y: `${y}.25`}));
         overlay.setValidWcs(true);
         numbers.setValidWcs(true);
         numbers.setCustomFormat(true);
@@ -1087,7 +1096,7 @@ describe("FrameStore.genRegionWcsProperties output", () => {
     });
 
     afterEach(async () => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
         numbers.setCustomFormat(false);
         numbers.setValidWcs(false);
         await overlay.setSystem(previousSystem);
@@ -1189,9 +1198,9 @@ describe("FrameStore.genRegionWcsProperties output", () => {
         const frame = makeFrame() as ReturnType<typeof makeFrame> & {defaultWcsSystem: SystemType; defaultWcsEquinox: string; defaultWcsEpoch: string};
         const shared = frame.wcsInfoForTransformation;
         const wcsCopy = {copy: true};
-        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
-        const set = jest.spyOn(AST, "set");
-        const deleteObject = jest.spyOn(AST, "deleteObject");
+        rs.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const set = rs.spyOn(AST, "set");
+        const deleteObject = rs.spyOn(AST, "deleteObject");
         await overlay.setSystem(SystemType.Image);
 
         frame.defaultWcsSystem = undefined as unknown as SystemType;
@@ -1224,7 +1233,7 @@ describe("FrameStore.genRegionWcsProperties output", () => {
 
 describe("FrameStore WCS header cards", () => {
     test("does not send header entries without a keyword to AST", () => {
-        const putFits = AST.putFits as jest.Mock;
+        const putFits = AST.putFits as Mock;
         putFits.mockClear();
         const headerEntries = [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries!, {name: "", value: "0", entryType: 1, numericValue: 0}, {name: "   ", value: "1"}];
         new FrameStore({...STOKES_CUBEFRAME_INFO, fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, headerEntries}} as FrameInfo);

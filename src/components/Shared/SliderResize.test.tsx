@@ -1,4 +1,5 @@
 import {Classes} from "@blueprintjs/core";
+import {rs} from "@rstest/core";
 import {act, fireEvent, render} from "@testing-library/react";
 
 import {Slider} from "./Slider/Slider";
@@ -38,7 +39,7 @@ describe("Slider", () => {
             }
         });
 
-        const onChange = jest.fn();
+        const onChange = rs.fn();
         const {container} = render(<Slider min={0} max={10} value={0} onChange={onChange} labelRenderer={false} />);
         const handle = container.querySelector<HTMLElement>(`.${Classes.SLIDER_HANDLE}`)!;
         handle.focus();

@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import type {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
@@ -10,7 +11,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
     const widgetsStore = appStore.widgetsStore;
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
         catalogStore.catalogProfileStores.clear();
         catalogStore.catalogDisplayStores.clear();
         catalogStore.catalogPlots.clear();
@@ -23,7 +24,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const widget = widgetsStore.getCatalogWidgetStore("catalog-overlay-component-0", 1);
         catalogStore.imageAssociatedCatalogId.set(100, [1]);
 
-        jest.spyOn(widgetsStore, "createFloatingCatalogWidget");
+        rs.spyOn(widgetsStore, "createFloatingCatalogWidget");
 
         const componentId = appStore.updateCatalogProfile(2, {frameInfo: {fileId: 100}} as any);
 
@@ -78,15 +79,15 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.ICRS},
-            get2DCoordinateData: jest.fn(),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
+            get2DCoordinateData: rs.fn(),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setPlottedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: rs.fn(),
             xAxis: CatalogOverlay.NONE,
             yAxis: "dec"
         };
@@ -94,10 +95,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
-        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
 
         appStore.handleCatalogFilterStream({
             columns: [],
@@ -117,21 +118,21 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DCoordinateData: jest.fn(() => ({
+            get2DCoordinateData: rs.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
-            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
+            getCoordinateEligibility: rs.fn(() => ({status: CatalogAxisEligibility.Eligible})),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setPlottedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: rs.fn(),
             xAxis: "_RAJ2000",
             yAxis: "_DEJ2000"
         };
@@ -140,10 +141,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
-        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue(frame);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
 
         appStore.handleCatalogFilterStream({
             columns: [],
@@ -164,21 +165,21 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.Galactic},
-            get2DCoordinateData: jest.fn(() => ({
+            get2DCoordinateData: rs.fn(() => ({
                 wcsX: [150],
                 wcsY: [2.476567],
                 xHeaderInfo: {units: ""},
                 yHeaderInfo: {units: ""}
             })),
-            getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
+            getCoordinateEligibility: rs.fn(() => ({status: CatalogAxisEligibility.Eligible})),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setPlottedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: rs.fn(),
             xAxis: "GLON1",
             yAxis: "GLAT1"
         };
@@ -186,10 +187,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
-        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
 
         appStore.handleCatalogFilterStream({
             columns: [],
@@ -207,23 +208,23 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const processedData = new Map<number, unknown>();
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.FK5},
-            get2DCoordinateData: jest.fn(() => ({
+            get2DCoordinateData: rs.fn(() => ({
                 wcsX: [1.1],
                 wcsY: [2.2],
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
             isUpdateColumnMode: true,
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(() => {
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(() => {
                 profileStore.isUpdateColumnMode = false;
             }),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setPlottedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: rs.fn(),
             xAxis: "RAJ2000",
             yAxis: "_DEJ2000"
         };
@@ -231,10 +232,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
-        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
 
         appStore.handleCatalogFilterStream({
             columns: [],
@@ -261,17 +262,17 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 .fn()
                 .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
                 .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),
-            getCoordinateEligibility: jest.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(() => {
+            getCoordinateEligibility: rs.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
+            setLoadingDataStatus: rs.fn(),
+            setProgress: rs.fn(),
+            setUpdatingDataStream: rs.fn(),
+            updateCatalogData: rs.fn(() => {
                 isFormatKnown = true;
             }),
             updateMode: CatalogUpdateMode.ViewUpdate
         };
         const widgetStore = {
-            setPlottedImageOverlayState: jest.fn(),
+            setPlottedImageOverlayState: rs.fn(),
             xAxis: "elon",
             yAxis: "elat"
         };
@@ -279,11 +280,11 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
-        jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
-        jest.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
-        const clearSpy = jest.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(jest.fn());
-        const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
+        rs.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
+        rs.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
+        rs.spyOn(catalogStore, "getFrameIdByCatalogId").mockReturnValue(10);
+        const clearSpy = rs.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(rs.fn());
+        const convertSpy = rs.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(rs.fn());
 
         appStore.handleCatalogFilterStream({
             columns: [],

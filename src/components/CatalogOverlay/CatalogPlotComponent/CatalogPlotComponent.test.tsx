@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {CatalogOverlay, CatalogPlotType, DragMode} from "enums";
@@ -22,8 +23,8 @@ function loadCatalog(fileId: number, filename: string) {
         catalogInfo: {fileId, directory: "/catalogs", fileInfo: {name: filename}},
         catalogHeader,
         catalogControlHeader,
-        get2DPlotData: jest.fn(() => ({wcsX: [], wcsY: []})),
-        get1DPlotData: jest.fn(() => ({wcsData: new Float32Array()})),
+        get2DPlotData: rs.fn(() => ({wcsX: [], wcsY: []})),
+        get1DPlotData: rs.fn(() => ({wcsData: new Float32Array()})),
         getColumnHeader: (columnName: string) => {
             const dataIndex = catalogControlHeader.get(columnName)?.dataIndex;
             return dataIndex !== undefined ? catalogHeader[dataIndex] : undefined;
@@ -35,7 +36,7 @@ function loadCatalog(fileId: number, filename: string) {
 describe("CatalogPlotComponent catalog selection", () => {
     afterEach(() => {
         WidgetsStore.Instance.catalogWidgets.clear();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("updates the widget selection when a plot selection is made", () => {
@@ -45,18 +46,18 @@ describe("CatalogPlotComponent catalog selection", () => {
             catalogInfo: {fileId: 7, fileInfo: {name: "test-catalog"}},
             catalogData: [],
             numVisibleRows: 4,
-            get2DPlotData: jest.fn(() => ({wcsX: [0, 10, 20, 30], wcsY: [0, 10, 20, 30]})),
-            getOriginIndices: jest.fn(() => [12]),
-            setSelectedPointIndices: jest.fn()
+            get2DPlotData: rs.fn(() => ({wcsX: [0, 10, 20, 30], wcsY: [0, 10, 20, 30]})),
+            getOriginIndices: rs.fn(() => [12]),
+            setSelectedPointIndices: rs.fn()
         };
         const catalogDisplayStore = {
-            requestCatalogTableAutoScroll: jest.fn()
+            requestCatalogTableAutoScroll: rs.fn()
         };
         const widgetStore = {
             dragMode: DragMode.Lasso,
             xColumnName: "Fmag",
             yColumnName: "Bmag",
-            setIndicator: jest.fn(),
+            setIndicator: rs.fn(),
             plotType: CatalogPlotType.D2Scatter
         };
         catalogStore.catalogProfileStores.set(7, profileStore as any);
@@ -82,7 +83,7 @@ describe("CatalogPlotComponent catalog selection", () => {
 
     test("clears the selection when a plot selection contains no sources", () => {
         const component = new CatalogPlotComponent({id: "catalog-plot-0", docked: false} as any);
-        const onDeselect = jest.spyOn(component as any, "onDeselect").mockImplementation(() => undefined);
+        const onDeselect = rs.spyOn(component as any, "onDeselect").mockImplementation(() => undefined);
 
         component["selectCatalogPoints"]([]);
 
@@ -95,8 +96,8 @@ describe("CatalogPlotComponent catalog selection", () => {
             getChart: () => null,
             getData: () => ({bins: [], binSize: 0, binIndices: []}),
             getBorder: () => undefined,
-            setBorder: jest.fn(),
-            selectPoints: jest.fn()
+            setBorder: rs.fn(),
+            selectPoints: rs.fn()
         });
         interaction["panPreviousX"] = 10;
         interaction["hasHandledDrag"] = true;
@@ -107,9 +108,9 @@ describe("CatalogPlotComponent catalog selection", () => {
     });
 
     test("selects histogram bins when released outside the plot", () => {
-        const selectPoints = jest.fn();
+        const selectPoints = rs.fn();
         const interaction = new CatalogHistogramInteraction({
-            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: rs.fn()}) as any,
             getData: () => ({
                 bins: [
                     {x: 20, y: 1},
@@ -119,7 +120,7 @@ describe("CatalogPlotComponent catalog selection", () => {
                 binIndices: [[7], [8]]
             }),
             getBorder: () => undefined,
-            setBorder: jest.fn(),
+            setBorder: rs.fn(),
             selectPoints
         });
         interaction["dragStartX"] = 10;
@@ -131,12 +132,12 @@ describe("CatalogPlotComponent catalog selection", () => {
     });
 
     test("selects histogram bins on release when no mousemove was recorded", () => {
-        const selectPoints = jest.fn();
+        const selectPoints = rs.fn();
         const interaction = new CatalogHistogramInteraction({
-            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: jest.fn()}) as any,
+            getChart: () => ({chartArea: {left: 0, right: 100}, canvas: {getBoundingClientRect: () => ({left: 100})}, scales: {x: {getValueForPixel: (pixel: number) => pixel}}, draw: rs.fn()}) as any,
             getData: () => ({bins: [{x: 20, y: 1}], binSize: 20, binIndices: [[7]]}),
             getBorder: () => undefined,
-            setBorder: jest.fn(),
+            setBorder: rs.fn(),
             selectPoints
         });
         interaction["dragStartX"] = 10;
@@ -172,11 +173,11 @@ describe("CatalogPlotComponent restored plots", () => {
         Array.from(catalogStore.catalogPlots.keys()).forEach(plotComponentId => catalogStore.clearCatalogPlotsByComponentId(plotComponentId));
         catalogStore.catalogProfileStores.clear();
         widgetsStore.catalogPlotWidgets.clear();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("drops restored columns the catalog lacks when the layout is applied against a loaded one", () => {
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
         loadCatalog(11, "first.xml");
 
         const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {
@@ -197,7 +198,7 @@ describe("CatalogPlotComponent restored plots", () => {
     });
 
     test("drops restored plot columns whose catalog type is unsupported", () => {
-        const addWarning = jest.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(jest.fn());
+        const addWarning = rs.spyOn(AppStore.Instance.logStore, "addWarning").mockImplementation(rs.fn());
         loadCatalog(11, "first.xml");
 
         const plotId = (widgetsStore as any).initializeCatalogPlotWidget(plotProps, "catalog-plot-0", {

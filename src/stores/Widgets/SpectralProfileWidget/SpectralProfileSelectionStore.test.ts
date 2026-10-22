@@ -1,4 +1,4 @@
-import {describe, expect, test} from "@jest/globals";
+import {describe, expect, test} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 // Load the stores in dependency order before importing one of them directly

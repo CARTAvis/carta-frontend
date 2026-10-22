@@ -1,4 +1,5 @@
 import * as React from "react";
+import {rs} from "@rstest/core";
 import {act, render} from "@testing-library/react";
 
 import {DragMode, InteractionMode, ZoomMode} from "enums";
@@ -9,11 +10,11 @@ import {ScatterPlotComponent} from "./ScatterPlotComponent";
 test("initializes the scatter overlay with chart bounds without mouse interaction", () => {
     const originalResizeObserver = window.ResizeObserver;
     const originalIntersectionObserver = window.IntersectionObserver;
-    const mockObserver = jest.fn(() => ({observe: jest.fn(), disconnect: jest.fn()}));
+    const mockObserver = rs.fn(() => ({observe: rs.fn(), disconnect: rs.fn()}));
     window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
     window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
     const componentRef = React.createRef<ScatterPlotComponent>();
-    const renderOverlay = jest.fn(() => null);
+    const renderOverlay = rs.fn(() => null);
     const {unmount} = render(<ScatterPlotComponent ref={componentRef} data={[]} xMin={0} xMax={10} yMin={0} yMax={10} renderOverlay={renderOverlay} />);
 
     try {
@@ -31,7 +32,7 @@ test("initializes the scatter overlay with chart bounds without mouse interactio
 test("exports the source overlay canvas from the mounted scatter container", () => {
     const originalResizeObserver = window.ResizeObserver;
     const originalIntersectionObserver = window.IntersectionObserver;
-    const mockObserver = jest.fn(() => ({observe: jest.fn(), disconnect: jest.fn()}));
+    const mockObserver = rs.fn(() => ({observe: rs.fn(), disconnect: rs.fn()}));
     window.ResizeObserver = mockObserver as unknown as typeof ResizeObserver;
     window.IntersectionObserver = mockObserver as unknown as typeof IntersectionObserver;
     const componentRef = React.createRef<ScatterPlotComponent>();
@@ -41,10 +42,10 @@ test("exports the source overlay canvas from the mounted scatter container", () 
     overlayCanvas.dataset.overlay = "true";
     container.querySelector(".scatter-plot-component")!.appendChild(overlayCanvas);
     componentRef.current!.onPlotRefUpdated({canvas: chartCanvas});
-    const drawImage = jest.fn();
-    const appStore = jest.spyOn(AppStore, "Instance", "get").mockReturnValue({preferenceStore: {hasTransparentImageBackground: false}} as AppStore);
-    const getContext = jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({fillRect: jest.fn(), drawImage} as unknown as CanvasRenderingContext2D);
-    const toBlob = jest.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(() => {});
+    const drawImage = rs.fn();
+    const appStore = rs.spyOn(AppStore, "Instance", "get").mockReturnValue({preferenceStore: {hasTransparentImageBackground: false}} as AppStore);
+    const getContext = rs.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({fillRect: rs.fn(), drawImage} as unknown as CanvasRenderingContext2D);
+    const toBlob = rs.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(() => {});
 
     try {
         componentRef.current!.exportImage();
@@ -72,7 +73,7 @@ const CreateMouseEvent = (modifiers: Partial<Pick<MouseEvent, "altKey" | "ctrlKe
 
 describe("ScatterPlotComponent interactions", () => {
     test("ignores mouse movement before the chart area is available", () => {
-        const graphCursorMoved = jest.fn();
+        const graphCursorMoved = rs.fn();
         const component = new ScatterPlotComponent({data: [], graphCursorMoved});
 
         expect(() => component.onStageMouseMove(CreateMouseEvent() as any)).not.toThrow();
@@ -84,7 +85,7 @@ describe("ScatterPlotComponent interactions", () => {
         ["Alt", {altKey: true}]
     ])("supports %s-drag panning for legacy consumers", (_modifier, modifiers) => {
         const component = new ScatterPlotComponent({});
-        const startPanning = jest.spyOn(component, "startPanning");
+        const startPanning = rs.spyOn(component, "startPanning");
 
         component.onStageMouseDown(CreateMouseEvent(modifiers) as any);
 
@@ -94,8 +95,8 @@ describe("ScatterPlotComponent interactions", () => {
 
     test("does not start an interaction when drag mode is disabled", () => {
         const component = new ScatterPlotComponent({dragAction: false});
-        const startSelection = jest.spyOn(component, "startSelection");
-        const startPanning = jest.spyOn(component, "startPanning");
+        const startSelection = rs.spyOn(component, "startSelection");
+        const startPanning = rs.spyOn(component, "startPanning");
 
         component.onStageMouseDown(CreateMouseEvent({shiftKey: true}) as any);
 
@@ -105,7 +106,7 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("ends an interaction when the pointer is released outside the stage", () => {
-        const onBoxSelected = jest.fn();
+        const onBoxSelected = rs.fn();
         const component = new ScatterPlotComponent({dragAction: DragMode.Select, onBoxSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
         component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
 
@@ -121,7 +122,7 @@ describe("ScatterPlotComponent interactions", () => {
 
     test("ignores non-primary mouse buttons", () => {
         const component = new ScatterPlotComponent({});
-        const startSelection = jest.spyOn(component, "startSelection");
+        const startSelection = rs.spyOn(component, "startSelection");
 
         component.onStageMouseDown(CreateMouseEvent({button: 2}) as any);
 
@@ -139,7 +140,7 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("completes a lasso when it closes near its starting point", () => {
-        const onLassoSelected = jest.fn();
+        const onLassoSelected = rs.fn();
         const component = new ScatterPlotComponent({dragAction: DragMode.Lasso, onLassoSelected, xMin: 0, xMax: 100, yMin: 0, yMax: 100});
         component.chartArea = {left: 0, right: 100, top: 0, bottom: 100, width: 100, height: 100};
 
@@ -152,20 +153,27 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("does not route a mouseup after a rejected mousedown as a click", () => {
-        const graphZoomReset = jest.fn();
+        rs.useFakeTimers();
+        const graphZoomReset = rs.fn();
         const component = new ScatterPlotComponent({graphZoomReset});
         component.chartArea = {left: 20, right: 80, top: 10, bottom: 70, width: 60, height: 60};
 
-        component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
-        component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
-        component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
-        component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+        try {
+            component.onStageMouseDown({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+            component.onStageMouseUp({evt: {offsetX: 20, offsetY: 40, button: 0}} as any);
+            component.onStageMouseDown({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
+            component.onStageMouseUp({evt: {offsetX: 19, offsetY: 41, button: 0}} as any);
 
-        expect(graphZoomReset).not.toHaveBeenCalled();
+            expect(graphZoomReset).not.toHaveBeenCalled();
+            rs.runOnlyPendingTimers();
+        } finally {
+            rs.clearAllTimers();
+            rs.useRealTimers();
+        }
     });
 
     test("does not zoom for thin XY drags", () => {
-        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
+        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: rs.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
         component.selectionBoxEnd = {x: 5, y: 25};
 
@@ -173,7 +181,7 @@ describe("ScatterPlotComponent interactions", () => {
     });
 
     test("uses XY zoom for meaningful XY drags", () => {
-        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: jest.fn()});
+        const component = new ScatterPlotComponent({dragAction: DragMode.Zoom, graphZoomedXY: rs.fn()});
         component.selectionBoxStart = {x: 0, y: 0};
         component.selectionBoxEnd = {x: 25, y: 25};
 

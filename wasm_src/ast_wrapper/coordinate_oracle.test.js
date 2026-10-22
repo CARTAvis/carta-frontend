@@ -14,7 +14,7 @@
  */
 // Emscripten binds console.error when loading, so install the spy before requiring AST.
 const originalConsoleError = console.error.bind(console);
-const consoleError = jest.spyOn(console, "error").mockImplementation(originalConsoleError);
+const consoleError = rs.spyOn(console, "error").mockImplementation(originalConsoleError);
 const AST = require("./build/index.js");
 const {parseCoordinateValue} = require("../../src/utilities/catalog/coordinateFormat");
 

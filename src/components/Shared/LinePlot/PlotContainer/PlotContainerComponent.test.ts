@@ -1,6 +1,8 @@
+import {rs} from "@rstest/core";
+
 import {type Point2D} from "models";
 
-jest.mock("utilities", () => ({
+rs.mock("utilities", () => ({
     clamp: (value: number) => value,
     toExponential: (value: number) => `${value}`,
     toFixed: (value: number) => `${value}`

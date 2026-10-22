@@ -1,7 +1,9 @@
-jest.mock("utilities", () => ({
-    getInterpolatedPathAtDistance: jest.fn((start, points) => [start, ...points]),
+import {rs} from "@rstest/core";
+
+rs.mock("utilities", () => ({
+    getInterpolatedPathAtDistance: rs.fn((start, points) => [start, ...points]),
     rotate2D: (point, angle) => ({x: point.x * Math.cos(angle) - point.y * Math.sin(angle), y: point.x * Math.sin(angle) + point.y * Math.cos(angle)}),
-    scale2D: jest.fn()
+    scale2D: rs.fn()
 }));
 
 import {getInterpolatedPathAtDistance} from "utilities";

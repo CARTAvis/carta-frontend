@@ -2,12 +2,12 @@ import {exportTsvFile, getExportFileName} from "./export";
 
 describe("export file names", () => {
     beforeEach(() => {
-        jest.useFakeTimers().setSystemTime(new Date(2026, 8, 23, 21, 40, 14));
+        rs.useFakeTimers().setSystemTime(new Date(2026, 8, 23, 21, 40, 14));
     });
 
     afterEach(() => {
-        jest.useRealTimers();
-        jest.restoreAllMocks();
+        rs.useRealTimers();
+        rs.restoreAllMocks();
     });
 
     test("follow the {file name}-{content}-{timestamp} pattern", () => {
@@ -26,7 +26,7 @@ describe("export file names", () => {
 
     test("are used for the TSV download", () => {
         let downloadName = "";
-        jest.spyOn(HTMLAnchorElement.prototype, "dispatchEvent").mockImplementation(function (this: HTMLAnchorElement) {
+        rs.spyOn(HTMLAnchorElement.prototype, "dispatchEvent").mockImplementation(function (this: HTMLAnchorElement) {
             downloadName = this.download;
             return true;
         });
