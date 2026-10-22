@@ -21,7 +21,7 @@ import {
     type WorkspaceMomentRequest,
     type WorkspacePvRequest
 } from "models";
-import {CatalogApiService} from "services";
+import {BackendService, CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -32,6 +32,9 @@ import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalo
  * milliseconds. The backend reports the progress every two seconds while it computes.
  */
 const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
+
+/** How long a restore waits for the backend to take on a region before making images over it anyway, in milliseconds. */
+const REGION_HANDSHAKE_TIMEOUT = 10_000;
 
 /** Which of the session's references an image is matched to. */
 type ReferenceKind = "spatial" | "spectral" | "raster";
@@ -100,6 +103,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly images = new Map<number, WorkspaceFile>();
     /** How each generated image is named to the user, by its workspace ID. */
     private readonly generatedImageNames = new Map<number, string>();
+    /** The images moments have been made of again so far. */
+    private readonly momentSources = new Set<FrameStore>();
     /** Images that name a reference that is a generated image not made yet, to be matched once it is. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
@@ -504,7 +509,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         let outcome: FrameStore[] | "skipped" | undefined;
         if (request.type === "moment") {
-            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId);
+            // The first request of an image replaces nothing; a later one keeps the images the earlier
+            // ones made. The backend numbers the names of kept images, as it did when they were made.
+            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            this.momentSources.add(source);
+            if (message && regionId > RegionId.CURSOR) {
+                yield* awaited(this.introduceRegionToBackend(source, regionId));
+                if (!this.isCurrent) {
+                    return [];
+                }
+            }
             if (message) {
                 source.resetMomentRequestState();
                 const made = (this.appStore.requestMoment(message, source) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
@@ -547,8 +561,43 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return outcome;
     }
 
+    /**
+     * Get the backend ready to make moments over a region of an image.
+     *
+     * The backend makes moments over a region only of an image whose region data it already keeps,
+     * which it starts doing the first time a widget asks it for a region's statistics, histogram or
+     * profile. In a session some widget has always asked by then; during a restore none has yet, and
+     * the request fails. So ask for one statistic of the region, wait for it to come back, and take
+     * the request back. The backend handles requests out of order, so sending the request alone is
+     * not enough: the moments could be asked for before it is taken on.
+     */
+    private introduceRegionToBackend(frame: FrameStore, regionId: number): Promise<void> {
+        const backendService = BackendService.Instance;
+        const fileId = frame.frameInfo.fileId;
+        return new Promise<void>(resolve => {
+            let isDone = false;
+            const finish = () => {
+                if (isDone) {
+                    return;
+                }
+                isDone = true;
+                clearTimeout(timer);
+                subscription.unsubscribe();
+                backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
+                resolve();
+            };
+            const subscription = backendService.statsStream.subscribe(stats => {
+                if (stats?.fileId === fileId && stats.regionId === regionId) {
+                    finish();
+                }
+            });
+            const timer = setTimeout(finish, REGION_HANDSHAKE_TIMEOUT);
+            backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
+        });
+    }
+
     /** The request a saved moment request makes, or nothing if it is not one this version can make. */
-    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number): CARTA.MomentRequest.$Properties | undefined {
+    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number, shouldKeep: boolean): CARTA.MomentRequest.$Properties | undefined {
         const {moments, channelRange, mask, pixelRange} = request;
         const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
         if (
@@ -571,8 +620,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             spectralRange: {min: channelRange.min, max: channelRange.max},
             mask,
             pixelRange: new CARTA.FloatBounds({min: pixelRange.min, max: pixelRange.max}),
-            // the images of the other requests made of the same image stay
-            keep: true,
+            keep: shouldKeep,
             restFreq: source.restFreqStore?.restFreqInHz
         };
     }
