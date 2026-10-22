@@ -1,6 +1,10 @@
+import React from "react";
+import {HotkeysProvider} from "@blueprintjs/core";
+import {cleanup, render} from "@testing-library/react";
+
 import {AppStore} from "stores";
 
-import {HotkeyService} from "./HotkeyWrapper";
+import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 
 const MockSelection = (text: string) => ({isCollapsed: text.length === 0, toString: () => text}) as unknown as Selection;
 
@@ -64,5 +68,47 @@ describe("HotkeyService.copyRegion", () => {
 
         expect(copySelectedRegion).toHaveBeenCalledTimes(1);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+});
+
+describe("HotkeysRegistrar", () => {
+    const originalTarget = process.env.PUBLIC_REACT_APP_TARGET;
+    beforeEach(() => {
+        delete process.env.PUBLIC_REACT_APP_TARGET;
+    });
+    afterEach(() => {
+        cleanup();
+        jest.restoreAllMocks();
+        if (originalTarget === undefined) delete process.env.PUBLIC_REACT_APP_TARGET;
+        else process.env.PUBLIC_REACT_APP_TARGET = originalTarget;
+    });
+
+    test("handles macOS dead-key events for Alt+E", () => {
+        const exportImage = jest.spyOn(AppStore.Instance, "exportImage").mockImplementation(() => undefined);
+        render(React.createElement(HotkeysProvider, null, React.createElement(HotkeysRegistrar)));
+
+        document.dispatchEvent(new KeyboardEvent("keydown", {altKey: true, bubbles: true, cancelable: true, code: "KeyE", key: "Dead"}));
+
+        expect(exportImage).toHaveBeenCalledWith(1);
+    });
+
+    test.each(["linux", "darwin"])("does not register the Alt+E fallback for the %s target", target => {
+        process.env.PUBLIC_REACT_APP_TARGET = target;
+        const exportImage = jest.spyOn(AppStore.Instance, "exportImage").mockImplementation(() => undefined);
+        render(React.createElement(HotkeysProvider, null, React.createElement(HotkeysRegistrar)));
+        document.dispatchEvent(new KeyboardEvent("keydown", {altKey: true, bubbles: true, code: "KeyE", key: "Dead"}));
+        expect(exportImage).not.toHaveBeenCalled();
+    });
+
+    test.each(["", "true", "plaintext-only"])("preserves Alt+E when typing inside contenteditable=%s", value => {
+        const exportImage = jest.spyOn(AppStore.Instance, "exportImage").mockImplementation(() => undefined);
+        const {container} = render(React.createElement(HotkeysProvider, null, React.createElement(HotkeysRegistrar)));
+        const editable = document.createElement("div");
+        editable.setAttribute("contenteditable", value);
+        const child = document.createElement("span");
+        editable.appendChild(child);
+        container.appendChild(editable);
+        child.dispatchEvent(new KeyboardEvent("keydown", {altKey: true, bubbles: true, code: "KeyE", key: "Dead"}));
+        expect(exportImage).not.toHaveBeenCalled();
     });
 });
