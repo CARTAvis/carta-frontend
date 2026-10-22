@@ -140,7 +140,7 @@ export class WorkspaceSnapshotter {
             isTakingMore = false;
             const waiting: GeneratedImageGroup[] = [];
             for (const group of pending) {
-                const problem = this.whyNotSavable(group.request);
+                const problem = this.whyNotSavable(group);
                 if (problem === undefined) {
                     this.generatedImageGroups.push(group);
                     group.frames.forEach(frame => this.savedGeneratedImages.add(frame));
@@ -162,9 +162,14 @@ export class WorkspaceSnapshotter {
      *
      * @returns nothing when it can be saved.
      */
-    private whyNotSavable(request: ImageGenerationRequest): string | "waiting" | undefined {
+    private whyNotSavable({request, frames}: GeneratedImageGroup): string | "waiting" | undefined {
         if (request.type === "hips") {
             return undefined;
+        }
+        // Moment images are told apart by which moment each is; without that, only all of them in
+        // the order they were made can be told apart.
+        if (request.type === "moment" && frames.some(frame => frame.generation?.moment === undefined) && frames.length !== request.moments.length) {
+            return "it cannot tell which moment each of its remaining images is";
         }
         const source = request.source;
         if (!this.appStore.frames.includes(source)) {

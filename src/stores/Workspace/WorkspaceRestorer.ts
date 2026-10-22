@@ -521,10 +521,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             if (message) {
                 source.resetMomentRequestState();
-                const made = (this.appStore.requestMoment(message, source) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const waiting = {isSkipped: false};
+                const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
                 outcome = yield* awaited(
                     this.waitForRequest(
                         made,
+                        waiting,
                         `making ${subject}`,
                         () => source.requestingMomentsProgress,
                         () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
@@ -535,10 +537,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
             if (message) {
                 source.resetPvRequestState();
-                const made = (this.appStore.requestPV(message, source, true) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const waiting = {isSkipped: false};
+                const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
                 outcome = yield* awaited(
                     this.waitForRequest(
                         made,
+                        waiting,
                         `making ${subject}`,
                         () => source.requestingPVProgress,
                         () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
@@ -645,9 +649,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Wait for a request that makes images, showing its progress and letting the user skip it.
      *
      * Skipping asks the backend to stop, but does not wait for it to: the restore carries on at once,
-     * and images that still arrive for a skipped request are closed.
+     * and images that still arrive for a skipped request are closed without being shown.
      */
-    private waitForRequest(made: Promise<FrameStore[]>, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
+    private waitForRequest(made: Promise<FrameStore[]>, waiting: {isSkipped: boolean}, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
         return new Promise(resolve => {
             let isSettled = false;
             const settle = (outcome: FrameStore[] | "skipped"): boolean => {
@@ -663,6 +667,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return true;
             };
             const skip = () => {
+                waiting.isSkipped = true;
                 cancel();
                 settle("skipped");
             };
