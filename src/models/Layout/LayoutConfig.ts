@@ -78,6 +78,35 @@ export class LayoutConfig {
         }
     };
 
+    /**
+     * Upgrade and validate a layout without changing the caller's object.
+     *
+     * Layout validation applies defaults, so validating a workspace's embedded layout in place
+     * would mutate the workspace and make it possible to clear the current layout before a bad
+     * config is rejected. Keep this operation as the single preparation step for callers that
+     * are about to replace a live layout.
+     */
+    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null): any | undefined => {
+        if (!layout) {
+            return undefined;
+        }
+
+        let candidate: any;
+        try {
+            candidate = JSON.parse(JSON.stringify(layout));
+        } catch (err) {
+            console.error("Layout preparation failed:", err);
+            return undefined;
+        }
+
+        LayoutConfig.upgradeLayout(candidate);
+        if (!LayoutConfig.layoutValidator(candidate)) {
+            console.error("Layout validation failed:", LayoutConfig.layoutValidator.errors);
+            return undefined;
+        }
+        return candidate;
+    };
+
     // Note: layoutConfig is formalized(modified) during validation if valid
     public static isUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
         if (!layoutName || !layoutConfig) {
@@ -111,7 +140,8 @@ export class LayoutConfig {
 
     /**
      * Recursively collects component configs from the abstract layout tree.
-     * Each component config has: id, props, widgetSettings, plotType.
+     * Each component config has: id, props, widgetSettings, and plotType for a catalog plot in a layout
+     * saved before its type moved into its widget settings.
      */
     private static collectComponentConfigs = (content: any[], componentConfigs: any[]) => {
         if (!content || !Array.isArray(content)) {
@@ -151,7 +181,8 @@ export class LayoutConfig {
     };
 
     /**
-     * Creates the abstract config from the current FlexLayout model for saving.
+     * Creates the abstract config from the current FlexLayout model for saving. It names none of the
+     * session's images or catalogs, so a saved layout and the copy a workspace carries take one form.
      */
     public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
         if (!appStore || !modelJson) {
@@ -189,11 +220,6 @@ export class LayoutConfig {
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
-            // add plot type
-            const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(config.id);
-            if (plotWidget) {
-                floatingConfig.plotType = plotWidget.plotType;
-            }
             configToSave.floating.push(floatingConfig);
         });
 
@@ -219,10 +245,6 @@ export class LayoutConfig {
                 const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
-                }
-                const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(instanceId);
-                if (plotWidget) {
-                    child.plotType = plotWidget.plotType;
                 }
                 // Clean up internal field so it doesn't persist in saved layouts
                 delete child._instanceId;
