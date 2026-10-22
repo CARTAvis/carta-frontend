@@ -64,14 +64,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
-            const id = appStore.widgetsStore.addSpectralProfileWidget();
+            const id = appStore.widgetsStore.addWidget(SpectralProfilerComponent.WidgetConfig.type);
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
                 this.widgetId = id;
             }
         } else {
             if (!appStore.widgetsStore.spectralProfileWidgets.has(this.widgetId)) {
-                appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
+                appStore.widgetsStore.addWidget(SpectralProfilerComponent.WidgetConfig.type, this.widgetId);
             }
         }
         this.cachedWidgetStore = appStore.widgetsStore.spectralProfileWidgets.get(this.widgetId) ?? new SpectralProfileWidgetStore();

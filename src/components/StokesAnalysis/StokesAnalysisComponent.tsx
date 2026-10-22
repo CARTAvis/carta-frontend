@@ -120,7 +120,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WidgetConfig.type) {
-            const id = appStore.widgetsStore.addStokesWidget();
+            const id = appStore.widgetsStore.addWidget(StokesAnalysisComponent.WidgetConfig.type);
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
                 this.widgetId = id;
