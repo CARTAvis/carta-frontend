@@ -39,10 +39,8 @@ function createCatalog() {
         isFileBasedCatalog: true,
         catalogCoordinateSystem: {system: CatalogSystemType.FK5},
         catalogHeader,
-        catalogData,
-        catalogOriginalData: catalogData,
+        rows: {data: catalogData, originalData: catalogData, getSortedIndices: jest.fn((indices: number[]) => indices)},
         selectedPointIndices: [] as number[],
-        getSortedIndices: jest.fn((indices: number[]) => indices),
         toTableConfig: jest.fn(() => ({displayedColumns: ["Name"], maxRows: 3}))
     };
 }

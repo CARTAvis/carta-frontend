@@ -18,17 +18,23 @@ type MockProfileStore = {
     activedSystem: {x: CatalogOverlay; y: CatalogOverlay} | undefined;
     catalogControlHeader: Map<string, {dataIndex: number; display: boolean; filter: string}>;
     catalogCoordinateSystem: {system: CatalogSystemType};
-    catalogData: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
+    rows: {
+        data: Map<number, {dataType: CARTA.ColumnType; data: Array<string | number | null>}>;
+        canLoadMore: boolean;
+        isLoading: boolean;
+        isStreaming: boolean;
+        mode: CatalogUpdateMode;
+        fetchColumns: jest.Mock;
+    };
+    columnIndices: number[];
+    getTableFilters: jest.Mock;
     catalogHeader: Array<{columnIndex: number; dataType: CARTA.ColumnType; name: string; units?: string}>;
     displayedNumericColumnNames: string[];
     isNumericColumn: (columnName: string) => boolean;
     isFileBasedCatalog: boolean;
-    shouldUpdateData?: boolean;
     getCoordinateEligibility: jest.Mock<CatalogAxisEligibilityResult, [string]>;
     setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
-    setIsUpdateColumn: jest.Mock<void, [boolean]>;
     setHeaderDisplay: jest.Mock<void, [boolean, string]>;
-    setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
 };
 
 const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
@@ -63,7 +69,10 @@ function createMockProfileStore(system: CatalogSystemType, columns: MockColumn[]
         activedSystem: SYSTEM_OVERLAY_MAP.get(system),
         catalogControlHeader,
         catalogCoordinateSystem: {system},
-        catalogData,
+        // Every row held, as an online catalog holds them, so no columns are asked for.
+        rows: {data: catalogData, canLoadMore: false, isLoading: false, isStreaming: false, mode: CatalogUpdateMode.TableUpdate, fetchColumns: jest.fn()},
+        columnIndices: [],
+        getTableFilters: jest.fn(),
         catalogHeader,
         get displayedNumericColumnNames(): string[] {
             return Array.from(catalogControlHeader)
@@ -74,19 +83,17 @@ function createMockProfileStore(system: CatalogSystemType, columns: MockColumn[]
         isFileBasedCatalog: false,
         getCoordinateEligibility: jest.fn(),
         setCatalogCoordinateSystem: jest.fn(),
-        setIsUpdateColumn: jest.fn(),
-        setHeaderDisplay: jest.fn(),
-        setUpdateMode: jest.fn()
+        setHeaderDisplay: jest.fn()
     } as MockProfileStore;
 
     profileStore.getCoordinateEligibility.mockImplementation((columnName: string) => {
         const controlHeader = profileStore.catalogControlHeader.get(columnName);
         const headerInfo = controlHeader ? profileStore.catalogHeader[controlHeader.dataIndex] : undefined;
-        const column = profileStore.catalogData.get(headerInfo?.columnIndex ?? NaN);
+        const column = profileStore.rows.data.get(headerInfo?.columnIndex ?? NaN);
         const sampleData = column?.dataType === CARTA.ColumnType.String ? (column.data as Array<string | null | undefined>) : undefined;
         const eligibility = getCatalogAxisEligibility(headerInfo?.dataType, headerInfo?.units, sampleData);
         const isUnresolvedString = headerInfo?.dataType === CARTA.ColumnType.String && !getCoordinateDescriptorFromUnits(headerInfo?.units);
-        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.isFileBasedCatalog && profileStore.shouldUpdateData) {
+        if (eligibility.status === CatalogAxisEligibility.Ineligible && isUnresolvedString && profileStore.rows.canLoadMore) {
             return {status: CatalogAxisEligibility.Unknown, reason: "Column coordinate format is still being determined from streamed values."};
         }
         return eligibility;
@@ -341,7 +348,7 @@ describe("CatalogDisplayStore overlay axes", () => {
         });
 
         test("enables hidden matching columns when no visible coordinate columns are available", () => {
-            const requestFilteredRows = jest.spyOn(CatalogStore.Instance, "requestFilteredRows").mockImplementation(jest.fn());
+            const requestColumns = jest.spyOn(CatalogStore.Instance, "requestColumns").mockImplementation(jest.fn());
             const {catalogFileId, profileStore, displayStore} = openMockCatalog(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}], {
                 configure: profileStore => (profileStore.isFileBasedCatalog = true)
             });
@@ -350,14 +357,12 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.yAxis).toBe("ycentroid");
             expect(profileStore.setHeaderDisplay).toHaveBeenCalledWith(true, "xcentroid");
             expect(profileStore.setHeaderDisplay).toHaveBeenCalledWith(true, "ycentroid");
-            expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
-            expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
-            expect(requestFilteredRows).toHaveBeenCalledWith(catalogFileId);
+            expect(requestColumns).toHaveBeenCalledWith(catalogFileId);
         });
 
         test("does nothing when preference is disabled", () => {
             setAutoSelect(false);
-            const requestFilteredRows = jest.spyOn(CatalogStore.Instance, "requestFilteredRows").mockImplementation(jest.fn());
+            const requestColumns = jest.spyOn(CatalogStore.Instance, "requestColumns").mockImplementation(jest.fn());
             const {profileStore, displayStore} = openMockCatalog(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}], {
                 configure: profileStore => (profileStore.isFileBasedCatalog = true)
             });
@@ -365,12 +370,15 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.xAxis).toBe(CatalogOverlay.NONE);
             expect(displayStore.yAxis).toBe(CatalogOverlay.NONE);
             expect(profileStore.setHeaderDisplay).not.toHaveBeenCalled();
-            expect(requestFilteredRows).not.toHaveBeenCalled();
+            expect(requestColumns).not.toHaveBeenCalled();
         });
     });
 
     describe("streamed coordinate formats", () => {
-        const configureStreaming = (profileStore: MockProfileStore) => Object.assign(profileStore, {isFileBasedCatalog: true, isLoadingData: false, shouldUpdateData: true, updateMode: CatalogUpdateMode.TableUpdate});
+        const configureStreaming = (profileStore: MockProfileStore) => {
+            profileStore.isFileBasedCatalog = true;
+            Object.assign(profileStore.rows, {isLoading: false, canLoadMore: true, mode: CatalogUpdateMode.TableUpdate});
+        };
 
         test("requests another streamed chunk while coordinate formats are unknown", () => {
             const requestMoreRows = jest.spyOn(CatalogStore.Instance, "requestMoreRows").mockImplementation(jest.fn());
@@ -433,8 +441,8 @@ describe("CatalogDisplayStore overlay axes", () => {
                     ],
                     200
                 );
-                profileStore.setSubsetEndIndex(2);
-                jest.spyOn(CatalogStore.Instance, "requestMoreRows").mockImplementation(() => profileStore.setLoadingDataStatus(true));
+                runInAction(() => (profileStore.rows.loadedRowCount = 2));
+                jest.spyOn(CatalogStore.Instance, "requestMoreRows").mockImplementation(() => runInAction(() => (profileStore.rows.isLoading = true)));
                 return profileStore;
             });
 
@@ -443,8 +451,8 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
 
             runInAction(() => {
-                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--"]});
-                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--"]});
+                profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--"]});
+                profileStore.rows.originalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--"]});
             });
 
             // The first chunk is deliberately inconclusive: one coordinate and one placeholder
@@ -452,9 +460,9 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
 
             runInAction(() => {
-                profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00", ...new Array(197).fill("14:00:00")]});
-                profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00", ...new Array(197).fill("-23:00:00")]});
-                profileStore.setSubsetEndIndex(200);
+                profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "--", "13:00:00", ...new Array(197).fill("14:00:00")]});
+                profileStore.rows.originalData.set(1, {dataType: CARTA.ColumnType.String, data: ["-21:57:15", "--", "-22:00:00", ...new Array(197).fill("-23:00:00")]});
+                profileStore.rows.loadedRowCount = 200;
             });
 
             expect(displayStore.xAxis).toBe("ra");
@@ -467,7 +475,7 @@ describe("CatalogDisplayStore overlay axes", () => {
 
             expect(displayStore.axisColumnEligibility.get("RA1")?.status).toBe(CatalogAxisEligibility.Unknown);
 
-            runInAction(() => profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
+            runInAction(() => profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
 
             expect(displayStore.axisColumnEligibility.get("RA1")?.status).toBe(CatalogAxisEligibility.Eligible);
         });
@@ -475,10 +483,10 @@ describe("CatalogDisplayStore overlay axes", () => {
         test("refreshes column eligibility when a streamed update replaces an existing array", () => {
             const {profileStore, displayStore} = openCatalog(catalogFileId => createProfileStore(catalogFileId, CatalogSystemType.ICRS, [{name: "RA1", dataType: CARTA.ColumnType.String}], 2));
 
-            runInAction(() => profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", ""]}));
+            runInAction(() => profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.String, data: ["", ""]}));
             expect(displayStore.axisColumnEligibility.get("RA1")?.status).toBe(CatalogAxisEligibility.Unknown);
 
-            profileStore.updateCatalogData({filterDataSize: 2, requestEndIndex: 2, subsetDataSize: 2, subsetEndIndex: 2} as CARTA.CatalogFilterResponse, new Map([[0, {dataType: CARTA.ColumnType.String, data: ["12:30:00", "13:00:00"]}]]));
+            profileStore.rows.accept(new CARTA.CatalogFilterResponse({filterDataSize: 2, requestEndIndex: 2, subsetDataSize: 2, subsetEndIndex: 2, columns: {0: {dataType: CARTA.ColumnType.String, stringData: ["12:30:00", "13:00:00"]}}}));
 
             expect(displayStore.axisColumnEligibility.get("RA1")?.status).toBe(CatalogAxisEligibility.Eligible);
         });
@@ -614,7 +622,7 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.yAxisOptions).toEqual([CatalogOverlay.NONE, "DEJ2000", "flux", "RAJ2000"]);
             expect(displayStore.axisColumnEligibility.get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Unknown);
 
-            runInAction(() => profileStore.catalogOriginalData.set(1, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
+            runInAction(() => profileStore.rows.originalData.set(1, {dataType: CARTA.ColumnType.String, data: ["12:30:00"]}));
             expect(displayStore.axisColumnEligibility.get("RAJ2000")?.status).toBe(CatalogAxisEligibility.Eligible);
         });
 
@@ -632,9 +640,9 @@ describe("CatalogDisplayStore overlay axes", () => {
     });
 
     describe("setColumnDisplayed", () => {
-        test("uses table update mode for file-based column display updates", () => {
-            const requestFilteredRows = jest.spyOn(CatalogStore.Instance, "requestFilteredRows").mockImplementation(jest.fn());
-            const {catalogFileId, profileStore, displayStore} = openMockCatalog(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], {
+        test("asks for the rows of a column that is shown again", () => {
+            const requestColumns = jest.spyOn(CatalogStore.Instance, "requestColumns").mockImplementation(jest.fn());
+            const {catalogFileId, displayStore} = openMockCatalog(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], {
                 xAxis: "RAJ2000",
                 yAxis: "_DEJ2000",
                 configure: profileStore => (profileStore.isFileBasedCatalog = true)
@@ -642,9 +650,7 @@ describe("CatalogDisplayStore overlay axes", () => {
 
             displayStore.setColumnDisplayed("_RAJ2000", true);
 
-            expect(profileStore.setUpdateMode).toHaveBeenCalledWith(CatalogUpdateMode.TableUpdate);
-            expect(profileStore.setIsUpdateColumn).toHaveBeenCalledWith(true);
-            expect(requestFilteredRows).toHaveBeenCalledWith(catalogFileId);
+            expect(requestColumns).toHaveBeenCalledWith(catalogFileId);
         });
 
         test("reselects visible coordinate axes when columns are shown again from None", () => {
@@ -735,9 +741,9 @@ describe("CatalogDisplayStore overlay axes", () => {
             expect(displayStore.hasAttemptedAutoSelectImageOverlayAxes).toBe(false);
 
             runInAction(() => {
-                profileStore.catalogOriginalData.set(2, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("12:30:00")});
-                profileStore.catalogOriginalData.set(3, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("-21:57:15")});
-                profileStore.setSubsetEndIndex(200);
+                profileStore.rows.originalData.set(2, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("12:30:00")});
+                profileStore.rows.originalData.set(3, {dataType: CARTA.ColumnType.String, data: new Array(200).fill("-21:57:15")});
+                profileStore.rows.loadedRowCount = 200;
             });
 
             expect(displayStore.xAxis).toBe("GLON");
