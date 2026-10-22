@@ -170,7 +170,7 @@ export class WorkspaceSnapshotter {
         // Moment images are told apart by which moment each is; without that, only all of them in
         // the order they were made can be told apart.
         if (request.type === "moment" && frames.some(frame => frame.generation?.moment === undefined) && frames.length !== request.moments.length) {
-            return "it cannot tell which moment each of its remaining images is";
+            return "it cannot tell which moment each of its images is";
         }
         const source = request.source;
         if (!this.appStore.frames.includes(source)) {

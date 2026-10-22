@@ -564,7 +564,7 @@ describe("WorkspaceSnapshotter", () => {
 
             const {workspace, issues} = new WorkspaceSnapshotter().capture();
 
-            expect(issues.map(issue => issue.message)).toEqual(["Could not save the moment images of image0.fits: it cannot tell which moment each of its remaining images is"]);
+            expect(issues.map(issue => issue.message)).toEqual(["Could not save the moment images of image0.fits: it cannot tell which moment each of its images is"]);
             expect(workspace.generatedImages).toBeUndefined();
         });
 

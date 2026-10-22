@@ -1595,8 +1595,6 @@ export class AppStore {
             if (typeof openFileAck.fileId === "number") {
                 this.backendService.closeFile(openFileAck.fileId);
             }
-            // the backend has handed the ID out, so it is not handed out again
-            this.fileCounter++;
         }
     }
 
