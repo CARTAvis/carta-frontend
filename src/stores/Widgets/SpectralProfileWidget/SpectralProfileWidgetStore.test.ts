@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -39,6 +39,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             restFreqStore: {restFreqInHz: undefined},
             setIsRequestingMoments: jest.fn(),
             spectralType: SpectralType.FREQ,
+            spectralSystem: SpectralSystem.LSRK,
             spectralTypeSecondary: SpectralType.FREQ,
             spectralUnit: SpectralUnit.GHZ,
             spectralUnitSecondary: SpectralUnit.GHZ,
@@ -113,6 +114,18 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         expect(widgetStore.supportedSelectedMoments).toEqual([]);
         widgetStore.requestMoment();
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
+    });
+
+    test("sends the spectral coordinate used for the moment range", () => {
+        const {frame, appStore, widgetStore} = createWidgetStore(false);
+        runInAction(() => {
+            frame.spectralType = SpectralType.VOPT;
+        });
+        widgetStore.requestMoment();
+        const request = appStore.requestMoment.mock.calls[0][0];
+        const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
+        expect(decoded.spectralType).toBe(SpectralType.VOPT);
+        expect(decoded.spectralSystem).toBe(SpectralSystem.LSRK);
     });
 });
 
