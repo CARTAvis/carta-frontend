@@ -22,7 +22,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
-            findChannelIndexByValue: jest.fn((value: number) => value),
+            findChannelIndexByValue: jest.fn((value: number) => (value === 100 ? 0 : 1)),
             getIntensityConfig: jest.fn(() => intensityConfig),
             getRegion: jest.fn(),
             hasStokes: false,
@@ -116,16 +116,25 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
     });
 
-    test("sends the spectral coordinate used for the moment range", () => {
+    test.each([
+        [SpectralType.VOPT, SpectralUnit.KMS, 5100, 5400],
+        [SpectralType.VRAD, SpectralUnit.MS, 5100000, 5400000],
+        [SpectralType.FREQ, SpectralUnit.GHZ, 226.4589, 226.6818],
+        [SpectralType.WAVE, SpectralUnit.MM, 1.32253, 1.32384]
+    ])("sends channel bounds and standard of rest when using %s in %s", (spectralType, spectralUnit, min, max) => {
         const {frame, appStore, widgetStore} = createWidgetStore(false);
         runInAction(() => {
-            frame.spectralType = SpectralType.VOPT;
+            frame.findChannelIndexByValue = jest.fn((value: number) => (value === min ? 1 : 0));
+            frame.spectralType = spectralType;
+            frame.spectralUnit = spectralUnit;
+            widgetStore.channelValueRange = [min, max];
         });
         widgetStore.requestMoment();
         const request = appStore.requestMoment.mock.calls[0][0];
         const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
-        expect(decoded.spectralType).toBe(SpectralType.VOPT);
         expect(decoded.spectralSystem).toBe(SpectralSystem.LSRK);
+        expect(decoded.spectralRange?.min).toBe(0);
+        expect(decoded.spectralRange?.max).toBe(1);
     });
 });
 

@@ -363,7 +363,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
             if (channelIndex1 !== undefined && channelIndex2 !== undefined && isFinite(channelIndex1) && isFinite(channelIndex2)) {
-                const channelIndexRange: CARTA.IntBounds.$Properties = {
+                const channelIndexRange = {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
                 };
@@ -378,7 +378,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]}),
                     keep: this.shouldKeep,
                     restFreq: frame.restFreqStore?.restFreqInHz,
-                    spectralType: frame.spectralType ?? frame.spectralAxis?.type?.code,
                     spectralSystem: frame.spectralSystem ?? frame.spectralAxis?.specsys
                 };
                 frame.resetMomentRequestState();
