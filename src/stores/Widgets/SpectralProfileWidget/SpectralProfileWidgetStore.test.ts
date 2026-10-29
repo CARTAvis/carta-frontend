@@ -117,22 +117,23 @@ describe("SpectralProfileWidgetStore moments", () => {
     });
 
     test.each([
-        [SpectralType.VOPT, SpectralUnit.KMS, 5100, 5400],
-        [SpectralType.VRAD, SpectralUnit.MS, 5100000, 5400000],
-        [SpectralType.FREQ, SpectralUnit.GHZ, 226.4589, 226.6818],
-        [SpectralType.WAVE, SpectralUnit.MM, 1.32253, 1.32384]
-    ])("sends channel bounds and standard of rest when using %s in %s", (spectralType, spectralUnit, min, max) => {
+        [SpectralType.VOPT, SpectralUnit.KMS, 5100, 5400, SpectralSystem.LSRD],
+        [SpectralType.VRAD, SpectralUnit.MS, 5100000, 5400000, SpectralSystem.BARY],
+        [SpectralType.FREQ, SpectralUnit.GHZ, 226.4589, 226.6818, SpectralSystem.TOPO],
+        [SpectralType.WAVE, SpectralUnit.MM, 1.32253, 1.32384, SpectralSystem.BARY]
+    ])("sends channel bounds and standard of rest when using %s in %s", (spectralType, spectralUnit, min, max, spectralSystem) => {
         const {frame, appStore, widgetStore} = createWidgetStore(false);
         runInAction(() => {
             frame.findChannelIndexByValue = jest.fn((value: number) => (value === min ? 1 : 0));
             frame.spectralType = spectralType;
             frame.spectralUnit = spectralUnit;
+            frame.spectralSystem = spectralSystem;
             widgetStore.channelValueRange = [min, max];
         });
         widgetStore.requestMoment();
         const request = appStore.requestMoment.mock.calls[0][0];
         const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
-        expect(decoded.spectralSystem).toBe(SpectralSystem.LSRK);
+        expect(decoded.spectralSystem).toBe(spectralSystem);
         expect(decoded.spectralRange?.min).toBe(0);
         expect(decoded.spectralRange?.max).toBe(1);
     });
