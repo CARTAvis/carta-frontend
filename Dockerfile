@@ -2,11 +2,12 @@ FROM emscripten/emsdk:4.0.3
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Install build dependencies and update TLS certificates
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         bash curl wget git python3 make cmake \
-        gcc g++ pkg-config ca-certificates && \
+        gcc g++ pkg-config ca-certificates openssl && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 22 and 24
