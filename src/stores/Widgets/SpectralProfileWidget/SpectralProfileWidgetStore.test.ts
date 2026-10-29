@@ -11,7 +11,7 @@ import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
-describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () => {
+describe("SpectralProfileWidgetStore moments", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
 
     const createWidgetStore = (isSpectralAxisNonlinear: boolean) => {
@@ -39,12 +39,12 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             restFreqStore: {restFreqInHz: undefined},
             setIsRequestingMoments: jest.fn(),
             spectralType: SpectralType.FREQ,
-            spectralSystem: SpectralSystem.LSRK,
+            spectralSystem: SpectralSystem.LSRK as SpectralSystem | null | undefined,
             spectralTypeSecondary: SpectralType.FREQ,
             spectralUnit: SpectralUnit.GHZ,
             spectralUnitSecondary: SpectralUnit.GHZ,
             spectralUnitStr: SpectralUnit.GHZ,
-            spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}}
+            spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}, specsys: SpectralSystem.LSRK}
         });
         const appStore = {
             activeFrame: frame,
@@ -135,6 +135,18 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         expect(decoded.spectralSystem).toBe(SpectralSystem.LSRK);
         expect(decoded.spectralRange?.min).toBe(0);
         expect(decoded.spectralRange?.max).toBe(1);
+    });
+
+    test.each([null, undefined])("uses the native spectral system when the selected system is %s", spectralSystem => {
+        const {frame, appStore, widgetStore} = createWidgetStore(false);
+        runInAction(() => {
+            frame.spectralSystem = spectralSystem;
+            frame.spectralAxis.specsys = SpectralSystem.LSRD;
+        });
+        widgetStore.requestMoment();
+        const request = appStore.requestMoment.mock.calls[0][0];
+        const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
+        expect(decoded.spectralSystem).toBe(SpectralSystem.LSRD);
     });
 });
 

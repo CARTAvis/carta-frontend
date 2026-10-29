@@ -364,8 +364,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
             if (channelIndex1 !== undefined && channelIndex2 !== undefined && isFinite(channelIndex1) && isFinite(channelIndex2)) {
                 const channelIndexRange = {
-                    min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
-                    max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
+                    min: Math.min(channelIndex1, channelIndex2),
+                    max: Math.max(channelIndex1, channelIndex2)
                 };
                 const regionId = this.momentRegionId === RegionId.ACTIVE ? (this.effectiveFrame?.regionSet?.focusedRegion?.regionId ?? RegionId.CURSOR) : this.momentRegionId;
                 const requestMessage: CARTA.MomentRequest.$Properties = {
