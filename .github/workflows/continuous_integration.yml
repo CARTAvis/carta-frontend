@@ -50,7 +50,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container:
-      image: carta/frontend-builder-test
+      image: carta/frontend-builder
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
@@ -103,7 +103,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container:
-      image: carta/frontend-builder-test
+      image: carta/frontend-builder
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
