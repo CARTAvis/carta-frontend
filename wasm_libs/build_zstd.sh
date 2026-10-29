@@ -24,10 +24,10 @@ cd zstd/build/single_file_libs
 ./create_single_file_decoder.sh
 
 echo "Compiling to LLVM bitcode"
-cd ../../
+cd ../..
 mkdir -p build
 cd build
-emcc -O3 -g0 -msimd128 ../contrib/single_file_decoder/zstddeclib.c -c -o ./standalone_zstd.a
+emcc -O3 -g0 -msimd128 ../build/single_file_libs/zstddeclib.c -c -o ./standalone_zstd.a
 echo "Checking for Zstd bitcode..."
 if [[ $(find -L ./standalone_zstd.a -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
