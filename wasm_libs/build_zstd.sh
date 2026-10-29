@@ -20,7 +20,7 @@ fi
 mkdir -p zstd; tar -xf zstd-1.5.7.tar.gz --directory ./zstd --strip-components=1
 
 echo "Creating single file decoder source"
-cd zstd/contrib/single_file_decoder
+cd zstd/build/single_file_libs
 ./create_single_file_decoder.sh
 
 echo "Compiling to LLVM bitcode"
