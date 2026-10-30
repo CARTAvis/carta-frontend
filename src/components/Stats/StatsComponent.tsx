@@ -186,7 +186,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     private getWidgetBeamProperties = () => {
         const frame = this.widgetStore.effectiveFrame;
-        return frame ? frame.getBeamProperties(this.getEffectiveStokes(frame)) : null;
+        return frame ? frame.getBeamProperties({stokes: this.getEffectiveStokes(frame)}) : null;
     };
 
     private formatTableValue = (value: number | null | undefined, unit: string): StatsTableValue => {
