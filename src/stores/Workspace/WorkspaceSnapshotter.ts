@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WorkspaceItemKind} from "enums";
+import {ImageType, RegionOpacity, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
@@ -151,6 +151,29 @@ export class WorkspaceSnapshotter {
         }
         workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
         workspaceFile.intensityUnit = frame.intensityUnit;
+        const restFreqStore = frame.restFreqStore;
+        const restFreq = restFreqStore?.customRestFreq;
+        if (restFreq && !restFreqStore.isInvalidInput && (restFreq.value !== restFreqStore.headerRestFreq.value || restFreq.unit !== restFreqStore.headerRestFreq.unit)) {
+            workspaceFile.restFrequency = {value: restFreq.value, unit: restFreq.unit};
+        }
+        if (frame.isRestFrameSupported) {
+            workspaceFile.restFrame = {
+                // a shift the controls rejected leaves the axis uncorrected, as it is saved
+                enabled: frame.isRestFrameEnabled && frame.isRestFrameShiftInputValid,
+                redshift: frame.restFrameRedshift,
+                shiftMode: frame.restFrameShiftMode,
+                velocityConvention: frame.restFrameVelocityConvention
+            };
+        }
+
+        if (frame.beamProperties) {
+            const beam = frame.overlayBeamSettings;
+            workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
+        }
+        // Like regions, offset coordinates are the image's own only while it is not matched to another one.
+        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        }
 
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
@@ -199,7 +222,8 @@ export class WorkspaceSnapshotter {
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
-                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
+                opacity: region.opacity === RegionOpacity.Visible ? undefined : region.opacity
             }));
     }
 

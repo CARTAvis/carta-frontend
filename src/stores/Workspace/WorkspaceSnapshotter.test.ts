@@ -25,6 +25,11 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         spectralCoordinateSecondary: "Channel",
         spectralSystem: "LSRK",
         intensityUnit: "Jy/beam",
+        restFreqStore: {headerRestFreq: {value: 1.42, unit: "GHz"}, customRestFreq: {value: 1.42, unit: "GHz"}, isInvalidInput: false},
+        isRestFrameSupported: false,
+        beamProperties: undefined,
+        isOffsetCoord: false,
+        offsetCenter: undefined,
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
@@ -136,6 +141,65 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.files?.[0]).not.toHaveProperty("spectralCoordinateSecondary");
     });
 
+    test("captures the rest frequency, rest frame, beam and offset coordinates an image is shown with", () => {
+        const frame = createFrame(0, {
+            restFreqStore: {headerRestFreq: {value: 1.42, unit: "GHz"}, customRestFreq: {value: 230.5, unit: "GHz"}, isInvalidInput: false},
+            isRestFrameSupported: true,
+            isRestFrameEnabled: true,
+            isRestFrameShiftInputValid: true,
+            restFrameRedshift: 0.01,
+            restFrameShiftMode: "redshift",
+            restFrameVelocityConvention: "optical",
+            beamProperties: {},
+            overlayBeamSettings: {isVisible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
+            isOffsetCoord: true,
+            offsetCenter: {x: 5, y: 6},
+            skyRefIs: 1
+        });
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0]).toMatchObject({
+            restFrequency: {value: 230.5, unit: "GHz"},
+            restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
+            beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+        });
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("saves the rest frame as not applied while the shift entered for it is one the controls rejected", () => {
+        const frame = createFrame(0, {isRestFrameSupported: true, isRestFrameEnabled: true, isRestFrameShiftInputValid: false, restFrameRedshift: 0.01, restFrameShiftMode: "redshift", restFrameVelocityConvention: "optical"});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].restFrame).toEqual({enabled: false, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"});
+    });
+
+    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and hidden offset coordinates", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        for (const field of ["restFrequency", "restFrame", "beam", "offsetCoordinates"]) {
+            expect(workspace.files?.[0]).not.toHaveProperty(field);
+        }
+    });
+
+    test("leaves the offset coordinates of an image matched to another to that image", () => {
+        const reference = createFrame(0);
+        const matched = createFrame(1, {spatialReference: reference, isOffsetCoord: true, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+        createSession({frames: [reference, matched], activeFrame: reference, getFrame: (fileId: number) => [reference, matched][fileId]});
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[1]).not.toHaveProperty("offsetCoordinates");
+    });
+
     test("captures the sample width of a line region, and of no other kind", () => {
         const region = (regionId: number, regionType: CARTA.RegionType) => ({
             regionId,
@@ -156,6 +220,27 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.lineRegionSampleWidth)).toEqual([5, undefined]);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("captures how opaque a region is drawn, leaving it out for a region that is shown", () => {
+        const region = (regionId: number, opacity: number) => ({
+            regionId,
+            regionType: CARTA.RegionType.RECTANGLE,
+            rotation: 0,
+            controlPoints: [{x: 0, y: 0}],
+            name: "",
+            color: "#ffffff",
+            lineWidth: 2,
+            isLocked: false,
+            dashLength: 0,
+            opacity
+        });
+        const frame = createFrame(0, {regionSet: {regions: [region(1, 1), region(2, 0.5), region(3, 0)], focusedRegion: undefined}});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.opacity)).toEqual([undefined, 0.5, 0]);
     });
 
     test("captures a catalog against the image it is overlaid on", () => {
