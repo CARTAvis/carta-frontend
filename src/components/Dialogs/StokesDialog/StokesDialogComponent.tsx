@@ -88,7 +88,7 @@ export class StokesDialogComponent extends React.Component {
                         const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                         this.stokes = new Map();
                         fileBrowserStore.selectedFiles.forEach(async file => {
-                            if (fileBrowserStore.fileList?.directory && file.fileInfo?.name && file.hdu !== undefined) {
+                            if (fileBrowserStore.fileList?.directory != null && file.fileInfo?.name && file.hdu !== undefined) {
                                 const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
                                 if (stokes) {
                                     this.setStokes(file.fileInfo.name, stokes);
@@ -253,7 +253,7 @@ export class StokesDialogComponent extends React.Component {
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
-            if (fileBrowserStore.fileList?.directory) {
+            if (fileBrowserStore.fileList?.directory != null) {
                 if (!fileBrowserStore.isAppendingFrame || !frames.length) {
                     await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
                 } else {

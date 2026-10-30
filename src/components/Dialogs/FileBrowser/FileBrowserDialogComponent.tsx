@@ -155,7 +155,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -178,7 +178,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -212,7 +212,7 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
 
@@ -223,13 +223,13 @@ export class FileBrowserDialogComponent extends React.Component {
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             const directory = fileBrowserStore.catalogFileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No catalog directory selected");
             }
             yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS);
         } else {
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
             fileBrowserStore.setImportingRegions(true);
@@ -277,7 +277,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const restFreq = activeFrame.headerRestFreq === fileBrowserStore.saveRestFreqInHz ? NaN : fileBrowserStore.saveRestFreqInHz;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -311,7 +311,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             const filename = exportFilename.trim();
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
             await this.exportRegion(directory, filename);
@@ -348,7 +348,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 const filename = exportFilename.trim();
                 const directory = fileBrowserStore.fileList?.directory;
-                if (!directory) {
+                if (directory == null) {
                     throw new Error("No directory selected");
                 }
                 await this.exportRegion(directory, filename, true);
@@ -952,7 +952,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                     <AnchorButton
                                         icon="repeat"
                                         onClick={() => {
-                                            if (fileList?.directory) {
+                                            if (fileList?.directory != null) {
                                                 fileBrowserStore.selectFolder(fileList.directory, true);
                                             }
                                         }}
