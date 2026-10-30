@@ -105,10 +105,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let dataset: Map<number, ProcessedColumnData> | undefined;
         let numVisibleRows = 0;
         if (profileStore && catalogDisplayStore) {
-            dataset = profileStore.catalogData;
-            numVisibleRows = profileStore.numVisibleRows;
+            dataset = profileStore.rows.data;
+            numVisibleRows = profileStore.rows.visibleRowCount;
             if (profileStore.regionSelected && catalogDisplayStore.isShowingSelectedData) {
-                if (profileStore.isFileBasedCatalog) {
+                // Rows the table orders itself are shown through that order; the rest are shown as they are.
+                if (!profileStore.rows.tableOrder) {
                     dataset = profileStore.selectedData;
                 }
                 numVisibleRows = profileStore.regionSelected;
@@ -120,7 +121,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get isPlotButtonEnabled(): boolean {
         const profileStore = this.profileStore;
         const catalogDisplayStore = this.displayStore;
-        const isEnabled = !profileStore?.isLoadingData && !profileStore?.isUpdatingDataStream && catalogDisplayStore?.xAxis !== CatalogOverlay.NONE;
+        const isEnabled = !profileStore?.rows.isLoading && !profileStore?.rows.isStreaming && catalogDisplayStore?.xAxis !== CatalogOverlay.NONE;
         if (catalogDisplayStore?.catalogPlotType === CatalogPlotType.Histogram) {
             return isEnabled;
         } else {
@@ -161,7 +162,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 if (profileStore) {
                     let progressString = "";
                     const fileName = profileStore.catalogInfo.fileInfo.name;
-                    const progress = profileStore.progress;
+                    const progress = profileStore.rows.progress;
                     if (progress && isFinite(progress) && progress < 1) {
                         progressString = `[${toFixed(progress * 100)}% complete]`;
                     }
@@ -243,7 +244,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const headerInfo = profileStore?.catalogControlHeader.get(columnName);
         const shouldDisplay = headerInfo?.display ?? false;
-        const isDisabled = profileStore?.isLoadingData;
+        const isDisabled = profileStore?.rows.isLoading;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <>
@@ -340,7 +341,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnWidths={columnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
-                cellRendererDependencies={[headerDisplays, profileStore.isLoadingData]} // trigger re-render on controlHeader change
+                cellRendererDependencies={[headerDisplays, profileStore.rows.isLoading]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
             </Table>
@@ -451,7 +452,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        const shouldPlotMoreRows = catalogDisplayStore.plottedImageOverlayMaxRows !== undefined && profileStore.maxRows > catalogDisplayStore.plottedImageOverlayMaxRows;
+        const shouldPlotMoreRows = catalogDisplayStore.plottedImageOverlayMaxRows !== undefined && profileStore.rows.rowLimit > catalogDisplayStore.plottedImageOverlayMaxRows;
         return (
             catalogDisplayStore.plottedImageOverlayXAxis !== catalogDisplayStore.xAxis ||
             catalogDisplayStore.plottedImageOverlayYAxis !== catalogDisplayStore.yAxis ||
@@ -581,7 +582,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnHeaders: profileStore.displayedColumnHeaders,
             numVisibleRows: catalogTable.numVisibleRows,
             columnWidths: validColumnWidths.length === expectedColumnCount ? validColumnWidths : undefined,
-            isLoadingCell: profileStore.isLoadingData,
+            isLoadingCell: profileStore.rows.isLoading,
             selectedDataIndex: profileStore.selectedPointIndices,
             shouldShowSelectedData: catalogDisplayStore.isShowingSelectedData,
             updateTableRef: this.onCatalogDataTableRefUpdated,
@@ -592,8 +593,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSelectedRow: this.onCatalogTableDataSelected,
             updateSortRequest: this.updateSortRequest,
             sortingInfo: {
-                columnName: profileStore.sortingInfo.columnName ?? "",
-                sortingType: profileStore.sortingInfo.sortingType
+                columnName: profileStore.rows.activeQuery.sortColumn ?? "",
+                sortingType: profileStore.rows.activeQuery.sortingType
             },
             shouldDisableSort: profileStore.isLoadingOntoImage,
             tableHeaders: profileStore.catalogHeader,
@@ -602,25 +603,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             applyFilterWithEnter: this.handleFilterRequest
         };
 
-        if (!profileStore.isFileBasedCatalog) {
-            const store = profileStore as CatalogOnlineQueryProfileStore;
-            dataTableProps.sortedIndexMap = store.sortedIndexMap;
+        const tableOrder = profileStore.rows.tableOrder;
+        if (tableOrder) {
+            dataTableProps.sortedIndexMap = tableOrder;
             const selected = profileStore.selectedPointIndices.slice().sort((a, b) => {
                 return a - b;
             });
-            dataTableProps.sortedIndices = profileStore.getSortedIndices(selected);
+            dataTableProps.sortedIndices = profileStore.rows.getSortedIndices(selected);
         }
 
         let startIndex = 0;
-        if (profileStore.numVisibleRows) {
+        if (profileStore.rows.visibleRowCount) {
             startIndex = 1;
         }
 
         const catalogFileDataSize = profileStore.catalogInfo.dataSize;
-        const maxRow = profileStore.maxRows;
+        const maxRow = profileStore.rows.rowLimit;
         const tableVisibleRows = catalogTable.numVisibleRows;
         let info = `Showing ${startIndex} to ${tableVisibleRows} of total ${catalogFileDataSize} entries`;
-        const filterDataSize = profileStore.filterDataSize;
+        const filterDataSize = profileStore.rows.filteredRowCount;
         if (profileStore.hasFilter && filterDataSize !== undefined && isFinite(filterDataSize)) {
             info = `Showing ${startIndex} to ${tableVisibleRows} of ${filterDataSize} filtered entries. Total ${catalogFileDataSize} entries`;
         }
@@ -790,7 +791,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <ClearableNumericInputComponent
                                     className={"catalog-max-rows"}
                                     label="Max rows"
-                                    value={profileStore.maxRows}
+                                    value={profileStore.rows.rowLimit}
                                     onValueChanged={val => profileStore.setMaxRows(val)}
                                     onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                     displayExponential={false}
