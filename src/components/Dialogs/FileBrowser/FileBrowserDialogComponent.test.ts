@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
 import {BrowserMode, FrequencyUnit} from "enums";
-import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile} from "stores";
+import {AppStore, FileBrowserStore, type ISelectedFile, StreamingRowSource} from "stores";
 import {type FrameStore} from "stores/Frame";
 
 import {FileBrowserDialogComponent} from "./FileBrowserDialogComponent";
@@ -75,7 +75,7 @@ describe("FileBrowserDialogComponent", () => {
             fileBrowserStore.browserMode = BrowserMode.Catalog;
             await component.loadFile({fileInfo: {name: "catalog.fits"}});
 
-            expect(appStore.appendCatalog).toHaveBeenCalledWith("", "catalog.fits", CatalogProfileStore.INIT_TABLE_ROWS);
+            expect(appStore.appendCatalog).toHaveBeenCalledWith("", "catalog.fits", StreamingRowSource.INIT_TABLE_ROWS);
         });
 
         test("imports regions", async () => {
