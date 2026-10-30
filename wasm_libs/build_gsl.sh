@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
 cd "${0%/*}"
-if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/null) ]]; then
-    echo "Fetching GSL 2.6"
-    gsl_tar="gsl-2.6.tar.gz"
+if ! [[ $(find gsl-2.8.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/null) ]]; then
+    echo "Fetching GSL 2.8"
+    gsl_tar="gsl-2.8.tar.gz"
     gsl_urls=(
         "https://ftpmirror.gnu.org/gsl/${gsl_tar}"
         "https://mirror.ossplanet.net/gnu/gsl/${gsl_tar}"
@@ -22,16 +22,16 @@ if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/nu
         fi
 
         rm -f "${gsl_tar}"
-        echo "Failed to fetch GSL 2.6 from ${gsl_url}"
+        echo "Failed to fetch GSL 2.8 from ${gsl_url}"
     done
 
     if [[ "${downloaded}" != true ]]; then
-        echo "Failed to fetch GSL 2.6."
+        echo "Failed to fetch GSL 2.8."
         exit 1
     fi
 fi
 
-mkdir -p gsl; tar -xf gsl-2.6.tar.gz --directory ./gsl --strip-components=1
+mkdir -p gsl; tar -xf gsl-2.8.tar.gz --directory ./gsl --strip-components=1
 
 cd gsl
 echo "Building GSL using Emscripten"
