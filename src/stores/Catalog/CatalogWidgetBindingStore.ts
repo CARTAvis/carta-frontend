@@ -1,7 +1,7 @@
 import {action, makeObservable, observable, observe} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
+import {describeCatalogSource, isWidgetWorkspaceConfigOf, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
 import type {CatalogPlotLayoutSettings, CatalogPlotWidgetStoreProps} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
 import type {WidgetsStore} from "stores/Widgets/WidgetsStore";
@@ -434,7 +434,7 @@ export class CatalogWidgetBindingStore {
         };
         const entries = Object.entries(catalogWidgets ?? {});
 
-        const tables = entries.filter(([, config]) => config.type === "catalog-overlay");
+        const tables = entries.flatMap(([widgetId, config]) => (isWidgetWorkspaceConfigOf(config, "catalog-overlay") ? [[widgetId, config] as const] : []));
         if (tables.length) {
             this.widgets().restoreCatalogWidgets(tables.map(([widgetId]) => widgetId));
         }
@@ -458,7 +458,7 @@ export class CatalogWidgetBindingStore {
             }
         }
 
-        for (const [widgetId, config] of entries.filter(([, entry]) => entry.type === "catalog-plot")) {
+        for (const [widgetId, config] of entries.flatMap(([plotId, entry]) => (isWidgetWorkspaceConfigOf(entry, "catalog-plot") ? [[plotId, entry] as const] : []))) {
             const state = Array.from(this.plots.values()).find(candidate => candidate.widgetId === widgetId);
             if (!state || config.catalogId === undefined) {
                 continue;

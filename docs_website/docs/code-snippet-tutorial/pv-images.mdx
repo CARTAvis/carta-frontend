@@ -16,7 +16,7 @@ const file = await app.openFile("[filename]");
 const region = await file.regionSet.addRegionAsync(1, [{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]);
 
 // Create a pv generator widget
-app.widgetsStore.createFloatingPvGeneratorWidget();
+app.widgetsStore.createFloatingWidgetOfType("pv-generator");
 
 // Get the PvGeneratorWidgetStore object
 const pvGeneratorWidget = app.widgetsStore.pvGeneratorWidgets.get("pv-generator-0");
