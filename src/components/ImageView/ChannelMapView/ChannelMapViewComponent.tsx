@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 import {ImageType} from "enums";
 import {type CursorInfo, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
+import {getChannelMapCell} from "utilities";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -46,7 +47,15 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const gapX = frame.channelMapInnerOverlayStore.gapX;
     const gapY = frame.channelMapInnerOverlayStore.gapY;
 
-    const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+    const channelMapLayout = {
+        numColumns: channelMapStore.numColumns,
+        outerPadding,
+        tileWidth: innerRenderWidth,
+        tileHeight: innerRenderHeight,
+        gapX,
+        gapY
+    };
+    const lastRow = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout).row;
 
     const onMouseEnter = () => {
         setImageToolbarVisible(true);
@@ -84,10 +93,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     }
 
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
-        const column = index % channelMapStore.numColumns;
-        const row = Math.floor(index / channelMapStore.numColumns);
-        const left = outerPadding.left + (innerRenderWidth + gapX) * column;
-        const top = outerPadding.top + (innerRenderHeight + gapY) * row;
+        const {column, row, left, top} = getChannelMapCell(index, channelMapLayout);
         const isCornerOverlay = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
 
         return (
@@ -203,8 +209,6 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
     const appStore = AppStore.Instance;
     const overlaySettings = appStore.overlaySettings;
     const channelMapStore = appStore.channelMapStore;
-    const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
-    const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
 
     const outerPadding = frame.channelMapOuterOverlayStore.padding;
     const innerPadding = frame.channelMapInnerOverlayStore.padding;
@@ -214,6 +218,17 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
     const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
     const gapX = frame.channelMapInnerOverlayStore.gapX;
     const gapY = frame.channelMapInnerOverlayStore.gapY;
+
+    const channelMapLayout = {
+        numColumns: channelMapStore.numColumns,
+        outerPadding,
+        tileWidth: innerRenderWidth,
+        tileHeight: innerRenderHeight,
+        gapX,
+        gapY
+    };
+    const lastCell = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout);
+    const {row: lastRow, column: columnOfLastFrame} = lastCell;
 
     const canvasRef = React.useRef<Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> | null>(null);
     const getCanvasRefMap = (): Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> => {
@@ -277,8 +292,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
     return (
         <>
             {channelMapStore.channelArray.map((channel, index) => {
-                const column = index % channelMapStore.numColumns;
-                const row = Math.floor(index / channelMapStore.numColumns);
+                const {column, row, left: cellLeft, top: cellTop} = getChannelMapCell(index, channelMapLayout);
 
                 let overlayType: "corner" | "left" | "bottom" | "inner";
                 if (column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow)) {
@@ -291,8 +305,8 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
                     overlayType = "inner";
                 }
 
-                const left = outerPadding.left + (innerRenderWidth + gapX) * column - innerPadding.left;
-                const top = outerPadding.top + (innerRenderHeight + gapY) * row - innerPadding.top;
+                const left = cellLeft - innerPadding.left;
+                const top = cellTop - innerPadding.top;
 
                 return overlayType !== "corner" ? (
                     <canvas
@@ -317,7 +331,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
                 }}
                 overlaySettings={overlaySettings}
                 overlayStore={frame.channelMapInnerOverlayStore}
-                top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
+                top={lastCell.top - innerPadding.top}
                 isDocked={isDocked}
                 channelMapDrawFunction={draw}
             />
