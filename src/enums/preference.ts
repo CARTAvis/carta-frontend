@@ -125,6 +125,8 @@ export enum PreferenceKeys {
     STATS_PANEL_ENABLED = "statsPanelEnabled",
     STATS_PANEL_MODE = "statsPanelMode",
 
+    STATISTICS = "statistics",
+
     TELEMETRY_UUID = "telemetryUuid",
     TELEMETRY_MODE = "telemetryMode",
     TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
