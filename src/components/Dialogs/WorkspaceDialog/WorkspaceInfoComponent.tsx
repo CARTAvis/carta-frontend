@@ -2,12 +2,19 @@ import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
 import {Callout, HTMLTable, NonIdealState, Spinner} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
-import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {useMap} from "usehooks-ts";
 
+import {describeImageSource, getWorkspaceFilePaths, type Workspace, type WorkspaceFile, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 import "./WorkspaceInfoComponent.scss";
+
+function getFileStatus(info: CARTA.FileInfoResponse.$Properties | undefined): string {
+    if (!info) {
+        return "not checked";
+    }
+    return info.success ? "valid" : "failed";
+}
 
 export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceListItem}) => {
     const {workspaceListItem} = props;
@@ -25,8 +32,20 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
 
             const appStore = AppStore.Instance;
             for (const file of workspace.files) {
+                // An image arithmetic expression names no file to look up, so it is left unchecked.
+                const paths = getWorkspaceFilePaths(file.source);
+                if (!paths.length) {
+                    continue;
+                }
+
                 try {
-                    const info = await appStore.backendService.getFileInfo(file.directory, file.filename, file.hdu);
+                    let info: CARTA.FileInfoResponse.$Properties = {success: true};
+                    for (const path of paths) {
+                        info = await appStore.backendService.getFileInfo(path.directory, path.filename, path.hdu);
+                        if (!info.success) {
+                            break;
+                        }
+                    }
                     workspaceFileInfoMapActions.set(file, info);
                 } catch (err) {
                     workspaceFileInfoMapActions.set(file, {success: false, message: err});
@@ -100,30 +119,33 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                         {spatialReference ? (
                             <tr className="entry">
                                 <td className="entry-title">Spatial reference</td>
-                                <td className="entry-value">{spatialReference.filename}</td>
+                                <td className="entry-value">{describeImageSource(spatialReference.source)}</td>
                             </tr>
                         ) : null}
                         {spectralReference ? (
                             <tr className="entry">
                                 <td className="entry-title">Spectral reference</td>
-                                <td className="entry-value">{spectralReference.filename}</td>
+                                <td className="entry-value">{describeImageSource(spectralReference.source)}</td>
                             </tr>
                         ) : null}
                         {rasterReference ? (
                             <tr className="entry">
                                 <td className="entry-title">Raster scaling reference</td>
-                                <td className="entry-value">{rasterReference.filename}</td>
+                                <td className="entry-value">{describeImageSource(rasterReference.source)}</td>
                             </tr>
                         ) : null}
                         <tr className="entry">
                             <td className="entry-title">Files</td>
                             <td className="entry-value">
                                 <ul>
-                                    {workspace.files.map(f => (
-                                        <li key={f.id}>
-                                            {f.filename} ({workspaceFileInfoMap.get(f)?.success ? "valid" : "failed"})
-                                        </li>
-                                    ))}
+                                    {workspace.files.map(f => {
+                                        const info = workspaceFileInfoMap.get(f);
+                                        return (
+                                            <li key={f.id}>
+                                                {describeImageSource(f.source)} ({getFileStatus(info)})
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </td>
                         </tr>
