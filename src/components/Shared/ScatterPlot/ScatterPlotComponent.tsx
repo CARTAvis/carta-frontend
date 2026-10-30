@@ -36,6 +36,7 @@ export class ScatterPlotComponentProps {
     isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
+    exportTitle?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     shouldShowTopAxis?: boolean;
@@ -437,7 +438,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
-        let comment = `# ${imageName} ${plotName}`;
+        let comment = `# ${imageName} ${this.props.exportTitle ?? plotName}`;
         if (this.props.xLabel) {
             comment += `\n# xLabel: ${this.props.xLabel}`;
         }
