@@ -34,6 +34,7 @@ describe("ImageViewSettingsPanelComponent beam placement", () => {
             activeFrame: undefined,
             overlaySettings: {...realApp.overlaySettings, beam: {selectedFileId: 23, isSelectedFrameValid: true, settingsForDisplay: beamSettings}},
             preferenceStore: realApp.preferenceStore,
+            imageViewConfigStore: realApp.imageViewConfigStore,
             channelMapStore: {isChannelMapEnabled: true, displayedFrame: {shouldShowBeamForAllChannels: !hasSelectedPerPlaneBeams}},
             getFrame,
             frameNames: [],
