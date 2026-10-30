@@ -1,19 +1,20 @@
+import {type MockInstance, rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {RegionOpacity} from "enums";
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             imageRatio: 1,
-            resetCursorRegionSpectralProfileProgress: jest.fn(),
-            resetRegionSpectralProfileProgress: jest.fn()
+            resetCursorRegionSpectralProfileProgress: rs.fn(),
+            resetRegionSpectralProfileProgress: rs.fn()
         }
     },
     FileBrowserStore: {
         Instance: {
             exportRegionIndexes: [],
-            updateExportRegionIndexes: jest.fn()
+            updateExportRegionIndexes: rs.fn()
         }
     },
     PreferenceStore: {
@@ -28,34 +29,34 @@ jest.mock("stores", () => ({
     }
 }));
 
-jest.mock("stores/Frame", () => {
+rs.mock("stores/Frame", () => {
     class PointAnnotationStore {
-        initializeStyles = jest.fn();
+        initializeStyles = rs.fn();
     }
 
     return {
         CURSOR_REGION_ID: 0,
-        CompassAnnotationStore: jest.fn(),
-        FrameStore: jest.fn(),
+        CompassAnnotationStore: rs.fn(),
+        FrameStore: rs.fn(),
         PointAnnotationStore,
-        RulerAnnotationStore: jest.fn(),
-        TextAnnotationStore: jest.fn(),
-        VectorAnnotationStore: jest.fn()
+        RulerAnnotationStore: rs.fn(),
+        TextAnnotationStore: rs.fn(),
+        VectorAnnotationStore: rs.fn()
     };
 });
 
-jest.mock("models", () => ({
-    Transform2D: jest.fn(),
-    isValidWcsPoint: jest.fn(() => true)
+rs.mock("models", () => ({
+    Transform2D: rs.fn(),
+    isValidWcsPoint: rs.fn(() => true)
 }));
 
 import {RegionSetStore} from "./RegionSetStore";
 import {CURSOR_REGION_ID} from "./RegionStore";
 
 const BACKEND_SERVICE = {
-    removeRegion: jest.fn(),
-    setCursor: jest.fn(),
-    setRegion: jest.fn(() => Promise.resolve({regionId: 100}))
+    removeRegion: rs.fn(),
+    setCursor: rs.fn(),
+    setRegion: rs.fn(() => Promise.resolve({regionId: 100}))
 };
 
 const PREFERENCE = {
@@ -100,11 +101,11 @@ const MakeRegionSet = () => {
 };
 
 describe("RegionSetStore multi-selection behavior", () => {
-    let consoleLogSpy: jest.SpyInstance;
+    let consoleLogSpy: MockInstance;
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        consoleLogSpy = jest.spyOn(console, "log").mockImplementation(jest.fn());
+        rs.clearAllMocks();
+        consoleLogSpy = rs.spyOn(console, "log").mockImplementation(rs.fn());
     });
 
     afterEach(() => {

@@ -1,7 +1,9 @@
+import {rs} from "@rstest/core";
+
 import {CatalogOnlineQueryConfigStore, type VizierItem} from "./CatalogOnlineQueryConfigStore";
 
-jest.mock("ast_wrapper", () => ({}));
-jest.mock("stores", () => ({
+rs.mock("ast_wrapper", () => ({}));
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             activeFrame: null,
@@ -9,12 +11,12 @@ jest.mock("stores", () => ({
         }
     }
 }));
-jest.mock("utilities", () => ({
-    ASTSettingsString: jest.fn(),
-    clamp: jest.fn(),
-    getPixelValueFromWCS: jest.fn(),
-    setAstSystem: jest.fn(),
-    transformPoint: jest.fn()
+rs.mock("utilities", () => ({
+    ASTSettingsString: rs.fn(),
+    clamp: rs.fn(),
+    getPixelValueFromWCS: rs.fn(),
+    setAstSystem: rs.fn(),
+    transformPoint: rs.fn()
 }));
 
 describe("CatalogOnlineQueryConfigStore VizieR selection", () => {

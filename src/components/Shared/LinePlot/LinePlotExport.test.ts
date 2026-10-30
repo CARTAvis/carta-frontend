@@ -7,7 +7,7 @@ import {LinePlotComponent, type LinePlotComponentProps} from "./LinePlotComponen
 
 describe("LinePlotComponent TSV export header", () => {
     const exportedFiles = (props: Partial<LinePlotComponentProps>) => {
-        const exportTsvFile = jest.spyOn(exportUtilities, "exportTsvFile").mockReturnValue(null);
+        const exportTsvFile = rs.spyOn(exportUtilities, "exportTsvFile").mockReturnValue(null);
         new LinePlotComponent({xLabel: "Channel", yLabel: "Value", ...props} as LinePlotComponentProps).exportData();
         const files = exportTsvFile.mock.calls.map(([imageName, plotName, content]) => ({imageName, plotName, firstLine: content.split("\n")[0], content}));
         exportTsvFile.mockRestore();

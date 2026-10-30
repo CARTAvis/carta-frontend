@@ -1,4 +1,5 @@
 import type React from "react";
+import {rs} from "@rstest/core";
 import {Actions} from "flexlayout-react";
 
 import {CatalogPlotType, CatalogSettingsTabs, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
@@ -17,15 +18,15 @@ describe("WidgetsStore PV preview test ids", () => {
         imageViewConfigStore: {visibleImages: []}
     };
     const layoutModelMock = {
-        doAction: jest.fn(),
-        getNodeById: jest.fn(),
-        visitNodes: jest.fn()
+        doAction: rs.fn(),
+        getNodeById: rs.fn(),
+        visitNodes: rs.fn()
     };
 
     beforeEach(() => {
-        (Actions as any).selectTab = jest.fn(tabNodeId => ({type: "FlexLayout_SelectTab", data: {tabNode: tabNodeId}}));
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStoreMock as any);
-        jest.spyOn(LayoutStore, "Instance", "get").mockReturnValue({layoutModel: layoutModelMock} as any);
+        (Actions as any).selectTab = rs.fn(tabNodeId => ({type: "FlexLayout_SelectTab", data: {tabNode: tabNodeId}}));
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStoreMock as any);
+        rs.spyOn(LayoutStore, "Instance", "get").mockReturnValue({layoutModel: layoutModelMock} as any);
         layoutModelMock.getNodeById.mockReset();
         layoutModelMock.doAction.mockReset();
         layoutModelMock.visitNodes.mockReset();
@@ -36,7 +37,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     afterEach(() => {
         (Actions as any).selectTab = originalSelectTab;
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("uses the docked tab id for PV preview test ids while preserving the parent widget id for rendering", () => {
@@ -247,7 +248,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("defers restored catalog display settings until this session selects a catalog", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const displayStore = {applyConfigWhenReady: rs.fn()};
         const widgetSettings = {catalogFileId: 7, catalogColor: "#123456", catalogShape: "circle", catalogSize: 14, widgetPosition: "top"};
 
         CatalogStore.Instance.catalogDisplayStores.set(1, displayStore as any);
@@ -270,7 +271,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("discards pending catalog display settings when manual selection does not match", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const displayStore = {applyConfigWhenReady: rs.fn()};
         const widgetSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red"};
         const catalogFileId = 12;
 
@@ -355,7 +356,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        rs.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
         const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
         const oldWidgetId = widgetsStore.addCatalogPlotWidget(props)!;
         const componentId = "catalog-plot-component-retained";
@@ -373,8 +374,8 @@ describe("WidgetsStore PV preview test ids", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const firstSettings = {catalogFileId: 3, catalogDirectory: "/catalogs", catalogFilename: "first.xml", color: "red", settingsTabId: CatalogSettingsTabs.COLOR};
         const secondSettings = {catalogFileId: 4, catalogDirectory: "/catalogs", catalogFilename: "second.xml", color: "blue"};
-        const firstDisplayStore = {applyConfigWhenReady: jest.fn()};
-        const secondDisplayStore = {applyConfigWhenReady: jest.fn()};
+        const firstDisplayStore = {applyConfigWhenReady: rs.fn()};
+        const secondDisplayStore = {applyConfigWhenReady: rs.fn()};
 
         (widgetsStore as any).initializeCatalogOverlayWidget(firstSettings, "catalog-overlay-0");
         (widgetsStore as any).initializeCatalogOverlayWidget(secondSettings, "catalog-overlay-1");
@@ -399,7 +400,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("restores catalog plots only to their matching catalogs", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        rs.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
         const props = {xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter};
         const firstPlotId = (widgetsStore as any).initializeCatalogPlotWidget(props, "catalog-plot-0", {
             ...props,
@@ -450,7 +451,7 @@ describe("WidgetsStore PV preview test ids", () => {
 
     test("prefers current catalog display fields over legacy fields when restoring", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const displayStore = {applyConfigWhenReady: jest.fn()};
+        const displayStore = {applyConfigWhenReady: rs.fn()};
         const widgetSettings = {
             catalogFileId: 7,
             catalogColor: "#123456",

@@ -1,15 +1,14 @@
 import * as React from "react";
-import {act, fireEvent, render, screen} from "@testing-library/react";
+import {rs} from "@rstest/core";
+import {fireEvent, render, screen} from "@testing-library/react";
 
 import {FrameScaling} from "enums";
 
 import {ScalingParameterControlComponent} from "./ScalingParameterControlComponent";
 
 describe("ScalingParameterControlComponent parameter isolation", () => {
-    test("renders an empty disabled parameter", async () => {
-        await act(async () => {
-            render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={jest.fn()} />);
-        });
+    test("renders an empty disabled parameter", () => {
+        render(<ScalingParameterControlComponent scaling={FrameScaling.GAMMA} min={0.01} max={10} value={undefined} disabled={true} onValueChange={rs.fn()} />);
 
         expect(screen.getByRole("spinbutton")).toBeDisabled();
         expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe("");
@@ -22,7 +21,7 @@ describe("ScalingParameterControlComponent parameter isolation", () => {
         [FrameScaling.GAMMA, 0.3, 0.123456789, "0.123457"]
     ])("displays scaling %s with at most six decimal places", (scaling, initialValue, value, expected) => {
         const originalWarn = console.warn.bind(console);
-        const consoleWarn = jest.spyOn(console, "warn").mockImplementation((...args) => {
+        const consoleWarn = rs.spyOn(console, "warn").mockImplementation((...args) => {
             // This precision test intentionally supplies a value outside NumericInput's step constraints.
             if (args[0] !== "[Blueprint] <NumericInput> controlled value prop does not adhere to stepSize, min, and/or max constraints.") {
                 originalWarn(...args);
@@ -30,7 +29,7 @@ describe("ScalingParameterControlComponent parameter isolation", () => {
         });
 
         try {
-            const onValueChange = jest.fn();
+            const onValueChange = rs.fn();
             const {rerender} = render(<ScalingParameterControlComponent scaling={scaling} min={0.01} max={10} value={initialValue} onValueChange={onValueChange} />);
 
             rerender(<ScalingParameterControlComponent scaling={scaling} min={0.01} max={10} value={value} onValueChange={onValueChange} />);
@@ -42,8 +41,8 @@ describe("ScalingParameterControlComponent parameter isolation", () => {
     });
 
     test("discards the focused input draft when the scaling changes", () => {
-        const gammaChange = jest.fn();
-        const {rerender} = render(<ScalingParameterControlComponent scaling={FrameScaling.LOG} min={0.1} max={1_000_000} value={1_000} onValueChange={jest.fn()} />);
+        const gammaChange = rs.fn();
+        const {rerender} = render(<ScalingParameterControlComponent scaling={FrameScaling.LOG} min={0.1} max={1_000_000} value={1_000} onValueChange={rs.fn()} />);
         const logInput = screen.getByRole("spinbutton");
         fireEvent.focus(logInput);
         fireEvent.change(logInput, {target: {value: "25"}});

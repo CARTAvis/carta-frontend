@@ -1,5 +1,7 @@
-jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()}
+import {rs} from "@rstest/core";
+
+rs.mock("components/Shared", () => ({
+    AppToaster: {show: rs.fn()}
 }));
 
 import {FrameScaling} from "enums";

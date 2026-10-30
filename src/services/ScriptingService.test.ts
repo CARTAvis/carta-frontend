@@ -1,20 +1,26 @@
-const MOCK_UNDEFINED_TARGET = Object.create({value: undefined});
+import {rs} from "@rstest/core";
 
-const MOCK_APP_STORE = {
-    acceptUndefined: (value: unknown) => value === undefined,
-    fetchParameter: (value: unknown) => value,
-    getObject: () => ({nested: {id: 7}}),
-    getResponse: (): any => [],
-    getScalar: () => 5,
-    noResponse: () => undefined,
-    nullResponse: () => null,
-    objectResponse: () => ({nested: {value: 42, undefinedValue: undefined}}),
-    undefinedTargets: [MOCK_UNDEFINED_TARGET]
-};
+import * as ReturnPathUtilities from "utilities/scripting/returnPath" with {rstest: "importActual"};
 
-jest.mock("stores", () => ({
+const MOCK_APP_STORE = rs.hoisted(() => {
+    const undefinedTarget = Object.create({value: undefined});
+    return {
+        acceptUndefined: (value: unknown) => value === undefined,
+        fetchParameter: (value: unknown) => value,
+        getObject: () => ({nested: {id: 7}}),
+        getResponse: (): any => [],
+        getScalar: () => 5,
+        noResponse: () => undefined,
+        nullResponse: () => null,
+        objectResponse: () => ({nested: {value: 42, undefinedValue: undefined}}),
+        undefinedTargets: [undefinedTarget]
+    };
+});
+
+rs.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE}
 }));
+rs.mock("utilities", () => ReturnPathUtilities);
 
 import type {CARTA} from "carta-protobuf";
 
@@ -35,11 +41,11 @@ describe("ScriptingService", () => {
     const scriptingService = new ScriptingService();
 
     beforeEach(() => {
-        jest.spyOn(console, "error").mockImplementation(() => undefined);
+        rs.spyOn(console, "error").mockImplementation(() => undefined);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test.each([

@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {afterEach, describe, expect, type Mock, rs, test} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
@@ -22,9 +22,9 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
-            findChannelIndexByValue: jest.fn((value: number) => value),
-            getIntensityConfig: jest.fn(() => intensityConfig),
-            getRegion: jest.fn(),
+            findChannelIndexByValue: rs.fn((value: number) => value),
+            getIntensityConfig: rs.fn(() => intensityConfig),
+            getRegion: rs.fn(),
             hasStokes: false,
             headerUnit: "Jy/beam",
             intensityConfig,
@@ -35,9 +35,9 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             regionSet: {focusedRegion: undefined, regions: [], regionMap: new Map()},
             requiredPolarization: Polarizations.I,
             requiredUnit: "Jy/beam",
-            resetMomentRequestState: jest.fn(),
+            resetMomentRequestState: rs.fn(),
             restFreqStore: {restFreqInHz: undefined},
-            setIsRequestingMoments: jest.fn(),
+            setIsRequestingMoments: rs.fn(),
             spectralType: SpectralType.FREQ,
             spectralTypeSecondary: SpectralType.FREQ,
             spectralUnit: SpectralUnit.GHZ,
@@ -50,21 +50,21 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             focusedRegion: undefined,
             frameNames: [],
             frames: [frame],
-            getFrame: jest.fn(() => frame),
-            getFrameName: jest.fn(() => "test.fits"),
-            requestMoment: jest.fn(),
+            getFrame: rs.fn(() => frame),
+            getFrameName: rs.fn(() => "test.fits"),
+            requestMoment: rs.fn(),
             spatialAndSpectalMatchedFileIds: [],
             spectralProfiles: new Map()
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
-        jest.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        rs.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
         widgetStore = new SpectralProfileWidgetStore();
         return {frame, appStore, widgetStore};
     };
 
     afterEach(() => {
         widgetStore?.dispose();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("keeps every moment available and selected on a linear spectral axis", () => {
@@ -136,8 +136,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
-            getIntensityConfig: jest.fn(() => intensityConfig),
-            getRegion: jest.fn(),
+            getIntensityConfig: rs.fn(() => intensityConfig),
+            getRegion: rs.fn(),
             hasStokes: false,
             headerUnit: nativeIntensityUnit,
             intensityConfig,
@@ -154,18 +154,18 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             spectralUnitStr: spectralUnit,
             spectralLabel: `Frequency (${spectralUnit})`,
             spectralAxis: {type: {code: spectralType, unit: spectralUnit}},
-            convertSettingWCSToFreqMHz: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
-            convertFreqMHzToSettingWCS: jest.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
-            convertSettingWCSToFreqMHzArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values),
-            convertFreqMHzToSettingWCSArray: jest.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values)
+            convertSettingWCSToFreqMHz: rs.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertFreqMHzToSettingWCS: rs.fn((value: number, _type?: SpectralType, _unit?: SpectralUnit): number | undefined => value),
+            convertSettingWCSToFreqMHzArray: rs.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values),
+            convertFreqMHzToSettingWCSArray: rs.fn((values: number[], _type?: SpectralType, _unit?: SpectralUnit): number[] | undefined => values)
         };
         const appStore = {
             activeFrame: frame,
             focusedRegion: undefined,
             frameNames: [],
             frames: [frame],
-            getFrame: jest.fn(() => frame),
-            getFrameName: jest.fn(() => "test.fits"),
+            getFrame: rs.fn(() => frame),
+            getFrameName: rs.fn(() => "test.fits"),
             spatialAndSpectalMatchedFileIds: [],
             spectralProfiles: new Map([
                 [
@@ -174,21 +174,21 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
                         [
                             0,
                             {
-                                getProfile: jest.fn(() => ({progress: 1, values: new Float32Array([4, 8])}))
+                                getProfile: rs.fn(() => ({progress: 1, values: new Float32Array([4, 8])}))
                             }
                         ]
                     ])
                 ]
             ])
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
         widgetStore = new SpectralProfileWidgetStore();
         return {frame, widgetStore};
     };
 
     afterEach(() => {
         widgetStore?.dispose();
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("converts frequency coordinates in both directions without changing the redshift-zero identity", () => {
@@ -470,7 +470,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         widgetStore.setRestFrameRedshift(1);
         widgetStore.setXAxisRestFrameEnabled(true);
         widgetStore.setYAxisRestFrameEnabled(true);
-        (GSL.fitting as jest.Mock).mockReturnValueOnce({
+        (GSL.fitting as Mock).mockReturnValueOnce({
             yIntercept: 0,
             yInterceptError: 0,
             slope: 0,

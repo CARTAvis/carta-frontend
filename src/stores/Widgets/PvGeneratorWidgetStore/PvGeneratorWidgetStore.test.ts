@@ -12,23 +12,23 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         const frame = {
             isSpectralAxisNonlinear,
             channelValueBounds: {min: 0, max: 10},
-            findChannelIndexByValue: jest.fn((value: number) => value),
+            findChannelIndexByValue: rs.fn((value: number) => value),
             frameInfo: {fileId: 3},
-            getRegion: jest.fn(() => region),
+            getRegion: rs.fn(() => region),
             regionSet: {focusedRegion: undefined, regions: [region]},
-            resetPvRequestState: jest.fn(),
-            setIsRequestingPV: jest.fn()
+            resetPvRequestState: rs.fn(),
+            setIsRequestingPV: rs.fn()
         };
-        const appStore = {activeFrame: frame, frames: [frame], getFrame: jest.fn(() => frame), focusedRegion: undefined, requestPV: jest.fn(), requestPreviewPV: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
-        jest.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
+        const appStore = {activeFrame: frame, frames: [frame], getFrame: rs.fn(() => frame), focusedRegion: undefined, requestPV: rs.fn(), requestPreviewPV: rs.fn()};
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
+        rs.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
         const store = new PvGeneratorWidgetStore();
         store.setRegionId(ACTIVE_FILE_ID, region.regionId);
         return {store, appStore};
     };
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("requests neither a PV image nor a preview", () => {

@@ -11,25 +11,25 @@ describe("AppStore flows for a nonlinear spectral axis", () => {
     const nonlinearFrame = {isSpectralAxisNonlinear: true, frameInfo: {fileId: 5}} as unknown as FrameStore;
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("requestMoment rejects a coordinate-dependent moment without contacting the backend", async () => {
-        const requestMoment = jest.spyOn(appStore.backendService, "requestMoment").mockResolvedValue({} as CARTA.MomentResponse.$Properties);
+        const requestMoment = rs.spyOn(appStore.backendService, "requestMoment").mockResolvedValue({} as CARTA.MomentResponse.$Properties);
         await expect(appStore.requestMoment({fileId: 5, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]}, nonlinearFrame)).rejects.toThrow("Not available for nonlinear spectral axes");
         expect(requestMoment).not.toHaveBeenCalled();
     });
 
     test("requestPV and requestPreviewPV reject without contacting the backend", async () => {
-        const requestPV = jest.spyOn(appStore.backendService, "requestPV").mockResolvedValue({} as CARTA.PvResponse.$Properties);
+        const requestPV = rs.spyOn(appStore.backendService, "requestPV").mockResolvedValue({} as CARTA.PvResponse.$Properties);
         await expect(appStore.requestPV({fileId: 5, regionId: 1}, nonlinearFrame, false)).rejects.toThrow("Not available for nonlinear spectral axes");
         await expect(appStore.requestPreviewPV({fileId: 5, regionId: 1}, nonlinearFrame, "pv-generator-0-1")).rejects.toThrow("Not available for nonlinear spectral axes");
         expect(requestPV).not.toHaveBeenCalled();
     });
 
     test("saveFile rejects without contacting the backend", async () => {
-        jest.spyOn(appStore, "activeFrame", "get").mockReturnValue(nonlinearFrame);
-        const saveFile = jest.spyOn(appStore.backendService, "saveFile").mockResolvedValue({} as CARTA.SaveFileAck.$Properties);
+        rs.spyOn(appStore, "activeFrame", "get").mockReturnValue(nonlinearFrame);
+        const saveFile = rs.spyOn(appStore.backendService, "saveFile").mockResolvedValue({} as CARTA.SaveFileAck.$Properties);
         await expect(appStore.saveFile("/tmp", "out.fits", CARTA.FileType.FITS)).rejects.toThrow("Not available for nonlinear spectral axes");
         expect(saveFile).not.toHaveBeenCalled();
     });

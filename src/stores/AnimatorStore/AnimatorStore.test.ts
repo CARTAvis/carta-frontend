@@ -1,19 +1,31 @@
-const MOCK_APP_STORE = {
-    activeFrame: null as {frameInfo: {fileInfoExtended: {depth: number; stokes: number}}} | null,
-    activeImageIndex: 3,
-    imageViewConfigStore: {imageNum: 5},
-    setActiveImageByIndex: jest.fn()
-};
+import {rs} from "@rstest/core";
 
-const MOCK_TIME_SERIES_STORE = {
-    elements: [] as unknown[],
-    ensureActiveElement: jest.fn()
-};
+import * as AnimationPlayback from "models/AnimationPlayback/AnimationPlayback" with {rstest: "importActual"};
 
-jest.mock("stores", () => ({
+const {MOCK_APP_STORE, MOCK_TIME_SERIES_STORE} = rs.hoisted(() => ({
+    MOCK_APP_STORE: {
+        activeFrame: null as {frameInfo: {fileInfoExtended: {depth: number; stokes: number}}} | null,
+        activeImageIndex: 3,
+        imageViewConfigStore: {imageNum: 5},
+        setActiveImageByIndex: rs.fn()
+    },
+    MOCK_TIME_SERIES_STORE: {
+        elements: [] as unknown[],
+        ensureActiveElement: rs.fn()
+    }
+}));
+
+rs.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE},
     PreferenceStore: {Instance: {}},
     TimeSeriesStore: {Instance: MOCK_TIME_SERIES_STORE}
+}));
+rs.mock("models", () => AnimationPlayback);
+rs.mock("utilities", () => ({
+    clamp: (value: number, min: number, max: number) => Math.min(Math.max(value, min), max),
+    GetRequiredTiles: rs.fn(),
+    getTransformedChannelList: rs.fn(),
+    mapToObject: rs.fn()
 }));
 
 import {AnimationMode, PlayMode} from "enums";

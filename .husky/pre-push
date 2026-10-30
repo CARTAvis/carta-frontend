@@ -12,6 +12,7 @@ npm run checkformat
 
 echo "[pre-push] Running tests..."
 npm run test
+npm run test:leaks
 
 while read -r local_ref local_sha remote_ref remote_sha; do
     [ -z "$local_sha" ] && continue
