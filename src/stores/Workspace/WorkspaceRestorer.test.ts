@@ -1,4 +1,5 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {observable, runInAction} from "mobx";
 
 import {CatalogSystemType, ImageType, RadiusUnits, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
@@ -6,22 +7,50 @@ import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
+/** What the restorer needs of an image's render config, with the cube histogram's progress observable as in the real store. */
+function createRenderConfig() {
+    const state = observable({isUsingCubeHistogram: false, cubeHistogramProgress: 0});
+    return {
+        get isUsingCubeHistogram() {
+            return state.isUsingCubeHistogram;
+        },
+        get cubeHistogramProgress() {
+            return state.cubeHistogramProgress;
+        },
+        applyConfig: jest.fn((config: {useCubeHistogram?: boolean}) => runInAction(() => (state.isUsingCubeHistogram = config.useCubeHistogram ?? false))),
+        updateSiblings: jest.fn(),
+        setStokesIndex: jest.fn(),
+        awaitCompleteCubeHistogram: jest.fn(),
+        keepRangeWithoutCubeHistogram: jest.fn(),
+        /** Report the cube histogram's progress, as the backend's messages do. */
+        reportCubeHistogramProgress: (progress: number) => runInAction(() => (state.cubeHistogramProgress = progress))
+    };
+}
+
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
-    return {
+    const frame = {
         frameInfo: {fileId},
         center: {x: 0, y: 0},
         isAxisZoomable: false,
         zoomLevel: 1,
         spatialReference: undefined,
-        setChannels: jest.fn(),
-        renderConfig: {applyConfig: jest.fn(), updateSiblings: jest.fn()},
+        setChannels: jest.fn((_channel: number, stokes: number) => {
+            frame.requiredPolarizationIndex = stokes;
+        }),
+        requiredPolarizationIndex: 0,
+        coordinateOptionsZ: [
+            {value: "Iz", label: "I"},
+            {value: "Qz", label: "Q"}
+        ],
+        renderConfig: createRenderConfig(),
         contourConfig: {applyConfig: jest.fn()},
         vectorOverlayConfig: {applyConfig: jest.fn()},
         applyContours: jest.fn(),
         applyVectorOverlay: jest.fn(),
         regionSet: {addExistingRegion: jest.fn(), selectSingleRegion: jest.fn()}
     };
+    return frame;
 }
 
 /**
@@ -83,6 +112,11 @@ function createSession() {
             return Promise.resolve(10);
         }),
         getFrame: jest.fn((fileId: number) => frames.get(fileId)),
+        requestCubeHistogram: jest.fn((_fileId?: number, _coordinate?: string) => {
+            calls.push("requestCubeHistogram");
+        }),
+        cancelCubeHistogramRequest: jest.fn(),
+        setWorkspaceLoadingStep: jest.fn(),
         frameMap: frames,
         setSpatialReference: jest.fn(),
         setSpectralReference: jest.fn(),
@@ -572,6 +606,97 @@ describe("WorkspaceRestorer", () => {
             kind: WorkspaceItemKind.Layout,
             subject: "",
             message: "Could not restore the layout the workspace was saved in"
+        });
+    });
+
+    describe("an image whose percentile range was taken from the cube histogram", () => {
+        const cubeImage = {...IMAGE, renderConfig: {useCubeHistogram: true, selectedPercentile: [99.5], scaleMin: [1], scaleMax: [2]}};
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        test("computes its cube histogram again while the catalogs open, and waits for it before the layout", async () => {
+            const {appStore, calls} = createSession();
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
+                calls.push("requestCubeHistogram");
+                const renderConfig = appStore.getFrame(fileId as number)!.renderConfig;
+                // Complete only once the catalogs have started opening.
+                setTimeout(() => {
+                    renderConfig.reportCubeHistogramProgress(0.5);
+                    setTimeout(() => {
+                        calls.push("cubeHistogramComplete");
+                        renderConfig.reportCubeHistogramProgress(1);
+                    }, 0);
+                }, 0);
+            });
+
+            const issues = await restore(createWorkspace({files: [cubeImage], catalogs: [CATALOG], layout: LAYOUT}));
+
+            const frame = appStore.frames[0];
+            expect(issues).toEqual([]);
+            expect(frame.renderConfig.awaitCompleteCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Iz");
+            expect(calls.indexOf("requestCubeHistogram")).toBeLessThan(calls.indexOf("appendCatalog"));
+            expect(calls.indexOf("cubeHistogramComplete")).toBeLessThan(calls.indexOf("applyLayout"));
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5});
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
+            expect(frame.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
+        });
+
+        test("asks for the cube histogram of the Stokes it is restored in, and files the result under it", async () => {
+            const {appStore} = createSession();
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
+                setTimeout(() => appStore.getFrame(fileId as number)!.renderConfig.reportCubeHistogramProgress(1), 0);
+            });
+
+            await restore(createWorkspace({files: [{...cubeImage, stokes: 1}]}));
+
+            const frame = appStore.frames[0];
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Qz");
+            expect(frame.renderConfig.setStokesIndex).toHaveBeenCalledWith(1);
+        });
+
+        test("asks for nothing when only its contours were taken from the cube histogram", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, renderConfig: {useCubeHistogramContours: true}}]}));
+
+            expect(appStore.requestCubeHistogram).not.toHaveBeenCalled();
+        });
+
+        test("leaves no image waiting on its cube histogram once a later load has taken over without clearing the session", async () => {
+            jest.useFakeTimers();
+            const {appStore} = createSession();
+
+            const pending = restoreIssues(createWorkspace({files: [cubeImage, {...cubeImage, id: 2, stokes: 1}]}));
+            await jest.advanceTimersByTimeAsync(0);
+            // A later load claims the session, then fails to fetch its workspace, so these images stay.
+            WorkspaceRestorer.claimGeneration();
+            await jest.advanceTimersByTimeAsync(60_000);
+            const issues = await pending;
+
+            const [first, second] = appStore.frames;
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(0);
+            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
+            // Never asked for, and restored in Q: the range kept is Q's.
+            expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(1);
+            expect(issues).toEqual([]);
+        });
+
+        test("keeps its saved range as a custom one when the backend stops reporting progress", async () => {
+            jest.useFakeTimers();
+            const {appStore} = createSession();
+
+            const pending = restore(createWorkspace({files: [cubeImage]}));
+            await jest.advanceTimersByTimeAsync(60_000);
+            const issues = await pending;
+
+            const frame = appStore.frames[0];
+            expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
+            expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range"]);
         });
     });
 });

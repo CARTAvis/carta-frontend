@@ -5,8 +5,11 @@ jest.mock("components/Shared", () => ({
 import {FrameScaling} from "enums";
 import {type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {RenderConfigStore} from "./RenderConfigStore";
+
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
 interface RenderConfigPreferenceOverrides {
     scalingAlphaLog: number;
@@ -130,6 +133,12 @@ describe("RenderConfigStore alpha validation", () => {
 });
 
 describe("RenderConfigStore workspace round trip", () => {
+    test("writes only fields the workspace schema declares", () => {
+        const renderConfig = createRenderConfig();
+
+        expect(undeclaredFields("workspace/render-config", WORKSPACE_SCHEMA.definitions["render-config"].properties, renderConfig.toConfig())).toEqual([]);
+    });
+
     test("returns the applied config", () => {
         const renderConfig = createRenderConfig();
         const config = {
@@ -151,6 +160,115 @@ describe("RenderConfigStore workspace round trip", () => {
 
         renderConfig.applyConfig(config);
 
-        expect(renderConfig.toConfig()).toEqual({...config, useCubeHistogram: false, useCubeHistogramContours: false});
+        expect(renderConfig.toConfig()).toEqual({...config, customColormapHexStart: "#000000", customColormapHexEnd: "#FFFFFF", useCubeHistogram: false, useCubeHistogramContours: false});
+    });
+});
+
+/** A histogram of four bins of one, spanning 0 to 5 as the store reads its edges. */
+const HISTOGRAM = {numBins: 4, binWidth: 1, firstBinCenter: 0.5, bins: [1, 1, 1, 1], mean: 2, stdDev: 1};
+
+describe("RenderConfigStore workspace restore", () => {
+    test("saves the colors of a custom colormap", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM);
+        renderConfig.setCustomHexStart("#112233");
+        renderConfig.setCustomHexEnd("#445566");
+
+        expect(renderConfig.toConfig()).toEqual(expect.objectContaining({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM, customColormapHexStart: "#112233", customColormapHexEnd: "#445566"}));
+    });
+
+    test("restores both colors of a custom colormap", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.applyConfig({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM, customColormapHexStart: "#112233", customColormapHexEnd: "#445566"});
+
+        expect(renderConfig.colorMap).toBe(RenderConfigStore.COLOR_MAPS_CUSTOM);
+        expect(renderConfig.customColormapHexStart).toBe("#112233");
+        expect(renderConfig.customColormapHexEnd).toBe("#445566");
+    });
+
+    test("keeps its own custom colormap colors when a workspace saved none", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.applyConfig({colorMap: RenderConfigStore.COLOR_MAPS_CUSTOM});
+
+        expect(renderConfig.customColormapHexStart).toBe("#000000");
+        expect(renderConfig.customColormapHexEnd).toBe("#FFFFFF");
+    });
+
+    test("restores a cube histogram percentile as saved, without taking it from the channel histogram", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.applyConfig({useCubeHistogram: true, useCubeHistogramContours: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+        renderConfig.updateChannelHistogram(HISTOGRAM);
+
+        expect(renderConfig.isUsingCubeHistogram).toBe(true);
+        expect(renderConfig.isUsingCubeHistogramContours).toBe(true);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
+    });
+
+    test("keeps a restored range while the cube histogram streams, and takes the percentile from the complete one", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+
+        renderConfig.awaitCompleteCubeHistogram();
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
+
+        renderConfig.updateCubeHistogram(HISTOGRAM, 1);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([0, 5]);
+    });
+
+    test("follows a streaming cube histogram when no restore is waiting for it", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([0, 5]);
+    });
+
+    test("keeps a restored range as a custom one when its cube histogram does not come", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [100], scaleMin: [-1], scaleMax: [9]});
+        renderConfig.awaitCompleteCubeHistogram();
+
+        renderConfig.keepRangeWithoutCubeHistogram();
+        renderConfig.updateChannelHistogram(HISTOGRAM);
+
+        expect(renderConfig.isUsingCubeHistogram).toBe(false);
+        expect(renderConfig.selectedPercentileVal).toBe(-1);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([-1, 9]);
+    });
+
+    test("keeps the range of the polarization it is told to, as a custom one", () => {
+        const renderConfig = createRenderConfig();
+        renderConfig.applyConfig({useCubeHistogram: true, selectedPercentile: [99.5, 100], scaleMin: [-1, -2], scaleMax: [9, 8]});
+
+        renderConfig.keepRangeWithoutCubeHistogram(1);
+
+        expect(renderConfig.selectedPercentile).toEqual([99.5, -1]);
+        expect(renderConfig.scaleMax).toEqual([9, 8]);
+    });
+
+    test("forgets that the cube histogram was asked for once it is cleared", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.markCubeHistogramRequested();
+        renderConfig.updateCubeHistogram(HISTOGRAM, 0.75);
+        expect(renderConfig.isCubeHistogramRequested).toBe(true);
+
+        renderConfig.updateCubeHistogram(null, 0);
+        expect(renderConfig.isCubeHistogramRequested).toBe(false);
+    });
+
+    test("keeps a restored custom range when a histogram arrives", () => {
+        const renderConfig = createRenderConfig();
+
+        renderConfig.applyConfig({selectedPercentile: [-1], scaleMin: [2], scaleMax: [3]});
+        renderConfig.updateChannelHistogram(HISTOGRAM);
+
+        expect(renderConfig.selectedPercentileVal).toBe(-1);
+        expect([renderConfig.scaleMinVal, renderConfig.scaleMaxVal]).toEqual([2, 3]);
     });
 });

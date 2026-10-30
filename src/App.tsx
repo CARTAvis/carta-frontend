@@ -71,17 +71,18 @@ export class App extends React.Component {
         const layoutClassName = classNames("layout-container", {"dark-theme": appStore.isDarkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.isDarkTheme);
+        const workspaceLoadingStep = appStore.isResumingSession ? undefined : appStore.workspaceLoadingStep;
 
         return (
             <div className={className}>
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent
-                    progress={0}
-                    timeRemaining={0}
+                    progress={workspaceLoadingStep?.progress ?? 0}
+                    timeRemaining={workspaceLoadingStep ? (appStore.estimatedTaskRemainingTime ?? 0) : 0}
                     isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
                     cancellable={false}
-                    text={appStore.isResumingSession ? "Resuming session..." : "Loading workspace..."}
+                    text={appStore.isResumingSession ? "Resuming session..." : workspaceLoadingStep ? `Loading workspace: ${workspaceLoadingStep.description}` : "Loading workspace..."}
                 />
                 <div className={layoutClassName}>
                     {layoutStore.layoutModel && (

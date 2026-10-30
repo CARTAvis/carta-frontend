@@ -46,6 +46,8 @@ export class RenderConfigStore {
     @observable isUsingCubeHistogram: boolean = false;
     @observable isUsingCubeHistogramContours: boolean = false;
     @observable cubeHistogramProgress: number = 0;
+    /** Whether the cube histogram has been asked for since it was last cleared, so that its progress means something. */
+    @observable isCubeHistogramRequested: boolean = false;
     @observable selectedPercentile: number[];
     @observable histChannel: number = 0;
     @observable stokesIndex: number = 0;
@@ -56,6 +58,8 @@ export class RenderConfigStore {
     @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
+    /** Set while a restore waits for the cube histogram, so that its partial results leave the saved range alone. */
+    private isAwaitingCompleteCubeHistogram = false;
 
     private frame: FrameStore;
 
@@ -326,6 +330,15 @@ export class RenderConfigStore {
     @action updateCubeHistogram = (histogram: CARTA.Histogram.$Properties | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
+        if (!histogram) {
+            this.isCubeHistogramRequested = false;
+        }
+        if (this.isAwaitingCompleteCubeHistogram) {
+            if (progress < 1) {
+                return;
+            }
+            this.isAwaitingCompleteCubeHistogram = false;
+        }
         if (this.selectedPercentile[this.stokesIndex] > 0 && this.isUsingCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
@@ -569,9 +582,8 @@ export class RenderConfigStore {
         if (config.colorMap) {
             this.setColorMap(config.colorMap);
         }
-        if (config.customColormapHexEnd) {
-            this.setCustomHexEnd(config.customColormapHexEnd);
-        }
+        this.customColormapHexStart = config.customColormapHexStart || this.customColormapHexStart;
+        this.customColormapHexEnd = config.customColormapHexEnd || this.customColormapHexEnd;
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = sanitizeScalingParameter(FrameScaling.GAMMA, config.gamma ?? this.gamma, this.gamma);
@@ -584,16 +596,46 @@ export class RenderConfigStore {
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;
-        // TODO: Handle cube histograms properly. For now, default to false
-        this.isUsingCubeHistogram = false;
-        this.isUsingCubeHistogramContours = false;
+        // Set as saved without asking for anything: the cube histogram is the restore's to ask for.
+        this.isUsingCubeHistogram = config.useCubeHistogram ?? false;
+        this.isUsingCubeHistogramContours = config.useCubeHistogramContours ?? false;
         this.updateSiblings();
+    };
+
+    /** Record that the cube histogram has been asked for. */
+    @action markCubeHistogramRequested = () => {
+        this.isCubeHistogramRequested = true;
+    };
+
+    /**
+     * Keep the range as it is until the cube histogram is complete, then take the percentile from it.
+     * A restore asks for this, since the range it applied is already what the cube histogram will give.
+     */
+    @action awaitCompleteCubeHistogram = () => {
+        this.isAwaitingCompleteCubeHistogram = true;
+    };
+
+    /**
+     * Give up on the cube histogram, and keep the range as a custom one, so that it no longer
+     * follows a histogram that is not coming.
+     *
+     * @param stokesIndex - The polarization whose range to keep: the one the image is in, which an
+     * image not yet in view may not have reported to this store.
+     */
+    @action keepRangeWithoutCubeHistogram = (stokesIndex: number = this.stokesIndex) => {
+        this.isAwaitingCompleteCubeHistogram = false;
+        this.isUsingCubeHistogram = false;
+        if (this.selectedPercentile[stokesIndex] > 0) {
+            this.selectedPercentile[stokesIndex] = -1;
+        }
     };
 
     public toConfig = (): WorkspaceRenderConfig => {
         return {
             scaling: this.scaling,
             colorMap: this.colorMap,
+            customColormapHexStart: this.customColormapHexStart,
+            customColormapHexEnd: this.customColormapHexEnd,
             bias: this.bias,
             contrast: this.contrast,
             gamma: this.gamma,

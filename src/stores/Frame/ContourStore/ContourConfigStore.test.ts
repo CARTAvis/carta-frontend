@@ -3,8 +3,11 @@ import {CARTA} from "carta-protobuf";
 import {ContourDashMode} from "enums/contour";
 import {type WorkspaceContourConfig} from "models/Workspace";
 import {type PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
+import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {ContourConfigStore} from "./ContourConfigStore";
+
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
 function createStore(isDefaultInverted: boolean): ContourConfigStore {
     const preference = {
@@ -55,6 +58,14 @@ describe("ContourConfigStore workspace colormap inversion", () => {
 });
 
 describe("ContourConfigStore workspace round trip", () => {
+    test("writes only fields the workspace schema declares", () => {
+        const store = createStore(false);
+        store.setEnabled(true);
+        store.applyConfig(createWorkspaceConfig(true));
+
+        expect(undeclaredFields("workspace/contour-config", WORKSPACE_SCHEMA.definitions["contour-config"].properties, store.toConfig()!)).toEqual([]);
+    });
+
     test("returns the applied config", () => {
         const store = createStore(false);
         store.setEnabled(true);
