@@ -162,6 +162,16 @@ const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | u
     } as any
 });
 
+test("annulus world axes follow the ellipse orientation on rectangular pixels", () => {
+    const frame = Object.create(FrameStore.prototype) as FrameStore;
+    Object.defineProperty(frame, "pixelUnitSizeArcsec", {value: {x: 120, y: 60}});
+    expect(frame.getAnnulusWcsSizeInArcsec({x: 3, y: 6}, 0)).toEqual({x: 180, y: 720});
+    expect(frame.getAnnulusWcsSizeInArcsec({x: 3, y: 6}, 90)).toEqual({x: 360, y: 360});
+    const diagonal = frame.getAnnulusWcsAxisScale(30);
+    expect(diagonal.x).toBeCloseTo(Math.hypot(60, 30 * Math.sqrt(3)));
+    expect(diagonal.y).toBeCloseTo(Math.hypot(60 * Math.sqrt(3), 30));
+});
+
 describe("FrameStore", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -1092,6 +1102,17 @@ describe("FrameStore.genRegionWcsProperties output", () => {
         numbers.setValidWcs(false);
         await overlay.setSystem(previousSystem);
         overlay.setValidWcs(false);
+    });
+
+    test("preserves rotated annulus axis sizes on rectangular pixels", () => {
+        const frame = makeFrame();
+        const points = [
+            {x: 10, y: 20},
+            {x: 4, y: 6},
+            {x: 2, y: 3}
+        ];
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ANNULUS, points, 0)).toBe('annulus(wcs:ICRS)[[10.5deg, 20.25deg], [6.0000000000", 6.0000000000"], [12.0000000000", 12.0000000000"], 0.000000deg]');
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ANNULUS, points, 90)).toBe('annulus(wcs:ICRS)[[10.5deg, 20.25deg], [4.0000000000", 9.0000000000"], [8.0000000000", 18.0000000000"], 90.000000deg]');
     });
 
     test("formats every region shape", () => {

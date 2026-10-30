@@ -118,10 +118,17 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
         const visibleControls = this.props.visibleControls ?? AppearanceForm.getControlsForRegion(region);
 
         return (
-            <div className="appearance-form">
+            <div className="appearance-form" data-testid="region-dialog-appearance-form">
                 {visibleControls.has(AppearanceControl.Color) && (
                     <FormGroup label="Color" inline={true}>
-                        <ColorPickerComponent color={region.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => this.apply(r => r.setColor(color.hex))} disableAlpha={true} darkTheme={this.props.darkTheme} />
+                        <ColorPickerComponent
+                            data-testid="region-dialog-color-button"
+                            color={region.color}
+                            presetColors={SWATCH_COLORS}
+                            setColor={(color: ColorResult) => this.apply(r => r.setColor(color.hex))}
+                            disableAlpha={true}
+                            darkTheme={this.props.darkTheme}
+                        />
                     </FormGroup>
                 )}
                 {visibleControls.has(AppearanceControl.LineWidth) && (
@@ -139,13 +146,22 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                 )}
                 {visibleControls.has(AppearanceControl.DashLength) && (
                     <FormGroup inline={true} label="Dash length" labelInfo="(px)">
-                        <SafeNumericInput placeholder="Dash length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
+                        <SafeNumericInput
+                            data-testid="region-dialog-dash-length-input"
+                            placeholder="Dash length"
+                            min={0}
+                            max={RegionStore.MAX_DASH_LENGTH}
+                            value={region.dashLength}
+                            stepSize={1}
+                            onValueChange={this.handleDashLengthChange}
+                        />
                     </FormGroup>
                 )}
                 {visibleControls.has(AppearanceControl.Font) && (
                     <>
                         <FormGroup inline={true} label="Font size" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-font-size-input"
                                 placeholder="Font size"
                                 min={0.5}
                                 max={100}
@@ -155,10 +171,16 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Font">
-                            <HTMLSelect options={Object.values(Font)} value={(this.props.region as TextAnnotationStore).font} onChange={ev => this.apply(r => (r as TextAnnotationStore).setFont(ev.target.value as Font))} />
+                            <HTMLSelect
+                                data-testid="region-dialog-font-select"
+                                options={Object.values(Font)}
+                                value={(this.props.region as TextAnnotationStore).font}
+                                onChange={ev => this.apply(r => (r as TextAnnotationStore).setFont(ev.target.value as Font))}
+                            />
                         </FormGroup>
                         <FormGroup inline={true} label="Font style">
                             <HTMLSelect
+                                data-testid="region-dialog-font-style-select"
                                 options={Object.values(FontStyle)}
                                 value={(this.props.region as TextAnnotationStore).fontStyle}
                                 onChange={ev => this.apply(r => (r as TextAnnotationStore).setFontStyle(ev.target.value as FontStyle))}
@@ -169,10 +191,11 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                 {visibleControls.has(AppearanceControl.Point) && (
                     <>
                         <FormGroup inline={true} label="Shape">
-                            <PointShapeSelectComponent handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
+                            <PointShapeSelectComponent data-testid="region-dialog-point-shape-button" handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
                         </FormGroup>
                         <FormGroup inline={true} label="Size" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-point-size-input"
                                 placeholder="Point size"
                                 min={0.5}
                                 max={50}
@@ -187,6 +210,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                     <>
                         <FormGroup inline={true} label="Arrowhead length" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-vector-arrowhead-length-input"
                                 placeholder="Length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
@@ -197,6 +221,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-vector-arrowhead-width-input"
                                 placeholder="Width"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
@@ -212,6 +237,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         <Label>North label offset</Label>
                         <FormGroup inline={true} label="X" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-north-label-x-offset-input"
                                 placeholder="North label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -222,6 +248,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-north-label-y-offset-input"
                                 placeholder="North label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -233,6 +260,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         <Label>East label offset</Label>
                         <FormGroup inline={true} label="X" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-east-label-x-offset-input"
                                 placeholder="East label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -243,6 +271,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-east-label-y-offset-input"
                                 placeholder="East label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -252,7 +281,11 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show arrowhead">
-                            <HTMLSelect value={AppearanceForm.getCompassArrowheadSelection(region as CompassAnnotationStore)} onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}>
+                            <HTMLSelect
+                                data-testid="region-dialog-compass-arrowhead-select"
+                                value={AppearanceForm.getCompassArrowheadSelection(region as CompassAnnotationStore)}
+                                onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
+                            >
                                 <option value={"north"}>North</option>
                                 <option value={"east"}>East</option>
                                 <option value={"both"}>Both</option>
@@ -260,6 +293,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Arrowhead length" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-compass-arrowhead-length-input"
                                 placeholder="Length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
@@ -270,6 +304,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-compass-arrowhead-width-input"
                                 placeholder="Width"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
@@ -284,6 +319,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                     <>
                         <FormGroup inline={true} label="Number of decimals">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-decimals-input"
                                 placeholder="Number of decimals"
                                 min={0}
                                 max={6}
@@ -294,12 +330,14 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary lines">
                             <Switch
+                                data-testid="region-dialog-ruler-auxiliary-lines-switch"
                                 checked={(region as RulerAnnotationStore).isAuxiliaryLineVisible}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => this.apply(r => (r as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked))}
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Auxiliary lines dash length" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-auxiliary-dash-length-input"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryLineVisible}
                                 placeholder="Dash length"
                                 min={0}
@@ -311,6 +349,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Text X offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-text-x-offset-input"
                                 placeholder="Text X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -321,6 +360,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Text Y offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-text-y-offset-input"
                                 placeholder="Text Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
                                 max={RegionStore.MAX_LABEL_OFFSET}
@@ -331,6 +371,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary labels">
                             <Switch
+                                data-testid="region-dialog-ruler-auxiliary-labels-switch"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryLineVisible}
                                 checked={(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => this.apply(r => (r as RulerAnnotationStore).setAuxiliaryTextVisible(ev.target.checked))}
@@ -338,6 +379,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="X label X offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-x-label-x-offset-input"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="X label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
@@ -349,6 +391,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="X label Y offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-x-label-y-offset-input"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="X label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
@@ -360,6 +403,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Y label X offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-y-label-x-offset-input"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="Y label X offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
@@ -371,6 +415,7 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                         </FormGroup>
                         <FormGroup inline={true} label="Y label Y offset" labelInfo="(px)">
                             <SafeNumericInput
+                                data-testid="region-dialog-ruler-y-label-y-offset-input"
                                 disabled={!(region as RulerAnnotationStore).isAuxiliaryTextVisible}
                                 placeholder="Y label Y offset"
                                 min={RegionStore.MIN_LABEL_OFFSET}
@@ -384,7 +429,12 @@ export class AppearanceForm extends React.Component<AppearanceFormProps> {
                 )}
                 {visibleControls.has(AppearanceControl.TextAlignment) && (
                     <FormGroup label="Text alignment" inline={true}>
-                        <HTMLSelect options={AppearanceForm.TextAlignmentOptions} value={(region as TextAnnotationStore).position} onChange={ev => this.apply(r => (r as TextAnnotationStore).setPosition(parseInt(ev.target.value)))} />
+                        <HTMLSelect
+                            data-testid="region-dialog-text-alignment-select"
+                            options={AppearanceForm.TextAlignmentOptions}
+                            value={(region as TextAnnotationStore).position}
+                            onChange={ev => this.apply(r => (r as TextAnnotationStore).setPosition(parseInt(ev.target.value)))}
+                        />
                     </FormGroup>
                 )}
             </div>
