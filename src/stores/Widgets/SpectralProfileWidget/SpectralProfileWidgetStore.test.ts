@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralSystem, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -11,7 +11,7 @@ import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
-describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () => {
+describe("SpectralProfileWidgetStore moments", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
 
     const createWidgetStore = (isSpectralAxisNonlinear: boolean) => {
@@ -22,7 +22,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
-            findChannelIndexByValue: jest.fn((value: number) => value),
+            findChannelIndexByValue: jest.fn((value: number) => (value === 100 ? 0 : 1)),
             getIntensityConfig: jest.fn(() => intensityConfig),
             getRegion: jest.fn(),
             hasStokes: false,
@@ -39,11 +39,12 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             restFreqStore: {restFreqInHz: undefined},
             setIsRequestingMoments: jest.fn(),
             spectralType: SpectralType.FREQ,
+            spectralSystem: SpectralSystem.LSRK as SpectralSystem | null | undefined,
             spectralTypeSecondary: SpectralType.FREQ,
             spectralUnit: SpectralUnit.GHZ,
             spectralUnitSecondary: SpectralUnit.GHZ,
             spectralUnitStr: SpectralUnit.GHZ,
-            spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}}
+            spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}, specsys: SpectralSystem.LSRK}
         });
         const appStore = {
             activeFrame: frame,
@@ -113,6 +114,40 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         expect(widgetStore.supportedSelectedMoments).toEqual([]);
         widgetStore.requestMoment();
         expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+        [SpectralType.VOPT, SpectralUnit.KMS, 5100, 5400, SpectralSystem.LSRD],
+        [SpectralType.VRAD, SpectralUnit.MS, 5100000, 5400000, SpectralSystem.BARY],
+        [SpectralType.FREQ, SpectralUnit.GHZ, 226.4589, 226.6818, SpectralSystem.TOPO],
+        [SpectralType.WAVE, SpectralUnit.MM, 1.32253, 1.32384, SpectralSystem.BARY]
+    ])("sends channel bounds and standard of rest when using %s in %s", (spectralType, spectralUnit, min, max, spectralSystem) => {
+        const {frame, appStore, widgetStore} = createWidgetStore(false);
+        runInAction(() => {
+            frame.findChannelIndexByValue = jest.fn((value: number) => (value === min ? 1 : 0));
+            frame.spectralType = spectralType;
+            frame.spectralUnit = spectralUnit;
+            frame.spectralSystem = spectralSystem;
+            widgetStore.channelValueRange = [min, max];
+        });
+        widgetStore.requestMoment();
+        const request = appStore.requestMoment.mock.calls[0][0];
+        const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
+        expect(decoded.spectralSystem).toBe(spectralSystem);
+        expect(decoded.spectralRange?.min).toBe(0);
+        expect(decoded.spectralRange?.max).toBe(1);
+    });
+
+    test.each([null, undefined])("uses the native spectral system when the selected system is %s", spectralSystem => {
+        const {frame, appStore, widgetStore} = createWidgetStore(false);
+        runInAction(() => {
+            frame.spectralSystem = spectralSystem;
+            frame.spectralAxis.specsys = SpectralSystem.LSRD;
+        });
+        widgetStore.requestMoment();
+        const request = appStore.requestMoment.mock.calls[0][0];
+        const decoded = CARTA.MomentRequest.decode(CARTA.MomentRequest.encode(request).finish());
+        expect(decoded.spectralSystem).toBe(SpectralSystem.LSRD);
     });
 });
 
