@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Changelog | API | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/api/next/changelog"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Changelog | API | CARTA Frontend Documentation"><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/api/next/changelog"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/next/changelog" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/api/next/changelog" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[]}</script><link rel="stylesheet" href="/carta-frontend/assets/css/styles.fffda85c.css">
-<script src="/carta-frontend/assets/js/runtime~main.37fafca7.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.e7c1a0a9.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.2cc1437f.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.c407b3ef.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -51,6 +51,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html" target
 <li class="">Fixed the 2D image fitting text exports putting the timestamp before the content name, unlike the other exports, and named all TSV, PNG and text exports with one <code>{file name}-{content}-{timestamp}</code> rule, which adds the image name to the profile fitting log (<a href="https://github.com/CARTAvis/carta-frontend/issues/2984" target="_blank" rel="noopener noreferrer" class="">#2984</a>).</li>
 <li class="">Fixed the misaligned column divider between the header and the rows of the Statistics widget for images with beam information (<a href="https://github.com/CARTAvis/carta-frontend/issues/2979" target="_blank" rel="noopener noreferrer" class="">#2979</a>).</li>
 <li class="">Fixed the missing WCS for images whose FITS header contains an entry without a keyword (<a href="https://github.com/CARTAvis/carta-frontend/issues/3024" target="_blank" rel="noopener noreferrer" class="">#3024</a>).</li>
+<li class="">Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder (<a href="https://github.com/CARTAvis/carta-frontend/issues/2964" target="_blank" rel="noopener noreferrer" class="">#2964</a>).</li>
 </ul>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="changed">Changed<a href="#changed" class="hash-link" aria-label="Direct link to Changed" title="Direct link to Changed" translate="no">​</a></h3>
 <ul>
