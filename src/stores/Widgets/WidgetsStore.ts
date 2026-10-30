@@ -27,8 +27,21 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
-import {type ConfigurableStore, CreateWidgetButton, type DefaultWidgetConfig, FlexLayoutDomMarker, getWidgetMap, type Persisted} from "models";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
+import {
+    type ConfigurableStore,
+    CreateWidgetButton,
+    type DefaultWidgetConfig,
+    FlexLayoutDomMarker,
+    getWidgetMap,
+    type IdentifiedWidgetStore,
+    type Persisted,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceIssue,
+    type WorkspacePlotWidgetConfig
+} from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
@@ -56,7 +69,14 @@ import {smoothStepOffset} from "utilities";
 export type {DefaultWidgetConfig} from "models";
 
 export class WidgetConfig implements DefaultWidgetConfig {
+    private static nextRenderKey = 0;
+
     id: string;
+    /**
+     * Unique to this config. A layout replaces each widget and its store under the same ID, so a
+     * floating widget keyed by this is mounted again and takes the new store its component caches.
+     */
+    readonly renderKey = `${WidgetConfig.nextRenderKey++}`;
     readonly type: string;
     readonly minWidth: number;
     readonly minHeight: number;
@@ -431,6 +451,80 @@ export class WidgetsStore {
     private static isDisposable = (store: unknown): store is Disposable => {
         return typeof (store as Disposable | undefined)?.dispose === "function";
     };
+
+    private static isIdentified = (store: unknown): store is IdentifiedWidgetStore => {
+        return typeof (store as IdentifiedWidgetStore | undefined)?.widgetId === "string";
+    };
+
+    /** A widget ID no other widget with one of its own has, starting from the one preferred. */
+    private uniqueWidgetId(preferredId: string): string {
+        const taken = new Set<string>();
+        this.widgetsMap.forEach(widgets =>
+            widgets.forEach(widgetStore => {
+                if (WidgetsStore.isIdentified(widgetStore)) {
+                    taken.add(widgetStore.widgetId);
+                }
+            })
+        );
+        let widgetId = preferredId;
+        for (let index = 1; taken.has(widgetId); index++) {
+            widgetId = `${preferredId}-${index}`;
+        }
+        return widgetId;
+    }
+
+    private static isWorkspaceConfigurable = (store: unknown): store is WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig> => {
+        return WidgetsStore.isIdentified(store) && typeof (store as Partial<WorkspaceConfigurableWidget<unknown>>).toWorkspaceConfig === "function";
+    };
+
+    /** What each profile, analysis and statistics widget shows, keyed by its widget ID. */
+    public savedPlotWidgets(ids: WorkspaceIdWriter): Record<string, WorkspacePlotWidgetConfig> {
+        const saved: Record<string, WorkspacePlotWidgetConfig> = {};
+        this.widgetsMap.forEach((widgets, widgetType) =>
+            widgets.forEach(widgetStore => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore)) {
+                    saved[widgetStore.widgetId] = {...widgetStore.toWorkspaceConfig(ids), type: widgetType} as WorkspacePlotWidgetConfig;
+                }
+            })
+        );
+        return saved;
+    }
+
+    /**
+     * Point each profile, analysis and statistics widget at the image and region a workspace says it
+     * showed. The rest follows with {@link restorePlotWidgets}, once the widgets have settled.
+     */
+    @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids));
+    }
+
+    /** Give each profile, analysis and statistics widget the rest of what a workspace says it showed. */
+    @action public restorePlotWidgets(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
+    }
+
+    /** Zoom each profile, analysis and statistics widget back to the range a workspace saved, once what it shows has settled. */
+    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
+        this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
+            widgetStore.applyWorkspaceView(config);
+            return [];
+        });
+    }
+
+    private restorePlotWidgetsBy(
+        plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined,
+        apply: (widgetStore: WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig>, config: WorkspacePlotWidgetConfig) => string[]
+    ): WorkspaceIssue[] {
+        const issues: WorkspaceIssue[] = [];
+        Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
+            this.widgetsMap.get(config.type)?.forEach(widgetStore => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
+                    apply(widgetStore, config).forEach(problem => issues.push({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`}));
+                }
+            });
+        });
+        return issues;
+    }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {
         const configurable = store as Partial<ConfigurableStore<object, Persisted<object>>> | undefined;
@@ -1399,6 +1493,9 @@ export class WidgetsStore {
             const widgetStore = createStore();
             if (widgetSettings && WidgetsStore.isConfigurable(widgetStore)) {
                 widgetStore.applyConfig(widgetSettings);
+            }
+            if (WidgetsStore.isIdentified(widgetStore)) {
+                widgetStore.widgetId = this.uniqueWidgetId(widgetStore.widgetId || id);
             }
             widgets.set(id, widgetStore);
         }

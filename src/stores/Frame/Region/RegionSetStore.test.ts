@@ -358,3 +358,37 @@ describe("RegionSetStore multi-selection behavior", () => {
         expect(second.isLocked).toBe(false);
     });
 });
+
+describe("RegionSetStore restoring an existing region", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.spyOn(console, "log").mockImplementation(jest.fn());
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("resolves once the backend has given the region the ID it keeps", async () => {
+        BACKEND_SERVICE.setRegion.mockResolvedValueOnce({regionId: 105});
+        const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+
+        const region = await regionSet.addExistingRegionAsync(
+            [
+                {x: 1, y: 1},
+                {x: 2, y: 2}
+            ],
+            0,
+            CARTA.RegionType.RECTANGLE,
+            3,
+            "saved",
+            "#123456",
+            2,
+            [0]
+        );
+
+        expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(1);
+        expect(region.regionId).toBe(105);
+        expect(region.color).toBe("#123456");
+    });
+});

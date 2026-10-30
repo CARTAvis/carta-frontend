@@ -8,8 +8,12 @@
  */
 export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
     "layout/animator": ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"],
-    "layout/histogram": ["meanRmsVisible"],
-    "layout/spectral-profiler": ["restFrameRedshift", "restFrameShiftMode", "restFrameVelocityConvention", "xAxisRestFrameEnabled", "yAxisRestFrameEnabled"],
+    "layout/histogram": ["widgetId", "meanRmsVisible", "settingsTabId", "autoBins"],
+    "layout/render-config": ["widgetId"],
+    "layout/spatial-profiler": ["widgetId", "markerTextVisible", "settingsTabId", "smoothing"],
+    "layout/spectral-profiler": ["widgetId", "restFrameShiftMode", "restFrameVelocityConvention", "markerTextVisible", "secondaryAxisCursorInfoVisible", "settingsTabId", "smoothing"],
+    "layout/stats": ["widgetId"],
+    "layout/stokes": ["widgetId", "invertedColorMap", "fractionalPolVisible", "referenceAxesVisible", "settingsTabId", "smoothing"],
     "workspace/contour-config": ["colormapInverted"],
     "workspace/vector-overlay-config": ["colormapInverted", "thresholdOption"]
 };
