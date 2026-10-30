@@ -514,7 +514,7 @@ export class FrameStore {
     }
 
     @computed get shouldShowBeamForAllChannels(): boolean {
-        return this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.beamTable.length > 1 && this.frameInfo.beamTable.some(beam => beam.channel != null && beam.channel > 0);
+        return !this.isSwappedZ && this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.beamTable.length > 1 && this.frameInfo.beamTable.some(beam => beam.channel != null && beam.channel > 0);
     }
 
     @computed get beamProperties(): BeamProperties | null {
