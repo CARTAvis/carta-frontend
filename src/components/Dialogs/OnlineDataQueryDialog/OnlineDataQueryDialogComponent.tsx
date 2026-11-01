@@ -4,15 +4,17 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, OnlineDataQueryDialogTabs} from "enums";
-import {AppStore} from "stores";
+import {AppStore, SiaQueryStore} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
+import {DownloadProgressDialog} from "./DownloadProgressDialog";
 import {HipsQueryComponent} from "./HipsQueryComponent";
+import {SiaQueryComponent} from "./SiaQueryComponent";
 
 import "./OnlineDataQueryDialogComponent.scss";
 
-const DEFAULT_WIDTH = 600;
-const DEFAULT_HEIGHT = 570;
+const DEFAULT_WIDTH = 700;
+const DEFAULT_HEIGHT = 800;
 const MIN_WIDTH = 450;
 const MIN_HEIGHT = 200;
 
@@ -40,10 +42,12 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             isResizingEnabled={true}
             dialogId={DialogId.OnlineDataQuery}
         >
+            <DownloadProgressDialog />
             <div className={Classes.DIALOG_BODY}>
                 <Tabs id="onlineQueryDialogTabs">
                     <Tab id={OnlineDataQueryDialogTabs.Catalog} title="Catalog" panel={<CatalogQueryComponent />} />
                     <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS Survey" panel={<HipsQueryComponent />} />
+                    {SiaQueryStore.Instance.services.length > 0 && <Tab id={OnlineDataQueryDialogTabs.Sia} title="IVOA Simple Image Access" panel={<SiaQueryComponent />} />}
                 </Tabs>
             </div>
         </DraggableDialogComponent>

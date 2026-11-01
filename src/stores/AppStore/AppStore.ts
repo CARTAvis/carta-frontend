@@ -377,6 +377,11 @@ export class AppStore {
 
     // Tasks
     @observable taskProgress: number = 0;
+    /** Whether a remote file (HiPS or SIA) is being downloaded. */
+    @observable isDownloadingRemoteFile: boolean = false;
+    /** Bytes downloaded by the pending remote file request, and the total (-1 if the server did not report it). */
+    @observable downloadedBytes: number = 0;
+    @observable totalBytes: number = -1;
     @observable taskStartTime: number = 0;
     @observable taskCurrentTime: number = 0;
     @observable isFileLoading: boolean = false;
@@ -392,6 +397,16 @@ export class AppStore {
     @action updateTaskProgress = (progress: number) => {
         this.taskProgress = progress;
         this.taskCurrentTime = performance.now();
+    };
+
+    /**
+     * Updates the progress of the pending remote file download, shared by every remote data query.
+     * @param progress - The progress message from the backend.
+     */
+    @action updateDownloadProgress = (progress: CARTA.RemoteFileProgress) => {
+        this.downloadedBytes = Number(progress.downloadedBytes ?? 0);
+        this.totalBytes = Number(progress.totalBytes ?? -1);
+        this.updateTaskProgress(progress.progress ?? 0);
     };
 
     @computed get estimatedTaskRemainingTime(): number | undefined {
@@ -806,7 +821,7 @@ export class AppStore {
     }
 
     /**
-     * Loads a file by HiPS data queries and adds it as a frame.
+     * Loads a file from a remote data query (HiPS or SIA) and adds it as a frame.
      * @param remoteRequest - Parameters for the query.
      * @returns The added frame.
      * @throws If there is an error loading the file.
@@ -815,12 +830,16 @@ export class AppStore {
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
+            this.restartTaskProgress();
+            this.downloadedBytes = 0;
+            this.totalBytes = -1;
+            this.isDownloadingRemoteFile = true;
             const ack: CARTA.RemoteFileResponse.$Properties = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
-                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: `Remote data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
-                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "Remote data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -830,8 +849,10 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
+            this.alertStore.showAlert(`Remote data query failed: ${err}`);
             throw err;
+        } finally {
+            this.isDownloadingRemoteFile = false;
         }
     }
 
@@ -2293,6 +2314,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.remoteFileProgressStream.subscribe(this.handleRemoteFileProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
         this.backendService.pvPreviewStream.subscribe(this.handlePvPreviewStream);
@@ -2613,6 +2635,13 @@ export class AppStore {
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             previewFrame.updatePreviewDataGenerator.next();
         }
+    };
+
+    handleRemoteFileProgressStream = (remoteFileProgress: CARTA.RemoteFileProgress) => {
+        if (!remoteFileProgress) {
+            return;
+        }
+        this.updateDownloadProgress(remoteFileProgress);
     };
 
     handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {

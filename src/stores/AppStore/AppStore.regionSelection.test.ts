@@ -60,6 +60,7 @@ jest.mock("services", () => ({
             momentProgressStream: {subscribe: jest.fn()},
             pvPreviewStream: {subscribe: jest.fn()},
             pvProgressStream: {subscribe: jest.fn()},
+            remoteFileProgressStream: {subscribe: jest.fn()},
             scriptingStream: {subscribe: jest.fn()},
             spatialProfileStream: {subscribe: jest.fn()},
             spectralProfileStream: {subscribe: jest.fn()},

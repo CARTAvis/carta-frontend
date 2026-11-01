@@ -18,6 +18,7 @@ const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
 export interface RuntimeConfig {
     dashboardAddress?: string;
     apiAddress?: string;
+    siaServices?: {name: string; queryUrl: string}[];
     tokenRefreshAddress?: string;
     logoutAddress?: string;
 }

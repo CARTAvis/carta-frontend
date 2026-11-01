@@ -78,7 +78,8 @@ export enum VectorOverlayDialogTabs {
 
 export enum OnlineDataQueryDialogTabs {
     Catalog,
-    Hips
+    Hips,
+    Sia
 }
 
 export enum ContourDialogTabs {

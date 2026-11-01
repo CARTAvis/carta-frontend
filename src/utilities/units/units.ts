@@ -188,3 +188,21 @@ export function pixelToFluxDensityUnit(pixelUnit: string): string {
     }
     return pixelUnit.replace(/\/beam|\/arcsec\^2|\/arcsec2|\/sr|\/pixel/i, "");
 }
+
+/**
+ * Formats a byte count for display, from bytes up to terabytes.
+ * @param sizeInBytes - The size in bytes.
+ */
+export function getFileSizeDisplay(sizeInBytes: number): string {
+    if (sizeInBytes >= 1e12) {
+        return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
+    } else if (sizeInBytes >= 1e9) {
+        return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
+    } else if (sizeInBytes >= 1e6) {
+        return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
+    } else if (sizeInBytes >= 1e3) {
+        return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
+    } else {
+        return `${sizeInBytes} B`;
+    }
+}

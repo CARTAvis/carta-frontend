@@ -86,6 +86,7 @@ export class BackendService {
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
     readonly pvProgressStream: Subject<CARTA.PvProgress>;
+    readonly remoteFileProgressStream: Subject<CARTA.RemoteFileProgress>;
     readonly fittingProgressStream: Subject<CARTA.FittingProgress>;
     readonly vectorTileStream: Subject<CARTA.VectorOverlayTileData>;
     readonly pvPreviewStream: Subject<CARTA.PvPreviewData>;
@@ -113,6 +114,7 @@ export class BackendService {
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.listProgressStream = new Subject<CARTA.ListProgress>();
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
+        this.remoteFileProgressStream = new Subject<CARTA.RemoteFileProgress>();
         this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
         this.pvPreviewStream = new Subject<CARTA.PvPreviewData>();
@@ -154,7 +156,9 @@ export class BackendService {
             [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}],
             [CARTA.EventType.PV_PREVIEW_DATA, {messageClass: CARTA.PvPreviewData, handler: this.onStreamedPvPreviewData}],
-            [CARTA.EventType.REMOTE_FILE_RESPONSE, {messageClass: CARTA.RemoteFileResponse, handler: this.onDeferredResponse}]
+            [CARTA.EventType.REMOTE_FILE_RESPONSE, {messageClass: CARTA.RemoteFileResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.SIA_QUERY_RESPONSE, {messageClass: CARTA.SiaQueryResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.REMOTE_FILE_PROGRESS, {messageClass: CARTA.RemoteFileProgress, handler: this.onStreamedRemoteFileProgress}]
         ]);
 
         // check ping every 5 seconds
@@ -818,6 +822,22 @@ export class BackendService {
         }
     }
 
+    async siaQuery(message: CARTA.SiaQueryRequest.$Properties): Promise<CARTA.SiaQueryResponse.$Properties> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SIA_QUERY_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SIA_QUERY_REQUEST, CARTA.SiaQueryRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.SiaQueryResponse.$Properties>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
+        }
+    }
+
     async requestRemoteFile(message: CARTA.RemoteFileRequest.$Properties): Promise<CARTA.RemoteFileResponse.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -1051,6 +1071,10 @@ export class BackendService {
 
     private onStreamedPvProgress(_eventId: number, pvProgress: CARTA.PvProgress) {
         this.pvProgressStream.next(pvProgress);
+    }
+
+    private onStreamedRemoteFileProgress(_eventId: number, remoteFileProgress: CARTA.RemoteFileProgress) {
+        this.remoteFileProgressStream.next(remoteFileProgress);
     }
 
     private onStreamedFittingProgress(_eventId: number, fittingProgress: CARTA.FittingProgress) {

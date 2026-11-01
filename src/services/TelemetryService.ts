@@ -74,9 +74,9 @@ export class TelemetryService {
         this.sessionId = uuidv1();
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
 
-        window.onbeforeunload = ev => {
+        // Not cancelled: preventDefault only prompts the user to confirm, it does not hold the page open
+        window.onbeforeunload = () => {
             this.flushTelemetry(true);
-            ev.preventDefault();
         };
 
         this.telemetrySubmissionHandle = setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
