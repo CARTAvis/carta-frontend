@@ -4,7 +4,7 @@ import {action, makeObservable} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
-import {type CatalogInfo, type WCSPoint2D} from "models";
+import {type CatalogInfo, type Point2D, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
@@ -41,6 +41,21 @@ export class CatalogApiService {
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
         const encoded = encodeURIComponent(query);
         return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
+    };
+
+    /**
+     * Resolves an object name to its ICRS coordinates in degrees with SIMBAD.
+     * @param name - The object name.
+     * @returns The coordinates, or undefined if the object was not found.
+     */
+    public resolveObjectCoordinates = async (name: string): Promise<Point2D | undefined> => {
+        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${name}'`;
+        const response = await this.getSimbadCatalog(query);
+        const metadata = response.data?.metadata as {name: string}[];
+        const raIndex = metadata?.findIndex(column => column.name === "ra");
+        const decIndex = metadata?.findIndex(column => column.name === "dec");
+        const row = response.data?.data?.[0];
+        return response.status === 200 && row && raIndex >= 0 && decIndex >= 0 ? {x: row[raIndex], y: row[decIndex]} : undefined;
     };
 
     public cancelQuery(type: CatalogDatabase) {

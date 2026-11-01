@@ -12,7 +12,7 @@ import moment from "moment";
 
 import {BrowserMode, FileFilteringType, FileFilterMode} from "enums";
 import {AppStore, type BrowserFileList, FileBrowserStore, type ISelectedFile} from "stores";
-import {toFixed} from "utilities";
+import {getFileSizeDisplay} from "utilities";
 
 import "./FileListTableComponent.scss";
 
@@ -93,20 +93,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     private static compareNumbers(a: number | Long | null | undefined, b: number | Long | null | undefined): number {
         return FileListTableComponent.toNumber(a) - FileListTableComponent.toNumber(b);
-    }
-
-    private static getFileSizeDisplay(sizeInBytes: number): string {
-        if (sizeInBytes >= 1e12) {
-            return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
-        } else if (sizeInBytes >= 1e9) {
-            return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
-        } else if (sizeInBytes >= 1e6) {
-            return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
-        } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
-        } else {
-            return `${sizeInBytes} B`;
-        }
     }
 
     get tableEntries(): FileEntry[] {
@@ -395,7 +381,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.getFileSizeDisplay(entry.size)}
+                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && getFileSizeDisplay(entry.size)}
                         {!entry.isFile && entry.itemCount !== undefined && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>

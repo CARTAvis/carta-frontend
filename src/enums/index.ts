@@ -18,6 +18,7 @@ export * from "./polarization";
 export * from "./preference";
 export * from "./pv";
 export * from "./region";
+export * from "./sia";
 export * from "./spectral";
 export * from "./tab";
 export * from "./table";

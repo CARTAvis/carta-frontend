@@ -1,0 +1,135 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+$sia-content-width: 401px;
+
+.sia-query-panel {
+    user-select: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+
+    .sia-query-config {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+
+        .#{$ns}-form-group {
+            margin-bottom: 8px;
+        }
+
+        .#{$ns}-label {
+            min-width: 10em;
+            width: 10em;
+            text-align: right;
+        }
+
+        .#{$ns}-form-content {
+            display: flex;
+            flex-wrap: wrap;
+            flex: 1;
+            gap: 5px;
+
+            .#{$ns}-input-group {
+                width: 130px;
+            }
+
+            .#{$ns}-numeric-input .#{$ns}-input-group {
+                width: 130px;
+            }
+
+            .range-select select {
+                width: 200px;
+            }
+        }
+
+        .service-input {
+            width: 100%;
+            max-width: $sia-content-width;
+        }
+
+        .service-url {
+            width: 100%;
+            max-width: $sia-content-width;
+            margin-top: -3px;
+            font-size: x-small;
+            font-family: monospace;
+            user-select: text;
+        }
+
+        .filters-toggle {
+            margin-bottom: 4px;
+        }
+
+        .query-error {
+            margin: 10px 0;
+            width: auto;
+        }
+    }
+
+    .sia-query-results {
+        flex: 1 1 220px;
+        min-height: 150px;
+        margin: 5px 0;
+        display: flex;
+        flex-direction: column;
+
+        .result-filter {
+            margin-bottom: 5px;
+        }
+
+        .sia-results-table {
+            flex: 1;
+            min-height: 0;
+        }
+    }
+
+    .query-footer {
+        margin-top: 10px;
+
+        .result-info {
+            margin-right: auto;
+            align-self: center;
+        }
+    }
+}
+
+.service-list-select {
+    .#{$ns}-menu {
+        max-height: 300px;
+        overflow: auto;
+    }
+}
+
+.sia-results-table {
+    height: 100%;
+
+    // .column-name (sort header) styling is shared with the file browser table
+
+    .#{$ns}-table-cell {
+        cursor: pointer !important;
+        line-height: 22px;
+        height: 22px;
+        // Padding moves onto the content below, so a row with empty cells is still selectable across the whole cell
+        padding: 0;
+
+        .#{$ns}-table-truncated-text {
+            height: 100%;
+        }
+
+        .cell-content {
+            display: block;
+            width: 100%;
+            height: 100%;
+            padding: 0 8px;
+        }
+    }
+
+    // Highlight the whole row rather than the clicked cell
+    .#{$ns}-table-selection-region {
+        left: 0 !important;
+        right: 0 !important;
+        width: auto !important;
+    }
+}
