@@ -344,7 +344,7 @@ export class WorkspaceRestorer {
                 frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
                 if (this.isCurrent) {
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range`);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
                 }
             }
         }
