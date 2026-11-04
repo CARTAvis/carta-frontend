@@ -984,12 +984,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             frame.renderConfig.awaitCompleteCubeHistogram();
             frame.renderConfig.setStokesIndex(stokesIndex);
             this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
-            const isComplete = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
-            if (!isComplete && isOpen()) {
+            const outcome = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
+            if ((outcome === "stalled" || outcome === "skipped") && isOpen()) {
                 frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
                 if (this.isCurrent) {
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
+                    const failure = outcome === "skipped" ? `Skipped computing the cube histogram of ${imageName}` : `Could not compute the cube histogram of ${imageName}`;
+                    this.report(WorkspaceItemKind.Image, imageName, `${failure}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
                 }
             }
         }
@@ -999,30 +1000,36 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Wait for the cube histogram of an image, and return whether it completes. It does not complete
-     * when the image is closed (a later workspace load closes every image), or when the backend stops
-     * reporting progress.
+     * Wait for the cube histogram of an image, and return how the wait ends: "complete" when the
+     * histogram is complete, "closed" when the image is closed (a later workspace load closes every
+     * image), "stalled" when the backend stops reporting progress, or "skipped" when the user skips it.
      */
-    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<boolean> {
+    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<"complete" | "closed" | "stalled" | "skipped"> {
         return new Promise(resolve => {
             let stallTimer: ReturnType<typeof setTimeout> | undefined;
-            const finish = (isComplete: boolean, dispose: () => void) => {
+            let isSettled = false;
+            const finish = (outcome: "complete" | "closed" | "stalled" | "skipped", dispose: () => void) => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
                 clearTimeout(stallTimer);
                 dispose();
-                resolve(isComplete);
+                resolve(outcome);
             };
+            const skip = () => finish("skipped", disposeReaction);
             const disposeReaction = reaction(
                 () => ({progress: frame.renderConfig.cubeHistogramProgress, isOpen: this.appStore.frames.includes(frame)}),
                 ({progress, isOpen}, _previous, self) => {
                     if (!isOpen || progress >= 1) {
-                        finish(isOpen, () => self.dispose());
+                        finish(isOpen ? "complete" : "closed", () => self.dispose());
                         return;
                     }
                     if (this.isCurrent) {
-                        this.appStore.setWorkspaceLoadingStep({description, progress});
+                        this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
                     }
                     clearTimeout(stallTimer);
-                    stallTimer = setTimeout(() => finish(false, disposeReaction), CUBE_HISTOGRAM_STALL_TIMEOUT);
+                    stallTimer = setTimeout(() => finish("stalled", disposeReaction), CUBE_HISTOGRAM_STALL_TIMEOUT);
                 },
                 {fireImmediately: true, equals: comparer.structural}
             );
