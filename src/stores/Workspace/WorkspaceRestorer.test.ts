@@ -6,7 +6,7 @@ import {Subject} from "rxjs";
 import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
@@ -1097,7 +1097,7 @@ describe("WorkspaceRestorer", () => {
             expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Iz");
             expect(calls.indexOf("requestCubeHistogram")).toBeLessThan(calls.indexOf("appendCatalog"));
             expect(calls.indexOf("cubeHistogramComplete")).toBeLessThan(calls.indexOf("applyLayout"));
-            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5});
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5, onSkip: expect.any(Function)});
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
         });
@@ -1155,6 +1155,34 @@ describe("WorkspaceRestorer", () => {
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
             expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
             expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
+        });
+
+        test("keeps its saved range as a custom one when the user skips it, and goes on with the next image", async () => {
+            const {appStore} = createSession();
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
+                const renderConfig = appStore.getFrame(fileId as number)!.renderConfig;
+                setTimeout(() => renderConfig.reportCubeHistogramProgress(0.2), 0);
+            });
+            appStore.setWorkspaceLoadingStep.mockImplementation((step?: WorkspaceLoadingStep) => {
+                // Skip the first image's cube histogram as soon as its progress is shown.
+                if (step?.description === "cube histogram of image.fits" && step.progress > 0) {
+                    step.onSkip?.();
+                }
+            });
+
+            const pending = restore(createWorkspace({files: [cubeImage, {...cubeImage, id: 2, source: {...cubeImage.source, filename: "second.fits"}}]}));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            const [first, second] = appStore.frames;
+            second.renderConfig.reportCubeHistogramProgress(1);
+            const issues = await pending;
+
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(2);
+            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
+            expect(second.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
+            expect(issues).toEqual(["Skipped computing the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
         });
     });
 
