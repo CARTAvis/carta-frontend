@@ -696,7 +696,7 @@ describe("WorkspaceRestorer", () => {
             const frame = appStore.frames[0];
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
             expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
-            expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range"]);
+            expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
         });
     });
 });
