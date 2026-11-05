@@ -376,10 +376,10 @@ export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "
 }
 
 /**
- * One request that made images, and the images it made that the session still showed.
+ * One request that made images, and the images from it that the session still showed.
  *
- * The request is recorded rather than the images, and once rather than once per image: one
- * request for moments makes an image of each (ADR-0003).
+ * The workspace records the request instead of the images. It records the request once, not once
+ * per image, because one request for moments makes one image for each moment.
  */
 export interface WorkspaceGeneratedImages {
     request: WorkspaceGenerationRequest;
