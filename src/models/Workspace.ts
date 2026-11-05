@@ -363,13 +363,13 @@ export interface WorkspaceCatalog {
 }
 
 /**
- * What one catalog table or plot widget shows: Widget Config, which means nothing against other data
- * and so is kept by the Workspace rather than the Layout (ADR-0005).
+ * What one catalog table or plot widget shows. This is a Widget Config. It has no meaning for other
+ * data, so the workspace saves it and the layout does not.
  */
 export interface WorkspaceCatalogWidgetConfig {
     /** The kind of widget, which a restore needs to recreate one the layout does not have. */
     type: "catalog-overlay" | "catalog-plot";
-    /** Workspace ID of the catalog the widget shows. */
+    /** The Workspace ID of the catalog that the widget shows. */
     catalogId?: number;
     /** Table widgets: the settings section each catalog was left on, by Workspace catalog ID. */
     settingsTabs?: {[workspaceCatalogId: string]: number};

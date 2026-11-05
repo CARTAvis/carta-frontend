@@ -208,9 +208,10 @@ export class CatalogWidgetBindingStore {
     }
 
     /**
-     * What each table and plot widget shows, keyed by the widget's own stable ID. A widget showing a
-     * catalog the Workspace does not carry names none: a Workspace describes only what was loaded
-     * (ADR-0006), and a loaded catalog can still be left out of it, such as one on a generated image.
+     * What each table and plot widget shows, by the stable ID of the widget. A widget that shows a
+     * catalog which the workspace does not save gets no catalog ID. A workspace describes only the
+     * catalogs that were loaded. A loaded catalog can still be left out of the workspace, such as a
+     * catalog on a generated image.
      *
      * @param savedCatalogIds - the Workspace IDs of the catalogs being saved.
      */
