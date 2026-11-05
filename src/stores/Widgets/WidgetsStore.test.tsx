@@ -210,6 +210,31 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(secondId).not.toBe(firstId);
     });
 
+    test.each([
+        ["createFloatingSpatialProfilerWidget", "spatial-profiler"],
+        ["createFloatingSpectralProfilerWidget", "spectral-profiler"],
+        ["createFloatingStokesWidget", "stokes"],
+        ["createFloatingSpectralLineQueryWidget", "spectral-line-query"],
+        ["createFloatingStatsWidget", "stats"],
+        ["createFloatingHistogramWidget", "histogram"],
+        ["createFloatingRenderWidget", "render-config"],
+        ["createFloatingLogWidget", "log"],
+        ["createFloatingAnimatorWidget", "animator"],
+        ["createFloatingChannelMapControlWidget", "channel-map-control"],
+        ["createFloatingRegionListWidget", "region-list"],
+        ["createFloatingLayerListWidget", "layer-list"],
+        ["createFloatingCursorInfoWidget", "cursor-info"],
+        ["createFloatingPvGeneratorWidget", "pv-generator"]
+    ] as const)("%s opens a floating %s widget", (method, widgetType) => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const createFloatingWidgetOfType = jest.spyOn(widgetsStore, "createFloatingWidgetOfType").mockImplementation(jest.fn());
+
+        widgetsStore[method]();
+
+        expect(createFloatingWidgetOfType).toHaveBeenCalledWith(widgetType);
+        expect(getWidgetMap().has(widgetType)).toBe(true);
+    });
+
     test("creates no store for a widget whose registration has none", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
