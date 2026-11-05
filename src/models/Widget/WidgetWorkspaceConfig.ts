@@ -1,8 +1,9 @@
 import {type WorkspaceCatalogOverlayConfig, type WorkspaceCatalogPlotConfig} from "../Workspace";
 
 /**
- * The Widget Config a Workspace keeps for each kind of widget, keyed by the widget's registration
- * type (ADR-0005). A kind of widget that gains one adds an entry here rather than a branch.
+ * The Widget Config that a workspace saves for each kind of widget, by the type in the widget's
+ * registration. To give another kind of widget a Widget Config, add an entry here. The code that
+ * saves and restores it then needs no new branch.
  */
 export interface WidgetWorkspaceConfigs {
     "catalog-overlay": WorkspaceCatalogOverlayConfig;
@@ -11,7 +12,7 @@ export interface WidgetWorkspaceConfigs {
 
 export type WidgetWorkspaceType = keyof WidgetWorkspaceConfigs;
 
-/** One widget's Widget Config, tagged with its kind so that a restore can recreate a widget the layout does not have. */
+/** The Widget Config of one widget, with the kind of the widget in `type`. A restore needs the kind to create the widget again when the layout does not have it. */
 export type WidgetWorkspaceConfig<TType extends WidgetWorkspaceType = WidgetWorkspaceType> = {[K in TType]: {type: K} & WidgetWorkspaceConfigs[K]}[TType];
 
 export function isWidgetWorkspaceConfigOf<TType extends WidgetWorkspaceType>(config: WidgetWorkspaceConfig, type: TType): config is Extract<WidgetWorkspaceConfig, {type: TType}> {

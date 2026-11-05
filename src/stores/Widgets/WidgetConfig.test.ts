@@ -4,7 +4,7 @@ import {PlotType, RestFrameShiftMode, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
-// load the stores before the widget stores: importing one alone reaches ColormapComponent through a circular import before "utilities" is initialised
+// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
 import "stores";
 
 import {AnimatorWidgetStore} from "./AnimatorWidgetStore/AnimatorWidgetStore";
@@ -59,7 +59,7 @@ describe("widget config round trip", () => {
     });
 });
 
-/** The layout schema's widget for each store, as a layout saves it. */
+/** The definition in the layout schema for each widget store. A layout saves the widget in this form. */
 const LAYOUT_WIDGETS: [string, () => ConfigurableStore<object, Persisted<object>>][] = [
     ["render-config", () => new RenderConfigWidgetStore()],
     ["histogram", () => new HistogramWidgetStore()],
