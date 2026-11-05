@@ -70,8 +70,9 @@ export class ContourDialogComponent extends React.Component {
                     }
                 }
             }),
-            // A restored image can take its contour levels from the cube histogram without it having
-            // been computed again: ask for it once the levels are about to be generated from it.
+            // A restored image can use the cube histogram for its contour levels while nothing has asked
+            // the backend for it yet. Ask for it when the contour dialog is open, because the dialog
+            // generates the levels from it.
             reaction(
                 () => {
                     const appStore = AppStore.Instance;

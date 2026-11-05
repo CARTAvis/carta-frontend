@@ -7,7 +7,7 @@ import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
-/** What the restorer needs of an image's render config, with the cube histogram's progress observable as in the real store. */
+/** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
 function createRenderConfig() {
     const state = observable({isUsingCubeHistogram: false, cubeHistogramProgress: 0});
     return {
@@ -22,7 +22,7 @@ function createRenderConfig() {
         setStokesIndex: jest.fn(),
         awaitCompleteCubeHistogram: jest.fn(),
         keepRangeWithoutCubeHistogram: jest.fn(),
-        /** Report the cube histogram's progress, as the backend's messages do. */
+        /** Report the progress of the cube histogram, as the messages from the backend do. */
         reportCubeHistogramProgress: (progress: number) => runInAction(() => (state.cubeHistogramProgress = progress))
     };
 }
@@ -621,7 +621,7 @@ describe("WorkspaceRestorer", () => {
             appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
                 calls.push("requestCubeHistogram");
                 const renderConfig = appStore.getFrame(fileId as number)!.renderConfig;
-                // Complete only once the catalogs have started opening.
+                // Complete the histogram only after the catalogs start to open.
                 setTimeout(() => {
                     renderConfig.reportCubeHistogramProgress(0.5);
                     setTimeout(() => {
@@ -671,7 +671,7 @@ describe("WorkspaceRestorer", () => {
 
             const pending = restoreIssues(createWorkspace({files: [cubeImage, {...cubeImage, id: 2, stokes: 1}]}));
             await jest.advanceTimersByTimeAsync(0);
-            // A later load claims the session, then fails to fetch its workspace, so these images stay.
+            // A later load takes over the session and then fails to fetch its workspace, so these images stay open.
             WorkspaceRestorer.claimGeneration();
             await jest.advanceTimersByTimeAsync(60_000);
             const issues = await pending;
@@ -680,7 +680,7 @@ describe("WorkspaceRestorer", () => {
             expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(1);
             expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(0);
             expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
-            // Never asked for, and restored in Q: the range kept is Q's.
+            // This image was never requested and was restored in Q, so the kept range is the range of Q.
             expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(1);
             expect(issues).toEqual([]);
         });

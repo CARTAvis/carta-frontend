@@ -164,7 +164,7 @@ describe("RenderConfigStore workspace round trip", () => {
     });
 });
 
-/** A histogram of four bins of one, spanning 0 to 5 as the store reads its edges. */
+/** A histogram with four bins of one count each, from 0 to 5, as the store reads its bin edges. */
 const HISTOGRAM = {numBins: 4, binWidth: 1, firstBinCenter: 0.5, bins: [1, 1, 1, 1], mean: 2, stdDev: 1};
 
 describe("RenderConfigStore workspace restore", () => {
