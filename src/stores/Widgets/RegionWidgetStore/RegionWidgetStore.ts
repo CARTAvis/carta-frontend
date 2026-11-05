@@ -40,8 +40,9 @@ export class RegionWidgetStore {
     };
 
     /**
-     * Which image and region the widget shows, as a workspace names them. An image the workspace
-     * does not carry is left out, and the widget comes back showing the active one (ADR-0006).
+     * Returns the image and region that the widget shows, as the workspace names them. When the
+     * workspace does not save the image, the image is left out. The restored widget then shows the
+     * active image.
      */
     protected toWorkspaceBinding(ids: WorkspaceIdWriter): WorkspaceWidgetBinding {
         const imageIdOf = (fileId: number): number | undefined | null => (fileId === ACTIVE_FILE_ID ? undefined : (ids.imageIdOf(fileId) ?? null));
