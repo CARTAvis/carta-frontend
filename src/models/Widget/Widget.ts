@@ -71,7 +71,7 @@ export interface WidgetRegistration {
     config: DefaultWidgetConfig;
     settingsConfig?: DefaultWidgetConfig;
     component: ComponentType<DockedWidgetComponentProps>;
-    /** Creates the store behind each instance of the widget. A widget without one is either a singleton or creates its stores itself. */
+    /** Creates the store for each instance of the widget. A widget without `createStore` either has only one instance, or creates its stores itself. */
     createStore?: () => object;
 }
 

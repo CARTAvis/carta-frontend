@@ -606,7 +606,7 @@ export class WidgetsStore {
 
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
-            // A type that creates nothing still reaches the placeholder below, with no ID, as it always has.
+            // A widget type that creates no store still reaches the placeholder below, with no ID.
             const id = this.addWidgetByType(this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType), savedConfig.widgetSettings) as string;
             const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
@@ -1383,7 +1383,7 @@ export class WidgetsStore {
     }
 
     // region Widgets created from the registration table
-    /** Adds a store for a widget whose registration creates one, applying the settings a layout saved for it. */
+    /** Adds a store for a widget whose registration has `createStore`, and applies the settings that a layout saved for it. Returns the ID of the store, or null when the registration creates no store. */
     @action addWidget(widgetType: string, id: string | null = null, widgetSettings: object | null = null): string | null {
         const widgets = this.widgetsMap.get(widgetType);
         const createStore = getWidgetMap().get(widgetType)?.createStore;
@@ -1413,8 +1413,8 @@ export class WidgetsStore {
         }
     };
 
-    // Open a floating widget of one type. Code snippets and the tutorials call these methods by name,
-    // so keep them as a short form of `createFloatingWidgetOfType`.
+    // Each of these methods opens a floating widget of one type, as a short form of
+    // `createFloatingWidgetOfType`. Code snippets and the tutorials call them by name, so keep them.
     createFloatingSpatialProfilerWidget = () => this.createFloatingWidgetOfType(SpatialProfilerComponent.WidgetConfig.type);
     createFloatingSpectralProfilerWidget = () => this.createFloatingWidgetOfType(SpectralProfilerComponent.WidgetConfig.type);
     createFloatingStokesWidget = () => this.createFloatingWidgetOfType(StokesAnalysisComponent.WidgetConfig.type);
