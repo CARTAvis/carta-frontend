@@ -46,7 +46,7 @@ export class RenderConfigStore {
     @observable isUsingCubeHistogram: boolean = false;
     @observable isUsingCubeHistogramContours: boolean = false;
     @observable cubeHistogramProgress: number = 0;
-    /** Whether the cube histogram has been asked for since it was last cleared, so that its progress means something. */
+    /** Whether the cube histogram was requested after it was last cleared. Without a request, its progress means nothing. */
     @observable isCubeHistogramRequested: boolean = false;
     @observable selectedPercentile: number[];
     @observable histChannel: number = 0;
@@ -58,7 +58,7 @@ export class RenderConfigStore {
     @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
-    /** Set while a restore waits for the cube histogram, so that its partial results leave the saved range alone. */
+    /** True while a restore waits for the cube histogram. Then the partial results do not change the saved range. */
     private isAwaitingCompleteCubeHistogram = false;
 
     private frame: FrameStore;
@@ -596,7 +596,7 @@ export class RenderConfigStore {
         this.scaleMin = config.scaleMin ?? this.scaleMin;
         this.scaleMax = config.scaleMax ?? this.scaleMax;
         this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;
-        // Set as saved without asking for anything: the cube histogram is the restore's to ask for.
+        // Set these values as saved, without asking the backend for anything. The restore asks for the cube histogram itself.
         this.isUsingCubeHistogram = config.useCubeHistogram ?? false;
         this.isUsingCubeHistogramContours = config.useCubeHistogramContours ?? false;
         this.updateSiblings();
@@ -608,19 +608,23 @@ export class RenderConfigStore {
     };
 
     /**
-     * Keep the range as it is until the cube histogram is complete, then take the percentile from it.
-     * A restore asks for this, since the range it applied is already what the cube histogram will give.
+     * Keep the range as it is until the cube histogram is complete. Then take the percentile from the
+     * histogram.
+     *
+     * A restore calls this because the range that it applied is already the range that the cube
+     * histogram will give.
      */
     @action awaitCompleteCubeHistogram = () => {
         this.isAwaitingCompleteCubeHistogram = true;
     };
 
     /**
-     * Give up on the cube histogram, and keep the range as a custom one, so that it no longer
-     * follows a histogram that is not coming.
+     * Stop waiting for the cube histogram, and keep the range as a custom range. Then the range no
+     * longer follows a histogram that will not come.
      *
-     * @param stokesIndex - The polarization whose range to keep: the one the image is in, which an
-     * image not yet in view may not have reported to this store.
+     * @param stokesIndex - The polarization whose range is kept. This is the Stokes of the image. The
+     * store learns the Stokes only when a channel histogram arrives, so for an image that was not in
+     * view, the store may still have another Stokes.
      */
     @action keepRangeWithoutCubeHistogram = (stokesIndex: number = this.stokesIndex) => {
         this.isAwaitingCompleteCubeHistogram = false;

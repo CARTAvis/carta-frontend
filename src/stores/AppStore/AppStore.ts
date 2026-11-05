@@ -371,7 +371,7 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
-    /** What a workspace load is waiting for, when it is a long task with progress of its own. */
+    /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
     @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
 
     @action restartTaskProgress = () => {
@@ -1476,12 +1476,12 @@ export class AppStore {
     };
 
     /**
-     * Ask the backend for an image's cube histogram.
+     * Ask the backend for the cube histogram of an image.
      *
-     * @param fileId - The image, or the active image if left out.
-     * @param coordinate - The polarization to compute it for, such as "Qz". Left out, the backend uses the Stokes it last showed the image in.
+     * @param fileId - The image. When it is left out, the active image is used.
+     * @param coordinate - The polarization to compute the histogram for, such as "Qz". When it is left out, the backend uses the Stokes that the frontend last sent for the image.
      *
-     * Nothing is sent while one already asked for is still being computed, since the backend would compute it twice.
+     * Send nothing while an earlier request is still being computed. Otherwise the backend would compute the histogram twice.
      */
     @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
@@ -2763,7 +2763,7 @@ export class AppStore {
         this.workspaceLoadingStep = undefined;
     };
 
-    /** Say what a workspace load is waiting for, or that it is no longer waiting on anything. */
+    /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
     @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
         this.workspaceLoadingStep = step;
     };

@@ -9,8 +9,8 @@ import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
 
 /**
- * How long a cube histogram may go without progress before a restore gives up on it, in
- * milliseconds. The backend reports its progress every two seconds while it computes.
+ * How long a cube histogram can go without progress before a restore stops waiting for it, in
+ * milliseconds. The backend reports the progress every two seconds while it computes.
  */
 const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
 
@@ -117,7 +117,7 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         this.configureImages();
-        // Computed on the backend while the catalogs open, and waited for before the layout.
+        // The backend computes the cube histograms while the catalogs open. The restore waits for them before it applies the layout.
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
@@ -308,13 +308,14 @@ export class WorkspaceRestorer {
     }
 
     /**
-     * Stage 3a: compute again the cube histograms that images' percentile ranges were taken from.
+     * Stage 3a: compute again the cube histograms that the percentile ranges of images came from.
      *
-     * A workspace is a snapshot, so an image restored with such a range keeps following the cube
-     * histogram. The backend computes one cube histogram at a time for a session, so they are asked
-     * for one after another. The range applied in stage 3 stays until a cube histogram is complete,
-     * and for an unchanged file the percentile then gives it again. An image whose cube histogram
-     * does not come keeps its saved range as a custom one.
+     * A workspace is a snapshot, so a restored image with such a range still follows the cube
+     * histogram. The backend computes only one cube histogram at a time for a session, so the
+     * restore asks for them one after another. The range applied in stage 3 stays until the cube
+     * histogram is complete. For an unchanged file, the percentile then gives the same range again.
+     * When the cube histogram of an image does not come, the image keeps its saved range as a
+     * custom range.
      */
     private async restoreCubeHistograms(): Promise<void> {
         const pending = (this.workspace.files ?? []).flatMap(fileInfo => {
@@ -324,8 +325,8 @@ export class WorkspaceRestorer {
         for (const {fileInfo, frame} of pending) {
             const isOpen = () => this.appStore.frames.includes(frame);
             if (!this.isCurrent) {
-                // Taken over by a later load that kept these images: leave none of them waiting on a
-                // cube histogram nobody will ask for.
+                // A later load took over and kept these images. Do not leave any of them waiting for a
+                // cube histogram that nobody will request.
                 if (isOpen()) {
                     frame.renderConfig.keepRangeWithoutCubeHistogram(frame.requiredPolarizationIndex);
                 }
@@ -333,8 +334,10 @@ export class WorkspaceRestorer {
             }
 
             const imageName = describeImageSource(fileInfo.source);
-            // The backend computes it in whichever Stokes it last showed the image in, which for an
-            // image not yet in view is not the one restored; name it, and file the result under it.
+            // Name the restored Stokes in the request, and store the result under that Stokes. Without a
+            // coordinate, the backend uses the Stokes that the frontend last sent for the image. The
+            // frontend sends it only while the image is in view, through a throttled update, so the
+            // backend may still have another Stokes.
             const stokesIndex = frame.requiredPolarizationIndex;
             frame.renderConfig.awaitCompleteCubeHistogram();
             frame.renderConfig.setStokesIndex(stokesIndex);
@@ -354,8 +357,9 @@ export class WorkspaceRestorer {
     }
 
     /**
-     * Resolve to whether an image's cube histogram completes. It does not if the image is closed,
-     * which a later workspace load does to every image, or if the backend stops reporting progress.
+     * Wait for the cube histogram of an image, and return whether it completes. It does not complete
+     * when the image is closed (a later workspace load closes every image), or when the backend stops
+     * reporting progress.
      */
     private waitForCubeHistogram(frame: FrameStore, description: string): Promise<boolean> {
         return new Promise(resolve => {
