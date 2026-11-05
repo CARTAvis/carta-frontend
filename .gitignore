@@ -208,7 +208,3 @@ carta-frontend-*.tgz
 AGENTS.md
 CLAUDE.md
 GEMINI.md
-CONTEXT.md
-.scratch/*
-docs/agents/*
-docs/adr/*
