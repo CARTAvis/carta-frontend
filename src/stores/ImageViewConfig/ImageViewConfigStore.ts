@@ -6,7 +6,7 @@ import {type ConfigurableStore, type ImageViewItem, type Persisted} from "models
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 
-/** The multi-panel grid of the image view, which a layout saves since it suits any images (ADR-0005). */
+/** The multi-panel grid of the image view. A layout saves the grid, because the grid works with any images. */
 export interface ImageViewGridConfig {
     multiPanelEnabled: boolean;
     /** How the grid is sized when multi-panel is enabled. */
