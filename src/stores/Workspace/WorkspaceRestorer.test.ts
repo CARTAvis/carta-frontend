@@ -967,7 +967,6 @@ describe("WorkspaceRestorer", () => {
             await jest.advanceTimersByTimeAsync(0);
             // A later load takes over the session and then fails to fetch its workspace, so these images stay open.
             WorkspaceRestorer.claimGeneration();
-            await jest.advanceTimersByTimeAsync(60_000);
             const issues = await pending;
 
             const [first, second] = appStore.frames;
@@ -977,20 +976,6 @@ describe("WorkspaceRestorer", () => {
             // This image was never requested and was restored in Q, so the kept range is the range of Q.
             expect(second.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledWith(1);
             expect(issues).toEqual([]);
-        });
-
-        test("keeps its saved range as a custom one when the backend stops reporting progress", async () => {
-            jest.useFakeTimers();
-            const {appStore} = createSession();
-
-            const pending = restore(createWorkspace({files: [cubeImage]}));
-            await jest.advanceTimersByTimeAsync(60_000);
-            const issues = await pending;
-
-            const frame = appStore.frames[0];
-            expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
-            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
-            expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
         });
 
         test("keeps its saved range as a custom one when the user skips it, and goes on with the next image", async () => {

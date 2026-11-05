@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {autorun, comparer, reaction} from "mobx";
+import {autorun, comparer, observable, reaction, runInAction} from "mobx";
 
 import {BeamType, FrequencyUnit, HipsCoord, HipsProjection, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WorkspaceItemKind} from "enums";
 import {
@@ -26,12 +26,6 @@ import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWo
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
-
-/**
- * How long a cube histogram can go without progress before a restore stops waiting for it, in
- * milliseconds. The backend reports the progress every two seconds while it computes.
- */
-const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
 
 /** How long a restore waits for the backend to take on a region before making images over it anyway, in milliseconds. */
 const REGION_HANDSHAKE_TIMEOUT = 10_000;
@@ -63,8 +57,11 @@ interface CatalogConfigRequest {
  * display store for how it is drawn.
  */
 export class WorkspaceRestorer implements WorkspaceIdReader {
-    /** How many workspace loads have been started, so that a later one can take over from an earlier. */
-    private static generationCounter = 0;
+    /**
+     * How many workspace loads have been started, so that a later one can take over from an earlier.
+     * It is observable, so that a wait of an earlier load ends as soon as a later load starts.
+     */
+    private static readonly GenerationCounter = observable.box(0);
 
     /**
      * Take the session over from whatever load is already running.
@@ -77,12 +74,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @returns which load this is, to be passed to the restorer and checked against afterwards.
      */
     public static claimGeneration(): number {
-        return ++WorkspaceRestorer.generationCounter;
+        runInAction(() => WorkspaceRestorer.GenerationCounter.set(WorkspaceRestorer.GenerationCounter.get() + 1));
+        return WorkspaceRestorer.GenerationCounter.get();
     }
 
     /** Whether a load is still the one the session is following. */
     public static isCurrentGeneration(generation: number): boolean {
-        return generation === WorkspaceRestorer.generationCounter;
+        return generation === WorkspaceRestorer.GenerationCounter.get();
     }
 
     /** One entry per item that could not be brought back as saved. */
@@ -985,12 +983,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             frame.renderConfig.setStokesIndex(stokesIndex);
             this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
             const outcome = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
-            if ((outcome === "stalled" || outcome === "skipped") && isOpen()) {
+            if ((outcome === "skipped" || outcome === "superseded") && isOpen()) {
                 frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
-                if (this.isCurrent) {
-                    const failure = outcome === "skipped" ? `Skipped computing the cube histogram of ${imageName}` : `Could not compute the cube histogram of ${imageName}`;
-                    this.report(WorkspaceItemKind.Image, imageName, `${failure}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
+                if (outcome === "skipped" && this.isCurrent) {
+                    this.report(WorkspaceItemKind.Image, imageName, `Skipped computing the cube histogram of ${imageName}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
                 }
             }
         }
@@ -1002,34 +999,34 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Wait for the cube histogram of an image, and return how the wait ends: "complete" when the
      * histogram is complete, "closed" when the image is closed (a later workspace load closes every
-     * image), "stalled" when the backend stops reporting progress, or "skipped" when the user skips it.
+     * image), "superseded" when a later workspace load starts, or "skipped" when the user skips it.
+     *
+     * The wait has no time limit. The user decides when to stop waiting, with the Skip button.
      */
-    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<"complete" | "closed" | "stalled" | "skipped"> {
+    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<"complete" | "closed" | "superseded" | "skipped"> {
         return new Promise(resolve => {
-            let stallTimer: ReturnType<typeof setTimeout> | undefined;
             let isSettled = false;
-            const finish = (outcome: "complete" | "closed" | "stalled" | "skipped", dispose: () => void) => {
+            const finish = (outcome: "complete" | "closed" | "superseded" | "skipped", dispose: () => void) => {
                 if (isSettled) {
                     return;
                 }
                 isSettled = true;
-                clearTimeout(stallTimer);
                 dispose();
                 resolve(outcome);
             };
             const skip = () => finish("skipped", disposeReaction);
             const disposeReaction = reaction(
-                () => ({progress: frame.renderConfig.cubeHistogramProgress, isOpen: this.appStore.frames.includes(frame)}),
-                ({progress, isOpen}, _previous, self) => {
+                () => ({progress: frame.renderConfig.cubeHistogramProgress, isOpen: this.appStore.frames.includes(frame), isCurrent: this.isCurrent}),
+                ({progress, isOpen, isCurrent}, _previous, self) => {
                     if (!isOpen || progress >= 1) {
                         finish(isOpen ? "complete" : "closed", () => self.dispose());
                         return;
                     }
-                    if (this.isCurrent) {
-                        this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
+                    if (!isCurrent) {
+                        finish("superseded", () => self.dispose());
+                        return;
                     }
-                    clearTimeout(stallTimer);
-                    stallTimer = setTimeout(() => finish("stalled", disposeReaction), CUBE_HISTOGRAM_STALL_TIMEOUT);
+                    this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
                 },
                 {fireImmediately: true, equals: comparer.structural}
             );
