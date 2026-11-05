@@ -1413,6 +1413,23 @@ export class WidgetsStore {
         }
     };
 
+    // Open a floating widget of one type. Code snippets and the tutorials call these methods by name,
+    // so keep them as a short form of `createFloatingWidgetOfType`.
+    createFloatingSpatialProfilerWidget = () => this.createFloatingWidgetOfType(SpatialProfilerComponent.WidgetConfig.type);
+    createFloatingSpectralProfilerWidget = () => this.createFloatingWidgetOfType(SpectralProfilerComponent.WidgetConfig.type);
+    createFloatingStokesWidget = () => this.createFloatingWidgetOfType(StokesAnalysisComponent.WidgetConfig.type);
+    createFloatingSpectralLineQueryWidget = () => this.createFloatingWidgetOfType(SpectralLineQueryComponent.WidgetConfig.type);
+    createFloatingStatsWidget = () => this.createFloatingWidgetOfType(StatsComponent.WidgetConfig.type);
+    createFloatingHistogramWidget = () => this.createFloatingWidgetOfType(HistogramComponent.WidgetConfig.type);
+    createFloatingRenderWidget = () => this.createFloatingWidgetOfType(RenderConfigComponent.WidgetConfig.type);
+    createFloatingLogWidget = () => this.createFloatingWidgetOfType(LogComponent.WidgetConfig.type);
+    createFloatingAnimatorWidget = () => this.createFloatingWidgetOfType(AnimatorComponent.WidgetConfig.type);
+    createFloatingChannelMapControlWidget = () => this.createFloatingWidgetOfType(ChannelMapControlComponent.WidgetConfig.type);
+    createFloatingRegionListWidget = () => this.createFloatingWidgetOfType(RegionListComponent.WidgetConfig.type);
+    createFloatingLayerListWidget = () => this.createFloatingWidgetOfType(LayerListComponent.WidgetConfig.type);
+    createFloatingCursorInfoWidget = () => this.createFloatingWidgetOfType(CursorInfoComponent.WidgetConfig.type);
+    createFloatingPvGeneratorWidget = () => this.createFloatingWidgetOfType(PvGeneratorComponent.WidgetConfig.type);
+
     // endregion
 
     // region Spectral Profile Widgets
