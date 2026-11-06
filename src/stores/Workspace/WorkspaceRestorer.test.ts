@@ -1384,6 +1384,15 @@ describe("WorkspaceRestorer", () => {
             });
         });
 
+        test("says why a moment request failed", async () => {
+            createGeneratingSession(Promise.reject(new Error("Moment generation failed: no spectral axis.")));
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+
+            const problems = await restore(createWorkspace({generatedImages: [{request: wholeImage, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(problems).toEqual(["Could not make the moment images of image.fits: Moment generation failed: no spectral axis"]);
+        });
+
         test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
             const {requestMoment} = createGeneratingSession();
             const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};

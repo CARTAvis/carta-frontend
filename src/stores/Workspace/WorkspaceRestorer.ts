@@ -722,6 +722,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         let outcome: FrameStore[] | "skipped" | undefined;
+        let reason: string | undefined;
         if (request.type === "moment") {
             // The first request on an image replaces no images. A later request keeps the images
             // that earlier requests made. The backend numbers the names of kept images, as it did
@@ -743,15 +744,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `Making ${subject}`,
-                        () => source.requestingMomentsProgress,
-                        () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => source.requestingMomentsProgress,
+                            () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         } else if (request.type === "fitting") {
             // Make only the images that the session still showed. The fit also shows its result again.
@@ -778,15 +784,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `Making ${subject}`,
-                        () => source.requestingPVProgress,
-                        () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => source.requestingPVProgress,
+                            () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         }
 
@@ -799,7 +810,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return [];
         }
         if (!outcome.length) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`, WorkspaceIssueOutcome.Failed);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
         }
         return outcome;
     }
@@ -949,11 +960,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Skipping asks the backend to stop, but does not wait for the backend. The restore continues
      * at once. Images that still arrive for a skipped request are closed without being shown.
+     *
+     * @throws The error of the request, when the request fails before it is skipped.
      */
     private waitForRequest(made: Promise<FrameStore[]>, waiting: {isSkipped: boolean}, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let isSettled = false;
-            const settle = (outcome: FrameStore[] | "skipped"): boolean => {
+            /** Stops the wait. Returns false when the wait has already stopped. */
+            const finish = (): boolean => {
                 if (isSettled) {
                     return false;
                 }
@@ -961,6 +975,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 disposeProgress();
                 if (this.isCurrent) {
                     this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                return true;
+            };
+            const settle = (outcome: FrameStore[] | "skipped"): boolean => {
+                if (!finish()) {
+                    return false;
                 }
                 resolve(outcome);
                 return true;
@@ -986,7 +1006,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 },
                 err => {
                     console.error(err);
-                    settle([]);
+                    if (finish()) {
+                        reject(err);
+                    }
                 }
             );
         });
