@@ -215,7 +215,7 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** The width in pixels that a spatial profile along a line or polyline region samples. */
     lineRegionSampleWidth?: number;
-    /** How opaque the region is drawn: 1 shown, 0.5 semi-transparent, 0 hidden. Left out when shown. */
+    /** The opacity of the region: 1 is shown, 0.5 is semi-transparent and 0 is hidden. Left out when the region is shown. */
     opacity?: number;
 }
 
@@ -284,13 +284,13 @@ export interface WorkspaceFile {
     spectralSystem?: SpectralSystem;
     /** The intensity unit of the spectral profiles of the image. */
     intensityUnit?: string;
-    /** The rest frequency the spectral axis is converted with, when it is not the one in the header. */
+    /** The rest frequency that converts the spectral axis. Left out when it is the rest frequency in the header. */
     restFrequency?: {value: number; unit: string};
-    /** How the beam is drawn over an image that has one. */
+    /** The beam overlay settings of an image that has a beam. */
     beam?: {visible: boolean; color: string; type: string; width: number; shiftX: number; shiftY: number};
-    /** Offset coordinates, when shown: their centre in image pixels, and whether it is the origin or the pole. */
+    /** The offset coordinates, when they are shown. Saves the center in image pixels, and whether the center is the origin or the pole. */
     offsetCoordinates?: {center: Point2D; skyRefIs: number};
-    /** The rest frame the spectral axis of an image that supports one is shown in. */
+    /** The rest frame of the spectral axis, for an image that supports a rest frame. */
     restFrame?: {enabled: boolean; redshift: number; shiftMode: string; velocityConvention: string};
 
     renderConfig?: WorkspaceRenderConfig;

@@ -164,7 +164,7 @@ export class WorkspaceSnapshotter {
         }
         if (frame.isRestFrameSupported) {
             workspaceFile.restFrame = {
-                // a shift the controls rejected leaves the axis uncorrected, as it is saved
+                // Save the rest frame as off when the controls rejected the shift. The axis is not corrected in that case either.
                 enabled: frame.isRestFrameEnabled && frame.isRestFrameShiftInputValid,
                 redshift: frame.restFrameRedshift,
                 shiftMode: frame.restFrameShiftMode,
@@ -176,7 +176,7 @@ export class WorkspaceSnapshotter {
             const beam = frame.overlayBeamSettings;
             workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
         }
-        // Like regions, offset coordinates are the image's own only while it is not matched to another one.
+        // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
         if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
             workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
         }
