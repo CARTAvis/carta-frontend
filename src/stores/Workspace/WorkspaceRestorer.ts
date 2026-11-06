@@ -167,7 +167,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @returns one entry per item that could not be brought back as saved.
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
-        this.clearSession();
+        WorkspaceRestorer.clearSession();
         yield* this.openImages();
         if (!this.isCurrent) {
             return this.issues;
@@ -203,11 +203,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.showProgress("Finishing the images");
         yield* awaited(cubeHistograms);
         yield* awaited(regions);
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.showProgress("Restoring the layout and widgets");
         this.restoreLayout();
         yield* this.restoreViews();
         if (!this.isCurrent) {
@@ -222,21 +224,34 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.issues.push({kind, subject, message});
     }
 
-    /** Stage 1: put the session back to an empty state for the workspace to be restored into. */
-    private clearSession(): void {
+    /**
+     * Stage 1: put the session back to an empty state for the workspace to be restored into.
+     * Cancelling a load does the same, to close what the load has opened so far.
+     */
+    public static clearSession(): void {
+        const appStore = AppStore.Instance;
         CatalogApiService.Instance.cancelPendingQueries("The online catalog query was given up on to open a workspace");
-        this.appStore.catalogStore.interruptRequests("The previous workspace restore was interrupted");
-        this.appStore.animatorStore.stopAnimation();
-        this.appStore.tileService.clearRequestQueue();
-        this.appStore.removeAllFrames();
+        appStore.catalogStore.interruptRequests("The previous workspace restore was interrupted");
+        appStore.animatorStore.stopAnimation();
+        appStore.tileService.clearRequestQueue();
+        appStore.removeAllFrames();
+    }
+
+    /** Show the user the stage that this restore is in, and the item of the stage that it is on. */
+    private showProgress(stage: string, index?: number, count?: number, item?: string): void {
+        if (this.isCurrent) {
+            this.appStore.setWorkspaceRestoreProgress({stage, index, count, item});
+        }
     }
 
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */
     private *openImages(): Generator<Promise<unknown>, void, any> {
-        for (const fileInfo of this.workspace.files ?? []) {
+        const files = this.workspace.files ?? [];
+        for (const [index, fileInfo] of files.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Opening images", index + 1, files.length, describeImageSource(fileInfo.source));
             let frame: FrameStore | undefined;
             try {
                 frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
@@ -285,14 +300,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * session, so it runs together with the opening of the file images.
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
-        for (const {request, images} of this.generatedImages) {
-            if (request.type !== "hips" || !images.length) {
+        const hipsImages = this.generatedImages.filter(({request, images}) => request.type === "hips" && images.length);
+        for (const [index, {request, images}] of hipsImages.entries()) {
+            if (request.type !== "hips") {
                 continue;
             }
             if (!this.isCurrent) {
                 return;
             }
             const subject = WorkspaceRestorer.describeRequest(request, "");
+            this.showProgress("Opening HiPS images", index + 1, hipsImages.length, subject);
             const query = WorkspaceRestorer.hipsQueryOf(request);
             if (!query) {
                 this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`);
@@ -336,6 +353,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const place = object ? {object} : {ra: center?.x, dec: center?.y};
         return {hips: survey, width, height, ...place, fov, coordsys, projection, rotationAngle};
+    }
+
+    /** Returns the name of a saved request, as shown to the user, with the image that it is made from. */
+    private subjectOf(request: WorkspaceGenerationRequest): string {
+        if (request.type === "hips") {
+            return WorkspaceRestorer.describeRequest(request, "");
+        }
+        const sourceInfo = this.images.get(request.sourceImageId);
+        return WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
     }
 
     /** Returns the name of a request, as shown to the user. */
@@ -461,10 +487,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         // Make the request over the region by the ID that the backend gave the region.
         yield* awaited(regions);
-        for (const generated of requests) {
+        for (const [index, generated] of requests.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Making generated images", index + 1, requests.length, this.subjectOf(generated.request));
             const frames = yield* this.makeImagesAgain(generated);
             if (!this.isCurrent) {
                 frames.forEach(frame => this.closeSupersededImage(frame));
@@ -492,8 +519,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (request.type !== "moment" && request.type !== "pv") {
             return [];
         }
-        const sourceInfo = this.images.get(request.sourceImageId);
-        const subject = WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
+        const subject = this.subjectOf(request);
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`);
@@ -513,7 +539,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
             this.momentSources.add(source);
             if (message && regionId > RegionId.CURSOR) {
-                const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `preparing ${subject}`));
+                const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
                     return [];
                 }
@@ -531,7 +557,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     this.waitForRequest(
                         made,
                         waiting,
-                        `making ${subject}`,
+                        `Making ${subject}`,
                         () => source.requestingMomentsProgress,
                         () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
                     )
@@ -547,7 +573,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     this.waitForRequest(
                         made,
                         waiting,
-                        `making ${subject}`,
+                        `Making ${subject}`,
                         () => source.requestingPVProgress,
                         () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
                     )
@@ -1008,7 +1034,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             frame.renderConfig.awaitCompleteCubeHistogram();
             frame.renderConfig.setStokesIndex(stokesIndex);
             this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
-            const outcome = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
+            const outcome = await this.waitForCubeHistogram(frame, `Computing the cube histogram of ${imageName}`);
             if ((outcome === "skipped" || outcome === "superseded") && isOpen()) {
                 frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
@@ -1107,11 +1133,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /** Stage 5: open every catalog against the image it belongs to. */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
-        for (const catalogInfo of this.workspace.catalogs ?? []) {
+        const catalogs = this.workspace.catalogs ?? [];
+        for (const [index, catalogInfo] of catalogs.entries()) {
             if (!this.isCurrent) {
                 return;
             }
             const description = describeCatalogSource(catalogInfo.source);
+            this.showProgress("Opening catalogs", index + 1, catalogs.length, description);
             const targetFrameId = catalogInfo.associatedImageId === undefined ? undefined : this.frameIds.get(catalogInfo.associatedImageId);
             if (catalogInfo.associatedImageId !== undefined && targetFrameId === undefined) {
                 this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`);
@@ -1165,10 +1193,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * and a request left waiting behind the others could be given up on before its turn came.
      */
     private *configureCatalogs(): Generator<Promise<unknown>, void, any> {
-        for (const catalogInfo of this.workspace.catalogs ?? []) {
+        const catalogs = this.workspace.catalogs ?? [];
+        for (const [index, catalogInfo] of catalogs.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Applying the catalog settings", index + 1, catalogs.length, describeCatalogSource(catalogInfo.source));
             const request = this.startCatalogConfig(catalogInfo);
             if (!request) {
                 continue;
