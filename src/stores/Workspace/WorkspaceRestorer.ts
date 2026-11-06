@@ -833,11 +833,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (restFrame.enabled) {
                     unsupported.push("its rest frame");
                 }
-            } else if (
-                Object.values(RestFrameShiftMode).includes(restFrame.shiftMode) &&
-                Object.values(VelocityConvention).includes(restFrame.velocityConvention) &&
-                isValidRedshift(restFrame.redshift)
-            ) {
+            } else if (Object.values(RestFrameShiftMode).includes(restFrame.shiftMode) && Object.values(VelocityConvention).includes(restFrame.velocityConvention) && isValidRedshift(restFrame.redshift)) {
                 frame.setRestFrameShiftMode(restFrame.shiftMode);
                 frame.setRestFrameVelocityConvention(restFrame.velocityConvention);
                 frame.setRestFrameRedshift(restFrame.redshift);
