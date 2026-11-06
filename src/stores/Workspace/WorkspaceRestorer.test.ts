@@ -227,24 +227,34 @@ function createSession() {
     return {appStore, calls, profileStore, displayStore};
 }
 
-/** Drive the restore the way a mobx flow does. */
-async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
-    const generator = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration()).restore();
+/**
+ * Drive a restore to the end the way a mobx flow does. A promise that rejects is thrown into the
+ * restore, where the restore can catch it.
+ */
+async function drive(restorer: WorkspaceRestorer): Promise<WorkspaceIssue[]> {
+    const generator = restorer.restore();
     let step = generator.next();
     while (!step.done) {
-        step = generator.next(await step.value);
+        let value: unknown;
+        try {
+            value = await step.value;
+        } catch (err) {
+            step = generator.throw(err);
+            continue;
+        }
+        step = generator.next(value);
     }
     return step.value;
+}
+
+async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
+    return drive(new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration()));
 }
 
 /** Runs the restore to the end, and returns the restorer so that the test can check the ID maps. */
 async function restored(workspace: Workspace): Promise<WorkspaceRestorer> {
     const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration());
-    const generator = restorer.restore();
-    let step = generator.next();
-    while (!step.done) {
-        step = generator.next(await step.value);
-    }
+    await drive(restorer);
     return restorer;
 }
 
@@ -394,6 +404,17 @@ describe("WorkspaceRestorer", () => {
         load.mockClear();
         expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query");
         expect(load).not.toHaveBeenCalled();
+    });
+
+    test("says why an image or a catalog could not be opened, as the backend says it", async () => {
+        const {appStore} = createSession();
+        appStore.appendFile = jest.fn(() => Promise.reject("File /data/image.fits does not exist."));
+        const catalogSource: WorkspaceCatalogQuerySource = {type: "vizier", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.FK5, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500, table: "I/355/gaiadr3"};
+        jest.spyOn(CatalogApiService.Instance, "loadVizierCatalogs").mockRejectedValue(new Error("Network Error"));
+
+        const issues = await restoreIssues(createWorkspace({catalogs: [{id: 1, source: catalogSource}]}));
+
+        expect(issues.map(issue => issue.message)).toEqual(expect.arrayContaining(["Could not open the image image.fits: File /data/image.fits does not exist", expect.stringMatching(/^Could not load the catalog .*: Network Error$/)]));
     });
 
     test("shows the stage and the item of the stage that it is on", async () => {

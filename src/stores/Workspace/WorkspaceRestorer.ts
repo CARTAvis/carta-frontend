@@ -73,6 +73,20 @@ interface CatalogConfigRequest {
  * owns it: a frame's own config stores, a catalog's profile store for its table and query, and its
  * display store for how it is drawn.
  */
+/**
+ * Returns why a load failed, as the backend or the request says it, without the final period. For
+ * example, "File /data/cube.fits does not exist".
+ */
+function reasonOf(err: unknown): string | undefined {
+    const text = (err instanceof Error ? err.message : String(err ?? "")).trim().replace(/\.$/, "");
+    return text || undefined;
+}
+
+/** Adds the reason to a sentence that reports a failure, when the reason is known. */
+function withReason(sentence: string, reason: string | undefined): string {
+    return reason ? `${sentence}: ${reason}` : sentence;
+}
+
 export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * The number of workspace loads that have started. A later load uses it to take over from an
@@ -421,10 +435,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             this.showProgress("Opening images", index + 1, files.length, describeImageSource(fileInfo.source));
             let frame: FrameStore | undefined;
+            let reason: string | undefined;
             try {
                 frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             // Checked again here rather than only at the top of the loop: the image finished opening
             // while this restore was suspended, and a load started in the meantime owns the session.
@@ -433,7 +449,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`, WorkspaceIssueOutcome.Failed);
+                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), withReason(`Could not open the image ${describeImageSource(fileInfo.source)}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(fileInfo, frame);
@@ -484,17 +500,19 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
             let frame: FrameStore | undefined;
+            let reason: string | undefined;
             try {
                 frame = (yield* awaitedFlow<FrameStore | undefined | 0>(this.appStore.loadRemoteFile(query))) || undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             if (!this.isCurrent) {
                 this.closeSupersededImage(frame);
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`, WorkspaceIssueOutcome.Failed);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(images[0], frame);
@@ -1403,17 +1421,19 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
 
             let catalogFileId: number | undefined;
+            let reason: string | undefined;
             try {
                 catalogFileId = (yield* this.openCatalogSource(catalogInfo.source, targetFrameId)) ?? undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             if (!this.isCurrent) {
                 this.closeSupersededCatalog(catalogFileId);
                 return;
             }
             if (catalogFileId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}`, WorkspaceIssueOutcome.Failed);
+                this.report(WorkspaceItemKind.Catalog, description, withReason(`Could not load the catalog ${description}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
 
