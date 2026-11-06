@@ -637,7 +637,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId) {
                 const isRegionVisible = region.opacity !== RegionOpacity.Invisible;
                 hideEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionHideClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
+                    <div
+                        className="cell"
+                        style={{width: RegionListComponent.ActionColumnDefaultWidth}}
+                        onClick={ev => this.handleRegionHideClicked(ev, region)}
+                        onDoubleClick={this.stopDoubleClickPropagation}
+                        data-testid={"region-list-table-row-" + (props.index + 1) + "-visibility-cell"}
+                    >
                         <Tooltip content={isRegionVisible ? "Hide region" : "Show region"} position={Position.BOTTOM}>
                             <Icon icon={isRegionVisible ? "eye-open" : "eye-off"} style={{opacity: getRegionIconOpacity(region.opacity)}} />
                         </Tooltip>
