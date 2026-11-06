@@ -181,6 +181,23 @@ describe("AppStore.cancelLoadingWorkspace", () => {
         expect(appStore.isLoadingWorkspace).toBe(false);
     });
 
+    test("keeps the open images when the load is still reading the workspace", async () => {
+        const fetch = deferred<Workspace | undefined>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockReturnValue(fetch.promise);
+        const restore = jest.spyOn(WorkspaceRestorer.prototype, "restore");
+        const clearSession = jest.spyOn(WorkspaceRestorer, "clearSession").mockImplementation(jest.fn());
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+
+        const load = appStore.loadWorkspace("cubes");
+        appStore.cancelLoadingWorkspace();
+        fetch.resolve(workspace);
+
+        await expect(load).resolves.toBe(false);
+        expect(clearSession).not.toHaveBeenCalled();
+        expect(restore).not.toHaveBeenCalled();
+        expect(appStore.isLoadingWorkspace).toBe(false);
+    });
+
     test("does nothing when no workspace is loading", () => {
         const clearSession = jest.spyOn(WorkspaceRestorer, "clearSession").mockImplementation(jest.fn());
 
