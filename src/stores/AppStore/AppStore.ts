@@ -143,7 +143,7 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
 export interface WorkspaceLoadingStep {
     description: string;
     progress: number;
-    /** Give up on this step and carry on with the rest of the load, when that is possible. */
+    /** Skips this step and continues with the rest of the load, when that is possible. */
     onSkip?: () => void;
 }
 
@@ -1520,8 +1520,8 @@ export class AppStore {
     /**
      * Request moment images of an image.
      *
-     * @param isStillWanted - asked once the images are made; when it answers no, they are closed on
-     *                        the backend instead of being added to the session.
+     * @param isStillWanted - called when the images are made. When it returns false, the images are
+     *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
      */
     @flow.bound
@@ -1608,8 +1608,8 @@ export class AppStore {
     /**
      * Request a PV image of an image.
      *
-     * @param isStillWanted - asked once the image is made; when it answers no, it is closed on the
-     *                        backend instead of being added to the session.
+     * @param isStillWanted - called when the image is made. When it returns false, the image is
+     *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
      */
     @flow.bound
