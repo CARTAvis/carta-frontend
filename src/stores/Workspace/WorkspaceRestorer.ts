@@ -295,7 +295,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const subject = WorkspaceRestorer.describeRequest(request, "");
             const query = WorkspaceRestorer.hipsQueryOf(request);
             if (!query) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the query is not one this version can read`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`);
                 continue;
             }
             let frame: FrameStore | undefined;
@@ -309,7 +309,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
                 continue;
             }
             this.adoptImage(images[0], frame);
@@ -496,12 +496,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const subject = WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the image it is made from was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`);
             return [];
         }
         const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
         if (regionId === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the region it is made over was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`);
             return [];
         }
 
@@ -556,15 +556,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         if (outcome === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again: the request is not one this version can make`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`);
             return [];
         }
         if (outcome === "skipped") {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject} again`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`);
             return [];
         }
         if (!outcome.length) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject} again`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
         }
         return outcome;
     }
@@ -733,7 +733,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (!frame) {
                 if (frames.length) {
                     const imageName = this.nameOf(image);
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName} again`);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`);
                 }
                 continue;
             }

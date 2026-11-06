@@ -1125,7 +1125,7 @@ describe("WorkspaceRestorer", () => {
             const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
-            expect(problems).toEqual(["Skipped making the moment images of image.fits again", "Could not make the PV image of image.fits.moment.maximum again: the image it is made from was not restored"]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Could not make the PV image of image.fits.moment.maximum: the image it is made from was not restored"]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "making the moment images of image.fits", progress: 0.5}));
         });
 
@@ -1156,7 +1156,7 @@ describe("WorkspaceRestorer", () => {
 
             expect(requestMoment).not.toHaveBeenCalled();
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs.length)).toEqual([1, 0]);
-            expect(problems).toEqual(["Skipped making the moment images of image.fits again"]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits"]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "preparing the moment images of image.fits", progress: 0}));
         });
 
@@ -1166,7 +1166,7 @@ describe("WorkspaceRestorer", () => {
             const problems = await restore(createWorkspace({generatedImages: [{request: {...momentRequest, regionId: 9}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
 
             expect(requestMoment).not.toHaveBeenCalled();
-            expect(problems).toEqual(["Could not make the moment images of image.fits again: the region it is made over was not restored"]);
+            expect(problems).toEqual(["Could not make the moment images of image.fits: the region it is made over was not restored"]);
         });
 
         test("queries a HiPS image again with the images opened, so an image can be matched to it", async () => {
