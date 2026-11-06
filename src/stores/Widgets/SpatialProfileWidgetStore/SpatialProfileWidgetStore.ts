@@ -16,7 +16,7 @@ const DEFAULT_STOKES = "current";
 
 /** What a spatial profiler widget saves of its plot. */
 export interface SpatialProfileWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
     coordinate: string;
     primaryLineColor: string;

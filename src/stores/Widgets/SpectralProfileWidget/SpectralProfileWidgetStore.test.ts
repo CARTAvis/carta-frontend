@@ -116,7 +116,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
     });
 });
 
-/** A workspace that carries no image, and keeps every region under the ID it was saved with. */
+/** A workspace that saves no image. Each region keeps the ID that it was saved with. */
 const WORKSPACE_IDS = {
     imageIdOf: (): number | undefined => undefined,
     fileIdOf: (): number | undefined => undefined,

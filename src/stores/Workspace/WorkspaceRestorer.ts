@@ -78,7 +78,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
-    /** Workspace image ID to the IDs its regions were saved with, each to the ID the backend gave the region restored from it. */
+    /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
@@ -302,8 +302,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * The spectral coordinates, spectral system and intensity unit the image was shown in, set on
-     * the image alone: an image spectrally matched to another was saved with that one's.
+     * Sets the spectral coordinates, spectral system and intensity unit of the image, on this image
+     * only. An image that is spectrally matched to another image was saved with the settings of
+     * that image.
      */
     private restoreSpectralSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
         const imageName = describeImageSource(fileInfo.source);
@@ -331,10 +332,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Regions are only the image's own while it is not matched to another one.
+     * Restores the regions of the image. An image that is matched to another image has no regions
+     * of its own.
      *
-     * The backend gives each restored region an ID of its own, so the ID each was saved with is
-     * mapped to it once the backend has answered.
+     * The backend gives each restored region a new ID. Map the saved ID of each region to the new
+     * ID after the backend answers.
      */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
@@ -372,15 +374,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * The ID a region a workspace names has in this session.
+     * Returns the ID in this session of a region from the workspace, or nothing when the region was
+     * not restored.
      *
      * The cursor, the whole image and the other fixed region IDs are the same in every session. A
-     * region of an image matched to another is one of that image's.
+     * region of an image that is matched to another image belongs to that other image.
      *
-     * @param workspaceImageId - the workspace ID of the image the region was saved on; none for the
-     *                           image saved in front.
-     * @param savedRegionId - the ID the region was saved with.
-     * @returns nothing for a region that was not restored.
+     * @param workspaceImageId - the workspace ID of the image that the region was saved on. Leave
+     *                           it out for the image that was in front.
+     * @param savedRegionId - the ID that the region was saved with.
      */
     public regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined {
         if (savedRegionId <= RegionId.CURSOR) {
@@ -753,11 +755,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 8: point the widgets and plots at the catalogs, images and regions just restored.
+     * Stage 8: point the widgets and plots at the catalogs, images and regions that were just
+     * restored.
      *
-     * A profile, analysis or statistics widget is pointed at its image and region first, given the
-     * rest of what it showed once it has settled, and zoomed last: pointing a widget at another image
-     * resets what it shows of it, and changing what it shows resets its zoom.
+     * Restore a profile, analysis or statistics widget in three steps. Point it at its image and
+     * region, apply the rest of what it showed after it settles, and zoom it last. Pointing a
+     * widget at another image resets what it shows. Changing what it shows resets its zoom.
      */
     private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
@@ -778,7 +781,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return this.workspace.selectedFile === undefined || this.frameIds.has(this.workspace.selectedFile);
     }
 
-    /** The file ID a workspace image has in this session, if it was restored. */
+    /** Returns the file ID that a workspace image has in this session, or nothing when the image was not restored. */
     public fileIdOf(workspaceImageId: number): number | undefined {
         return this.frameIds.get(workspaceImageId);
     }

@@ -73,8 +73,9 @@ export class WidgetConfig implements DefaultWidgetConfig {
 
     id: string;
     /**
-     * Unique to this config. A layout replaces each widget and its store under the same ID, so a
-     * floating widget keyed by this is mounted again and takes the new store its component caches.
+     * A key that is unique to this config. A layout replaces each widget and its store, and keeps
+     * the same widget ID. A floating widget uses this key, so the widget is mounted again and its
+     * component uses the new store.
      */
     readonly renderKey = `${WidgetConfig.nextRenderKey++}`;
     readonly type: string;
@@ -456,7 +457,7 @@ export class WidgetsStore {
         return typeof (store as IdentifiedWidgetStore | undefined)?.widgetId === "string";
     };
 
-    /** A widget ID no other widget with one of its own has, starting from the one preferred. */
+    /** Returns a widget ID that no other widget uses. Starts from the preferred ID. */
     private uniqueWidgetId(preferredId: string): string {
         const taken = new Set<string>();
         this.widgetsMap.forEach(widgets =>
@@ -477,7 +478,7 @@ export class WidgetsStore {
         return WidgetsStore.isIdentified(store) && typeof (store as Partial<WorkspaceConfigurableWidget<unknown>>).toWorkspaceConfig === "function";
     };
 
-    /** What each profile, analysis and statistics widget shows, keyed by its widget ID. */
+    /** What each profile, analysis and statistics widget shows, by the widget ID. */
     public savedPlotWidgets(ids: WorkspaceIdWriter): Record<string, WorkspacePlotWidgetConfig> {
         const saved: Record<string, WorkspacePlotWidgetConfig> = {};
         this.widgetsMap.forEach((widgets, widgetType) =>
@@ -491,19 +492,19 @@ export class WidgetsStore {
     }
 
     /**
-     * Point each profile, analysis and statistics widget at the image and region a workspace says it
-     * showed. The rest follows with {@link restorePlotWidgets}, once the widgets have settled.
+     * Points each profile, analysis and statistics widget at the image and region that the
+     * workspace saved. {@link restorePlotWidgets} applies the rest after the widgets settle.
      */
     @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids));
     }
 
-    /** Give each profile, analysis and statistics widget the rest of what a workspace says it showed. */
+    /** Applies the rest of what the workspace saved to each profile, analysis and statistics widget. */
     @action public restorePlotWidgets(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
     }
 
-    /** Zoom each profile, analysis and statistics widget back to the range a workspace saved, once what it shows has settled. */
+    /** Zooms each profile, analysis and statistics widget to its saved range, after what the widget shows has settled. */
     @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
         this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
             widgetStore.applyWorkspaceView(config);
