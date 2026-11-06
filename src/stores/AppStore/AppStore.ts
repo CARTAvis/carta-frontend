@@ -2871,6 +2871,7 @@ export class AppStore {
             }
             this.setLoadingWorkspaceName(workspace.name || name);
 
+            this.hasRestoreChangedSession = true;
             const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
@@ -2899,6 +2900,7 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.hasRestoreChangedSession = false;
         this.workspaceLoadingStep = undefined;
         this.workspaceRestoreProgress = undefined;
         this.loadingWorkspaceName = "";
@@ -2922,8 +2924,17 @@ export class AppStore {
     };
 
     /**
+     * Whether a restore has started to change the session, and has not finished. A restore that a
+     * later load stops leaves this true, because the session still has what it opened.
+     */
+    private hasRestoreChangedSession = false;
+
+    /**
      * Stop the workspace load that is running, and close everything that it has opened so far. The
      * session is then empty.
+     *
+     * While the load still reads the workspace, no restore has changed the session yet. Then Cancel
+     * keeps the images that the user has open.
      */
     @action cancelLoadingWorkspace = () => {
         if (!this.isLoadingWorkspace) {
@@ -2936,7 +2947,9 @@ export class AppStore {
         // The load stops as soon as it sees that it no longer owns the session. Images and catalogs
         // that are still on their way are closed when they arrive.
         WorkspaceRestorer.claimGeneration();
-        WorkspaceRestorer.clearSession();
+        if (this.hasRestoreChangedSession) {
+            WorkspaceRestorer.clearSession();
+        }
         this.finishLoadingWorkspace();
         AppToaster.show({icon: "disable", message: name ? `Cancelled opening workspace "${name}"` : "Cancelled opening the workspace", timeout: 3000});
     };
