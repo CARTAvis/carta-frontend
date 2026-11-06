@@ -10,7 +10,7 @@ import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRan
 
 /** What a render config widget saves of its histogram plot. */
 export interface RenderConfigWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -126,13 +126,13 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    /** What the widget shows of the image in front: only the range its histogram was zoomed to. */
+    /** Returns the zoom range of the histogram of the image in front. The workspace saves nothing else for this widget. */
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceRenderConfigWidgetConfig => {
         const fileId = AppStore.Instance.activeFrame?.frameInfo.fileId;
         return fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {};
     };
 
-    /** Whether a restore found the image in front the widget was saved showing, so that the range it was zoomed to still applies. */
+    /** Whether a restore found the image in front that the widget showed when the workspace was saved. If not, the saved zoom range does not apply. */
     private isShowingWorkspaceData = true;
 
     public applyWorkspaceBinding = (_config: WorkspaceRenderConfigWidgetConfig, ids: WorkspaceIdReader): string[] => {

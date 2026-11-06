@@ -84,8 +84,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             autorun(() => {
                 if (appStore.activeFrame) {
                     const newHist = appStore.activeFrame.renderConfig.histogram;
-                    // The first histogram the widget sees is the one any range it was zoomed to, such as one
-                    // a workspace restored, was taken on; only a later one resets it.
+                    // A zoom range that the widget already has, such as one that a workspace
+                    // restored, belongs to the first histogram that the widget sees. Only a later
+                    // histogram resets the zoom range.
                     if (newHist !== this.cachedHistogram) {
                         if (this.cachedHistogram !== undefined) {
                             this.widgetStore.clearXYBounds();

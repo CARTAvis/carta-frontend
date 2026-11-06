@@ -1,4 +1,4 @@
-// load the stores before the widget stores: importing one alone reaches ColormapComponent through a circular import before "utilities" is initialised
+// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
 import {observable, runInAction} from "mobx";
 
 import {RegionId} from "enums";
@@ -12,7 +12,7 @@ import {SpatialProfileWidgetStore} from "./SpatialProfileWidgetStore/SpatialProf
 import {StatsWidgetStore} from "./StatsWidgetStore/StatsWidgetStore";
 import {StokesAnalysisWidgetStore} from "./StokesAnalysisWidgetStore/StokesAnalysisWidgetStore";
 
-/** A session holding two images with Stokes I and Q, the first of them in front. */
+/** A session with two images that have Stokes I and Q. The first image is in front. */
 function createSession() {
     const createFrame = (fileId: number) => ({
         frameInfo: {fileId},
@@ -36,10 +36,10 @@ function createSession() {
     return session;
 }
 
-/** A workspace being saved that carries the image with file ID 3 as image 2, and no other. */
+/** A workspace being saved that saves only the image with file ID 3, as image 2. */
 const WRITER: WorkspaceIdWriter = {imageIdOf: fileId => (fileId === 3 ? 2 : undefined)};
 
-/** A workspace being restored in which image 2 came back as file ID 7, with its region 5 as region 15. */
+/** A workspace being restored. Image 2 came back as file ID 7, and its region 5 came back as region 15. */
 const READER: WorkspaceIdReader = {
     fileIdOf: imageId => (imageId === 2 ? 7 : undefined),
     regionIdOf: (imageId, regionId) => (regionId <= RegionId.CURSOR ? regionId : imageId === 2 && regionId === 5 ? 15 : undefined),
