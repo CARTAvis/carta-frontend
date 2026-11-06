@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, RegionId, RegionOpacity, WorkspaceItemKind} from "enums";
+import {type HipsCoord, type HipsProjection, ImageType, RegionId, RegionOpacity, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceGenerationRequest, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
@@ -372,8 +372,8 @@ export class WorkspaceSnapshotter {
                 object: query.object || undefined,
                 center: query.object ? undefined : center,
                 fov: query.fov ?? 0,
-                coordsys: query.coordsys ?? "",
-                projection: query.projection ?? "",
+                coordsys: (query.coordsys ?? "") as HipsCoord,
+                projection: (query.projection ?? "") as HipsProjection,
                 rotationAngle: query.rotationAngle ?? 0
             };
         }

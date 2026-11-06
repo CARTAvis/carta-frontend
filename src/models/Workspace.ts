@@ -12,6 +12,8 @@ import {
     type CatalogSystemType,
     type ContourDashMode,
     FrameScaling,
+    type HipsCoord,
+    type HipsProjection,
     type MultiProfileCategory,
     type RadiusUnits,
     type RegionOpacity,
@@ -307,12 +309,12 @@ export interface WorkspaceMomentRequest {
     sourceImageId: number;
     /** The region they are taken over, by the ID it was saved with; the whole image when it is not a region of its own. */
     regionId: number;
-    /** The moments the request made images of, as `CARTA.Moment` values. */
-    moments: number[];
+    /** The moments that the request made images of. */
+    moments: CARTA.Moment[];
     /** The channels the moments are taken over, as channel indices. */
     channelRange: {min: number; max: number};
-    /** How the pixel range masks the cube, as a `CARTA.MomentMask` value. */
-    mask: number;
+    /** How the pixel range masks the cube. */
+    mask: CARTA.MomentMask;
     pixelRange: {min: number; max: number};
 }
 
@@ -336,13 +338,13 @@ export interface WorkspaceHipsRequest {
     survey: string;
     width: number;
     height: number;
-    /** The object the image is centred on, or else its centre. */
+    /** The object that the image is centered on. When it is left out, `center` gives the center of the image. */
     object?: string;
     center?: Point2D;
     /** The field of view, in degrees. */
     fov: number;
-    coordsys: string;
-    projection: string;
+    coordsys: HipsCoord;
+    projection: HipsProjection;
     /** The rotation angle, in degrees. */
     rotationAngle: number;
 }
@@ -353,8 +355,8 @@ export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvReq
 export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "directory" | "filename" | "hdu"> {
     /** The name the image had when it was saved, for naming it to the user. */
     name?: string;
-    /** For a moment image, which of the request's moments it is, as a `CARTA.Moment` value. */
-    moment?: number;
+    /** For a moment image, the moment of the request that the image shows. */
+    moment?: CARTA.Moment;
 }
 
 /**
