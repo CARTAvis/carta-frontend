@@ -371,6 +371,8 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
+    /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
+    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1473,10 +1475,19 @@ export class AppStore {
         });
     };
 
-    @action requestCubeHistogram = (fileId: number = -1) => {
+    /**
+     * Ask the backend for the cube histogram of an image.
+     *
+     * @param fileId - The image. When it is left out, the active image is used.
+     * @param coordinate - The polarization to compute the histogram for, such as "Qz". When it is left out, the backend uses the Stokes that the frontend last sent for the image.
+     *
+     * Send nothing while an earlier request is still being computed. Otherwise the backend would compute the histogram twice.
+     */
+    @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
-        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0 && !frame.renderConfig.isCubeHistogramRequested) {
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{coordinate, channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            frame.renderConfig.markCubeHistogramRequested();
             this.restartTaskProgress();
         }
     };
@@ -2749,6 +2760,12 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.workspaceLoadingStep = undefined;
+    };
+
+    /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
+    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+        this.workspaceLoadingStep = step;
     };
 
     @flow.bound

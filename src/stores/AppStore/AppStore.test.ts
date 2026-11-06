@@ -607,3 +607,23 @@ describe("scaleZoomForImageRatio", () => {
         expect(scaleZoomForImageRatio({effectiveZoomLevel: {x: 2, y: 4}, isAxisZoomable: true, zoomLevel: 4} as any, 2)).toEqual({x: 4, y: 8});
     });
 });
+
+describe("AppStore.requestCubeHistogram", () => {
+    const appStore = AppStore.Instance;
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("asks only once for a cube histogram that is still being computed", () => {
+        const renderConfig = {cubeHistogramProgress: 0, isCubeHistogramRequested: false, markCubeHistogramRequested: jest.fn(() => (renderConfig.isCubeHistogramRequested = true))};
+        jest.spyOn(appStore, "getFrame").mockReturnValue({frameInfo: {fileId: 3}, renderConfig} as any);
+        const setHistogramRequirements = jest.spyOn(appStore.backendService, "setHistogramRequirements").mockImplementation(() => undefined as any);
+
+        appStore.requestCubeHistogram(3, "Qz");
+        appStore.requestCubeHistogram(3);
+
+        expect(setHistogramRequirements).toHaveBeenCalledTimes(1);
+        expect(setHistogramRequirements).toHaveBeenCalledWith(expect.objectContaining({fileId: 3, regionId: -2, histograms: [expect.objectContaining({coordinate: "Qz", channel: -2})]}));
+    });
+});
