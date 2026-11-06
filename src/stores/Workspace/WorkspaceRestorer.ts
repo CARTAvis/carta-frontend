@@ -27,9 +27,6 @@ import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
-/** How long a restore waits for the backend to take on a region before making images over it anyway, in milliseconds. */
-const REGION_HANDSHAKE_TIMEOUT = 10_000;
-
 /** Which of the session's references an image is matched to. */
 type ReferenceKind = "spatial" | "spectral" | "raster";
 
@@ -516,12 +513,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
             this.momentSources.add(source);
             if (message && regionId > RegionId.CURSOR) {
-                yield* awaited(this.introduceRegionToBackend(source, regionId));
+                const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `preparing ${subject}`));
                 if (!this.isCurrent) {
                     return [];
                 }
+                if (handshake === "skipped") {
+                    outcome = "skipped";
+                } else if (handshake === "closed") {
+                    outcome = [];
+                }
             }
-            if (message) {
+            if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
@@ -577,28 +579,48 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * statistic of the region, wait for the answer, and then cancel that request. Sending the
      * request alone is not enough, because the backend handles requests out of order, and the
      * moment request could arrive first.
+     *
+     * The wait has no time limit. It ends when the backend answers, when the image is closed or a
+     * later workspace load starts, or when the user skips it. Skipping it also skips the moment
+     * request.
      */
-    private introduceRegionToBackend(frame: FrameStore, regionId: number): Promise<void> {
+    private introduceRegionToBackend(frame: FrameStore, regionId: number, description: string): Promise<"ready" | "closed" | "superseded" | "skipped"> {
         const backendService = BackendService.Instance;
         const fileId = frame.frameInfo.fileId;
-        return new Promise<void>(resolve => {
-            let isDone = false;
-            const finish = () => {
-                if (isDone) {
+        return new Promise(resolve => {
+            let isSettled = false;
+            const finish = (outcome: "ready" | "closed" | "superseded" | "skipped") => {
+                if (isSettled) {
                     return;
                 }
-                isDone = true;
-                clearTimeout(timer);
+                isSettled = true;
                 subscription.unsubscribe();
-                backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
-                resolve();
+                disposeReaction();
+                if (outcome !== "closed") {
+                    backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
+                }
+                if (this.isCurrent) {
+                    this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                resolve(outcome);
             };
             const subscription = backendService.statsStream.subscribe(stats => {
                 if (stats?.fileId === fileId && stats.regionId === regionId) {
-                    finish();
+                    finish("ready");
                 }
             });
-            const timer = setTimeout(finish, REGION_HANDSHAKE_TIMEOUT);
+            const disposeReaction = reaction(
+                () => ({isOpen: this.appStore.frames.includes(frame), isCurrent: this.isCurrent}),
+                ({isOpen, isCurrent}) => {
+                    if (!isOpen) {
+                        finish("closed");
+                    } else if (!isCurrent) {
+                        finish("superseded");
+                    }
+                },
+                {equals: comparer.structural}
+            );
+            this.appStore.setWorkspaceLoadingStep({description, progress: 0, onSkip: () => finish("skipped")});
             backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
         });
     }
