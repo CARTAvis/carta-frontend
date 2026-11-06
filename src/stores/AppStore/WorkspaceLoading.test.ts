@@ -204,7 +204,6 @@ describe("AppStore workspace restore report", () => {
             appStore.activeWorkspace = undefined;
             appStore.isLoadingWorkspace = false;
             appStore.workspaceRestoreReport = undefined;
-            appStore.isWorkspaceRestoreReportOpen = false;
         });
     });
 
@@ -218,16 +217,13 @@ describe("AppStore workspace restore report", () => {
         await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
 
         expect(appStore.workspaceRestoreReport).toEqual({name: "cubes", issues});
-        expect(appStore.isWorkspaceRestoreReportOpen).toBe(true);
         expect(toaster).not.toHaveBeenCalled();
 
-        // Closing the dialog keeps the report, for a later save of the same workspace.
         appStore.closeWorkspaceRestoreReport();
-        expect(appStore.isWorkspaceRestoreReportOpen).toBe(false);
-        expect(appStore.workspaceRestoreReport).toEqual({name: "cubes", issues});
+        expect(appStore.workspaceRestoreReport).toBeUndefined();
     });
 
-    test("shows no report when everything was restored, and forgets the report of the previous restore", async () => {
+    test("shows no report when everything was restored, and closes the report of the previous restore", async () => {
         jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
         let restoreIssues = issues;
         jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
@@ -240,6 +236,5 @@ describe("AppStore workspace restore report", () => {
         restoreIssues = [];
         await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
         expect(appStore.workspaceRestoreReport).toBeUndefined();
-        expect(appStore.isWorkspaceRestoreReportOpen).toBe(false);
     });
 });
