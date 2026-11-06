@@ -229,12 +229,12 @@ describe("CatalogApiService source-driven loading", () => {
         expect(query).not.toHaveBeenCalled();
     });
 
-    test("opens no catalog when its SIMBAD query is canceled", async () => {
+    test("opens no catalog when its SIMBAD query is canceled, and passes the cancellation on", async () => {
         const service = new CatalogApiService();
         const {appStore} = configureSession();
         jest.spyOn(service, "getSimbadCatalog").mockRejectedValue(new axios.CanceledError("query canceled"));
 
-        await expect(service.loadSimbadCatalog(simbadSource)).resolves.toEqual({dataSize: 0, fileId: undefined});
+        await expect(service.loadSimbadCatalog(simbadSource)).rejects.toThrow("query canceled");
         expect(jest.mocked(CatalogOnlineQueryProfileStore)).not.toHaveBeenCalled();
         expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
     });

@@ -69,6 +69,11 @@ function reasonOf(err: unknown): string | undefined {
     return text || undefined;
 }
 
+/** Throws the reason for an online catalog query that answered with no sources, for the report. */
+function noSources(): never {
+    throw new Error("the query found no sources");
+}
+
 /** Adds the reason to a sentence that reports a failure, when the reason is known. */
 function withReason(sentence: string, reason: string | undefined): string {
     return reason ? `${sentence}: ${reason}` : sentence;
@@ -1449,13 +1454,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         if (source.type === "simbad") {
             const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
-            return fileId;
+            return fileId ?? noSources();
         }
 
         if (!source.table) {
             return undefined;
         }
-        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0];
+        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0] ?? noSources();
     }
 
     /**
