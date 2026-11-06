@@ -61,19 +61,6 @@ interface CatalogConfigRequest {
 }
 
 /**
- * Brings a workspace back into the running session, one named stage at a time.
- *
- * Restoring is not a single step: images have to exist before catalogs can be attached to them, a
- * catalog's rows have to match its saved query before its overlay is drawn, and the widgets and
- * plots showing a catalog can only be bound once it is loaded. Running the stages in a fixed order
- * makes what a restored session looks like a property of the workspace, rather than of which store
- * happened to be ready first.
- *
- * The restorer owns the order and the loading. What each piece of state means stays with whoever
- * owns it: a frame's own config stores, a catalog's profile store for its table and query, and its
- * display store for how it is drawn.
- */
-/**
  * Returns why a load failed, as the backend or the request says it, without the final period. For
  * example, "File /data/cube.fits does not exist".
  */
@@ -87,6 +74,19 @@ function withReason(sentence: string, reason: string | undefined): string {
     return reason ? `${sentence}: ${reason}` : sentence;
 }
 
+/**
+ * Brings a workspace back into the running session, one named stage at a time.
+ *
+ * Restoring is not a single step: images have to exist before catalogs can be attached to them, a
+ * catalog's rows have to match its saved query before its overlay is drawn, and the widgets and
+ * plots showing a catalog can only be bound once it is loaded. Running the stages in a fixed order
+ * makes what a restored session looks like a property of the workspace, rather than of which store
+ * happened to be ready first.
+ *
+ * The restorer owns the order and the loading. What each piece of state means stays with whoever
+ * owns it: a frame's own config stores, a catalog's profile store for its table and query, and its
+ * display store for how it is drawn.
+ */
 export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * The number of workspace loads that have started. A later load uses it to take over from an
@@ -484,11 +484,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * depend on any other data in the session.
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
-        const hipsImages = this.generatedImages.filter(({request, images}) => request.type === "hips" && images.length);
+        const hipsImages = this.generatedImages.filter((generated): generated is WorkspaceGeneratedImages & {request: WorkspaceHipsRequest} => generated.request.type === "hips" && generated.images.length > 0);
         for (const [index, {request, images}] of hipsImages.entries()) {
-            if (request.type !== "hips") {
-                continue;
-            }
             if (!this.isCurrent) {
                 return;
             }

@@ -779,7 +779,7 @@ export interface WorkspaceIssue {
     message: string;
     /**
      * Set by a restore when the item is not in the session, so a save of the session leaves the
-     * item out. Left out when the item is in the session, but not as it was saved.
+     * item out. Undefined when the item is in the session, but not as it was saved.
      */
     outcome?: WorkspaceIssueOutcome;
 }
