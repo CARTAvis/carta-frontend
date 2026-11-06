@@ -61,7 +61,12 @@ export async function exportScreenshot(isImageOnly = true, maxWidth = 512, forma
             return false;
         }
 
-        const canvas = await html2canvas(element, isImageOnly ? undefined : {ignoreElements: node => SCREENSHOT_IGNORED_CLASSES.some(className => node.classList?.contains(className))});
+        // Draw the page at the width of the screenshot, not at the pixel ratio of the screen. On a 4K
+        // screen with a pixel ratio of 2, the full size would be 7680 by 4320 pixels. Safari cannot
+        // make a canvas that large, so the screenshot would fail.
+        const scale = maxWidth > 0 && element.clientWidth > 0 ? Math.min(window.devicePixelRatio, maxWidth / element.clientWidth) : undefined;
+        const ignoreElements = isImageOnly ? undefined : (node: Element) => SCREENSHOT_IGNORED_CLASSES.some(className => node.classList?.contains(className));
+        const canvas = await html2canvas(element, {scale, ignoreElements});
         const thumbnailCanvas: HTMLCanvasElement = document.createElement("canvas");
         let width: number;
         let height: number;

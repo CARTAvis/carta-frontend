@@ -60,7 +60,7 @@ describe("exportScreenshot", () => {
     test("captures only the image viewer by default", async () => {
         await exportScreenshot();
 
-        expect(html2canvas).toHaveBeenCalledWith(document.querySelector(".image-view-div"), undefined);
+        expect(html2canvas).toHaveBeenCalledWith(document.querySelector(".image-view-div"), expect.objectContaining({ignoreElements: undefined}));
     });
 
     test("captures the whole app without its overlays, such as dialogs, toasts and popovers", async () => {
@@ -75,6 +75,20 @@ describe("exportScreenshot", () => {
         };
         expect([Classes.PORTAL, Classes.OVERLAY, Classes.TOAST_CONTAINER, Classes.POPOVER].map(ignores)).toEqual([true, true, true, true]);
         expect(ignores("floating-widget")).toBe(false);
+    });
+
+    test("draws the page at the width of the screenshot, and not larger than the pixel ratio of the screen", async () => {
+        const app = document.querySelector(".App") as HTMLElement;
+        jest.spyOn(app, "clientWidth", "get").mockReturnValue(3840);
+        const pixelRatio = window.devicePixelRatio;
+        window.devicePixelRatio = 2;
+        await exportScreenshot(false, 1024);
+        expect((html2canvas as unknown as jest.Mock).mock.calls[0][1].scale).toBeCloseTo(1024 / 3840);
+
+        jest.spyOn(app, "clientWidth", "get").mockReturnValue(400);
+        await exportScreenshot(false, 1024);
+        expect((html2canvas as unknown as jest.Mock).mock.calls[1][1].scale).toBe(2);
+        window.devicePixelRatio = pixelRatio;
     });
 
     test("scales the screenshot to the width asked for, keeping its aspect ratio", async () => {
