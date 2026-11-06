@@ -2857,6 +2857,7 @@ export class AppStore {
             }
             restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
 
+            // Take the name before `finishLoadingWorkspace` clears it. The report shows the name.
             const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
