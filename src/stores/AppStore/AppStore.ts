@@ -777,9 +777,13 @@ export class AppStore {
      * A workspace restore does not show the alert. It lists the file in its report, with the
      * reason. Then the user does not have to close an alert for each file that the restore could
      * not open.
+     *
+     * @param isRestoring - Whether a workspace restore was running when the load started. Take it
+     * before the request goes out. If the user cancels the restore while the request is in flight,
+     * `isLoadingWorkspace` is already false when the error arrives.
      */
-    private alertLoadError(message: string) {
-        if (!this.isLoadingWorkspace) {
+    private alertLoadError(message: string, isRestoring: boolean) {
+        if (!isRestoring) {
             this.alertStore.showAlert(message);
         }
     }
@@ -799,6 +803,7 @@ export class AppStore {
      */
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, isImageArithmetic: boolean, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true) {
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         this.openingImageCount++;
 
@@ -838,7 +843,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
-            this.alertLoadError(`Error loading file: ${err}`);
+            this.alertLoadError(`Error loading file: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         } finally {
@@ -853,6 +858,7 @@ export class AppStore {
      * @throws If there is an error loading the file.
      */
     @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest.$Properties) {
+        const isRestoring = this.isLoadingWorkspace;
         this.openingImageCount++;
         try {
             remoteRequest.fileId = this.fileCounter;
@@ -860,7 +866,7 @@ export class AppStore {
             const ack: CARTA.RemoteFileResponse.$Properties = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
                 // A workspace restore reports the failed query with the reason, in its report.
-                if (this.isLoadingWorkspace) {
+                if (isRestoring) {
                     throw new Error(ack.message || "the query returned no image");
                 }
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
@@ -882,7 +888,7 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertLoadError(`HiPS data query failed: ${err}`);
+            this.alertLoadError(`HiPS data query failed: ${err}`, isRestoring);
             throw err;
         } finally {
             this.openingImageCount--;
@@ -890,6 +896,7 @@ export class AppStore {
     }
 
     loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         this.openingImageCount++;
         try {
@@ -909,7 +916,7 @@ export class AppStore {
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
-            this.alertLoadError(`Error loading files: ${err}`);
+            this.alertLoadError(`Error loading files: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         } finally {
@@ -1286,6 +1293,7 @@ export class AppStore {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
 
         try {
@@ -1306,7 +1314,7 @@ export class AppStore {
             return fileId;
         } catch (err) {
             console.error(err);
-            this.alertLoadError(`Error loading catalogs: ${err}`);
+            this.alertLoadError(`Error loading catalogs: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         }

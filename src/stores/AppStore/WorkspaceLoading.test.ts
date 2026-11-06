@@ -238,3 +238,46 @@ describe("AppStore workspace restore report", () => {
         expect(appStore.workspaceRestoreReport).toBeUndefined();
     });
 });
+
+describe("AppStore load error alerts", () => {
+    const appStore = AppStore.Instance;
+
+    beforeEach(() => {
+        appStore.alertStore.dismissAlert();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        appStore.alertStore.dismissAlert();
+        runInAction(() => {
+            appStore.isLoadingWorkspace = false;
+        });
+    });
+
+    test("shows no alert for a file that a cancelled restore was still opening", async () => {
+        const ack = deferred<never>();
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+        jest.spyOn(appStore.backendService, "loadFile").mockReturnValue(ack.promise);
+        runInAction(() => {
+            appStore.isLoadingWorkspace = true;
+        });
+
+        const load = appStore.loadFile("/data", "missing.fits", "", false);
+        runInAction(() => {
+            appStore.isLoadingWorkspace = false;
+        });
+        ack.reject(new Error("File /data/missing.fits does not exist"));
+
+        await expect(load).rejects.toThrow("does not exist");
+        expect(appStore.alertStore.isAlertVisible ? appStore.alertStore.alertText : undefined).toBeUndefined();
+    });
+
+    test("shows the alert for a file that the user opens", async () => {
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+        jest.spyOn(appStore.backendService, "loadFile").mockRejectedValue(new Error("File /data/missing.fits does not exist"));
+
+        await expect(appStore.loadFile("/data", "missing.fits", "", false)).rejects.toThrow("does not exist");
+        expect(appStore.alertStore.isAlertVisible).toBe(true);
+        expect(appStore.alertStore.alertText).toContain("Error loading file");
+    });
+});
