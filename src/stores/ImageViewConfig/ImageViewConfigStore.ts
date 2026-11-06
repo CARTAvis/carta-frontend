@@ -11,9 +11,9 @@ export interface ImageViewGridConfig {
     multiPanelEnabled: boolean;
     /** How the grid is sized when multi-panel is enabled. */
     panelMode: ImagePanelMode.Dynamic | ImagePanelMode.Fixed;
-    /** The number of columns: the maximum in dynamic mode, the exact count in fixed mode. */
+    /** The number of columns. In dynamic mode, this is the maximum number. In fixed mode, this is the exact number. */
     panelColumns: number;
-    /** The number of rows: the maximum in dynamic mode, the exact count in fixed mode. */
+    /** The number of rows. In dynamic mode, this is the maximum number. In fixed mode, this is the exact number. */
     panelRows: number;
 }
 
@@ -34,7 +34,7 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
 
     @observable private imageList: ImageViewItem[] = [];
     private nextColorBlendingId = 0;
-    /** The grid of this session; a setting it does not hold follows the user's preference. */
+    /** The grid settings of this session. A setting that is not set here follows the user's preference. */
     @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
 
     /** Whether multi-panel is enabled in this session. */
@@ -47,12 +47,12 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         return this.grid.panelMode ?? PreferenceStore.Instance.imagePanelMode;
     }
 
-    /** The column setting of the grid. */
+    /** The number of columns of the grid in this session. See {@link ImageViewGridConfig.panelColumns}. */
     @computed get panelColumns(): number {
         return this.grid.panelColumns ?? PreferenceStore.Instance.imagePanelColumns;
     }
 
-    /** The row setting of the grid. */
+    /** The number of rows of the grid in this session. See {@link ImageViewGridConfig.panelRows}. */
     @computed get panelRows(): number {
         return this.grid.panelRows ?? PreferenceStore.Instance.imagePanelRows;
     }
@@ -69,7 +69,7 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, mode);
     };
 
-    /** Sets the column setting of the grid, and keeps it as the user's default. */
+    /** Sets the number of columns of the grid, and keeps it as the user's default. */
     @action setPanelColumns = (columns: number) => {
         if (isPanelCount(columns)) {
             this.grid.panelColumns = columns;
@@ -77,7 +77,7 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         }
     };
 
-    /** Sets the row setting of the grid, and keeps it as the user's default. */
+    /** Sets the number of rows of the grid, and keeps it as the user's default. */
     @action setPanelRows = (rows: number) => {
         if (isPanelCount(rows)) {
             this.grid.panelRows = rows;
@@ -93,9 +93,9 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     });
 
     /**
-     * Applies the grid a layout saved, to this session only: restoring is not a user action, so the
-     * user's defaults stay as they were. A setting the layout does not hold, or holds in a shape the
-     * controls would not accept, follows the user's preference.
+     * Applies the grid that a layout saved, to this session only. A restore is not a user action,
+     * so the user's defaults do not change. When the layout leaves out a setting, or saves a value
+     * that the controls do not accept, that setting follows the user's preference.
      */
     @action applyConfig = (config: Persisted<ImageViewGridConfig> | null | undefined) => {
         const panelMode = config?.panelMode;

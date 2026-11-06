@@ -9,7 +9,7 @@ describe("fields the schemas do not declare yet", () => {
     test.each(Object.entries(PENDING_SCHEMA_FIELDS))("%s lists only fields its schema still leaves undeclared", (definitionId, fields) => {
         const [schema, definition] = definitionId.split("/");
         const properties = SCHEMAS[schema].definitions[definition]?.properties;
-        // a layout keeps a widget's settings under widgetSettings, beside the widget's type and ID
+        // A layout saves the settings of a widget in `widgetSettings`, next to the type and ID of the widget.
         const declared = (schema === "layout" ? properties?.widgetSettings?.properties : properties) ?? {};
 
         expect(fields.filter(field => field in declared)).toEqual([]);
