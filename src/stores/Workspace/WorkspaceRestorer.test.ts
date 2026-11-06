@@ -1184,7 +1184,7 @@ describe("WorkspaceRestorer", () => {
         };
 
         /** A session that makes generated images as the backend does: moment images come back in the order of the request. */
-        function createGeneratingSession(momentsMade?: Promise<unknown>) {
+        function createGeneratingSession(momentsMade?: Promise<unknown>, shouldAnswerStats = true) {
             frameOverrides = {resetMomentRequestState: jest.fn(), resetPvRequestState: jest.fn(), requestingMomentsProgress: 0.5, requestingPVProgress: 0};
             const session = createSession();
             const {appStore} = session;
@@ -1208,7 +1208,7 @@ describe("WorkspaceRestorer", () => {
             const backend = {
                 statsStream,
                 setStatsRequirements: jest.fn((message: {fileId: number; regionId: number; statsConfigs: unknown[]}) => {
-                    if (message.statsConfigs.length) {
+                    if (message.statsConfigs.length && shouldAnswerStats) {
                         setTimeout(() => statsStream.next({fileId: message.fileId, regionId: message.regionId}));
                     }
                     return true;
@@ -1270,7 +1270,7 @@ describe("WorkspaceRestorer", () => {
         test("reports a request the user skips, and what is made of its images", async () => {
             const {appStore, cancelRequestingMoment, requestMoment, requestPV} = createGeneratingSession(new Promise(() => {}));
             appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
-                if (step?.onSkip) {
+                if (step?.onSkip && step.description.startsWith("making")) {
                     setTimeout(step.onSkip);
                 }
             });
@@ -1291,6 +1291,37 @@ describe("WorkspaceRestorer", () => {
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits again", "Could not make the PV image of image.fits.moment.maximum again: the image it is made from was not restored"]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "making the moment images of image.fits", progress: 0.5}));
+        });
+
+        test("waits for the backend to take on the region with no time limit, until the user skips it", async () => {
+            jest.useFakeTimers();
+            const {appStore, requestMoment, backend} = createGeneratingSession(undefined, false);
+            let skipPreparing: (() => void) | undefined;
+            appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
+                if (step?.description.startsWith("preparing")) {
+                    skipPreparing = step.onSkip;
+                }
+            });
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [{request: momentRequest, images: [{id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]
+            });
+
+            const restoring = restore(workspace);
+            // Much longer than any fixed limit: the restore still waits for the backend.
+            await jest.advanceTimersByTimeAsync(10 * 60 * 1000);
+            expect(skipPreparing).toBeDefined();
+            expect(requestMoment).not.toHaveBeenCalled();
+
+            skipPreparing?.();
+            await jest.advanceTimersByTimeAsync(0);
+            const problems = await restoring;
+            jest.useRealTimers();
+
+            expect(requestMoment).not.toHaveBeenCalled();
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs.length)).toEqual([1, 0]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits again"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "preparing the moment images of image.fits", progress: 0}));
         });
 
         test("reports a request whose region did not come back, without making it", async () => {
