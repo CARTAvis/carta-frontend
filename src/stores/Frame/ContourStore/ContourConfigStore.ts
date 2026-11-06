@@ -1,13 +1,13 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
-import type {WorkspaceContourConfig} from "models";
+import type {ConfigurableStore, WorkspaceContourConfig} from "models";
 import tinycolor from "tinycolor2";
 
 import {ContourDashMode} from "enums";
 import {type PreferenceStore} from "stores";
 
-export class ContourConfigStore {
+export class ContourConfigStore implements ConfigurableStore<WorkspaceContourConfig | undefined, WorkspaceContourConfig> {
     @observable isEnabled: boolean = false;
     @observable levels: number[] = [];
     @observable smoothingMode: CARTA.SmoothingMode;

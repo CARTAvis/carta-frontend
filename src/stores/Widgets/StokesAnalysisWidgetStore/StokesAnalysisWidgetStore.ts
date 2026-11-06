@@ -5,6 +5,7 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
+import {type ConfigurableStore, type Persisted} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
@@ -24,7 +25,20 @@ const DEFAULTS = {
     invertedColorMap: false
 };
 
-export class StokesAnalysisWidgetStore extends RegionWidgetStore {
+/** What a Stokes analysis widget saves of its plots. */
+export interface StokesAnalysisWidgetConfig {
+    primaryLineColor: string;
+    secondaryLineColor: string;
+    lineWidth: number;
+    linePlotPointSize: number;
+    plotType: PlotType;
+    colorMap: string;
+    scatterPlotPointSize: number;
+    pointTransparency: number;
+    equalAxes: boolean;
+}
+
+export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>> {
     @observable sharedMinX: number | undefined = undefined;
     @observable sharedMaxX: number | undefined = undefined;
     @observable quMinY: number | undefined = undefined;
@@ -376,16 +390,14 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return AppStore.Instance.isDarkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
-    public applyConfig = (widgetSettings): void => {
+    public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
-        const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
-        const secondaryLineColor = tinycolor(widgetSettings.secondaryLineColor);
-        if (secondaryLineColor.isValid() || isAutoColor(widgetSettings.secondaryLineColor)) {
+        if (typeof widgetSettings.secondaryLineColor === "string" && (tinycolor(widgetSettings.secondaryLineColor).isValid() || isAutoColor(widgetSettings.secondaryLineColor))) {
             this.secondaryLineColor = widgetSettings.secondaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
@@ -411,7 +423,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     };
 
-    public toConfig = () => {
+    public toConfig = (): StokesAnalysisWidgetConfig => {
         return {
             primaryLineColor: this.primaryLineColor,
             secondaryLineColor: this.secondaryLineColor,

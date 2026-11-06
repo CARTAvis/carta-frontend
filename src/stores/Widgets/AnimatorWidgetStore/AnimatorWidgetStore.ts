@@ -1,6 +1,7 @@
 import {action, makeObservable, observable} from "mobx";
 
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
+import {type ConfigurableStore, type Persisted} from "models";
 
 export interface AnimatorWidgetConfig {
     timeLabelFormat: TimeLabelFormat;
@@ -26,8 +27,6 @@ export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
     relativeTimeUnit: RelativeTimeUnit.AUTO
 };
 
-export type PersistedAnimatorWidgetConfig = Partial<Record<keyof AnimatorWidgetConfig, unknown>>;
-
 function isEnumValue<T extends string>(enumeration: Record<string, T>, value: unknown): value is T {
     return typeof value === "string" && Object.values(enumeration).includes(value as T);
 }
@@ -40,7 +39,7 @@ function isFiniteNumber(value: unknown): value is number {
     return typeof value === "number" && isFinite(value);
 }
 
-export class AnimatorWidgetStore implements AnimatorWidgetConfig {
+export class AnimatorWidgetStore implements AnimatorWidgetConfig, ConfigurableStore<AnimatorWidgetConfig, Persisted<AnimatorWidgetConfig>> {
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
     @observable ianaTimeZone: string | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
@@ -93,7 +92,7 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig {
         this.relativeTimeUnit = unit;
     };
 
-    @action applyConfig = (config: PersistedAnimatorWidgetConfig) => {
+    @action applyConfig = (config: Persisted<AnimatorWidgetConfig>) => {
         if (isEnumValue(TimeLabelFormat, config.timeLabelFormat)) {
             this.timeLabelFormat = config.timeLabelFormat;
         }
