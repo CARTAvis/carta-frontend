@@ -4,6 +4,7 @@ import {type CARTA} from "carta-protobuf";
 import {
     type AngularSizeUnit,
     type AnimationMode,
+    type BeamType,
     type CatalogDisplayMode,
     type CatalogOverlayShape,
     type CatalogPlotType,
@@ -18,8 +19,12 @@ import {
     type RedshiftType,
     type SpectralLineQueryRangeType,
     type SpectralLineQueryUnit,
+    type RegionOpacity,
+    type RestFrameShiftMode,
+    type SkyRefIs,
     type SpectralSystem,
     type VectorOverlaySource,
+    type VelocityConvention,
     type WorkspaceItemKind
 } from "enums";
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
@@ -215,8 +220,8 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** The width in pixels that a spatial profile along a line or polyline region samples. */
     lineRegionSampleWidth?: number;
-    /** The opacity of the region: 1 is shown, 0.5 is semi-transparent and 0 is hidden. Left out when the region is shown. */
-    opacity?: number;
+    /** The opacity of the region: `SemiTransparent` (0.5) or `Invisible` (0). Left out when the region is `Visible` (1). */
+    opacity?: RegionOpacity;
 }
 
 export interface WorkspaceColorBlending {
@@ -287,11 +292,11 @@ export interface WorkspaceFile {
     /** The rest frequency that converts the spectral axis. Left out when it is the rest frequency in the header. */
     restFrequency?: {value: number; unit: string};
     /** The beam overlay settings of an image that has a beam. */
-    beam?: {visible: boolean; color: string; type: string; width: number; shiftX: number; shiftY: number};
+    beam?: {visible: boolean; color: string; type: BeamType; width: number; shiftX: number; shiftY: number};
     /** The offset coordinates, when they are shown. Saves the center in image pixels, and whether the center is the origin or the pole. */
-    offsetCoordinates?: {center: Point2D; skyRefIs: number};
+    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */
-    restFrame?: {enabled: boolean; redshift: number; shiftMode: string; velocityConvention: string};
+    restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;

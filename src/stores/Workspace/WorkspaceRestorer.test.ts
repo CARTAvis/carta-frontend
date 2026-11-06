@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {observable, runInAction} from "mobx";
 
-import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
+import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
@@ -795,9 +795,9 @@ describe("WorkspaceRestorer", () => {
     describe("the rest frequency, rest frame, beam and offset coordinates of an image", () => {
         const savedSettings = {
             restFrequency: {value: 230.5, unit: "GHz"},
-            restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
-            beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
-            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+            restFrame: {enabled: true, redshift: 0.01, shiftMode: RestFrameShiftMode.REDSHIFT, velocityConvention: VelocityConvention.OPTICAL},
+            beam: {visible: false, color: "#00ff00", type: BeamType.Solid, width: 2, shiftX: 3, shiftY: -4},
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: SkyRefIs.Pole}
         };
 
         test("shows the image with the ones it was saved with", async () => {
@@ -956,7 +956,11 @@ describe("WorkspaceRestorer", () => {
         test("hides or dims a region as it was saved, and leaves one no control would set as shown", async () => {
             const {appStore} = createSession();
 
-            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), opacity: 0}, {...region(2), opacity: 0.5}, {...region(3), opacity: 0.3}, region(4)]}}]}));
+            await restore(
+                createWorkspace({
+                    files: [{...IMAGE, regionsSet: {regions: [{...region(1), opacity: RegionOpacity.Invisible}, {...region(2), opacity: RegionOpacity.SemiTransparent}, {...region(3), opacity: 0.3 as RegionOpacity}, region(4)]}}]
+                })
+            );
 
             const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setOpacity: jest.Mock}[];
             expect(restoredRegions.map(restoredRegion => restoredRegion.setOpacity.mock.calls)).toEqual([[[0]], [[0.5]], [], []]);
