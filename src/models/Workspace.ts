@@ -218,7 +218,7 @@ export interface WorkspaceStokesFile {
     directory?: string;
     filename: string;
     hdu?: string;
-    polarizationType?: number;
+    polarizationType?: CARTA.PolarizationType;
 }
 
 export interface WorkspaceFileImageSource {
