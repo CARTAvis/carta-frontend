@@ -1,10 +1,12 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
+import {Subject} from "rxjs";
 
-import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
+import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
-import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
+import {BackendService, CatalogApiService} from "services";
+import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
@@ -154,9 +156,15 @@ function createSession() {
         cancelCubeHistogramRequest: jest.fn(),
         setWorkspaceLoadingStep: jest.fn(),
         frameMap: frames,
-        setSpatialReference: jest.fn(),
-        setSpectralReference: jest.fn(),
-        setRasterScalingReference: jest.fn(),
+        setSpatialReference: jest.fn((frame: unknown) => {
+            appStore.spatialReference = frame as never;
+        }),
+        setSpectralReference: jest.fn((frame: unknown) => {
+            appStore.spectralReference = frame as never;
+        }),
+        setRasterScalingReference: jest.fn((frame: unknown) => {
+            appStore.rasterScalingReference = frame as never;
+        }),
         setSpatialMatchingEnabled: jest.fn(),
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
@@ -755,13 +763,13 @@ describe("WorkspaceRestorer", () => {
 
         test("sets the rest frequency in a step of its own, before the images are matched with it", async () => {
             const {appStore} = createSession();
-            appStore.spectralReference = {} as never;
-            const generator = new WorkspaceRestorer(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}}], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}};
+            const generator = new WorkspaceRestorer(createWorkspace({files: [IMAGE, matched], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
 
             let didMatchBeforeRestFrequency: boolean | undefined;
             let step = generator.next();
             while (!step.done) {
-                const restFreqStore = appStore.frames[0]?.restFreqStore;
+                const restFreqStore = appStore.frames[1]?.restFreqStore;
                 if (didMatchBeforeRestFrequency === undefined && restFreqStore?.setCustomVal.mock.calls.length) {
                     didMatchBeforeRestFrequency = appStore.setSpectralMatchingEnabled.mock.calls.length > 0;
                 }
@@ -774,7 +782,6 @@ describe("WorkspaceRestorer", () => {
 
         test("puts the offset coordinates back once every image is matched, since matching one moves them", async () => {
             const {appStore} = createSession();
-            appStore.spatialReference = {} as never;
             const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
 
             await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: savedSettings.offsetCoordinates, references: {spatial: 1}}, matched], references: {spatial: 1}}));
@@ -926,7 +933,7 @@ describe("WorkspaceRestorer", () => {
             expect(appStore.requestCubeHistogram).toHaveBeenCalledWith(frame.frameInfo.fileId, "Iz");
             expect(calls.indexOf("requestCubeHistogram")).toBeLessThan(calls.indexOf("appendCatalog"));
             expect(calls.indexOf("cubeHistogramComplete")).toBeLessThan(calls.indexOf("applyLayout"));
-            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5});
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith({description: "cube histogram of image.fits", progress: 0.5, onSkip: expect.any(Function)});
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
             expect(frame.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
         });
@@ -960,7 +967,6 @@ describe("WorkspaceRestorer", () => {
             await jest.advanceTimersByTimeAsync(0);
             // A later load takes over the session and then fails to fetch its workspace, so these images stay open.
             WorkspaceRestorer.claimGeneration();
-            await jest.advanceTimersByTimeAsync(60_000);
             const issues = await pending;
 
             const [first, second] = appStore.frames;
@@ -972,18 +978,221 @@ describe("WorkspaceRestorer", () => {
             expect(issues).toEqual([]);
         });
 
-        test("keeps its saved range as a custom one when the backend stops reporting progress", async () => {
-            jest.useFakeTimers();
+        test("keeps its saved range as a custom one when the user skips it, and goes on with the next image", async () => {
             const {appStore} = createSession();
+            appStore.requestCubeHistogram.mockImplementation((fileId?: number, _coordinate?: string) => {
+                const renderConfig = appStore.getFrame(fileId as number)!.renderConfig;
+                setTimeout(() => renderConfig.reportCubeHistogramProgress(0.2), 0);
+            });
+            appStore.setWorkspaceLoadingStep.mockImplementation((step?: WorkspaceLoadingStep) => {
+                // Skip the first image's cube histogram as soon as its progress is shown.
+                if (step?.description === "cube histogram of image.fits" && step.progress > 0) {
+                    step.onSkip?.();
+                }
+            });
 
-            const pending = restore(createWorkspace({files: [cubeImage]}));
-            await jest.advanceTimersByTimeAsync(60_000);
+            const pending = restore(createWorkspace({files: [cubeImage, {...cubeImage, id: 2, source: {...cubeImage.source, filename: "second.fits"}}]}));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            const [first, second] = appStore.frames;
+            second.renderConfig.reportCubeHistogramProgress(1);
             const issues = await pending;
 
-            const frame = appStore.frames[0];
-            expect(frame.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
-            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(frame.frameInfo.fileId);
-            expect(issues).toEqual(["Could not compute the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
+            expect(appStore.requestCubeHistogram).toHaveBeenCalledTimes(2);
+            expect(first.renderConfig.keepRangeWithoutCubeHistogram).toHaveBeenCalledTimes(1);
+            expect(appStore.cancelCubeHistogramRequest).toHaveBeenCalledWith(first.frameInfo.fileId);
+            expect(second.renderConfig.keepRangeWithoutCubeHistogram).not.toHaveBeenCalled();
+            expect(issues).toEqual(["Skipped computing the cube histogram of image.fits; its percentile range is kept as a custom range; select Per-cube to compute it again"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
+        });
+    });
+
+    describe("generated images", () => {
+        const savedRegion = {id: 5, type: 3, rotation: 0, points: []};
+        const momentRequest = {
+            type: "moment" as const,
+            sourceImageId: 1,
+            regionId: 5,
+            moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+            channelRange: {min: 2, max: 8},
+            mask: CARTA.MomentMask.Include,
+            pixelRange: {min: 0.1, max: 1}
+        };
+
+        /** A session that makes generated images as the backend does: moment images come back in the order of the request. */
+        function createGeneratingSession(momentsMade?: Promise<unknown>, shouldAnswerStats = true) {
+            frameOverrides = {resetMomentRequestState: jest.fn(), resetPvRequestState: jest.fn(), requestingMomentsProgress: 0.5, requestingPVProgress: 0};
+            const session = createSession();
+            const {appStore} = session;
+            let nextFileId = 100;
+            const addFrame = (generation: unknown) => {
+                const frame = {...createFrame(++nextFileId), generation};
+                (appStore.frameMap as Map<number, unknown>).set(frame.frameInfo.fileId, frame);
+                appStore.frames.push(frame as never);
+                return frame;
+            };
+            const generating = {
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _isStillWanted?: () => boolean) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                cancelRequestingMoment: jest.fn(),
+                requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
+                cancelRequestingPV: jest.fn(),
+                loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({})))
+            };
+            Object.assign(appStore, generating);
+            // The backend answers a statistics request for a region with that region's statistics.
+            const statsStream = new Subject<{fileId: number; regionId: number}>();
+            const backend = {
+                statsStream,
+                setStatsRequirements: jest.fn((message: {fileId: number; regionId: number; statsConfigs: unknown[]}) => {
+                    if (message.statsConfigs.length && shouldAnswerStats) {
+                        setTimeout(() => statsStream.next({fileId: message.fileId, regionId: message.regionId}));
+                    }
+                    return true;
+                })
+            };
+            jest.spyOn(BackendService, "Instance", "get").mockReturnValue(backend as never);
+            return {...session, ...generating, backend};
+        }
+
+        test("makes moment images again once the regions are back, over the ID the backend gave the region", async () => {
+            const {appStore, requestMoment, backend} = createGeneratingSession();
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [
+                    {
+                        request: momentRequest,
+                        images: [
+                            {id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, renderConfig: {colorMap: "viridis"} as never},
+                            {id: 3, name: "image.fits.moment.integrated", moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}
+                        ]
+                    }
+                ]
+            });
+
+            const restorer = await restored(workspace);
+
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
+            // The backend is asked for a statistic of the region, and answers it, before the
+            // moments are asked for.
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
+                {fileId: 1, regionId: 105, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]},
+                {fileId: 1, regionId: 105, statsConfigs: []}
+            ]);
+            expect(backend.setStatsRequirements.mock.invocationCallOrder[1]).toBeLessThan(requestMoment.mock.invocationCallOrder[0]);
+            // Each image gets the moment that it was saved with, whatever order the backend sent
+            // the images in.
+            const maximum = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
+            expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+            expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
+            expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        });
+
+        test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
+            const {requestMoment} = createGeneratingSession();
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+
+            await restore(
+                createWorkspace({
+                    generatedImages: [
+                        {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                        {request: {...wholeImage, moments: [CARTA.Moment.MIN_OF_THE_SPECTRUM]}, images: [{id: 3, moment: CARTA.Moment.MIN_OF_THE_SPECTRUM}]}
+                    ]
+                })
+            );
+
+            expect(requestMoment.mock.calls.map(([message]) => message.keep)).toEqual([false, true]);
+        });
+
+        test("reports a request the user skips, and what is made of its images", async () => {
+            const {appStore, cancelRequestingMoment, requestMoment, requestPV} = createGeneratingSession(new Promise(() => {}));
+            appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
+                if (step?.onSkip && step.description.startsWith("making")) {
+                    setTimeout(step.onSkip);
+                }
+            });
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [
+                    {request: momentRequest, images: [{id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                    {request: {type: "pv", sourceImageId: 2, regionId: RegionId.IMAGE, width: 3, reverse: false}, images: [{id: 3, name: "pv.fits"}]}
+                ]
+            });
+
+            const problems = await restore(workspace);
+
+            expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
+            // The images that the backend still makes for the skipped request are not wanted.
+            const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
+            expect(isStillWanted()).toBe(false);
+            expect(requestPV).not.toHaveBeenCalled();
+            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Could not make the PV image of image.fits.moment.maximum: the image it is made from was not restored"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "making the moment images of image.fits", progress: 0.5}));
+        });
+
+        test("waits for the backend to take on the region with no time limit, until the user skips it", async () => {
+            jest.useFakeTimers();
+            const {appStore, requestMoment, backend} = createGeneratingSession(undefined, false);
+            let skipPreparing: (() => void) | undefined;
+            appStore.setWorkspaceLoadingStep.mockImplementation((step: any) => {
+                if (step?.description.startsWith("preparing")) {
+                    skipPreparing = step.onSkip;
+                }
+            });
+            const workspace = createWorkspace({
+                files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                generatedImages: [{request: momentRequest, images: [{id: 2, name: "image.fits.moment.maximum", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]
+            });
+
+            const restoring = restore(workspace);
+            // Much longer than any fixed limit: the restore still waits for the backend.
+            await jest.advanceTimersByTimeAsync(10 * 60 * 1000);
+            expect(skipPreparing).toBeDefined();
+            expect(requestMoment).not.toHaveBeenCalled();
+
+            skipPreparing?.();
+            await jest.advanceTimersByTimeAsync(0);
+            const problems = await restoring;
+            jest.useRealTimers();
+
+            expect(requestMoment).not.toHaveBeenCalled();
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs.length)).toEqual([1, 0]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits"]);
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "preparing the moment images of image.fits", progress: 0}));
+        });
+
+        test("reports a request whose region did not come back, without making it", async () => {
+            const {requestMoment} = createGeneratingSession();
+
+            const problems = await restore(createWorkspace({generatedImages: [{request: {...momentRequest, regionId: 9}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(requestMoment).not.toHaveBeenCalled();
+            expect(problems).toEqual(["Could not make the moment images of image.fits: the region it is made over was not restored"]);
+        });
+
+        test("queries a HiPS image again with the images opened, so an image can be matched to it", async () => {
+            const {appStore, loadRemoteFile} = createGeneratingSession();
+            const hips = {type: "hips" as const, survey: "CDS/P/DSS2/red", width: 100, height: 80, center: {x: 10, y: -20}, fov: 1, coordsys: HipsCoord.Icrs, projection: HipsProjection.TAN, rotationAngle: 0};
+
+            await restore(createWorkspace({files: [{...IMAGE, references: {spatial: 2}}], generatedImages: [{request: hips, images: [{id: 2, name: "DSS2.fits"}]}], references: {spatial: 2}}));
+
+            expect(loadRemoteFile).toHaveBeenCalledWith({hips: "CDS/P/DSS2/red", width: 100, height: 80, ra: 10, dec: -20, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0});
+            expect(appStore.spatialReference).toBe(appStore.frames[1]);
+            expect(appStore.setSpatialMatchingEnabled).toHaveBeenCalledWith(appStore.frames[0], true);
+        });
+
+        test("matches an image to a reference made again by a request once it is made", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+
+            await restore(
+                createWorkspace({
+                    files: [{...IMAGE, references: {spatial: 2}}],
+                    generatedImages: [{request: {...momentRequest, regionId: RegionId.IMAGE}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}],
+                    references: {spatial: 2}
+                })
+            );
+
+            expect(appStore.setSpatialMatchingEnabled).toHaveBeenCalledWith(appStore.frames[0], true);
+            expect(appStore.setSpatialMatchingEnabled.mock.invocationCallOrder[0]).toBeGreaterThan(requestMoment.mock.invocationCallOrder[0]);
         });
     });
 });

@@ -12,6 +12,8 @@ import {
     type CatalogSystemType,
     type ContourDashMode,
     FrameScaling,
+    type HipsCoord,
+    type HipsProjection,
     type MultiProfileCategory,
     type RadiusUnits,
     type RegionOpacity,
@@ -300,6 +302,74 @@ export interface WorkspaceFile {
     };
 }
 
+/** A request for moment images. The request names its image and region by their workspace IDs. */
+export interface WorkspaceMomentRequest {
+    type: "moment";
+    /** The image the moments are taken of. */
+    sourceImageId: number;
+    /** The region of the moments, by the ID that the region was saved with. When the moments are taken over the whole image, this is the fixed ID of the whole image. */
+    regionId: number;
+    /** The moments that the request made images of. */
+    moments: CARTA.Moment[];
+    /** The channels the moments are taken over, as channel indices. */
+    channelRange: {min: number; max: number};
+    /** How the pixel range masks the cube. */
+    mask: CARTA.MomentMask;
+    pixelRange: {min: number; max: number};
+}
+
+/** A request for a PV image. The request names its image and cut by their workspace IDs. */
+export interface WorkspacePvRequest {
+    type: "pv";
+    sourceImageId: number;
+    /** The line or polyline region the cut follows, by the ID it was saved with. */
+    regionId: number;
+    /** How many pixels wide the cut is averaged over. */
+    width: number;
+    /** The channels that the PV image covers, as channel indices. Left out when the PV image covers all channels. */
+    channelRange?: {min: number; max: number};
+    /** Whether the position axis is drawn vertically. */
+    reverse: boolean;
+}
+
+/** A HiPS query. It does not depend on any other data in the session. */
+export interface WorkspaceHipsRequest {
+    type: "hips";
+    survey: string;
+    width: number;
+    height: number;
+    /** The object that the image is centered on. When it is left out, `center` gives the center of the image. */
+    object?: string;
+    center?: Point2D;
+    /** The field of view, in degrees. */
+    fov: number;
+    coordsys: HipsCoord;
+    projection: HipsProjection;
+    /** The rotation angle, in degrees. */
+    rotationAngle: number;
+}
+
+export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest;
+
+/** An image that a request made. It is saved like a file image, but without a source, because a restore makes it again instead of opening it. */
+export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "directory" | "filename" | "hdu"> {
+    /** The name the image had when it was saved, for naming it to the user. */
+    name?: string;
+    /** For a moment image, the moment of the request that the image shows. */
+    moment?: CARTA.Moment;
+}
+
+/**
+ * One request that made images, and the images from it that the session still showed.
+ *
+ * The workspace records the request instead of the images. It records the request once, not once
+ * per image, because one request for moments makes one image for each moment.
+ */
+export interface WorkspaceGeneratedImages {
+    request: WorkspaceGenerationRequest;
+    images: WorkspaceGeneratedFile[];
+}
+
 /** A short name for an image source, for showing to the user. */
 export function describeImageSource(source: WorkspaceImageSource | undefined): string {
     switch (source?.type) {
@@ -523,6 +593,11 @@ export interface Workspace {
     files?: WorkspaceFile[];
     catalogs?: WorkspaceCatalog[];
     colorBlendingImages?: WorkspaceColorBlending[];
+    /**
+     * The moment, PV and HiPS images, by the requests that made them, in the order that they were
+     * made. A request can use an image that an earlier request made.
+     */
+    generatedImages?: WorkspaceGeneratedImages[];
     references?: {
         spatial?: number;
         spectral?: number;

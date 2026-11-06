@@ -81,7 +81,10 @@ export class App extends React.Component {
                     progress={workspaceLoadingStep?.progress ?? 0}
                     timeRemaining={workspaceLoadingStep ? (appStore.estimatedTaskRemainingTime ?? 0) : 0}
                     isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
-                    cancellable={false}
+                    cancellable={!!workspaceLoadingStep?.onSkip}
+                    onCancel={workspaceLoadingStep?.onSkip}
+                    cancelText="Skip"
+                    cancelTooltip="Skip this step and restore the rest of the workspace"
                     text={appStore.isResumingSession ? "Resuming session..." : workspaceLoadingStep ? `Loading workspace: ${workspaceLoadingStep.description}` : "Loading workspace..."}
                 />
                 <div className={layoutClassName}>

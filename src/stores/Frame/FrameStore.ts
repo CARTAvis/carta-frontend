@@ -109,6 +109,29 @@ export interface FrameInfo {
     previewSourceFileId?: number;
 }
 
+/**
+ * How a generated image was made, in terms of this session. All images from one request share one
+ * record. This lets a workspace save the request once.
+ */
+export type ImageGenerationRequest =
+    | {
+          type: "moment";
+          source: FrameStore;
+          regionId: number;
+          moments: CARTA.Moment[];
+          channelRange: {min: number; max: number};
+          mask: CARTA.MomentMask;
+          pixelRange: {min: number; max: number};
+      }
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
+    | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties};
+
+/** The request that a generated image came from. For a moment image, also the moment that the image shows. */
+export interface ImageGeneration {
+    request: ImageGenerationRequest;
+    moment?: CARTA.Moment;
+}
+
 export const WCS_PRECISION = 10;
 const SPECTRAL_CTYPE_PATTERN = /freq|vrad|vopt|wave|awav|velo/i;
 
@@ -221,6 +244,8 @@ export class FrameStore {
     @observable secondaryRasterScalingImages: FrameStore[] = [];
     @observable momentImages: FrameStore[] = [];
     @observable pvImages: FrameStore[] = [];
+    /** How a moment, PV or HiPS image was made, so that a workspace can make it again. */
+    generation: ImageGeneration | undefined = undefined;
     @observable generatedPVRegionId: number = 0;
     @observable fittingResult: string = "";
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];

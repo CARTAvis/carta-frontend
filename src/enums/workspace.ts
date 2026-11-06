@@ -8,6 +8,8 @@ export enum WorkspaceDialogMode {
 export enum WorkspaceItemKind {
     Image = "image",
     ColorBlending = "color-blending",
+    /** A request that made moment, PV or HiPS images. */
+    GeneratedImage = "generated-image",
     Catalog = "catalog",
     CatalogSelection = "catalog-selection",
     CatalogWidget = "catalog-widget",
