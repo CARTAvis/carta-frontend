@@ -2,7 +2,6 @@ import {action, computed, makeObservable, observable} from "mobx";
 import type {Point2D} from "models";
 
 import {CatalogOverlay, type CatalogPlotType, DragMode} from "enums";
-import type {WorkspaceCatalogAssociation} from "models/Workspace";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -14,16 +13,25 @@ export interface CatalogPlotWidgetStoreProps {
 export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 
-export interface CatalogPlotWidgetConfig extends WorkspaceCatalogAssociation {
+/** What a Layout keeps for a plot: what would still make sense against any catalog. */
+export interface CatalogPlotLayoutSettings {
+    /** The plot's own identity, stable across the sessions a workspace spans. */
+    widgetId?: string;
     plotType: CatalogPlotType;
+    dragMode?: DragMode | false;
+    scatterBorder?: Border;
+    histogramBorder?: XBorder;
+}
+
+/** What a Workspace keeps for a plot: what it is drawn from, which means nothing against another catalog. */
+export interface CatalogPlotWidgetConfig {
     xColumnName: string;
     yColumnName?: string;
     statisticColumnName?: string;
     isLogScaleY?: boolean;
     nBinX?: number;
-    dragMode?: DragMode | false;
-    scatterBorder?: Border;
-    histogramBorder?: XBorder;
+    isFittingEnabled?: boolean;
+    cursor?: Point2D;
 }
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
@@ -41,11 +49,15 @@ export class CatalogPlotWidgetStore {
     @observable xColumnName: string;
     @observable yColumnName: string | undefined;
     @observable fitting: Fitting | null = null;
+    @observable isFittingEnabled: boolean = false;
     @observable minMaxX: {minVal: number; maxVal: number} | null = null;
     @observable statisticColumnName: string = CatalogOverlay.NONE;
     @observable statistic: Statistic | null = null;
-    /** The catalog this plot belongs to. Its columns mean nothing against any other catalog. */
-    private catalogAssociation: WorkspaceCatalogAssociation | undefined;
+    /**
+     * Whether {@link indicatorInfo} was put back by a workspace. It was read off rows that are still
+     * to be loaded, so their arriving does not clear it; the cursor or a change of column does.
+     */
+    private isIndicatorRestored = false;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         this.plotType = props.plotType;
@@ -54,22 +66,22 @@ export class CatalogPlotWidgetStore {
         makeObservable(this);
     }
 
-    public toConfig = (): CatalogPlotWidgetConfig => ({
-        ...this.catalogAssociation,
+    public toLayoutSettings = (): CatalogPlotLayoutSettings => ({
         plotType: this.plotType,
-        xColumnName: this.xColumnName,
-        yColumnName: this.yColumnName,
-        statisticColumnName: this.statisticColumnName,
-        isLogScaleY: this.isLogScaleY,
-        nBinX: this.nBinX,
         dragMode: this.dragMode,
         scatterBorder: this.scatterBorder,
         histogramBorder: this.histogramBorder
     });
 
-    @action setCatalogAssociation(association: WorkspaceCatalogAssociation | undefined) {
-        this.catalogAssociation = association;
-    }
+    public toConfig = (): CatalogPlotWidgetConfig => ({
+        xColumnName: this.xColumnName,
+        yColumnName: this.yColumnName,
+        statisticColumnName: this.statisticColumnName,
+        isLogScaleY: this.isLogScaleY,
+        nBinX: this.nBinX,
+        isFittingEnabled: this.isFittingEnabled,
+        cursor: this.indicatorInfo && Number.isFinite(this.indicatorInfo.x) && Number.isFinite(this.indicatorInfo.y) ? {x: this.indicatorInfo.x, y: this.indicatorInfo.y} : undefined
+    });
 
     /**
      * Drop restored columns the catalog turns out not to have, and return their names. A plot's
@@ -83,12 +95,29 @@ export class CatalogPlotWidgetStore {
             if (column !== undefined && column !== CatalogOverlay.NONE && !hasColumn(column)) {
                 dropped.push(column);
                 this[key] = CatalogOverlay.NONE;
+                // A readout taken off a column the plot no longer draws reads nothing.
+                if (key !== "statisticColumnName") {
+                    this.indicatorInfo = undefined;
+                    this.isIndicatorRestored = false;
+                }
             }
         }
         return dropped;
     }
 
-    public getCatalogAssociation = (): WorkspaceCatalogAssociation | undefined => this.catalogAssociation;
+    /** Put back what a Layout kept. Anything else an older Layout carries is not read. */
+    @action applyLayoutSettings(settings: Partial<CatalogPlotLayoutSettings>) {
+        if (settings.dragMode !== undefined) {
+            const dragMode = settings.dragMode;
+            this.dragMode = dragMode === false || Object.values(DragMode).includes(dragMode) ? dragMode : DragMode.Select;
+        }
+        if (settings.scatterBorder) {
+            this.scatterBorder = settings.scatterBorder;
+        }
+        if (settings.histogramBorder) {
+            this.histogramBorder = settings.histogramBorder;
+        }
+    }
 
     @action applyConfig(config: Partial<CatalogPlotWidgetConfig>) {
         if (typeof config.xColumnName === "string") {
@@ -106,16 +135,17 @@ export class CatalogPlotWidgetStore {
         if (Number.isInteger(config.nBinX) && (config.nBinX as number) > 0) {
             this.nBinX = config.nBinX;
         }
-        if (config.dragMode !== undefined) {
-            const dragMode = config.dragMode as DragMode | false;
-            this.dragMode = dragMode === false || Object.values(DragMode).includes(dragMode) ? dragMode : DragMode.Select;
+        if (typeof config.isFittingEnabled === "boolean") {
+            this.isFittingEnabled = config.isFittingEnabled;
         }
-        if (config.scatterBorder) {
-            this.scatterBorder = config.scatterBorder;
+        if (config.cursor && Number.isFinite(config.cursor.x) && Number.isFinite(config.cursor.y)) {
+            this.indicatorInfo = {x: config.cursor.x, y: config.cursor.y};
+            this.isIndicatorRestored = true;
         }
-        if (config.histogramBorder) {
-            this.histogramBorder = config.histogramBorder;
-        }
+    }
+
+    public get hasRestoredIndicator(): boolean {
+        return this.isIndicatorRestored;
     }
 
     @action setStatisticColumn(columnName: string) {
@@ -128,14 +158,17 @@ export class CatalogPlotWidgetStore {
 
     @action setColumnX(columnName: string) {
         this.xColumnName = columnName;
+        this.isIndicatorRestored = false;
     }
 
     @action setColumnY(columnName: string) {
         this.yColumnName = columnName;
+        this.isIndicatorRestored = false;
     }
 
     @action setIndicator(val: Point2D | undefined) {
         this.indicatorInfo = val;
+        this.isIndicatorRestored = false;
     }
 
     @action setScatterborder(border: Border) {
@@ -160,6 +193,9 @@ export class CatalogPlotWidgetStore {
 
     @action setFitting(value: Fitting | null) {
         this.fitting = value;
+        if (value) {
+            this.isFittingEnabled = true;
+        }
     }
 
     @action setMinMaxX(value: {minVal: number; maxVal: number} | null) {
@@ -167,6 +203,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @action initLinearFitting = () => {
+        this.isFittingEnabled = false;
         this.setFitting(null);
         this.setMinMaxX(null);
     };

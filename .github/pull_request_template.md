@@ -13,6 +13,7 @@ For the pull request:
 - [ ] GitHub Project estimate added
 - [ ] changelog updated / no changelog update needed
 - [ ] unit test added (for functions with no dependenies)
+- [ ] workspace support needed (snapshot/restore, related code, or e2e tests) / no workspace support needed
 - [ ] API documentation added (for public variables and methods in stores)
 
 For dependencies:

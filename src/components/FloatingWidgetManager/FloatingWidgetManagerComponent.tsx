@@ -69,7 +69,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
         const widgetsStore = WidgetsStore.Instance;
         widgetsStore.removeFloatingWidgetComponent(componentId);
-        widgetsStore.catalogWidgets.delete(componentId);
+        widgetsStore.deleteCatalogWidget(componentId);
     };
 
     private removeCatalogPlotWidget = (componentId?: string) => {
@@ -79,7 +79,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
         const widgetsStore = WidgetsStore.Instance;
         widgetsStore.removeFloatingWidgetComponent(componentId);
-        CatalogStore.Instance.clearCatalogPlotsByComponentId(componentId);
+        CatalogStore.Instance.widgetBindings.closeComponent(componentId);
     };
 
     private removeLayerListSettingsWidget = (widget: WidgetConfig) => {

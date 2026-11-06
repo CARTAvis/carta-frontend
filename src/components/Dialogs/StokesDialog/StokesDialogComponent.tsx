@@ -218,7 +218,7 @@ export class StokesDialogComponent extends React.Component {
     }
 
     private loadSelectedFiles = async () => {
-        const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
+        const {dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
         const stokesFiles: CARTA.StokesFile.$Properties[] = [];
         this.stokes.forEach(file => {
@@ -233,13 +233,7 @@ export class StokesDialogComponent extends React.Component {
             }
         }
 
-        await this.loadFile(stokesFiles as CARTA.StokesFile[])
-            .then(() => {
-                activeFrame?.setStokesFiles(stokesFiles as CARTA.StokesFile[]);
-            })
-            .catch(() => {
-                activeFrame?.setStokesFiles([]);
-            });
+        await this.loadFile(stokesFiles as CARTA.StokesFile[]).catch(err => console.error(err));
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {
