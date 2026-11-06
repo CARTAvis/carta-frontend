@@ -1,13 +1,28 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImagePanelMode, ImageType} from "enums";
-import {type ImageViewItem} from "models";
+import {ImagePanelMode, ImageType, PreferenceKeys} from "enums";
+import {type ConfigurableStore, type ImageViewItem, type Persisted} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 
+/** The multi-panel grid of the image view. A layout saves the grid, because the grid works with any images. */
+export interface ImageViewGridConfig {
+    multiPanelEnabled: boolean;
+    /** How the grid is sized when multi-panel is enabled. */
+    panelMode: ImagePanelMode.Dynamic | ImagePanelMode.Fixed;
+    /** The number of columns. In dynamic mode, this is the maximum number. In fixed mode, this is the exact number. */
+    panelColumns: number;
+    /** The number of rows. In dynamic mode, this is the maximum number. In fixed mode, this is the exact number. */
+    panelRows: number;
+}
+
+function isPanelCount(value: unknown): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 1;
+}
+
 /** Configuration of the images in the image view widget. */
-export class ImageViewConfigStore {
+export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConfig, Persisted<ImageViewGridConfig>> {
     private static staticInstance: ImageViewConfigStore;
 
     public static get Instance() {
@@ -19,6 +34,78 @@ export class ImageViewConfigStore {
 
     @observable private imageList: ImageViewItem[] = [];
     private nextColorBlendingId = 0;
+    /** The grid settings of this session. A setting that is not set here follows the user's preference. */
+    @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
+
+    /** Whether multi-panel is enabled in this session. */
+    @computed get isMultiPanelEnabled(): boolean {
+        return this.grid.multiPanelEnabled ?? PreferenceStore.Instance.isImageMultiPanelEnabled;
+    }
+
+    /** How the grid is sized when multi-panel is enabled. */
+    @computed get multiPanelMode(): ImagePanelMode {
+        return this.grid.panelMode ?? PreferenceStore.Instance.imagePanelMode;
+    }
+
+    /** The number of columns of the grid in this session. See {@link ImageViewGridConfig.panelColumns}. */
+    @computed get panelColumns(): number {
+        return this.grid.panelColumns ?? PreferenceStore.Instance.imagePanelColumns;
+    }
+
+    /** The number of rows of the grid in this session. See {@link ImageViewGridConfig.panelRows}. */
+    @computed get panelRows(): number {
+        return this.grid.panelRows ?? PreferenceStore.Instance.imagePanelRows;
+    }
+
+    /** Enables or disables multi-panel, and keeps the choice as the user's default. */
+    @action setMultiPanelEnabled = (isEnabled: boolean) => {
+        this.grid.multiPanelEnabled = isEnabled;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, isEnabled);
+    };
+
+    /** Sets how the grid is sized, and keeps the choice as the user's default. */
+    @action setMultiPanelMode = (mode: ImagePanelMode.Dynamic | ImagePanelMode.Fixed) => {
+        this.grid.panelMode = mode;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, mode);
+    };
+
+    /** Sets the number of columns of the grid, and keeps it as the user's default. */
+    @action setPanelColumns = (columns: number) => {
+        if (isPanelCount(columns)) {
+            this.grid.panelColumns = columns;
+            PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, columns);
+        }
+    };
+
+    /** Sets the number of rows of the grid, and keeps it as the user's default. */
+    @action setPanelRows = (rows: number) => {
+        if (isPanelCount(rows)) {
+            this.grid.panelRows = rows;
+            PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, rows);
+        }
+    };
+
+    public toConfig = (): ImageViewGridConfig => ({
+        multiPanelEnabled: this.isMultiPanelEnabled,
+        panelMode: this.multiPanelMode === ImagePanelMode.Fixed ? ImagePanelMode.Fixed : ImagePanelMode.Dynamic,
+        panelColumns: this.panelColumns,
+        panelRows: this.panelRows
+    });
+
+    /**
+     * Applies the grid that a layout saved, to this session only. A restore is not a user action,
+     * so the user's defaults do not change. When the layout leaves out a setting, or saves a value
+     * that the controls do not accept, that setting follows the user's preference.
+     */
+    @action applyConfig = (config: Persisted<ImageViewGridConfig> | null | undefined) => {
+        const panelMode = config?.panelMode;
+        this.grid = {
+            multiPanelEnabled: typeof config?.multiPanelEnabled === "boolean" ? config.multiPanelEnabled : undefined,
+            panelMode: panelMode === ImagePanelMode.Dynamic || panelMode === ImagePanelMode.Fixed ? panelMode : undefined,
+            panelColumns: isPanelCount(config?.panelColumns) ? config.panelColumns : undefined,
+            panelRows: isPanelCount(config?.panelRows) ? config.panelRows : undefined
+        };
+    };
 
     /**
      * Adds a loaded image to the image list.
@@ -243,14 +330,13 @@ export class ImageViewConfigStore {
 
     /** The number of columns in the image view widget. */
     @computed get numImageColumns() {
-        return this.getImagePanelDimension(PreferenceStore.Instance.imagePanelColumns, this.imageNum);
+        return this.getImagePanelDimension(this.panelColumns, this.imageNum);
     }
 
     /** The number of rows in the image view widget. */
     @computed get numImageRows() {
-        const preferenceStore = PreferenceStore.Instance;
-        const dynamicRowCount = Math.ceil(this.imageNum / preferenceStore.imagePanelColumns);
-        return this.getImagePanelDimension(preferenceStore.imagePanelRows, dynamicRowCount);
+        const dynamicRowCount = Math.ceil(this.imageNum / this.panelColumns);
+        return this.getImagePanelDimension(this.panelRows, dynamicRowCount);
     }
 
     /** The number of image panels on a page. */
@@ -260,8 +346,7 @@ export class ImageViewConfigStore {
 
     /** The image panel mode. */
     @computed get imagePanelMode() {
-        const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.isImageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+        return this.isMultiPanelEnabled ? this.multiPanelMode : ImagePanelMode.None;
     }
 
     private getImagePanelDimension = (fixedPanelCount: number, dynamicPanelCount: number) => {
