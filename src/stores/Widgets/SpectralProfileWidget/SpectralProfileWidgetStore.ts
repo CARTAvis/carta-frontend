@@ -81,7 +81,7 @@ export type MultiPlotData = {
 
 /** What a spectral profiler widget saves of its plot and rest frame. */
 export interface SpectralProfileWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -1316,13 +1316,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     };
 
     /**
-     * What several profiles shown together differ in, then the image and region shown. Choosing a
-     * category points the widget back at the active image and region, which the second step undoes.
+     * Sets the category that the profiles shown together differ in, then the image and region.
+     * Choosing a category points the widget at the active image and region. The second step points
+     * it back.
      */
     @action public applyWorkspaceBinding = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         const category = Object.values(MultiProfileCategory).find(value => value === config.profileCategory) ?? MultiProfileCategory.NONE;
         this.profileSelectionStore.applyWorkspaceSelection({category});
-        // The rest frame here too: a change of its Y scale resets the Y range, which the second step restores.
+        // Set the rest frame in this step too. A change of the Y scale resets the Y range. The last
+        // step restores the Y range.
         if (typeof config.restFrameRedshift === "number" && isValidRedshift(config.restFrameRedshift)) {
             this.restFrameRedshift = config.restFrameRedshift;
         }
@@ -1336,8 +1338,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     };
 
     @action public applyWorkspaceConfig = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
-        // Pointing the widget at the same image and region again changes nothing, unless choosing the
-        // category undid it; what it could not be pointed at was said in the first step.
+        // Point the widget at its image and region again, because choosing the category can undo
+        // this. The first step already returned the problems with the image and region.
         this.applyWorkspaceBindingOf(config, ids);
 
         const selection = this.profileSelectionStore;
@@ -1371,7 +1373,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (config.intensityUnit !== undefined) {
             this.setMultiProfileIntensityUnit(config.intensityUnit);
         }
-        // A range is of the profiles shown, so it is not kept when some of them could not be.
+        // A zoom range belongs to the profiles shown. Drop it when some of the profiles were not
+        // restored.
         if (problems.length) {
             this.isShowingWorkspaceData = false;
         }

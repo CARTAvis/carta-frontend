@@ -14,7 +14,7 @@ export class RegionWidgetStore {
     @observable fileId: number = ACTIVE_FILE_ID;
     @observable regionIdMap: Map<number, number> = new Map<number, number>();
     @observable type: RegionsType;
-    /** Whether a restore pointed the widget at the data it was saved showing, so that what it showed of that data still applies. */
+    /** Whether a restore pointed the widget at the data that it showed when the workspace was saved. If not, the saved settings for that data do not apply. */
     protected isShowingWorkspaceData = true;
 
     constructor(type: RegionsType) {
@@ -54,17 +54,17 @@ export class RegionWidgetStore {
         return {...(typeof imageId === "number" ? {imageId} : {}), ...(regions.length ? {regions} : {})};
     }
 
-    /** Whether the image the widget shows is one the workspace carries, so that what it shows of it can be saved. */
+    /** Returns whether the workspace saves the image that the widget shows. Only then can the workspace save what the widget shows of the image. */
     protected isShowingSavedImage(ids: WorkspaceIdWriter): boolean {
         const fileId = this.effectiveFrame?.frameInfo.fileId;
         return fileId !== undefined && ids.imageIdOf(fileId) !== undefined;
     }
 
     /**
-     * Point the widget at the image and region a workspace says it showed, falling back to the
-     * active ones for those that were not restored.
+     * Points the widget at the image and region that the workspace saved. When the image or region
+     * was not restored, the widget shows the active one.
      *
-     * @returns what could not be pointed at.
+     * @returns the problems, as sentences about the widget.
      */
     @action protected applyWorkspaceBindingOf(binding: WorkspaceWidgetBinding, ids: WorkspaceIdReader): string[] {
         const problems: string[] = [];

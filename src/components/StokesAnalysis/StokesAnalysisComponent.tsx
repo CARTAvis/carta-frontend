@@ -163,7 +163,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.disposers.length = 0;
     }
 
-    /** Whether the widget has been measured, so that a resize is a change of the size it was zoomed in at. */
+    /** Whether the widget size has been measured. The first measurement keeps the zoom range of the scatter plot. Each later resize resets it. */
     private hasMeasuredSize = false;
 
     @action private onResize = (width: number, height: number) => {

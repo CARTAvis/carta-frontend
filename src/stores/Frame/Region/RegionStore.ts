@@ -32,7 +32,7 @@ import {
 } from "utilities";
 
 export const CURSOR_REGION_ID = 0;
-/** The widths a spatial profile along a line region can sample, in pixels. */
+/** The widths in pixels that a spatial profile along a line region can sample. */
 export const LINE_REGION_SAMPLE_WIDTH_MIN = 1;
 export const LINE_REGION_SAMPLE_WIDTH_MAX = 20;
 export const FOCUS_REGION_RATIO = 0.4;

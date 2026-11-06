@@ -27,7 +27,7 @@ const DEFAULTS = {
 };
 
 /** What a Stokes analysis widget saves of its plots. */
-/** The pairs of bounds the plots of a Stokes analysis widget are zoomed to. */
+/** The zoom ranges of the plots of a Stokes analysis widget, as pairs of bounds. */
 const STOKES_ANALYSIS_RANGES: [WorkspaceStokesAnalysisRange, WorkspaceStokesAnalysisRange][] = [
     ["sharedMinX", "sharedMaxX"],
     ["quMinY", "quMaxY"],
@@ -40,7 +40,7 @@ const STOKES_ANALYSIS_RANGES: [WorkspaceStokesAnalysisRange, WorkspaceStokesAnal
 ];
 
 export interface StokesAnalysisWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
     primaryLineColor: string;
     secondaryLineColor: string;

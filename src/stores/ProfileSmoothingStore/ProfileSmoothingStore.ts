@@ -6,7 +6,7 @@ import {LineSettings, PlotType, SmoothingType} from "enums";
 import {type ConfigurableStore, type Persisted, type Point2D} from "models";
 import {isAutoColor} from "utilities";
 
-/** How a profile is smoothed and the smoothed profile drawn, as a layout keeps it. */
+/** The smoothing settings and the style of the smoothed profile, as a layout saves them. */
 export interface ProfileSmoothingConfig {
     type: SmoothingType;
     lineColor: string;
@@ -21,7 +21,7 @@ export interface ProfileSmoothingConfig {
     binWidth: number;
     savitzkyGolaySize: number;
     savitzkyGolayOrder: number;
-    /** The line whose smoothed colour is being edited, and the colour of each, by the line's name. */
+    /** The line whose smoothed color is being edited, and the smoothed color of each line, by the name of the line. */
     selectedLine: string;
     lineColors: {[line: string]: string};
 }
@@ -137,7 +137,7 @@ export class ProfileSmoothingStore implements ConfigurableStore<ProfileSmoothing
         lineColors: Object.fromEntries(this.colorMap)
     });
 
-    /** Take each setting a layout saved that the smoothing controls would accept, and keep the rest. */
+    /** Applies each setting from a layout that the smoothing controls accept. Keeps the current value of every other setting. */
     @action applyConfig = (config: Persisted<ProfileSmoothingConfig>) => {
         if (!config || typeof config !== "object") {
             return;

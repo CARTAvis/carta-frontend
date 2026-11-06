@@ -6,9 +6,9 @@ import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type Workspac
 import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
-/** What a statistics widget saves. */
+/** The settings that a statistics widget saves in a layout. */
 export interface StatsWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
 }
 

@@ -27,7 +27,7 @@ function createRenderConfig() {
     };
 }
 
-/** The ID the backend gives a restored region: one of its own, unrelated to the one it was saved with. */
+/** The ID that the backend gives a restored region. It is a new ID, not related to the saved ID. */
 const RegisterRegion = jest.fn((savedRegionId: number): Promise<number> => Promise.resolve(savedRegionId + 100));
 
 /** What the restorer needs of an image it has opened. */
@@ -198,7 +198,7 @@ async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
     return step.value;
 }
 
-/** Drive the restore to its end, and hand back the restorer to ask what it mapped. */
+/** Runs the restore to the end, and returns the restorer so that the test can check the ID maps. */
 async function restored(workspace: Workspace): Promise<WorkspaceRestorer> {
     const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration());
     const generator = restorer.restore();

@@ -157,8 +157,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     componentDidMount() {
-        // The range the widget was zoomed to belongs to the image it is mounted on, such as one a
-        // workspace restored it zoomed in on; only a later change of image resets it.
+        // Remember the image that the widget shows when it mounts. A zoom range that the widget
+        // already has, such as one that a workspace restored, belongs to this image. Only a later
+        // change of image resets the zoom range.
         this.cachedFrame = this.widgetStore.effectiveFrame ?? null;
     }
 

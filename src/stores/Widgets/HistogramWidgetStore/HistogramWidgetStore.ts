@@ -11,7 +11,7 @@ import {applyWorkspacePlotRange, isWorkspaceRange, toWorkspacePlotRange} from ".
 
 /** What a histogram widget saves of its plot. */
 export interface HistogramWidgetConfig {
-    /** The widget's own ID, which stays the same across the sessions a layout is applied in. */
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
     widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -21,7 +21,7 @@ export interface HistogramWidgetConfig {
     plotType: PlotType;
     settingsTabId: HistogramSettingsTabs;
     autoBins: boolean;
-    /** The number of bins, when they are not chosen automatically. */
+    /** The number of bins. Left out when the bins are chosen automatically. */
     numBins?: number;
 }
 

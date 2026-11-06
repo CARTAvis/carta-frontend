@@ -737,8 +737,9 @@ export class SpectralProfileSelectionStore {
     };
 
     /**
-     * Show the profiles a workspace says were shown, as far as they are still valid. The category is
-     * set as it was without the defaults choosing one sets, which the rest replaces.
+     * Shows the profiles that the workspace saved, when they are still valid. Sets the category
+     * without the defaults that choosing a category sets. The rest of the selection replaces those
+     * defaults.
      */
     @action applyWorkspaceSelection = (selection: {category?: MultiProfileCategory; fileIds?: number[]; regionIds?: number[]; statsTypes?: CARTA.StatsType[]; coordinates?: string[]}) => {
         if (selection.category !== undefined) {

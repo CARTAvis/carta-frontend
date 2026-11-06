@@ -35,34 +35,39 @@ export function isWidgetWorkspaceConfigOf<TType extends WidgetWorkspaceType>(con
     return config.type === type;
 }
 
-/** How a workspace being saved names the data a widget shows. */
+/** Gives the workspace IDs of the data that a widget shows, while a workspace is saved. */
 export interface WorkspaceIdWriter {
-    /** The workspace ID of an image, or nothing for one the workspace does not carry. */
+    /** Returns the workspace ID of an image, or nothing when the workspace does not save the image. */
     imageIdOf(fileId: number): number | undefined;
 }
 
-/** How a workspace being restored names the data a widget shows, in this session's terms. */
+/** Gives the IDs in this session of the data that a widget showed, while a workspace is restored. */
 export interface WorkspaceIdReader {
-    /** The file ID a workspace image has in this session, or nothing for one that was not restored. */
+    /** Returns the file ID that a workspace image has in this session, or nothing when the image was not restored. */
     fileIdOf(workspaceImageId: number): number | undefined;
     /**
-     * The ID a saved region has in this session, or nothing for one that was not restored.
+     * Returns the ID that a saved region has in this session, or nothing when the region was not
+     * restored.
      *
-     * @param workspaceImageId - the image it was saved on; none for the image that was in front.
+     * @param workspaceImageId - the workspace ID of the image that the region was saved on. Leave
+     *                           it out for the image that was in front.
      */
     regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined;
-    /** Whether the image saved in front was restored, which a widget following the active image was showing. */
+    /** Returns whether the image that was in front when the workspace was saved was restored. A widget that follows the active image showed this image. */
     wasActiveImageRestored(): boolean;
 }
 
 /**
- * A widget's store that keeps Widget Config in a workspace.
+ * A widget store that saves a Widget Config in a workspace.
  *
- * A restore applies it in three steps, letting what the widget does when it is pointed at other
- * data settle in between: first which image and region the widget shows, then what it shows of
- * them, and last the range it was zoomed to, which changing any of that resets. The first two answer
- * what they could not bring back, as sentences about the widget; the range is left out when they
- * could not.
+ * A restore applies the config in three steps:
+ * 1. Point the widget at its image and region.
+ * 2. Apply what the widget shows of them.
+ * 3. Zoom the widget to its saved range.
+ *
+ * Each step can reset the result of a later step, so the widget settles between the steps. The
+ * first two steps return the problems as sentences about the widget. When there are problems, the
+ * third step does not apply the zoom range.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;

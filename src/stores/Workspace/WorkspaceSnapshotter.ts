@@ -334,7 +334,7 @@ export class WorkspaceSnapshotter {
             this.workspace.catalogWidgets = catalogWidgets;
         }
 
-        // Likewise only the images stage 1 saved.
+        // Save only the widgets that show an image that stage 1 saved, like the catalogs above.
         const savedImageIds = new Set(this.workspace.files.map(file => file.id));
         const plotWidgets = this.appStore.widgetsStore.savedPlotWidgets({
             imageIdOf: fileId => {
