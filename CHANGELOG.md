@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for saving the multi-panel grid and maximized panels in layouts and workspaces, and the open analysis dialogs and widget settings panels in workspaces ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Added support for restoring rest frequencies, rest frames, beam overlays, offset coordinates, region opacity, the spectral matching type, the selection of several regions, the hidden layers of a color-blended image, a frozen cursor, the fields of the online catalog query dialog and the chosen size tab of the catalog settings in workspaces ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Added support for restoring moment, PV and HiPS images in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
-* Added a thumbnail of the whole app to saved workspaces, and a dialog that shows the progress of opening a workspace and can cancel it ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
+* Added a thumbnail of the whole app to saved workspaces, a dialog that shows the progress of opening a workspace and can cancel it, and a report of what could not be restored ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).

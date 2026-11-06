@@ -1,7 +1,8 @@
 import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {type Workspace} from "models";
+import {WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
+import {type Workspace, type WorkspaceIssue} from "models";
 import {AppStore, WorkspaceRestorer} from "stores";
 
 function deferred<T>() {
@@ -186,5 +187,59 @@ describe("AppStore.cancelLoadingWorkspace", () => {
         appStore.cancelLoadingWorkspace();
 
         expect(clearSession).not.toHaveBeenCalled();
+    });
+});
+
+describe("AppStore workspace restore report", () => {
+    const appStore = AppStore.Instance;
+    const workspace = {workspaceVersion: 2, frontendVersion: 0, name: "cubes", description: "cubes"} as Workspace;
+    const issues: WorkspaceIssue[] = [
+        {kind: WorkspaceItemKind.Image, subject: "cube.fits", message: "Could not open the image cube.fits", outcome: WorkspaceIssueOutcome.Failed},
+        {kind: WorkspaceItemKind.Layout, subject: "", message: "Could not restore the layout the workspace was saved in"}
+    ];
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        runInAction(() => {
+            appStore.activeWorkspace = undefined;
+            appStore.isLoadingWorkspace = false;
+            appStore.workspaceRestoreReport = undefined;
+            appStore.isWorkspaceRestoreReportOpen = false;
+        });
+    });
+
+    test("shows the report when a restore brought something back differently, instead of a toast", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            return issues;
+        });
+        const toaster = jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
+
+        expect(appStore.workspaceRestoreReport).toEqual({name: "cubes", issues});
+        expect(appStore.isWorkspaceRestoreReportOpen).toBe(true);
+        expect(toaster).not.toHaveBeenCalled();
+
+        // Closing the dialog keeps the report, for a later save of the same workspace.
+        appStore.closeWorkspaceRestoreReport();
+        expect(appStore.isWorkspaceRestoreReportOpen).toBe(false);
+        expect(appStore.workspaceRestoreReport).toEqual({name: "cubes", issues});
+    });
+
+    test("shows no report when everything was restored, and forgets the report of the previous restore", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        let restoreIssues = issues;
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            return restoreIssues;
+        });
+
+        await appStore.loadWorkspace("cubes");
+        expect(appStore.workspaceRestoreReport).toBeDefined();
+
+        restoreIssues = [];
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
+        expect(appStore.workspaceRestoreReport).toBeUndefined();
+        expect(appStore.isWorkspaceRestoreReportOpen).toBe(false);
     });
 });

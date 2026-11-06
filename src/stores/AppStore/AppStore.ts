@@ -153,6 +153,13 @@ export interface WorkspaceRestoreProgress {
     item?: string;
 }
 
+/** What the last workspace restore could not bring back as saved. */
+export interface WorkspaceRestoreReport {
+    /** The name of the workspace, as the user knows it. */
+    name: string;
+    issues: WorkspaceIssue[];
+}
+
 /** What a workspace load is waiting for. */
 export interface WorkspaceLoadingStep {
     description: string;
@@ -399,6 +406,9 @@ export class AppStore {
     /** The name of the workspace that is loading, as the user knows it. */
     @observable loadingWorkspaceName: string = "";
     @observable.ref workspaceRestoreProgress: WorkspaceRestoreProgress | undefined = undefined;
+    /** The report of the last restore, while the session still shows that restore. */
+    @observable.ref workspaceRestoreReport: WorkspaceRestoreReport | undefined = undefined;
+    @observable isWorkspaceRestoreReportOpen: boolean = false;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1188,6 +1198,7 @@ export class AppStore {
         this.clearSpatialReference();
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
+        this.clearWorkspaceRestoreReport();
         if (this.backendService.closeFile(-1)) {
             // Nothing this session opened is left to name, so give every workspace ID back. A close
             // that did not go through leaves everything loaded, still to be named by a later save.
@@ -2842,6 +2853,7 @@ export class AppStore {
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
         this.loadingWorkspaceName = isKey ? "" : name;
+        this.clearWorkspaceRestoreReport();
         this.workspaceRestoreProgress = {stage: "Reading the workspace"};
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
@@ -2863,13 +2875,14 @@ export class AppStore {
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            if (restoreIssues.length) {
-                restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
-                AppToaster.show(WarningToast(`${restoreIssues.length} item(s) in workspace "${name}" were not restored as saved. See the log for details.`));
-            }
+            restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
 
+            const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
+            if (restoreIssues.length) {
+                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues});
+            }
             return true;
         } catch (err) {
             console.error(err);
@@ -2892,6 +2905,21 @@ export class AppStore {
 
     @action private setLoadingWorkspaceName = (name: string) => {
         this.loadingWorkspaceName = name;
+    };
+
+    @action private showWorkspaceRestoreReport = (report: WorkspaceRestoreReport) => {
+        this.workspaceRestoreReport = report;
+        this.isWorkspaceRestoreReportOpen = true;
+    };
+
+    @action closeWorkspaceRestoreReport = () => {
+        this.isWorkspaceRestoreReportOpen = false;
+    };
+
+    /** Forget the report of the last restore, once the session no longer shows that restore. */
+    @action private clearWorkspaceRestoreReport = () => {
+        this.workspaceRestoreReport = undefined;
+        this.isWorkspaceRestoreReportOpen = false;
     };
 
     /** Set the stage that a workspace restore is in. */

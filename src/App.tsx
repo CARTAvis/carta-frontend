@@ -5,7 +5,7 @@ import {type ILayoutApi, Layout} from "flexlayout-react";
 import {observer} from "mobx-react";
 
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
-import {TaskProgressDialogComponent, WorkspaceRestoreDialogComponent} from "components/Dialogs";
+import {TaskProgressDialogComponent, WorkspaceRestoreDialogComponent, WorkspaceRestoreReportDialogComponent} from "components/Dialogs";
 import {AlertType} from "enums";
 import {ApiService} from "services";
 import {type AlertStore, AppStore, LayoutStore} from "stores";
@@ -78,6 +78,7 @@ export class App extends React.Component {
                 {alertComponent}
                 <TaskProgressDialogComponent progress={0} timeRemaining={0} isOpen={appStore.isResumingSession} cancellable={false} text="Resuming session..." />
                 <WorkspaceRestoreDialogComponent />
+                <WorkspaceRestoreReportDialogComponent />
                 <div className={layoutClassName}>
                     {layoutStore.layoutModel && (
                         <Layout

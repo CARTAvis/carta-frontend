@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
 
-import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
+import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
@@ -837,7 +837,7 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toContain(issue.message);
     });
 
-    test("says what kind of thing each report is about, and which one", async () => {
+    test("says what kind of thing each report is about, which one, and whether it was left out", async () => {
         const {appStore} = createSession();
         appStore.appendFile = jest.fn(() => Promise.resolve(undefined));
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
@@ -847,12 +847,14 @@ describe("WorkspaceRestorer", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Image,
             subject: "image.fits",
-            message: "Could not open the image image.fits"
+            message: "Could not open the image image.fits",
+            outcome: WorkspaceIssueOutcome.Failed
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Catalog,
             subject: "sources.vot",
-            message: "Could not load the catalog sources.vot: the image it belongs to was not restored"
+            message: "Could not load the catalog sources.vot: the image it belongs to was not restored",
+            outcome: WorkspaceIssueOutcome.Failed
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
@@ -1376,8 +1378,10 @@ describe("WorkspaceRestorer", () => {
                 ]
             });
 
-            const problems = await restore(workspace);
+            const issues = await restoreIssues(workspace);
+            const problems = issues.map(issue => issue.message);
 
+            expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Failed]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
             const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
