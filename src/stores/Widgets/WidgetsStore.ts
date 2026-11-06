@@ -723,7 +723,7 @@ export class WidgetsStore {
     };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
-        // The grid is the session's, not one widget's: apply it once, from the first image view that saved one.
+        // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (imageViews.length) {
             AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
