@@ -110,8 +110,8 @@ export interface FrameInfo {
 }
 
 /**
- * How a generated image was made, in the session's own terms. The images one request made share the
- * one record, which is how a workspace saves the request once.
+ * How a generated image was made, in terms of this session. All images from one request share one
+ * record. This lets a workspace save the request once.
  */
 export type ImageGenerationRequest =
     | {
@@ -126,7 +126,7 @@ export type ImageGenerationRequest =
     | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
     | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties};
 
-/** The request a generated image came from, and for a moment image which of its moments it is. */
+/** The request that a generated image came from. For a moment image, also the moment that the image shows. */
 export interface ImageGeneration {
     request: ImageGenerationRequest;
     moment?: CARTA.Moment;
