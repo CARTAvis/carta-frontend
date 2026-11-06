@@ -474,8 +474,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             !isNumber(fov) ||
             !isNumber(rotationAngle) ||
             !hasPlace ||
-            !Object.values(HipsCoord).includes(coordsys as HipsCoord) ||
-            !Object.values(HipsProjection).includes(projection as HipsProjection)
+            !Object.values(HipsCoord).includes(coordsys) ||
+            !Object.values(HipsProjection).includes(projection)
         ) {
             return undefined;
         }

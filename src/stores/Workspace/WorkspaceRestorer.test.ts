@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
 
-import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
+import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRestorer} from "stores";
@@ -1302,7 +1302,7 @@ describe("WorkspaceRestorer", () => {
 
         test("queries a HiPS image again with the images opened, so an image can be matched to it", async () => {
             const {appStore, loadRemoteFile} = createGeneratingSession();
-            const hips = {type: "hips" as const, survey: "CDS/P/DSS2/red", width: 100, height: 80, center: {x: 10, y: -20}, fov: 1, coordsys: "icrs", projection: "TAN", rotationAngle: 0};
+            const hips = {type: "hips" as const, survey: "CDS/P/DSS2/red", width: 100, height: 80, center: {x: 10, y: -20}, fov: 1, coordsys: HipsCoord.Icrs, projection: HipsProjection.TAN, rotationAngle: 0};
 
             await restore(createWorkspace({files: [{...IMAGE, references: {spatial: 2}}], generatedImages: [{request: hips, images: [{id: 2, name: "DSS2.fits"}]}], references: {spatial: 2}}));
 
