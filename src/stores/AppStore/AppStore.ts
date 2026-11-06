@@ -406,9 +406,8 @@ export class AppStore {
     /** The name of the workspace that is loading, as the user knows it. */
     @observable loadingWorkspaceName: string = "";
     @observable.ref workspaceRestoreProgress: WorkspaceRestoreProgress | undefined = undefined;
-    /** The report of the last restore, while the session still shows that restore. */
+    /** The report of the last restore, while the report dialog is open. */
     @observable.ref workspaceRestoreReport: WorkspaceRestoreReport | undefined = undefined;
-    @observable isWorkspaceRestoreReportOpen: boolean = false;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1213,7 +1212,6 @@ export class AppStore {
         this.clearSpatialReference();
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
-        this.clearWorkspaceRestoreReport();
         if (this.backendService.closeFile(-1)) {
             // Nothing this session opened is left to name, so give every workspace ID back. A close
             // that did not go through leaves everything loaded, still to be named by a later save.
@@ -2835,7 +2833,7 @@ export class AppStore {
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
         this.loadingWorkspaceName = isKey ? "" : name;
-        this.clearWorkspaceRestoreReport();
+        this.closeWorkspaceRestoreReport();
         this.workspaceRestoreProgress = {stage: "Reading the workspace"};
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
@@ -2891,17 +2889,10 @@ export class AppStore {
 
     @action private showWorkspaceRestoreReport = (report: WorkspaceRestoreReport) => {
         this.workspaceRestoreReport = report;
-        this.isWorkspaceRestoreReportOpen = true;
     };
 
     @action closeWorkspaceRestoreReport = () => {
-        this.isWorkspaceRestoreReportOpen = false;
-    };
-
-    /** Forget the report of the last restore, once the session no longer shows that restore. */
-    @action private clearWorkspaceRestoreReport = () => {
         this.workspaceRestoreReport = undefined;
-        this.isWorkspaceRestoreReportOpen = false;
     };
 
     /** Set the stage that a workspace restore is in. */

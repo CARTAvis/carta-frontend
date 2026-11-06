@@ -15,7 +15,12 @@ import "./WorkspaceRestoreReportDialogComponent.scss";
  */
 export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
-    const report = appStore.workspaceRestoreReport;
+    // Keep showing the last report while the dialog fades out after it is closed.
+    const lastReport = React.useRef(appStore.workspaceRestoreReport);
+    if (appStore.workspaceRestoreReport) {
+        lastReport.current = appStore.workspaceRestoreReport;
+    }
+    const report = lastReport.current;
     const issues = report?.issues ?? [];
     const leftOut = issues.filter(issue => issue.outcome);
     const changed = issues.filter(issue => !issue.outcome);
@@ -26,7 +31,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             className={classNames("workspace-restore-report-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
             icon="warning-sign"
             title={`Workspace "${report?.name ?? ""}" was not fully restored`}
-            isOpen={appStore.isWorkspaceRestoreReportOpen && !!report}
+            isOpen={!!appStore.workspaceRestoreReport}
             onClose={appStore.closeWorkspaceRestoreReport}
             canOutsideClickClose={false}
         >
