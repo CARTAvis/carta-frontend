@@ -2995,6 +2995,8 @@ export class AppStore {
         const thumbnail = yield exportScreenshot(false, 1024);
         if (thumbnail) {
             workspace.thumbnail = thumbnail;
+        } else {
+            this.logStore.addWarning(`Could not take the thumbnail of workspace "${name}". The workspace is saved without one.`, ["workspace"]);
         }
 
         const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
