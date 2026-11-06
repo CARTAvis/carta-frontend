@@ -1,10 +1,22 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, describeImageSource, isWidgetWorkspaceConfigOf, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {ImageType, RegionId, WorkspaceItemKind} from "enums";
+import {
+    describeCatalogSource,
+    describeImageSource,
+    GetIntensityOptions,
+    isWidgetWorkspaceConfigOf,
+    type Workspace,
+    type WorkspaceCatalog,
+    type WorkspaceCatalogSource,
+    type WorkspaceFile,
+    type WorkspaceIdReader,
+    type WorkspaceImageSource,
+    type WorkspaceIssue
+} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
-import {type FrameStore} from "stores/Frame";
+import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
 
@@ -37,7 +49,7 @@ interface CatalogConfigRequest {
  * owns it: a frame's own config stores, a catalog's profile store for its table and query, and its
  * display store for how it is drawn.
  */
-export class WorkspaceRestorer {
+export class WorkspaceRestorer implements WorkspaceIdReader {
     /** How many workspace loads have been started, so that a later one can take over from an earlier. */
     private static generationCounter = 0;
 
@@ -66,6 +78,8 @@ export class WorkspaceRestorer {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
+    /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
+    private readonly regionIds = new Map<number, Map<number, number>>();
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
@@ -116,8 +130,9 @@ export class WorkspaceRestorer {
         if (!this.isCurrent) {
             return this.issues;
         }
-        this.configureImages();
-        // The backend computes the cube histograms while the catalogs open. The restore waits for them before it applies the layout.
+        // The backend registers the regions and computes the cube histograms while the catalogs open.
+        // The restore waits for both before it applies the layout.
+        const regions = this.configureImages();
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
@@ -130,11 +145,15 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         yield* awaited(cubeHistograms);
+        yield* awaited(regions);
         if (!this.isCurrent) {
             return this.issues;
         }
         this.restoreLayout();
-        this.restoreViews();
+        yield* this.restoreViews();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.settle();
         return this.issues;
     }
@@ -221,7 +240,8 @@ export class WorkspaceRestorer {
     }
 
     /** Stage 3: apply what each image is displayed with, now that all of them exist. */
-    private configureImages(): void {
+    private configureImages(): Promise<unknown> {
+        const regions: Promise<void>[] = [];
         for (const fileInfo of this.workspace.files ?? []) {
             const frame = this.frameOf(fileInfo.id);
             if (!frame) {
@@ -252,6 +272,8 @@ export class WorkspaceRestorer {
                 }
             }
 
+            this.restoreSpectralSettings(frame, fileInfo);
+
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
                 frame.applyContours();
@@ -266,7 +288,7 @@ export class WorkspaceRestorer {
             }
             restoreWorkspaceZoom(frame, fileInfo);
 
-            this.restoreRegions(frame, fileInfo);
+            regions.push(this.restoreRegions(frame, fileInfo));
         }
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
@@ -276,35 +298,102 @@ export class WorkspaceRestorer {
         if (!savedFrontFrame && this.frontFrame) {
             this.appStore.updateActiveImageByFrame(this.frontFrame);
         }
+        return Promise.all(regions);
     }
 
-    /** Regions are only the image's own while it is not matched to another one. */
-    private restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): void {
+    /**
+     * Sets the spectral coordinates, spectral system and intensity unit of the image, on this image
+     * only. An image that is spectrally matched to another image was saved with the settings of
+     * that image.
+     */
+    private restoreSpectralSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const imageName = describeImageSource(fileInfo.source);
+        const unsupported: string[] = [];
+        if (fileInfo.spectralCoordinate !== undefined && !frame.setSpectralCoordinate(fileInfo.spectralCoordinate, false)) {
+            unsupported.push(`the spectral coordinate ${fileInfo.spectralCoordinate}`);
+        }
+        if (fileInfo.spectralCoordinateSecondary !== undefined && !frame.setSpectralCoordinateSecondary(fileInfo.spectralCoordinateSecondary, false)) {
+            unsupported.push(`the secondary spectral coordinate ${fileInfo.spectralCoordinateSecondary}`);
+        }
+        if (fileInfo.spectralSystem !== undefined && !frame.setSpectralSystem(fileInfo.spectralSystem, false)) {
+            unsupported.push(`the spectral system ${fileInfo.spectralSystem}`);
+        }
+        const intensityUnit = fileInfo.intensityUnit;
+        if (intensityUnit !== undefined) {
+            if (intensityUnit === frame.headerUnit || GetIntensityOptions(frame.intensityConfig).includes(intensityUnit)) {
+                frame.setIntensityUnit(intensityUnit);
+            } else {
+                unsupported.push(`the intensity unit ${intensityUnit}`);
+            }
+        }
+        if (unsupported.length) {
+            this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} in ${unsupported.join(", ")}`);
+        }
+    }
+
+    /**
+     * Restores the regions of the image. An image that is matched to another image has no regions
+     * of its own.
+     *
+     * The backend gives each restored region a new ID. Map the saved ID of each region to the new
+     * ID after the backend answers.
+     */
+    private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
             return;
         }
 
         const preferenceStore = this.appStore.preferenceStore;
-        for (const regionInfo of fileInfo.regionsSet.regions) {
-            const region = frame.regionSet.addExistingRegion(
-                regionInfo.points,
-                regionInfo.rotation,
-                regionInfo.type,
-                regionInfo.id,
-                regionInfo.name ?? "",
-                regionInfo.color ?? preferenceStore.regionColor,
-                regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                false,
-                regionInfo.annotationStyles
-            );
-            if (region) {
+        const regionIds = new Map<number, number>();
+        this.regionIds.set(fileInfo.id, regionIds);
+        const selectedRegion = fileInfo.regionsSet.selectedRegion;
+        await Promise.all(
+            fileInfo.regionsSet.regions.map(async regionInfo => {
+                const region = await frame.regionSet.addExistingRegionAsync(
+                    regionInfo.points,
+                    regionInfo.rotation,
+                    regionInfo.type,
+                    regionInfo.id,
+                    regionInfo.name ?? "",
+                    regionInfo.color ?? preferenceStore.regionColor,
+                    regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
+                    regionInfo.dashes ?? [preferenceStore.regionDashLength],
+                    regionInfo.annotationStyles
+                );
+                regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
-                if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
+                const sampleWidth = regionInfo.lineRegionSampleWidth;
+                if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
+                    region.setLineRegionSampleWidth(sampleWidth);
+                }
+                if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }
-            }
+            })
+        );
+    }
+
+    /**
+     * Returns the ID in this session of a region from the workspace, or nothing when the region was
+     * not restored.
+     *
+     * The cursor, the whole image and the other fixed region IDs are the same in every session. A
+     * region of an image that is matched to another image belongs to that other image.
+     *
+     * @param workspaceImageId - the workspace ID of the image that the region was saved on. Leave
+     *                           it out for the image that was in front.
+     * @param savedRegionId - the ID that the region was saved with.
+     */
+    public regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined {
+        if (savedRegionId <= RegionId.CURSOR) {
+            return savedRegionId;
         }
+        if (workspaceImageId === undefined) {
+            return this.workspace.selectedFile === undefined ? undefined : this.regionIdOf(this.workspace.selectedFile, savedRegionId);
+        }
+        const fileInfo = this.workspace.files?.find(file => file.id === workspaceImageId);
+        const ownerId = fileInfo?.references?.spatial ?? workspaceImageId;
+        return this.regionIds.get(ownerId)?.get(savedRegionId);
     }
 
     /**
@@ -665,9 +754,36 @@ export class WorkspaceRestorer {
         }
     }
 
-    /** Stage 8: point the widgets and plots that show a catalog at the catalogs just loaded. */
-    private restoreViews(): void {
+    /**
+     * Stage 8: point the widgets and plots at the catalogs, images and regions that were just
+     * restored.
+     *
+     * Restore a profile, analysis or statistics widget in three steps. Point it at its image and
+     * region, apply the rest of what it showed after it settles, and zoom it last. Pointing a
+     * widget at another image resets what it shows. Changing what it shows resets its zoom.
+     */
+    private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
+        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgetBindings(this.workspace.plotWidgets, this));
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return;
+        }
+        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this));
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return;
+        }
+        this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
+    }
+
+    public wasActiveImageRestored(): boolean {
+        return this.workspace.selectedFile === undefined || this.frameIds.has(this.workspace.selectedFile);
+    }
+
+    /** Returns the file ID that a workspace image has in this session, or nothing when the image was not restored. */
+    public fileIdOf(workspaceImageId: number): number | undefined {
+        return this.frameIds.get(workspaceImageId);
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */

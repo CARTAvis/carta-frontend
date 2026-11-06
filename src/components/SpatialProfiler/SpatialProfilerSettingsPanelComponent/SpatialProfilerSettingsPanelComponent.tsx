@@ -8,6 +8,7 @@ import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps
 import {HelpType, RegionId, SpatialProfilerSettingsTabs} from "enums";
 import {type LineKey} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {type SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -240,7 +241,14 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                             title="Computation"
                             panel={
                                 <FormGroup label={"Width"} inline={true}>
-                                    <SafeNumericInput min={1} max={20} stepSize={1} disabled={!widgetStore.effectiveRegion} value={lineRegionSampleWidth} onValueChange={value => widgetStore.setLineRegionSampleWidth(value)} />
+                                    <SafeNumericInput
+                                        min={LINE_REGION_SAMPLE_WIDTH_MIN}
+                                        max={LINE_REGION_SAMPLE_WIDTH_MAX}
+                                        stepSize={1}
+                                        disabled={!widgetStore.effectiveRegion}
+                                        value={lineRegionSampleWidth}
+                                        onValueChange={value => widgetStore.setLineRegionSampleWidth(value)}
+                                    />
                                 </FormGroup>
                             }
                         />

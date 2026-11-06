@@ -11,7 +11,9 @@ import {
     type CatalogSystemType,
     type ContourDashMode,
     FrameScaling,
+    type MultiProfileCategory,
     type RadiusUnits,
+    type SpectralSystem,
     type VectorOverlaySource,
     type WorkspaceItemKind
 } from "enums";
@@ -206,6 +208,8 @@ export interface WorkspaceRegion {
     dashes?: number[];
     locked?: boolean;
     annotationStyles?: any;
+    /** The width in pixels that a spatial profile along a line or polyline region samples. */
+    lineRegionSampleWidth?: number;
 }
 
 export interface WorkspaceColorBlending {
@@ -264,6 +268,13 @@ export interface WorkspaceFile {
     zoomAxis?: "both" | "x" | "y";
     channel?: number;
     stokes?: number;
+    /** The spectral coordinate of the spectral axis, and the secondary spectral coordinate, with the names that the spectral settings use. */
+    spectralCoordinate?: string;
+    spectralCoordinateSecondary?: string;
+    /** The spectral system. {@link SpectralSystem.BARY} is saved as `"BARYCENT"`, and {@link SpectralSystem.TOPO} as `"TOPOCENT"`. */
+    spectralSystem?: SpectralSystem;
+    /** The intensity unit of the spectral profiles of the image. */
+    intensityUnit?: string;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -386,6 +397,88 @@ export interface WorkspaceCatalogPlotConfig {
     cursor?: Point2D;
 }
 
+/** The image and region that a widget shows, by their IDs in the workspace. When the image is left out, the widget shows the active image. */
+export interface WorkspaceWidgetBinding {
+    /** The Workspace ID of the image that the widget shows. Left out when the widget shows the active image. */
+    imageId?: number;
+    /** The region that the widget shows, by the ID that the region was saved with. */
+    regions?: {imageId?: number; regionId: number}[];
+}
+
+/** The zoom range of a line plot, in the units that the plot showed. An axis that was not zoomed is left out. */
+export interface WorkspacePlotRange {
+    minX?: number;
+    maxX?: number;
+    minY?: number;
+    maxY?: number;
+}
+
+export type WorkspaceRenderConfigWidgetConfig = WorkspacePlotRange;
+
+export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** The Stokes of the profile, such as `"Q"`. Left out when the profile uses the current Stokes of the image. */
+    stokes?: string;
+}
+
+export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** The Stokes of the histogram, such as `"Qz"`. `"z"` means the current Stokes of the image. */
+    coordinate?: string;
+    /** The pixel value bounds of the histogram. Left out when the histogram uses the bounds of the image. */
+    pixelBounds?: {min: number; max: number};
+}
+
+export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
+    /** The Stokes of the statistics, such as `"Qz"`. `"z"` means the current Stokes of the image. */
+    coordinate?: string;
+}
+
+/** The zoom ranges of the plots of a Stokes analysis widget. */
+export type WorkspaceStokesAnalysisRange =
+    | "sharedMinX"
+    | "sharedMaxX"
+    | "quMinY"
+    | "quMaxY"
+    | "polIntensityMinY"
+    | "polIntensityMaxY"
+    | "polAngleMinY"
+    | "polAngleMaxY"
+    | "quScatterMinX"
+    | "quScatterMaxX"
+    | "quScatterMinY"
+    | "quScatterMaxY"
+    | "quScatterEqualXmin"
+    | "quScatterEqualXmax"
+    | "quScatterEqualYmin"
+    | "quScatterEqualYmax";
+
+export interface WorkspaceStokesAnalysisWidgetConfig extends WorkspaceWidgetBinding {
+    ranges?: Partial<Record<WorkspaceStokesAnalysisRange, number>>;
+}
+
+export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
+    /** The category that the profiles shown together differ in, such as image or region. {@link MultiProfileCategory.STOKES} is saved as `"Polarization"`. Left out when the widget shows one profile. */
+    profileCategory?: MultiProfileCategory;
+    /** The images whose profiles are shown together, by Workspace image ID. */
+    imageIds?: number[];
+    /** The regions of the shown image whose profiles are shown, by the IDs that the regions were saved with. */
+    regionIds?: number[];
+    /** The statistics whose profiles are shown. */
+    statsTypes?: CARTA.StatsType[];
+    /** The Stokes of the profiles shown, such as `"Iz"` or `"Qz"`. `"z"` means the current Stokes of the image. */
+    coordinates?: string[];
+    /** The color of each profile shown together. The key is a Workspace image ID, a saved region ID, a statistic or a Stokes, by the category. */
+    profileColors?: {key: number | string; color: string}[];
+    /** The intensity unit of the profiles when the widget shows the profiles of several images together. */
+    intensityUnit?: string;
+    /** The redshift of the source, and whether each axis is shown in the rest frame of the source. */
+    restFrameRedshift?: number;
+    xAxisRestFrameEnabled?: boolean;
+    yAxisRestFrameEnabled?: boolean;
+}
+
+/** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"render-config" | "spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
+
 /**
  * What one catalog table or plot widget shows. This is a Widget Config. It has no meaning for other
  * data, so the workspace saves it and the layout does not.
@@ -428,6 +521,8 @@ export interface Workspace {
     selectedColorBlending?: number;
     /** What each catalog table and plot widget shows, keyed by the widget's stable ID. */
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
+    /** What each profile, analysis and statistics widget shows, by the stable ID of the widget. */
+    plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;
