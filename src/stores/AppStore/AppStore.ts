@@ -139,6 +139,20 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     }
 }
 
+/**
+ * The stage that a workspace restore is in, and the item of the stage that it is working on. For
+ * example, "Opening catalogs", item 2 of 5, "the VizieR query for I/239/hip_main".
+ */
+export interface WorkspaceRestoreProgress {
+    stage: string;
+    /** The position of the item in the stage, counted from 1. */
+    index?: number;
+    /** The number of items in the stage. */
+    count?: number;
+    /** The name of the item, as the user knows it. */
+    item?: string;
+}
+
 /** What a workspace load is waiting for. */
 export interface WorkspaceLoadingStep {
     description: string;
@@ -382,6 +396,9 @@ export class AppStore {
     @observable isLoadingWorkspace: boolean = false;
     /** The step that a workspace load is waiting for, with its progress and its Skip. It is undefined when the load waits for nothing. */
     @observable.ref workspaceLoadingStep: WorkspaceLoadingStep | undefined = undefined;
+    /** The name of the workspace that is loading, as the user knows it. */
+    @observable loadingWorkspaceName: string = "";
+    @observable.ref workspaceRestoreProgress: WorkspaceRestoreProgress | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -2824,6 +2841,8 @@ export class AppStore {
     @flow.bound
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
+        this.loadingWorkspaceName = isKey ? "" : name;
+        this.workspaceRestoreProgress = {stage: "Reading the workspace"};
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
         const generation = WorkspaceRestorer.claimGeneration();
@@ -2838,6 +2857,7 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
+            this.setLoadingWorkspaceName(workspace.name || name);
 
             const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
@@ -2866,6 +2886,37 @@ export class AppStore {
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
         this.workspaceLoadingStep = undefined;
+        this.workspaceRestoreProgress = undefined;
+        this.loadingWorkspaceName = "";
+    };
+
+    @action private setLoadingWorkspaceName = (name: string) => {
+        this.loadingWorkspaceName = name;
+    };
+
+    /** Set the stage that a workspace restore is in. */
+    @action setWorkspaceRestoreProgress = (progress: WorkspaceRestoreProgress | undefined) => {
+        this.workspaceRestoreProgress = progress;
+    };
+
+    /**
+     * Stop the workspace load that is running, and close everything that it has opened so far. The
+     * session is then empty.
+     */
+    @action cancelLoadingWorkspace = () => {
+        if (!this.isLoadingWorkspace) {
+            return;
+        }
+        const name = this.loadingWorkspaceName;
+        // Skip the step that the load is waiting for. Then the backend also stops what it computes
+        // for the step, such as moment images.
+        this.workspaceLoadingStep?.onSkip?.();
+        // The load stops as soon as it sees that it no longer owns the session. Images and catalogs
+        // that are still on their way are closed when they arrive.
+        WorkspaceRestorer.claimGeneration();
+        WorkspaceRestorer.clearSession();
+        this.finishLoadingWorkspace();
+        AppToaster.show({icon: "disable", message: name ? `Cancelled opening workspace "${name}"` : "Cancelled opening the workspace", timeout: 3000});
     };
 
     /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
