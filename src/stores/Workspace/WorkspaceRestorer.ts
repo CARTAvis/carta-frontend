@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {BeamType, FrequencyUnit, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, type SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
+import {BeamType, FrequencyUnit, ImageType, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -403,13 +403,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (restFrame.enabled) {
                     unsupported.push("its rest frame");
                 }
-            } else if (
-                Object.values(RestFrameShiftMode).includes(restFrame.shiftMode as RestFrameShiftMode) &&
-                Object.values(VelocityConvention).includes(restFrame.velocityConvention as VelocityConvention) &&
-                isValidRedshift(restFrame.redshift)
-            ) {
-                frame.setRestFrameShiftMode(restFrame.shiftMode as RestFrameShiftMode);
-                frame.setRestFrameVelocityConvention(restFrame.velocityConvention as VelocityConvention);
+            } else if (Object.values(RestFrameShiftMode).includes(restFrame.shiftMode) && Object.values(VelocityConvention).includes(restFrame.velocityConvention) && isValidRedshift(restFrame.redshift)) {
+                frame.setRestFrameShiftMode(restFrame.shiftMode);
+                frame.setRestFrameVelocityConvention(restFrame.velocityConvention);
                 frame.setRestFrameRedshift(restFrame.redshift);
                 frame.setRestFrameEnabled(restFrame.enabled === true);
             } else {
@@ -429,8 +425,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (typeof beam.color === "string" && beam.color) {
                 beamSettings.setColor(beam.color);
             }
-            if (Object.values(BeamType).includes(beam.type as BeamType)) {
-                beamSettings.setType(beam.type as BeamType);
+            if (Object.values(BeamType).includes(beam.type)) {
+                beamSettings.setType(beam.type);
             }
             if (isNumber(beam.width) && beam.width > 0) {
                 beamSettings.setWidth(beam.width);
