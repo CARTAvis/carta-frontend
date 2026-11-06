@@ -58,8 +58,9 @@ interface CatalogConfigRequest {
  */
 export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
-     * How many workspace loads have been started, so that a later one can take over from an earlier.
-     * It is observable, so that a wait of an earlier load ends as soon as a later load starts.
+     * The number of workspace loads that have started. A later load uses it to take over from an
+     * earlier load. It is observable, so that a wait in an earlier load ends as soon as a later
+     * load starts.
      */
     private static readonly GenerationCounter = observable.box(0);
 
@@ -95,7 +96,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
     private readonly colorBlendings = new Map<number, ColorBlendingStore>();
-    /** The requests for generated images the workspace carries, each with the images it made. */
+    /** The requests for generated images that the workspace saves, each with the images that it made. */
     private readonly generatedImages: WorkspaceGeneratedImages[];
     /** Every image the workspace shows, opened or made again, by its workspace ID. */
     private readonly images = new Map<number, WorkspaceFile>();
@@ -103,7 +104,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly generatedImageNames = new Map<number, string>();
     /** The images moments have been made of again so far. */
     private readonly momentSources = new Set<FrameStore>();
-    /** Images that name a reference that is a generated image not made yet, to be matched once it is. */
+    /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
     constructor(
@@ -259,7 +260,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Take an image just opened or made again as the one the workspace names by its ID. */
+    /** Uses an image that was just opened or made again as the image that the workspace names by this ID. */
     private adoptImage(fileInfo: WorkspaceFile, frame: FrameStore): void {
         this.frameIds.set(fileInfo.id, frame.frameInfo.fileId);
         // The workspace is the authority on which image its own ID names.
@@ -267,7 +268,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
 
-        // References have to be in place before any image can be matched against them.
+        // Set the references before any image is matched against them.
         if (this.workspace.references?.spatial === fileInfo.id) {
             this.appStore.setSpatialReference(frame);
         }
@@ -283,8 +284,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 2b: query each HiPS image again. A query depends on nothing else in the session, so it
-     * is made with the images that are opened.
+     * Stage 2b: query each HiPS image again. A HiPS query does not depend on any other data in the
+     * session, so it runs together with the opening of the file images.
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
         for (const {request, images} of this.generatedImages) {
@@ -318,7 +319,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** The query a saved HiPS request makes, or nothing if it is not one this version can make. */
+    /** Returns the query that a saved HiPS request makes, or nothing when this version cannot make it. */
     private static hipsQueryOf(request: WorkspaceHipsRequest): CARTA.RemoteFileRequest.$Properties | undefined {
         const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
         const {survey, width, height, object, center, fov, coordsys, projection, rotationAngle} = request;
@@ -340,7 +341,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return {hips: survey, width, height, ...place, fov, coordsys, projection, rotationAngle};
     }
 
-    /** How a request is named to the user. */
+    /** Returns the name of a request, as shown to the user. */
     private static describeRequest(request: WorkspaceGenerationRequest, sourceName: string): string {
         switch (request.type) {
             case "moment":
@@ -375,8 +376,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 3: apply what each image is displayed with, once it exists: every image opened, then
-     * those each request makes again as it makes them.
+     * Stage 3: apply the display settings of each image when the image exists. Apply them first to
+     * every opened image, then to the images of each request as the request makes them.
      */
     private configureImages(images: WorkspaceFile[]): Promise<unknown> {
         const regions: Promise<void>[] = [];
@@ -421,12 +422,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Match an image to the reference it was matched to, if it named one.
+     * Matches an image to the reference that it was matched to, if the workspace names one.
      *
-     * A workspace that names no reference -- because the session's own was an image it could not
-     * save -- matches nothing, rather than every image that named none, and an image is not matched
-     * to whichever image stands in for a reference that did not come back. A reference made again by
-     * a request is not there yet when the images opened are configured, so those wait for it.
+     * When the workspace names no reference, because the reference of the session was an image that
+     * it could not save, match nothing. Do not match every image that named no reference, and do
+     * not match an image to a stand-in for a reference that did not come back. A reference that a
+     * request makes again does not exist yet when the opened images are configured, so those images
+     * wait for it.
      */
     private matchImage(frame: FrameStore, fileInfo: WorkspaceFile, kind: ReferenceKind): void {
         const referenceId = this.workspace.references?.[kind];
@@ -450,16 +452,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 3b: make the moment and PV images again, in the order they were saved in, each from its
-     * image and over its region as restored. A request can be made of an image or over a region of
-     * one an earlier request made, so each request's images are configured before the next is made.
+     * Stage 3b: make the moment and PV images again, in the saved order, each from its restored
+     * image and over its restored region. A request can use an image, or a region on an image, that
+     * an earlier request made. So configure the images of each request before the next request is
+     * made.
      */
     private *generateImages(regions: Promise<unknown>): Generator<Promise<unknown>, void, any> {
         const requests = this.generatedImages.filter(({request}) => request.type === "moment" || request.type === "pv");
         if (!requests.length) {
             return;
         }
-        // A request is made over a region by the ID the backend gave it.
+        // Make the request over the region by the ID that the backend gave the region.
         yield* awaited(regions);
         for (const generated of requests) {
             if (!this.isCurrent) {
@@ -486,7 +489,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Run one saved moment or PV request again.
      *
-     * @returns the images it made, none when it could not be made or was skipped.
+     * @returns the images that it made, or none when the request could not be made or was skipped.
      */
     private *makeImagesAgain({request}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[], any> {
         if (request.type !== "moment" && request.type !== "pv") {
@@ -507,8 +510,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         let outcome: FrameStore[] | "skipped" | undefined;
         if (request.type === "moment") {
-            // The first request of an image replaces nothing; a later one keeps the images the earlier
-            // ones made. The backend numbers the names of kept images, as it did when they were made.
+            // The first request on an image replaces no images. A later request keeps the images
+            // that earlier requests made. The backend numbers the names of kept images, as it did
+            // when the images were first made.
             const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
             this.momentSources.add(source);
             if (message && regionId > RegionId.CURSOR) {
@@ -564,14 +568,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Get the backend ready to make moments over a region of an image.
+     * Gets the backend ready to make moments over a region of an image.
      *
-     * The backend makes moments over a region only of an image whose region data it already keeps,
-     * which it starts doing the first time a widget asks it for a region's statistics, histogram or
-     * profile. In a session some widget has always asked by then; during a restore none has yet, and
-     * the request fails. So ask for one statistic of the region, wait for it to come back, and take
-     * the request back. The backend handles requests out of order, so sending the request alone is
-     * not enough: the moments could be asked for before it is taken on.
+     * The backend makes moments over a region only when it already keeps the region data of the
+     * image. It starts to keep this data the first time that a widget asks for statistics, a
+     * histogram or a profile of the region. In a normal session, a widget has always asked by then.
+     * During a restore, no widget has asked yet, so the moment request fails. So ask for one
+     * statistic of the region, wait for the answer, and then cancel that request. Sending the
+     * request alone is not enough, because the backend handles requests out of order, and the
+     * moment request could arrive first.
      */
     private introduceRegionToBackend(frame: FrameStore, regionId: number): Promise<void> {
         const backendService = BackendService.Instance;
@@ -598,7 +603,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         });
     }
 
-    /** The request a saved moment request makes, or nothing if it is not one this version can make. */
+    /** Returns the request that a saved moment request makes, or nothing when this version cannot make it. */
     private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number, shouldKeep: boolean): CARTA.MomentRequest.$Properties | undefined {
         const {moments, channelRange, mask, pixelRange} = request;
         const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
@@ -627,7 +632,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         };
     }
 
-    /** The request a saved PV request makes, or nothing if it is not one this version can make. */
+    /** Returns the request that a saved PV request makes, or nothing when this version cannot make it. */
     private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
         const {width, channelRange} = request;
         if (!Number.isInteger(width) || width < 1 || (channelRange !== undefined && (!Number.isInteger(channelRange?.min) || !Number.isInteger(channelRange?.max)))) {
@@ -644,10 +649,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Wait for a request that makes images, showing its progress and letting the user skip it.
+     * Waits for a request that makes images, shows its progress and lets the user skip it.
      *
-     * Skipping asks the backend to stop, but does not wait for it to: the restore carries on at once,
-     * and images that still arrive for a skipped request are closed without being shown.
+     * Skipping asks the backend to stop, but does not wait for the backend. The restore continues
+     * at once. Images that still arrive for a skipped request are closed without being shown.
      */
     private waitForRequest(made: Promise<FrameStore[]>, waiting: {isSkipped: boolean}, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
         return new Promise(resolve => {
@@ -675,7 +680,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
                 }
             });
-            // A skipped request's images are closed before they are shown; this catches any that are not.
+            // The images of a skipped request are normally closed before they are shown. This also
+            // closes any that were shown.
             made.then(
                 frames => {
                     if (!settle(frames)) {
@@ -691,8 +697,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Take the images a request made again as the ones the workspace names, by which moment each is
-     * when the request made several.
+     * Uses the images that a request made again as the images that the workspace names. When the
+     * request made several images, match them by their moments.
      *
      * @returns the saved images that were made again.
      */
@@ -710,16 +716,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
             this.adoptImage(image, frame);
-            // A moment image is matched to the image it was made of on its own; one saved unmatched stays so.
+            // The session matches a moment image to its source image by itself. Turn the match off
+            // for an image that was saved unmatched.
             if (frame.spatialReference && image.references?.spatial === undefined) {
                 this.appStore.setSpatialMatchingEnabled(frame, false);
             }
             adopted.push(image);
         }
-        // Images the workspace does not show are not left in the session.
+        // Close the images that the workspace does not show.
         unclaimed.forEach(frame => this.closeSupersededImage(frame));
 
-        // Images that wait for one of these as their reference are matched now.
+        // Match now the images that wait for one of these images as their reference.
         const pending = this.pendingMatches.splice(0);
         for (const match of pending) {
             this.matchImage(match.frame, match.fileInfo, match.kind);
@@ -728,12 +735,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * The image the session is left with in front: the one saved there, or else the first restored.
-     * The images a request made again were each put in front as they arrived.
+     * Returns the image to put in front: the image that was saved in front, or else the first
+     * restored image. Each image that a request made again was put in front when it arrived.
      */
     private chooseFrontImage(): void {
-        // The image saved in front may not be back: it could not be opened or made again, or it was a
-        // generated image the workspace does not carry. A session with images open has one in front.
+        // The image saved in front can be missing. It could not be opened or made again, or it was
+        // a generated image that the workspace does not save. A session with open images always has
+        // one image in front.
         const savedFrontFrame = this.workspace.selectedFile === undefined ? undefined : this.frameOf(this.workspace.selectedFile);
         this.frontFrame = savedFrontFrame ?? this.allImages.map(fileInfo => this.frameOf(fileInfo.id)).find(frame => frame !== undefined);
         if (this.frontFrame && this.appStore.activeFrame !== this.frontFrame) {
@@ -993,9 +1001,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Wait for the cube histogram of an image, and return how the wait ends: "complete" when the
-     * histogram is complete, "closed" when the image is closed (a later workspace load closes every
-     * image), "superseded" when a later workspace load starts, or "skipped" when the user skips it.
+     * Wait for the cube histogram of an image, and return how the wait ends:
+     * - "complete": the histogram is complete;
+     * - "closed": the image was closed. A later workspace load closes every image;
+     * - "superseded": a later workspace load started;
+     * - "skipped": the user skipped the wait.
      *
      * The wait has no time limit. The user decides when to stop waiting, with the Skip button.
      */

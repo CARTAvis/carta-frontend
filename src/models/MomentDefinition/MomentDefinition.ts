@@ -26,13 +26,14 @@ export const NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS: CARTA.Moment[] = [
 ];
 
 /**
- * Which moment each image a moment request made is, in the order the backend sends them back.
+ * Returns the moment of each image that a moment request made, in the order that the backend sends
+ * the images back.
  *
- * The backend makes them in the order they were asked for, but leaves out the median coordinate
+ * The backend makes the images in the order of the request. It leaves out the median coordinate
  * when the pixel range cannot give one.
  *
- * @param requested - the moments the request asked for.
- * @param madeCount - how many images came back.
+ * @param requested - the moments that the request asked for.
+ * @param madeCount - the number of images that came back.
  * @returns nothing when the images cannot be told apart.
  */
 export function momentsMade(requested: CARTA.Moment[], madeCount: number): CARTA.Moment[] | undefined {

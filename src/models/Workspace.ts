@@ -302,12 +302,12 @@ export interface WorkspaceFile {
     };
 }
 
-/** A request for moment images, naming its image and region by the IDs the workspace knows them by. */
+/** A request for moment images. The request names its image and region by their workspace IDs. */
 export interface WorkspaceMomentRequest {
     type: "moment";
     /** The image the moments are taken of. */
     sourceImageId: number;
-    /** The region they are taken over, by the ID it was saved with; the whole image when it is not a region of its own. */
+    /** The region of the moments, by the ID that the region was saved with. When the moments are taken over the whole image, this is the fixed ID of the whole image. */
     regionId: number;
     /** The moments that the request made images of. */
     moments: CARTA.Moment[];
@@ -318,7 +318,7 @@ export interface WorkspaceMomentRequest {
     pixelRange: {min: number; max: number};
 }
 
-/** A request for a PV image, naming its image and cut by the IDs the workspace knows them by. */
+/** A request for a PV image. The request names its image and cut by their workspace IDs. */
 export interface WorkspacePvRequest {
     type: "pv";
     sourceImageId: number;
@@ -326,13 +326,13 @@ export interface WorkspacePvRequest {
     regionId: number;
     /** How many pixels wide the cut is averaged over. */
     width: number;
-    /** The channels the PV image covers, as channel indices; all of them when left out. */
+    /** The channels that the PV image covers, as channel indices. Left out when the PV image covers all channels. */
     channelRange?: {min: number; max: number};
     /** Whether the position axis is drawn vertically. */
     reverse: boolean;
 }
 
-/** A HiPS query, which depends on nothing else in the session. */
+/** A HiPS query. It does not depend on any other data in the session. */
 export interface WorkspaceHipsRequest {
     type: "hips";
     survey: string;
@@ -351,7 +351,7 @@ export interface WorkspaceHipsRequest {
 
 export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest;
 
-/** An image a request made: shown as a file is, but made again rather than opened, so it has no source. */
+/** An image that a request made. It is saved like a file image, but without a source, because a restore makes it again instead of opening it. */
 export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "directory" | "filename" | "hdu"> {
     /** The name the image had when it was saved, for naming it to the user. */
     name?: string;
@@ -594,8 +594,8 @@ export interface Workspace {
     catalogs?: WorkspaceCatalog[];
     colorBlendingImages?: WorkspaceColorBlending[];
     /**
-     * The moment, PV and HiPS images, by the requests that made them, in the order they were made:
-     * a request can be made of an image an earlier one made.
+     * The moment, PV and HiPS images, by the requests that made them, in the order that they were
+     * made. A request can use an image that an earlier request made.
      */
     generatedImages?: WorkspaceGeneratedImages[];
     references?: {

@@ -14,7 +14,7 @@ export interface WorkspaceSnapshot {
     issues: WorkspaceIssue[];
 }
 
-/** One request that made images, and the images it made that the session still shows. */
+/** One request that made images, and the images from it that the session still shows. */
 interface GeneratedImageGroup {
     request: ImageGenerationRequest;
     frames: FrameStore[];
@@ -45,7 +45,7 @@ export class WorkspaceSnapshotter {
 
     /** One entry per item that could not be captured as it stands. */
     private readonly issues: WorkspaceIssue[] = [];
-    /** The requests for generated images that are saved, in an order each can be made again in. */
+    /** The requests for generated images that are saved, in an order in which each can be made again. */
     private readonly generatedImageGroups: GeneratedImageGroup[] = [];
     /** The generated images saved with the request that made them. */
     private readonly savedGeneratedImages = new Set<FrameStore>();
@@ -90,8 +90,8 @@ export class WorkspaceSnapshotter {
 
         let hasTemporaryFiles = false;
         for (const frame of this.appStore.frames) {
-            // A generated image has no source to open it from again. One a request made is saved with
-            // the request, or reported with it; any other is not saved.
+            // A generated image has no source to open it from. An image that a request made is
+            // saved with the request, or reported with it. Any other generated image is not saved.
             if (frame?.frameInfo?.generated) {
                 hasTemporaryFiles ||= !frame.generation;
                 continue;
@@ -118,12 +118,12 @@ export class WorkspaceSnapshotter {
     }
 
     /**
-     * Stage 0: which generated images can be saved, by the request that made them.
+     * Stage 0: find the generated images that can be saved, by the request that made them.
      *
-     * A request is saved once, with the images it made that the session still shows, and only if it
-     * can be made again: the image it was made from is saved, and so is the region it was made over.
-     * Those can be images another request made, so a request is taken only once whatever it is made
-     * of has been, which also puts the requests in an order they can be made again in.
+     * Save a request once, with the images from it that the session still shows. Save it only if it
+     * can be made again: its source image and its region are both saved. These can be images that
+     * another request made. So take a request only after everything it is made from is taken. This
+     * also puts the requests in an order in which they can be made again.
      */
     private collectGeneratedImages(): void {
         const framesByRequest = new Map<ImageGenerationRequest, FrameStore[]>();
@@ -153,21 +153,22 @@ export class WorkspaceSnapshotter {
             }
             pending = waiting;
         }
-        // Whatever is still waiting is made of an image that is not saved.
+        // The requests that are still waiting are made from an image that is not saved.
         pending.forEach(group => this.reportUnsavedRequest(group.request, "the image it was made from was not saved"));
     }
 
     /**
-     * Why a request cannot be saved, or "waiting" while what it is made of may still be.
+     * Returns why a request cannot be saved, or "waiting" when the data that it is made from may
+     * still be saved.
      *
-     * @returns nothing when it can be saved.
+     * @returns nothing when the request can be saved.
      */
     private whyNotSavable({request, frames}: GeneratedImageGroup): string | "waiting" | undefined {
         if (request.type === "hips") {
             return undefined;
         }
-        // Moment images are told apart by which moment each is; without that, only all of them in
-        // the order they were made can be told apart.
+        // Moment images are told apart by their moments. Without the moments, the images can be
+        // told apart only when all of them remain, in the order that they were made.
         if (request.type === "moment" && frames.some(frame => frame.generation?.moment === undefined) && frames.length !== request.moments.length) {
             return "it cannot tell which moment each of its images is";
         }
@@ -175,7 +176,8 @@ export class WorkspaceSnapshotter {
         if (!this.appStore.frames.includes(source)) {
             return "the image it was made from is closed";
         }
-        // The region is the one the image is shown with, which is another image's when it is matched to one.
+        // Use the region of the image that the source is shown with. When the source is matched to
+        // another image, the region belongs to that image.
         const regionOwner = source.spatialReference ?? source;
         for (const image of [source, regionOwner]) {
             if (image.frameInfo.generated && !this.savedGeneratedImages.has(image)) {
@@ -209,12 +211,13 @@ export class WorkspaceSnapshotter {
     }
 
     /**
-     * The ID this workspace knows an image by: the one it was given when it was opened.
+     * Returns the workspace ID of an image: the ID that the image was given when it was opened.
      *
-     * A generated image has one only when it is saved with the request that made it, although the
-     * session registered every one like any other. Nothing that names any other generated image can
-     * be saved either: answering with its registration would let a color blend be written naming an
-     * image the workspace does not carry, which comes back quietly missing one of its layers.
+     * A generated image has a workspace ID only when it is saved with the request that made it,
+     * although the session registered every image in the same way. Data that names any other
+     * generated image cannot be saved either. If it were saved, a color blend could name an image
+     * that the workspace does not save. The blend would then come back without one of its layers,
+     * and no message would say so.
      */
     private imageIdOf(frame: FrameStore | undefined | null): number | undefined {
         if (frame?.frameInfo?.generated && !this.savedGeneratedImages.has(frame)) {
@@ -332,10 +335,11 @@ export class WorkspaceSnapshotter {
     }
 
     /**
-     * Stage 1a: each generated image saved, with the request that made it.
+     * Stage 1a: save each generated image with the request that made it.
      *
-     * A request is written once, naming its image and region by the IDs the workspace knows them by.
-     * Each image is shown as a file is, without a source: it is made again rather than opened.
+     * Write each request once, and name its image and region by their workspace IDs. Save each
+     * image like a file image, but without a source, because a restore makes it again instead of
+     * opening it.
      */
     private captureGeneratedImages(): void {
         const generatedImages = this.generatedImageGroups.flatMap(({request, frames}) => {
@@ -348,7 +352,7 @@ export class WorkspaceSnapshotter {
                 if (workspaceImageId === undefined) {
                     return [];
                 }
-                // made again rather than opened, so without a source
+                // Save the image without a source, because a restore makes it again.
                 const image = this.captureImage(frame, workspaceImageId, undefined);
                 return [{...image, name: frame.frameInfo.fileInfo.name ?? undefined, moment: frame.generation?.moment}];
             });
@@ -359,7 +363,7 @@ export class WorkspaceSnapshotter {
         }
     }
 
-    /** A request as the workspace saves it, naming its image and region by the IDs it knows them by. */
+    /** Returns a request as the workspace saves it, with its image and region named by their workspace IDs. */
     private workspaceRequestOf(request: ImageGenerationRequest, frames: FrameStore[]): WorkspaceGenerationRequest | undefined {
         if (request.type === "hips") {
             const query = request.query;
@@ -384,7 +388,7 @@ export class WorkspaceSnapshotter {
         if (request.type === "pv") {
             return {type: "pv", sourceImageId, regionId: request.regionId, width: request.width, channelRange: request.channelRange && {...request.channelRange}, reverse: request.reverse};
         }
-        // Only the moments whose images are still shown: the rest were closed.
+        // Save only the moments whose images are still shown. The other images were closed.
         const moments = frames.map(frame => frame.generation?.moment);
         return {
             type: "moment",

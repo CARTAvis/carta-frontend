@@ -1019,7 +1019,7 @@ describe("WorkspaceRestorer", () => {
             pixelRange: {min: 0.1, max: 1}
         };
 
-        /** A session that makes generated images the way the backend answers: moment images in the order asked for. */
+        /** A session that makes generated images as the backend does: moment images come back in the order of the request. */
         function createGeneratingSession(momentsMade?: Promise<unknown>) {
             frameOverrides = {resetMomentRequestState: jest.fn(), resetPvRequestState: jest.fn(), requestingMomentsProgress: 0.5, requestingPVProgress: 0};
             const session = createSession();
@@ -1072,13 +1072,15 @@ describe("WorkspaceRestorer", () => {
             const restorer = await restored(workspace);
 
             expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
-            // The backend is asked for a statistic of the region, which it has answered, before the moments.
+            // The backend is asked for a statistic of the region, and answers it, before the
+            // moments are asked for.
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
                 {fileId: 1, regionId: 105, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]},
                 {fileId: 1, regionId: 105, statsConfigs: []}
             ]);
             expect(backend.setStatsRequirements.mock.invocationCallOrder[1]).toBeLessThan(requestMoment.mock.invocationCallOrder[0]);
-            // Each image is the moment it was saved as, whatever order the backend sent them in.
+            // Each image gets the moment that it was saved with, whatever order the backend sent
+            // the images in.
             const maximum = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
             expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
             expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
@@ -1119,7 +1121,7 @@ describe("WorkspaceRestorer", () => {
             const problems = await restore(workspace);
 
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
-            // Images the backend still makes for it are not wanted.
+            // The images that the backend still makes for the skipped request are not wanted.
             const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
