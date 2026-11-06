@@ -1,0 +1,41 @@
+.workspace-restore-dialog {
+    width: 480px;
+
+    .restore-stage {
+        font-weight: 600;
+    }
+
+    .restore-item {
+        margin: 4px 0 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .restore-step {
+        margin-top: 16px;
+
+        .restore-step-text {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .restore-step-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .restore-step-time {
+            flex-shrink: 0;
+        }
+
+        .restore-step-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+}

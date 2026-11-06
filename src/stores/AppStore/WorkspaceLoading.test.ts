@@ -129,3 +129,62 @@ describe("AppStore.loadWorkspace overlapping loads", () => {
         expect(appStore.isLoadingWorkspace).toBe(false);
     });
 });
+
+describe("AppStore.cancelLoadingWorkspace", () => {
+    const appStore = AppStore.Instance;
+    const workspace = {workspaceVersion: 2, frontendVersion: 0, name: "cubes", description: "cubes"} as Workspace;
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        runInAction(() => {
+            appStore.activeWorkspace = undefined;
+            appStore.isLoadingWorkspace = false;
+        });
+    });
+
+    test("stops the restore, skips the step it waits for, and leaves the session empty", async () => {
+        const stage = deferred<void>();
+        let notifyStarted!: () => void;
+        const started = new Promise<void>(resolve => (notifyStarted = resolve));
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        let isRestoreFinished = false;
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            notifyStarted();
+            yield stage.promise;
+            isRestoreFinished = true;
+            return [];
+        });
+        const clearSession = jest.spyOn(WorkspaceRestorer, "clearSession").mockImplementation(jest.fn());
+        const toaster = jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        const onSkip = jest.fn();
+
+        const load = appStore.loadWorkspace("cubes");
+        await started;
+        appStore.setWorkspaceRestoreProgress({stage: "Opening images", index: 1, count: 2, item: "cube.fits"});
+        appStore.setWorkspaceLoadingStep({description: "Computing the cube histogram of cube.fits", progress: 0.5, onSkip});
+        expect(appStore.loadingWorkspaceName).toBe("cubes");
+
+        appStore.cancelLoadingWorkspace();
+
+        expect(onSkip).toHaveBeenCalledTimes(1);
+        expect(clearSession).toHaveBeenCalledTimes(1);
+        expect(toaster).toHaveBeenCalledWith(expect.objectContaining({message: 'Cancelled opening workspace "cubes"'}));
+        expect(appStore.isLoadingWorkspace).toBe(false);
+        expect(appStore.workspaceLoadingStep).toBeUndefined();
+        expect(appStore.workspaceRestoreProgress).toBeUndefined();
+
+        stage.resolve();
+        await expect(load).resolves.toBe(false);
+        expect(isRestoreFinished).toBe(true);
+        expect(appStore.activeWorkspace).toBeUndefined();
+        expect(appStore.isLoadingWorkspace).toBe(false);
+    });
+
+    test("does nothing when no workspace is loading", () => {
+        const clearSession = jest.spyOn(WorkspaceRestorer, "clearSession").mockImplementation(jest.fn());
+
+        appStore.cancelLoadingWorkspace();
+
+        expect(clearSession).not.toHaveBeenCalled();
+    });
+});

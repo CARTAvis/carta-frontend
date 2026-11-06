@@ -18,3 +18,4 @@ export * from "./TaskProgressDialog/TaskProgressDialogComponent";
 export * from "./TelemetryDialog/TelemetryDialogComponent";
 export * from "./VectorOverlayDialog/VectorOverlayDialogComponent";
 export * from "./WorkspaceDialog/WorkspaceDialogComponent";
+export * from "./WorkspaceRestoreDialog/WorkspaceRestoreDialogComponent";

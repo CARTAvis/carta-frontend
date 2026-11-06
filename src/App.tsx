@@ -5,7 +5,7 @@ import {type ILayoutApi, Layout} from "flexlayout-react";
 import {observer} from "mobx-react";
 
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
-import {TaskProgressDialogComponent} from "components/Dialogs";
+import {TaskProgressDialogComponent, WorkspaceRestoreDialogComponent} from "components/Dialogs";
 import {AlertType} from "enums";
 import {ApiService} from "services";
 import {type AlertStore, AppStore, LayoutStore} from "stores";
@@ -71,22 +71,13 @@ export class App extends React.Component {
         const layoutClassName = classNames("layout-container", {"dark-theme": appStore.isDarkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.isDarkTheme);
-        const workspaceLoadingStep = appStore.isResumingSession ? undefined : appStore.workspaceLoadingStep;
 
         return (
             <div className={className}>
                 <UIControllerComponent />
                 {alertComponent}
-                <TaskProgressDialogComponent
-                    progress={workspaceLoadingStep?.progress ?? 0}
-                    timeRemaining={workspaceLoadingStep ? (appStore.estimatedTaskRemainingTime ?? 0) : 0}
-                    isOpen={appStore.isResumingSession || appStore.isLoadingWorkspace}
-                    cancellable={!!workspaceLoadingStep?.onSkip}
-                    onCancel={workspaceLoadingStep?.onSkip}
-                    cancelText="Skip"
-                    cancelTooltip="Skip this step and restore the rest of the workspace"
-                    text={appStore.isResumingSession ? "Resuming session..." : workspaceLoadingStep ? `Loading workspace: ${workspaceLoadingStep.description}` : "Loading workspace..."}
-                />
+                <TaskProgressDialogComponent progress={0} timeRemaining={0} isOpen={appStore.isResumingSession} cancellable={false} text="Resuming session..." />
+                <WorkspaceRestoreDialogComponent />
                 <div className={layoutClassName}>
                     {layoutStore.layoutModel && (
                         <Layout
