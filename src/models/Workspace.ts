@@ -11,7 +11,9 @@ import {
     type CatalogSystemType,
     type ContourDashMode,
     FrameScaling,
+    type MultiProfileCategory,
     type RadiusUnits,
+    type SpectralSystem,
     type VectorOverlaySource,
     type WorkspaceItemKind
 } from "enums";
@@ -269,7 +271,8 @@ export interface WorkspaceFile {
     /** The spectral coordinate of the spectral axis, and the secondary spectral coordinate, with the names that the spectral settings use. */
     spectralCoordinate?: string;
     spectralCoordinateSecondary?: string;
-    spectralSystem?: string;
+    /** The spectral system. {@link SpectralSystem.BARY} is saved as `"BARYCENT"`, and {@link SpectralSystem.TOPO} as `"TOPOCENT"`. */
+    spectralSystem?: SpectralSystem;
     /** The intensity unit of the spectral profiles of the image. */
     intensityUnit?: string;
 
@@ -413,19 +416,19 @@ export interface WorkspacePlotRange {
 export type WorkspaceRenderConfigWidgetConfig = WorkspacePlotRange;
 
 export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
-    /** The Stokes of the profile. Left out when the profile uses the current Stokes of the image. */
+    /** The Stokes of the profile, such as `"Q"`. Left out when the profile uses the current Stokes of the image. */
     stokes?: string;
 }
 
 export interface WorkspaceHistogramWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
-    /** The Stokes of the histogram. */
+    /** The Stokes of the histogram, such as `"Qz"`. `"z"` means the current Stokes of the image. */
     coordinate?: string;
     /** The pixel value bounds of the histogram. Left out when the histogram uses the bounds of the image. */
     pixelBounds?: {min: number; max: number};
 }
 
 export interface WorkspaceStatsWidgetConfig extends WorkspaceWidgetBinding {
-    /** The Stokes of the statistics. */
+    /** The Stokes of the statistics, such as `"Qz"`. `"z"` means the current Stokes of the image. */
     coordinate?: string;
 }
 
@@ -453,13 +456,15 @@ export interface WorkspaceStokesAnalysisWidgetConfig extends WorkspaceWidgetBind
 }
 
 export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
-    /** The category that the profiles shown together differ in, such as image or region. Left out when the widget shows one profile. */
-    profileCategory?: string;
+    /** The category that the profiles shown together differ in, such as image or region. {@link MultiProfileCategory.STOKES} is saved as `"Polarization"`. Left out when the widget shows one profile. */
+    profileCategory?: MultiProfileCategory;
     /** The images whose profiles are shown together, by Workspace image ID. */
     imageIds?: number[];
     /** The regions of the shown image whose profiles are shown, by the IDs that the regions were saved with. */
     regionIds?: number[];
-    statsTypes?: number[];
+    /** The statistics whose profiles are shown. */
+    statsTypes?: CARTA.StatsType[];
+    /** The Stokes of the profiles shown, such as `"Iz"` or `"Qz"`. `"z"` means the current Stokes of the image. */
     coordinates?: string[];
     /** The color of each profile shown together. The key is a Workspace image ID, a saved region ID, a statistic or a Stokes, by the category. */
     profileColors?: {key: number | string; color: string}[];

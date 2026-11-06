@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, RegionId, type SpectralSystem, WorkspaceItemKind} from "enums";
+import {ImageType, RegionId, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -315,7 +315,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (fileInfo.spectralCoordinateSecondary !== undefined && !frame.setSpectralCoordinateSecondary(fileInfo.spectralCoordinateSecondary, false)) {
             unsupported.push(`the secondary spectral coordinate ${fileInfo.spectralCoordinateSecondary}`);
         }
-        if (fileInfo.spectralSystem !== undefined && !frame.setSpectralSystem(fileInfo.spectralSystem as SpectralSystem, false)) {
+        if (fileInfo.spectralSystem !== undefined && !frame.setSpectralSystem(fileInfo.spectralSystem, false)) {
             unsupported.push(`the spectral system ${fileInfo.spectralSystem}`);
         }
         const intensityUnit = fileInfo.intensityUnit;

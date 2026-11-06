@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {observable, runInAction} from "mobx";
 
-import {CatalogSystemType, ImageType, RadiusUnits, RegionId, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
@@ -672,7 +672,7 @@ describe("WorkspaceRestorer", () => {
     test("shows an image in the spectral coordinates, spectral system and intensity unit it was saved in, without aligning other images", async () => {
         const {appStore} = createSession();
 
-        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Radio velocity (km/s)", spectralCoordinateSecondary: "Channel", spectralSystem: "LSRK", intensityUnit: "Jy/beam"}]}));
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Radio velocity (km/s)", spectralCoordinateSecondary: "Channel", spectralSystem: SpectralSystem.LSRK, intensityUnit: "Jy/beam"}]}));
 
         const frame = appStore.frames[0];
         expect(problems).toEqual([]);
@@ -685,7 +685,7 @@ describe("WorkspaceRestorer", () => {
     test("reports the spectral settings an image can no longer be shown in", async () => {
         const {appStore} = createSession();
 
-        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Unsupported", spectralSystem: "Unsupported", intensityUnit: "K"}]}));
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Unsupported", spectralSystem: "Unsupported" as SpectralSystem, intensityUnit: "K"}]}));
 
         expect(problems).toEqual(["Could not show image.fits in the spectral coordinate Unsupported, the spectral system Unsupported, the intensity unit K"]);
         expect(appStore.frames[0].setIntensityUnit).not.toHaveBeenCalled();
