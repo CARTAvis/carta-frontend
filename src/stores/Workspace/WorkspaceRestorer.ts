@@ -21,6 +21,7 @@ import {
     VelocityConvention,
     WORKSPACE_DIALOG_TABS,
     WORKSPACE_DIALOGS,
+    WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
 import {
@@ -656,9 +657,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Report something that could not be brought back, naming what it was about. */
-    private report(kind: WorkspaceItemKind, subject: string, message: string): void {
-        this.issues.push({kind, subject, message});
+    /**
+     * Report something that could not be brought back, naming what it was about.
+     *
+     * @param outcome - why the item is not in the session at all. Leave it out when the item is in
+     *                  the session, but not as it was saved.
+     */
+    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome): void {
+        this.issues.push({kind, subject, message, outcome});
     }
 
     /**
@@ -719,7 +725,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`);
+                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(fileInfo, frame);
@@ -766,7 +772,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             this.showProgress("Opening HiPS images", index + 1, hipsImages.length, subject);
             const query = WorkspaceRestorer.hipsQueryOf(request);
             if (!query) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
             let frame: FrameStore | undefined;
@@ -780,7 +786,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(images[0], frame);
@@ -983,12 +989,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const subject = this.subjectOf(request);
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
             return [];
         }
         const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
         if (regionId === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`, WorkspaceIssueOutcome.Failed);
             return [];
         }
 
@@ -1062,15 +1068,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         if (outcome === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`, WorkspaceIssueOutcome.Failed);
             return [];
         }
         if (outcome === "skipped") {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`, WorkspaceIssueOutcome.Skipped);
             return [];
         }
         if (!outcome.length) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`, WorkspaceIssueOutcome.Failed);
         }
         return outcome;
     }
@@ -1283,7 +1289,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (!frame) {
                 if (frames.length) {
                     const imageName = this.nameOf(image);
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`, WorkspaceIssueOutcome.Failed);
                 }
                 continue;
             }
@@ -1699,7 +1705,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             this.showProgress("Opening catalogs", index + 1, catalogs.length, description);
             const targetFrameId = catalogInfo.associatedImageId === undefined ? undefined : this.frameIds.get(catalogInfo.associatedImageId);
             if (catalogInfo.associatedImageId !== undefined && targetFrameId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`);
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
 
@@ -1714,7 +1720,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (catalogFileId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}`);
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
 
