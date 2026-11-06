@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring catalogs and the widget layout in workspaces ([#2950](https://github.com/CARTAvis/carta-frontend/issues/2950)).
 * Added support for restoring percentile ranges from the cube histogram in workspaces ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 * Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query settings and results, the PV generator settings, the plotted spectral lines, and the animator and Log widget settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
+* Added support for saving the multi-panel grid and maximized panels in layouts and workspaces, and the open dialogs and widget settings panels with their places, tabs and unapplied settings, the Region dialog coordinates, the File Info header search and the snippet of the Snippet dialog in workspaces ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 ### Fixed
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
