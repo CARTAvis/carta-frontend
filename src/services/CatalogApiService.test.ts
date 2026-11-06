@@ -25,7 +25,7 @@ jest.mock("stores", () => ({
         }
     }
 }));
-jest.mock("utilities", () => ({CatalogApiProcessing: {}}));
+jest.mock("utilities", () => ({CatalogApiProcessing: {}, convertRadius: jest.requireActual("../utilities/catalog/radius").convertRadius}));
 jest.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemetryEntry: jest.fn()}}}));
 
 interface TestableCatalogApiService {

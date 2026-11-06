@@ -2,9 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {CatalogOverlay, CatalogSystemType, CatalogType, CatalogUpdateMode, ImageType, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogSystemType, CatalogType, ImageType, WorkspaceItemKind} from "enums";
 import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio, WorkspaceSnapshotter} from "stores";
-import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
+import {CatalogAxisEligibility} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;
@@ -31,11 +31,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.ICRS},
             get2DCoordinateData: jest.fn(),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: true,
+                accept: jest.fn(() => processedData)
+            }
         };
         const widgetStore = {
             setPlottedImageOverlayState: jest.fn(),
@@ -46,7 +45,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -62,7 +60,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
+        expect(profileStore.rows.accept).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}));
         expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
@@ -79,11 +77,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 yHeaderInfo: {units: "deg"}
             })),
             getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: true,
+                accept: jest.fn(() => processedData)
+            }
         };
         const widgetStore = {
             setPlottedImageOverlayState: jest.fn(),
@@ -95,7 +92,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -114,8 +110,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         expect(profileStore.get2DCoordinateData).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", processedData, CatalogSystemType.FK5);
         expect(convertSpy).toHaveBeenCalledWith(1, [1.1], [2.2], "wcs", "deg", "deg", expect.objectContaining({system: CatalogSystemType.FK5}), 1, 1, undefined);
         expect(widgetStore.setPlottedImageOverlayState).toHaveBeenCalledWith("_RAJ2000", "_DEJ2000", CatalogSystemType.FK5);
-        expect(profileStore.setLoadingDataStatus).toHaveBeenCalledWith(false);
-        expect(profileStore.setUpdatingDataStream).toHaveBeenCalledWith(false);
     });
 
     test("updates Galactic overlays when coordinate columns have no units", () => {
@@ -129,11 +123,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 yHeaderInfo: {units: ""}
             })),
             getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: true,
+                accept: jest.fn(() => processedData)
+            }
         };
         const widgetStore = {
             setPlottedImageOverlayState: jest.fn(),
@@ -144,7 +137,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -175,11 +167,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 yHeaderInfo: {units: "deg"}
             })),
             getCoordinateEligibility: jest.fn(() => ({status: CatalogAxisEligibility.Eligible})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: true,
+                accept: jest.fn(() => processedData)
+            }
         };
         // The widget has been moved on to other columns since the overlay was drawn, which does not
         // take the overlay down.
@@ -197,7 +188,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -226,11 +216,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
         // checked: the user changed the filter, and the first request's rows arrive afterwards.
         const profileStore = {
             get2DCoordinateData: jest.fn(),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(),
-            updateMode: CatalogUpdateMode.TableUpdate
+            rows: {
+                isLoadingForOverlay: false,
+                accept: jest.fn(() => new Map())
+            }
         };
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogRequests.attach(1, 2);
@@ -241,8 +230,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             message: {columns: [], fileId: 1, progress: 1, subsetDataSize: 1, subsetEndIndex: 1} as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.updateCatalogData).not.toHaveBeenCalled();
-        expect(profileStore.setUpdatingDataStream).not.toHaveBeenCalled();
+        expect(profileStore.rows.accept).not.toHaveBeenCalled();
     });
 
     test("does not replot for column-update responses", () => {
@@ -255,14 +243,10 @@ describe("AppStore.handleCatalogFilterStream", () => {
                 xHeaderInfo: {units: "deg"},
                 yHeaderInfo: {units: "deg"}
             })),
-            isUpdateColumnMode: true,
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(() => {
-                profileStore.isUpdateColumnMode = false;
-            }),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: false,
+                accept: jest.fn(() => processedData)
+            }
         };
         const widgetStore = {
             setPlottedImageOverlayState: jest.fn(),
@@ -273,7 +257,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const convertSpy = jest.spyOn(catalogStore, "convertToImageCoordinate").mockImplementation(jest.fn());
@@ -289,7 +272,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
             } as unknown as CARTA.CatalogFilterResponse
         });
 
-        expect(profileStore.updateCatalogData).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}), processedData);
+        expect(profileStore.rows.accept).toHaveBeenCalledWith(expect.objectContaining({fileId: 1}));
         expect(profileStore.get2DCoordinateData).not.toHaveBeenCalled();
         expect(convertSpy).not.toHaveBeenCalled();
         expect(widgetStore.setPlottedImageOverlayState).not.toHaveBeenCalled();
@@ -301,19 +284,19 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const accumulatedData = {prefix: "all rows"};
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"},
-            catalogData: accumulatedData,
             get2DCoordinateData: jest
                 .fn()
                 .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
                 .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),
             getCoordinateEligibility: jest.fn(() => ({status: isFormatKnown ? CatalogAxisEligibility.Eligible : CatalogAxisEligibility.Unknown})),
-            setLoadingDataStatus: jest.fn(),
-            setProgress: jest.fn(),
-            setUpdatingDataStream: jest.fn(),
-            updateCatalogData: jest.fn(() => {
-                isFormatKnown = true;
-            }),
-            updateMode: CatalogUpdateMode.ViewUpdate
+            rows: {
+                isLoadingForOverlay: true,
+                data: accumulatedData,
+                accept: jest.fn(() => {
+                    isFormatKnown = true;
+                    return processedData;
+                })
+            }
         };
         const widgetStore = {
             setPlottedImageOverlayState: jest.fn(),
@@ -324,7 +307,6 @@ describe("AppStore.handleCatalogFilterStream", () => {
         catalogStore.catalogProfileStores.set(1, profileStore as any);
         catalogStore.catalogDisplayStores.set(1, widgetStore as any);
 
-        jest.spyOn(ProtobufProcessing, "processCatalogData").mockReturnValue(processedData as any);
         jest.spyOn(appStore, "getFrame").mockReturnValue({isValidWcs: true, wcsInfo: "wcs"} as any);
         jest.spyOn(catalogStore, "imageIdOf").mockReturnValue(10);
         const clearSpy = jest.spyOn(catalogStore, "clearImageCoordsData").mockImplementation(jest.fn());
@@ -426,7 +408,7 @@ describe("AppStore.handleErrorStream", () => {
         // not read once the request has been given up on.
         const profileStore = addProfileStore(3);
         catalogStore.catalogRequests.attach(3, 12);
-        profileStore.setUpdatingDataStream(true);
+        runInAction(() => (profileStore.rows.isStreaming = true));
 
         appStore.handleErrorStream({severity: 3, tags: ["catalog_filter"], data: "3", message: "catalog request failed"} as any);
 
@@ -442,7 +424,7 @@ describe("AppStore.handleErrorStream", () => {
         catalogStore.catalogRequests.finish(9, false, "restore timed out");
         await expect(completion).resolves.toEqual({success: false, didStart: true, message: "restore timed out"});
 
-        const updateSpy = jest.spyOn(profileStore, "updateCatalogData");
+        const updateSpy = jest.spyOn(profileStore.rows, "accept");
         appStore.handleCatalogFilterStream({
             requestId: 1,
             message: {
@@ -500,7 +482,8 @@ describe("AppStore.saveWorkspace", () => {
     }
 
     test("refuses to save while a catalog is still streaming", async () => {
-        addCatalog(1, "streaming.vot").setLoadingDataStatus(true);
+        const streaming = addCatalog(1, "streaming.vot");
+        runInAction(() => (streaming.rows.isLoading = true));
         addCatalog(2, "loaded.vot");
         const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
 
@@ -608,12 +591,12 @@ describe("AppStore.saveWorkspace", () => {
 
     test("does not report a catalog whose rows have all arrived", () => {
         const profileStore = addCatalog(1, "loaded.vot");
-        profileStore.setLoadingDataStatus(true);
-        profileStore.setUpdatingDataStream(true);
+        runInAction(() => (profileStore.rows.isLoading = true));
+        runInAction(() => (profileStore.rows.isStreaming = true));
         expect(catalogStore.streamingCatalogNames).toEqual(["loaded.vot"]);
 
-        profileStore.setLoadingDataStatus(false);
-        profileStore.setUpdatingDataStream(false);
+        runInAction(() => (profileStore.rows.isLoading = false));
+        runInAction(() => (profileStore.rows.isStreaming = false));
 
         expect(catalogStore.streamingCatalogNames).toEqual([]);
     });

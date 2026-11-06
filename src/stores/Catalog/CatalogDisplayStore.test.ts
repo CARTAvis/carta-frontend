@@ -275,8 +275,7 @@ describe("CatalogDisplayStore data-derived range cache", () => {
         let data = Float32Array.from([1, 2, 3, 4]);
         const profileStore = {
             catalogControlHeader: new Map([["VALUE", {filter: "", display: true}]]),
-            numVisibleRows: 2,
-            sortingInfo: {columnName: null, sortingType: null},
+            rows: {visibleRowCount: 2, activeQuery: {sortColumn: null, sortingType: null}},
             get1DPlotData: () => ({wcsData: data})
         } as unknown as CatalogProfileStore;
         const columnRange = (displayStore as any).columnRange.bind(displayStore);
@@ -286,17 +285,17 @@ describe("CatalogDisplayStore data-derived range cache", () => {
             expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 2});
 
             data = Float32Array.from([1, 2, 3, 4]);
-            profileStore.numVisibleRows = 4;
+            profileStore.rows.visibleRowCount = 4;
             expect(columnRange(profileStore, "VALUE")).toEqual({min: 1, max: 4});
             expect(fround).toHaveBeenCalledTimes(4);
 
             data = Float32Array.from([10, 20, 30, 40]);
-            profileStore.numVisibleRows = 2;
+            profileStore.rows.visibleRowCount = 2;
             expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 20});
             expect(fround).toHaveBeenCalledTimes(6);
 
-            profileStore.numVisibleRows = 4;
-            profileStore.sortingInfo = {columnName: "VALUE", sortingType: CARTA.SortingType.Ascending};
+            profileStore.rows.visibleRowCount = 4;
+            profileStore.rows.activeQuery = {...profileStore.rows.activeQuery, sortColumn: "VALUE", sortingType: CARTA.SortingType.Ascending};
             expect(columnRange(profileStore, "VALUE")).toEqual({min: 10, max: 40});
             expect(fround).toHaveBeenCalledTimes(10);
 
