@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
 
+import {AppToaster} from "components/Shared";
 import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
@@ -312,6 +313,21 @@ describe("WorkspaceRestorer", () => {
         const issues = await restoreIssues(createWorkspace({catalogs: [{id: 1, source: catalogSource}]}));
 
         expect(issues.map(issue => issue.message)).toEqual(expect.arrayContaining(["Could not open the image image.fits: File /data/image.fits does not exist", expect.stringMatching(/^Could not load the catalog .*: Network Error$/)]));
+    });
+
+    test("says why an online catalog could not be loaded, without a toast", async () => {
+        createSession();
+        const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+        const query = jest.spyOn(CatalogApiService.Instance, "getSimbadCatalog").mockRejectedValue(new Error("Request to mirror simbad.example failed"));
+        const toaster = jest.spyOn(AppToaster, "show").mockResolvedValue(undefined);
+
+        const failed = await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+        expect(failed.map(issue => issue.message)).toContainEqual(expect.stringMatching(/^Could not load the catalog .*: Request to mirror simbad.example failed$/));
+
+        query.mockResolvedValue({status: 200, data: {data: [], metadata: []}} as any);
+        const empty = await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+        expect(empty.map(issue => issue.message)).toContainEqual(expect.stringMatching(/^Could not load the catalog .*: the query found no sources$/));
+        expect(toaster).not.toHaveBeenCalled();
     });
 
     test("shows the stage and the item of the stage that it is on", async () => {
