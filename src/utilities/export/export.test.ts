@@ -1,4 +1,9 @@
-import {exportTsvFile, getExportFileName} from "./export";
+import {Classes} from "@blueprintjs/core";
+import html2canvas from "html2canvas-pro";
+
+import {exportScreenshot, exportTsvFile, getExportFileName} from "./export";
+
+jest.mock("html2canvas-pro", () => jest.fn());
 
 describe("export file names", () => {
     beforeEach(() => {
@@ -32,5 +37,50 @@ describe("export file names", () => {
         });
         exportTsvFile("image IQU.fits", "Q profile", "# x\ty\n");
         expect(downloadName).toBe("image__IQU.fits-Q-profile-2026-09-23-21-40-14.tsv");
+    });
+});
+
+describe("exportScreenshot", () => {
+    const captured = document.createElement("canvas");
+    captured.width = 1024;
+    captured.height = 512;
+
+    beforeEach(() => {
+        document.body.innerHTML = '<div class="App"><div class="image-view-div"></div></div>';
+        (html2canvas as unknown as jest.Mock).mockResolvedValue(captured);
+        jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({drawImage: jest.fn()} as never);
+        jest.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue("data:image/jpeg;base64,");
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        (html2canvas as unknown as jest.Mock).mockReset();
+    });
+
+    test("captures only the image viewer by default", async () => {
+        await exportScreenshot();
+
+        expect(html2canvas).toHaveBeenCalledWith(document.querySelector(".image-view-div"), undefined);
+    });
+
+    test("captures the whole app without its overlays, such as dialogs, toasts and popovers", async () => {
+        await exportScreenshot(false);
+
+        const [element, options] = (html2canvas as unknown as jest.Mock).mock.calls[0];
+        expect(element).toBe(document.querySelector(".App"));
+        const ignores = (className: string) => {
+            const node = document.createElement("div");
+            node.classList.add(className);
+            return options.ignoreElements(node);
+        };
+        expect([Classes.PORTAL, Classes.OVERLAY, Classes.TOAST_CONTAINER, Classes.POPOVER].map(ignores)).toEqual([true, true, true, true]);
+        expect(ignores("floating-widget")).toBe(false);
+    });
+
+    test("scales the screenshot to the width asked for, keeping its aspect ratio", async () => {
+        const thumbnail = await exportScreenshot(false, 512);
+
+        expect(thumbnail).toBe("data:image/jpeg;base64,");
+        expect((HTMLCanvasElement.prototype.toDataURL as jest.Mock).mock.instances[0]).toMatchObject({width: 512, height: 256});
     });
 });

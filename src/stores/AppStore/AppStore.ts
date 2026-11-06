@@ -2917,7 +2917,9 @@ export class AppStore {
             AppToaster.show(WarningToast(`${issues.length} item(s) could not be saved in workspace "${name}". See the log for details.`));
         }
 
-        const thumbnail = yield exportScreenshot();
+        // The thumbnail shows the whole app, so that the workspace can be told apart by its layout too.
+        // It is 1024 pixels wide, so that the text of the widgets can be read on high-density screens.
+        const thumbnail = yield exportScreenshot(false, 1024);
         if (thumbnail) {
             workspace.thumbnail = thumbnail;
         }
