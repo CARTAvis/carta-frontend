@@ -30,7 +30,7 @@ function createRenderConfig() {
 /** The ID that the backend gives a restored region. It is a new ID, not related to the saved ID. */
 const RegisterRegion = jest.fn((savedRegionId: number): Promise<number> => Promise.resolve(savedRegionId + 100));
 
-/** What a test changes about every image the restorer opens: whether it has a beam, supports a rest frame and so on. */
+/** The properties that a test sets on every image that the restorer opens, such as whether the image has a beam or supports a rest frame. */
 let frameOverrides: Record<string, unknown> = {};
 
 /** What the restorer needs of an image it has opened. */

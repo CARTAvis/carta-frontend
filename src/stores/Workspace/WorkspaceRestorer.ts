@@ -130,8 +130,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
-        // A new rest frequency reaches an image's WCS only once the step it was set in ends, and the
-        // images are matched with that WCS, so the step ends before they are configured.
+        // End this step before the images are matched. A new rest frequency reaches the WCS of an
+        // image only when the step that set it ends. Matching the images uses this WCS.
         this.restoreRestFrequencies();
         yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
@@ -342,10 +342,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * The offset coordinates each image was shown in. They were saved only on an image not matched to
-     * another one, and are passed on to the images matched to it as they would be from the controls.
-     * They are set once every image is matched: matching an image moves the offset centre of the one
-     * it is matched to.
+     * Restores the offset coordinates of each image.
+     *
+     * The workspace saves offset coordinates only on an image that is not matched to another image.
+     * Pass them on to the images matched to it, as the controls do. Set them after every image is
+     * matched. Matching an image moves the offset center of the image that it is matched to.
      */
     private restoreOffsetCoordinates(): void {
         for (const fileInfo of this.workspace.files ?? []) {
@@ -371,8 +372,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 2a: the rest frequency each image's spectral axis was converted with, when it was not the
-     * one in the header.
+     * Stage 2a: restore the rest frequency that converts the spectral axis of each image. Skip an
+     * image whose rest frequency is the one in its header.
      */
     private restoreRestFrequencies(): void {
         for (const fileInfo of this.workspace.files ?? []) {
