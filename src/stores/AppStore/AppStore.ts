@@ -1585,6 +1585,8 @@ export class AppStore {
      * @param isStillWanted - called when the images are made. When it returns false, the images are
      *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
+     * @throws The error of the backend, during a workspace restore only. The restore lists it in its
+     *         report.
      */
     @flow.bound
     *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
@@ -1595,6 +1597,7 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
         if (!message.keep) {
@@ -1647,6 +1650,9 @@ export class AppStore {
             frame.resetMomentRequestState();
             this.endFileLoading();
             console.error(err);
+            if (isRestoring) {
+                throw err;
+            }
         }
         return momentImages;
     }
@@ -1673,6 +1679,8 @@ export class AppStore {
      * @param isStillWanted - called when the image is made. When it returns false, the image is
      *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
+     * @throws The error of the backend, during a workspace restore only. The restore lists it in its
+     *         report, so no toast shows it.
      */
     @flow.bound
     *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
@@ -1683,6 +1691,7 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame
         if (!shouldKeepExisting) {
@@ -1730,6 +1739,9 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
+            if (isRestoring) {
+                throw err;
+            }
             AppToaster.show(ErrorToast(err));
         }
         return pvImage;
