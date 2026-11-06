@@ -773,6 +773,19 @@ export class AppStore {
     };
 
     /**
+     * Tell the user that a file could not be loaded.
+     *
+     * A workspace restore does not show the alert. It lists the file in its report, with the
+     * reason. Then the user does not have to close an alert for each file that the restore could
+     * not open.
+     */
+    private alertLoadError(message: string) {
+        if (!this.isLoadingWorkspace) {
+            this.alertStore.showAlert(message);
+        }
+    }
+
+    /**
      * Loads a file at the given path and adds it as a frame to the application.
      *
      * @param path - The path to the parent directory of the file to load, or of the file itself.
@@ -826,7 +839,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.alertLoadError(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
         } finally {
@@ -847,6 +860,10 @@ export class AppStore {
             this.fileCounter++;
             const ack: CARTA.RemoteFileResponse.$Properties = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
+                // A workspace restore reports the failed query with the reason, in its report.
+                if (this.isLoadingWorkspace) {
+                    throw new Error(ack.message || "the query returned no image");
+                }
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
@@ -866,7 +883,7 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
+            this.alertLoadError(`HiPS data query failed: ${err}`);
             throw err;
         } finally {
             this.openingImageCount--;
@@ -893,7 +910,7 @@ export class AppStore {
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading files: ${err}`);
+            this.alertLoadError(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
         } finally {
@@ -1277,7 +1294,7 @@ export class AppStore {
             const fileId: number | undefined = yield this.catalogStore.open(frame, async catalogFileId => {
                 const ack = await this.backendService.loadCatalogFile(directory, file, catalogFileId, previewDataSize);
                 if (!ack.success || !ack.dataSize) {
-                    throw new Error("No catalog file loaded");
+                    throw new Error(ack.message || "No catalog file loaded");
                 }
                 const catalogInfo: CatalogInfo = {fileId: catalogFileId, directory, fileInfo: ack.fileInfo ?? {}, dataSize: ack.dataSize};
                 return new CatalogProfileStore(catalogInfo, (ack.headers ?? []) as CARTA.CatalogHeader[], ProtobufProcessing.processCatalogData(ack.previewData ?? {}), CatalogType.FILE);
@@ -1291,7 +1308,7 @@ export class AppStore {
             return fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading catalogs: ${err}`);
+            this.alertLoadError(`Error loading catalogs: ${err}`);
             this.endFileLoading();
             throw err;
         }
