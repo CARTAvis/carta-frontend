@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {DialogId, ImageType, RegionId, RegionOpacity, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {DialogId, type HipsCoord, type HipsProjection, ImageType, RegionId, RegionOpacity, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     CARTA_INFO,
     type Workspace,
@@ -478,8 +478,8 @@ export class WorkspaceSnapshotter {
                 object: query.object || undefined,
                 center: query.object ? undefined : center,
                 fov: query.fov ?? 0,
-                coordsys: query.coordsys ?? "",
-                projection: query.projection ?? "",
+                coordsys: (query.coordsys ?? "") as HipsCoord,
+                projection: (query.projection ?? "") as HipsProjection,
                 rotationAngle: query.rotationAngle ?? 0
             };
         }
