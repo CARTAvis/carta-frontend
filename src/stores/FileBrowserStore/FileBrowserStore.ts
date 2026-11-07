@@ -166,6 +166,14 @@ export class FileBrowserStore {
         this.filePick = pick;
     };
 
+    /** End a pick without a file, and close the browser that is open for it. A restore that ends uses this. */
+    @action cancelFilePick = () => {
+        if (this.filePick) {
+            this.finishFilePick(undefined);
+            this.hideFileBrowser();
+        }
+    };
+
     @action private finishFilePick = (location: WorkspaceFileLocation | undefined) => {
         const pick = this.filePick;
         this.filePick = undefined;

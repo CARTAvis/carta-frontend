@@ -1,7 +1,7 @@
 import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
+import {BrowserMode, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceIssue} from "models";
 import {AppStore, WorkspaceRecoveryStore, WorkspaceRestorer} from "stores";
 
@@ -295,8 +295,8 @@ describe("AppStore workspace restore report", () => {
     });
 
     describe("new file locations", () => {
-        const repointed = {images: new Map([[1, {type: "file" as const, directory: "/new", filename: "cube.fits"}]]), catalogs: new Map()};
         const stored = {...workspace, files: [{id: 1, source: {type: "file" as const, directory: "/old", filename: "cube.fits"}, channel: 2}]} as Workspace;
+        const repointed = {images: new Map([[1, {from: stored.files![0].source, to: {type: "file" as const, directory: "/new", filename: "cube.fits"}}]]), catalogs: new Map()};
 
         function restoreWithNewLocations() {
             jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* (this: WorkspaceRestorer) {
@@ -333,6 +333,47 @@ describe("AppStore workspace restore report", () => {
             expect(appStore.workspaceRestoreReport?.storedName).toBeUndefined();
             await expect(appStore.writeBackRepointedLocations()).resolves.toBe(false);
             expect(setWorkspace).not.toHaveBeenCalled();
+        });
+
+        test("does not write a workspace that was saved again with other files since it was opened", async () => {
+            jest.spyOn(appStore.apiService, "getWorkspace")
+                .mockResolvedValueOnce(stored)
+                .mockResolvedValue({...stored, files: [{id: 1, source: {type: "file", filename: "other.fits"}}]} as Workspace);
+            const setWorkspace = jest.spyOn(appStore.apiService, "setWorkspace");
+            jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+            restoreWithNewLocations();
+
+            await appStore.loadWorkspace("cubes");
+            await expect(appStore.writeBackRepointedLocations()).resolves.toBe(false);
+
+            expect(setWorkspace).not.toHaveBeenCalled();
+            expect(appStore.workspaceWriteBack).toBe("outdated");
+        });
+
+        test("ends a file pick that is still open when the restore is cancelled", async () => {
+            let notifyStarted!: () => void;
+            const started = new Promise<void>(resolve => (notifyStarted = resolve));
+            jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(stored);
+            const pick = deferred<void>();
+            jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+                notifyStarted();
+                yield pick.promise;
+                return [];
+            });
+            jest.spyOn(WorkspaceRestorer, "clearSession").mockImplementation(jest.fn());
+            jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+            const resolvePick = jest.fn();
+
+            const load = appStore.loadWorkspace("cubes");
+            await started;
+            // The user is choosing a file for the restore.
+            runInAction(() => (appStore.fileBrowserStore.filePick = {mode: BrowserMode.File, resolve: resolvePick}));
+            appStore.cancelLoadingWorkspace();
+            pick.resolve();
+            await load;
+
+            expect(resolvePick).toHaveBeenCalledWith(undefined);
+            expect(appStore.fileBrowserStore.filePick).toBeUndefined();
         });
 
         test("lets the user try again when the workspace could not be written", async () => {
