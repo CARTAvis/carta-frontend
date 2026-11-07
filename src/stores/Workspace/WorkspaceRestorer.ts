@@ -1434,8 +1434,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Stage 5: open every catalog against the image it belongs to. */
+    /**
+     * Stage 5: open every catalog against the image it belongs to.
+     *
+     * A mirror that times out is waited for only once. The later online catalogs on that mirror fail
+     * at once with the same reason.
+     */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
+        const forgetTimedOutMirrors = CatalogApiService.Instance.rememberTimedOutMirrors();
+        try {
+            yield* this.openEachCatalog();
+        } finally {
+            forgetTimedOutMirrors();
+        }
+    }
+
+    private *openEachCatalog(): Generator<Promise<unknown>, void, any> {
         const catalogs = this.workspace.catalogs ?? [];
         for (const [index, catalogInfo] of catalogs.entries()) {
             if (!this.isCurrent) {

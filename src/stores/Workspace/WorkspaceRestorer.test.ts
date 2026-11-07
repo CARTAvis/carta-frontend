@@ -1,4 +1,5 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {AxiosError} from "axios";
 import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
@@ -431,6 +432,32 @@ describe("WorkspaceRestorer", () => {
         const empty = await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
         expect(empty.map(issue => issue.message)).toContainEqual(expect.stringMatching(/^Could not load the catalog .*: the query found no sources$/));
         expect(toaster).not.toHaveBeenCalled();
+    });
+
+    test("waits only once for a mirror that does not respond, and gives both catalogs the reason", async () => {
+        createSession();
+        const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+        const timeout = new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT);
+        const service = CatalogApiService.Instance as unknown as {axiosInstanceSimbad: {get: (url: string) => Promise<unknown>}};
+        const get = jest.spyOn(service.axiosInstanceSimbad, "get").mockRejectedValue(timeout);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                catalogs: [
+                    {id: 1, source, associatedImageId: 1},
+                    {id: 2, source: {...source, radius: 3}, associatedImageId: 1}
+                ]
+            })
+        );
+
+        expect(get).toHaveBeenCalledTimes(1);
+        const messages = issues.map(issue => issue.message).filter(message => message.startsWith("Could not load the catalog"));
+        expect(messages).toHaveLength(2);
+        messages.forEach(message => expect(message).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/));
+
+        // The next restore tries the mirror again.
+        await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+        expect(get).toHaveBeenCalledTimes(2);
     });
 
     test("shows the stage and the item of the stage that it is on", async () => {
