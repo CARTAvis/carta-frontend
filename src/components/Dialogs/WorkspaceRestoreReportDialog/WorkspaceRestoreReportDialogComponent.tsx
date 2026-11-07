@@ -104,7 +104,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                 onClick={appStore.writeBackRepointedLocations}
                                 data-testid="workspace-restore-report-write-back-button"
                             >
-                                {writeBack === "written" ? "New locations saved" : writeBack === "outdated" ? "Workspace has changed" : "Save new locations in workspace"}
+                                {writeBack === "written" ? "New locations saved" : writeBack === "outdated" ? "New locations not saved" : "Save new locations in workspace"}
                             </AnchorButton>
                         </Tooltip>
                     )}
