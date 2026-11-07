@@ -656,6 +656,24 @@ export class ApiService {
         return undefined;
     };
 
+    /**
+     * Returns a workspace as it is stored, without upgrading it to the form that a restore reads.
+     * A change that is written back from it then changes only what the caller changes.
+     */
+    public getStoredWorkspace = async (name: string): Promise<Workspace | undefined> => {
+        try {
+            if (ApiService.runtimeConfig.apiAddress) {
+                const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${name}`;
+                const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
+                return response?.data?.success ? response.data.workspace : undefined;
+            }
+            return JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}")?.[name] ?? undefined;
+        } catch (err) {
+            console.error(err);
+            return undefined;
+        }
+    };
+
     public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
         const isValid = ApiService.workspaceValidator(workspace);
         if (!isValid) {

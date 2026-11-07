@@ -32,6 +32,7 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
+    WorkspaceConfig,
     type WorkspaceFile,
     type WorkspaceIssue
 } from "models";
@@ -3009,15 +3010,31 @@ export class AppStore {
         if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none") {
             return false;
         }
-        this.setWorkspaceWriteBack("writing");
+        // Change the state only while the report that started the write is still shown. A later
+        // restore may show its own report before this write ends.
+        const setState = (state: "none" | "writing" | "written" | "outdated") => {
+            if (this.workspaceRestoreReport === report) {
+                this.setWorkspaceWriteBack(state);
+            }
+        };
+        setState("writing");
         try {
-            const stored: Workspace | undefined = yield this.apiService.getWorkspace(storedName);
+            // Read the workspace as it is stored. The form that a restore reads is upgraded, and
+            // writing that form back would change more than the sources.
+            const stored: Workspace | undefined = yield this.apiService.getStoredWorkspace(storedName);
             if (!stored) {
                 throw new Error(`Could not read workspace "${storedName}"`);
             }
+            // Compare as JSON, which drops the fields that the upgrade leaves undefined.
+            const asJson = (workspace: Workspace) => JSON.parse(JSON.stringify(workspace));
+            if (!_.isEqual(asJson(WorkspaceConfig.upgradeForRuntime(stored)), asJson(stored))) {
+                setState("outdated");
+                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
+                return false;
+            }
             const patched = WorkspaceRestorer.withRepointedSources(stored, report.repointed);
             if (!patched) {
-                this.setWorkspaceWriteBack("outdated");
+                setState("outdated");
                 AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved again after it was opened, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
                 return false;
             }
@@ -3026,14 +3043,14 @@ export class AppStore {
                 throw new Error(`Could not write workspace "${storedName}"`);
             }
             if (this.activeWorkspace?.name === storedName) {
-                this.activeWorkspace = saved;
+                this.activeWorkspace = WorkspaceConfig.upgradeForRuntime(saved);
             }
-            this.setWorkspaceWriteBack("written");
+            setState("written");
             AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${report.name}"`, intent: "success", timeout: 3000});
             return true;
         } catch (err) {
             console.error(err);
-            this.setWorkspaceWriteBack("none");
+            setState("none");
             AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${report.name}"`, intent: "danger", timeout: 3000});
             return false;
         }

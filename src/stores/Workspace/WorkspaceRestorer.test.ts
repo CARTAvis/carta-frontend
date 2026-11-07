@@ -1611,13 +1611,14 @@ describe("WorkspaceRestorer", () => {
             const issues = await restoreIssues(workspace);
             const problems = issues.map(issue => issue.message);
 
-            expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Failed]);
+            // What is made of the skipped images is skipped with them.
+            expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
             const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
-            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Could not make the PV image of image.fits.moment.maximum: the image it is made from was not restored"]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "Making the moment images of image.fits", progress: 0.5}));
         });
 
@@ -1876,6 +1877,37 @@ describe("WorkspaceRestorer", () => {
             );
 
             expect(dependents).toEqual(["the catalog sources.vot", "the PV image of image.fits", "the spatial matching of second.fits", "its place in 1 color-blended image"]);
+        });
+
+        test("shows the step that started last, and does not remove the step of another wait when its own ends", () => {
+            const {appStore} = createSession();
+            type Steps = {startStep: () => {show: (step: WorkspaceLoadingStep) => void; end: () => void}};
+            const restorer = new WorkspaceRestorer(createWorkspace(), WorkspaceRestorer.claimGeneration()) as unknown as Steps;
+            const histogram = {description: "Computing the cube histogram of image.fits", progress: 0.2, onSkip: jest.fn()};
+            const query = {description: "Waiting for the catalog from the SIMBAD query", progress: 0, onSkip: jest.fn()};
+            const shown = () => appStore.setWorkspaceLoadingStep.mock.calls.at(-1)?.[0];
+
+            // The query ends first.
+            const histogramStep = restorer.startStep();
+            histogramStep.show(histogram);
+            const queryStep = restorer.startStep();
+            queryStep.show(query);
+            histogramStep.show({...histogram, progress: 0.4});
+            expect(shown()).toBe(query);
+            queryStep.end();
+            expect(shown()).toEqual({...histogram, progress: 0.4});
+            histogramStep.end();
+            expect(shown()).toBeUndefined();
+
+            // The histogram ends first.
+            const laterHistogram = restorer.startStep();
+            laterHistogram.show(histogram);
+            const laterQuery = restorer.startStep();
+            laterQuery.show(query);
+            laterHistogram.end();
+            expect(shown()).toBe(query);
+            laterQuery.end();
+            expect(shown()).toBeUndefined();
         });
 
         test("writes only the sources of the images and catalogs the user chose new files for", () => {

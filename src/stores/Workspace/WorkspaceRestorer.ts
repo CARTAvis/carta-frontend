@@ -46,7 +46,7 @@ import {
     type WorkspacePvRequest
 } from "models";
 import {BackendService, CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
@@ -221,6 +221,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly awaitedImageIds = new Set<number>();
     /** The files that the user chose, for the images and catalogs that opened from them. */
     public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
+    /** The steps that the restore waits for at the same time, in the order that they started. */
+    private readonly waitingSteps: {step?: WorkspaceLoadingStep}[] = [];
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
@@ -486,6 +488,41 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         appStore.animatorStore.stopAnimation();
         appStore.tileService.clearRequestQueue();
         appStore.removeAllFrames();
+    }
+
+    /**
+     * Start a step that the restore waits for, and return how to show and end it.
+     *
+     * Steps can overlap. For example, a cube histogram is computed while an online catalog query
+     * runs. The dialog shows the step that started last, with its Skip. When that step ends, the
+     * dialog shows the step before it again. A step that ends does not remove the step of another
+     * wait.
+     */
+    private startStep(): {show: (step: WorkspaceLoadingStep) => void; end: () => void} {
+        const entry: {step?: WorkspaceLoadingStep} = {};
+        this.waitingSteps.push(entry);
+        const update = () => {
+            // A later load owns the dialog. It shows its own steps.
+            if (this.isCurrent) {
+                const shown = [...this.waitingSteps].reverse().find(waiting => waiting.step);
+                this.appStore.setWorkspaceLoadingStep(shown?.step);
+            }
+        };
+        return {
+            show: step => {
+                if (this.waitingSteps.includes(entry)) {
+                    entry.step = step;
+                    update();
+                }
+            },
+            end: () => {
+                const index = this.waitingSteps.indexOf(entry);
+                if (index >= 0) {
+                    this.waitingSteps.splice(index, 1);
+                    update();
+                }
+            }
+        };
     }
 
     /** Show the user the stage that this restore is in, and the item of the stage that it is on. */
@@ -1102,6 +1139,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return [];
         }
         if (outcome === "skipped") {
+            // The images of this request are skipped with it. An item made from them is skipped too.
+            generated.images.forEach(image => this.skippedImageIds.add(image.id));
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`, WorkspaceIssueOutcome.Skipped);
             return [];
         }
@@ -1134,6 +1173,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const fileId = frame.frameInfo.fileId;
         return new Promise(resolve => {
             let isSettled = false;
+            const step = this.startStep();
             const finish = (outcome: "ready" | "closed" | "superseded" | "skipped") => {
                 if (isSettled) {
                     return;
@@ -1144,9 +1184,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (outcome !== "closed") {
                     backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
                 }
-                if (this.isCurrent) {
-                    this.appStore.setWorkspaceLoadingStep(undefined);
-                }
+                step.end();
                 resolve(outcome);
             };
             const subscription = backendService.statsStream.subscribe(stats => {
@@ -1165,7 +1203,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 },
                 {equals: comparer.structural}
             );
-            this.appStore.setWorkspaceLoadingStep({description, progress: 0, onSkip: () => finish("skipped")});
+            step.show({description, progress: 0, onSkip: () => finish("skipped")});
             backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
         });
     }
@@ -1265,6 +1303,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private waitForRequest(made: Promise<FrameStore[]>, waiting: {isSkipped: boolean}, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
         return new Promise((resolve, reject) => {
             let isSettled = false;
+            const step = this.startStep();
             /** Stops the wait. Returns false when the wait has already stopped. */
             const finish = (): boolean => {
                 if (isSettled) {
@@ -1272,9 +1311,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
                 isSettled = true;
                 disposeProgress();
-                if (this.isCurrent) {
-                    this.appStore.setWorkspaceLoadingStep(undefined);
-                }
+                step.end();
                 return true;
             };
             const settle = (outcome: FrameStore[] | "skipped"): boolean => {
@@ -1291,8 +1328,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             };
             const disposeProgress = autorun(() => {
                 const progress = progressOf();
-                if (this.isCurrent && !isSettled) {
-                    this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
+                if (!isSettled) {
+                    step.show({description, progress, onSkip: skip});
                 }
             });
             // The images of a skipped request are normally closed before they are shown. This also
@@ -1629,9 +1666,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             }
         }
-        if (this.isCurrent) {
-            this.appStore.setWorkspaceLoadingStep(undefined);
-        }
     }
 
     /**
@@ -1646,12 +1680,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private waitForCubeHistogram(frame: FrameStore, description: string): Promise<"complete" | "closed" | "superseded" | "skipped"> {
         return new Promise(resolve => {
             let isSettled = false;
+            const step = this.startStep();
             const finish = (outcome: "complete" | "closed" | "superseded" | "skipped", dispose: () => void) => {
                 if (isSettled) {
                     return;
                 }
                 isSettled = true;
                 dispose();
+                step.end();
                 resolve(outcome);
             };
             const skip = () => finish("skipped", disposeReaction);
@@ -1666,7 +1702,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         finish("superseded", () => self.dispose());
                         return;
                     }
-                    this.appStore.setWorkspaceLoadingStep({description, progress, onSkip: skip});
+                    step.show({description, progress, onSkip: skip});
                 },
                 {fireImmediately: true, equals: comparer.structural}
             );
@@ -1830,7 +1866,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             query.isSkipped = true;
             CatalogApiService.Instance.cancelPendingQueries("The online catalog query was skipped");
         };
-        this.appStore.setWorkspaceLoadingStep({description: `Waiting for the catalog ${description}`, progress: 0, onSkip: skip});
+        const step = this.startStep();
+        step.show({description: `Waiting for the catalog ${description}`, progress: 0, onSkip: skip});
         try {
             if (source.type === "simbad") {
                 const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
@@ -1838,9 +1875,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table!], targetFrameId)))[0] ?? noSources();
         } finally {
-            if (this.isCurrent) {
-                this.appStore.setWorkspaceLoadingStep(undefined);
-            }
+            step.end();
         }
     }
 

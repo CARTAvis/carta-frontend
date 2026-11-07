@@ -307,6 +307,7 @@ describe("AppStore workspace restore report", () => {
 
         test("shows the report when only new locations were chosen, and writes them to the workspace once", async () => {
             jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(stored);
+            jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue(stored);
             const setWorkspace = jest.spyOn(appStore.apiService, "setWorkspace").mockImplementation(async (_name, written) => written);
             jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
             restoreWithNewLocations();
@@ -336,9 +337,8 @@ describe("AppStore workspace restore report", () => {
         });
 
         test("does not write a workspace that was saved again with other files since it was opened", async () => {
-            jest.spyOn(appStore.apiService, "getWorkspace")
-                .mockResolvedValueOnce(stored)
-                .mockResolvedValue({...stored, files: [{id: 1, source: {type: "file", filename: "other.fits"}}]} as Workspace);
+            jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(stored);
+            jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue({...stored, files: [{id: 1, source: {type: "file", filename: "other.fits"}}]} as Workspace);
             const setWorkspace = jest.spyOn(appStore.apiService, "setWorkspace");
             jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
             restoreWithNewLocations();
@@ -348,6 +348,42 @@ describe("AppStore workspace restore report", () => {
 
             expect(setWorkspace).not.toHaveBeenCalled();
             expect(appStore.workspaceWriteBack).toBe("outdated");
+        });
+
+        test("writes back the workspace as it is stored, and not one that an earlier version saved", async () => {
+            // A workspace saved by an earlier version names its files without a source.
+            const older = {workspaceVersion: 1, frontendVersion: 0, files: [{id: 1, directory: "/old", filename: "cube.fits"}]} as unknown as Workspace;
+            jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(stored);
+            jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue(older);
+            const setWorkspace = jest.spyOn(appStore.apiService, "setWorkspace");
+            const toaster = jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+            restoreWithNewLocations();
+
+            await appStore.loadWorkspace("cubes");
+            await expect(appStore.writeBackRepointedLocations()).resolves.toBe(false);
+
+            expect(setWorkspace).not.toHaveBeenCalled();
+            expect(appStore.workspaceWriteBack).toBe("outdated");
+            expect(toaster).toHaveBeenCalledWith(expect.objectContaining({message: 'Workspace "cubes" was saved by an earlier version. Save the workspace to keep the new locations in it'}));
+        });
+
+        test("does not change the report of a later restore when an earlier write ends", async () => {
+            const stored$ = deferred<Workspace | undefined>();
+            jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(stored);
+            jest.spyOn(appStore.apiService, "getStoredWorkspace").mockReturnValue(stored$.promise);
+            jest.spyOn(appStore.apiService, "setWorkspace").mockImplementation(async (_name, written) => written);
+            jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+            restoreWithNewLocations();
+
+            await appStore.loadWorkspace("cubes");
+            const writing = appStore.writeBackRepointedLocations();
+            await appStore.loadWorkspace("cubes");
+            const laterReport = appStore.workspaceRestoreReport;
+            stored$.resolve(stored);
+            await writing;
+
+            expect(appStore.workspaceRestoreReport).toBe(laterReport);
+            expect(appStore.workspaceWriteBack).toBe("none");
         });
 
         test("ends a file pick that is still open when the restore is cancelled", async () => {
