@@ -22,6 +22,7 @@ import {
     type SpectralSystem,
     type VectorOverlaySource,
     type VelocityConvention,
+    type WorkspaceIssueOutcome,
     type WorkspaceItemKind
 } from "enums";
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
@@ -631,6 +632,11 @@ export interface WorkspaceIssue {
     subject: string;
     /** What happened, as a whole sentence naming the subject. */
     message: string;
+    /**
+     * Set by a restore when the item is not in the session, so a save of the session leaves the
+     * item out. Undefined when the item is in the session, but not as it was saved.
+     */
+    outcome?: WorkspaceIssueOutcome;
 }
 
 export interface WorkspaceListItem {

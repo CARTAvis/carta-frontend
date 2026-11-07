@@ -116,6 +116,25 @@ export class CatalogApiService {
         return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
     };
 
+    /**
+     * Tell the user why an online catalog query failed. A cancelled query shows its reason as a
+     * warning.
+     *
+     * `loadSimbadCatalog` and `loadVizierCatalogs` do not show the error themselves. A workspace
+     * restore lists the error in its report instead.
+     */
+    public static showQueryError(error: unknown) {
+        if (axios.isCancel(error)) {
+            if (error.message) {
+                AppToaster.show(WarningToast(error.message));
+            }
+        } else if (error instanceof Error && error.message) {
+            AppToaster.show(ErrorToast(error.message));
+        } else {
+            console.log("Online catalog query error: " + error);
+        }
+    }
+
     public cancelQuery(type: CatalogDatabase, reason?: string) {
         if (type === CatalogDatabase.SIMBAD) {
             this.cancelTokenSourceSimbad.cancel(reason ?? "Simbad query canceled by the user.");
@@ -301,15 +320,9 @@ export class CatalogApiService {
             }
         } catch (error) {
             if (axios.isCancel(error)) {
-                if (error?.message) {
-                    AppToaster.show(WarningToast(error?.message));
-                }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
-            } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
-            } else {
-                console.log("VizieR Table Error: " + error);
             }
+            throw error;
         }
         return resources;
     };
@@ -408,15 +421,9 @@ export class CatalogApiService {
             }
         } catch (error) {
             if (axios.isCancel(error)) {
-                if (error?.message) {
-                    AppToaster.show(WarningToast(error?.message));
-                }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
-            } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
-            } else {
-                console.log("Append Simbad Error: " + error);
             }
+            throw error;
         }
         return {dataSize, fileId: loadedFileId};
     };

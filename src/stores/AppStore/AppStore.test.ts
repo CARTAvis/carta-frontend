@@ -584,7 +584,8 @@ describe("AppStore.saveWorkspace", () => {
 
         await appStore.saveWorkspace("test-workspace");
 
-        expect(addWarning.mock.calls.map(([message]) => message)).toEqual(issues.map(issue => issue.message));
+        // The test page has no app to take the thumbnail of, so the save also warns that it has no thumbnail.
+        expect(addWarning.mock.calls.map(([message]) => message).filter(message => !message.includes("thumbnail"))).toEqual(issues.map(issue => issue.message));
         expect(showToast).toHaveBeenCalledTimes(1);
         expect(JSON.stringify(showToast.mock.calls[0][0])).toContain("2 item(s) could not be saved");
     });
