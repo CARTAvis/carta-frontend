@@ -1,5 +1,42 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .workspace-restore-dialog {
     width: 480px;
+
+    &:has(.workspace-recovery) {
+        width: 600px;
+    }
+
+    .workspace-recovery {
+        ul {
+            max-height: 50vh;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        li {
+            padding: 8px 0;
+            overflow-wrap: anywhere;
+
+            & + li {
+                border-top: 1px solid $pt-divider-black;
+            }
+        }
+
+        .recovery-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .recovery-note {
+            margin-top: 4px;
+            color: $pt-text-color-muted;
+        }
+    }
 
     .restore-stage {
         font-weight: 600;

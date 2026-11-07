@@ -4,6 +4,7 @@ import {autorun, comparer, observable, reaction, runInAction} from "mobx";
 import {
     AnimationMode,
     BeamType,
+    CatalogDatabase,
     FrequencyUnit,
     HipsCoord,
     HipsProjection,
@@ -28,8 +29,10 @@ import {
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
+    type WorkspaceCatalogFileSource,
     type WorkspaceCatalogSource,
     type WorkspaceFile,
+    type WorkspaceFileImageSource,
     type WorkspaceFittingRequest,
     type WorkspaceGeneratedFile,
     type WorkspaceGeneratedImages,
@@ -45,6 +48,7 @@ import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
+import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /** Which of the session's references an image is matched to. */
@@ -58,6 +62,40 @@ interface CatalogConfigRequest {
     /** What to report if its rows do not come back. */
     rowFailure: string;
     completion: Promise<CatalogRestoreOutcome>;
+}
+
+/** What one attempt at an item of a stage came to. */
+type TaskOutcome =
+    /** The item is open, or it is reported and the user cannot do anything about it. */
+    | "done"
+    /** The item waits for an image that another item of the stage makes after Recovery. */
+    | "deferred"
+    /** The item failed, and the user can retry it, choose a new file for it or skip it. */
+    | WorkspaceRecoveryItem;
+
+/** One item of a stage: an image, a catalog or a request that makes images. */
+interface RestoreTask {
+    /** Returns how the item is named to the user. A new location changes the name. */
+    subject(): string;
+    /** The workspace IDs of the images that the item opens or makes. */
+    imageIds: number[];
+    /** Tries to open or make the item once. */
+    attempt(): Generator<Promise<unknown>, TaskOutcome, any>;
+    /** Uses the file that the user chose for the next attempt. */
+    repoint?(location: WorkspaceFileLocation): void;
+}
+
+/** The files that the user chose during a restore, for the images and catalogs that opened from them. */
+export interface WorkspaceRepointedSources {
+    /** The new source of each image, by its workspace ID. */
+    images: Map<number, WorkspaceFileImageSource>;
+    /** The new source of each catalog, by its workspace ID. */
+    catalogs: Map<number, WorkspaceCatalogFileSource>;
+}
+
+/** Returns "1 region" or "3 regions". */
+function countOf(count: number, noun: string): string {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
 /**
@@ -120,6 +158,31 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return generation === WorkspaceRestorer.GenerationCounter.get();
     }
 
+    /**
+     * Returns a copy of a stored workspace, with the sources of the images and catalogs that the
+     * user chose new files for. Everything else is kept as stored.
+     */
+    public static withRepointedSources(workspace: Workspace, repointed: WorkspaceRepointedSources): Workspace {
+        const files = workspace.files?.map(fileInfo => {
+            const source = repointed.images.get(fileInfo.id);
+            if (!source) {
+                return fileInfo;
+            }
+            // Drop the location fields of workspaces written before version 2, so that they do not
+            // name the old file next to the new source.
+            const patched: WorkspaceFile = {...fileInfo, source};
+            delete patched.directory;
+            delete patched.filename;
+            delete patched.hdu;
+            return patched;
+        });
+        const catalogs = workspace.catalogs?.map(catalogInfo => {
+            const source = repointed.catalogs.get(catalogInfo.id);
+            return source ? {...catalogInfo, source} : catalogInfo;
+        });
+        return {...workspace, ...(files && {files}), ...(catalogs && {catalogs})};
+    }
+
     /** One entry per item that could not be brought back as saved. */
     private readonly issues: WorkspaceIssue[] = [];
     /** Workspace image ID to the file ID this session gave it. */
@@ -138,8 +201,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly images = new Map<number, WorkspaceFile>();
     /** How each generated image is named to the user, by its workspace ID. */
     private readonly generatedImageNames = new Map<number, string>();
-    /** The images moments have been made of again so far. */
+    /** The images that moment images have been made from so far. */
     private readonly momentSources = new Set<FrameStore>();
+    /** The workspace IDs of the images that the user skipped. */
+    private readonly skippedImageIds = new Set<number>();
+    /** The workspace IDs of the images whose item failed, and that Recovery may still open. */
+    private readonly awaitedImageIds = new Set<number>();
+    /** The files that the user chose, for the images and catalogs that opened from them. */
+    public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
@@ -433,32 +502,201 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */
     private *openImages(): Generator<Promise<unknown>, void, any> {
-        const files = this.workspace.files ?? [];
-        for (const [index, fileInfo] of files.entries()) {
-            if (!this.isCurrent) {
-                return;
+        yield* this.runStage(
+            "Opening images",
+            (this.workspace.files ?? []).map(fileInfo => this.imageTask(fileInfo))
+        );
+    }
+
+    /** Returns the task that opens one image, from its saved source or from the file the user chooses. */
+    private imageTask(fileInfo: WorkspaceFile): RestoreTask {
+        const state = {source: fileInfo.source, isRepointed: false};
+        return {
+            subject: () => describeImageSource(state.source),
+            imageIds: [fileInfo.id],
+            attempt: () => this.attemptImage(fileInfo, state),
+            repoint: ({directory, filename, hdu}) => {
+                state.source = {type: "file", directory, filename, hdu};
+                state.isRepointed = true;
             }
-            this.showProgress("Opening images", index + 1, files.length, describeImageSource(fileInfo.source));
-            let frame: FrameStore | undefined;
-            let reason: string | undefined;
+        };
+    }
+
+    private *attemptImage(fileInfo: WorkspaceFile, state: {source: WorkspaceImageSource | undefined; isRepointed: boolean}): Generator<Promise<unknown>, TaskOutcome, any> {
+        const {source} = state;
+        const subject = describeImageSource(source);
+        let frame: FrameStore | undefined;
+        let reason: string | undefined;
+        try {
+            frame = (yield* this.openImageSource(source)) ?? undefined;
+        } catch (err) {
+            console.error(err);
+            reason = reasonOf(err);
+        }
+        // Checked again here rather than only before the attempt: the image finished opening while
+        // this restore was suspended, and a load started in the meantime owns the session.
+        if (!this.isCurrent) {
+            this.closeSupersededImage(frame);
+            return "done";
+        }
+        if (!frame) {
+            return {
+                kind: WorkspaceItemKind.Image,
+                subject,
+                message: withReason(`Could not open the image ${subject}`, reason),
+                repointKind: source?.type === "file" ? "image" : undefined,
+                canRetry: source?.type !== "file",
+                dependents: this.dependentsOfImages([fileInfo.id])
+            };
+        }
+        if (state.isRepointed && source?.type === "file") {
+            this.repointed.images.set(fileInfo.id, source);
+        }
+        this.adoptImage(fileInfo, frame);
+        return "done";
+    }
+
+    /**
+     * Run the items of a stage, then let the user choose what to do with the items that failed.
+     * Run the items that the user retries or chooses a new file for again, and ask again for the
+     * items that fail again. The stage ends when no item is left to run.
+     *
+     * @param startRound - starts what one round of attempts shares, and returns how to end it.
+     */
+    private *runStage(stage: string, tasks: RestoreTask[], startRound?: () => () => void): Generator<Promise<unknown>, void, any> {
+        let pending = tasks;
+        while (pending.length) {
+            const failed: {task: RestoreTask; item: WorkspaceRecoveryItem}[] = [];
+            const deferred: RestoreTask[] = [];
+            const endRound = startRound?.();
             try {
-                frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
-            } catch (err) {
-                console.error(err);
-                reason = reasonOf(err);
+                for (const [index, task] of pending.entries()) {
+                    if (!this.isCurrent) {
+                        return;
+                    }
+                    this.showProgress(stage, index + 1, pending.length, task.subject());
+                    const outcome = yield* task.attempt();
+                    if (!this.isCurrent) {
+                        return;
+                    }
+                    if (outcome === "deferred") {
+                        deferred.push(task);
+                    } else if (outcome === "done") {
+                        task.imageIds.forEach(id => this.awaitedImageIds.delete(id));
+                    } else {
+                        task.imageIds.forEach(id => this.awaitedImageIds.add(id));
+                        failed.push({task, item: outcome});
+                    }
+                }
+            } finally {
+                endRound?.();
             }
-            // Checked again here rather than only at the top of the loop: the image finished opening
-            // while this restore was suspended, and a load started in the meantime owns the session.
-            if (!this.isCurrent) {
-                this.closeSupersededImage(frame);
-                return;
-            }
-            if (!frame) {
-                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), withReason(`Could not open the image ${describeImageSource(fileInfo.source)}`, reason), WorkspaceIssueOutcome.Failed);
+            if (!failed.length) {
+                // An item is deferred only while it waits for an image of an item that failed in this
+                // round. With no failure, no item waits any more. Run the deferred items again, so
+                // that the stage ends.
+                this.awaitedImageIds.clear();
+                pending = deferred;
                 continue;
             }
-            this.adoptImage(fileInfo, frame);
+            const choices = yield* this.askUser(
+                stage,
+                failed.map(({item}) => item)
+            );
+            if (!this.isCurrent) {
+                return;
+            }
+            pending = [];
+            choices.forEach((choice, index) => {
+                const {task, item} = failed[index];
+                if (choice.action === WorkspaceRecoveryAction.Skip) {
+                    task.imageIds.forEach(id => {
+                        this.awaitedImageIds.delete(id);
+                        this.skippedImageIds.add(id);
+                    });
+                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped);
+                    return;
+                }
+                if (choice.action === WorkspaceRecoveryAction.Repoint) {
+                    task.repoint?.(choice.location);
+                }
+                pending.push(task);
+            });
+            // Run the deferred items after the items that they wait for.
+            pending.push(...deferred);
         }
+    }
+
+    /**
+     * Show the user the items of a stage that failed, and wait for a choice for each item.
+     *
+     * A cancelled or superseded restore does not wait. Every item is then skipped, and the caller
+     * sees that the restore no longer owns the session.
+     */
+    private *askUser(stage: string, items: WorkspaceRecoveryItem[]): Generator<Promise<unknown>, WorkspaceRecoveryChoice[], any> {
+        const recovery = new WorkspaceRecoveryStore(stage, items);
+        this.appStore.setWorkspaceRecovery(recovery);
+        const disposeReaction = reaction(
+            () => this.isCurrent,
+            isCurrent => !isCurrent && recovery.abandon(),
+            {fireImmediately: true}
+        );
+        try {
+            return yield* awaited(recovery.decided);
+        } finally {
+            disposeReaction();
+            if (this.appStore.workspaceRecovery === recovery) {
+                this.appStore.setWorkspaceRecovery(undefined);
+            }
+        }
+    }
+
+    /**
+     * Returns what the restore leaves out with the images, when the user skips them. For example,
+     * "2 regions" or "the catalog sources.vot".
+     */
+    private dependentsOfImages(imageIds: number[]): string[] {
+        const ids = new Set(imageIds);
+        const dependents: string[] = [];
+        for (const id of imageIds) {
+            const fileInfo = this.images.get(id);
+            const regionCount = (fileInfo?.regionsSet?.regions ?? []).filter(region => region.id > RegionId.CURSOR).length;
+            if (regionCount) {
+                dependents.push(countOf(regionCount, "region"));
+            }
+            if (fileInfo?.contourConfig) {
+                dependents.push(`the contours of ${this.nameOf(fileInfo)}`);
+            }
+            if (fileInfo?.vectorOverlayConfig) {
+                dependents.push(`the vector overlay of ${this.nameOf(fileInfo)}`);
+            }
+        }
+        for (const catalog of this.workspace.catalogs ?? []) {
+            if (catalog.associatedImageId !== undefined && ids.has(catalog.associatedImageId)) {
+                dependents.push(`the catalog ${describeCatalogSource(catalog.source)}`);
+            }
+        }
+        for (const {request} of this.generatedImages) {
+            if (request.type !== "hips" && ids.has(request.sourceImageId)) {
+                dependents.push(this.subjectOf(request));
+            }
+        }
+        for (const kind of ["spatial", "spectral", "raster"] as const) {
+            const referenceId = this.workspace.references?.[kind];
+            if (referenceId === undefined || !ids.has(referenceId)) {
+                continue;
+            }
+            for (const fileInfo of this.allImages) {
+                if (!ids.has(fileInfo.id) && fileInfo.references?.[kind] === referenceId) {
+                    dependents.push(`the ${kind} matching of ${this.nameOf(fileInfo)}`);
+                }
+            }
+        }
+        const blendings = (this.workspace.colorBlendingImages ?? []).filter(blending => blending.selectedFrameId?.some(id => ids.has(id))).length;
+        if (blendings) {
+            dependents.push(`its place in ${countOf(blendings, "color-blended image")}`);
+        }
+        return dependents;
     }
 
     /** Uses an image that was just opened or made again as the image that the workspace names by this ID. */
@@ -490,35 +728,40 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
         const hipsImages = this.generatedImages.filter((generated): generated is WorkspaceGeneratedImages & {request: WorkspaceHipsRequest} => generated.request.type === "hips" && generated.images.length > 0);
-        for (const [index, {request, images}] of hipsImages.entries()) {
-            if (!this.isCurrent) {
-                return;
-            }
-            const subject = WorkspaceRestorer.describeRequest(request, "");
-            this.showProgress("Opening HiPS images", index + 1, hipsImages.length, subject);
-            const query = WorkspaceRestorer.hipsQueryOf(request);
-            if (!query) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`, WorkspaceIssueOutcome.Failed);
-                continue;
-            }
-            let frame: FrameStore | undefined;
-            let reason: string | undefined;
-            try {
-                frame = (yield* awaitedFlow<FrameStore | undefined | 0>(this.appStore.loadRemoteFile(query))) || undefined;
-            } catch (err) {
-                console.error(err);
-                reason = reasonOf(err);
-            }
-            if (!this.isCurrent) {
-                this.closeSupersededImage(frame);
-                return;
-            }
-            if (!frame) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
-                continue;
-            }
-            this.adoptImage(images[0], frame);
+        yield* this.runStage(
+            "Opening HiPS images",
+            hipsImages.map(generated => ({
+                subject: () => WorkspaceRestorer.describeRequest(generated.request, ""),
+                imageIds: [generated.images[0].id],
+                attempt: () => this.attemptHipsImage(generated)
+            }))
+        );
+    }
+
+    private *attemptHipsImage({request, images}: WorkspaceGeneratedImages & {request: WorkspaceHipsRequest}): Generator<Promise<unknown>, TaskOutcome, any> {
+        const subject = WorkspaceRestorer.describeRequest(request, "");
+        const query = WorkspaceRestorer.hipsQueryOf(request);
+        if (!query) {
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`, WorkspaceIssueOutcome.Failed);
+            return "done";
         }
+        let frame: FrameStore | undefined;
+        let reason: string | undefined;
+        try {
+            frame = (yield* awaitedFlow<FrameStore | undefined | 0>(this.appStore.loadRemoteFile(query))) || undefined;
+        } catch (err) {
+            console.error(err);
+            reason = reasonOf(err);
+        }
+        if (!this.isCurrent) {
+            this.closeSupersededImage(frame);
+            return "done";
+        }
+        if (!frame) {
+            return {kind: WorkspaceItemKind.GeneratedImage, subject, message: withReason(`Could not make ${subject}`, reason), canRetry: true, dependents: this.dependentsOfImages([images[0].id])};
+        }
+        this.adoptImage(images[0], frame);
+        return "done";
     }
 
     /** Returns the query that a saved HiPS request makes, or nothing when this version cannot make it. */
@@ -677,42 +920,66 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         // Make the request over the region by the ID that the backend gave the region.
         yield* awaited(regions);
-        for (const [index, generated] of requests.entries()) {
-            if (!this.isCurrent) {
-                return;
+        yield* this.runStage(
+            "Making generated images",
+            requests.map(generated => ({
+                subject: () => this.subjectOf(generated.request),
+                imageIds: generated.images.map(image => image.id),
+                attempt: () => this.attemptGeneratedImages(generated)
+            }))
+        );
+    }
+
+    private *attemptGeneratedImages(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, TaskOutcome, any> {
+        const outcome = yield* this.makeImagesAgain(generated);
+        if (!this.isCurrent) {
+            if (Array.isArray(outcome)) {
+                outcome.forEach(frame => this.closeSupersededImage(frame));
             }
-            this.showProgress("Making generated images", index + 1, requests.length, this.subjectOf(generated.request));
-            const frames = yield* this.makeImagesAgain(generated);
-            if (!this.isCurrent) {
-                frames.forEach(frame => this.closeSupersededImage(frame));
-                return;
-            }
-            const images = this.adoptGeneratedImages(generated, frames);
-            if (!images.length) {
-                continue;
-            }
-            this.restoreRestFrequencies(images);
-            yield* awaited(Promise.resolve());
-            if (!this.isCurrent) {
-                return;
-            }
-            yield* awaited(this.configureImages(images));
+            return "done";
         }
+        if (outcome === "deferred") {
+            return "deferred";
+        }
+        if (!Array.isArray(outcome)) {
+            const imageIds = generated.images.map(image => image.id);
+            return {kind: WorkspaceItemKind.GeneratedImage, subject: this.subjectOf(generated.request), message: outcome.failure, canRetry: true, dependents: this.dependentsOfImages(imageIds)};
+        }
+        const images = this.adoptGeneratedImages(generated, outcome);
+        if (!images.length) {
+            return "done";
+        }
+        this.restoreRestFrequencies(images);
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return "done";
+        }
+        yield* awaited(this.configureImages(images));
+        return "done";
     }
 
     /**
      * Run one saved moment, PV or image fitting request again.
      *
-     * @returns the images that it made, or none when the request could not be made or was skipped.
+     * @returns the images that it made, or none when the request cannot be made or was skipped.
+     * Returns "deferred" when the image that it is made from may still be made after Recovery.
+     * Returns the failure when the backend could not make the images. The user can retry them.
      */
-    private *makeImagesAgain({request, images}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[], any> {
+    private *makeImagesAgain({request, images}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {failure: string}, any> {
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
         const subject = this.subjectOf(request);
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
+            if (this.awaitedImageIds.has(request.sourceImageId)) {
+                return "deferred";
+            }
+            if (this.skippedImageIds.has(request.sourceImageId)) {
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}: the image it is made from was skipped`, WorkspaceIssueOutcome.Skipped);
+            } else {
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
+            }
             return [];
         }
         const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
@@ -724,11 +991,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         let outcome: FrameStore[] | "skipped" | undefined;
         let reason: string | undefined;
         if (request.type === "moment") {
-            // The first request on an image replaces no images. A later request keeps the images
-            // that earlier requests made. The backend numbers the names of kept images, as it did
-            // when the images were first made.
+            // The first request that makes moment images of an image replaces no images. A later
+            // request keeps the images that earlier requests made. This includes a request that the
+            // user retries after a later request made its images. The backend numbers the names of
+            // kept images, as it did when the images were first made.
             const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
-            this.momentSources.add(source);
             if (message && regionId > RegionId.CURSOR) {
                 const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
@@ -815,7 +1082,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return [];
         }
         if (!outcome.length) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
+            return {failure: withReason(`Could not make ${subject}`, reason)};
+        }
+        if (request.type === "moment") {
+            this.momentSources.add(source);
         }
         return outcome;
     }
@@ -1441,67 +1711,111 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * at once. Their reason says that the mirror timed out on an earlier query.
      */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
-        const forgetTimedOutMirrors = CatalogApiService.Instance.rememberTimedOutMirrors();
-        try {
-            yield* this.openEachCatalog();
-        } finally {
-            forgetTimedOutMirrors();
-        }
+        yield* this.runStage(
+            "Opening catalogs",
+            (this.workspace.catalogs ?? []).map(catalogInfo => this.catalogTask(catalogInfo)),
+            // Each round of attempts waits for a timed-out mirror once. A retry waits for it again.
+            () => CatalogApiService.Instance.rememberTimedOutMirrors()
+        );
     }
 
-    private *openEachCatalog(): Generator<Promise<unknown>, void, any> {
-        const catalogs = this.workspace.catalogs ?? [];
-        for (const [index, catalogInfo] of catalogs.entries()) {
-            if (!this.isCurrent) {
-                return;
+    /** Returns the task that opens one catalog, from its saved source or from the file the user chooses. */
+    private catalogTask(catalogInfo: WorkspaceCatalog): RestoreTask {
+        const state = {source: catalogInfo.source, isRepointed: false};
+        return {
+            subject: () => describeCatalogSource(state.source),
+            imageIds: [],
+            attempt: () => this.attemptCatalog(catalogInfo, state),
+            repoint: ({directory, filename}) => {
+                state.source = {type: "file", directory, filename};
+                state.isRepointed = true;
             }
-            const description = describeCatalogSource(catalogInfo.source);
-            this.showProgress("Opening catalogs", index + 1, catalogs.length, description);
-            const targetFrameId = catalogInfo.associatedImageId === undefined ? undefined : this.frameIds.get(catalogInfo.associatedImageId);
-            if (catalogInfo.associatedImageId !== undefined && targetFrameId === undefined) {
+        };
+    }
+
+    private *attemptCatalog(catalogInfo: WorkspaceCatalog, state: {source: WorkspaceCatalogSource; isRepointed: boolean}): Generator<Promise<unknown>, TaskOutcome, any> {
+        const {source} = state;
+        const description = describeCatalogSource(source);
+        const imageId = catalogInfo.associatedImageId;
+        const targetFrameId = imageId === undefined ? undefined : this.frameIds.get(imageId);
+        if (imageId !== undefined && targetFrameId === undefined) {
+            if (this.skippedImageIds.has(imageId)) {
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: the image it belongs to was skipped`, WorkspaceIssueOutcome.Skipped);
+            } else {
                 this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`, WorkspaceIssueOutcome.Failed);
-                continue;
             }
-
-            let catalogFileId: number | undefined;
-            let reason: string | undefined;
-            try {
-                catalogFileId = (yield* this.openCatalogSource(catalogInfo.source, targetFrameId)) ?? undefined;
-            } catch (err) {
-                console.error(err);
-                reason = reasonOf(err);
-            }
-            if (!this.isCurrent) {
-                this.closeSupersededCatalog(catalogFileId);
-                return;
-            }
-            if (catalogFileId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, withReason(`Could not load the catalog ${description}`, reason), WorkspaceIssueOutcome.Failed);
-                continue;
-            }
-
-            this.catalogIds.set(catalogInfo.id, catalogFileId);
-            // The workspace is the authority on which catalog its own ID names.
-            WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, catalogFileId, catalogInfo.id);
+            return "done";
         }
+
+        const query = {isSkipped: false};
+        let catalogFileId: number | undefined;
+        let reason: string | undefined;
+        try {
+            catalogFileId = (yield* this.openCatalogSource(source, targetFrameId, description, query)) ?? undefined;
+        } catch (err) {
+            console.error(err);
+            reason = reasonOf(err);
+        }
+        if (!this.isCurrent) {
+            this.closeSupersededCatalog(catalogFileId);
+            return "done";
+        }
+        if (catalogFileId === undefined) {
+            if (query.isSkipped) {
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped);
+                return "done";
+            }
+            return {
+                kind: WorkspaceItemKind.Catalog,
+                subject: description,
+                message: withReason(`Could not load the catalog ${description}`, reason),
+                repointKind: source.type === "file" ? "catalog" : undefined,
+                canRetry: source.type !== "file",
+                database: source.type === "simbad" ? CatalogDatabase.SIMBAD : source.type === "vizier" ? CatalogDatabase.VIZIER : undefined,
+                dependents: []
+            };
+        }
+
+        if (state.isRepointed && source.type === "file") {
+            this.repointed.catalogs.set(catalogInfo.id, source);
+        }
+        this.catalogIds.set(catalogInfo.id, catalogFileId);
+        // The workspace is the authority on which catalog its own ID names.
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, catalogFileId, catalogInfo.id);
+        return "done";
     }
 
-    /** Open one catalog the way the workspace says it was opened, re-running a query if that is what it was. */
-    private *openCatalogSource(source: WorkspaceCatalogSource, targetFrameId: number | undefined): Generator<Promise<unknown>, number | undefined, any> {
+    /**
+     * Open one catalog the way the workspace says it was opened, re-running a query if that is what it was.
+     *
+     * While an online query runs, the restore dialog offers to skip it. Then the user does not have
+     * to wait for a mirror that does not answer. A skipped query sets `query.isSkipped`.
+     */
+    private *openCatalogSource(source: WorkspaceCatalogSource, targetFrameId: number | undefined, description: string, query: {isSkipped: boolean}): Generator<Promise<unknown>, number | undefined, any> {
         if (source.type === "file") {
             const fileId = yield* awaitedFlow<number | undefined>(this.appStore.appendCatalog(source.directory ?? "", source.filename, StreamingRowSource.INIT_TABLE_ROWS, targetFrameId));
             return typeof fileId === "number" ? fileId : undefined;
         }
-
-        if (source.type === "simbad") {
-            const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
-            return fileId ?? noSources();
-        }
-
-        if (!source.table) {
+        if (source.type === "vizier" && !source.table) {
             return undefined;
         }
-        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0] ?? noSources();
+
+        const skip = () => {
+            query.isSkipped = true;
+            CatalogApiService.Instance.cancelPendingQueries("The online catalog query was skipped");
+        };
+        this.appStore.setWorkspaceLoadingStep({description: `Waiting for the catalog ${description}`, progress: 0, onSkip: skip});
+        try {
+            if (source.type === "simbad") {
+                const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
+                return fileId ?? noSources();
+            }
+            return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table!], targetFrameId)))[0] ?? noSources();
+        } finally {
+            if (this.isCurrent) {
+                this.appStore.setWorkspaceLoadingStep(undefined);
+            }
+        }
     }
 
     /**

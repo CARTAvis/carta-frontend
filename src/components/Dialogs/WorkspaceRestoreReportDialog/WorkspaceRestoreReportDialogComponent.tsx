@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, Dialog, H4, Intent, Tag} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, H4, Intent, Tag, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -8,10 +8,17 @@ import {AppStore} from "stores";
 
 import "./WorkspaceRestoreReportDialogComponent.scss";
 
+/** Returns a path such as /data/cube.fits, from a directory that may be empty. */
+function pathOf(directory: string | undefined, filename: string): string {
+    return directory ? `${directory.replace(/\/$/, "")}/${filename}` : filename;
+}
+
 /**
- * Lists what the last workspace restore could not bring back as saved, in two groups:
+ * Lists what the last workspace restore could not bring back as saved, in three groups:
  * - items that are not in the session, each marked as failed or skipped.
  * - items that are in the session, but not as saved.
+ * - images and catalogs that opened from a file that the user chose. The user can write these new
+ *   locations to the stored workspace, and change nothing else in it.
  */
 export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
@@ -24,12 +31,14 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const issues = report?.issues ?? [];
     const leftOut = issues.filter(issue => issue.outcome);
     const changed = issues.filter(issue => !issue.outcome);
+    const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])];
+    const writeBack = appStore.workspaceWriteBack;
 
     return (
         <Dialog
             portalClassName="dialog-portal"
             className={classNames("workspace-restore-report-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
-            icon="warning-sign"
+            icon={issues.length ? "warning-sign" : "info-sign"}
             title={
                 <>
                     Workspace restore report
@@ -70,9 +79,35 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                         </ul>
                     </section>
                 )}
+                {repointed.length > 0 && (
+                    <section data-testid="workspace-restore-report-repointed">
+                        <H4>Opened from new locations ({repointed.length})</H4>
+                        <p>{report?.storedName !== undefined ? "The stored workspace still names the old files until you save the new locations in it." : "This workspace cannot be changed, so it keeps the old locations."}</p>
+                        <ul>
+                            {repointed.map((source, index) => (
+                                <li key={index}>
+                                    <span>{pathOf(source.directory, source.filename)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                    {repointed.length > 0 && report?.storedName !== undefined && (
+                        <Tooltip content="Change only the locations of these files in the stored workspace">
+                            <AnchorButton
+                                icon={writeBack === "written" ? "tick" : "floppy-disk"}
+                                loading={writeBack === "writing"}
+                                disabled={writeBack !== "none"}
+                                onClick={appStore.writeBackRepointedLocations}
+                                data-testid="workspace-restore-report-write-back-button"
+                            >
+                                {writeBack === "written" ? "New locations saved" : "Save new locations in workspace"}
+                            </AnchorButton>
+                        </Tooltip>
+                    )}
                     <AnchorButton intent={Intent.PRIMARY} onClick={appStore.closeWorkspaceRestoreReport} data-testid="workspace-restore-report-close-button">
                         Close
                     </AnchorButton>
