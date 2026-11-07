@@ -426,6 +426,17 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
+        // A workspace restore asks for a file, and opens it itself.
+        if (fileBrowserStore.filePick) {
+            const isFolderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
+            const isPickDisabled = !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || isFolderSelected || fileBrowserStore.selectedFiles?.length > 1;
+            return (
+                <Tooltip content="Open this file in place of the one that the workspace could not open">
+                    <AnchorButton intent={Intent.PRIMARY} disabled={isPickDisabled} onClick={fileBrowserStore.choosePickedFile} text="Choose" data-testid="file-browser-choose-button" />
+                </Tooltip>
+            );
+        }
+
         switch (browserMode) {
             case BrowserMode.File:
                 let isActionDisabled: boolean;

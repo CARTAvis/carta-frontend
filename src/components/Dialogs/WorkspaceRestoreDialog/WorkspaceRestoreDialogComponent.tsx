@@ -5,6 +5,8 @@ import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
 
+import {WorkspaceRecoveryComponent} from "./WorkspaceRecoveryComponent";
+
 import "./WorkspaceRestoreDialogComponent.scss";
 
 /** Returns how much time is left, such as "1m05s" or "09s". */
@@ -17,11 +19,16 @@ function formatTimeRemaining(milliseconds: number): string {
 
 /**
  * Shows the progress of a workspace restore: the stage, the item of the stage, and what the restore
- * waits for. Cancel stops the restore at any time, and leaves the session empty.
+ * waits for. When a stage has items that failed, it shows them instead, with a choice for each, until
+ * the user continues. Cancel stops the restore at any time, and leaves the session empty.
+ *
+ * The dialog hides while the user chooses a file for an item in the file browser. Otherwise it would
+ * cover the file browser.
  */
 export const WorkspaceRestoreDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
     const progress = appStore.workspaceRestoreProgress;
+    const recovery = appStore.workspaceRecovery;
     const step = appStore.workspaceLoadingStep;
     const name = appStore.loadingWorkspaceName;
 
@@ -41,39 +48,59 @@ export const WorkspaceRestoreDialogComponent = observer(() => {
             canEscapeKeyClose={false}
             canOutsideClickClose={false}
             isCloseButtonShown={false}
-            isOpen={appStore.isLoadingWorkspace && !appStore.isResumingSession}
+            isOpen={appStore.isLoadingWorkspace && !appStore.isResumingSession && !appStore.fileBrowserStore.filePick}
         >
             <div className={Classes.DIALOG_BODY}>
-                <div className="restore-stage" data-testid="workspace-restore-stage">
-                    {stageText}
-                </div>
-                <div className="restore-item" data-testid="workspace-restore-item" title={progress?.item}>
-                    {progress?.item ?? " "}
-                </div>
-                <ProgressBar value={fraction} animate={fraction === undefined} stripes={fraction === undefined} intent="primary" />
-                {step && (
-                    <div className="restore-step" data-testid="workspace-restore-step">
-                        <div className="restore-step-text">
-                            <span className="restore-step-description" title={step.description}>
-                                {step.description}
-                            </span>
-                            {timeRemaining ? <span className="restore-step-time">{formatTimeRemaining(timeRemaining)} left</span> : null}
+                {recovery ? (
+                    <WorkspaceRecoveryComponent recovery={recovery} />
+                ) : (
+                    <>
+                        <div className="restore-stage" data-testid="workspace-restore-stage">
+                            {stageText}
                         </div>
-                        <div className="restore-step-progress">
-                            <ProgressBar value={step.progress || undefined} animate={!step.progress} stripes={!step.progress} intent="primary" />
-                            {step.onSkip && (
-                                <Tooltip content="Skip this step and restore the rest of the workspace">
-                                    <AnchorButton size="small" onClick={step.onSkip} data-testid="workspace-restore-skip-button">
-                                        Skip
-                                    </AnchorButton>
-                                </Tooltip>
-                            )}
+                        <div className="restore-item" data-testid="workspace-restore-item" title={progress?.item}>
+                            {progress?.item ?? " "}
                         </div>
-                    </div>
+                        <ProgressBar value={fraction} animate={fraction === undefined} stripes={fraction === undefined} intent="primary" />
+                        {step && (
+                            <div className="restore-step" data-testid="workspace-restore-step">
+                                <div className="restore-step-text">
+                                    <span className="restore-step-description" title={step.description}>
+                                        {step.description}
+                                    </span>
+                                    {timeRemaining ? <span className="restore-step-time">{formatTimeRemaining(timeRemaining)} left</span> : null}
+                                </div>
+                                <div className="restore-step-progress">
+                                    <ProgressBar value={step.progress || undefined} animate={!step.progress} stripes={!step.progress} intent="primary" />
+                                    {step.onSkip && (
+                                        <Tooltip content="Skip this step and restore the rest of the workspace">
+                                            <AnchorButton size="small" onClick={step.onSkip} data-testid="workspace-restore-skip-button">
+                                                Skip
+                                            </AnchorButton>
+                                        </Tooltip>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                    {recovery && (
+                        <>
+                            <Tooltip content="Skip every item in the list, and restore the rest of the workspace">
+                                <AnchorButton onClick={recovery.skipAll} data-testid="workspace-recovery-skip-all-button">
+                                    Skip all
+                                </AnchorButton>
+                            </Tooltip>
+                            <Tooltip content={recovery.canContinue ? "Do what you chose for each item, and restore the rest of the workspace" : "Choose what to do with each item first"}>
+                                <AnchorButton intent="primary" disabled={!recovery.canContinue} onClick={recovery.continue} data-testid="workspace-recovery-continue-button">
+                                    Continue
+                                </AnchorButton>
+                            </Tooltip>
+                        </>
+                    )}
                     <Tooltip content="Stop opening the workspace, and close what it has opened so far">
                         <AnchorButton onClick={appStore.cancelLoadingWorkspace} data-testid="workspace-restore-cancel-button">
                             Cancel
