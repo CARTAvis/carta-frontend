@@ -2855,6 +2855,10 @@ export class AppStore {
         this.loadingWorkspaceName = isKey ? "" : name;
         this.closeWorkspaceRestoreReport();
         this.workspaceRestoreProgress = {stage: "Reading the workspace"};
+        // Skip the step that an earlier load still waits for, and remove it from the dialog. The
+        // earlier load does not remove the step itself once this load owns the session.
+        this.workspaceLoadingStep?.onSkip?.();
+        this.workspaceLoadingStep = undefined;
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
         const generation = WorkspaceRestorer.claimGeneration();

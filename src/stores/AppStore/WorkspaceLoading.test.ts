@@ -110,6 +110,21 @@ describe("AppStore.loadWorkspace overlapping loads", () => {
         expect(appStore.isLoadingWorkspace).toBe(false);
     });
 
+    test("a newer load skips the step that the older restore waits for, and does not show it", async () => {
+        const newerFetch = deferred<Workspace | undefined>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockImplementation(() => newerFetch.promise);
+        const onSkip = jest.fn();
+        appStore.setWorkspaceLoadingStep({description: "Computing the moment images of cube.fits", progress: 0.5, onSkip});
+
+        const newerLoad = appStore.loadWorkspace("newer");
+
+        expect(onSkip).toHaveBeenCalledTimes(1);
+        expect(appStore.workspaceLoadingStep).toBeUndefined();
+        newerFetch.resolve(undefined);
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        await expect(newerLoad).resolves.toBe(false);
+    });
+
     test("a failed newer fetch still prevents the older result from restoring", async () => {
         const olderFetch = deferred<Workspace | undefined>();
         const priorWorkspace = {workspaceVersion: 2, frontendVersion: 0, description: "prior"} as Workspace;
