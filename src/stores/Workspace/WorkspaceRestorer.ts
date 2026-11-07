@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {isEqual} from "lodash";
 import {autorun, comparer, observable, reaction, runInAction} from "mobx";
 
 import {
@@ -87,10 +88,10 @@ interface RestoreTask {
 
 /** The files that the user chose during a restore, for the images and catalogs that opened from them. */
 export interface WorkspaceRepointedSources {
-    /** The new source of each image, by its workspace ID. */
-    images: Map<number, WorkspaceFileImageSource>;
-    /** The new source of each catalog, by its workspace ID. */
-    catalogs: Map<number, WorkspaceCatalogFileSource>;
+    /** The saved source and the new source of each image, by its workspace ID. */
+    images: Map<number, {from: WorkspaceImageSource | undefined; to: WorkspaceFileImageSource}>;
+    /** The saved source and the new source of each catalog, by its workspace ID. */
+    catalogs: Map<number, {from: WorkspaceCatalogSource; to: WorkspaceCatalogFileSource}>;
 }
 
 /** Returns "1 region" or "3 regions". */
@@ -161,13 +162,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Returns a copy of a stored workspace, with the sources of the images and catalogs that the
      * user chose new files for. Everything else is kept as stored.
+     *
+     * Change a source only while the stored workspace still has the source that the restore started
+     * from. The workspace may have been saved again since then, and an ID may then name another
+     * file. Returns undefined when no source can be changed.
      */
-    public static withRepointedSources(workspace: Workspace, repointed: WorkspaceRepointedSources): Workspace {
+    public static withRepointedSources(workspace: Workspace, repointed: WorkspaceRepointedSources): Workspace | undefined {
+        let changes = 0;
         const files = workspace.files?.map(fileInfo => {
-            const source = repointed.images.get(fileInfo.id);
-            if (!source) {
+            const repoint = repointed.images.get(fileInfo.id);
+            if (!repoint || !isEqual(fileInfo.source, repoint.from)) {
                 return fileInfo;
             }
+            changes++;
+            const source = repoint.to;
             // Drop the location fields of workspaces written before version 2, so that they do not
             // name the old file next to the new source.
             const patched: WorkspaceFile = {...fileInfo, source};
@@ -177,10 +185,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return patched;
         });
         const catalogs = workspace.catalogs?.map(catalogInfo => {
-            const source = repointed.catalogs.get(catalogInfo.id);
-            return source ? {...catalogInfo, source} : catalogInfo;
+            const repoint = repointed.catalogs.get(catalogInfo.id);
+            if (!repoint || !isEqual(catalogInfo.source, repoint.from)) {
+                return catalogInfo;
+            }
+            changes++;
+            return {...catalogInfo, source: repoint.to};
         });
-        return {...workspace, ...(files && {files}), ...(catalogs && {catalogs})};
+        return changes ? {...workspace, ...(files && {files}), ...(catalogs && {catalogs})} : undefined;
     }
 
     /** One entry per item that could not be brought back as saved. */
@@ -514,6 +526,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return {
             subject: () => describeImageSource(state.source),
             imageIds: [fileInfo.id],
+
             attempt: () => this.attemptImage(fileInfo, state),
             repoint: ({directory, filename, hdu}) => {
                 state.source = {type: "file", directory, filename, hdu};
@@ -524,7 +537,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     private *attemptImage(fileInfo: WorkspaceFile, state: {source: WorkspaceImageSource | undefined; isRepointed: boolean}): Generator<Promise<unknown>, TaskOutcome, any> {
         const {source} = state;
-        const subject = describeImageSource(source);
+        // The workspace names the image by its saved file, also after the user chose another file.
+        const subject = describeImageSource(fileInfo.source);
+        const tried = state.isRepointed ? ` from ${describeImageSource(source)}` : "";
+        if (!source || !["file", "lel", "hypercube"].includes(source.type)) {
+            this.report(WorkspaceItemKind.Image, subject, `Could not open the image ${subject}: the source is not one this version can open`, WorkspaceIssueOutcome.Failed);
+            return "done";
+        }
         let frame: FrameStore | undefined;
         let reason: string | undefined;
         try {
@@ -543,14 +562,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return {
                 kind: WorkspaceItemKind.Image,
                 subject,
-                message: withReason(`Could not open the image ${subject}`, reason),
+                message: withReason(`Could not open the image ${subject}${tried}`, reason),
                 repointKind: source?.type === "file" ? "image" : undefined,
                 canRetry: source?.type !== "file",
                 dependents: this.dependentsOfImages([fileInfo.id])
             };
         }
         if (state.isRepointed && source?.type === "file") {
-            this.repointed.images.set(fileInfo.id, source);
+            this.repointed.images.set(fileInfo.id, {from: fileInfo.source, to: source});
         }
         this.adoptImage(fileInfo, frame);
         return "done";
@@ -580,6 +599,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         return;
                     }
                     if (outcome === "deferred") {
+                        // The images of a deferred item are awaited too. An item made from them waits as well.
+                        task.imageIds.forEach(id => this.awaitedImageIds.add(id));
                         deferred.push(task);
                     } else if (outcome === "done") {
                         task.imageIds.forEach(id => this.awaitedImageIds.delete(id));
@@ -965,7 +986,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Returns "deferred" when the image that it is made from may still be made after Recovery.
      * Returns the failure when the backend could not make the images. The user can retry them.
      */
-    private *makeImagesAgain({request, images}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {failure: string}, any> {
+    private *makeImagesAgain(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {failure: string}, any> {
+        const {request, images} = generated;
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
@@ -976,6 +998,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return "deferred";
             }
             if (this.skippedImageIds.has(request.sourceImageId)) {
+                // The images of this request are skipped with it. An item made from them is skipped too.
+                generated.images.forEach(image => this.skippedImageIds.add(image.id));
                 this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}: the image it is made from was skipped`, WorkspaceIssueOutcome.Skipped);
             } else {
                 this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
@@ -1735,7 +1759,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     private *attemptCatalog(catalogInfo: WorkspaceCatalog, state: {source: WorkspaceCatalogSource; isRepointed: boolean}): Generator<Promise<unknown>, TaskOutcome, any> {
         const {source} = state;
-        const description = describeCatalogSource(source);
+        // The workspace names the catalog by its saved source, also after the user chose another file.
+        const description = describeCatalogSource(catalogInfo.source);
+        const tried = state.isRepointed ? ` from ${describeCatalogSource(source)}` : "";
         const imageId = catalogInfo.associatedImageId;
         const targetFrameId = imageId === undefined ? undefined : this.frameIds.get(imageId);
         if (imageId !== undefined && targetFrameId === undefined) {
@@ -1751,6 +1777,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         let catalogFileId: number | undefined;
         let reason: string | undefined;
         try {
+            if (source.type === "vizier" && !source.table) {
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the query names no table`, WorkspaceIssueOutcome.Failed);
+                return "done";
+            }
             catalogFileId = (yield* this.openCatalogSource(source, targetFrameId, description, query)) ?? undefined;
         } catch (err) {
             console.error(err);
@@ -1768,7 +1798,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return {
                 kind: WorkspaceItemKind.Catalog,
                 subject: description,
-                message: withReason(`Could not load the catalog ${description}`, reason),
+                message: withReason(`Could not load the catalog ${description}${tried}`, reason),
                 repointKind: source.type === "file" ? "catalog" : undefined,
                 canRetry: source.type !== "file",
                 database: source.type === "simbad" ? CatalogDatabase.SIMBAD : source.type === "vizier" ? CatalogDatabase.VIZIER : undefined,
@@ -1777,7 +1807,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         if (state.isRepointed && source.type === "file") {
-            this.repointed.catalogs.set(catalogInfo.id, source);
+            this.repointed.catalogs.set(catalogInfo.id, {from: catalogInfo.source, to: source});
         }
         this.catalogIds.set(catalogInfo.id, catalogFileId);
         // The workspace is the authority on which catalog its own ID names.
@@ -1796,10 +1826,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const fileId = yield* awaitedFlow<number | undefined>(this.appStore.appendCatalog(source.directory ?? "", source.filename, StreamingRowSource.INIT_TABLE_ROWS, targetFrameId));
             return typeof fileId === "number" ? fileId : undefined;
         }
-        if (source.type === "vizier" && !source.table) {
-            return undefined;
-        }
-
         const skip = () => {
             query.isSkipped = true;
             CatalogApiService.Instance.cancelPendingQueries("The online catalog query was skipped");

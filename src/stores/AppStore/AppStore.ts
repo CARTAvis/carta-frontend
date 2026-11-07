@@ -419,7 +419,7 @@ export class AppStore {
     /** The items of a restore stage that failed, while the restore waits for the user to choose what to do with them. */
     @observable.ref workspaceRecovery: WorkspaceRecoveryStore | undefined = undefined;
     /** How far the new locations of the last report are in being written to the stored workspace. */
-    @observable workspaceWriteBack: "none" | "writing" | "written" = "none";
+    @observable workspaceWriteBack: "none" | "writing" | "written" | "outdated" = "none";
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -2925,6 +2925,7 @@ export class AppStore {
         const generation = WorkspaceRestorer.claimGeneration();
         this.workspaceRecovery?.abandon();
         this.workspaceRecovery = undefined;
+        this.fileBrowserStore.cancelFilePick();
 
         try {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
@@ -2970,6 +2971,8 @@ export class AppStore {
     @action private finishLoadingWorkspace = () => {
         this.workspaceRecovery?.abandon();
         this.workspaceRecovery = undefined;
+        // A file that the user is still choosing for this restore is no longer wanted.
+        this.fileBrowserStore.cancelFilePick();
         this.isLoadingWorkspace = false;
         this.hasRestoreChangedSession = false;
         this.workspaceLoadingStep = undefined;
@@ -2990,7 +2993,7 @@ export class AppStore {
         this.workspaceRecovery = recovery;
     };
 
-    @action private setWorkspaceWriteBack = (state: "none" | "writing" | "written") => {
+    @action private setWorkspaceWriteBack = (state: "none" | "writing" | "written" | "outdated") => {
         this.workspaceWriteBack = state;
     };
 
@@ -3009,7 +3012,16 @@ export class AppStore {
         this.setWorkspaceWriteBack("writing");
         try {
             const stored: Workspace | undefined = yield this.apiService.getWorkspace(storedName);
-            const saved: Workspace | undefined = stored ? yield this.apiService.setWorkspace(storedName, WorkspaceRestorer.withRepointedSources(stored, report.repointed)) : undefined;
+            if (!stored) {
+                throw new Error(`Could not read workspace "${storedName}"`);
+            }
+            const patched = WorkspaceRestorer.withRepointedSources(stored, report.repointed);
+            if (!patched) {
+                this.setWorkspaceWriteBack("outdated");
+                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved again after it was opened, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
+                return false;
+            }
+            const saved: Workspace | undefined = yield this.apiService.setWorkspace(storedName, patched);
             if (!saved) {
                 throw new Error(`Could not write workspace "${storedName}"`);
             }

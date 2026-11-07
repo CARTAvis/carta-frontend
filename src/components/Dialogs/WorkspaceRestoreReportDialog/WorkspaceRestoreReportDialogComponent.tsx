@@ -31,7 +31,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const issues = report?.issues ?? [];
     const leftOut = issues.filter(issue => issue.outcome);
     const changed = issues.filter(issue => !issue.outcome);
-    const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])];
+    const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])].map(({to}) => to);
     const writeBack = appStore.workspaceWriteBack;
 
     return (
@@ -104,7 +104,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                 onClick={appStore.writeBackRepointedLocations}
                                 data-testid="workspace-restore-report-write-back-button"
                             >
-                                {writeBack === "written" ? "New locations saved" : "Save new locations in workspace"}
+                                {writeBack === "written" ? "New locations saved" : writeBack === "outdated" ? "Workspace has changed" : "Save new locations in workspace"}
                             </AnchorButton>
                         </Tooltip>
                     )}

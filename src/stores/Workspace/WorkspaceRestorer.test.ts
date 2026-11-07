@@ -429,7 +429,7 @@ describe("WorkspaceRestorer", () => {
         expect(load).toHaveBeenCalledWith(source, ["I/355/gaiadr3"], 1);
 
         load.mockClear();
-        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query");
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query: the query names no table");
         expect(load).not.toHaveBeenCalled();
     });
 
@@ -1546,6 +1546,37 @@ describe("WorkspaceRestorer", () => {
             }
         });
 
+        test("keeps a chain of requests waiting for the first one, and skips the whole chain with it", async () => {
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+            const workspace = createWorkspace({
+                generatedImages: [
+                    {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, name: "maximum.fits", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                    {request: {...wholeImage, sourceImageId: 2, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]}, images: [{id: 3, name: "integrated.fits", moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}]},
+                    {request: {...wholeImage, sourceImageId: 3, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 4, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}
+                ]
+            });
+
+            for (const action of [WorkspaceRecoveryAction.Retry, WorkspaceRecoveryAction.Skip] as const) {
+                const {appStore, requestMoment} = createGeneratingSession();
+                requestMoment.mockImplementationOnce(() => Promise.reject(new Error("Moment generation failed")));
+                appStore.onRecovery = recovery => {
+                    recovery.setChoice(0, {action});
+                    recovery.continue();
+                };
+
+                const issues = await restoreIssues(workspace);
+
+                if (action === WorkspaceRecoveryAction.Retry) {
+                    expect(issues).toEqual([]);
+                    expect(requestMoment).toHaveBeenCalledTimes(4);
+                } else {
+                    expect(issues.map(({outcome}) => outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
+                    expect(issues[2].message).toBe("Skipped making the moment images of integrated.fits: the image it is made from was skipped");
+                }
+                jest.restoreAllMocks();
+            }
+        });
+
         test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
             const {requestMoment} = createGeneratingSession();
             const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
@@ -1693,7 +1724,7 @@ describe("WorkspaceRestorer", () => {
                 }
             ]);
             expect(appendFile.mock.calls[1].slice(0, 3)).toEqual(["/moved", "image-moved.fits", "0"]);
-            expect(restorer.repointed.images.get(IMAGE.id)).toEqual({type: "file", directory: "/moved", filename: "image-moved.fits", hdu: "0"});
+            expect(restorer.repointed.images.get(IMAGE.id)).toEqual({from: IMAGE.source, to: {type: "file", directory: "/moved", filename: "image-moved.fits", hdu: "0"}});
             // The catalog of the image opens, and nothing is reported.
             expect(appStore.appendCatalog).toHaveBeenCalled();
             expect(restorer.fileIdOf(IMAGE.id)).toBeDefined();
@@ -1710,7 +1741,8 @@ describe("WorkspaceRestorer", () => {
                     recovery.setChoice(0, {action: WorkspaceRecoveryAction.Repoint, location: {directory: "/moved", filename: "wrong.fits"}});
                     recovery.continue();
                 } else {
-                    expect(recovery.items[0].message).toBe("Could not open the image wrong.fits: File /data/wrong.fits does not exist");
+                    // The image keeps the name that the workspace gives it, with the file that was tried.
+                    expect(recovery.items[0].message).toBe("Could not open the image image.fits from wrong.fits: File /data/wrong.fits does not exist");
                     recovery.skipAll();
                 }
             };
@@ -1720,7 +1752,7 @@ describe("WorkspaceRestorer", () => {
 
             expect(round).toBe(2);
             expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
-                ["Could not open the image wrong.fits: File /data/wrong.fits does not exist", WorkspaceIssueOutcome.Skipped],
+                ["Could not open the image image.fits from wrong.fits: File /data/wrong.fits does not exist", WorkspaceIssueOutcome.Skipped],
                 ["Skipped the catalog sources.vot: the image it belongs to was skipped", WorkspaceIssueOutcome.Skipped]
             ]);
             // The file did not open, so the workspace keeps its saved location.
@@ -1856,13 +1888,51 @@ describe("WorkspaceRestorer", () => {
             });
 
             const patched = WorkspaceRestorer.withRepointedSources(stored, {
-                images: new Map([[1, {type: "file" as const, directory: "/new", filename: "image.fits"}]]),
-                catalogs: new Map([[2, {type: "file" as const, directory: "/new", filename: "other.vot"}]])
-            });
+                images: new Map([[1, {from: {type: "file" as const, directory: "/old", filename: "image.fits"}, to: {type: "file" as const, directory: "/new", filename: "image.fits"}}]]),
+                catalogs: new Map([[2, {from: CATALOG.source, to: {type: "file" as const, directory: "/new", filename: "other.vot"}}]])
+            })!;
 
             expect(patched.files).toEqual([{id: 1, source: {type: "file", directory: "/new", filename: "image.fits"}, channel: 3}, stored.files![1]]);
             expect(patched.catalogs).toEqual([CATALOG, {...CATALOG, id: 2, source: {type: "file", directory: "/new", filename: "other.vot"}}]);
             expect({...patched, files: undefined, catalogs: undefined}).toEqual({...stored, files: undefined, catalogs: undefined});
+        });
+
+        test("changes no source that the stored workspace no longer has, as after it was saved again", () => {
+            const stored = createWorkspace({
+                files: [
+                    {id: 1, source: {type: "file", filename: "another.fits"}},
+                    {id: 2, source: {type: "file", filename: "image.fits"}}
+                ]
+            });
+            const to = {type: "file" as const, directory: "/new", filename: "image.fits"};
+
+            expect(WorkspaceRestorer.withRepointedSources(stored, {images: new Map([[1, {from: {type: "file", filename: "image.fits"}, to}]]), catalogs: new Map()})).toBeUndefined();
+            const patched = WorkspaceRestorer.withRepointedSources(stored, {
+                images: new Map([
+                    [1, {from: {type: "file", filename: "image.fits"}, to}],
+                    [2, {from: {type: "file", filename: "image.fits"}, to}]
+                ]),
+                catalogs: new Map()
+            });
+            expect(patched?.files).toEqual([stored.files![0], {id: 2, source: to}]);
+        });
+
+        test("reports an image or a VizieR catalog that cannot be opened as it is saved, without Recovery", async () => {
+            const {appStore} = createSession();
+            const vizier: WorkspaceCatalogQuerySource = {...source, type: "vizier"};
+
+            const issues = await restoreIssues(
+                createWorkspace({
+                    files: [IMAGE, {id: 2, source: {type: "future"} as never}],
+                    catalogs: [{id: 1, source: vizier, associatedImageId: 1}]
+                })
+            );
+
+            expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
+                ["Could not open the image an image of an unknown kind: the source is not one this version can open", WorkspaceIssueOutcome.Failed],
+                ["Could not load the catalog from the VizieR query: the query names no table", WorkspaceIssueOutcome.Failed]
+            ]);
+            expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalled();
         });
     });
 });
