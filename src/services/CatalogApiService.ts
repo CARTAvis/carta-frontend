@@ -210,7 +210,7 @@ export class CatalogApiService {
             // mirror is not added to the later set.
             const timedOutMirrors = this.timedOutMirrors;
             if (timedOutMirrors?.has(activeMirrorUrl)) {
-                return Promise.reject(this.createMirrorTimeoutError(activeMirrorUrl));
+                return Promise.reject(this.createMirrorTimeoutError(activeMirrorUrl, true));
             }
             return instance.get(this.joinUrl(activeMirrorUrl, path), {timeout: CatalogApiService.QUERY_TIMEOUT_MS, transitional: {clarifyTimeoutError: true}}).catch(error => {
                 if (axios.isCancel(error)) {
@@ -236,9 +236,16 @@ export class CatalogApiService {
         }
     };
 
-    private createMirrorTimeoutError = (mirrorUrl: string): Error => {
+    /**
+     * Returns the error for a mirror that did not respond in time.
+     *
+     * @param didTimeOutEarlier - true when this request did not wait, because the mirror timed out
+     * on an earlier request. Then the user can see that the restore waited only once.
+     */
+    private createMirrorTimeoutError = (mirrorUrl: string, didTimeOutEarlier = false): Error => {
         const seconds = CatalogApiService.QUERY_TIMEOUT_MS / 1000;
-        return new Error(`Mirror ${this.mirrorLabel(mirrorUrl)} did not respond within ${seconds} seconds. The mirror may be unavailable. Select another mirror site and retry.`);
+        const query = didTimeOutEarlier ? " to an earlier query" : "";
+        return new Error(`Mirror ${this.mirrorLabel(mirrorUrl)} did not respond within ${seconds} seconds${query}. The mirror may be unavailable. Select another mirror site and retry.`);
     };
 
     private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {

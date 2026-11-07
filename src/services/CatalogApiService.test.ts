@@ -45,7 +45,24 @@ describe("CatalogApiService active mirror", () => {
         await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed. The mirror may be unavailable. Select another mirror site and retry. Details: Network Error");
 
         expect(get).toHaveBeenCalledTimes(1);
-        expect(get).toHaveBeenCalledWith("https://active.example/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=test", expect.objectContaining({timeout: CatalogApiService.QUERY_TIMEOUT_MS}));
+        expect(get).toHaveBeenCalledWith(
+            "https://active.example/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=test",
+            expect.objectContaining({timeout: CatalogApiService.QUERY_TIMEOUT_MS, transitional: expect.objectContaining({clarifyTimeoutError: true})})
+        );
+    });
+
+    test("does not take an aborted request for a mirror that timed out", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        // Without `clarifyTimeoutError`, axios gives a timeout this code too.
+        const get = jest.fn().mockRejectedValue(new AxiosError("Request aborted", AxiosError.ECONNABORTED));
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+
+        const forget = service.rememberTimedOutMirrors();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed. The mirror may be unavailable. Select another mirror site and retry. Details: Request aborted");
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed.");
+        forget();
+
+        expect(get).toHaveBeenCalledTimes(2);
     });
 
     test("names the mirror that did not respond within the time limit", async () => {
@@ -66,7 +83,7 @@ describe("CatalogApiService active mirror", () => {
 
         const forget = service.rememberTimedOutMirrors();
         await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
-        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Mirror active.example did not respond within 60 seconds.");
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Mirror active.example did not respond within 60 seconds to an earlier query. The mirror may be unavailable. Select another mirror site and retry.");
         expect(get).toHaveBeenCalledTimes(1);
 
         forget();

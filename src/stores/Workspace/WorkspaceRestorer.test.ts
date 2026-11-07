@@ -453,10 +453,31 @@ describe("WorkspaceRestorer", () => {
         expect(get).toHaveBeenCalledTimes(1);
         const messages = issues.map(issue => issue.message).filter(message => message.startsWith("Could not load the catalog"));
         expect(messages).toHaveLength(2);
-        messages.forEach(message => expect(message).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/));
+        expect(messages[0]).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/);
+        expect(messages[1]).toMatch(/: Mirror .+ did not respond within 60 seconds to an earlier query\. The mirror may be unavailable\. Select another mirror site and retry$/);
 
         // The next restore tries the mirror again.
         await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+        expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    test("forgets the mirrors that timed out when a newer load supersedes the restore", async () => {
+        createSession();
+        const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+        const timeout = new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT);
+        const service = CatalogApiService.Instance as unknown as {axiosInstanceSimbad: {get: (url: string) => Promise<unknown>}};
+        // A newer load starts while the first query waits for the mirror.
+        const get = jest.spyOn(service.axiosInstanceSimbad, "get").mockImplementationOnce(() => {
+            WorkspaceRestorer.claimGeneration();
+            return Promise.reject(timeout);
+        });
+
+        await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+        expect(get).toHaveBeenCalledTimes(1);
+
+        // A query after the superseded restore waits for the mirror again.
+        get.mockRejectedValue(timeout);
+        await expect(CatalogApiService.Instance.loadSimbadCatalog(source)).rejects.toThrow("Mirror");
         expect(get).toHaveBeenCalledTimes(2);
     });
 
