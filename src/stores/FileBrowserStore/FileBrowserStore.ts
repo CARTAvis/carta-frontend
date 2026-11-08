@@ -123,7 +123,8 @@ export class FileBrowserStore {
 
     /**
      * Open the file browser for the user to choose an image or a catalog file, and do not open the
-     * file. A workspace restore uses this, so the browser opens while the restore is running.
+     * file. A workspace restore uses this. So the browser opens during a restore, when the other
+     * modes do not open.
      *
      * @returns the chosen file, or undefined when the user closes the browser without one.
      */

@@ -41,7 +41,7 @@ export interface WorkspaceRecoveryItem {
 /**
  * The items of one restore stage that failed, and the choice that the user makes for each item.
  *
- * The restore waits for `decided` before it goes on with the stage. The promise resolves when the
+ * The restore waits for `decided` before it continues the stage. The promise resolves when the
  * user continues, or skips all items. It also resolves when the restore is cancelled or a later load
  * starts. Then every item is skipped, and the restore sees that it no longer owns the session.
  */
@@ -77,14 +77,14 @@ export class WorkspaceRecoveryStore {
         return !this.isDecided && this.items.every((_, index) => this.choices.has(index));
     }
 
-    /** Go on with the stage, with the choice made for each item. */
+    /** Continue the stage, with the choice made for each item. */
     @action continue = (): void => {
         if (this.canContinue) {
             this.finish(this.items.map((_, index) => this.choices.get(index)!));
         }
     };
 
-    /** Skip every item, whatever was chosen for it, and go on with the stage. */
+    /** Skip every item, whatever was chosen for it, and continue the stage. */
     @action skipAll = (): void => {
         this.finish(this.items.map(() => ({action: WorkspaceRecoveryAction.Skip})));
     };

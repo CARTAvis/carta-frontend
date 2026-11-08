@@ -657,8 +657,8 @@ export class ApiService {
     };
 
     /**
-     * Returns a workspace as it is stored, without upgrading it to the form that a restore reads.
-     * A change that is written back from it then changes only what the caller changes.
+     * Returns a workspace as it is stored, not upgraded to the form that a restore reads. When a
+     * caller changes it and writes it back, the write changes only what the caller changed.
      */
     public getStoredWorkspace = async (name: string): Promise<Workspace | undefined> => {
         try {

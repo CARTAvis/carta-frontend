@@ -1500,7 +1500,7 @@ describe("WorkspaceRestorer", () => {
             expect(items).toEqual([expect.objectContaining({kind: WorkspaceItemKind.GeneratedImage, message: "Could not make the moment images of image.fits: Moment generation failed: the backend is busy", canRetry: true})]);
             expect(issues).toEqual([]);
             expect(original).toBeDefined();
-            // The retry comes after the later request made its images, so it keeps them.
+            // The retry comes after the later request made its images. So the retry keeps those images.
             expect(requestMoment.mock.calls.map(([message]) => [message.moments, message.keep])).toEqual([
                 [[CARTA.Moment.MAX_OF_THE_SPECTRUM], false],
                 [[CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], false],
@@ -1818,7 +1818,7 @@ describe("WorkspaceRestorer", () => {
 
         test("skips an online query that the user does not wait for, without Recovery", async () => {
             const {appStore} = createSession();
-            // The query never answers. Cancelling the pending queries ends it, as axios does.
+            // The query never answers. Cancelling the pending queries rejects it. Axios does the same.
             let rejectQuery: ((reason: unknown) => void) | undefined;
             jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockImplementation(() => new Promise((_, reject) => (rejectQuery = reject)));
             jest.spyOn(CatalogApiService.Instance, "cancelPendingQueries").mockImplementation(() => rejectQuery?.({__CANCEL__: true, message: "The online catalog query was skipped"}));

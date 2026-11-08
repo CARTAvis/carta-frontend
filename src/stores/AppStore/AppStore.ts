@@ -163,8 +163,9 @@ export interface WorkspaceRestoreReport {
     /** The files that the user chose during the restore, for the images and catalogs that opened from them. */
     repointed?: WorkspaceRepointedSources;
     /**
-     * The name that the workspace is stored under, when the new locations can be written to it. The
-     * user then opened the workspace by this name and may change it, not through a shared link.
+     * The name that the workspace is stored under, when the new locations can be written to it. It
+     * is set when the user opened the workspace by this name and may change it. It is not set for a
+     * workspace opened through a shared link.
      */
     storedName?: string;
 }
@@ -419,7 +420,7 @@ export class AppStore {
     @observable.ref workspaceRestoreReport: WorkspaceRestoreReport | undefined = undefined;
     /** The items of a restore stage that failed, while the restore waits for the user to choose what to do with them. */
     @observable.ref workspaceRecovery: WorkspaceRecoveryStore | undefined = undefined;
-    /** How far the new locations of the last report are in being written to the stored workspace. */
+    /** The state of writing the new locations of the last report to the stored workspace. */
     @observable workspaceWriteBack: "none" | "writing" | "written" | "outdated" = "none";
 
     @action restartTaskProgress = () => {
@@ -3019,13 +3020,13 @@ export class AppStore {
         };
         setState("writing");
         try {
-            // Read the workspace as it is stored. The form that a restore reads is upgraded, and
-            // writing that form back would change more than the sources.
+            // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
+            // form were written back, the write would change more than the sources.
             const stored: Workspace | undefined = yield this.apiService.getStoredWorkspace(storedName);
             if (!stored) {
                 throw new Error(`Could not read workspace "${storedName}"`);
             }
-            // Compare as JSON, which drops the fields that the upgrade leaves undefined.
+            // Compare the two as JSON. JSON drops the fields that the upgrade sets to undefined.
             const asJson = (workspace: Workspace) => JSON.parse(JSON.stringify(workspace));
             if (!_.isEqual(asJson(WorkspaceConfig.upgradeForRuntime(stored)), asJson(stored))) {
                 setState("outdated");

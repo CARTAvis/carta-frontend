@@ -439,7 +439,8 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
-        // A workspace restore asks for a file, and opens it itself.
+        // Show Choose during a pick. The workspace restore that asked for the file opens the file
+        // itself.
         if (fileBrowserStore.filePick) {
             const isFolderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
             const isPickDisabled = !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || isFolderSelected || fileBrowserStore.selectedFiles?.length > 1;
@@ -835,7 +836,7 @@ export class FileBrowserDialogComponent extends React.Component {
             </PopoverNext>
         );
 
-        // A pick returns one file, so it offers no image arithmetic.
+        // Offer no image arithmetic during a pick. A pick returns one file, not an expression.
         if (browserMode === BrowserMode.File && !AppStore.Instance.fileBrowserStore.filePick) {
             const inputTypeMenu = (
                 <PopoverNext

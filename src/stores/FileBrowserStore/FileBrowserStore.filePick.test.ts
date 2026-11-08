@@ -2,7 +2,7 @@ import {observable, runInAction} from "mobx";
 
 import {BrowserMode, DialogId} from "enums";
 
-// The file browser is open while its entry is true, as in `DialogStore`.
+// The entry of the file browser is true while the browser is open. `DialogStore` keeps the same map.
 const DIALOG_VISIBLE = observable.map<DialogId, boolean>();
 const APP_STORE_MOCK = {
     activeFrame: null as any,

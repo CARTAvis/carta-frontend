@@ -65,7 +65,7 @@ interface CatalogConfigRequest {
     completion: Promise<CatalogRestoreOutcome>;
 }
 
-/** What one attempt at an item of a stage came to. */
+/** The result of one attempt to open or make an item of a stage. */
 type TaskOutcome =
     /** The item is open, or it is reported and the user cannot do anything about it. */
     | "done"
@@ -589,8 +589,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             console.error(err);
             reason = reasonOf(err);
         }
-        // Checked again here rather than only before the attempt: the image finished opening while
-        // this restore was suspended, and a load started in the meantime owns the session.
+        // Check again here, not only before the attempt. The image finished opening while this
+        // restore was suspended. A load that started in the meantime may own the session now.
         if (!this.isCurrent) {
             this.closeSupersededImage(frame);
             return "done";
@@ -617,7 +617,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Run the items that the user retries or chooses a new file for again, and ask again for the
      * items that fail again. The stage ends when no item is left to run.
      *
-     * @param startRound - starts what one round of attempts shares, and returns how to end it.
+     * @param startRound - starts what the attempts of one round share, such as the memory of the
+     * mirrors that timed out. It returns the function that ends it.
      */
     private *runStage(stage: string, tasks: RestoreTask[], startRound?: () => () => void): Generator<Promise<unknown>, void, any> {
         let pending = tasks;
