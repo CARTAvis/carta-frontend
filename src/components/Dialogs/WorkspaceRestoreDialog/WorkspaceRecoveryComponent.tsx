@@ -14,7 +14,7 @@ function mirrorLabel(url: string): string {
     }
 }
 
-/** Lets the user choose the mirror of an online database that a retry asks. The choice is the same one as in the Online Data Query dialog. */
+/** Lets the user choose the mirror that a retry sends the query to. The Online Data Query dialog uses the same choice. */
 const MirrorSelect = observer(({database}: {database: CatalogDatabase}) => {
     const mirrorSiteStore = MirrorSiteStore.Instance;
     const mirrors = mirrorSiteStore.getMirrorSites(database).filter(url => !mirrorSiteStore.isMirrorUnavailable(database, url));
@@ -35,8 +35,9 @@ const MirrorSelect = observer(({database}: {database: CatalogDatabase}) => {
 });
 
 /**
- * Lists the items of a restore stage that failed, and lets the user choose for each one: open it from
- * another file, open it again as it is saved, or skip it. Skipping an item names what goes with it.
+ * Lists the items of a restore stage that failed. For each item, the user chooses to open it from
+ * another file, to open it again as it is saved, or to skip it. Skipping an item names what goes
+ * with it.
  */
 export const WorkspaceRecoveryComponent = observer(({recovery}: {recovery: WorkspaceRecoveryStore}) => {
     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
