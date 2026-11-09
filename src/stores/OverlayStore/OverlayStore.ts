@@ -145,9 +145,9 @@ export interface OverlayLabelConfig {
 }
 
 /**
- * How the WCS overlay looks, as a layout saves it. It names none of the images, so a layout can
- * carry it to any session. The custom texts and the switches that show them belong to the images,
- * so a workspace saves them instead. See {@link WorkspaceWcsOverlayText}.
+ * How the WCS overlay looks, as a layout saves it. These settings do not depend on any image, so a
+ * layout can apply them in any session. The custom texts and the switches that show them belong to
+ * the images. A workspace saves them instead. See {@link WorkspaceWcsOverlayText}.
  */
 export interface WcsOverlayConfig {
     isVisible: boolean;
@@ -239,7 +239,8 @@ export class OverlayGlobalSettings {
 
     constructor() {
         makeObservable<OverlayGlobalSettings, "customColor">(this);
-        // The color follows the preference until it is set. So pass every change of the color to AST.
+        // Pass every change of the color to AST. The color follows the preference until the session
+        // sets it, so the color can change without a call to setColor.
         autorun(() => AST.setColor(getColorForTheme(this.color), AstColorsIndex.GLOBAL));
     }
 
@@ -1290,7 +1291,7 @@ export class OverlaySettings {
         this.ticks.applyConfig(sectionOf(config?.ticks));
         this.numbers.applyConfig(sectionOf(config?.numbers));
         this.labels.applyConfig(sectionOf(config?.labels));
-        // Without a custom format, the formats follow the system.
+        // Set the formats from the system again. Without a custom format, the formats follow the system.
         this.setFormatsFromSystem();
         return problems;
     }

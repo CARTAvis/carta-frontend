@@ -249,8 +249,8 @@ export interface WorkspaceColorBlending {
 
 /**
  * The custom texts of the WCS overlay that are the same for every image, and the switches that show
- * the custom texts. Each image saves its own custom title. A layout saves the rest of the overlay,
- * because the rest names none of the images.
+ * the custom texts. Each image saves its own custom title. A layout saves the other overlay
+ * settings, because those settings do not depend on any image.
  */
 export interface WorkspaceWcsOverlayText {
     labels: {hasCustomText: boolean; customLabelX: string; customLabelY: string};
