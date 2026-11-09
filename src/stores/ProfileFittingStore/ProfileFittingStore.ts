@@ -8,6 +8,8 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
 export class ProfileFittingStore {
+    /** The most components that a restore reads. The panel offers 20, and auto detect can find more. */
+    public static readonly MAX_WORKSPACE_COMPONENTS = 100;
     @observable function: FittingFunction = FittingFunction.GAUSSIAN;
     @observable components: ProfileFittingIndividualStore[] = [new ProfileFittingIndividualStore()];
     @observable continuum: FittingContinuum = FittingContinuum.NONE;
@@ -522,17 +524,19 @@ export class ProfileFittingStore {
         const numberOr = (value: unknown, fallback: number): number => (shouldApplyGuesses && typeof value === "number" && isFinite(value) ? value : fallback);
         const isTrue = (value: unknown): boolean => value === true;
         this.reset();
-        if (Object.values(FittingFunction).includes(config.function)) {
+        // These are numeric enums, whose values also hold their names, such as "GAUSSIAN". Accept only the numbers.
+        if (typeof config.function === "number" && Object.values(FittingFunction).includes(config.function)) {
             this.setFunction(config.function);
         }
-        if (Object.values(FittingContinuum).includes(config.continuum)) {
+        if (typeof config.continuum === "number" && Object.values(FittingContinuum).includes(config.continuum)) {
             this.setContinuum(config.continuum);
         }
         this.setYIntercept(numberOr(config.yIntercept, 0));
         this.setSlope(numberOr(config.slope, 0));
         this.setLockedYIntercept(isTrue(config.yInterceptLocked));
         this.setLockedSlope(isTrue(config.slopeLocked));
-        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object") : [];
+        // Read a limited number of components, so a damaged workspace cannot create very many.
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, ProfileFittingStore.MAX_WORKSPACE_COMPONENTS) : [];
         if (components.length) {
             this.setComponents(components.length, true);
             components.forEach((saved, index) => {
