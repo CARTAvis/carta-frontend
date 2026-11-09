@@ -568,6 +568,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             )
         );
 
+        // Clear the fitting when the widget shows another profile. A part of the same profile that
+        // arrives does not clear it. Then the guesses that the user typed, or that a workspace
+        // restored, stay while a large cube streams its profile.
+        this.disposers.push(
+            reaction(
+                () => this.fittedProfileKey,
+                () => this.fittingStore.reset()
+            )
+        );
+
         this.disposers.push(
             reaction(
                 () => this.yAxisRestFrameScale,
@@ -794,6 +804,40 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
             this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (${this.restFrameVelocityConvention}, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
         ];
+    }
+
+    /**
+     * Names the profile that fitting uses, without its data: the image, the region and its shape,
+     * the statistic, the Stokes, the spectral axis, the intensity unit and the smoothing. The name
+     * changes when the widget shows another profile, and not when more data of the same profile
+     * arrives.
+     */
+    @computed private get fittedProfileKey(): string {
+        const profile = this.profileSelectionStore.profiles[0];
+        if (!profile) {
+            return "";
+        }
+        const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
+        const region = profile.regionId === null ? undefined : frame?.getRegion(profile.regionId);
+        const channelValues = profile.channelValues;
+        return JSON.stringify([
+            profile.fileId,
+            profile.regionId,
+            region?.controlPoints,
+            region?.rotation,
+            profile.label,
+            channelValues?.[0],
+            channelValues?.[channelValues.length - 1],
+            channelValues?.length,
+            profile.intensityUnit,
+            this.intensityUnit,
+            this.smoothingStore.type
+        ]);
+    }
+
+    /** Whether the profile that fitting uses has all of its data. Auto detect and Fit wait for it, so they never use a part of the profile. */
+    @computed get isFittingProfileComplete(): boolean {
+        return (this.profileSelectionStore.profiles[0]?.data?.progress ?? 0) >= 1;
     }
 
     @computed get displayChannelValueRange(): NumberRange {

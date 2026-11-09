@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed workspaces putting moment, PV, HiPS and image fitting images at the end of the image list ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Fixed online SIMBAD and VizieR queries waiting forever for a mirror that does not respond; they now stop after 60 seconds ([#3058](https://github.com/CARTAvis/carta-frontend/issues/3058)).
+* Fixed spectral profile fitting guesses being cleared by every part of a streamed profile and by opening the fitting settings again: they are now cleared only when the profile changes, and Auto detect and Fit wait for the whole profile ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
