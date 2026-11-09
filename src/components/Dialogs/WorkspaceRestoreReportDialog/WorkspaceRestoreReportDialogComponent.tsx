@@ -23,7 +23,7 @@ function pathOf(directory: string | undefined, filename: string): string {
 const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnderCause?: boolean}) => {
     const isSkipped = issue.outcome === WorkspaceIssueOutcome.Skipped;
     return (
-        <Tag minimal={isUnderCause} intent={isSkipped ? Intent.WARNING : Intent.DANGER} icon={isSkipped ? "disable" : "error"} className="outcome-tag">
+        <Tag minimal={isUnderCause} intent={isSkipped ? Intent.WARNING : Intent.DANGER} icon={isSkipped ? "step-forward" : "error"} className="outcome-tag">
             {isSkipped ? "Skipped" : "Failed"}
         </Tag>
     );
