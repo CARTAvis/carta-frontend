@@ -37,6 +37,7 @@ import {
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
+    type WorkspaceSpectralMoments,
     type WorkspaceSpectralProfileWidgetConfig
 } from "models";
 import {TelemetryService} from "services";
@@ -58,6 +59,19 @@ import {
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
+
+/** Names a unit in a sentence. An empty unit has no name, as for a profile without an intensity unit. */
+function describeUnit(unit: unknown): string {
+    return typeof unit === "string" && unit ? `"${unit}"` : "no unit";
+}
+
+function describeUnits(xUnit: unknown, yUnit: unknown): string {
+    return `${describeUnit(xUnit)} on the x axis and ${describeUnit(yUnit)} on the y axis`;
+}
+
+function isRange(range: unknown): range is [number, number] {
+    return Array.isArray(range) && range.length === 2 && range.every(value => typeof value === "number" && isFinite(value));
+}
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
 type XTransformTarget = "display" | "observed";
@@ -1313,7 +1327,40 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
             ...(this.spectralLinesMHz.length ? {spectralLines: this.spectralLinesMHz.map(({species, value, qn}) => ({species, value, qn}))} : {}),
-            ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
+            ...(this.isShowingSavedImage(ids)
+                ? {
+                      ...toWorkspacePlotRange(this),
+                      fitting: this.fittingStore.toWorkspaceConfig(this.spectralUnitOf(this.isXAxisRestFrameActive), this.intensityUnitOf(this.isYAxisRestFrameActive)),
+                      moments: this.toWorkspaceMoments()
+                  }
+                : {})
+        };
+    };
+
+    /**
+     * Names the spectral coordinate of the x values, such as "Frequency (GHz), LSRK, rest frame". A
+     * restore compares the saved name with the current name to check that the values still fit.
+     */
+    private spectralUnitOf = (isRestFrame: boolean): string => {
+        const frame = this.effectiveFrame;
+        return [frame?.spectralCoordinate, frame?.spectralSystem, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
+    };
+
+    /** Names the unit of the y values, such as "Jy/beam" or "Jy/beam, rest frame". */
+    private intensityUnitOf = (isRestFrame: boolean): string => {
+        return [this.yUnit, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
+    };
+
+    /** Returns the moment generator settings. The ranges are in the observed frame, as the store keeps them. */
+    private toWorkspaceMoments = (): WorkspaceSpectralMoments => {
+        return {
+            moments: [...this.selectedMoments],
+            regionId: this.momentRegionId,
+            channelRange: [this.channelValueRange[0], this.channelValueRange[1]],
+            channelUnit: this.spectralUnitOf(false),
+            mask: this.momentMask,
+            maskRange: [this.maskRange[0], this.maskRange[1]],
+            maskUnit: this.intensityUnitOf(false)
         };
     };
 
@@ -1389,10 +1436,75 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         return problems;
     };
 
-    public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig): void => {
+    /**
+     * Zooms the widget to its saved range, and applies the fitting and moment generator settings.
+     * These settings are applied in this last step, because a change of the spectral coordinate,
+     * the rest frame or the Y scale in an earlier step resets them.
+     */
+    @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }
+        // The settings belong to the image that the widget showed. When that image was not
+        // restored, the first step already reported it.
+        const isShowingSavedImage = config.imageId === undefined ? ids.wasActiveImageRestored() : ids.fileIdOf(config.imageId) !== undefined;
+        if (!isShowingSavedImage) {
+            return [];
+        }
+        const problems: string[] = [];
+        const fitting = config.fitting;
+        if (fitting && typeof fitting === "object") {
+            const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
+            const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
+            if (fitting.xUnit === xUnit && fitting.yUnit === yUnit) {
+                this.fittingStore.applyWorkspaceConfig(fitting);
+            } else {
+                problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The fitting settings keep their defaults`);
+            }
+        }
+        const moments = config.moments;
+        if (moments && typeof moments === "object") {
+            problems.push(...this.applyWorkspaceMoments(moments, config.imageId, ids));
+        }
+        return problems;
+    };
+
+    @action private applyWorkspaceMoments = (moments: WorkspaceSpectralMoments, imageId: number | undefined, ids: WorkspaceIdReader): string[] => {
+        const problems: string[] = [];
+        if (Array.isArray(moments.moments)) {
+            const selected = moments.moments.filter(moment => Object.values(CARTA.Moment).includes(moment));
+            this.selectedMoments = selected.filter((moment, index) => selected.indexOf(moment) === index && this.isMomentSupported(moment));
+        }
+        if (Object.values(CARTA.MomentMask).includes(moments.mask)) {
+            this.setMomentMask(moments.mask);
+        }
+        if (moments.regionId === RegionId.IMAGE || moments.regionId === RegionId.ACTIVE) {
+            this.selectMomentRegion(moments.regionId);
+        } else if (typeof moments.regionId === "number") {
+            const regionId = ids.regionIdOf(imageId, moments.regionId);
+            if (regionId !== undefined) {
+                this.selectMomentRegion(regionId);
+            } else {
+                problems.push("the region that its moments were made from was not restored, so the moments are made from the whole image");
+            }
+        }
+        if (isRange(moments.channelRange)) {
+            const unit = this.spectralUnitOf(false);
+            if (moments.channelUnit === unit) {
+                this.setSelectedChannelRange(moments.channelRange[0], moments.channelRange[1]);
+            } else {
+                problems.push(`the spectral range of its moments was in ${describeUnit(moments.channelUnit)}, but the profile now shows ${describeUnit(unit)}. The range covers the whole spectral axis`);
+            }
+        }
+        if (isRange(moments.maskRange)) {
+            const unit = this.intensityUnitOf(false);
+            if (moments.maskUnit === unit) {
+                this.setSelectedMaskRange(moments.maskRange[0], moments.maskRange[1]);
+            } else {
+                problems.push(`the mask range of its moments was in ${describeUnit(moments.maskUnit)}, but the profile now shows ${describeUnit(unit)}. The mask range keeps its default`);
+            }
+        }
+        return problems;
     };
 
     public toConfig = (): SpectralProfileWidgetConfig => {

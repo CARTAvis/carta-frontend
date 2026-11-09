@@ -506,11 +506,15 @@ export class WidgetsStore {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
     }
 
-    /** Zooms each profile, analysis and statistics widget to its saved range, after what the widget shows has settled. */
-    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
-        this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
-            widgetStore.applyWorkspaceView(config);
-            return [];
+    /**
+     * Zooms each profile, analysis and statistics widget to its saved range, after what the widget
+     * shows has settled. Also applies the settings that the earlier steps would reset, such as the
+     * fitting settings of a spectral profiler.
+     */
+    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
+            const problems = widgetStore.applyWorkspaceView(config, ids);
+            return Array.isArray(problems) ? problems : [];
         });
     }
 

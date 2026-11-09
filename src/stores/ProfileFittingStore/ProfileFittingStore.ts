@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {FittingContinuum, FittingFunction} from "enums";
-import {type Point2D} from "models";
+import {type Point2D, type WorkspaceSpectralFitting} from "models";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
@@ -469,6 +469,75 @@ export class ProfileFittingStore {
 
     @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
         this.originData = {x, y};
+    };
+
+    /**
+     * Returns the fitting settings that a workspace saves. The fit results are left out.
+     *
+     * @param xUnit - the unit of the x axis that the guesses are in
+     * @param yUnit - the unit of the y axis that the guesses are in
+     */
+    public toWorkspaceConfig = (xUnit: string, yUnit: string): WorkspaceSpectralFitting => {
+        // JSON writes a value that is not finite as null. Save 0, the default, instead.
+        const finite = (value: number): number => (isFinite(value) ? value : 0);
+        return {
+            function: this.function,
+            continuum: this.continuum,
+            yIntercept: finite(this.yIntercept),
+            slope: finite(this.slope),
+            yInterceptLocked: this.isLockedYIntercept,
+            slopeLocked: this.isLockedSlope,
+            components: this.components.map(component => ({
+                center: finite(component.center),
+                amp: finite(component.amp),
+                fwhm: finite(component.fwhm),
+                centerLocked: component.isLockedCenter,
+                ampLocked: component.isLockedAmp,
+                fwhmLocked: component.isLockedFwhm
+            })),
+            autoDetectWithContinuum: this.isAutoDetectWithCont,
+            autoDetectWithFitting: this.isAutoDetectWithFitting,
+            residualVisible: this.isResidualEnabled,
+            xUnit,
+            yUnit
+        };
+    };
+
+    /**
+     * Applies the fitting settings that a workspace saved. Starts from the defaults, so a value that
+     * is missing or not valid keeps its default. The caller checks the units first.
+     */
+    @action applyWorkspaceConfig = (config: WorkspaceSpectralFitting): void => {
+        const numberOr = (value: unknown, fallback: number): number => (typeof value === "number" && isFinite(value) ? value : fallback);
+        const isTrue = (value: unknown): boolean => value === true;
+        this.reset();
+        if (Object.values(FittingFunction).includes(config.function)) {
+            this.setFunction(config.function);
+        }
+        if (Object.values(FittingContinuum).includes(config.continuum)) {
+            this.setContinuum(config.continuum);
+        }
+        this.setYIntercept(numberOr(config.yIntercept, 0));
+        this.setSlope(numberOr(config.slope, 0));
+        this.setLockedYIntercept(isTrue(config.yInterceptLocked));
+        this.setLockedSlope(isTrue(config.slopeLocked));
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object") : [];
+        if (components.length) {
+            this.setComponents(components.length, true);
+            components.forEach((saved, index) => {
+                const component = this.components[index];
+                component.setCenter(numberOr(saved.center, 0));
+                component.setAmp(numberOr(saved.amp, 0));
+                component.setFwhm(numberOr(saved.fwhm, 0));
+                component.setLockedCenter(isTrue(saved.centerLocked));
+                component.setLockedAmp(isTrue(saved.ampLocked));
+                component.setLockedFwhm(isTrue(saved.fwhmLocked));
+            });
+            this.setSelectedIndex(0);
+        }
+        this.setIsAutoDetectWithCont(isTrue(config.autoDetectWithContinuum));
+        this.setIsAutoDetectWithFitting(isTrue(config.autoDetectWithFitting));
+        this.setEnableResidual(config.residualVisible !== false);
     };
 }
 

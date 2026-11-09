@@ -254,7 +254,7 @@ function createSession() {
             floatingWidgets: [] as unknown[],
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined),
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
@@ -1378,6 +1378,7 @@ describe("WorkspaceRestorer", () => {
     test("points the profile and analysis widgets at their images and regions, and gives them the rest once they have settled", async () => {
         const {appStore, calls} = createSession();
         const plotWidgets = {"stats-0": {type: "stats" as const, imageId: 1}};
+        const viewIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "stats-0", message: "Could not fully restore the widget stats-0: the fitting guesses were made in other units"};
         let didSettleBeforeTheRest = false;
         appStore.widgetsStore.restorePlotWidgetBindings.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetBindings");
@@ -1390,6 +1391,7 @@ describe("WorkspaceRestorer", () => {
         });
         appStore.widgetsStore.restorePlotWidgetViews.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetViews");
+            return [viewIssue];
         });
         const queryIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "spectral-line-query-0", message: "Could not fully restore the widget spectral-line-query-0: the spectral line query returned no result"};
         appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce(() => {
@@ -1403,6 +1405,9 @@ describe("WorkspaceRestorer", () => {
         while (!step.done) {
             step = generator.next(await step.value);
         }
+        // The last step reports what it could not apply, such as fitting guesses in other units.
+        expect(step.value).toContainEqual(viewIssue);
+        expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledWith(plotWidgets, restorer);
 
         // The results of online queries are fetched again last, and their problems are reported.
         expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews", "restorePlotWidgetResults"]);
