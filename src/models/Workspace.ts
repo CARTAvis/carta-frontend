@@ -697,7 +697,8 @@ export interface WorkspaceSpectralFitting {
     residualVisible: boolean;
     /**
      * The units of the x and y axes that the guesses are in, such as "Frequency (GHz), LSRK, rest
-     * frame" and "Jy/beam". A restore applies the guesses only when the profile shows the same units.
+     * frame" and "Jy/beam". A restore applies the guesses only when it shows the same profile in
+     * the same units.
      */
     xUnit: string;
     yUnit: string;

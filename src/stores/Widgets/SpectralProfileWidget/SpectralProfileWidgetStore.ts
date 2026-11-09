@@ -60,7 +60,7 @@ import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRan
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 
-/** Names a unit in a sentence. An empty unit has no name, as for a profile without an intensity unit. */
+/** Returns the name of a unit for a sentence, such as "Jy/beam" in quotes. An empty unit, as for a profile without an intensity unit, is "no unit". */
 function describeUnit(unit: unknown): string {
     return typeof unit === "string" && unit ? `"${unit}"` : "no unit";
 }
@@ -568,9 +568,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             )
         );
 
-        // Clear the fitting when the widget shows another profile. A part of the same profile that
-        // arrives does not clear it. Then the guesses that the user typed, or that a workspace
-        // restored, stay while a large cube streams its profile.
+        // Clear the fitting when the widget shows another profile. Do not clear it when more data of
+        // the same profile arrives. Then the guesses that the user typed or that a workspace
+        // restored stay while a large cube streams its profile.
         this.disposers.push(
             reaction(
                 () => this.fittedProfileKey,
@@ -807,10 +807,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     }
 
     /**
-     * Names the profile that fitting uses, without its data: the image, the region and its shape,
-     * the statistic, the Stokes, the spectral axis, the intensity unit and the smoothing. The name
-     * changes when the widget shows another profile, and not when more data of the same profile
-     * arrives. The region name is left out, so renaming the region keeps the fitting.
+     * Returns a key for the profile that fitting uses, without the data of the profile: the image,
+     * the region and its shape, the statistic, the Stokes, the spectral axis, the intensity unit
+     * and the smoothing. The key changes when the widget shows another profile, and not when more
+     * data of the same profile arrives. The key leaves out the region name. Then renaming the
+     * region keeps the fitting.
      */
     @computed private get fittedProfileKey(): string {
         const profile = this.profileSelectionStore.profiles[0];
@@ -828,8 +829,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             region?.rotation,
             selection.selectedStatsTypes,
             selection.selectedCoordinates,
-            // The coordinate "z" follows the Stokes of the image, so a change of that Stokes gives
-            // another profile. A profile in a fixed Stokes, such as "Iz", does not change.
+            // The coordinate "z" follows the Stokes of the image. When that Stokes changes, the
+            // profile changes. A profile in a fixed Stokes, such as "Iz", stays the same.
             selection.selectedCoordinates[0] === "z" ? frame?.requiredStokes : undefined,
             channelValues?.[0],
             channelValues?.[channelValues.length - 1],
@@ -840,7 +841,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         ]);
     }
 
-    /** Whether the profile that fitting uses has all of its data. Auto detect and Fit wait for it, so they never use a part of the profile. */
+    /** Whether all the data of the profile that fitting uses has arrived. Auto detect and Fit wait for it. Then they never use only a part of the profile. */
     @computed get isFittingProfileComplete(): boolean {
         return (this.profileSelectionStore.profiles[0]?.data?.progress ?? 0) >= 1;
     }
@@ -1387,24 +1388,25 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     };
 
     /**
-     * Names the spectral coordinate of the x values, such as "Frequency (GHz), LSRK, rest frame". A
-     * restore compares the saved name with the current name to check that the values still fit.
+     * Returns the name of the spectral coordinate of the x values, such as "Frequency (GHz), LSRK,
+     * rest frame". A restore compares the saved name with the current name. This checks that the
+     * saved values still fit.
      */
     private spectralUnitOf = (isRestFrame: boolean): string => {
         const frame = this.effectiveFrame;
         return [frame?.spectralCoordinate, frame?.spectralSystem, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
     };
 
-    /** Names the unit of the y values, such as "Jy/beam" or "Jy/beam, rest frame". */
+    /** Returns the name of the unit of the y values, such as "Jy/beam" or "Jy/beam, rest frame". */
     private intensityUnitOf = (isRestFrame: boolean): string => {
         return [this.yUnit, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
     };
 
     /**
      * Returns the moment generator settings. The ranges are in the observed frame, as the store
-     * keeps them. A range that is the default is left out: the whole spectral axis, and a mask
-     * range of 0 to 1. Then a restore in other units does not report a range that the user did not
-     * choose.
+     * keeps them. Leaves out a range that is the default: a channel range of the whole spectral
+     * axis, or a mask range of 0 to 1. Then a restore in other units does not report a range that
+     * the user did not choose.
      */
     private toWorkspaceMoments = (): WorkspaceSpectralMoments => {
         const bounds = this.effectiveFrame?.channelValueBounds;
@@ -1494,15 +1496,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
 
     /**
      * Zooms the widget to its saved range, and applies the fitting and moment generator settings.
-     * These settings are applied in this last step, because a change of the spectral coordinate,
-     * the rest frame or the Y scale in an earlier step resets them.
+     * Apply these settings in this last step. A change of the spectral coordinate, the rest frame
+     * or the Y scale in an earlier step resets them.
      */
     @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }
         // The settings belong to the image that the widget showed. When that image was not
-        // restored, the first step already reported it.
+        // restored, skip them. The first step already reported the image.
         const isShowingSavedImage = config.imageId === undefined ? ids.wasActiveImageRestored() : ids.fileIdOf(config.imageId) !== undefined;
         if (!isShowingSavedImage) {
             return [];
@@ -1515,7 +1517,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
             // The guesses belong to the profile that was fitted. When the first step could not show
             // that profile again, such as when its region was not restored, the guesses are 0. A
-            // workspace does not save the cursor position, so the guesses of a cursor profile are 0 too.
+            // workspace does not save the cursor position. So the guesses of a cursor profile are 0
+            // too.
             const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;
             const isSameProfile = this.isShowingWorkspaceData && !isCursorProfile;
             this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
