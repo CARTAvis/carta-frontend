@@ -2285,7 +2285,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return;
         }
-        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this));
+        this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this)));
     }
 
     /**
