@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SmoothingType, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -779,6 +779,52 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         const config = widgetStore.toWorkspaceConfig({imageIdOf: fileId => (fileId === 7 ? 2 : undefined)});
 
         expect(config).toEqual(expect.objectContaining({profileCategory: MultiProfileCategory.IMAGE, imageIds: [2], profileColors: [{key: 2, color: "#ff0000"}]}));
+    });
+
+    describe("when the fitting is cleared", () => {
+        /** A widget whose cursor profile arrives in parts, from a region whose shape can change. */
+        const createStreamingWidgetStore = () => {
+            const {frame} = createWidgetStore();
+            const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
+            const region = observable({controlPoints: [{x: 1, y: 1}], rotation: 0});
+            frame.getRegion.mockReturnValue(region as never);
+            (AppStore.Instance.spectralProfiles.get(7)!.get(0)!.getProfile as jest.Mock).mockImplementation(() => data.get());
+            const store = new SpectralProfileWidgetStore();
+            runInAction(() => {
+                store.fittingStore.setYIntercept(0.5);
+                store.fittingStore.components[0].setCenter(105);
+            });
+            return {store, data, region};
+        };
+
+        test("keeps the guesses while more data of the same profile arrives, and waits for all of it before Auto detect and Fit", () => {
+            const {store, data} = createStreamingWidgetStore();
+            expect(store.isFittingProfileComplete).toBe(false);
+
+            runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+            expect(store.isFittingProfileComplete).toBe(true);
+            expect([store.fittingStore.yIntercept, store.fittingStore.components[0].center]).toEqual([0.5, 105]);
+            store.dispose();
+        });
+
+        test("clears the guesses when the region of the profile moves", () => {
+            const {store, region} = createStreamingWidgetStore();
+
+            runInAction(() => (region.controlPoints[0] = {x: 2, y: 1}));
+
+            expect([store.fittingStore.yIntercept, store.fittingStore.components[0].center]).toEqual([0, 0]);
+            store.dispose();
+        });
+
+        test("clears the guesses when the smoothing type changes", () => {
+            const {store} = createStreamingWidgetStore();
+
+            runInAction(() => store.smoothingStore.setType(SmoothingType.BOXCAR));
+
+            expect(store.fittingStore.yIntercept).toBe(0);
+            store.dispose();
+        });
     });
 
     describe("fitting and moment settings in a workspace", () => {
