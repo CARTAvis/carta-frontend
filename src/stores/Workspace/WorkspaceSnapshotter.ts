@@ -35,6 +35,19 @@ interface GeneratedImageGroup {
 }
 
 /** The workspace while it is being filled in: the collections the stages append to are already there. */
+/** Calls `visit` with each image view widget in a layout config, docked or floating. */
+function forEachImageView(node: unknown, visit: (imageView: {widgetSettings?: Record<string, unknown>}) => void): void {
+    if (Array.isArray(node)) {
+        node.forEach(child => forEachImageView(child, visit));
+    } else if (node && typeof node === "object") {
+        const config = node as Record<string, unknown>;
+        if (config.type === "component" && config.id === "image-view") {
+            visit(config as {widgetSettings?: Record<string, unknown>});
+        }
+        Object.values(config).forEach(child => forEachImageView(child, visit));
+    }
+}
+
 type WorkspaceUnderConstruction = Workspace & Required<Pick<Workspace, "files" | "colorBlendingImages" | "references">>;
 
 /**
@@ -645,7 +658,15 @@ export class WorkspaceSnapshotter {
      */
     private captureLayout(): void {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
-        // The layout saves how the WCS overlay looks. The custom texts describe the images, so the workspace saves them.
+        // A saved layout leaves out the overlay settings that follow the user's preferences. A
+        // workspace shows the same overlay on any computer, so its layout keeps them as they are shown.
+        const wcsOverlay = this.appStore.overlaySettings.toConfig(true);
+        forEachImageView(this.workspace.layout, imageView => {
+            if (imageView.widgetSettings) {
+                imageView.widgetSettings.wcsOverlay = wcsOverlay;
+            }
+        });
+        // The custom texts describe the images, so the workspace saves them.
         this.workspace.wcsOverlay = this.appStore.overlaySettings.toTextConfig();
     }
 

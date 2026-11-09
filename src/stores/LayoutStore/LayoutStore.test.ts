@@ -68,6 +68,20 @@ describe("LayoutStore layout configs", () => {
         expect(layoutStore.currentLayoutName).toBe(PresetLayout.CUBEVIEW);
     });
 
+    test("tells the user what a layout from the Layout menu could not apply as it was saved", () => {
+        MOCK_APP_STORE.widgetsStore.initWidgets.mockReturnValueOnce(["The first problem", "The second problem"]);
+
+        expect(layoutStore.applyLayout(PresetLayout.CUBEVIEW)).toBe(true);
+
+        expect(MOCK_APP_STORE.alertStore.showAlert).toHaveBeenCalledWith("The first problem\nThe second problem");
+    });
+
+    test("shows no alert when a layout from the Layout menu applies as it was saved", () => {
+        expect(layoutStore.applyLayout(PresetLayout.CUBEVIEW)).toBe(true);
+
+        expect(MOCK_APP_STORE.alertStore.showAlert).not.toHaveBeenCalled();
+    });
+
     test("leaves the current layout in place when the config is not a valid layout", () => {
         layoutStore.applyLayoutConfig(defaultConfig());
         const layoutModel = layoutStore.layoutModel;

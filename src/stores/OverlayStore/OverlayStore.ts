@@ -63,7 +63,8 @@ function isNumberFormat(value: unknown): value is NumberFormatType {
 
 export interface OverlayGlobalConfig {
     labelType: LabelType;
-    color: string;
+    /** Left out of a layout while the color follows the user's preference. */
+    color?: string;
     /** The tolerance of the curves, in percent. */
     tolerance: number;
     system: SystemType;
@@ -80,7 +81,8 @@ export interface OverlayTitleConfig {
 }
 
 export interface OverlayGridConfig {
-    isVisible: boolean;
+    /** Left out of a layout while the visibility follows the user's preference. */
+    isVisible?: boolean;
     hasCustomColor: boolean;
     color: string;
     width: number;
@@ -132,7 +134,8 @@ export interface OverlayNumberConfig {
 }
 
 export interface OverlayLabelConfig {
-    isVisible: boolean;
+    /** Left out of a layout while the visibility follows the user's preference. */
+    isVisible?: boolean;
     isHidden: boolean;
     hasCustomColor: boolean;
     color: string;
@@ -244,8 +247,10 @@ export class OverlayGlobalSettings {
         this.customColor = color;
     };
 
-    toConfig(): OverlayGlobalConfig {
-        return {labelType: this.labelType, color: this.color, tolerance: this.tolerance, system: this.system};
+    /** @param shouldIncludePreferenceValues - whether to save the color also when it follows the user's preference. */
+    toConfig(shouldIncludePreferenceValues: boolean): OverlayGlobalConfig {
+        const color = shouldIncludePreferenceValues ? this.color : this.customColor;
+        return {labelType: this.labelType, ...(color === undefined ? {} : {color}), tolerance: this.tolerance, system: this.system};
     }
 
     /** Applies everything but the coordinate system. {@link OverlaySettings.applyConfig} applies the system. */
@@ -403,15 +408,17 @@ export class OverlayGridSettings {
         AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
     };
 
-    toConfig(): OverlayGridConfig {
-        return {isVisible: this.isVisible, hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
+    /** @param shouldIncludePreferenceValues - whether to save the visibility also when it follows the user's preference. */
+    toConfig(shouldIncludePreferenceValues: boolean): OverlayGridConfig {
+        const isVisible = shouldIncludePreferenceValues ? this.isVisible : this.isVisibleInSession;
+        return {...(isVisible === undefined ? {} : {isVisible}), hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
     }
 
     @action applyConfig(config: Persisted<OverlayGridConfig> | undefined) {
         this.isVisibleInSession = isBoolean(config?.isVisible) ? config.isVisible : undefined;
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
-        this.width = savedOr(config?.width, isLineWidth, 1);
+        this.width = savedOr(config?.width, numberIn(0.001), 1);
         this.hasCustomGap = savedOr(config?.hasCustomGap, isBoolean, false);
         this.gapX = savedOr(config?.gapX, numberIn(0.001), 0.2);
         this.gapY = savedOr(config?.gapY, numberIn(0.001), 0.2);
@@ -622,7 +629,7 @@ export class OverlayAxisSettings {
         this.isVisible = savedOr(config?.isVisible, isBoolean, false);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
-        this.width = savedOr(config?.width, isLineWidth, 1);
+        this.width = savedOr(config?.width, numberIn(0.001), 1);
     }
 }
 
@@ -889,9 +896,11 @@ export class OverlayLabelSettings {
         this.customLabelY = label;
     };
 
-    toConfig(): OverlayLabelConfig {
+    /** @param shouldIncludePreferenceValues - whether to save the visibility also when it follows the user's preference. */
+    toConfig(shouldIncludePreferenceValues: boolean): OverlayLabelConfig {
+        const isVisible = shouldIncludePreferenceValues ? this.isVisible : this.isVisibleInSession;
         return {
-            isVisible: this.isVisible,
+            ...(isVisible === undefined ? {} : {isVisible}),
             isHidden: this.isHidden,
             hasCustomColor: this.hasCustomColor,
             color: this.color,
@@ -1218,18 +1227,27 @@ export class OverlaySettings {
         this.isVisible = isVisible;
     }
 
-    /** Returns how the overlay looks, as a layout saves it. */
-    toConfig(): WcsOverlayConfig {
+    /**
+     * Returns how the overlay looks, as a layout saves it.
+     *
+     * A saved layout can be the user's preference layout, which is applied each time CARTA starts.
+     * So a layout leaves out each setting that follows the user's preference, and the setting keeps
+     * following the preference. A workspace keeps the settings as they are shown, so that it shows
+     * the same overlay on any computer.
+     *
+     * @param shouldIncludePreferenceValues - whether to save the settings that follow the user's preference.
+     */
+    toConfig(shouldIncludePreferenceValues: boolean = false): WcsOverlayConfig {
         return {
             isVisible: this.isVisible,
-            global: this.global.toConfig(),
+            global: this.global.toConfig(shouldIncludePreferenceValues),
             title: this.title.toConfig(),
-            grid: this.grid.toConfig(),
+            grid: this.grid.toConfig(shouldIncludePreferenceValues),
             border: this.border.toConfig(),
             axes: this.axes.toConfig(),
             ticks: this.ticks.toConfig(),
             numbers: this.numbers.toConfig(),
-            labels: this.labels.toConfig()
+            labels: this.labels.toConfig(shouldIncludePreferenceValues)
         };
     }
 
@@ -1251,13 +1269,6 @@ export class OverlaySettings {
         this.isVisible = savedOr(config?.isVisible, isBoolean, true);
         const global = sectionOf<OverlayGlobalConfig>(config?.global);
         this.global.applyConfig(global);
-        this.title.applyConfig(sectionOf(config?.title));
-        this.grid.applyConfig(sectionOf(config?.grid));
-        this.border.applyConfig(sectionOf(config?.border));
-        this.axes.applyConfig(sectionOf(config?.axes));
-        this.ticks.applyConfig(sectionOf(config?.ticks));
-        this.numbers.applyConfig(sectionOf(config?.numbers));
-        this.labels.applyConfig(sectionOf(config?.labels));
 
         // Set the system directly. setSystem asks the user before it turns off spatial matching.
         // Image coordinates and spatial matching do not work together. Keep the matching, because
@@ -1268,6 +1279,19 @@ export class OverlaySettings {
             problems.push("Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially");
         }
         this.global.system = system;
+        // Set the default number formats of the new system before the number settings are applied.
+        // A custom format that the config leaves out then takes the default of the new system.
+        this.setFormatsFromSystem();
+
+        this.title.applyConfig(sectionOf(config?.title));
+        this.grid.applyConfig(sectionOf(config?.grid));
+        this.border.applyConfig(sectionOf(config?.border));
+        this.axes.applyConfig(sectionOf(config?.axes));
+        this.ticks.applyConfig(sectionOf(config?.ticks));
+        this.numbers.applyConfig(sectionOf(config?.numbers));
+        this.labels.applyConfig(sectionOf(config?.labels));
+        // Without a custom format, the formats follow the system.
+        this.setFormatsFromSystem();
         return problems;
     }
 

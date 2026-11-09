@@ -98,7 +98,10 @@ function createSession(overrides: Record<string, any> = {}) {
         // The Image Fitting dialog fits the active image over the field of view, as it does by default.
         imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
-        overlaySettings: {toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))},
+        overlaySettings: {
+            toConfig: jest.fn((shouldIncludePreferenceValues: boolean) => ({isVisible: true, grid: shouldIncludePreferenceValues ? {isVisible: false, width: 1} : {width: 1}})),
+            toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))
+        },
         ...overrides
     };
 
@@ -769,6 +772,24 @@ describe("WorkspaceSnapshotter", () => {
             {imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
             {imageListIndex: 2, selectedFrameId: [], alpha: [1]}
         ]);
+    });
+
+    test("adds no overlay to an image view that saved no settings", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.layout?.docked.content[0].widgetSettings).toBeUndefined();
+        expect(workspace.layout?.docked.content[0]).toEqual({type: "component", id: "image-view"});
+    });
+
+    test("keeps the overlay settings that follow the preferences in each image view of the layout, as they are shown", () => {
+        const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view", widgetSettings: {panelRows: 1, wcsOverlay: {grid: {width: 1}}}}]}, floating: []};
+        createSession({layoutStore: {currentLayoutConfig: jest.fn(() => layout)}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.layout?.docked.content[0].widgetSettings).toEqual({panelRows: 1, wcsOverlay: {isVisible: true, grid: {isVisible: false, width: 1}}});
     });
 
     test("reports an item the session never opened instead of giving it an ID", () => {

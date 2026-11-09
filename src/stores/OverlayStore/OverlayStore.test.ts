@@ -110,6 +110,45 @@ describe("the WCS overlay in a layout", () => {
         expect(overlay.grid.isVisible).toBe(false);
     });
 
+    test("leaves out of a layout the settings that follow the preferences, so that they still follow them when the layout is applied", () => {
+        const overlay = createOverlay();
+        overlay.labels.setVisible(false);
+
+        const config = overlay.toConfig();
+
+        expect(config.global).not.toHaveProperty("color");
+        expect(config.grid).not.toHaveProperty("isVisible");
+        expect(config.labels.isVisible).toBe(false);
+        const other = createOverlay();
+        other.applyConfig(JSON.parse(JSON.stringify(config)));
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, true);
+        expect(other.global.color).toBe("auto-red");
+        expect(other.grid.isVisible).toBe(true);
+        expect(other.labels.isVisible).toBe(false);
+    });
+
+    test("saves the settings that follow the preferences as they are shown, for a workspace", () => {
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
+        const overlay = createOverlay();
+
+        const config = overlay.toConfig(true);
+
+        expect(config.global.color).toBe("auto-red");
+        expect(config.grid.isVisible).toBe(false);
+        expect(config.labels.isVisible).toBe(true);
+    });
+
+    test("accepts grid and axis widths above 30, as the settings panel does", () => {
+        const overlay = createOverlay();
+
+        overlay.applyConfig({grid: {width: 40}, axes: {width: 45}});
+
+        expect(overlay.grid.width).toBe(40);
+        expect(overlay.axes.width).toBe(45);
+    });
+
     test("keeps a setting that the session set when the preference changes", () => {
         const overlay = createOverlay();
         overlay.grid.setVisible(false);
@@ -180,6 +219,29 @@ describe("the WCS overlay in a layout", () => {
 
         expect(overlay.numbers.formatTypeX).toBe(NumberFormatType.HMS);
         expect(overlay.numbers.formatTypeY).toBe(NumberFormatType.DMS);
+    });
+
+    test("gives a custom format that the layout left out the default format of the system that the layout saved", () => {
+        const overlay = createOverlay();
+        overlay.global.setValidWcs(true);
+        overlay.numbers.setValidWcs(true);
+        overlay.applyConfig({global: {system: SystemType.FK5}});
+        expect(overlay.numbers.formatTypeX).toBe(NumberFormatType.HMS);
+
+        overlay.applyConfig({global: {system: SystemType.Galactic}, numbers: {hasCustomFormat: true}});
+
+        expect(overlay.numbers.formatTypeX).toBe(NumberFormatType.Degrees);
+        expect(overlay.numbers.formatTypeY).toBe(NumberFormatType.Degrees);
+    });
+
+    test("shows the formats of the system when the layout saved no custom format", () => {
+        const overlay = createOverlay();
+        overlay.global.setValidWcs(true);
+        overlay.numbers.setValidWcs(true);
+
+        overlay.applyConfig({global: {system: SystemType.Galactic}, numbers: {hasCustomFormat: false, formatX: NumberFormatType.HMS}});
+
+        expect(overlay.numbers.formatX).toBe(NumberFormatType.Degrees);
     });
 
     test("leaves the custom texts and their switches alone, because a workspace saves them", () => {

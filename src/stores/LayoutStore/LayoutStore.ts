@@ -104,7 +104,12 @@ export class LayoutStore {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return false;
         }
-        return this.applyLayoutConfig(this.layouts[layoutName], layoutName);
+        const problems: string[] = [];
+        const isApplied = this.applyLayoutConfig(this.layouts[layoutName], layoutName, problems);
+        if (problems.length) {
+            AlertStore.Instance.showAlert(problems.join("\n"));
+        }
+        return isApplied;
     };
 
     /**
