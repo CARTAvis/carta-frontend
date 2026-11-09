@@ -79,13 +79,14 @@ export interface WorkspaceIdReader {
  * 2. Apply what the widget shows of them.
  * 3. Zoom the widget to its saved range.
  *
- * Each step can reset the result of a later step, so the widget settles between the steps. The
- * first two steps return the problems as sentences about the widget. When there are problems, the
- * third step does not apply the zoom range.
+ * Each step can reset the result of a later step, so the widget settles between the steps. Each
+ * step returns the problems as sentences about the widget. The third step can return nothing when
+ * it has no problems. When the first two steps have problems, the third step does not apply the
+ * zoom range.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;
     applyWorkspaceBinding(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceConfig(config: TConfig, ids: WorkspaceIdReader): string[];
-    applyWorkspaceView(config: TConfig): void;
+    applyWorkspaceView(config: TConfig, ids: WorkspaceIdReader): string[] | void;
 }

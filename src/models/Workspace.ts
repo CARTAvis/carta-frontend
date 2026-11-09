@@ -13,6 +13,8 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     type ContourDashMode,
+    type FittingContinuum,
+    type FittingFunction,
     FrameScaling,
     type HipsCoord,
     type HipsProjection,
@@ -611,6 +613,10 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
     yAxisRestFrameEnabled?: boolean;
     /** The spectral lines that a spectral line query plotted on the widget, at the frequencies they were plotted at, in MHz. The query shifted them by its redshift. */
     spectralLines?: {species: string; value: number; qn: string}[];
+    /** The fitting settings. Left out when the widget does not show an image that the workspace saves. */
+    fitting?: WorkspaceSpectralFitting;
+    /** The moment generator settings. Left out when the widget does not show an image that the workspace saves. */
+    moments?: WorkspaceSpectralMoments;
 }
 
 /**
@@ -669,6 +675,46 @@ export interface WorkspaceAnimator {
     playMode: PlayMode;
     /** What the animator steps through: the channels, the Stokes, the images or a time series. */
     mode: AnimationMode;
+}
+
+/**
+ * The fitting settings of a spectral profiler: the function, the continuum and the initial guesses.
+ * The fit results are not saved. The user fits again after a restore.
+ */
+export interface WorkspaceSpectralFitting {
+    /** The fitting function, saved as its number: 0 is Gaussian and 1 is Lorentzian. */
+    function: FittingFunction;
+    /** The order of the continuum, saved as its number: -1 is none, 0 is constant and 1 is linear. */
+    continuum: FittingContinuum;
+    yIntercept: number;
+    slope: number;
+    yInterceptLocked: boolean;
+    slopeLocked: boolean;
+    /** The initial guesses of each component. */
+    components: {center: number; amp: number; fwhm: number; centerLocked: boolean; ampLocked: boolean; fwhmLocked: boolean}[];
+    autoDetectWithContinuum: boolean;
+    autoDetectWithFitting: boolean;
+    residualVisible: boolean;
+    /**
+     * The units of the x and y axes that the guesses are in, such as "Frequency (GHz), LSRK, rest
+     * frame" and "Jy/beam". A restore applies the guesses only when the profile shows the same units.
+     */
+    xUnit: string;
+    yUnit: string;
+}
+
+/** The moment generator settings of a spectral profiler. */
+export interface WorkspaceSpectralMoments {
+    moments: CARTA.Moment[];
+    /** The region that the moments are made from, by the ID that the region was saved with. -1 is the whole image, and -3 is the active region. */
+    regionId: number;
+    /** The spectral range, in the units of `channelUnit`. */
+    channelRange: [number, number];
+    channelUnit: string;
+    mask: CARTA.MomentMask;
+    /** The range of pixel values that the mask keeps, in the units of `maskUnit`. */
+    maskRange: [number, number];
+    maskUnit: string;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */
