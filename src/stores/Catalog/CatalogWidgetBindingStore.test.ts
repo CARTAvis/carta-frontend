@@ -47,7 +47,8 @@ describe("CatalogWidgetBindingStore", () => {
             message: "Could not restore catalog plot catalog-plot-0: the catalog missing.vot is unavailable; it is showing catalog file 5 instead",
             reason: "the catalog missing.vot is unavailable; it is showing catalog file 5 instead",
             causeCatalogId: 1,
-            effect: WorkspaceIssueEffect.CatalogNotRestored
+            effect: WorkspaceIssueEffect.CatalogNotRestored,
+            effectDetail: "catalog file 5"
         });
         // The unavailable catalog's ID is not held back from the next catalog opened.
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
@@ -149,7 +150,8 @@ describe("CatalogWidgetBindingStore", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
-            message: "Could not fully restore catalog plot catalog-plot-0 for the catalog sources.vot: column Gone is unavailable"
+            message: "Could not fully restore catalog plot catalog-plot-0 for the catalog sources.vot: column Gone is unavailable",
+            reason: "column Gone of the catalog sources.vot is unavailable"
         });
     });
 
@@ -323,7 +325,8 @@ describe("CatalogWidgetBindingStore", () => {
                 message: "Could not restore catalog widget widget-a: workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead",
                 reason: "workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead",
                 causeCatalogId: 20,
-                effect: WorkspaceIssueEffect.CatalogNotRestored
+                effect: WorkspaceIssueEffect.CatalogNotRestored,
+                effectDetail: "the catalog shown.vot"
             });
         });
 

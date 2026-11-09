@@ -416,6 +416,9 @@ describe("Catalog plot workspace binding", () => {
 
         expect(issues).toEqual([]);
         expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-3").catalogFileId).toBe(5);
+        // The report finds the title of the plot by the plot's stable ID.
+        expect(catalogStore.widgetBindings.shownPlotOf("plot-a")).toBe("catalog-plot-3");
+        expect(catalogStore.widgetBindings.shownPlotOf("plot-b")).toBeUndefined();
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-3")?.xColumnName).toBe("RA");
         expect(saved("plot-a")?.catalogId).toBe(2);
     });

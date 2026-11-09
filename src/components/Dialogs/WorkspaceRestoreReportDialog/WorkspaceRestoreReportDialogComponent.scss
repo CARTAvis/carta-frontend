@@ -34,7 +34,6 @@
         align-items: baseline;
         gap: 8px;
         padding: 4px 0;
-        overflow-wrap: anywhere;
     }
 
     // A left-out item puts what it caused below itself, so it stacks its lines.
@@ -48,12 +47,16 @@
         }
     }
 
+    // Line up the guide of what an item caused with the text of the item, after its outcome tag.
     .consequences {
-        margin: 4px 0 0 64px;
+        margin: 4px 0 0 88px;
         padding-left: 12px;
         border-left: 2px solid rgba($gray3, 0.4);
-        font-size: 13px;
         color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
 
         li {
             padding: 2px 0;
@@ -79,8 +82,10 @@
     .file-name {
         font-family: $pt-font-family-monospace;
         font-size: 12px;
-        padding: 0 3px;
+        padding: 0 2px;
+        margin: 0 -1px;
         border-radius: 3px;
         background: rgba($gray3, 0.15);
+        overflow-wrap: anywhere;
     }
 }

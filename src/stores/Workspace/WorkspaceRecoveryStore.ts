@@ -32,6 +32,8 @@ export interface WorkspaceRecoveryItem {
     label?: string;
     /** Why the item failed, without the name of the item. */
     reason?: string;
+    /** The Workspace ID of the saved catalog whose failure caused this one, such as the first query to a mirror that did not answer. */
+    causeCatalogId?: number;
     /** The kind of file that the user can choose for the item. Undefined when the item is not a file. */
     repointKind?: "image" | "catalog";
     /** Whether the item can be opened again as it is saved, such as an online query. */
