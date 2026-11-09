@@ -13,7 +13,7 @@ import {TelemetryService} from "./TelemetryService";
 export class MirrorTimeoutError extends Error {
     /**
      * @param mirrorUrl - the mirror that did not answer.
-     * @param didTimeOutEarlier - true when the query did not wait, because the mirror timed out on an earlier query.
+     * @param didTimeOutEarlier - true when the query did not wait for the mirror. This happens when the mirror timed out on an earlier query.
      */
     constructor(
         message: string,

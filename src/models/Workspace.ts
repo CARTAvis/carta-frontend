@@ -784,20 +784,20 @@ export interface WorkspaceIssue {
      */
     outcome?: WorkspaceIssueOutcome;
     /**
-     * How the restore report names the item, such as "The image cube.fits". The report shows it
-     * next to the outcome, so it does not say "Skipped" or "Could not" again. The report names a
-     * widget by its title instead.
+     * How the restore report names the item, such as "The image cube.fits". The report shows the
+     * label next to the outcome tag. So the label does not need to say "Skipped" or "Could not".
+     * The report names a widget by its title instead.
      */
     label?: string;
     /** Why the item is not restored as saved, without the name of the item. The report shows it after the label. */
     reason?: string;
     /** The Workspace IDs of the saved images that are not in the session because of this item. */
     imageIds?: number[];
-    /** The Workspace ID of the saved image that caused this issue, because the image is not in the session. */
+    /** The Workspace ID of the saved image that caused this issue. The issue happened because this image is not in the session. */
     causeImageId?: number;
     /** The Workspace IDs of the saved catalogs that are not in the session because of this item. */
     catalogIds?: number[];
-    /** The Workspace ID of the saved catalog that caused this issue, because the catalog is not in the session. */
+    /** The Workspace ID of the saved catalog that caused this issue. The issue happened because this catalog is not in the session. */
     causeCatalogId?: number;
     /** How a widget differs from the workspace. The report groups the widgets with the same effect. */
     effect?: WorkspaceIssueEffect;

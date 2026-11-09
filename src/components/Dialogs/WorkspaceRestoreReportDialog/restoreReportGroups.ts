@@ -1,7 +1,7 @@
 import {WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {type WorkspaceIssue} from "models";
 
-/** Widgets that show something else than they showed, for the same reason. */
+/** Widgets that no longer show what they showed in the workspace, for the same reason. */
 export interface WidgetGroup {
     effect: WorkspaceIssueEffect;
     /** What the widgets show now, when it is not the same for every widget with the effect. See {@link WorkspaceIssue.effectDetail}. */
@@ -10,7 +10,7 @@ export interface WidgetGroup {
     widgetIds: string[];
 }
 
-/** An item that the restore left out, with what it left out or changed in turn. */
+/** An item that the restore left out, and what the restore left out or changed because of this item. */
 export interface LeftOutItem {
     issue: WorkspaceIssue;
     /** The items that are not in the session because of this item, such as the catalogs of a skipped image. */
@@ -21,7 +21,7 @@ export interface LeftOutItem {
     changed: WorkspaceIssue[];
 }
 
-/** An item that is in the session but not as saved: a single issue, or widgets with the same effect. */
+/** An item that is in the session but not as saved. It is a single issue, or a group of widgets with the same effect. */
 export type ChangedItem = {issue: WorkspaceIssue} | {widgets: WidgetGroup};
 
 export interface RestoreReportGroups {
@@ -45,10 +45,11 @@ function addToGroups(groups: WidgetGroup[], issue: WorkspaceIssue & {effect: Wor
  * Groups the issues of a restore for the report.
  *
  * Lists each issue under the left-out item that caused it. For example, the catalogs of a skipped
- * image and the widgets that showed the image are listed under the image. The cause is found by the
- * saved images and catalogs: an issue names the image or catalog that caused it in `causeImageId` or
- * `causeCatalogId`, and a left-out item names the images and catalogs that it left out in `imageIds`
- * and `catalogIds`. A chain of causes is listed under its first item.
+ * image and the widgets that showed the image are listed under the image. The report finds the
+ * cause by the saved images and catalogs. An issue names the image or catalog that caused it in
+ * `causeImageId` or `causeCatalogId`. A left-out item names the images and catalogs that it left
+ * out in `imageIds` and `catalogIds`. When the causes form a chain, every issue of the chain is
+ * listed under the first item.
  *
  * Widgets with the same effect and detail are listed together, both under an item and in the
  * changed items.
@@ -67,8 +68,8 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
     const ownerOf = (issue: WorkspaceIssue): WorkspaceIssue | undefined =>
         (issue.causeImageId !== undefined ? owners.get(`image ${issue.causeImageId}`) : undefined) ?? (issue.causeCatalogId !== undefined ? owners.get(`catalog ${issue.causeCatalogId}`) : undefined);
 
-    // Follow the causes up to the first item, which is listed at the top level. An item in a loop
-    // of causes stays at the top level, so that the report still lists it.
+    // Follow the causes up to the first item. The report lists this item at the top level. An item
+    // in a loop of causes stays at the top level, so that the report still lists it.
     const rootOf = (issue: WorkspaceIssue): WorkspaceIssue => {
         const seen = new Set<WorkspaceIssue>([issue]);
         let current = issue;
@@ -125,9 +126,9 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
 }
 
 /**
- * Returns how the report shows an issue: the name of the item and the reason, such as "The image
- * cube.fits: File does not exist". A widget is named by its title. An issue without a name shows its
- * message.
+ * Returns how the report shows an issue. This is the name of the item and the reason, such as "The
+ * image cube.fits: File does not exist". A widget is named by its title. An issue without a name
+ * shows its message.
  *
  * @param titleOfWidget - returns the title that a widget shows, by its stable ID.
  * @param shouldShowReason - whether to add the reason. An item listed under its cause does not need it.
@@ -142,9 +143,9 @@ export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: s
 }
 
 /**
- * Returns the text before the titles of a group of widgets, which says what the widgets show now.
+ * Returns the text before the titles of a group of widgets. The text says what the widgets show now.
  *
- * @param isUnderCause - whether the group is listed under the item that caused it. Then "it" names that item.
+ * @param isUnderCause - whether the group is listed under the item that caused it. In that case, the text calls that item "it".
  */
 export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): string {
     const isOne = group.widgetIds.length === 1;
@@ -162,7 +163,7 @@ export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): 
     }
 }
 
-/** A piece of a report line, which is a file name or a path when `isFile` is set. */
+/** A piece of a report line. The piece is a file name or a path when `isFile` is true. */
 export interface TextPart {
     text: string;
     isFile: boolean;
@@ -179,14 +180,14 @@ function isFileName(word: string): boolean {
 }
 
 /**
- * Splits a report line into the file names and paths, and the rest, so that the report can show the
+ * Splits a report line into the file names and paths, and the rest. Then the report can show the
  * file names in another style.
  *
- * Finds the file names of the item: the whole subject when it is a file name, such as "my
- * cube.fits", and the words of the subject and the label that are file names, such as "cube.fits"
- * in "the moment images of cube.fits". Also finds absolute paths, such as "/data/cube.fits" in "File
- * /data/cube.fits does not exist", without the punctuation after them. A path with a space is found
- * only up to the space.
+ * The whole subject is a file name when it reads as one, such as "my cube.fits". The words of the
+ * subject and of the label can also be file names, such as "cube.fits" in "the moment images of
+ * cube.fits". Absolute paths are found too, such as "/data/cube.fits" in "File /data/cube.fits does
+ * not exist". The punctuation after a path is left out. A path with a space is found only up to the
+ * space.
  */
 export function splitFileNames(text: string, subject: string, label?: string): TextPart[] {
     const words = `${subject} ${label ?? ""}`.split(/\s+/).filter(isFileName);

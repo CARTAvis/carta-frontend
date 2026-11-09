@@ -36,7 +36,7 @@
         padding: 4px 0;
     }
 
-    // A left-out item puts what it caused below itself, so it stacks its lines.
+    // Stack the lines of a left-out item. The item shows what it caused below its own line.
     li.left-out-item {
         display: block;
 
@@ -47,7 +47,8 @@
         }
     }
 
-    // Line up the guide of what an item caused with the text of the item, after its outcome tag.
+    // Indent the list of what an item caused, so that its left line starts under the text of the
+    // item, after the outcome tag.
     .consequences {
         margin: 4px 0 0 88px;
         padding-left: 12px;
@@ -78,7 +79,7 @@
         min-width: 80px;
     }
 
-    // File names and paths, set apart from the words around them.
+    // Show file names and paths in a monospace font, so that they stand out from the words around them.
     .file-name {
         font-family: $pt-font-family-monospace;
         font-size: 12px;

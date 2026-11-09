@@ -481,7 +481,7 @@ describe("WorkspaceRestorer", () => {
         expect(messages).toHaveLength(2);
         expect(messages[0]).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/);
         expect(messages[1]).toMatch(/: Mirror .+ did not respond within 60 seconds to an earlier query\. The mirror may be unavailable\. Select another mirror site and retry$/);
-        // The report lists the second catalog under the first, which waited for the mirror.
+        // The report lists the second catalog under the first catalog. The first query waited for the mirror.
         const catalogs = issues.filter(issue => issue.kind === WorkspaceItemKind.Catalog);
         expect(catalogs.map(({label, catalogIds, causeCatalogId}) => ({label, catalogIds, causeCatalogId}))).toEqual([
             {label: "The SIMBAD catalog on image.fits", catalogIds: [1], causeCatalogId: undefined},
@@ -994,7 +994,7 @@ describe("WorkspaceRestorer", () => {
         const issues = await restoreIssues(createWorkspace({catalogs: [CATALOG], layout: {...LAYOUT, docked: {type: "row", content: []}}}));
 
         // The session skips each item that Recovery offers. The catalog goes with its image.
-        // The image names the saved image that it leaves out, and the catalog names it as the cause.
+        // The image issue names the saved image that it leaves out. The catalog issue names that image as its cause.
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Image,
             subject: "image.fits",

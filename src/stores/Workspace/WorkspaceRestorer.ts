@@ -210,7 +210,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
-    /** The Workspace ID of the first catalog whose query a mirror did not answer, by the mirror. */
+    /** The Workspace ID of the first catalog whose query a mirror did not answer, by the URL of the mirror. */
     private readonly timedOutCatalogIds = new Map<string, number>();
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
@@ -1825,7 +1825,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Returns how the restore report names a catalog, such as "The catalog sources.vot" or "The
-     * SIMBAD catalog on cube.fits". The image tells apart the online catalogs of one service.
+     * SIMBAD catalog on cube.fits". The name of the image tells apart two online catalogs from the
+     * same service.
      */
     private labelOfCatalog(catalogInfo: WorkspaceCatalog): string {
         const source = catalogInfo.source;
