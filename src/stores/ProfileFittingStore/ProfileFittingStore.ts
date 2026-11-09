@@ -471,6 +471,13 @@ export class ProfileFittingStore {
         this.originData = {x, y};
     };
 
+    /** Returns whether saved fitting settings have an initial guess that is not 0. A guess of 0 is the default. */
+    public static hasWorkspaceGuesses = (config: WorkspaceSpectralFitting): boolean => {
+        const isGuess = (value: unknown): boolean => typeof value === "number" && isFinite(value) && value !== 0;
+        const components = Array.isArray(config.components) ? config.components : [];
+        return isGuess(config.yIntercept) || isGuess(config.slope) || components.some(component => isGuess(component?.center) || isGuess(component?.amp) || isGuess(component?.fwhm));
+    };
+
     /**
      * Returns the fitting settings that a workspace saves. The fit results are left out.
      *
@@ -505,10 +512,14 @@ export class ProfileFittingStore {
 
     /**
      * Applies the fitting settings that a workspace saved. Starts from the defaults, so a value that
-     * is missing or not valid keeps its default. The caller checks the units first.
+     * is missing or not valid keeps its default.
+     *
+     * @param shouldApplyGuesses - whether to apply the initial guesses. The caller passes false when
+     *                             the guesses are in other units than the profile shows now. Then
+     *                             the guesses are 0, and the other settings are applied.
      */
-    @action applyWorkspaceConfig = (config: WorkspaceSpectralFitting): void => {
-        const numberOr = (value: unknown, fallback: number): number => (typeof value === "number" && isFinite(value) ? value : fallback);
+    @action applyWorkspaceConfig = (config: WorkspaceSpectralFitting, shouldApplyGuesses: boolean): void => {
+        const numberOr = (value: unknown, fallback: number): number => (shouldApplyGuesses && typeof value === "number" && isFinite(value) ? value : fallback);
         const isTrue = (value: unknown): boolean => value === true;
         this.reset();
         if (Object.values(FittingFunction).includes(config.function)) {

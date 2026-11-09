@@ -708,13 +708,13 @@ export interface WorkspaceSpectralMoments {
     moments: CARTA.Moment[];
     /** The region that the moments are made from, by the ID that the region was saved with. -1 is the whole image, and -3 is the active region. */
     regionId: number;
-    /** The spectral range, in the units of `channelUnit`. */
-    channelRange: [number, number];
-    channelUnit: string;
+    /** The spectral range, in the units of `channelUnit`. Left out when it is the whole spectral axis. */
+    channelRange?: [number, number];
+    channelUnit?: string;
     mask: CARTA.MomentMask;
-    /** The range of pixel values that the mask keeps, in the units of `maskUnit`. */
-    maskRange: [number, number];
-    maskUnit: string;
+    /** The range of pixel values that the mask uses, in the units of `maskUnit`. Left out when it is the default, 0 to 1. */
+    maskRange?: [number, number];
+    maskUnit?: string;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */

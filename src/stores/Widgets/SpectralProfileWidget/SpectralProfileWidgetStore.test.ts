@@ -782,10 +782,10 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     });
 
     describe("fitting and moment settings in a workspace", () => {
-        /** A frame in Frequency (GHz), LSRK, whose profile is in Jy/beam, and a workspace that saves it as image 1. */
+        /** A frame in Frequency (GHz), LSRK, from 100 to 110, whose profile is in Jy/beam. */
         const createFittingWidgetStore = () => {
             const created = createWidgetStore();
-            Object.assign(created.frame, {spectralCoordinate: "Frequency (GHz)", spectralSystem: "LSRK"});
+            Object.assign(created.frame, {spectralCoordinate: "Frequency (GHz)", spectralSystem: "LSRK", channelValueBounds: {min: 100, max: 110}});
             return created;
         };
         const savesTheImage = {imageIdOf: (): number | undefined => 1};
@@ -863,6 +863,8 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
                 widgetStore.setRestFrameRedshift(1);
                 widgetStore.setXAxisRestFrameEnabled(true);
                 widgetStore.setYAxisRestFrameEnabled(true);
+                widgetStore.setSelectedChannelRange(101, 108);
+                widgetStore.setSelectedMaskRange(0.2, 0.8);
             });
 
             const config = widgetStore.toWorkspaceConfig(savesTheImage);
@@ -896,16 +898,30 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             expect([fitting.isAutoDetectWithCont, fitting.isAutoDetectWithFitting, fitting.isResidualEnabled, fitting.hasResult]).toEqual([true, true, false, false]);
         });
 
-        test("keeps the fitting defaults and says so when the profile shows other units", () => {
+        test("sets the guesses to 0 and says so when the profile shows other units, and applies the other fitting settings", () => {
             const {widgetStore} = createFittingWidgetStore();
             const config = {fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK"}};
 
             const problems = restore(widgetStore, config);
 
+            const fitting = widgetStore.fittingStore;
             expect(problems).toEqual([
-                'the fitting guesses were made in "Velocity (km/s), LSRK" on the x axis and "Jy/beam" on the y axis, but the profile now shows "Frequency (GHz), LSRK" on the x axis and "Jy/beam" on the y axis. The fitting settings keep their defaults'
+                'the fitting guesses were made in "Velocity (km/s), LSRK" on the x axis and "Jy/beam" on the y axis, but the profile now shows "Frequency (GHz), LSRK" on the x axis and "Jy/beam" on the y axis. The guesses are 0'
             ]);
-            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept, widgetStore.fittingStore.components.length]).toEqual([0, 0, 1]);
+            expect([fitting.function, fitting.continuum, fitting.yIntercept, fitting.slope, fitting.isLockedYIntercept, fitting.isResidualEnabled]).toEqual([1, 1, 0, 0, true, false]);
+            expect(fitting.components.map(component => [component.center, component.amp, component.fwhm, component.isLockedCenter, component.isLockedFwhm])).toEqual([
+                [0, 0, 0, true, false],
+                [0, 0, 0, false, true]
+            ]);
+        });
+
+        test("does not report fitting guesses in other units when every guess is 0", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const guessesOfZero = {yIntercept: 0, slope: 0, components: [{center: 0, amp: 0, fwhm: 0, centerLocked: false, ampLocked: false, fwhmLocked: false}]};
+            const config = {fitting: {...savedFitting, ...guessesOfZero, xUnit: "Channel"}};
+
+            expect(restore(widgetStore, config)).toEqual([]);
+            expect(widgetStore.fittingStore.function).toBe(1);
         });
 
         test("keeps the default of each saved fitting value that is not valid", () => {
@@ -949,6 +965,19 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
                 maskRange: [0.2, 0.8],
                 maskUnit: "Jy/beam"
             });
+        });
+
+        test("leaves out a moment range that is the default, so a restore in other units does not report it", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.setSelectedChannelRange(100, 110);
+                widgetStore.setSelectedMaskRange(0, 1);
+            });
+
+            const moments = widgetStore.toWorkspaceConfig(savesTheImage).moments;
+
+            expect(moments).toEqual({moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: RegionId.IMAGE, mask: CARTA.MomentMask.None});
+            expect(restore(createFittingWidgetStore().widgetStore, {moments})).toEqual([]);
         });
 
         test("restores the moments, the region they are made from, the mask and the ranges", () => {

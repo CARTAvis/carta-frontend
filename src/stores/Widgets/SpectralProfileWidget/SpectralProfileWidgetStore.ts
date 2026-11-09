@@ -1351,16 +1351,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         return [this.yUnit, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
     };
 
-    /** Returns the moment generator settings. The ranges are in the observed frame, as the store keeps them. */
+    /**
+     * Returns the moment generator settings. The ranges are in the observed frame, as the store
+     * keeps them. A range that is the default is left out: the whole spectral axis, and a mask
+     * range of 0 to 1. Then a restore in other units does not report a range that the user did not
+     * choose.
+     */
     private toWorkspaceMoments = (): WorkspaceSpectralMoments => {
+        const bounds = this.effectiveFrame?.channelValueBounds;
+        const [channelMin, channelMax] = this.channelValueRange;
+        const [maskMin, maskMax] = this.maskRange;
+        const isWholeAxis = !bounds || (channelMin === bounds.min && channelMax === bounds.max);
         return {
             moments: [...this.selectedMoments],
             regionId: this.momentRegionId,
-            channelRange: [this.channelValueRange[0], this.channelValueRange[1]],
-            channelUnit: this.spectralUnitOf(false),
+            ...(isWholeAxis ? {} : {channelRange: [channelMin, channelMax], channelUnit: this.spectralUnitOf(false)}),
             mask: this.momentMask,
-            maskRange: [this.maskRange[0], this.maskRange[1]],
-            maskUnit: this.intensityUnitOf(false)
+            ...(maskMin === 0 && maskMax === 1 ? {} : {maskRange: [maskMin, maskMax], maskUnit: this.intensityUnitOf(false)})
         };
     };
 
@@ -1456,10 +1463,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (fitting && typeof fitting === "object") {
             const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
             const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
-            if (fitting.xUnit === xUnit && fitting.yUnit === yUnit) {
-                this.fittingStore.applyWorkspaceConfig(fitting);
-            } else {
-                problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The fitting settings keep their defaults`);
+            const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
+            this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits);
+            if (!isSameUnits && ProfileFittingStore.hasWorkspaceGuesses(fitting)) {
+                problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The guesses are 0`);
             }
         }
         const moments = config.moments;
