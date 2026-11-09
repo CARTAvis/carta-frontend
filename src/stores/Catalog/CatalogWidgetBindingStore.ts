@@ -436,7 +436,7 @@ export class CatalogWidgetBindingStore {
             const catalog = catalogs?.find(candidate => candidate.id === id);
             return catalog ? `the catalog ${describeCatalogSource(catalog.source)}` : `workspace catalog ${id}`;
         };
-        // Names the catalog that a widget shows instead, such as "the catalog sources.vot".
+        // Returns the name of the catalog that a widget shows instead, such as "the catalog sources.vot".
         const describeShown = (fileId: number | undefined): string | undefined => {
             if (fileId === undefined || !this.catalogs.catalogProfileStores.has(fileId)) {
                 return undefined;

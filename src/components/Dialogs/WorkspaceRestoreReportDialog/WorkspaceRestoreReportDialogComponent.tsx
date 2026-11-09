@@ -17,8 +17,8 @@ function pathOf(directory: string | undefined, filename: string): string {
 }
 
 /**
- * Marks an item as failed or skipped. An item listed under its cause has a lighter tag, so that the
- * item that caused it stands out.
+ * Marks an item as failed or skipped. An item that is listed under its cause has a lighter tag. Then
+ * the cause stands out.
  */
 const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnderCause?: boolean}) => {
     const isSkipped = issue.outcome === WorkspaceIssueOutcome.Skipped;
