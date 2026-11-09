@@ -1,6 +1,6 @@
 import {action, makeObservable, observable, observe} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, isWidgetWorkspaceConfigOf, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
 import type {CatalogPlotLayoutSettings, CatalogPlotWidgetStoreProps} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
@@ -454,7 +454,15 @@ export class CatalogWidgetBindingStore {
                     this.initTable(componentId, this.fallbackCatalog(undefined, undefined));
                 }
                 const fallback = componentId === undefined ? "" : describeFallback(this.tableCatalogs.get(componentId));
-                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId}: ${describe(config.catalogId)} is unavailable${fallback}`});
+                const reason = `${describe(config.catalogId)} is unavailable${fallback}`;
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogWidget,
+                    subject: widgetId,
+                    message: `Could not restore catalog widget ${widgetId}: ${reason}`,
+                    reason,
+                    causeCatalogId: config.catalogId,
+                    effect: WorkspaceIssueEffect.CatalogNotRestored
+                });
             } else if (matching.length !== 1 || !this.show(matching[0][0], catalogFileId)) {
                 issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId} to ${describe(config.catalogId)}: the widget selection could not be applied`});
             }
@@ -467,7 +475,15 @@ export class CatalogWidgetBindingStore {
             }
             const catalogFileId = catalogIds.get(config.catalogId);
             if (catalogFileId === undefined) {
-                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId}: ${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`});
+                const reason = `${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`;
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogPlot,
+                    subject: widgetId,
+                    message: `Could not restore catalog plot ${widgetId}: ${reason}`,
+                    reason,
+                    causeCatalogId: config.catalogId,
+                    effect: WorkspaceIssueEffect.CatalogNotRestored
+                });
                 continue;
             }
             const plotWidgetId = state.plotFor(state.activeCatalogFileId);

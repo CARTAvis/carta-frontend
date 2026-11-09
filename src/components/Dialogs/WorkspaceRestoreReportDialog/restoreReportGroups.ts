@@ -47,29 +47,33 @@ function addToGroups(groups: WidgetGroup[], effect: WorkspaceIssueEffect, widget
  *
  * Lists each issue under the left-out item that caused it. For example, the catalogs of a skipped
  * image and the widgets that showed the image are listed under the image. The cause is found by the
- * saved images: an issue names the image that caused it in `causeImageId`, and a left-out item names
- * the images that it left out in `imageIds`. A chain of causes is listed under its first item.
+ * saved images and catalogs: an issue names the image or catalog that caused it in `causeImageId` or
+ * `causeCatalogId`, and a left-out item names the images and catalogs that it left out in `imageIds`
+ * and `catalogIds`. A chain of causes is listed under its first item.
  *
  * Widgets with the same effect are listed together, both under an item and in the changed items.
  */
 export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreReportGroups {
     const leftOutIssues = issues.filter(issue => issue.outcome);
-    const ownerOfImage = new Map<number, WorkspaceIssue>();
+    // The left-out item of each saved image and catalog, by keys such as "image 2" and "catalog 1".
+    const owners = new Map<string, WorkspaceIssue>();
     for (const issue of leftOutIssues) {
-        for (const imageId of issue.imageIds ?? []) {
-            if (!ownerOfImage.has(imageId)) {
-                ownerOfImage.set(imageId, issue);
+        for (const key of [...(issue.imageIds ?? []).map(id => `image ${id}`), ...(issue.catalogIds ?? []).map(id => `catalog ${id}`)]) {
+            if (!owners.has(key)) {
+                owners.set(key, issue);
             }
         }
     }
+    const ownerOf = (issue: WorkspaceIssue): WorkspaceIssue | undefined =>
+        (issue.causeImageId !== undefined ? owners.get(`image ${issue.causeImageId}`) : undefined) ?? (issue.causeCatalogId !== undefined ? owners.get(`catalog ${issue.causeCatalogId}`) : undefined);
 
     // Follow the causes up to the first item, which is listed at the top level. An item in a loop
     // of causes stays at the top level, so that the report still lists it.
     const rootOf = (issue: WorkspaceIssue): WorkspaceIssue => {
         const seen = new Set<WorkspaceIssue>([issue]);
         let current = issue;
-        while (current.causeImageId !== undefined) {
-            const owner = ownerOfImage.get(current.causeImageId);
+        for (;;) {
+            const owner = ownerOf(current);
             if (!owner) {
                 break;
             }
@@ -130,7 +134,8 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
  * @param shouldShowReason - whether to add the reason. An item listed under its cause does not need it.
  */
 export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: string) => string, shouldShowReason: boolean = true): string {
-    const name = issue.kind === WorkspaceItemKind.PlotWidget && issue.reason !== undefined ? titleOfWidget(issue.subject) : issue.label;
+    const isWidget = issue.kind === WorkspaceItemKind.PlotWidget || issue.kind === WorkspaceItemKind.CatalogWidget || issue.kind === WorkspaceItemKind.CatalogPlot;
+    const name = isWidget && issue.reason !== undefined ? titleOfWidget(issue.subject) : issue.label;
     if (!name) {
         return issue.message;
     }
@@ -145,10 +150,51 @@ export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: s
 export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): string {
     const count = group.widgetIds.length;
     const widgets = count === 1 ? "Widget" : "Widgets";
+    if (group.effect === WorkspaceIssueEffect.CatalogNotRestored) {
+        return `${count === 1 ? "Catalog widget" : "Catalog widgets"} whose catalog was not restored:`;
+    }
     if (group.effect === WorkspaceIssueEffect.ActiveImage) {
         return isUnderCause
             ? `${widgets} that now show${count === 1 ? "s" : ""} the active image:`
             : `${widgets} that show${count === 1 ? "s" : ""} the active image, because the image ${count === 1 ? "it" : "they"} showed was not restored:`;
     }
     return `${widgets} that show${count === 1 ? "s" : ""} the active region, because the region ${count === 1 ? "it" : "they"} showed was not restored:`;
+}
+
+/** A piece of a report line, which is a file name or a path when `isFile` is set. */
+export interface TextPart {
+    text: string;
+    isFile: boolean;
+}
+
+function escapeRegExp(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Splits a report line into the file names and paths, and the rest, so that the report can show the
+ * file names in another style.
+ *
+ * Finds the file names of the item, which are the words of its subject that contain a dot, such as
+ * "cube.fits" in "the moment images of cube.fits". Also finds absolute paths, such as
+ * "/data/cube.fits" in "File /data/cube.fits does not exist".
+ */
+export function splitFileNames(text: string, subject: string): TextPart[] {
+    const names = subject.split(/\s+/).filter(word => word.includes(".") && word.length > 2);
+    const patterns = ["(?<![\\w/])/[^\\s:;,]+", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
+    const pattern = new RegExp(patterns.join("|"), "g");
+    const parts: TextPart[] = [];
+    let last = 0;
+    for (const match of text.matchAll(pattern)) {
+        const index = match.index ?? 0;
+        if (index > last) {
+            parts.push({text: text.slice(last, index), isFile: false});
+        }
+        parts.push({text: match[0], isFile: true});
+        last = index + match[0].length;
+    }
+    if (last < text.length) {
+        parts.push({text: text.slice(last), isFile: false});
+    }
+    return parts;
 }

@@ -303,8 +303,9 @@ describe("WidgetsStore PV preview test ids", () => {
 
         expect(widgetsStore.titleOfWidget("stats-0")).toBe("Statistics: Region 1");
         expect(widgetsStore.titleOfWidget("spatial-profiler-0")).toBe("Y Profile: Cursor");
-        expect(widgetsStore.titleOfWidget("stokes-0", "stokes")).toBe("Stokes Analysis");
-        expect(widgetsStore.titleOfWidget("stokes-0")).toBe("stokes-0");
+        // A widget that is not open is named by the default title of the type that its ID starts with.
+        expect(widgetsStore.titleOfWidget("stokes-0")).toBe("Stokes Analysis");
+        expect(widgetsStore.titleOfWidget("unknown-0")).toBe("unknown-0");
     });
 
     test("reports what a widget could not be pointed at, naming the widget", () => {
