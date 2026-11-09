@@ -447,37 +447,46 @@ describe("WidgetsStore initWidgets", () => {
         jest.restoreAllMocks();
     });
 
-    test("applies the image view grid a layout saved, and saves the session's grid in a layout", () => {
+    test("applies the image view grid and the WCS overlay a layout saved, and saves the session's grid and overlay in a layout", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const wcsOverlay = {isVisible: true, grid: {isVisible: false}};
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => grid)};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => ["The overlay problem"]), toConfig: jest.fn(() => wcsOverlay)};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], []);
+        const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], []);
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
-        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view")).toEqual(grid);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
+        expect(problems).toEqual(["The overlay problem"]);
+        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view")).toEqual({...grid, wcsOverlay});
     });
 
-    test("keeps the image view grid a layout saved when another image view in it saved none", () => {
+    test("keeps the image view grid and the WCS overlay a layout saved when another image view in it saved none", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const wcsOverlay = {grid: {isVisible: false}};
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], [{type: "component", id: "image-view"}]);
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], [{type: "component", id: "image-view"}]);
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
     });
 
-    test("returns the image view grid to the user's preferences when a layout saved none", () => {
+    test("returns the image view grid and the WCS overlay to their defaults and the user's preferences when a layout saved none", () => {
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}}], []);
 
         expect(imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+        expect(overlaySettings.applyConfig).toHaveBeenCalledWith(null);
     });
 
     test("brings a restored floating histogram to the front when selected", () => {

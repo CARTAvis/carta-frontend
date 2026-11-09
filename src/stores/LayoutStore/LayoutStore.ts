@@ -113,9 +113,10 @@ export class LayoutStore {
      * @param config - the layout, in the form a saved layout and a workspace both hold it.
      * @param layoutName - the saved layout it came from, or "" when it is not a layout of its own,
      *                     as for the layout a workspace carries.
+     * @param problems - receives what could not be applied as the layout saved it.
      * @returns whether the layout could be applied.
      */
-    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = ""): boolean => {
+    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = "", problems: string[] = []): boolean => {
         const preparedConfig = LayoutConfig.prepareLayout(config);
         if (!preparedConfig) {
             return false;
@@ -142,7 +143,7 @@ export class LayoutStore {
         appStore.widgetsStore.clearPopoutPositions();
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? []);
+        problems.push(...appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? []));
 
         this.layoutModel = nextLayoutModel;
 

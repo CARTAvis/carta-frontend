@@ -8,6 +8,7 @@ import {
     WORKSPACE_VERSION,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
+    type WorkspaceColorBlending,
     type WorkspaceFile,
     type WorkspaceFittingRequest,
     type WorkspaceGenerationRequest,
@@ -302,6 +303,9 @@ export class WorkspaceSnapshotter {
             const beam = frame.overlayBeamSettings;
             workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
         }
+        if (frame.titleCustomText !== frame.defaultTitleText) {
+            workspaceFile.titleCustomText = frame.titleCustomText;
+        }
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
         if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
             workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
@@ -502,14 +506,18 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
-            this.workspace.colorBlendingImages.push({
+            const workspaceColorBlending: WorkspaceColorBlending = {
                 imageListIndex: index,
                 selectedFrameId: selectedFrameId as number[],
                 alpha: colorBlending.alpha,
                 ...(colorBlending.isRasterVisible === false ? {rasterVisible: false} : {}),
                 ...(colorBlending.isContourVisible === false ? {contourVisible: false} : {}),
                 ...(colorBlending.isVectorOverlayVisible === false ? {vectorOverlayVisible: false} : {})
-            });
+            };
+            if (colorBlending.titleCustomText !== colorBlending.filename) {
+                workspaceColorBlending.titleCustomText = colorBlending.titleCustomText;
+            }
+            this.workspace.colorBlendingImages.push(workspaceColorBlending);
         }
     }
 
@@ -637,6 +645,8 @@ export class WorkspaceSnapshotter {
      */
     private captureLayout(): void {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
+        // The layout saves how the WCS overlay looks. The custom texts describe the images, so the workspace saves them.
+        this.workspace.wcsOverlay = this.appStore.overlaySettings.toTextConfig();
     }
 
     /**

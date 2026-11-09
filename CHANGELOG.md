@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added a progress dialog with Cancel and an end-of-restore report to opening a workspace, and a thumbnail of the whole app to saved workspaces ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings, and the Image Fitting settings and results, in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
+* Added support for saving the WCS overlay in layouts and workspaces: a layout keeps how the overlay looks, including the coordinate system, and a workspace keeps the custom axis labels and titles ([#3043](https://github.com/CARTAvis/carta-frontend/issues/3043)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -55,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed workspaces putting moment, PV, HiPS and image fitting images at the end of the image list ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Fixed online SIMBAD and VizieR queries waiting forever for a mirror that does not respond; they now stop after 60 seconds ([#3058](https://github.com/CARTAvis/carta-frontend/issues/3058)).
 * Fixed spectral profile fitting guesses being cleared while the profile streams in or when the fitting settings open ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
+* Fixed the WCS overlay color, grid and axis labels going back to the user's preferences each time an image was opened ([#3043](https://github.com/CARTAvis/carta-frontend/issues/3043)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

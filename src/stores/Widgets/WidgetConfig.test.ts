@@ -2,11 +2,10 @@ import Ajv from "ajv";
 
 import {HistogramSettingsTabs, PlotType, RestFrameShiftMode, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
+// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
+import {AppStore, WidgetsStore} from "stores";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
-
-// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
-import "stores";
 
 import {AnimatorWidgetStore} from "./AnimatorWidgetStore/AnimatorWidgetStore";
 import {HistogramWidgetStore} from "./HistogramWidgetStore/HistogramWidgetStore";
@@ -122,16 +121,34 @@ describe("widget config in a layout", () => {
     });
 });
 
-describe("image view grid in a layout", () => {
+describe("image view grid and WCS overlay in a layout", () => {
     const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/carta-widget", definitions: LAYOUT_SCHEMA.definitions});
-    const grid = () => ImageViewConfigStore.Instance.toConfig();
+    const imageViewSettings = () => WidgetsStore.Instance.toWidgetSettingsConfig("image-view", "image-view-0");
+
+    afterEach(() => {
+        AppStore.Instance.overlaySettings.applyConfig(null);
+        ImageViewConfigStore.Instance.applyConfig(null);
+    });
+
+    test("saves the WCS overlay with the grid", () => {
+        expect(imageViewSettings()).toEqual({...ImageViewConfigStore.Instance.toConfig(), wcsOverlay: AppStore.Instance.overlaySettings.toConfig()});
+    });
+
+    test("applies the WCS overlay of the first image view that saved its settings", () => {
+        const problems = WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings: {panelColumns: 3, wcsOverlay: {grid: {isVisible: false}, title: {isVisible: true}}}}], []);
+
+        expect(problems).toEqual([]);
+        expect(ImageViewConfigStore.Instance.panelColumns).toBe(3);
+        expect(AppStore.Instance.overlaySettings.grid.isVisible).toBe(false);
+        expect(AppStore.Instance.overlaySettings.title.isVisible).toBe(true);
+    });
 
     test("writes only fields the layout schema declares", () => {
-        expect(undeclaredFields("layout/image-view", LAYOUT_SCHEMA.definitions["image-view"]?.properties.widgetSettings.properties, grid())).toEqual([]);
+        expect(undeclaredFields("layout/image-view", LAYOUT_SCHEMA.definitions["image-view"]?.properties.widgetSettings.properties, imageViewSettings()!)).toEqual([]);
     });
 
     test("writes settings the layout schema accepts", () => {
-        expect(validateWidget(JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: grid()})))).toBe(true);
+        expect(validateWidget(JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: imageViewSettings()})))).toBe(true);
     });
 });
 

@@ -2,11 +2,161 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
+import {type Persisted, type WorkspaceWcsOverlayText} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {ASTSettingsString, clamp, getColorForTheme, getDefaultWcsFormats, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
+
+function isBoolean(value: unknown): value is boolean {
+    return typeof value === "boolean";
+}
+
+/** Returns a check that a value is a number from `min` to `max`. */
+function numberIn(min: number, max: number = Infinity) {
+    return (value: unknown): value is number => typeof value === "number" && isFinite(value) && value >= min && value <= max;
+}
+
+function isColor(value: unknown): value is string {
+    return typeof value === "string" && value.length > 0;
+}
+
+function isText(value: unknown): value is string {
+    return typeof value === "string";
+}
+
+/** Returns whether the value is the index of an AST font. */
+function isFont(value: unknown): value is number {
+    return Number.isInteger(value) && (value as number) >= 0 && (value as number) < AST.fonts.length;
+}
+
+function isOneOf<T>(values: readonly T[]) {
+    return (value: unknown): value is T => values.includes(value as T);
+}
+
+/** Returns the saved value when it passes the check, or else the fallback. */
+function savedOr<T>(value: unknown, isValid: (value: unknown) => value is T, fallback: T): T {
+    return isValid(value) ? value : fallback;
+}
+
+function isFontSize(value: unknown): value is number {
+    return numberIn(7, 96)(value);
+}
+
+function isLineWidth(value: unknown): value is number {
+    return numberIn(0.001, 30)(value);
+}
+
+/** Returns whether the value is a whole number that is 0 or more. */
+function isCount(value: unknown): value is number {
+    return Number.isInteger(value) && (value as number) >= 0;
+}
+
+function isLabelType(value: unknown): value is LabelType {
+    return isOneOf(Object.values(LabelType))(value);
+}
+
+function isNumberFormat(value: unknown): value is NumberFormatType {
+    return isOneOf(Object.values(NumberFormatType))(value);
+}
+
+export interface OverlayGlobalConfig {
+    labelType: LabelType;
+    color: string;
+    /** The tolerance of the curves, in percent. */
+    tolerance: number;
+    system: SystemType;
+}
+
+export interface OverlayTitleConfig {
+    isVisible: boolean;
+    /** Whether the toolbar button hides the title, the numbers and the labels. */
+    isHidden: boolean;
+    font: number;
+    fontSize: number;
+    hasCustomColor: boolean;
+    color: string;
+}
+
+export interface OverlayGridConfig {
+    isVisible: boolean;
+    hasCustomColor: boolean;
+    color: string;
+    width: number;
+    hasCustomGap: boolean;
+    gapX: number;
+    gapY: number;
+}
+
+export interface OverlayBorderConfig {
+    isVisible: boolean;
+    hasCustomColor: boolean;
+    color: string;
+    width: number;
+}
+
+export interface OverlayAxisConfig {
+    isVisible: boolean;
+    hasCustomColor: boolean;
+    color: string;
+    width: number;
+}
+
+export interface OverlayTickConfig {
+    shouldDrawAll: boolean;
+    hasCustomDensity: boolean;
+    densityX: number;
+    densityY: number;
+    hasCustomColor: boolean;
+    color: string;
+    width: number;
+    /** The length of the minor ticks, in percent. */
+    length: number;
+    /** The length of the major ticks, in percent. */
+    majorLength: number;
+}
+
+export interface OverlayNumberConfig {
+    isVisible: boolean;
+    isHidden: boolean;
+    font: number;
+    fontSize: number;
+    hasCustomColor: boolean;
+    color: string;
+    hasCustomFormat: boolean;
+    formatX: NumberFormatType;
+    formatY: NumberFormatType;
+    hasCustomPrecision: boolean;
+    precision: number;
+}
+
+export interface OverlayLabelConfig {
+    isVisible: boolean;
+    isHidden: boolean;
+    hasCustomColor: boolean;
+    color: string;
+    font: number;
+    fontSize: number;
+    hasRaDecReference: boolean;
+}
+
+/**
+ * How the WCS overlay looks, as a layout saves it. It names none of the images, so a layout can
+ * carry it to any session. The custom texts and the switches that show them belong to the images,
+ * so a workspace saves them instead. See {@link WorkspaceWcsOverlayText}.
+ */
+export interface WcsOverlayConfig {
+    isVisible: boolean;
+    global: OverlayGlobalConfig;
+    title: OverlayTitleConfig;
+    grid: OverlayGridConfig;
+    border: OverlayBorderConfig;
+    axes: OverlayAxisConfig;
+    ticks: OverlayTickConfig;
+    numbers: OverlayNumberConfig;
+    labels: OverlayLabelConfig;
+}
 
 export class Padding {
     left: number;
@@ -17,7 +167,8 @@ export class Padding {
 
 export class OverlayGlobalSettings {
     @observable labelType: LabelType = LabelType.Exterior;
-    @observable color: string;
+    /** The color set in this session. When it is not set, the color follows the user's preference. */
+    @observable private customColor: string | undefined = undefined;
     @observable tolerance: number = 2; // percentage
     @observable system: SystemType = SystemType.Auto;
 
@@ -79,15 +230,30 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
+    @computed get color(): string {
+        return this.customColor ?? PreferenceStore.Instance.astColor;
+    }
+
     constructor() {
-        this.setColor(PreferenceStore.Instance.astColor);
-        makeObservable(this);
+        makeObservable<OverlayGlobalSettings, "customColor">(this);
+        // The color follows the preference until it is set. So pass every change of the color to AST.
+        autorun(() => AST.setColor(getColorForTheme(this.color), AstColorsIndex.GLOBAL));
     }
 
     @action setColor = (color: string) => {
-        this.color = color;
-        AST.setColor(getColorForTheme(color), AstColorsIndex.GLOBAL);
+        this.customColor = color;
     };
+
+    toConfig(): OverlayGlobalConfig {
+        return {labelType: this.labelType, color: this.color, tolerance: this.tolerance, system: this.system};
+    }
+
+    /** Applies everything but the coordinate system. {@link OverlaySettings.applyConfig} applies the system. */
+    @action applyConfig(config: Persisted<OverlayGlobalConfig> | undefined) {
+        this.labelType = savedOr(config?.labelType, isLabelType, LabelType.Exterior);
+        this.customColor = isColor(config?.color) ? config.color : undefined;
+        this.tolerance = savedOr(config?.tolerance, numberIn(0.1), 2);
+    }
 
     @action setTolerance(tolerance: number) {
         this.tolerance = tolerance;
@@ -181,10 +347,24 @@ export class OverlayTitleSettings {
     @action setCustomText = (hasCustomTitle: boolean) => {
         this.hasCustomText = hasCustomTitle;
     };
+
+    toConfig(): OverlayTitleConfig {
+        return {isVisible: this.isVisible, isHidden: this.isHidden, font: this.font, fontSize: this.fontSize, hasCustomColor: this.hasCustomColor, color: this.color};
+    }
+
+    @action applyConfig(config: Persisted<OverlayTitleConfig> | undefined) {
+        this.isVisible = savedOr(config?.isVisible, isBoolean, false);
+        this.isHidden = savedOr(config?.isHidden, isBoolean, false);
+        this.font = savedOr(config?.font, isFont, 2);
+        this.fontSize = savedOr(config?.fontSize, isFontSize, 18);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+    }
 }
 
 export class OverlayGridSettings {
-    @observable isVisible: boolean = PreferenceStore.Instance.isAstGridVisible;
+    /** The visibility set in this session. When it is not set, the visibility follows the user's preference. */
+    @observable private isVisibleInSession: boolean | undefined = undefined;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
     @observable width: number = 1;
@@ -202,12 +382,16 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
+    @computed get isVisible(): boolean {
+        return this.isVisibleInSession ?? PreferenceStore.Instance.isAstGridVisible;
+    }
+
     constructor() {
-        makeObservable(this);
+        makeObservable<OverlayGridSettings, "isVisibleInSession">(this);
     }
 
     @action setVisible(isVisible: boolean = true) {
-        this.isVisible = isVisible;
+        this.isVisibleInSession = isVisible;
     }
 
     @action setCustomColor(hasCustomColor: boolean) {
@@ -218,6 +402,20 @@ export class OverlayGridSettings {
         this.color = color;
         AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
     };
+
+    toConfig(): OverlayGridConfig {
+        return {isVisible: this.isVisible, hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
+    }
+
+    @action applyConfig(config: Persisted<OverlayGridConfig> | undefined) {
+        this.isVisibleInSession = isBoolean(config?.isVisible) ? config.isVisible : undefined;
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.width = savedOr(config?.width, isLineWidth, 1);
+        this.hasCustomGap = savedOr(config?.hasCustomGap, isBoolean, false);
+        this.gapX = savedOr(config?.gapX, numberIn(0.001), 0.2);
+        this.gapY = savedOr(config?.gapY, numberIn(0.001), 0.2);
+    }
 
     @action setWidth(width: number) {
         this.width = width;
@@ -269,6 +467,17 @@ export class OverlayBorderSettings {
 
     @action setWidth(width: number) {
         this.width = width;
+    }
+
+    toConfig(): OverlayBorderConfig {
+        return {isVisible: this.isVisible, hasCustomColor: this.hasCustomColor, color: this.color, width: this.width};
+    }
+
+    @action applyConfig(config: Persisted<OverlayBorderConfig> | undefined) {
+        this.isVisible = savedOr(config?.isVisible, isBoolean, true);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.width = savedOr(config?.width, numberIn(0.5, 30), 1);
     }
 }
 
@@ -340,6 +549,32 @@ export class OverlayTickSettings {
     @action setMajorLength(length: number) {
         this.majorLength = length;
     }
+
+    toConfig(): OverlayTickConfig {
+        return {
+            shouldDrawAll: this.shouldDrawAll,
+            hasCustomDensity: this.hasCustomDensity,
+            densityX: this.densityX,
+            densityY: this.densityY,
+            hasCustomColor: this.hasCustomColor,
+            color: this.color,
+            width: this.width,
+            length: this.length,
+            majorLength: this.majorLength
+        };
+    }
+
+    @action applyConfig(config: Persisted<OverlayTickConfig> | undefined) {
+        this.shouldDrawAll = savedOr(config?.shouldDrawAll, isBoolean, true);
+        this.hasCustomDensity = savedOr(config?.hasCustomDensity, isBoolean, false);
+        this.densityX = savedOr(config?.densityX, numberIn(0), 4);
+        this.densityY = savedOr(config?.densityY, numberIn(0), 4);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.width = savedOr(config?.width, isLineWidth, 1);
+        this.length = savedOr(config?.length, numberIn(0, 100), 1);
+        this.majorLength = savedOr(config?.majorLength, numberIn(0, 100), 2);
+    }
 }
 
 export class OverlayAxisSettings {
@@ -377,6 +612,17 @@ export class OverlayAxisSettings {
 
     @action setWidth(width: number) {
         this.width = width;
+    }
+
+    toConfig(): OverlayAxisConfig {
+        return {isVisible: this.isVisible, hasCustomColor: this.hasCustomColor, color: this.color, width: this.width};
+    }
+
+    @action applyConfig(config: Persisted<OverlayAxisConfig> | undefined) {
+        this.isVisible = savedOr(config?.isVisible, isBoolean, false);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.width = savedOr(config?.width, isLineWidth, 1);
     }
 }
 
@@ -525,10 +771,45 @@ export class OverlayNumberSettings {
     @action setValidWcs(isValidWcs: boolean) {
         this.isValidWcs = isValidWcs;
     }
+
+    toConfig(): OverlayNumberConfig {
+        return {
+            isVisible: this.isVisible,
+            isHidden: this.isHidden,
+            font: this.font,
+            fontSize: this.fontSize,
+            hasCustomColor: this.hasCustomColor,
+            color: this.color,
+            hasCustomFormat: this.hasCustomFormat,
+            formatX: this.formatX,
+            formatY: this.formatY,
+            hasCustomPrecision: this.hasCustomPrecision,
+            precision: this.precision
+        };
+    }
+
+    /**
+     * Applies the saved number settings. When the format is not custom, the format that the
+     * coordinate system gives replaces the saved format. See {@link OverlaySettings.setFormatsFromSystem}.
+     */
+    @action applyConfig(config: Persisted<OverlayNumberConfig> | undefined) {
+        this.isVisible = savedOr(config?.isVisible, isBoolean, true);
+        this.isHidden = savedOr(config?.isHidden, isBoolean, false);
+        this.font = savedOr(config?.font, isFont, 0);
+        this.fontSize = savedOr(config?.fontSize, isFontSize, 12);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.hasCustomFormat = savedOr(config?.hasCustomFormat, isBoolean, false);
+        this.formatX = savedOr(config?.formatX, isNumberFormat, this.defaultFormatX ?? NumberFormatType.Degrees);
+        this.formatY = savedOr(config?.formatY, isNumberFormat, this.defaultFormatY ?? NumberFormatType.Degrees);
+        this.hasCustomPrecision = savedOr(config?.hasCustomPrecision, isBoolean, false);
+        this.precision = savedOr(config?.precision, isCount, 3);
+    }
 }
 
 export class OverlayLabelSettings {
-    @observable isVisible: boolean = PreferenceStore.Instance.isAstLabelsVisible;
+    /** The visibility set in this session. When it is not set, the visibility follows the user's preference. */
+    @observable private isVisibleInSession: boolean | undefined = undefined;
     @observable isHidden: boolean = false;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
@@ -539,8 +820,12 @@ export class OverlayLabelSettings {
     @observable customLabelX: string = "";
     @observable customLabelY: string = "";
 
+    @computed get isVisible(): boolean {
+        return this.isVisibleInSession ?? PreferenceStore.Instance.isAstLabelsVisible;
+    }
+
     constructor() {
-        makeObservable(this);
+        makeObservable<OverlayLabelSettings, "isVisibleInSession">(this);
     }
 
     @computed get styleString() {
@@ -564,7 +849,7 @@ export class OverlayLabelSettings {
     }
 
     @action setVisible(isVisible: boolean = true) {
-        this.isVisible = isVisible;
+        this.isVisibleInSession = isVisible;
     }
 
     @action setHidden(isHidden: boolean) {
@@ -603,6 +888,29 @@ export class OverlayLabelSettings {
     @action setCustomLabelY = (label: string) => {
         this.customLabelY = label;
     };
+
+    toConfig(): OverlayLabelConfig {
+        return {
+            isVisible: this.isVisible,
+            isHidden: this.isHidden,
+            hasCustomColor: this.hasCustomColor,
+            color: this.color,
+            font: this.font,
+            fontSize: this.fontSize,
+            hasRaDecReference: this.hasRaDecReference
+        };
+    }
+
+    /** Applies the saved label settings. The custom text is left as it is, because a workspace saves it. */
+    @action applyConfig(config: Persisted<OverlayLabelConfig> | undefined) {
+        this.isVisibleInSession = isBoolean(config?.isVisible) ? config.isVisible : undefined;
+        this.isHidden = savedOr(config?.isHidden, isBoolean, false);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
+        this.font = savedOr(config?.font, isFont, 0);
+        this.fontSize = savedOr(config?.fontSize, isFontSize, 15);
+        this.hasRaDecReference = savedOr(config?.hasRaDecReference, isBoolean, true);
+    }
 }
 
 export class OverlayColorbarSettings {
@@ -908,6 +1216,75 @@ export class OverlaySettings {
      */
     @action setVisible(isVisible: boolean) {
         this.isVisible = isVisible;
+    }
+
+    /** Returns how the overlay looks, as a layout saves it. */
+    toConfig(): WcsOverlayConfig {
+        return {
+            isVisible: this.isVisible,
+            global: this.global.toConfig(),
+            title: this.title.toConfig(),
+            grid: this.grid.toConfig(),
+            border: this.border.toConfig(),
+            axes: this.axes.toConfig(),
+            ticks: this.ticks.toConfig(),
+            numbers: this.numbers.toConfig(),
+            labels: this.labels.toConfig()
+        };
+    }
+
+    /**
+     * Applies how the overlay looks, as a layout saved it. The config replaces every setting. When
+     * the config leaves out a setting, or saves a value that the controls do not accept, the setting
+     * goes back to its default. A setting that has a preference goes back to the preference. The
+     * user's preferences do not change. The custom texts and their switches do not change either,
+     * because a workspace saves them.
+     *
+     * A config of null resets every setting.
+     *
+     * @returns what could not be applied as it was saved.
+     */
+    @action applyConfig(config: Persisted<WcsOverlayConfig> | null | undefined): string[] {
+        const problems: string[] = [];
+        const sectionOf = <T>(value: unknown): Persisted<T> | undefined => (value && typeof value === "object" ? (value as Persisted<T>) : undefined);
+
+        this.isVisible = savedOr(config?.isVisible, isBoolean, true);
+        const global = sectionOf<OverlayGlobalConfig>(config?.global);
+        this.global.applyConfig(global);
+        this.title.applyConfig(sectionOf(config?.title));
+        this.grid.applyConfig(sectionOf(config?.grid));
+        this.border.applyConfig(sectionOf(config?.border));
+        this.axes.applyConfig(sectionOf(config?.axes));
+        this.ticks.applyConfig(sectionOf(config?.ticks));
+        this.numbers.applyConfig(sectionOf(config?.numbers));
+        this.labels.applyConfig(sectionOf(config?.labels));
+
+        // Set the system directly. setSystem asks the user before it turns off spatial matching.
+        // Image coordinates and spatial matching do not work together. Keep the matching, because
+        // a workspace saves it with the images.
+        let system = savedOr(global?.system, isOneOf(Object.values(SystemType)), SystemType.Auto);
+        if (system === SystemType.Image && AppStore.Instance.frames.some(frame => frame.spatialReference)) {
+            system = SystemType.Auto;
+            problems.push("Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially");
+        }
+        this.global.system = system;
+        return problems;
+    }
+
+    /** Returns the custom texts that are the same for every image, and the switches that show the custom texts, as a workspace saves them. */
+    toTextConfig(): WorkspaceWcsOverlayText {
+        return {
+            labels: {hasCustomText: this.labels.hasCustomText, customLabelX: this.labels.customLabelX, customLabelY: this.labels.customLabelY},
+            title: {hasCustomText: this.title.hasCustomText}
+        };
+    }
+
+    /** Applies the custom texts and their switches, as a workspace saved them. A text or switch that the config leaves out goes back to its default. */
+    @action applyTextConfig(config: {[K in keyof WorkspaceWcsOverlayText]?: Persisted<WorkspaceWcsOverlayText[K]>} | undefined) {
+        this.labels.hasCustomText = savedOr(config?.labels?.hasCustomText, isBoolean, false);
+        this.labels.customLabelX = savedOr(config?.labels?.customLabelX, isText, "");
+        this.labels.customLabelY = savedOr(config?.labels?.customLabelY, isText, "");
+        this.title.hasCustomText = savedOr(config?.title?.hasCustomText, isBoolean, false);
     }
 
     @action setFormatsFromSystem() {

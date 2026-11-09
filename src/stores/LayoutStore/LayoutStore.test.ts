@@ -3,7 +3,7 @@ const MOCK_APP_STORE = {
         removeFloatingWidgets: jest.fn(),
         clearDockedWidgets: jest.fn(),
         clearPopoutPositions: jest.fn(),
-        initWidgets: jest.fn(),
+        initWidgets: jest.fn((_docked: any[], _floating: any[]): string[] => []),
         updateImageWidgetTitle: jest.fn(),
         floatingWidgets: [] as any[],
         toWidgetSettingsConfig: jest.fn(),

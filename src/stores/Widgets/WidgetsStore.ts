@@ -764,11 +764,20 @@ export class WidgetsStore {
         }
     };
 
-    public initWidgets = (componentConfigs: any[], floating: any[]) => {
-        // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
+    /**
+     * Creates the widgets of a layout.
+     *
+     * @returns what could not be applied as the layout saved it.
+     */
+    public initWidgets = (componentConfigs: any[], floating: any[]): string[] => {
+        const problems: string[] = [];
+        // The grid and the WCS overlay belong to the session, not to one widget. Apply them once,
+        // from the first image view that saved its settings.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (imageViews.length) {
-            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+            const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
+            AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
+            problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
         }
 
         componentConfigs.forEach(componentConfig => {
@@ -786,6 +795,7 @@ export class WidgetsStore {
 
         // init floating widgets
         floating.forEach(savedConfig => this.createFloatingWidget(savedConfig));
+        return problems;
     };
 
     private getWidgetComponentId = (node: TabNode): string => {
@@ -1222,7 +1232,7 @@ export class WidgetsStore {
 
         switch (widgetType) {
             case ImageViewComponent.WidgetConfig.type:
-                return AppStore.Instance.imageViewConfigStore.toConfig();
+                return {...AppStore.Instance.imageViewConfigStore.toConfig(), wcsOverlay: AppStore.Instance.overlaySettings.toConfig()};
             case CatalogOverlayComponent.WidgetConfig.type:
                 return this.catalogWidgets.get(widgetID)?.toLayoutSettings(CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
             case CatalogPlotComponent.WidgetConfig.type:

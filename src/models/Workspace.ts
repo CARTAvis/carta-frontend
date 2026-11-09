@@ -243,6 +243,18 @@ export interface WorkspaceColorBlending {
     rasterVisible?: boolean;
     contourVisible?: boolean;
     vectorOverlayVisible?: boolean;
+    /** The custom title of the color-blended image. Left out when it is the default title. */
+    titleCustomText?: string;
+}
+
+/**
+ * The custom texts of the WCS overlay that are the same for every image, and the switches that show
+ * the custom texts. Each image saves its own custom title. A layout saves the rest of the overlay,
+ * because the rest names none of the images.
+ */
+export interface WorkspaceWcsOverlayText {
+    labels: {hasCustomText: boolean; customLabelX: string; customLabelY: string};
+    title: {hasCustomText: boolean};
 }
 
 /** One of the images making up a hypercube. */
@@ -319,6 +331,8 @@ export interface WorkspaceFile {
     imageListIndex?: number;
     /** The result of the last image fitting of the image. Left out when the image has no result. */
     fitResult?: WorkspaceImageFitResult;
+    /** The custom title of the image in the WCS overlay. Left out when it is the default title, the file name. */
+    titleCustomText?: string;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -886,6 +900,7 @@ export interface Workspace {
     plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
     /** The settings of the Image Fitting dialog. */
     imageFitting?: WorkspaceImageFitting;
+    wcsOverlay?: WorkspaceWcsOverlayText;
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;
