@@ -10,8 +10,8 @@ import "./WorkspaceRestoreReportDialogComponent.scss";
 
 /**
  * Lists what the last workspace restore could not bring back as saved, in two groups:
- * - items that are not in the session, each marked as failed or skipped. A save leaves them out.
- * - items that are in the session, but not as saved. A save writes them as they are now.
+ * - items that are not in the session, each marked as failed or skipped.
+ * - items that are in the session, but not as saved.
  */
 export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
@@ -39,7 +39,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                 {leftOut.length > 0 && (
                     <section data-testid="workspace-restore-report-left-out">
                         <H4>Not restored ({leftOut.length})</H4>
-                        <p>Saving the workspace will not include these items.</p>
+                        <p>These items are not in the session.</p>
                         <ul>
                             {leftOut.map((issue, index) => (
                                 <li key={index}>
@@ -55,7 +55,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                 {changed.length > 0 && (
                     <section data-testid="workspace-restore-report-changed">
                         <H4>Restored with changes ({changed.length})</H4>
-                        <p>Saving the workspace will save these items as they are now.</p>
+                        <p>These items are in the session, but not as they were saved.</p>
                         <ul>
                             {changed.map((issue, index) => (
                                 <li key={index}>
