@@ -9,6 +9,21 @@ import {CatalogApiProcessing, convertRadius, type VizierResource} from "utilitie
 
 import {TelemetryService} from "./TelemetryService";
 
+/** A mirror that did not answer an online catalog query in time. */
+export class MirrorTimeoutError extends Error {
+    /**
+     * @param mirrorUrl - the mirror that did not answer.
+     * @param didTimeOutEarlier - true when the query did not wait, because the mirror timed out on an earlier query.
+     */
+    constructor(
+        message: string,
+        readonly mirrorUrl: string,
+        readonly didTimeOutEarlier: boolean
+    ) {
+        super(message);
+    }
+}
+
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
@@ -245,7 +260,7 @@ export class CatalogApiService {
     private createMirrorTimeoutError = (mirrorUrl: string, didTimeOutEarlier = false): Error => {
         const seconds = CatalogApiService.QUERY_TIMEOUT_MS / 1000;
         const query = didTimeOutEarlier ? " to an earlier query" : "";
-        return new Error(`Mirror ${this.mirrorLabel(mirrorUrl)} did not respond within ${seconds} seconds${query}. The mirror may be unavailable. Select another mirror site and retry.`);
+        return new MirrorTimeoutError(`Mirror ${this.mirrorLabel(mirrorUrl)} did not respond within ${seconds} seconds${query}. The mirror may be unavailable. Select another mirror site and retry.`, mirrorUrl, didTimeOutEarlier);
     };
 
     private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {

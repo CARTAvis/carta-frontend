@@ -23,7 +23,7 @@ import {
     WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
-import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
+import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
@@ -481,6 +481,12 @@ describe("WorkspaceRestorer", () => {
         expect(messages).toHaveLength(2);
         expect(messages[0]).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/);
         expect(messages[1]).toMatch(/: Mirror .+ did not respond within 60 seconds to an earlier query\. The mirror may be unavailable\. Select another mirror site and retry$/);
+        // The report lists the second catalog under the first, which waited for the mirror.
+        const catalogs = issues.filter(issue => issue.kind === WorkspaceItemKind.Catalog);
+        expect(catalogs.map(({label, catalogIds, causeCatalogId}) => ({label, catalogIds, causeCatalogId}))).toEqual([
+            {label: "The SIMBAD catalog on image.fits", catalogIds: [1], causeCatalogId: undefined},
+            {label: "The SIMBAD catalog on image.fits", catalogIds: [2], causeCatalogId: 1}
+        ]);
 
         // The next restore tries the mirror again.
         await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
@@ -898,19 +904,27 @@ describe("WorkspaceRestorer", () => {
             widgetIssue("render-config-0", WorkspaceIssueEffect.ActiveImage),
             widgetIssue("histogram-0", WorkspaceIssueEffect.ActiveRegion)
         ]);
+        appStore.widgetsStore.restorePlotWidgets.mockReturnValue([{kind: WorkspaceItemKind.PlotWidget, subject: "spectral-profiler-0", message: "spectral-profiler-0", reason: SOME_IMAGES_NOT_RESTORED}]);
 
         const issues = await restoreIssues(
             createWorkspace({
                 selectedFile: 1,
-                plotWidgets: {"stats-0": {type: "stats", imageId: 5}, "render-config-0": {type: "render-config"}, "histogram-0": {type: "histogram", imageId: 1}}
+                plotWidgets: {
+                    "stats-0": {type: "stats", imageId: 5},
+                    "render-config-0": {type: "render-config"},
+                    "histogram-0": {type: "histogram", imageId: 1},
+                    "spectral-profiler-0": {type: "spectral-profiler", imageId: 1, imageIds: [1, 6, 7]}
+                }
             })
         );
 
-        // A widget that saved no image followed the image in front. A missing region names no image.
-        expect(issues.map(issue => [issue.subject, issue.causeImageId])).toEqual([
-            ["stats-0", 5],
-            ["render-config-0", 1],
-            ["histogram-0", undefined]
+        // A widget that saved no image followed the image in front, and it still follows the active
+        // image. A missing region names no image. A profiler names the first image that is missing.
+        expect(issues.map(issue => [issue.subject, issue.effect, issue.causeImageId])).toEqual([
+            ["stats-0", WorkspaceIssueEffect.ActiveImage, 5],
+            ["render-config-0", WorkspaceIssueEffect.ActiveImageFollowed, 1],
+            ["histogram-0", WorkspaceIssueEffect.ActiveRegion, undefined],
+            ["spectral-profiler-0", undefined, 6]
         ]);
     });
 
@@ -1871,7 +1885,7 @@ describe("WorkspaceRestorer", () => {
             const issues = await restoring;
 
             expect(issues).toEqual([
-                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The catalog from the SIMBAD query", catalogIds: [1]}
+                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The SIMBAD catalog on image.fits", catalogIds: [1]}
             ]);
             expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalledWith(expect.anything());
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);

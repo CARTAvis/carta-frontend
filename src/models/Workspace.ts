@@ -801,6 +801,11 @@ export interface WorkspaceIssue {
     causeCatalogId?: number;
     /** How a widget differs from the workspace. The report groups the widgets with the same effect. */
     effect?: WorkspaceIssueEffect;
+    /**
+     * What the widget shows now, when it differs between widgets with the same effect, such as "the
+     * catalog sources.vot" for a catalog widget. The report groups the widgets with the same detail.
+     */
+    effectDetail?: string;
 }
 
 export interface WorkspaceListItem {

@@ -29,37 +29,36 @@ const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnd
     );
 };
 
-/** Shows a report line, with the file names and paths in a monospace font. */
-const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => (
-    <span>
-        {splitFileNames(text, issue.subject).map((part, index) =>
-            part.isFile ? (
-                <span key={index} className="file-name">
-                    {part.text}
-                </span>
-            ) : (
-                <React.Fragment key={index}>{part.text}</React.Fragment>
-            )
-        )}
+/** Shows a file name or a path. A long path breaks after a slash, not inside a name. */
+const FileName = ({text}: {text: string}) => (
+    <span className="file-name">
+        {text.split(/(?<=\/)/).map((piece, index) => (
+            <React.Fragment key={index}>
+                {index > 0 && <wbr />}
+                {piece}
+            </React.Fragment>
+        ))}
     </span>
 );
 
-/** Lists widgets by their titles, after the text that says what changed. */
-const WidgetGroupLine = observer(({group, isUnderCause}: {group: WidgetGroup; isUnderCause: boolean}) => {
-    const widgetsStore = AppStore.Instance.widgetsStore;
-    return (
-        <li className="widget-group">
-            <span>{describeWidgetGroup(group, isUnderCause)}</span>
-            <span className="widget-titles">
-                {group.widgetIds.map(widgetId => (
-                    <Tag key={widgetId} minimal round intent={Intent.PRIMARY}>
-                        {widgetsStore.titleOfWidget(widgetId)}
-                    </Tag>
-                ))}
-            </span>
-        </li>
-    );
-});
+/** Shows a report line, with the file names and paths in a monospace font. */
+const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => (
+    <span>{splitFileNames(text, issue.subject).map((part, index) => (part.isFile ? <FileName key={index} text={part.text} /> : <React.Fragment key={index}>{part.text}</React.Fragment>))}</span>
+);
+
+/** Lists widgets by their titles, after the text that says what they show now. */
+const WidgetGroupLine = ({group, isUnderCause, titleOfWidget}: {group: WidgetGroup; isUnderCause: boolean; titleOfWidget: (widgetId: string) => string}) => (
+    <li className="widget-group">
+        <span>{describeWidgetGroup(group, isUnderCause)}</span>
+        <span className="widget-titles">
+            {group.widgetIds.map(widgetId => (
+                <Tag key={widgetId} minimal>
+                    {titleOfWidget(widgetId)}
+                </Tag>
+            ))}
+        </span>
+    </li>
+);
 
 /**
  * Lists what the last workspace restore could not bring back as saved, in three groups:
@@ -81,6 +80,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const issues = report?.issues ?? [];
     const groups = groupRestoreReport(issues);
     const titleOfWidget = (widgetId: string) => appStore.widgetsStore.titleOfWidget(widgetId);
+    const hasConsequences = groups.leftOut.some(item => item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0);
     const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])].map(({to}) => to);
     const writeBack = appStore.workspaceWriteBack;
 
@@ -100,11 +100,11 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             canOutsideClickClose={false}
         >
             <div className={Classes.DIALOG_BODY}>
-                {groups.leftOutCount > 0 && (
+                {groups.leftOut.length > 0 && (
                     <section data-testid="workspace-restore-report-left-out">
-                        <H4>Not restored ({groups.leftOutCount})</H4>
-                        <p>These items are not in the session.</p>
-                        <ul>
+                        <H4>Not restored</H4>
+                        <p>{hasConsequences ? "These items are not in the session. Under each item is what was left out or changed because of it." : "These items are not in the session."}</p>
+                        <ul role="list">
                             {groups.leftOut.map((item, index) => (
                                 <li key={index} className="left-out-item">
                                     <div className="issue">
@@ -112,7 +112,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                         <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
                                     </div>
                                     {(item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0) && (
-                                        <ul className="consequences" data-testid="workspace-restore-report-consequences">
+                                        <ul className="consequences" role="list" aria-label="Because of this" data-testid="workspace-restore-report-consequences">
                                             {item.leftOut.map((issue, consequenceIndex) => (
                                                 <li key={`left-out-${consequenceIndex}`}>
                                                     <OutcomeTag issue={issue} isUnderCause={true} />
@@ -120,7 +120,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                                 </li>
                                             ))}
                                             {item.widgets.map(group => (
-                                                <WidgetGroupLine key={group.effect} group={group} isUnderCause={true} />
+                                                <WidgetGroupLine key={`${group.effect}-${group.detail ?? ""}`} group={group} isUnderCause={true} titleOfWidget={titleOfWidget} />
                                             ))}
                                             {item.changed.map((issue, consequenceIndex) => (
                                                 <li key={`changed-${consequenceIndex}`}>
@@ -134,14 +134,14 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                         </ul>
                     </section>
                 )}
-                {groups.changedCount > 0 && (
+                {groups.changed.length > 0 && (
                     <section data-testid="workspace-restore-report-changed">
-                        <H4>Restored with changes ({groups.changedCount})</H4>
+                        <H4>Restored with changes</H4>
                         <p>These items are in the session, but not as they were saved.</p>
-                        <ul>
+                        <ul role="list">
                             {groups.changed.map((item, index) =>
                                 "widgets" in item ? (
-                                    <WidgetGroupLine key={index} group={item.widgets} isUnderCause={false} />
+                                    <WidgetGroupLine key={index} group={item.widgets} isUnderCause={false} titleOfWidget={titleOfWidget} />
                                 ) : (
                                     <li key={index}>
                                         <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />

@@ -546,13 +546,23 @@ export class WidgetsStore {
         for (const [type, widgets] of this.widgetsMap) {
             for (const [id, widgetStore] of widgets) {
                 if ((widgetStore as {widgetId?: unknown} | undefined)?.widgetId === widgetId) {
-                    const title = this.floatingWidgets.find(widget => widget.id === id)?.title ?? (LayoutStore.Instance.layoutModel?.getNodeById(id) as TabNode | undefined)?.getName?.();
-                    return title || (getWidgetMap().get(type)?.config.title ?? type);
+                    return this.titleOfComponent(id) || (getWidgetMap().get(type)?.config.title ?? type);
                 }
             }
         }
+        // A catalog plot keeps its stable ID with the catalog binding, not in its store.
+        const plotId = CatalogStore.Instance.widgetBindings.shownPlotOf(widgetId);
+        const plotTitle = plotId === undefined ? undefined : this.titleOfComponent(plotId);
+        if (plotTitle) {
+            return plotTitle;
+        }
         const type = [...getWidgetMap().keys()].filter(candidate => widgetId.startsWith(`${candidate}-`)).sort((a, b) => b.length - a.length)[0];
         return (type && getWidgetMap().get(type)?.config.title) || widgetId;
+    }
+
+    /** Returns the title of a floating widget or of a docked tab, by its component ID. */
+    private titleOfComponent(componentId: string): string | undefined {
+        return this.floatingWidgets.find(widget => widget.id === componentId)?.title ?? (LayoutStore.Instance.layoutModel?.getNodeById(componentId) as TabNode | undefined)?.getName?.();
     }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {

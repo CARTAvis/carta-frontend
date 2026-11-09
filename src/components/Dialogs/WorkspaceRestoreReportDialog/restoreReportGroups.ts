@@ -4,6 +4,8 @@ import {type WorkspaceIssue} from "models";
 /** Widgets that show something else than they showed, for the same reason. */
 export interface WidgetGroup {
     effect: WorkspaceIssueEffect;
+    /** What the widgets show now, when it is not the same for every widget with the effect. See {@link WorkspaceIssue.effectDetail}. */
+    detail?: string;
     /** The stable IDs of the widgets, in the order of the report. */
     widgetIds: string[];
 }
@@ -24,20 +26,17 @@ export type ChangedItem = {issue: WorkspaceIssue} | {widgets: WidgetGroup};
 
 export interface RestoreReportGroups {
     leftOut: LeftOutItem[];
-    /** The number of items that the restore left out, also the ones listed under another item. */
-    leftOutCount: number;
     changed: ChangedItem[];
-    /** The number of items in the session that are not as saved and that no left-out item explains. */
-    changedCount: number;
 }
 
-function addToGroups(groups: WidgetGroup[], effect: WorkspaceIssueEffect, widgetId: string): WidgetGroup | undefined {
-    const group = groups.find(existing => existing.effect === effect);
+/** Adds the widget of an issue to the group with its effect and detail, and returns the group when it is new. */
+function addToGroups(groups: WidgetGroup[], issue: WorkspaceIssue & {effect: WorkspaceIssueEffect}): WidgetGroup | undefined {
+    const group = groups.find(existing => existing.effect === issue.effect && existing.detail === issue.effectDetail);
     if (group) {
-        group.widgetIds.push(widgetId);
+        group.widgetIds.push(issue.subject);
         return undefined;
     }
-    const created = {effect, widgetIds: [widgetId]};
+    const created = {effect: issue.effect, detail: issue.effectDetail, widgetIds: [issue.subject]};
     groups.push(created);
     return created;
 }
@@ -51,7 +50,8 @@ function addToGroups(groups: WidgetGroup[], effect: WorkspaceIssueEffect, widget
  * `causeCatalogId`, and a left-out item names the images and catalogs that it left out in `imageIds`
  * and `catalogIds`. A chain of causes is listed under its first item.
  *
- * Widgets with the same effect are listed together, both under an item and in the changed items.
+ * Widgets with the same effect and detail are listed together, both under an item and in the
+ * changed items.
  */
 export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreReportGroups {
     const leftOutIssues = issues.filter(issue => issue.outcome);
@@ -98,22 +98,21 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
 
     const changed: ChangedItem[] = [];
     const changedGroups: WidgetGroup[] = [];
-    let changedCount = 0;
     for (const issue of issues) {
         const root = rootOf(issue);
         const item = root === issue ? undefined : items.get(root);
+        const effect = issue.effect;
         if (item) {
             if (issue.outcome) {
                 item.leftOut.push(issue);
-            } else if (issue.effect) {
-                addToGroups(item.widgets, issue.effect, issue.subject);
+            } else if (effect) {
+                addToGroups(item.widgets, {...issue, effect});
             } else {
                 item.changed.push(issue);
             }
         } else if (!issue.outcome) {
-            changedCount++;
-            if (issue.effect) {
-                const group = addToGroups(changedGroups, issue.effect, issue.subject);
+            if (effect) {
+                const group = addToGroups(changedGroups, {...issue, effect});
                 if (group) {
                     changed.push({widgets: group});
                 }
@@ -122,7 +121,7 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
             }
         }
     }
-    return {leftOut, leftOutCount: leftOutIssues.length, changed, changedCount};
+    return {leftOut, changed};
 }
 
 /**
@@ -135,30 +134,32 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
  */
 export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: string) => string, shouldShowReason: boolean = true): string {
     const isWidget = issue.kind === WorkspaceItemKind.PlotWidget || issue.kind === WorkspaceItemKind.CatalogWidget || issue.kind === WorkspaceItemKind.CatalogPlot;
-    const name = isWidget && issue.reason !== undefined ? titleOfWidget(issue.subject) : issue.label;
-    if (!name) {
+    const name = isWidget ? titleOfWidget(issue.subject) : issue.label;
+    if (!name || (isWidget && issue.reason === undefined)) {
         return issue.message;
     }
     return shouldShowReason && issue.reason ? `${name}: ${issue.reason}` : name;
 }
 
 /**
- * Returns the text before the titles of a group of widgets.
+ * Returns the text before the titles of a group of widgets, which says what the widgets show now.
  *
- * @param isUnderCause - whether the group is listed under the item that caused it, which already says why.
+ * @param isUnderCause - whether the group is listed under the item that caused it. Then "it" names that item.
  */
 export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): string {
-    const count = group.widgetIds.length;
-    const widgets = count === 1 ? "Widget" : "Widgets";
-    if (group.effect === WorkspaceIssueEffect.CatalogNotRestored) {
-        return `${count === 1 ? "Catalog widget" : "Catalog widgets"} whose catalog was not restored:`;
+    const isOne = group.widgetIds.length === 1;
+    const widgets = isOne ? "Widget" : "Widgets";
+    const verb = (singular: string, plural: string) => (isOne ? singular : plural);
+    switch (group.effect) {
+        case WorkspaceIssueEffect.ActiveImage:
+            return isUnderCause ? `${widgets} that showed it now ${verb("shows", "show")} the active image:` : `${widgets} whose image was not restored, now showing the active image:`;
+        case WorkspaceIssueEffect.ActiveImageFollowed:
+            return isUnderCause ? `${widgets} that followed it as the active image now ${verb("shows", "show")} another image:` : `${widgets} that ${verb("follows", "follow")} the active image, which is not the image that was in front:`;
+        case WorkspaceIssueEffect.ActiveRegion:
+            return `${widgets} whose region was not restored, now showing the active region:`;
+        case WorkspaceIssueEffect.CatalogNotRestored:
+            return `${isOne ? "Catalog widget" : "Catalog widgets"} whose catalog was not restored, now showing ${group.detail ?? "no catalog"}:`;
     }
-    if (group.effect === WorkspaceIssueEffect.ActiveImage) {
-        return isUnderCause
-            ? `${widgets} that now show${count === 1 ? "s" : ""} the active image:`
-            : `${widgets} that show${count === 1 ? "s" : ""} the active image, because the image ${count === 1 ? "it" : "they"} showed was not restored:`;
-    }
-    return `${widgets} that show${count === 1 ? "s" : ""} the active region, because the region ${count === 1 ? "it" : "they"} showed was not restored:`;
 }
 
 /** A piece of a report line, which is a file name or a path when `isFile` is set. */
@@ -171,17 +172,26 @@ function escapeRegExp(text: string): string {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Returns whether a word reads as a file name, such as "cube.fits", and not a URL or a version such as "v1.2". */
+function isFileName(word: string): boolean {
+    const extension = word.slice(word.lastIndexOf(".") + 1);
+    return word.length > 2 && word.includes(".") && !word.includes("://") && /[a-z]/i.test(extension);
+}
+
 /**
  * Splits a report line into the file names and paths, and the rest, so that the report can show the
  * file names in another style.
  *
- * Finds the file names of the item, which are the words of its subject that contain a dot, such as
- * "cube.fits" in "the moment images of cube.fits". Also finds absolute paths, such as
- * "/data/cube.fits" in "File /data/cube.fits does not exist".
+ * Finds the file names of the item in its subject: the whole subject when it is a file name, such as
+ * "my cube.fits", and the words of the subject that are file names, such as "cube.fits" in "the
+ * moment images of cube.fits". Also finds absolute paths, such as "/data/cube.fits" in "File
+ * /data/cube.fits does not exist", without the punctuation after them. A path with a space is found
+ * only up to the space.
  */
 export function splitFileNames(text: string, subject: string): TextPart[] {
-    const names = subject.split(/\s+/).filter(word => word.includes(".") && word.length > 2);
-    const patterns = ["(?<![\\w/])/[^\\s:;,]+", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
+    const names = [...(isFileName(subject) ? [subject] : []), ...subject.split(/\s+/).filter(isFileName)];
+    // A path starts with a slash that does not follow a letter, a slash or a colon, so that a URL is not taken as a path.
+    const patterns = ["(?<![\\w/:])/[^\\s:;,]*[^\\s:;,.)]", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
     const pattern = new RegExp(patterns.join("|"), "g");
     const parts: TextPart[] = [];
     let last = 0;

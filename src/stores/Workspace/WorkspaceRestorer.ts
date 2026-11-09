@@ -28,6 +28,7 @@ import {
     isWidgetWorkspaceConfigOf,
     MOMENT_TEXT,
     type Point2D,
+    SOME_IMAGES_NOT_RESTORED,
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
@@ -46,7 +47,7 @@ import {
     type WorkspaceMomentRequest,
     type WorkspacePvRequest
 } from "models";
-import {BackendService, CatalogApiService} from "services";
+import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -209,6 +210,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly frameIds = new Map<number, number>();
     /** Workspace catalog ID to the file ID this session gave it. */
     private readonly catalogIds = new Map<number, number>();
+    /** The Workspace ID of the first catalog whose query a mirror did not answer, by the mirror. */
+    private readonly timedOutCatalogIds = new Map<string, number>();
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
     /** The image the session is left with in front once the restore is done. */
@@ -481,7 +484,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @param outcome - why the item is not in the session at all. Leave it out when the item is in
      *                  the session, but not as it was saved.
      */
-    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome, details?: Pick<WorkspaceIssue, "label" | "reason" | "imageIds" | "causeImageId" | "catalogIds">): void {
+    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome, details?: Pick<WorkspaceIssue, "label" | "reason" | "imageIds" | "causeImageId" | "catalogIds" | "causeCatalogId">): void {
         this.issues.push({kind, subject, message, outcome, ...details});
     }
 
@@ -684,7 +687,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         this.awaitedImageIds.delete(id);
                         this.skippedImageIds.add(id);
                     });
-                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {label: item.label, reason: item.reason, imageIds: task.imageIds, catalogIds: task.catalogIds});
+                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {
+                        label: item.label,
+                        reason: item.reason,
+                        imageIds: task.imageIds,
+                        catalogIds: task.catalogIds,
+                        causeCatalogId: item.causeCatalogId
+                    });
                     return;
                 }
                 if (choice.action === WorkspaceRecoveryAction.Repoint) {
@@ -1814,6 +1823,21 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         );
     }
 
+    /**
+     * Returns how the restore report names a catalog, such as "The catalog sources.vot" or "The
+     * SIMBAD catalog on cube.fits". The image tells apart the online catalogs of one service.
+     */
+    private labelOfCatalog(catalogInfo: WorkspaceCatalog): string {
+        const source = catalogInfo.source;
+        if (source.type === "file") {
+            return `The catalog ${source.filename}`;
+        }
+        const service = source.type === "simbad" ? "SIMBAD" : "VizieR";
+        const table = source.type === "vizier" && source.table ? ` ${source.table}` : "";
+        const image = catalogInfo.associatedImageId === undefined ? undefined : this.images.get(catalogInfo.associatedImageId);
+        return `The ${service} catalog${table} on ${image ? this.nameOf(image) : "an image"}`;
+    }
+
     /** Returns the task that opens one catalog, from its saved source or from the file the user chooses. */
     private catalogTask(catalogInfo: WorkspaceCatalog): RestoreTask {
         const state = {source: catalogInfo.source, isRepointed: false};
@@ -1840,7 +1864,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (this.skippedImageIds.has(imageId)) {
                 const reason = "the image it belongs to was skipped";
                 this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Skipped, {
-                    label: `The catalog ${description}`,
+                    label: this.labelOfCatalog(catalogInfo),
                     catalogIds: [catalogInfo.id],
                     reason,
                     causeImageId: imageId
@@ -1848,7 +1872,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             } else {
                 const reason = "the image it belongs to was not restored";
                 this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {
-                    label: `The catalog ${description}`,
+                    label: this.labelOfCatalog(catalogInfo),
                     catalogIds: [catalogInfo.id],
                     reason,
                     causeImageId: imageId
@@ -1860,16 +1884,25 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const query = {isSkipped: false};
         let catalogFileId: number | undefined;
         let reason: string | undefined;
+        let causeCatalogId: number | undefined;
         try {
             if (source.type === "vizier" && !source.table) {
                 const reason = "the query names no table";
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, catalogIds: [catalogInfo.id], reason});
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: this.labelOfCatalog(catalogInfo), catalogIds: [catalogInfo.id], reason});
                 return "done";
             }
             catalogFileId = (yield* this.openCatalogSource(source, targetFrameId, description, query)) ?? undefined;
         } catch (err) {
             console.error(err);
             reason = reasonOf(err);
+            // A query that did not wait for a mirror is listed under the first query that waited for it.
+            if (err instanceof MirrorTimeoutError) {
+                if (err.didTimeOutEarlier) {
+                    causeCatalogId = this.timedOutCatalogIds.get(err.mirrorUrl);
+                } else {
+                    this.timedOutCatalogIds.set(err.mirrorUrl, catalogInfo.id);
+                }
+            }
         }
         if (!this.isCurrent) {
             this.closeSupersededCatalog(catalogFileId);
@@ -1877,14 +1910,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (catalogFileId === undefined) {
             if (query.isSkipped) {
-                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`, catalogIds: [catalogInfo.id]});
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped, {label: this.labelOfCatalog(catalogInfo), catalogIds: [catalogInfo.id]});
                 return "done";
             }
             return {
                 kind: WorkspaceItemKind.Catalog,
                 subject: description,
                 message: withReason(`Could not load the catalog ${description}${tried}`, reason),
-                label: `The catalog ${description}${tried}`,
+                label: `${this.labelOfCatalog(catalogInfo)}${tried}`,
+                causeCatalogId,
                 reason,
                 repointKind: source.type === "file" ? "catalog" : undefined,
                 canRetry: source.type !== "file",
@@ -2129,7 +2163,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return;
         }
-        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this));
+        this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgets(this.workspace.plotWidgets, this)));
         yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
             return;
@@ -2138,18 +2172,27 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Names the saved image that each widget showed, when the widget shows the active image because
-     * that image was not restored. The report lists the widget under the item that left the image out.
+     * Names the saved image whose absence caused the problem of each widget, so that the report
+     * lists the widget under the item that left the image out.
+     *
+     * A widget that saved no image followed the image in front. When that image was not restored,
+     * the widget still follows the active image, which is now another image. So its effect becomes
+     * {@link WorkspaceIssueEffect.ActiveImageFollowed}.
      */
     private withImageCauses(issues: WorkspaceIssue[]): WorkspaceIssue[] {
         return issues.map(issue => {
-            if (issue.effect !== WorkspaceIssueEffect.ActiveImage) {
-                return issue;
+            const config = this.workspace.plotWidgets?.[issue.subject] as {imageId?: unknown; imageIds?: unknown} | undefined;
+            if (issue.effect === WorkspaceIssueEffect.ActiveImage) {
+                if (typeof config?.imageId === "number") {
+                    return {...issue, causeImageId: config.imageId};
+                }
+                return {...issue, effect: WorkspaceIssueEffect.ActiveImageFollowed, causeImageId: this.workspace.selectedFile};
             }
-            const config = this.workspace.plotWidgets?.[issue.subject] as {imageId?: unknown} | undefined;
-            // A widget that saved no image followed the image in front.
-            const causeImageId = typeof config?.imageId === "number" ? config.imageId : this.workspace.selectedFile;
-            return causeImageId === undefined ? issue : {...issue, causeImageId};
+            if (issue.reason === SOME_IMAGES_NOT_RESTORED && Array.isArray(config?.imageIds)) {
+                const missing = config.imageIds.find(imageId => typeof imageId === "number" && this.fileIdOf(imageId) === undefined);
+                return missing === undefined ? issue : {...issue, causeImageId: missing};
+            }
+            return issue;
         });
     }
 

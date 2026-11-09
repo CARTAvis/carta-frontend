@@ -303,6 +303,10 @@ describe("WidgetsStore PV preview test ids", () => {
 
         expect(widgetsStore.titleOfWidget("stats-0")).toBe("Statistics: Region 1");
         expect(widgetsStore.titleOfWidget("spatial-profiler-0")).toBe("Y Profile: Cursor");
+        // A catalog plot keeps its stable ID with the catalog binding.
+        jest.spyOn(CatalogStore.Instance.widgetBindings, "shownPlotOf").mockImplementation(widgetId => (widgetId === "plot-a" ? "catalog-plot-4" : undefined));
+        layoutModelMock.getNodeById.mockImplementation(id => (id === "stats-3" ? {getName: () => "Statistics: Region 1"} : id === "catalog-plot-4" ? {getName: () => "Catalog Histogram : sources.vot"} : undefined));
+        expect(widgetsStore.titleOfWidget("plot-a")).toBe("Catalog Histogram : sources.vot");
         // A widget that is not open is named by the default title of the type that its ID starts with.
         expect(widgetsStore.titleOfWidget("stokes-0")).toBe("Stokes Analysis");
         expect(widgetsStore.titleOfWidget("unknown-0")).toBe("unknown-0");
