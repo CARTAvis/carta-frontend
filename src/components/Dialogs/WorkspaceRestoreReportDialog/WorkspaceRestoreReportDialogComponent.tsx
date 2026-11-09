@@ -43,7 +43,7 @@ const FileName = ({text}: {text: string}) => (
 
 /** Shows a report line, with the file names and paths in a monospace font. */
 const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => (
-    <span>{splitFileNames(text, issue.subject).map((part, index) => (part.isFile ? <FileName key={index} text={part.text} /> : <React.Fragment key={index}>{part.text}</React.Fragment>))}</span>
+    <span>{splitFileNames(text, issue.subject, issue.label).map((part, index) => (part.isFile ? <FileName key={index} text={part.text} /> : <React.Fragment key={index}>{part.text}</React.Fragment>))}</span>
 );
 
 /** Lists widgets by their titles, after the text that says what they show now. */

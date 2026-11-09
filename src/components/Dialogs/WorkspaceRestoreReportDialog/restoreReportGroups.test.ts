@@ -168,7 +168,7 @@ describe("describing an issue in the restore report", () => {
 });
 
 describe("finding the file names in a report line", () => {
-    const files = (text: string, subject: string) => splitFileNames(text, subject).flatMap(part => (part.isFile ? [part.text] : []));
+    const files = (text: string, subject: string, label?: string) => splitFileNames(text, subject, label).flatMap(part => (part.isFile ? [part.text] : []));
 
     test("finds the file names of the subject and the absolute paths", () => {
         expect(splitFileNames("The image cube.fits: File /data/cube.fits does not exist", "cube.fits")).toEqual([
@@ -182,6 +182,10 @@ describe("finding the file names in a report line", () => {
 
     test("finds a file name inside the subject of a request, and the longest name first", () => {
         expect(files("The PV image of cube.fits.moment.maximum", "the PV image of cube.fits.moment.maximum")).toEqual(["cube.fits.moment.maximum"]);
+    });
+
+    test("finds a file name in the label, but not the host name of a mirror in the reason", () => {
+        expect(files("The SIMBAD catalog on cube.fits: Mirror simbad.u-strasbg.fr did not respond", "from the SIMBAD query", "The SIMBAD catalog on cube.fits")).toEqual(["cube.fits"]);
     });
 
     test("finds a file name with a space when it is the whole subject", () => {

@@ -182,14 +182,15 @@ function isFileName(word: string): boolean {
  * Splits a report line into the file names and paths, and the rest, so that the report can show the
  * file names in another style.
  *
- * Finds the file names of the item in its subject: the whole subject when it is a file name, such as
- * "my cube.fits", and the words of the subject that are file names, such as "cube.fits" in "the
- * moment images of cube.fits". Also finds absolute paths, such as "/data/cube.fits" in "File
+ * Finds the file names of the item: the whole subject when it is a file name, such as "my
+ * cube.fits", and the words of the subject and the label that are file names, such as "cube.fits"
+ * in "the moment images of cube.fits". Also finds absolute paths, such as "/data/cube.fits" in "File
  * /data/cube.fits does not exist", without the punctuation after them. A path with a space is found
  * only up to the space.
  */
-export function splitFileNames(text: string, subject: string): TextPart[] {
-    const names = [...(isFileName(subject) ? [subject] : []), ...subject.split(/\s+/).filter(isFileName)];
+export function splitFileNames(text: string, subject: string, label?: string): TextPart[] {
+    const words = `${subject} ${label ?? ""}`.split(/\s+/).filter(isFileName);
+    const names = isFileName(subject) ? [subject, ...words] : words;
     // A path starts with a slash that does not follow a letter, a slash or a colon, so that a URL is not taken as a path.
     const patterns = ["(?<![\\w/:])/[^\\s:;,]*[^\\s:;,.)]", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
     const pattern = new RegExp(patterns.join("|"), "g");
