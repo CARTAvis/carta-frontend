@@ -788,13 +788,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
             const region = observable({controlPoints: [{x: 1, y: 1}], rotation: 0});
             frame.getRegion.mockReturnValue(region as never);
+            const stokes = observable.box(0);
+            Object.defineProperty(frame, "requiredStokes", {get: () => stokes.get()});
             (AppStore.Instance.spectralProfiles.get(7)!.get(0)!.getProfile as jest.Mock).mockImplementation(() => data.get());
             const store = new SpectralProfileWidgetStore();
             runInAction(() => {
                 store.fittingStore.setYIntercept(0.5);
                 store.fittingStore.components[0].setCenter(105);
             });
-            return {store, data, region};
+            return {store, data, region, stokes};
         };
 
         test("keeps the guesses while more data of the same profile arrives, and waits for all of it before Auto detect and Fit", () => {
@@ -814,6 +816,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             runInAction(() => (region.controlPoints[0] = {x: 2, y: 1}));
 
             expect([store.fittingStore.yIntercept, store.fittingStore.components[0].center]).toEqual([0, 0]);
+            store.dispose();
+        });
+
+        test("clears the guesses when the Stokes of the image changes, as the profile follows it", () => {
+            const {store, stokes} = createStreamingWidgetStore();
+
+            runInAction(() => stokes.set(1));
+
+            expect(store.fittingStore.yIntercept).toBe(0);
             store.dispose();
         });
 
@@ -972,13 +983,23 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         test("keeps the default of each saved fitting value that is not valid", () => {
             const {widgetStore} = createFittingWidgetStore();
-            const config = {fitting: {...savedFitting, function: 7, continuum: "linear", yIntercept: Number.NaN, components: [{center: "100", amp: 2}], residualVisible: "no"}};
+            const config = {fitting: {...savedFitting, function: "LORENTZIAN", continuum: "FIRST_ORDER", yIntercept: Number.NaN, components: [{center: "100", amp: 2}], residualVisible: "no"}};
 
             restore(widgetStore, config);
 
             const fitting = widgetStore.fittingStore;
             expect([fitting.function, fitting.continuum, fitting.yIntercept, fitting.isResidualEnabled]).toEqual([0, -1, 0, true]);
             expect(fitting.components.map(component => [component.center, component.amp, component.fwhm])).toEqual([[0, 2, 0]]);
+        });
+
+        test("sets the guesses to 0 and says so when the region of the fitted profile was not restored", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {regions: [{regionId: 5}], fitting: savedFitting};
+
+            const problems = restore(widgetStore, config, {...WORKSPACE_IDS, regionIdOf: () => undefined});
+
+            expect(problems).toEqual(["the profile that its fitting guesses were made for was not restored, so the guesses are 0"]);
+            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept, widgetStore.fittingStore.components[0].center]).toEqual([1, 0, 0]);
         });
 
         test("does not apply the settings of an image that was not restored", () => {
@@ -1028,11 +1049,14 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         test("restores the moments, the region they are made from, the mask and the ranges", () => {
             const {widgetStore} = createFittingWidgetStore();
-            const ids = {...WORKSPACE_IDS, regionIdOf: (_imageId: number | undefined, regionId: number): number | undefined => regionId + 10};
+            const regionIdOf = jest.fn((_imageId: number | undefined, regionId: number): number | undefined => regionId + 10);
+            const ids = {...WORKSPACE_IDS, regionIdOf};
 
             const problems = restore(widgetStore, {moments: savedMoments}, ids);
 
             expect(problems).toEqual([]);
+            // The widget follows the active image, so the region is looked up on the image that was in front.
+            expect(regionIdOf).toHaveBeenCalledWith(undefined, 5);
             expect(widgetStore.selectedMoments).toEqual([CARTA.Moment.MEAN_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]);
             expect(widgetStore.momentRegionId).toBe(15);
             expect(widgetStore.momentMask).toBe(CARTA.MomentMask.Include);
@@ -1046,6 +1070,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             const {widgetStore} = createFittingWidgetStore();
             const ids = {...WORKSPACE_IDS, regionIdOf: (): number | undefined => undefined};
             const moments = {...savedMoments, channelUnit: "Channel", maskUnit: "K"};
+            runInAction(() => widgetStore.selectMomentRegion(RegionId.ACTIVE));
 
             const problems = restore(widgetStore, {moments}, ids);
 

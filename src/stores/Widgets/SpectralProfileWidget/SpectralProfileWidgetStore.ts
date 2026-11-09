@@ -810,7 +810,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
      * Names the profile that fitting uses, without its data: the image, the region and its shape,
      * the statistic, the Stokes, the spectral axis, the intensity unit and the smoothing. The name
      * changes when the widget shows another profile, and not when more data of the same profile
-     * arrives.
+     * arrives. The region name is left out, so renaming the region keeps the fitting.
      */
     @computed private get fittedProfileKey(): string {
         const profile = this.profileSelectionStore.profiles[0];
@@ -820,12 +820,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
         const region = profile.regionId === null ? undefined : frame?.getRegion(profile.regionId);
         const channelValues = profile.channelValues;
+        const selection = this.profileSelectionStore;
         return JSON.stringify([
             profile.fileId,
             profile.regionId,
             region?.controlPoints,
             region?.rotation,
-            profile.label,
+            selection.selectedStatsTypes,
+            selection.selectedCoordinates,
+            // The coordinate "z" follows the Stokes of the image, so a change of that Stokes gives another profile.
+            frame?.requiredStokes,
             channelValues?.[0],
             channelValues?.[channelValues.length - 1],
             channelValues?.length,
@@ -1508,9 +1512,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
             const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
-            this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits);
-            if (!isSameUnits && ProfileFittingStore.hasWorkspaceGuesses(fitting)) {
-                problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The guesses are 0`);
+            // The guesses belong to the profile that was fitted. When the first step could not show
+            // that profile again, such as when its region was not restored, the guesses are 0.
+            const isSameProfile = this.isShowingWorkspaceData;
+            this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
+            if (ProfileFittingStore.hasWorkspaceGuesses(fitting)) {
+                if (!isSameProfile) {
+                    problems.push("the profile that its fitting guesses were made for was not restored, so the guesses are 0");
+                } else if (!isSameUnits) {
+                    problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The guesses are 0`);
+                }
             }
         }
         const moments = config.moments;
@@ -1536,6 +1547,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             if (regionId !== undefined) {
                 this.selectMomentRegion(regionId);
             } else {
+                this.selectMomentRegion(RegionId.IMAGE);
                 problems.push("the region that its moments were made from was not restored, so the moments are made from the whole image");
             }
         }
