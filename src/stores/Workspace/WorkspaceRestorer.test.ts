@@ -996,7 +996,8 @@ describe("WorkspaceRestorer", () => {
             outcome: WorkspaceIssueOutcome.Skipped,
             label: "The catalog sources.vot",
             reason: "the image it belongs to was skipped",
-            causeImageId: IMAGE.id
+            causeImageId: IMAGE.id,
+            catalogIds: [CATALOG.id]
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
@@ -1870,7 +1871,7 @@ describe("WorkspaceRestorer", () => {
             const issues = await restoring;
 
             expect(issues).toEqual([
-                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The catalog from the SIMBAD query"}
+                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The catalog from the SIMBAD query", catalogIds: [1]}
             ]);
             expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalledWith(expect.anything());
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);

@@ -1,7 +1,7 @@
 import {WorkspaceIssueEffect, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
 import {type WorkspaceIssue} from "models";
 
-import {describeIssue, describeWidgetGroup, groupRestoreReport} from "./restoreReportGroups";
+import {describeIssue, describeWidgetGroup, groupRestoreReport, splitFileNames} from "./restoreReportGroups";
 
 const SKIPPED_IMAGE: WorkspaceIssue = {
     kind: WorkspaceItemKind.Image,
@@ -52,6 +52,23 @@ describe("grouping the restore report", () => {
         ]);
         expect(groups.leftOutCount).toBe(3);
         expect(groups.changed).toEqual([]);
+        expect(groups.changedCount).toBe(0);
+    });
+
+    test("lists a catalog widget under the image whose catalog it showed, through the catalog", () => {
+        const catalog: WorkspaceIssue = {...CATALOG_ON_MOMENT, causeImageId: 1, catalogIds: [4]};
+        const table: WorkspaceIssue = {
+            kind: WorkspaceItemKind.CatalogWidget,
+            subject: "catalog-overlay-0",
+            message: "Could not restore catalog widget catalog-overlay-0: the catalog sources.vot is unavailable",
+            reason: "the catalog sources.vot is unavailable",
+            causeCatalogId: 4,
+            effect: WorkspaceIssueEffect.CatalogNotRestored
+        };
+
+        const groups = groupRestoreReport([SKIPPED_IMAGE, catalog, table]);
+
+        expect(groups.leftOut).toEqual([{issue: SKIPPED_IMAGE, leftOut: [catalog], widgets: [{effect: WorkspaceIssueEffect.CatalogNotRestored, widgetIds: ["catalog-overlay-0"]}], changed: []}]);
         expect(groups.changedCount).toBe(0);
     });
 
@@ -119,5 +136,29 @@ describe("describing an issue in the restore report", () => {
         expect(describeWidgetGroup({effect: WorkspaceIssueEffect.ActiveImage, widgetIds: ["a", "b"]}, true)).toBe("Widgets that now show the active image:");
         expect(describeWidgetGroup({effect: WorkspaceIssueEffect.ActiveImage, widgetIds: ["a", "b"]}, false)).toBe("Widgets that show the active image, because the image they showed was not restored:");
         expect(describeWidgetGroup({effect: WorkspaceIssueEffect.ActiveRegion, widgetIds: ["a"]}, false)).toBe("Widget that shows the active region, because the region it showed was not restored:");
+        expect(describeWidgetGroup({effect: WorkspaceIssueEffect.CatalogNotRestored, widgetIds: ["a", "b"]}, true)).toBe("Catalog widgets whose catalog was not restored:");
+    });
+});
+
+describe("finding the file names in a report line", () => {
+    test("finds the file names of the subject and the absolute paths", () => {
+        expect(splitFileNames("The image cube.fits: File /data/cube.fits does not exist", "cube.fits")).toEqual([
+            {text: "The image ", isFile: false},
+            {text: "cube.fits", isFile: true},
+            {text: ": File ", isFile: false},
+            {text: "/data/cube.fits", isFile: true},
+            {text: " does not exist", isFile: false}
+        ]);
+    });
+
+    test("finds a file name inside the subject of a request, and the longest name first", () => {
+        expect(splitFileNames("The PV image of cube.fits.moment.maximum", "the PV image of cube.fits.moment.maximum")).toEqual([
+            {text: "The PV image of ", isFile: false},
+            {text: "cube.fits.moment.maximum", isFile: true}
+        ]);
+    });
+
+    test("finds nothing in a line without file names", () => {
+        expect(splitFileNames("The catalog from the SIMBAD query", "from the SIMBAD query")).toEqual([{text: "The catalog from the SIMBAD query", isFile: false}]);
     });
 });

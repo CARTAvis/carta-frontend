@@ -795,6 +795,10 @@ export interface WorkspaceIssue {
     imageIds?: number[];
     /** The Workspace ID of the saved image that caused this issue, because the image is not in the session. */
     causeImageId?: number;
+    /** The Workspace IDs of the saved catalogs that are not in the session because of this item. */
+    catalogIds?: number[];
+    /** The Workspace ID of the saved catalog that caused this issue, because the catalog is not in the session. */
+    causeCatalogId?: number;
     /** How a widget differs from the workspace. The report groups the widgets with the same effect. */
     effect?: WorkspaceIssueEffect;
 }

@@ -81,6 +81,8 @@ interface RestoreTask {
     subject(): string;
     /** The workspace IDs of the images that the item opens or makes. */
     imageIds: number[];
+    /** The workspace IDs of the catalogs that the item opens. */
+    catalogIds?: number[];
     /** Tries to open or make the item once. */
     attempt(): Generator<Promise<unknown>, TaskOutcome, any>;
     /** Uses the file that the user chose for the next attempt. */
@@ -479,7 +481,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @param outcome - why the item is not in the session at all. Leave it out when the item is in
      *                  the session, but not as it was saved.
      */
-    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome, details?: Pick<WorkspaceIssue, "label" | "reason" | "imageIds" | "causeImageId">): void {
+    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome, details?: Pick<WorkspaceIssue, "label" | "reason" | "imageIds" | "causeImageId" | "catalogIds">): void {
         this.issues.push({kind, subject, message, outcome, ...details});
     }
 
@@ -682,7 +684,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         this.awaitedImageIds.delete(id);
                         this.skippedImageIds.add(id);
                     });
-                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {label: item.label, reason: item.reason, imageIds: task.imageIds});
+                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {label: item.label, reason: item.reason, imageIds: task.imageIds, catalogIds: task.catalogIds});
                     return;
                 }
                 if (choice.action === WorkspaceRecoveryAction.Repoint) {
@@ -1818,6 +1820,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return {
             subject: () => describeCatalogSource(state.source),
             imageIds: [],
+            catalogIds: [catalogInfo.id],
             attempt: () => this.attemptCatalog(catalogInfo, state),
             repoint: ({directory, filename}) => {
                 state.source = {type: "file", directory, filename};
@@ -1836,10 +1839,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (imageId !== undefined && targetFrameId === undefined) {
             if (this.skippedImageIds.has(imageId)) {
                 const reason = "the image it belongs to was skipped";
-                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`, reason, causeImageId: imageId});
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Skipped, {
+                    label: `The catalog ${description}`,
+                    catalogIds: [catalogInfo.id],
+                    reason,
+                    causeImageId: imageId
+                });
             } else {
                 const reason = "the image it belongs to was not restored";
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, reason, causeImageId: imageId});
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {
+                    label: `The catalog ${description}`,
+                    catalogIds: [catalogInfo.id],
+                    reason,
+                    causeImageId: imageId
+                });
             }
             return "done";
         }
@@ -1850,7 +1863,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         try {
             if (source.type === "vizier" && !source.table) {
                 const reason = "the query names no table";
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, reason});
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, catalogIds: [catalogInfo.id], reason});
                 return "done";
             }
             catalogFileId = (yield* this.openCatalogSource(source, targetFrameId, description, query)) ?? undefined;
@@ -1864,7 +1877,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (catalogFileId === undefined) {
             if (query.isSkipped) {
-                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`});
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`, catalogIds: [catalogInfo.id]});
                 return "done";
             }
             return {

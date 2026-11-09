@@ -7,7 +7,7 @@ import {WorkspaceIssueOutcome} from "enums";
 import {type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 
-import {describeIssue, describeWidgetGroup, groupRestoreReport, type WidgetGroup} from "./restoreReportGroups";
+import {describeIssue, describeWidgetGroup, groupRestoreReport, splitFileNames, type WidgetGroup} from "./restoreReportGroups";
 
 import "./WorkspaceRestoreReportDialogComponent.scss";
 
@@ -16,14 +16,33 @@ function pathOf(directory: string | undefined, filename: string): string {
     return directory ? `${directory.replace(/\/$/, "")}/${filename}` : filename;
 }
 
-const OutcomeTag = ({issue}: {issue: WorkspaceIssue}) => {
+/**
+ * Marks an item as failed or skipped. An item listed under its cause has a lighter tag, so that the
+ * item that caused it stands out.
+ */
+const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnderCause?: boolean}) => {
     const isSkipped = issue.outcome === WorkspaceIssueOutcome.Skipped;
     return (
-        <Tag minimal intent={isSkipped ? Intent.NONE : Intent.DANGER} className="outcome-tag">
+        <Tag minimal={isUnderCause} intent={isSkipped ? Intent.WARNING : Intent.DANGER} icon={isSkipped ? "disable" : "error"} className="outcome-tag">
             {isSkipped ? "Skipped" : "Failed"}
         </Tag>
     );
 };
+
+/** Shows a report line, with the file names and paths in a monospace font. */
+const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => (
+    <span>
+        {splitFileNames(text, issue.subject).map((part, index) =>
+            part.isFile ? (
+                <span key={index} className="file-name">
+                    {part.text}
+                </span>
+            ) : (
+                <React.Fragment key={index}>{part.text}</React.Fragment>
+            )
+        )}
+    </span>
+);
 
 /** Lists widgets by their titles, after the text that says what changed. */
 const WidgetGroupLine = observer(({group, isUnderCause}: {group: WidgetGroup; isUnderCause: boolean}) => {
@@ -33,7 +52,7 @@ const WidgetGroupLine = observer(({group, isUnderCause}: {group: WidgetGroup; is
             <span>{describeWidgetGroup(group, isUnderCause)}</span>
             <span className="widget-titles">
                 {group.widgetIds.map(widgetId => (
-                    <Tag key={widgetId} minimal round>
+                    <Tag key={widgetId} minimal round intent={Intent.PRIMARY}>
                         {widgetsStore.titleOfWidget(widgetId)}
                     </Tag>
                 ))}
@@ -90,14 +109,14 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                 <li key={index} className="left-out-item">
                                     <div className="issue">
                                         <OutcomeTag issue={item.issue} />
-                                        <span>{describeIssue(item.issue, titleOfWidget)}</span>
+                                        <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
                                     </div>
                                     {(item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0) && (
                                         <ul className="consequences" data-testid="workspace-restore-report-consequences">
                                             {item.leftOut.map((issue, consequenceIndex) => (
                                                 <li key={`left-out-${consequenceIndex}`}>
-                                                    <OutcomeTag issue={issue} />
-                                                    <span>{describeIssue(issue, titleOfWidget, false)}</span>
+                                                    <OutcomeTag issue={issue} isUnderCause={true} />
+                                                    <IssueText issue={issue} text={describeIssue(issue, titleOfWidget, false)} />
                                                 </li>
                                             ))}
                                             {item.widgets.map(group => (
@@ -105,7 +124,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                             ))}
                                             {item.changed.map((issue, consequenceIndex) => (
                                                 <li key={`changed-${consequenceIndex}`}>
-                                                    <span>{describeIssue(issue, titleOfWidget)}</span>
+                                                    <IssueText issue={issue} text={describeIssue(issue, titleOfWidget)} />
                                                 </li>
                                             ))}
                                         </ul>
@@ -125,7 +144,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                     <WidgetGroupLine key={index} group={item.widgets} isUnderCause={false} />
                                 ) : (
                                     <li key={index}>
-                                        <span>{describeIssue(item.issue, titleOfWidget)}</span>
+                                        <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
                                     </li>
                                 )
                             )}

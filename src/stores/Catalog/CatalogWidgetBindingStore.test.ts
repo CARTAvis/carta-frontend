@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, PreferenceKeys, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, PreferenceKeys, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {AppStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 
 // Opening a catalog with no table widget gives it one, and with it the display state that chooses
@@ -44,7 +44,10 @@ describe("CatalogWidgetBindingStore", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.CatalogPlot,
             subject: widgetId,
-            message: "Could not restore catalog plot catalog-plot-0: the catalog missing.vot is unavailable; it is showing catalog file 5 instead"
+            message: "Could not restore catalog plot catalog-plot-0: the catalog missing.vot is unavailable; it is showing catalog file 5 instead",
+            reason: "the catalog missing.vot is unavailable; it is showing catalog file 5 instead",
+            causeCatalogId: 1,
+            effect: WorkspaceIssueEffect.CatalogNotRestored
         });
         // The unavailable catalog's ID is not held back from the next catalog opened.
         expect(WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Catalog, 55)).toBe(1);
@@ -317,7 +320,10 @@ describe("CatalogWidgetBindingStore", () => {
             expect(issues).toContainEqual({
                 kind: WorkspaceItemKind.CatalogWidget,
                 subject: "widget-a",
-                message: "Could not restore catalog widget widget-a: workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead"
+                message: "Could not restore catalog widget widget-a: workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead",
+                reason: "workspace catalog 20 is unavailable; it is showing the catalog shown.vot instead",
+                causeCatalogId: 20,
+                effect: WorkspaceIssueEffect.CatalogNotRestored
             });
         });
 

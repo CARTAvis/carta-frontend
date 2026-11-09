@@ -72,7 +72,15 @@
 
     .outcome-tag {
         flex-shrink: 0;
-        min-width: 56px;
-        justify-content: center;
+        min-width: 80px;
+    }
+
+    // File names and paths, set apart from the words around them.
+    .file-name {
+        font-family: $pt-font-family-monospace;
+        font-size: 12px;
+        padding: 0 3px;
+        border-radius: 3px;
+        background: rgba($gray3, 0.15);
     }
 }

@@ -538,20 +538,21 @@ export class WidgetsStore {
     }
 
     /**
-     * Returns the title that a profile, analysis or statistics widget shows, such as "X Profile:
-     * Cursor", by the stable ID of the widget. Returns the default title of its type when the widget
-     * is not open.
+     * Returns the title that a widget shows, such as "X Profile: Cursor", by the stable ID of the
+     * widget. Returns the default title of its type when the widget is not open. The type is taken
+     * from the start of the ID, such as "catalog-plot" for "catalog-plot-0".
      */
-    public titleOfWidget(widgetId: string, widgetType?: string): string {
+    public titleOfWidget(widgetId: string): string {
         for (const [type, widgets] of this.widgetsMap) {
             for (const [id, widgetStore] of widgets) {
-                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
+                if ((widgetStore as {widgetId?: unknown} | undefined)?.widgetId === widgetId) {
                     const title = this.floatingWidgets.find(widget => widget.id === id)?.title ?? (LayoutStore.Instance.layoutModel?.getNodeById(id) as TabNode | undefined)?.getName?.();
                     return title || (getWidgetMap().get(type)?.config.title ?? type);
                 }
             }
         }
-        return (widgetType && getWidgetMap().get(widgetType)?.config.title) || widgetId;
+        const type = [...getWidgetMap().keys()].filter(candidate => widgetId.startsWith(`${candidate}-`)).sort((a, b) => b.length - a.length)[0];
+        return (type && getWidgetMap().get(type)?.config.title) || widgetId;
     }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {

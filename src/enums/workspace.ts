@@ -15,7 +15,9 @@ export enum WorkspaceIssueEffect {
     /** The widget shows the active image, because the image that it showed was not restored. */
     ActiveImage = "active-image",
     /** The widget shows the active region, because the region that it showed was not restored. */
-    ActiveRegion = "active-region"
+    ActiveRegion = "active-region",
+    /** The catalog widget or plot shows another catalog or none, because the catalog that it showed was not restored. */
+    CatalogNotRestored = "catalog-not-restored"
 }
 
 /** The kind of thing a workspace issue is about, for grouping and filtering. */
