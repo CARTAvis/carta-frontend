@@ -200,7 +200,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         const appStore = AppStore.Instance;
         const fittingStore = this.fittingStore;
         const isDisabled = this.widgetStore.profileNum > 1;
-        // Auto detect and Fit use the data of the profile, so they wait until all of it arrives.
+        // Auto detect and Fit use the data of the profile. They wait until all of the data arrives.
         const isWaitingForProfile = !this.widgetStore.isFittingProfileComplete;
 
         const cursorSelectionButton = (

@@ -8,7 +8,7 @@ import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
 export class ProfileFittingStore {
-    /** The most components that a restore reads. The panel offers 20, and auto detect can find more. */
+    /** The largest number of components that a restore reads. The panel offers up to 20 components, and auto detect can find more. */
     public static readonly MAX_WORKSPACE_COMPONENTS = 100;
     @observable function: FittingFunction = FittingFunction.GAUSSIAN;
     @observable components: ProfileFittingIndividualStore[] = [new ProfileFittingIndividualStore()];
@@ -517,14 +517,15 @@ export class ProfileFittingStore {
      * is missing or not valid keeps its default.
      *
      * @param shouldApplyGuesses - whether to apply the initial guesses. The caller passes false when
-     *                             the guesses are in other units than the profile shows now. Then
-     *                             the guesses are 0, and the other settings are applied.
+     *                             the guesses do not fit the profile shown now, such as when they
+     *                             are in other units. Then the guesses are 0, and the other
+     *                             settings are still applied.
      */
     @action applyWorkspaceConfig = (config: WorkspaceSpectralFitting, shouldApplyGuesses: boolean): void => {
         const numberOr = (value: unknown, fallback: number): number => (shouldApplyGuesses && typeof value === "number" && isFinite(value) ? value : fallback);
         const isTrue = (value: unknown): boolean => value === true;
         this.reset();
-        // These are numeric enums, whose values also hold their names, such as "GAUSSIAN". Accept only the numbers.
+        // `Object.values` of a numeric enum also returns the names, such as "GAUSSIAN". Accept only the numbers.
         if (typeof config.function === "number" && Object.values(FittingFunction).includes(config.function)) {
             this.setFunction(config.function);
         }
@@ -535,7 +536,7 @@ export class ProfileFittingStore {
         this.setSlope(numberOr(config.slope, 0));
         this.setLockedYIntercept(isTrue(config.yInterceptLocked));
         this.setLockedSlope(isTrue(config.slopeLocked));
-        // Read a limited number of components, so a damaged workspace cannot create very many.
+        // Read a limited number of components. Then a damaged workspace cannot create very many components.
         const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, ProfileFittingStore.MAX_WORKSPACE_COMPONENTS) : [];
         if (components.length) {
             this.setComponents(components.length, true);

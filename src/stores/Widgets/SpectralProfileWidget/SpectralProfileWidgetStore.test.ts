@@ -782,7 +782,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     });
 
     describe("when the fitting is cleared", () => {
-        /** A widget whose cursor profile arrives in parts, from a region whose shape can change, of an image with Stokes I and Q. */
+        /** Creates a widget whose profile arrives in parts. The region of the profile can change its shape, and the image has Stokes I and Q. */
         const createStreamingWidgetStore = () => {
             const {frame} = createWidgetStore();
             const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
@@ -851,7 +851,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     });
 
     describe("fitting and moment settings in a workspace", () => {
-        /** A frame in Frequency (GHz), LSRK, from 100 to 110, whose profile is in Jy/beam. */
+        /** Creates a widget on a frame in Frequency (GHz), LSRK, from 100 to 110. Its profile is in Jy/beam. */
         const createFittingWidgetStore = () => {
             const created = createWidgetStore();
             Object.assign(created.frame, {spectralCoordinate: "Frequency (GHz)", spectralSystem: "LSRK", channelValueBounds: {min: 100, max: 110}});
@@ -877,7 +877,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             yUnit: "Jy/beam"
         };
 
-        /** A widget that shows the profile of region 5, which comes back with the same ID. */
+        /** A config that points the widget at region 5. Region 5 comes back with the same ID. */
         const onRegion5 = {regions: [{regionId: 5}]};
 
         const savedMoments = {
@@ -1079,7 +1079,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             const problems = restore(widgetStore, {moments: savedMoments}, ids);
 
             expect(problems).toEqual([]);
-            // The widget follows the active image, so the region is looked up on the image that was in front.
+            // The widget follows the active image. So the region is looked up on the image that was in front.
             expect(regionIdOf).toHaveBeenCalledWith(undefined, 5);
             expect(widgetStore.selectedMoments).toEqual([CARTA.Moment.MEAN_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]);
             expect(widgetStore.momentRegionId).toBe(15);
