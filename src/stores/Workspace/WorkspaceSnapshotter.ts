@@ -319,6 +319,9 @@ export class WorkspaceSnapshotter {
         if (frame.titleCustomText !== frame.defaultTitleText) {
             workspaceFile.titleCustomText = frame.titleCustomText;
         }
+        if (frame.colorbarLabelCustomText !== frame.defaultColorbarLabelText) {
+            workspaceFile.colorbarLabelCustomText = frame.colorbarLabelCustomText;
+        }
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
         if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
             workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
