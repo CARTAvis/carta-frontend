@@ -828,8 +828,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             region?.rotation,
             selection.selectedStatsTypes,
             selection.selectedCoordinates,
-            // The coordinate "z" follows the Stokes of the image, so a change of that Stokes gives another profile.
-            frame?.requiredStokes,
+            // The coordinate "z" follows the Stokes of the image, so a change of that Stokes gives
+            // another profile. A profile in a fixed Stokes, such as "Iz", does not change.
+            selection.selectedCoordinates[0] === "z" ? frame?.requiredStokes : undefined,
             channelValues?.[0],
             channelValues?.[channelValues.length - 1],
             channelValues?.length,
@@ -1513,12 +1514,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
             // The guesses belong to the profile that was fitted. When the first step could not show
-            // that profile again, such as when its region was not restored, the guesses are 0.
-            const isSameProfile = this.isShowingWorkspaceData;
+            // that profile again, such as when its region was not restored, the guesses are 0. A
+            // workspace does not save the cursor position, so the guesses of a cursor profile are 0 too.
+            const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;
+            const isSameProfile = this.isShowingWorkspaceData && !isCursorProfile;
             this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
             if (ProfileFittingStore.hasWorkspaceGuesses(fitting)) {
-                if (!isSameProfile) {
+                if (!this.isShowingWorkspaceData) {
                     problems.push("the profile that its fitting guesses were made for was not restored, so the guesses are 0");
+                } else if (isCursorProfile) {
+                    problems.push("its fitting guesses were made for the profile at the cursor, whose position is not saved, so the guesses are 0");
                 } else if (!isSameUnits) {
                     problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The guesses are 0`);
                 }
