@@ -2638,7 +2638,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return;
         }
-        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this));
+        this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this)));
         const waiting = {isSkipped: false};
         const results = this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets, () => this.isCurrent && !waiting.isSkipped);
         const outcome = yield* awaited(this.waitForWidgetResults(results, waiting));
