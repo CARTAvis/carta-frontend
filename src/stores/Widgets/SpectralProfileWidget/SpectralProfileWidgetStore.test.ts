@@ -782,7 +782,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     });
 
     describe("when the fitting is cleared", () => {
-        /** A widget whose cursor profile arrives in parts, from a region whose shape can change. */
+        /** A widget whose cursor profile arrives in parts, from a region whose shape can change, of an image with Stokes I and Q. */
         const createStreamingWidgetStore = () => {
             const {frame} = createWidgetStore();
             const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
@@ -790,6 +790,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             frame.getRegion.mockReturnValue(region as never);
             const stokes = observable.box(0);
             Object.defineProperty(frame, "requiredStokes", {get: () => stokes.get()});
+            Object.assign(frame, {hasStokes: true, polarizationInfo: ["Stokes I", "Stokes Q"]});
             (AppStore.Instance.spectralProfiles.get(7)!.get(0)!.getProfile as jest.Mock).mockImplementation(() => data.get());
             const store = new SpectralProfileWidgetStore();
             runInAction(() => {
@@ -825,6 +826,17 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             runInAction(() => stokes.set(1));
 
             expect(store.fittingStore.yIntercept).toBe(0);
+            store.dispose();
+        });
+
+        test("keeps the guesses of a profile in a fixed Stokes when the Stokes of the image changes", () => {
+            const {store, stokes} = createStreamingWidgetStore();
+            runInAction(() => store.profileSelectionStore.applyWorkspaceSelection({coordinates: ["Iz"]}));
+            runInAction(() => store.fittingStore.setYIntercept(0.5));
+
+            runInAction(() => stokes.set(1));
+
+            expect(store.fittingStore.yIntercept).toBe(0.5);
             store.dispose();
         });
 
@@ -864,6 +876,9 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             xUnit: "Frequency (GHz), LSRK",
             yUnit: "Jy/beam"
         };
+
+        /** A widget that shows the profile of region 5, which comes back with the same ID. */
+        const onRegion5 = {regions: [{regionId: 5}]};
 
         const savedMoments = {
             moments: [CARTA.Moment.MEAN_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
@@ -941,7 +956,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         test("restores the fitting guesses, though showing the rest frame resets them", () => {
             const {widgetStore} = createFittingWidgetStore();
-            const config = {restFrameRedshift: 1, yAxisRestFrameEnabled: true, fitting: {...savedFitting, yUnit: "Jy/beam, rest frame"}};
+            const config = {...onRegion5, restFrameRedshift: 1, yAxisRestFrameEnabled: true, fitting: {...savedFitting, yUnit: "Jy/beam, rest frame"}};
 
             const problems = restore(widgetStore, config);
 
@@ -957,7 +972,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         test("sets the guesses to 0 and says so when the profile shows other units, and applies the other fitting settings", () => {
             const {widgetStore} = createFittingWidgetStore();
-            const config = {fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK"}};
+            const config = {...onRegion5, fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK"}};
 
             const problems = restore(widgetStore, config);
 
@@ -983,7 +998,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         test("keeps the default of each saved fitting value that is not valid", () => {
             const {widgetStore} = createFittingWidgetStore();
-            const config = {fitting: {...savedFitting, function: "LORENTZIAN", continuum: "FIRST_ORDER", yIntercept: Number.NaN, components: [{center: "100", amp: 2}], residualVisible: "no"}};
+            const config = {...onRegion5, fitting: {...savedFitting, function: "LORENTZIAN", continuum: "FIRST_ORDER", yIntercept: Number.NaN, components: [{center: "100", amp: 2}], residualVisible: "no"}};
 
             restore(widgetStore, config);
 
@@ -1000,6 +1015,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
             expect(problems).toEqual(["the profile that its fitting guesses were made for was not restored, so the guesses are 0"]);
             expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept, widgetStore.fittingStore.components[0].center]).toEqual([1, 0, 0]);
+        });
+
+        test("sets the guesses of a profile at the cursor to 0, as the cursor position is not saved", () => {
+            const {widgetStore} = createFittingWidgetStore();
+
+            const problems = restore(widgetStore, {fitting: savedFitting});
+
+            expect(problems).toEqual(["its fitting guesses were made for the profile at the cursor, whose position is not saved, so the guesses are 0"]);
+            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept]).toEqual([1, 0]);
         });
 
         test("does not apply the settings of an image that was not restored", () => {
