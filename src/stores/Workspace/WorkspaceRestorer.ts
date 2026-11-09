@@ -17,6 +17,7 @@ import {
     SkyRefIs,
     VelocityConvention,
     WORKSPACE_DIALOGS,
+    WorkspaceIssueEffect,
     WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
@@ -116,6 +117,11 @@ function noSources(): never {
 /** Adds the reason to a sentence that reports a failure, when the reason is known. */
 function withReason(sentence: string, reason: string | undefined): string {
     return reason ? `${sentence}: ${reason}` : sentence;
+}
+
+/** Returns the text with its first letter in upper case, such as "The moment images of cube.fits". */
+function capitalized(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -473,8 +479,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @param outcome - why the item is not in the session at all. Leave it out when the item is in
      *                  the session, but not as it was saved.
      */
-    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome): void {
-        this.issues.push({kind, subject, message, outcome});
+    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome, details?: Pick<WorkspaceIssue, "label" | "reason" | "imageIds" | "causeImageId">): void {
+        this.issues.push({kind, subject, message, outcome, ...details});
     }
 
     /**
@@ -578,7 +584,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const subject = describeImageSource(fileInfo.source);
         const tried = state.isRepointed ? ` from ${describeImageSource(source)}` : "";
         if (!source || !["file", "lel", "hypercube"].includes(source.type)) {
-            this.report(WorkspaceItemKind.Image, subject, `Could not open the image ${subject}: the source is not one this version can open`, WorkspaceIssueOutcome.Failed);
+            const reason = "the source is not one this version can open";
+            this.report(WorkspaceItemKind.Image, subject, `Could not open the image ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The image ${subject}`, reason, imageIds: [fileInfo.id]});
             return "done";
         }
         let frame: FrameStore | undefined;
@@ -600,6 +607,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 kind: WorkspaceItemKind.Image,
                 subject,
                 message: withReason(`Could not open the image ${subject}${tried}`, reason),
+                label: `The image ${subject}${tried}`,
+                reason,
                 repointKind: source?.type === "file" ? "image" : undefined,
                 canRetry: source?.type !== "file",
                 dependents: this.dependentsOfImages([fileInfo.id])
@@ -673,7 +682,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         this.awaitedImageIds.delete(id);
                         this.skippedImageIds.add(id);
                     });
-                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped);
+                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {label: item.label, reason: item.reason, imageIds: task.imageIds});
                     return;
                 }
                 if (choice.action === WorkspaceRecoveryAction.Repoint) {
@@ -801,7 +810,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const subject = WorkspaceRestorer.describeRequest(request, "");
         const query = WorkspaceRestorer.hipsQueryOf(request);
         if (!query) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`, WorkspaceIssueOutcome.Failed);
+            const reason = "the query is not one this version can read";
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: capitalized(subject), reason, imageIds: [images[0].id]});
             return "done";
         }
         let frame: FrameStore | undefined;
@@ -817,7 +827,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return "done";
         }
         if (!frame) {
-            return {kind: WorkspaceItemKind.GeneratedImage, subject, message: withReason(`Could not make ${subject}`, reason), canRetry: true, dependents: this.dependentsOfImages([images[0].id])};
+            return {
+                kind: WorkspaceItemKind.GeneratedImage,
+                subject,
+                message: withReason(`Could not make ${subject}`, reason),
+                label: capitalized(subject),
+                reason,
+                canRetry: true,
+                dependents: this.dependentsOfImages([images[0].id])
+            };
         }
         this.adoptImage(images[0], frame);
         return "done";
@@ -1002,7 +1020,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (!Array.isArray(outcome)) {
             const imageIds = generated.images.map(image => image.id);
-            return {kind: WorkspaceItemKind.GeneratedImage, subject: this.subjectOf(generated.request), message: outcome.failure, canRetry: true, dependents: this.dependentsOfImages(imageIds)};
+            const subject = this.subjectOf(generated.request);
+            return {
+                kind: WorkspaceItemKind.GeneratedImage,
+                subject,
+                message: withReason(`Could not make ${subject}`, outcome.reason),
+                label: capitalized(subject),
+                reason: outcome.reason,
+                canRetry: true,
+                dependents: this.dependentsOfImages(imageIds)
+            };
         }
         const images = this.adoptGeneratedImages(generated, outcome);
         if (!images.length) {
@@ -1024,12 +1051,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Returns "deferred" when the image that it is made from may still be made after Recovery.
      * Returns the failure when the backend could not make the images. The user can retry them.
      */
-    private *makeImagesAgain(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {failure: string}, any> {
+    private *makeImagesAgain(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {reason: string | undefined}, any> {
         const {request, images} = generated;
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
         const subject = this.subjectOf(request);
+        const details = {label: capitalized(subject), imageIds: generated.images.map(image => image.id), causeImageId: request.sourceImageId};
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
             if (this.awaitedImageIds.has(request.sourceImageId)) {
@@ -1038,15 +1066,18 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (this.skippedImageIds.has(request.sourceImageId)) {
                 // The images of this request are skipped with it. An item made from them is skipped too.
                 generated.images.forEach(image => this.skippedImageIds.add(image.id));
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}: the image it is made from was skipped`, WorkspaceIssueOutcome.Skipped);
+                const reason = "the image it is made from was skipped";
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}: ${reason}`, WorkspaceIssueOutcome.Skipped, {...details, reason});
             } else {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
+                const reason = "the image it is made from was not restored";
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {...details, reason});
             }
             return [];
         }
         const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
         if (regionId === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`, WorkspaceIssueOutcome.Failed);
+            const reason = "the region it is made over was not restored";
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
 
@@ -1136,17 +1167,18 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         if (outcome === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`, WorkspaceIssueOutcome.Failed);
+            const reason = "the request is not one this version can make";
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
         if (outcome === "skipped") {
             // The images of this request are skipped with it. An item made from them is skipped too.
             generated.images.forEach(image => this.skippedImageIds.add(image.id));
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`, WorkspaceIssueOutcome.Skipped);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`, WorkspaceIssueOutcome.Skipped, {label: details.label, imageIds: details.imageIds});
             return [];
         }
         if (!outcome.length) {
-            return {failure: withReason(`Could not make ${subject}`, reason)};
+            return {reason};
         }
         if (request.type === "moment") {
             this.momentSources.add(source);
@@ -1371,7 +1403,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (!frame) {
                 if (frames.length) {
                     const imageName = this.nameOf(image);
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`, WorkspaceIssueOutcome.Failed);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`, WorkspaceIssueOutcome.Failed, {label: `The image ${imageName}`, imageIds: [image.id]});
                 }
                 continue;
             }
@@ -1803,9 +1835,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const targetFrameId = imageId === undefined ? undefined : this.frameIds.get(imageId);
         if (imageId !== undefined && targetFrameId === undefined) {
             if (this.skippedImageIds.has(imageId)) {
-                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: the image it belongs to was skipped`, WorkspaceIssueOutcome.Skipped);
+                const reason = "the image it belongs to was skipped";
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`, reason, causeImageId: imageId});
             } else {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`, WorkspaceIssueOutcome.Failed);
+                const reason = "the image it belongs to was not restored";
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, reason, causeImageId: imageId});
             }
             return "done";
         }
@@ -1815,7 +1849,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         let reason: string | undefined;
         try {
             if (source.type === "vizier" && !source.table) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the query names no table`, WorkspaceIssueOutcome.Failed);
+                const reason = "the query names no table";
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The catalog ${description}`, reason});
                 return "done";
             }
             catalogFileId = (yield* this.openCatalogSource(source, targetFrameId, description, query)) ?? undefined;
@@ -1829,13 +1864,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (catalogFileId === undefined) {
             if (query.isSkipped) {
-                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped);
+                this.report(WorkspaceItemKind.Catalog, description, `Skipped the catalog ${description}`, WorkspaceIssueOutcome.Skipped, {label: `The catalog ${description}`});
                 return "done";
             }
             return {
                 kind: WorkspaceItemKind.Catalog,
                 subject: description,
                 message: withReason(`Could not load the catalog ${description}${tried}`, reason),
+                label: `The catalog ${description}${tried}`,
+                reason,
                 repointKind: source.type === "file" ? "catalog" : undefined,
                 canRetry: source.type !== "file",
                 database: source.type === "simbad" ? CatalogDatabase.SIMBAD : source.type === "vizier" ? CatalogDatabase.VIZIER : undefined,
@@ -2074,7 +2111,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
-        this.issues.push(...this.appStore.widgetsStore.restorePlotWidgetBindings(this.workspace.plotWidgets, this));
+        this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetBindings(this.workspace.plotWidgets, this)));
         yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
             return;
@@ -2085,6 +2122,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
+    }
+
+    /**
+     * Names the saved image that each widget showed, when the widget shows the active image because
+     * that image was not restored. The report lists the widget under the item that left the image out.
+     */
+    private withImageCauses(issues: WorkspaceIssue[]): WorkspaceIssue[] {
+        return issues.map(issue => {
+            if (issue.effect !== WorkspaceIssueEffect.ActiveImage) {
+                return issue;
+            }
+            const config = this.workspace.plotWidgets?.[issue.subject] as {imageId?: unknown} | undefined;
+            // A widget that saved no image followed the image in front.
+            const causeImageId = typeof config?.imageId === "number" ? config.imageId : this.workspace.selectedFile;
+            return causeImageId === undefined ? issue : {...issue, causeImageId};
+        });
     }
 
     public wasActiveImageRestored(): boolean {

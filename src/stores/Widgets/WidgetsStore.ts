@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {
     type ConfigurableStore,
     CreateWidgetButton,
@@ -35,7 +35,9 @@ import {
     FlexLayoutDomMarker,
     getWidgetMap,
     type IdentifiedWidgetStore,
+    IMAGE_NOT_RESTORED,
     type Persisted,
+    REGION_NOT_RESTORED,
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
@@ -520,11 +522,36 @@ export class WidgetsStore {
         Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
             this.widgetsMap.get(config.type)?.forEach(widgetStore => {
                 if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
-                    apply(widgetStore, config).forEach(problem => issues.push({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`}));
+                    apply(widgetStore, config).forEach(problem =>
+                        issues.push({
+                            kind: WorkspaceItemKind.PlotWidget,
+                            subject: widgetId,
+                            message: `Could not fully restore the widget ${widgetId}: ${problem}`,
+                            reason: problem,
+                            effect: problem === IMAGE_NOT_RESTORED ? WorkspaceIssueEffect.ActiveImage : problem === REGION_NOT_RESTORED ? WorkspaceIssueEffect.ActiveRegion : undefined
+                        })
+                    );
                 }
             });
         });
         return issues;
+    }
+
+    /**
+     * Returns the title that a profile, analysis or statistics widget shows, such as "X Profile:
+     * Cursor", by the stable ID of the widget. Returns the default title of its type when the widget
+     * is not open.
+     */
+    public titleOfWidget(widgetId: string, widgetType?: string): string {
+        for (const [type, widgets] of this.widgetsMap) {
+            for (const [id, widgetStore] of widgets) {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
+                    const title = this.floatingWidgets.find(widget => widget.id === id)?.title ?? (LayoutStore.Instance.layoutModel?.getNodeById(id) as TabNode | undefined)?.getName?.();
+                    return title || (getWidgetMap().get(type)?.config.title ?? type);
+                }
+            }
+        }
+        return (widgetType && getWidgetMap().get(widgetType)?.config.title) || widgetId;
     }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {

@@ -1,7 +1,8 @@
 import type React from "react";
 import {Actions} from "flexlayout-react";
+import {runInAction} from "mobx";
 
-import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, CatalogSettingsTabs, HelpType, IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {getWidgetMap} from "models/Widget/Widget";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {AppStore} from "stores/AppStore/AppStore";
@@ -293,13 +294,34 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(widgetsStore.statsWidgets.get("stats-3")!.coordinate).toBe("Qz");
     });
 
+    test("names a widget by the title that it shows, docked or floating, or by the default title of its type", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-0"});
+        widgetsStore.addWidget("spatial-profiler", "spatial-profiler-2", {widgetId: "spatial-profiler-0"});
+        layoutModelMock.getNodeById.mockImplementation(id => (id === "stats-3" ? {getName: () => "Statistics: Region 1"} : undefined));
+        runInAction(() => widgetsStore.floatingWidgets.push({id: "spatial-profiler-2", title: "Y Profile: Cursor"} as any));
+
+        expect(widgetsStore.titleOfWidget("stats-0")).toBe("Statistics: Region 1");
+        expect(widgetsStore.titleOfWidget("spatial-profiler-0")).toBe("Y Profile: Cursor");
+        expect(widgetsStore.titleOfWidget("stokes-0", "stokes")).toBe("Stokes Analysis");
+        expect(widgetsStore.titleOfWidget("stokes-0")).toBe("stokes-0");
+    });
+
     test("reports what a widget could not be pointed at, naming the widget", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-0"});
 
         const issues = widgetsStore.restorePlotWidgetBindings({"stats-0": {type: "stats", imageId: 4}}, {fileIdOf: () => undefined, regionIdOf: () => undefined, wasActiveImageRestored: () => true});
 
-        expect(issues).toEqual([{kind: WorkspaceItemKind.PlotWidget, subject: "stats-0", message: "Could not fully restore the widget stats-0: the image it showed was not restored, so it shows the active image"}]);
+        expect(issues).toEqual([
+            {
+                kind: WorkspaceItemKind.PlotWidget,
+                subject: "stats-0",
+                message: "Could not fully restore the widget stats-0: the image it showed was not restored, so it shows the active image",
+                reason: "the image it showed was not restored, so it shows the active image",
+                effect: WorkspaceIssueEffect.ActiveImage
+            }
+        ]);
     });
 
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {

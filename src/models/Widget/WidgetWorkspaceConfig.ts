@@ -41,6 +41,12 @@ export function isWidgetWorkspaceConfigOf<TType extends WidgetWorkspaceType>(con
 }
 
 /** Gives the workspace IDs of the data that a widget shows, while a workspace is saved. */
+/** The problem of a widget whose saved image was not restored. The restore report names the image as the cause. */
+export const IMAGE_NOT_RESTORED = "the image it showed was not restored, so it shows the active image";
+
+/** The problem of a widget whose saved region was not restored. */
+export const REGION_NOT_RESTORED = "the region it showed was not restored, so it shows the active region";
+
 export interface WorkspaceIdWriter {
     /** Returns the workspace ID of an image, or nothing when the workspace does not save the image. */
     imageIdOf(fileId: number): number | undefined;

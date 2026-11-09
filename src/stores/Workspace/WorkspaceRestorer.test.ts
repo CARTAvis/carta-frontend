@@ -19,6 +19,7 @@ import {
     SkyRefIs,
     SpectralSystem,
     VelocityConvention,
+    WorkspaceIssueEffect,
     WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
@@ -889,6 +890,30 @@ describe("WorkspaceRestorer", () => {
         expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
     });
 
+    test("names the saved image that a widget showed when the widget shows the active image instead", async () => {
+        const {appStore} = createSession();
+        const widgetIssue = (widgetId: string, effect: WorkspaceIssueEffect) => ({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: widgetId, reason: widgetId, effect});
+        appStore.widgetsStore.restorePlotWidgetBindings.mockReturnValue([
+            widgetIssue("stats-0", WorkspaceIssueEffect.ActiveImage),
+            widgetIssue("render-config-0", WorkspaceIssueEffect.ActiveImage),
+            widgetIssue("histogram-0", WorkspaceIssueEffect.ActiveRegion)
+        ]);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                selectedFile: 1,
+                plotWidgets: {"stats-0": {type: "stats", imageId: 5}, "render-config-0": {type: "render-config"}, "histogram-0": {type: "histogram", imageId: 1}}
+            })
+        );
+
+        // A widget that saved no image followed the image in front. A missing region names no image.
+        expect(issues.map(issue => [issue.subject, issue.causeImageId])).toEqual([
+            ["stats-0", 5],
+            ["render-config-0", 1],
+            ["histogram-0", undefined]
+        ]);
+    });
+
     test("reports an invalid embedded layout the layout store could not apply", async () => {
         const {appStore} = createSession();
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
@@ -955,17 +980,23 @@ describe("WorkspaceRestorer", () => {
         const issues = await restoreIssues(createWorkspace({catalogs: [CATALOG], layout: {...LAYOUT, docked: {type: "row", content: []}}}));
 
         // The session skips each item that Recovery offers. The catalog goes with its image.
+        // The image names the saved image that it leaves out, and the catalog names it as the cause.
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Image,
             subject: "image.fits",
             message: "Could not open the image image.fits",
-            outcome: WorkspaceIssueOutcome.Skipped
+            outcome: WorkspaceIssueOutcome.Skipped,
+            label: "The image image.fits",
+            imageIds: [IMAGE.id]
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Catalog,
             subject: "sources.vot",
             message: "Skipped the catalog sources.vot: the image it belongs to was skipped",
-            outcome: WorkspaceIssueOutcome.Skipped
+            outcome: WorkspaceIssueOutcome.Skipped,
+            label: "The catalog sources.vot",
+            reason: "the image it belongs to was skipped",
+            causeImageId: IMAGE.id
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
@@ -1619,6 +1650,11 @@ describe("WorkspaceRestorer", () => {
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);
+            // The report lists the PV request under the moment request, by the image that the PV request is made from.
+            expect(issues.map(({label, reason, imageIds, causeImageId}) => ({label, reason, imageIds, causeImageId}))).toEqual([
+                {label: "The moment images of image.fits", reason: undefined, imageIds: [2], causeImageId: undefined},
+                {label: "The PV image of image.fits.moment.maximum", reason: "the image it is made from was skipped", imageIds: [3], causeImageId: 2}
+            ]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "Making the moment images of image.fits", progress: 0.5}));
         });
 
@@ -1719,6 +1755,8 @@ describe("WorkspaceRestorer", () => {
                     kind: WorkspaceItemKind.Image,
                     subject: "image.fits",
                     message: "Could not open the image image.fits: File /data/image.fits does not exist",
+                    label: "The image image.fits",
+                    reason: "File /data/image.fits does not exist",
                     repointKind: "image",
                     canRetry: false,
                     dependents: ["1 region", "the catalog sources.vot"]
@@ -1831,7 +1869,9 @@ describe("WorkspaceRestorer", () => {
             step!.onSkip!();
             const issues = await restoring;
 
-            expect(issues).toEqual([{kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped}]);
+            expect(issues).toEqual([
+                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The catalog from the SIMBAD query"}
+            ]);
             expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalledWith(expect.anything());
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
         });

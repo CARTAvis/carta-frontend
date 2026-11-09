@@ -4,7 +4,10 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {WorkspaceIssueOutcome} from "enums";
+import {type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
+
+import {describeIssue, describeWidgetGroup, groupRestoreReport, type WidgetGroup} from "./restoreReportGroups";
 
 import "./WorkspaceRestoreReportDialogComponent.scss";
 
@@ -13,9 +16,37 @@ function pathOf(directory: string | undefined, filename: string): string {
     return directory ? `${directory.replace(/\/$/, "")}/${filename}` : filename;
 }
 
+const OutcomeTag = ({issue}: {issue: WorkspaceIssue}) => {
+    const isSkipped = issue.outcome === WorkspaceIssueOutcome.Skipped;
+    return (
+        <Tag minimal intent={isSkipped ? Intent.NONE : Intent.DANGER} className="outcome-tag">
+            {isSkipped ? "Skipped" : "Failed"}
+        </Tag>
+    );
+};
+
+/** Lists widgets by their titles, after the text that says what changed. */
+const WidgetGroupLine = observer(({group, isUnderCause}: {group: WidgetGroup; isUnderCause: boolean}) => {
+    const widgetsStore = AppStore.Instance.widgetsStore;
+    return (
+        <li className="widget-group">
+            <span>{describeWidgetGroup(group, isUnderCause)}</span>
+            <span className="widget-titles">
+                {group.widgetIds.map(widgetId => (
+                    <Tag key={widgetId} minimal round>
+                        {widgetsStore.titleOfWidget(widgetId)}
+                    </Tag>
+                ))}
+            </span>
+        </li>
+    );
+});
+
 /**
  * Lists what the last workspace restore could not bring back as saved, in three groups:
- * - items that are not in the session, each marked as failed or skipped.
+ * - items that are not in the session, each marked as failed or skipped. Under each item, the
+ *   report lists what the restore left out or changed because of it, such as the widgets that
+ *   showed a skipped image.
  * - items that are in the session, but not as saved.
  * - images and catalogs that opened from a file that the user chose. The user can write these new
  *   locations to the stored workspace, and change nothing else in it.
@@ -29,8 +60,8 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     }
     const report = lastReport.current;
     const issues = report?.issues ?? [];
-    const leftOut = issues.filter(issue => issue.outcome);
-    const changed = issues.filter(issue => !issue.outcome);
+    const groups = groupRestoreReport(issues);
+    const titleOfWidget = (widgetId: string) => appStore.widgetsStore.titleOfWidget(widgetId);
     const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])].map(({to}) => to);
     const writeBack = appStore.workspaceWriteBack;
 
@@ -50,32 +81,54 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             canOutsideClickClose={false}
         >
             <div className={Classes.DIALOG_BODY}>
-                {leftOut.length > 0 && (
+                {groups.leftOutCount > 0 && (
                     <section data-testid="workspace-restore-report-left-out">
-                        <H4>Not restored ({leftOut.length})</H4>
+                        <H4>Not restored ({groups.leftOutCount})</H4>
                         <p>These items are not in the session.</p>
                         <ul>
-                            {leftOut.map((issue, index) => (
-                                <li key={index}>
-                                    <Tag minimal intent={issue.outcome === WorkspaceIssueOutcome.Skipped ? Intent.NONE : Intent.DANGER}>
-                                        {issue.outcome === WorkspaceIssueOutcome.Skipped ? "Skipped" : "Failed"}
-                                    </Tag>
-                                    <span>{issue.message}</span>
+                            {groups.leftOut.map((item, index) => (
+                                <li key={index} className="left-out-item">
+                                    <div className="issue">
+                                        <OutcomeTag issue={item.issue} />
+                                        <span>{describeIssue(item.issue, titleOfWidget)}</span>
+                                    </div>
+                                    {(item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0) && (
+                                        <ul className="consequences" data-testid="workspace-restore-report-consequences">
+                                            {item.leftOut.map((issue, consequenceIndex) => (
+                                                <li key={`left-out-${consequenceIndex}`}>
+                                                    <OutcomeTag issue={issue} />
+                                                    <span>{describeIssue(issue, titleOfWidget, false)}</span>
+                                                </li>
+                                            ))}
+                                            {item.widgets.map(group => (
+                                                <WidgetGroupLine key={group.effect} group={group} isUnderCause={true} />
+                                            ))}
+                                            {item.changed.map((issue, consequenceIndex) => (
+                                                <li key={`changed-${consequenceIndex}`}>
+                                                    <span>{describeIssue(issue, titleOfWidget)}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     </section>
                 )}
-                {changed.length > 0 && (
+                {groups.changedCount > 0 && (
                     <section data-testid="workspace-restore-report-changed">
-                        <H4>Restored with changes ({changed.length})</H4>
+                        <H4>Restored with changes ({groups.changedCount})</H4>
                         <p>These items are in the session, but not as they were saved.</p>
                         <ul>
-                            {changed.map((issue, index) => (
-                                <li key={index}>
-                                    <span>{issue.message}</span>
-                                </li>
-                            ))}
+                            {groups.changed.map((item, index) =>
+                                "widgets" in item ? (
+                                    <WidgetGroupLine key={index} group={item.widgets} isUnderCause={false} />
+                                ) : (
+                                    <li key={index}>
+                                        <span>{describeIssue(item.issue, titleOfWidget)}</span>
+                                    </li>
+                                )
+                            )}
                         </ul>
                     </section>
                 )}
