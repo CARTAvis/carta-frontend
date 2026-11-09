@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {RegionId, RegionsType} from "enums";
-import {type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceWidgetBinding} from "models";
+import {IMAGE_NOT_RESTORED, REGION_NOT_RESTORED, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceWidgetBinding} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 
@@ -71,7 +71,7 @@ export class RegionWidgetStore {
         let fileId = ACTIVE_FILE_ID;
         const restoredFileId = binding.imageId === undefined ? undefined : ids.fileIdOf(binding.imageId);
         if (binding.imageId === undefined ? !ids.wasActiveImageRestored() : restoredFileId === undefined) {
-            problems.push("the image it showed was not restored, so it shows the active image");
+            problems.push(IMAGE_NOT_RESTORED);
         } else if (restoredFileId !== undefined) {
             fileId = restoredFileId;
         }
@@ -87,7 +87,7 @@ export class RegionWidgetStore {
             if (regionId !== undefined) {
                 this.setRegionId(regionFileId, regionId);
             } else if (regionFileId === fileId && !problems.length) {
-                problems.push("the region it showed was not restored, so it shows the active region");
+                problems.push(REGION_NOT_RESTORED);
             }
         }
         this.isShowingWorkspaceData = problems.length === 0;

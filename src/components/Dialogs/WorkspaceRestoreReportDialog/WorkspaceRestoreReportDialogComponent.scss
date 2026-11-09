@@ -37,7 +37,40 @@
         overflow-wrap: anywhere;
     }
 
-    .#{$ns}-tag {
+    // A left-out item puts what it caused below itself, so it stacks its lines.
+    li.left-out-item {
+        display: block;
+
+        .issue {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+    }
+
+    .consequences {
+        margin: 4px 0 0 64px;
+        padding-left: 12px;
+        border-left: 2px solid rgba($gray3, 0.4);
+        font-size: 13px;
+        color: $pt-text-color-muted;
+
+        li {
+            padding: 2px 0;
+        }
+    }
+
+    li.widget-group {
+        flex-wrap: wrap;
+    }
+
+    .widget-titles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .outcome-tag {
         flex-shrink: 0;
         min-width: 56px;
         justify-content: center;

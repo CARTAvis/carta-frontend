@@ -28,6 +28,10 @@ export interface WorkspaceRecoveryItem {
     subject: string;
     /** Why the item failed, as a whole sentence naming the item. */
     message: string;
+    /** How the restore report names the item, if the user skips it. See {@link WorkspaceIssue.label}. */
+    label?: string;
+    /** Why the item failed, without the name of the item. */
+    reason?: string;
     /** The kind of file that the user can choose for the item. Undefined when the item is not a file. */
     repointKind?: "image" | "catalog";
     /** Whether the item can be opened again as it is saved, such as an online query. */
