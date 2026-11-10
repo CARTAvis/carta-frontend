@@ -158,6 +158,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         this.settle();
         this.restoreDialogs();
+        this.restoreWidgetSettings();
         return this.issues;
     }
 
@@ -173,6 +174,38 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const dialogStore = this.appStore.dialogStore;
         WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
         saved.filter(id => WORKSPACE_DIALOGS.includes(id)).forEach(id => dialogStore.showDialog(id));
+    }
+
+    /**
+     * Opens the settings panels of widgets that were open, where they were, and closes the other
+     * floating settings panels. Open them after the layout, when the widgets are back.
+     */
+    private restoreWidgetSettings(): void {
+        const saved = this.workspace.openWidgetSettings;
+        if (!Array.isArray(saved)) {
+            return;
+        }
+        const widgetsStore = this.appStore.widgetsStore;
+        widgetsStore.floatingWidgets.filter(config => config.type === "floating-settings").forEach(config => widgetsStore.removeFloatingWidget(config.id));
+        const isPlaced = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+        for (const panel of saved) {
+            if (!panel || typeof panel.widgetId !== "string" || typeof panel.widgetType !== "string" || typeof panel.title !== "string") {
+                continue;
+            }
+            const parentId = widgetsStore.layoutIdOf(panel.widgetType, panel.widgetId);
+            if (parentId === undefined) {
+                this.report(WorkspaceItemKind.Layout, panel.title, "The settings panel of this widget was not opened, because the widget was not restored");
+                continue;
+            }
+            widgetsStore.createFloatingSettingsWidget(panel.title, parentId, panel.widgetType);
+            const config = widgetsStore.floatingWidgets.find(w => w.type === "floating-settings" && w.parentId === parentId);
+            if (config && isPlaced(panel.x) && isPlaced(panel.y)) {
+                config.setDefaultPosition(panel.x, panel.y);
+            }
+            if (config && isPlaced(panel.width) && isPlaced(panel.height) && panel.width > 0 && panel.height > 0) {
+                config.setDefaultSize(panel.width, panel.height);
+            }
+        }
     }
 
     /**

@@ -271,6 +271,31 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
     });
 
+    test("opens the saved settings panels where they were, closes the other floating settings panels, and reports a panel whose widget was not restored", async () => {
+        const {appStore} = createSession();
+        const config = {type: "floating-settings", id: "new", parentId: "spectral-profiler-1", setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()};
+        const widgetsStore = appStore.widgetsStore as any;
+        widgetsStore.floatingWidgets = [{type: "floating-settings", id: "old", parentId: "histogram-0"}];
+        widgetsStore.removeFloatingWidget = jest.fn((id: string) => (widgetsStore.floatingWidgets = widgetsStore.floatingWidgets.filter((w: {id: string}) => w.id !== id)));
+        widgetsStore.layoutIdOf = jest.fn((_type: string, id: string) => (id === "spectral-profiler-3" ? "spectral-profiler-1" : undefined));
+        widgetsStore.createFloatingSettingsWidget = jest.fn(() => widgetsStore.floatingWidgets.push(config));
+
+        const problems = await restore(
+            createWorkspace({
+                openWidgetSettings: [
+                    {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400},
+                    {widgetId: "stokes-0", widgetType: "stokes", title: "Stokes Analysis"}
+                ]
+            })
+        );
+
+        expect(widgetsStore.removeFloatingWidget).toHaveBeenCalledWith("old");
+        expect(widgetsStore.createFloatingSettingsWidget.mock.calls).toEqual([["Z Profile", "spectral-profiler-1", "spectral-profiler"]]);
+        expect(config.setDefaultPosition).toHaveBeenCalledWith(0, 30);
+        expect(config.setDefaultSize).toHaveBeenCalledWith(650, 400);
+        expect(problems).toEqual(["The settings panel of this widget was not opened, because the widget was not restored"]);
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 

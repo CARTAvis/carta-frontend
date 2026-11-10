@@ -364,6 +364,31 @@ export class WorkspaceSnapshotter {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
     }
 
+    /**
+     * Saves the floating settings panels of widgets, from the bottom one to the top one. The panel
+     * of a PV preview is left out, because a restore does not make the preview again.
+     */
+    private captureWidgetSettings(): void {
+        const widgetsStore = this.appStore.widgetsStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        if (!widgetsStore?.floatingWidgets) {
+            return;
+        }
+        const panels = widgetsStore.floatingWidgets
+            .filter(config => config.type === "floating-settings" && config.parentId && config.parentType && config.parentType !== "pv-generator")
+            .sort((a, b) => (zIndexManager?.findIndex(a.id) ?? 0) - (zIndexManager?.findIndex(b.id) ?? 0));
+        this.workspace.openWidgetSettings = panels.map(config => ({
+            widgetId: widgetsStore.workspaceIdOf(config.parentType!, config.parentId!),
+            widgetType: config.parentType!,
+            // The panel is titled "<title of the widget> Settings", and some panels add what they show, such as ": Region #1".
+            title: (config.title ?? "").replace(/ Settings.*$/, ""),
+            x: config.defaultX,
+            y: config.defaultY,
+            width: config.defaultWidth,
+            height: config.defaultHeight
+        }));
+    }
+
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
@@ -373,6 +398,7 @@ export class WorkspaceSnapshotter {
         if (dialogStore?.dialogVisible) {
             this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
         }
+        this.captureWidgetSettings();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.

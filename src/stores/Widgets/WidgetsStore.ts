@@ -1738,6 +1738,30 @@ export class WidgetsStore {
         }
     };
 
+    /**
+     * Returns the ID that a workspace saves for a widget: the `widgetId` of its store when it has
+     * one, and otherwise the ID that the layout uses for it. The `widgetId` stays the same when a
+     * layout adds the widget again, and the layout ID can change.
+     */
+    workspaceIdOf = (widgetType: string, id: string): string => {
+        const store = this.widgetsMap.get(widgetType)?.get(id);
+        return WidgetsStore.isIdentified(store) && store.widgetId ? store.widgetId : id;
+    };
+
+    /**
+     * Returns the ID that the layout uses for the widget that a workspace saved as `workspaceId`.
+     * Returns undefined when no such widget is open.
+     */
+    layoutIdOf = (widgetType: string, workspaceId: string): string | undefined => {
+        const widgets = this.widgetsMap.get(widgetType);
+        if (widgets) {
+            return [...widgets.keys()].find(id => this.workspaceIdOf(widgetType, id) === workspaceId);
+        }
+        // A widget without a store, such as the animator. The image view uses its type as its ID.
+        const isOpen = workspaceId === widgetType || this.floatingWidgets.some(w => w.id === workspaceId) || !!LayoutStore.Instance.layoutModel?.getNodeById(workspaceId);
+        return isOpen ? workspaceId : undefined;
+    };
+
     @action addFloatingSettingsWidget(id: string | null = null, parentId: string, type: string) {
         // Generate new id if none passed in
         if (!id) {
