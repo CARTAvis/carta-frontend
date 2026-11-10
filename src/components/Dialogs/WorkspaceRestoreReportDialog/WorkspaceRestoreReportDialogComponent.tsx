@@ -82,7 +82,8 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
         ...[...(report?.repointed?.catalogs.values() ?? [])].map(({from, to}) => ({from: describeCatalogSource(from), to}))
     ];
     const leftOutCount = issues.filter(issue => issue.outcome).length;
-    const changedCount = issues.length - leftOutCount;
+    // Count the items that the section lists. A widget listed under its cause is not counted again.
+    const changedCount = groups.changed.reduce((count, item) => count + ("widgets" in item ? item.widgets.widgetIds.length : 1), 0);
     const writeBack = appStore.workspaceWriteBack;
 
     return (
