@@ -6,6 +6,7 @@ import {
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
+    SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
@@ -126,6 +127,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         this.clearSession();
+        this.restoreSpectralMatchingType();
         yield* this.openImages();
         if (!this.isCurrent) {
             return this.issues;
@@ -278,6 +280,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.appStore.animatorStore.stopAnimation();
         this.appStore.tileService.clearRequestQueue();
         this.appStore.removeAllFrames();
+    }
+
+    /**
+     * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
+     * images are matched, as matching an image moves it to the channel of its reference in this
+     * coordinate. A workspace saved before it kept this setting keeps the setting of the session.
+     */
+    private restoreSpectralMatchingType(): void {
+        const type = this.workspace.spectralMatchingType;
+        if (type === undefined) {
+            return;
+        }
+        if (SPECTRAL_MATCHING_TYPES.includes(type)) {
+            this.appStore.setSpectralMatchingType(type);
+        } else {
+            this.report(WorkspaceItemKind.Image, "spectral matching", `Could not restore the spectral matching type ${String(type)}: it is not one this version knows, so images are matched by ${this.appStore.spectralMatchingType}`);
+        }
     }
 
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */

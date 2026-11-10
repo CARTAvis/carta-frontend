@@ -75,6 +75,7 @@ export class WorkspaceSnapshotter {
         references.spatial = this.imageIdOf(this.appStore.spatialReference);
         references.spectral = this.imageIdOf(this.appStore.spectralReference);
         references.raster = this.imageIdOf(this.appStore.rasterScalingReference);
+        this.workspace.spectralMatchingType = this.appStore.spectralMatchingType;
 
         let hasTemporaryFiles = false;
         for (const frame of this.appStore.frames) {

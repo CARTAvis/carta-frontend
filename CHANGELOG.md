@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder ([#2964](https://github.com/CARTAvis/carta-frontend/issues/2964)).
 * Fixed workspaces not restoring custom colormap colors, or the image of the Contour dialog when it does not follow the active image ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 * Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

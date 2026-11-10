@@ -440,6 +440,12 @@ describe("WorkspaceSnapshotter", () => {
         ]);
     });
 
+    test("saves the spectral coordinate that spectrally matched images are matched by", () => {
+        createSession({spectralMatchingType: "FREQ"});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.spectralMatchingType).toBe("FREQ");
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};

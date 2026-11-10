@@ -158,6 +158,10 @@ function createSession() {
         setSpatialReference: jest.fn(),
         setSpectralReference: jest.fn(),
         setRasterScalingReference: jest.fn(),
+        spectralMatchingType: "VRAD",
+        setSpectralMatchingType: jest.fn((type: string) => {
+            appStore.spectralMatchingType = type;
+        }),
         setSpatialMatchingEnabled: jest.fn(),
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
@@ -882,6 +886,24 @@ describe("WorkspaceRestorer", () => {
             const beam = appStore.frames[0].overlayBeamSettings;
             expect([beam.setVisible, beam.setColor, beam.setType, beam.setWidth, beam.setShiftX, beam.setShiftY].every(setter => setter.mock.calls.length === 0)).toBe(true);
         });
+    });
+
+    test("sets the spectral matching type before it opens the images, so that matching takes the saved channel", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({spectralMatchingType: "FREQ" as never}));
+
+        expect(appStore.setSpectralMatchingType).toHaveBeenCalledWith("FREQ");
+        expect(appStore.setSpectralMatchingType.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
+    });
+
+    test("keeps the spectral matching type of the session when the saved one is not valid, and says so", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({spectralMatchingType: "SPEED" as never}));
+
+        expect(appStore.setSpectralMatchingType).not.toHaveBeenCalled();
+        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by VRAD"]);
     });
 
     describe("the regions of an image", () => {
