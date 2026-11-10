@@ -34,7 +34,6 @@ interface GeneratedImageGroup {
     frames: FrameStore[];
 }
 
-/** The workspace while it is being filled in: the collections the stages append to are already there. */
 /** Calls `visit` with each image view widget in a layout config, docked or floating. */
 function forEachImageView(node: unknown, visit: (imageView: {widgetSettings?: Record<string, unknown>}) => void): void {
     if (Array.isArray(node)) {
@@ -48,6 +47,7 @@ function forEachImageView(node: unknown, visit: (imageView: {widgetSettings?: Re
     }
 }
 
+/** The workspace while it is being filled in: the collections the stages append to are already there. */
 type WorkspaceUnderConstruction = Workspace & Required<Pick<Workspace, "files" | "colorBlendingImages" | "references">>;
 
 /**

@@ -72,7 +72,7 @@ export interface OverlayGlobalConfig {
 
 export interface OverlayTitleConfig {
     isVisible: boolean;
-    /** Whether the toolbar button hides the title, the numbers and the labels. */
+    /** Whether the toolbar button hides the title. The same button also hides the numbers and the labels. Each of them saves its own flag. */
     isHidden: boolean;
     font: number;
     fontSize: number;
@@ -797,8 +797,8 @@ export class OverlayNumberSettings {
     }
 
     /**
-     * Applies the saved number settings. When the format is not custom, the format that the
-     * coordinate system gives replaces the saved format. See {@link OverlaySettings.setFormatsFromSystem}.
+     * Applies the saved number settings. When the format is not custom, the caller then sets the
+     * format from the coordinate system. See {@link OverlaySettings.applyConfig}.
      */
     @action applyConfig(config: Persisted<OverlayNumberConfig> | undefined) {
         this.isVisible = savedOr(config?.isVisible, isBoolean, true);
@@ -1254,8 +1254,8 @@ export class OverlaySettings {
 
     /**
      * Applies how the overlay looks, as a layout saved it. The config replaces every setting. When
-     * the config leaves out a setting, or saves a value that the controls do not accept, the setting
-     * goes back to its default. A setting that has a preference goes back to the preference. The
+     * the config leaves out a setting, or saves a value that is not valid, the setting goes back
+     * to its default. A setting that has a preference goes back to the preference. The
      * user's preferences do not change. The custom texts and their switches do not change either,
      * because a workspace saves them.
      *

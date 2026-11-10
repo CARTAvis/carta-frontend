@@ -334,10 +334,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         // The backend registers the regions while the images are configured. Moment and PV images
         // wait for the regions. The cube histograms are computed while the catalogs open. The
         // restore waits for both before it applies the layout.
-        this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         const regions = this.configureImages(this.allImages);
         yield* this.generateImages(regions);
         if (!this.isCurrent) {
