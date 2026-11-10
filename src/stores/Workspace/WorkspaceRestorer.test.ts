@@ -1628,6 +1628,33 @@ describe("WorkspaceRestorer", () => {
             }
         });
 
+        test("puts the images back in the order of the saved image list, with a generated image between the images that were opened", async () => {
+            const {appStore} = createGeneratingSession();
+            // The workspace has no color-blended images, so the image list holds the frames alone.
+            appStore.reorderFrame.mockImplementation((oldIndex: number, newIndex: number, length: number) => {
+                const moved = appStore.frames.splice(oldIndex, length);
+                appStore.frames.splice(newIndex, 0, ...moved);
+            });
+            const files = [
+                {...IMAGE, imageListIndex: 2},
+                {id: 4, source: {type: "file" as const, filename: "other.fits"}, imageListIndex: 0}
+            ];
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]};
+
+            const restorer = await restored(createWorkspace({files, generatedImages: [{request: wholeImage, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, imageListIndex: 1}]}]}));
+
+            expect(appStore.frames.map(frame => frame.frameInfo.fileId)).toEqual([4, 2, 1].map(id => restorer.fileIdOf(id)));
+        });
+
+        test("keeps the order in which the images were opened for a workspace saved without the places of the images", async () => {
+            const {appStore} = createGeneratingSession();
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]};
+
+            await restore(createWorkspace({generatedImages: [{request: wholeImage, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(appStore.reorderFrame).not.toHaveBeenCalled();
+        });
+
         test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
             const {requestMoment} = createGeneratingSession();
             const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};

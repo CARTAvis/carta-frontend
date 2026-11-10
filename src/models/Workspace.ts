@@ -310,6 +310,11 @@ export interface WorkspaceFile {
     offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */
     restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
+    /**
+     * The place of the image in the image list. The places count the images that the workspace does
+     * not save, so only their order matters. Left out by a workspace saved before it kept the place.
+     */
+    imageListIndex?: number;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;

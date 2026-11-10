@@ -345,6 +345,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.chooseFrontImage();
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
+        this.putImagesInSavedListOrder();
         this.putFrontImageBack();
         this.restoreContourDataSource();
         this.restoreAnimator();
@@ -1835,6 +1836,38 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             this.appStore.reorderFrame(this.appStore.imageViewConfigStore.imageNum - 1, imageListIndex, 1);
         }
+    }
+
+    /**
+     * Puts the images and the color-blended images in the order of the saved image list. A generated
+     * image is made after the images that were opened, so it is added at the end. A workspace saved
+     * before it kept the places keeps the order in which the images were opened.
+     */
+    private putImagesInSavedListOrder(): void {
+        const images = [...(this.workspace.files ?? []), ...this.generatedImages.flatMap(generated => generated.images)];
+        if (!images.length || !images.every(image => typeof image.imageListIndex === "number")) {
+            return;
+        }
+        const placed: {index: number; type: ImageType.FRAME | ImageType.COLOR_BLENDING; id: number}[] = [];
+        for (const image of images) {
+            const frame = this.frameOf(image.id);
+            if (frame) {
+                placed.push({index: image.imageListIndex as number, type: ImageType.FRAME, id: frame.frameInfo.fileId});
+            }
+        }
+        for (const [index, colorBlending] of this.colorBlendings) {
+            placed.push({index, type: ImageType.COLOR_BLENDING, id: colorBlending.id});
+        }
+        // Move each item to its place, from the first place on. An item only moves toward the front,
+        // so the items before it stay in their places.
+        placed.sort((a, b) => a.index - b.index);
+        const imageList = this.appStore.imageViewConfigStore;
+        placed.forEach(({type, id}, place) => {
+            const index = imageList.getImageListIndex(type, id);
+            if (index > place) {
+                this.appStore.reorderFrame(index, place, 1);
+            }
+        });
     }
 
     /**

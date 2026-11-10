@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed text, compass and ruler annotations drawn at the wrong size when an image view first shows them, such as after a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed workspaces putting moment, PV, HiPS and image fitting images at the end of the image list ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Fixed online SIMBAD and VizieR queries waiting forever for a mirror that does not respond; they now stop after 60 seconds ([#3058](https://github.com/CARTAvis/carta-frontend/issues/3058)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).

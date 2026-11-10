@@ -79,7 +79,7 @@ function createSession(overrides: Record<string, any> = {}) {
         rasterScalingReference: undefined,
         timeSeriesStore: {isMember: jest.fn(() => false)},
         animatorStore: {frameRate: 5, step: 1, playMode: 0, animationMode: 0},
-        imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
+        imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn((_type: ImageType, _id: number) => 0)},
         catalogStore: {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
             catalogProfileStores: new Map<number, unknown>([[10, profileStore]]),
@@ -632,6 +632,14 @@ describe("WorkspaceSnapshotter", () => {
                 images: [expect.objectContaining({id: 2, name: "image0_model.fits", fittingImage: "model"}), expect.objectContaining({id: 3, name: "image0_residual.fits", fittingImage: "residual"})]
             }
         ]);
+    });
+
+    test("saves the place of each image in the image list", () => {
+        const {appStore} = createSession();
+        appStore.imageViewConfigStore.getImageListIndex.mockReturnValue(3);
+
+        expect(new WorkspaceSnapshotter().capture().workspace.files?.[0].imageListIndex).toBe(3);
+        expect(appStore.imageViewConfigStore.getImageListIndex).toHaveBeenCalledWith(ImageType.FRAME, 0);
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {
