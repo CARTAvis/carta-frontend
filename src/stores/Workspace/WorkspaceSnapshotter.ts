@@ -81,7 +81,7 @@ export class WorkspaceSnapshotter {
         return {workspace: this.detach(), issues: this.issues};
     }
 
-    /** Stage 1: every image, with how it was opened and how it is displayed. */
+    /** Stage 1: every image opened from a file or an expression, with how it was opened and how it is displayed. Stage 1a saves the generated images. */
     private captureImages(): void {
         const references = this.workspace.references;
         references.spatial = this.imageIdOf(this.appStore.spatialReference);
@@ -361,7 +361,6 @@ export class WorkspaceSnapshotter {
                 if (workspaceImageId === undefined) {
                     return [];
                 }
-                // Save the image without a source, because a restore makes it again.
                 const image = this.captureImage(frame, workspaceImageId, undefined);
                 return [{...image, name: frame.frameInfo.fileInfo.name ?? undefined, moment: frame.generation?.moment}];
             });
@@ -492,8 +491,9 @@ export class WorkspaceSnapshotter {
 
             // A catalog names its image by the ID this workspace knows the image by, not by the
             // session file ID, which is handed out again once the image is closed. A catalog whose
-            // image the workspace does not carry -- a generated one, or one it has lost track of --
-            // is not saved: restoring it would put it over whichever image happened to be in front.
+            // image the workspace does not save is not saved either. Examples are a generated image
+            // that no saved request makes, or an image that the session lost track of. Restoring the
+            // catalog would put it over whichever image happened to be in front.
             const imageFileId = this.appStore.catalogStore.imageIdOf(catalogFileId);
             const associatedImageId = this.imageIdOf(this.appStore.frames.find(frame => frame?.frameInfo.fileId === imageFileId));
             if (associatedImageId === undefined) {

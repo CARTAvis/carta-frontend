@@ -327,7 +327,7 @@ export interface WorkspaceMomentRequest {
     sourceImageId: number;
     /** The region of the moments, by the ID that the region was saved with. When the moments are taken over the whole image, this is the fixed ID of the whole image. */
     regionId: number;
-    /** The moments that the request made images of. */
+    /** The moments to make again. These are the moments whose images the session still showed. */
     moments: CARTA.Moment[];
     /** The channels the moments are taken over, as channel indices. */
     channelRange: {min: number; max: number};
@@ -686,8 +686,8 @@ export interface Workspace {
     catalogs?: WorkspaceCatalog[];
     colorBlendingImages?: WorkspaceColorBlending[];
     /**
-     * The moment, PV and HiPS images, by the requests that made them, in the order that they were
-     * made. A request can use an image that an earlier request made.
+     * The moment, PV and HiPS images, by the requests that made them. Each request comes after the
+     * requests that made the images it uses.
      */
     generatedImages?: WorkspaceGeneratedImages[];
     references?: {
