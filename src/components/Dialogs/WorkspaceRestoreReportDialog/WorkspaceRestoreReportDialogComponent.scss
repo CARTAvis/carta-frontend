@@ -109,6 +109,7 @@
         gap: 6px;
 
         > li {
+            display: block;
             padding: 8px 12px;
             border: 1px solid $pt-divider-black;
             border-radius: $pt-border-radius;
@@ -132,44 +133,68 @@
         &.is-failed {
             border-left-color: $red3;
         }
+    }
 
-        .issue {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
+    // Show the name of an item on its first line, with the outcome at the right.
+    .item-name {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+
+        .outcome-tag {
+            flex-shrink: 0;
+            margin-left: auto;
         }
     }
 
-    // List what an item caused under a line, so that it starts under the text of the item, after the
-    // outcome tag.
+    // Indent the lines under the name of an item, so that they start under its text, after the icon.
+    .item-reason,
     .consequences {
-        margin: 8px 0 0 88px;
-        padding-top: 6px;
-        border-top: 1px dashed $pt-divider-black;
+        margin-left: 20px;
+    }
+
+    .item-reason {
+        margin-top: 2px;
+        font-size: 12px;
         color: $pt-text-color-muted;
 
         .#{$ns}-dark & {
-            border-top-color: $pt-dark-divider-white;
             color: $pt-dark-text-color-muted;
+        }
+    }
+
+    // List what an item caused under a dashed line, each group under a short caption.
+    .consequences {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed $pt-divider-black;
+
+        .#{$ns}-dark & {
+            border-top-color: $pt-dark-divider-white;
         }
 
         li {
+            display: block;
             padding: 2px 0;
         }
     }
 
-    li.widget-group {
-        flex-wrap: wrap;
+    .consequence-caption {
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
     }
 
     .widget-titles {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
-    }
-
-    .outcome-tag {
-        flex-shrink: 0;
-        min-width: 80px;
     }
 }

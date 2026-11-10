@@ -10,3 +10,10 @@
     background: rgba($gray3, 0.15);
     overflow-wrap: anywhere;
 }
+
+// Lift the icon of an item, so that it lines up with the text of its name.
+.workspace-item-icon {
+    flex-shrink: 0;
+    position: relative;
+    top: 2px;
+}

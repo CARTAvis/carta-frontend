@@ -1,11 +1,11 @@
 import * as React from "react";
-import {Button, ButtonGroup, HTMLSelect, Icon, type IconName, Intent, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, HTMLSelect, Icon, Intent, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {type CatalogDatabase, WorkspaceItemKind} from "enums";
-import {AppStore, MirrorSiteStore, WorkspaceRecoveryAction, type WorkspaceRecoveryItem, type WorkspaceRecoveryStore} from "stores";
+import {type CatalogDatabase} from "enums";
+import {AppStore, MirrorSiteStore, WorkspaceRecoveryAction, type WorkspaceRecoveryStore} from "stores";
 
-import {FileName, FileNameText} from "../WorkspaceRestoreReportDialog/FileNameText";
+import {FileName, FileNameText, ItemIcon} from "../WorkspaceRestoreReportDialog/FileNameText";
 
 /** Returns the host of a mirror URL, such as simbad.cds.unistra.fr, or the whole URL when it cannot be parsed. */
 function mirrorLabel(url: string): string {
@@ -37,18 +37,6 @@ const MirrorSelect = observer(({database}: {database: CatalogDatabase}) => {
     );
 });
 
-/** Returns the icon of the kind of an item, such as an image or a catalog. */
-function iconOf(item: WorkspaceRecoveryItem): IconName {
-    switch (item.kind) {
-        case WorkspaceItemKind.Catalog:
-            return "th";
-        case WorkspaceItemKind.GeneratedImage:
-            return "layers";
-        default:
-            return "media";
-    }
-}
-
 /**
  * Lists the items of a restore stage that failed. For each item, the user chooses to open it from
  * another file, to open it again as it is saved, or to skip it. Skipping an item names what goes
@@ -64,16 +52,9 @@ export const WorkspaceRecoveryComponent = observer(({recovery}: {recovery: Works
         }
     };
 
-    const undecided = recovery.items.filter((_, index) => !recovery.choiceOf(index)).length;
-
     return (
         <div className="workspace-recovery" data-testid="workspace-recovery">
-            <div className="recovery-header">
-                <span className="restore-stage">{recovery.stage}</span>
-                <span className="recovery-status" data-testid="workspace-recovery-status">
-                    {undecided === 0 ? "Ready to continue" : `${undecided === 1 ? "1 item needs" : `${undecided} items need`} a decision`}
-                </span>
-            </div>
+            <div className="restore-stage">{recovery.stage}</div>
             <ul role="list">
                 {recovery.items.map((item, index) => {
                     const choice = recovery.choiceOf(index);
@@ -82,34 +63,12 @@ export const WorkspaceRecoveryComponent = observer(({recovery}: {recovery: Works
                         <li key={index} className="recovery-item" data-testid="workspace-recovery-item">
                             <div className="recovery-text">
                                 <div className="recovery-label">
-                                    <Icon icon={iconOf(item)} size={14} />
+                                    <ItemIcon kind={item.kind} />
                                     <FileNameText text={item.label && item.reason ? item.label : item.message} subject={item.subject} label={item.label} />
                                 </div>
                                 {item.label && item.reason && (
                                     <div className="recovery-reason">
                                         <FileNameText text={item.reason} subject={item.subject} label={item.label} />
-                                    </div>
-                                )}
-                                {choice?.action === WorkspaceRecoveryAction.Repoint && (
-                                    <div className="recovery-note recovery-location" data-testid="workspace-recovery-location">
-                                        <Icon icon="arrow-right" size={12} />
-                                        <span>
-                                            Opens <FileName text={choice.location.filename} />
-                                            {choice.location.hdu ? ` (HDU ${choice.location.hdu})` : ""}
-                                            {choice.location.directory ? (
-                                                <>
-                                                    {" "}
-                                                    in <FileName text={choice.location.directory} />
-                                                </>
-                                            ) : (
-                                                " in the top-level folder"
-                                            )}
-                                        </span>
-                                    </div>
-                                )}
-                                {choice?.action === WorkspaceRecoveryAction.Skip && item.dependents.length > 0 && (
-                                    <div className="recovery-note" data-testid="workspace-recovery-dependents">
-                                        Skipping it also leaves out {item.dependents.join(", ")}.
                                     </div>
                                 )}
                             </div>
@@ -152,6 +111,28 @@ export const WorkspaceRecoveryComponent = observer(({recovery}: {recovery: Works
                                 </ButtonGroup>
                                 {item.database && <MirrorSelect database={item.database} />}
                             </div>
+                            {choice?.action === WorkspaceRecoveryAction.Repoint && (
+                                <div className="recovery-note recovery-location" data-testid="workspace-recovery-location">
+                                    <Icon icon="arrow-right" size={12} />
+                                    <span>
+                                        Opens <FileName text={choice.location.filename} />
+                                        {choice.location.hdu ? ` (HDU ${choice.location.hdu})` : ""}
+                                        {choice.location.directory ? (
+                                            <>
+                                                {" "}
+                                                in <FileName text={choice.location.directory} />
+                                            </>
+                                        ) : (
+                                            " in the top-level folder"
+                                        )}
+                                    </span>
+                                </div>
+                            )}
+                            {choice?.action === WorkspaceRecoveryAction.Skip && item.dependents.length > 0 && (
+                                <div className="recovery-note" data-testid="workspace-recovery-dependents">
+                                    Skipping it also leaves out {item.dependents.join(", ")}.
+                                </div>
+                            )}
                         </li>
                     );
                 })}

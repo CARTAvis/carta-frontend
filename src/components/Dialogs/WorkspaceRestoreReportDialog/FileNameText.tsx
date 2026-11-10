@@ -1,4 +1,7 @@
 import * as React from "react";
+import {Icon, type IconName} from "@blueprintjs/core";
+
+import {WorkspaceItemKind} from "enums";
 
 import {splitFileNames} from "./restoreReportGroups";
 
@@ -25,3 +28,26 @@ export const FileName = ({text}: {text: string}) => (
 export const FileNameText = ({text, subject, label}: {text: string; subject: string; label?: string}) => (
     <span>{splitFileNames(text, subject, label).map((part, index) => (part.isFile ? <FileName key={index} text={part.text} /> : <React.Fragment key={index}>{part.text}</React.Fragment>))}</span>
 );
+
+/** Returns the icon of a kind of workspace item, such as an image or a catalog. */
+function iconOf(kind: WorkspaceItemKind): IconName {
+    switch (kind) {
+        case WorkspaceItemKind.Image:
+            return "media";
+        case WorkspaceItemKind.GeneratedImage:
+        case WorkspaceItemKind.ColorBlending:
+            return "layers";
+        case WorkspaceItemKind.Catalog:
+        case WorkspaceItemKind.CatalogSelection:
+            return "th";
+        case WorkspaceItemKind.CatalogWidget:
+        case WorkspaceItemKind.CatalogPlot:
+        case WorkspaceItemKind.PlotWidget:
+            return "widget";
+        default:
+            return "dot";
+    }
+}
+
+/** Shows the icon of a kind of workspace item, in front of its name. */
+export const ItemIcon = ({kind}: {kind: WorkspaceItemKind}) => <Icon icon={iconOf(kind)} size={14} className="workspace-item-icon" />;

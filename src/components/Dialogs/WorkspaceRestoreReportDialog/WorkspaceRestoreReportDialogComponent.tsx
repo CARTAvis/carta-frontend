@@ -7,7 +7,7 @@ import {WorkspaceIssueOutcome} from "enums";
 import {describeCatalogSource, describeImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 
-import {FileName, FileNameText} from "./FileNameText";
+import {FileName, FileNameText, ItemIcon} from "./FileNameText";
 import {describeIssue, describeWidgetGroup, groupRestoreReport, type WidgetGroup} from "./restoreReportGroups";
 
 import "./WorkspaceRestoreReportDialogComponent.scss";
@@ -25,14 +25,11 @@ const SectionTitle = ({icon, children}: {icon: IconName; children: React.ReactNo
     </H5>
 );
 
-/**
- * Marks an item as failed or skipped. An item that is listed under its cause has a lighter tag. Then
- * the cause stands out.
- */
-const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnderCause?: boolean}) => {
+/** Marks an item as failed or skipped, at the right of its name. */
+const OutcomeTag = ({issue}: {issue: WorkspaceIssue}) => {
     const isSkipped = issue.outcome === WorkspaceIssueOutcome.Skipped;
     return (
-        <Tag minimal={isUnderCause} intent={isSkipped ? Intent.WARNING : Intent.DANGER} icon={isSkipped ? "step-forward" : "error"} className="outcome-tag">
+        <Tag minimal intent={isSkipped ? Intent.WARNING : Intent.DANGER} className="outcome-tag">
             {isSkipped ? "Skipped" : "Failed"}
         </Tag>
     );
@@ -41,18 +38,44 @@ const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnd
 /** Shows a report line, with the file names and paths in a monospace font. */
 const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => <FileNameText text={text} subject={issue.subject} label={issue.label} />;
 
-/** Lists widgets by their titles, after the text that says what they show now. */
-const WidgetGroupLine = ({group, isUnderCause, titleOfWidget}: {group: WidgetGroup; isUnderCause: boolean; titleOfWidget: (widgetId: string) => string}) => (
-    <li className="widget-group">
-        <span>{describeWidgetGroup(group, isUnderCause)}</span>
-        <span className="widget-titles">
+/**
+ * Shows an item as the Recovery dialog does: its name on the first line, and the reason on the
+ * line below. An item without a name shows its message on the first line.
+ *
+ * @param shouldShowReason - whether to show the reason. An item listed under its cause does not need it.
+ * @param tag - what to show at the right of the name, such as the outcome.
+ */
+const ItemLines = ({issue, titleOfWidget, shouldShowReason = true, tag}: {issue: WorkspaceIssue; titleOfWidget: (widgetId: string) => string; shouldShowReason?: boolean; tag?: React.ReactNode}) => {
+    const name = describeIssue(issue, titleOfWidget, false);
+    const reason = name !== issue.message && shouldShowReason ? issue.reason : undefined;
+    return (
+        <>
+            <div className="issue item-name">
+                <ItemIcon kind={issue.kind} />
+                <IssueText issue={issue} text={name} />
+                {tag}
+            </div>
+            {reason && (
+                <div className="item-reason">
+                    <IssueText issue={issue} text={reason} />
+                </div>
+            )}
+        </>
+    );
+};
+
+/** Lists widgets by their titles, under the line that says what they show now. */
+const WidgetGroupLines = ({group, isUnderCause, titleOfWidget}: {group: WidgetGroup; isUnderCause: boolean; titleOfWidget: (widgetId: string) => string}) => (
+    <div className="widget-group">
+        <div className="consequence-caption">{describeWidgetGroup(group, isUnderCause).replace(/:$/, "")}</div>
+        <div className="widget-titles">
             {group.widgetIds.map(widgetId => (
                 <Tag key={widgetId} minimal>
                     {titleOfWidget(widgetId)}
                 </Tag>
             ))}
-        </span>
-    </li>
+        </div>
+    </div>
 );
 
 /**
@@ -125,27 +148,37 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                         <ul role="list">
                             {groups.leftOut.map((item, index) => (
                                 <li key={index} className={classNames("left-out-item", item.issue.outcome === WorkspaceIssueOutcome.Skipped ? "is-skipped" : "is-failed")}>
-                                    <div className="issue">
-                                        <OutcomeTag issue={item.issue} />
-                                        <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
-                                    </div>
+                                    <ItemLines issue={item.issue} titleOfWidget={titleOfWidget} tag={<OutcomeTag issue={item.issue} />} />
                                     {(item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0) && (
-                                        <ul className="consequences" role="list" aria-label="Because of this" data-testid="workspace-restore-report-consequences">
-                                            {item.leftOut.map((issue, consequenceIndex) => (
-                                                <li key={`left-out-${consequenceIndex}`}>
-                                                    <OutcomeTag issue={issue} isUnderCause={true} />
-                                                    <IssueText issue={issue} text={describeIssue(issue, titleOfWidget, false)} />
-                                                </li>
-                                            ))}
+                                        <div className="consequences" aria-label="Because of this" data-testid="workspace-restore-report-consequences">
+                                            {item.leftOut.length > 0 && (
+                                                <div>
+                                                    <div className="consequence-caption">Also left out</div>
+                                                    <ul role="list">
+                                                        {item.leftOut.map((issue, consequenceIndex) => (
+                                                            <li key={consequenceIndex}>
+                                                                <ItemLines issue={issue} titleOfWidget={titleOfWidget} shouldShowReason={false} />
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
                                             {item.widgets.map(group => (
-                                                <WidgetGroupLine key={`${group.effect}-${group.detail ?? ""}`} group={group} isUnderCause={true} titleOfWidget={titleOfWidget} />
+                                                <WidgetGroupLines key={`${group.effect}-${group.detail ?? ""}`} group={group} isUnderCause={true} titleOfWidget={titleOfWidget} />
                                             ))}
-                                            {item.changed.map((issue, consequenceIndex) => (
-                                                <li key={`changed-${consequenceIndex}`}>
-                                                    <IssueText issue={issue} text={describeIssue(issue, titleOfWidget)} />
-                                                </li>
-                                            ))}
-                                        </ul>
+                                            {item.changed.length > 0 && (
+                                                <div>
+                                                    <div className="consequence-caption">Also changed</div>
+                                                    <ul role="list">
+                                                        {item.changed.map((issue, consequenceIndex) => (
+                                                            <li key={consequenceIndex}>
+                                                                <ItemLines issue={issue} titleOfWidget={titleOfWidget} />
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </li>
                             ))}
@@ -157,15 +190,9 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                         <SectionTitle icon="changes">Restored with changes</SectionTitle>
                         <p>These items are in the session, but not as they were saved.</p>
                         <ul role="list">
-                            {groups.changed.map((item, index) =>
-                                "widgets" in item ? (
-                                    <WidgetGroupLine key={index} group={item.widgets} isUnderCause={false} titleOfWidget={titleOfWidget} />
-                                ) : (
-                                    <li key={index}>
-                                        <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
-                                    </li>
-                                )
-                            )}
+                            {groups.changed.map((item, index) => (
+                                <li key={index}>{"widgets" in item ? <WidgetGroupLines group={item.widgets} isUnderCause={false} titleOfWidget={titleOfWidget} /> : <ItemLines issue={item.issue} titleOfWidget={titleOfWidget} />}</li>
+                            ))}
                         </ul>
                     </section>
                 )}

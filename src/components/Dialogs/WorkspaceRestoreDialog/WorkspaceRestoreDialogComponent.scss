@@ -8,20 +8,8 @@
     }
 
     .workspace-recovery {
-        .recovery-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 8px;
+        .restore-stage {
             margin-bottom: 10px;
-        }
-
-        .recovery-status {
-            color: $pt-text-color-muted;
-
-            .#{$ns}-dark & {
-                color: $pt-dark-text-color-muted;
-            }
         }
 
         ul {
@@ -35,12 +23,8 @@
             list-style: none;
         }
 
-        // Show each item in a box, with its text at the left and its choices at the right.
+        // Show each item in a box: its name, the reason, the choices, and what the choice does.
         .recovery-item {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: start;
-            gap: 8px 12px;
             padding: 10px 12px;
             border: 1px solid $pt-divider-black;
             border-radius: $pt-border-radius;
@@ -55,18 +39,18 @@
             display: flex;
             align-items: baseline;
             gap: 6px;
+        }
 
-            .#{$ns}-icon {
-                flex-shrink: 0;
-                position: relative;
-                top: 2px;
-            }
+        // Indent the lines under the name, so that they start under its text, after the icon.
+        .recovery-reason,
+        .recovery-note,
+        .recovery-actions {
+            margin-left: 20px;
         }
 
         .recovery-reason,
         .recovery-note {
             margin-top: 2px;
-            margin-left: 20px;
             font-size: 12px;
             color: $pt-text-color-muted;
 
@@ -75,23 +59,24 @@
             }
         }
 
+        .recovery-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .recovery-location {
             display: flex;
             align-items: baseline;
             gap: 4px;
-            margin-left: 4px;
+            margin-top: 6px;
             color: $pt-intent-primary;
 
             .#{$ns}-dark & {
                 color: $blue5;
             }
-        }
-
-        .recovery-actions {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
         }
     }
 
