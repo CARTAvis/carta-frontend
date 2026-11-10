@@ -2345,6 +2345,9 @@ export class AppStore {
         if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config?.fixedNumBins && !regionHistogramData.config?.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
+            if (this.contourDataSource?.frameInfo.fileId === regionHistogramData.fileId) {
+                this.applyContourSourceHistogram();
+            }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
@@ -2992,11 +2995,37 @@ export class AppStore {
         if (this.shouldSyncFrameToContour) {
             this.updateActiveImageByFrame(frame);
         }
+        this.applyContourSourceHistogram();
+    };
+
+    /**
+     * Applies the waiting channel histogram of the image that the Contour dialog shows, when no view
+     * shows that image. A channel histogram waits until a tile of its channel arrives, and no tile
+     * arrives for an image that no view shows. For example, a workspace restore can open an image
+     * that is never shown, and the Contour dialog can show it. Without this, the dialog would show
+     * no histogram for that image.
+     */
+    private applyContourSourceHistogram = () => {
+        const frame = this.contourDataSource;
+        if (frame && !this.imageViewConfigStore.visibleFrames.includes(frame)) {
+            this.updateHistogram(frame.frameInfo.fileId, frame.stokes, frame.channel);
+        }
     };
 
     @computed get isFrameLockedToContour() {
         return this.shouldSyncFrameToContour && this.shouldSyncContourToFrame;
     }
+
+    /**
+     * Sets whether the Contour dialog follows the active image, and the image it shows when it does
+     * not. Setting the image does not change the active image.
+     */
+    @action setContourDataSourceUnlocked = (frame: FrameStore) => {
+        this.shouldSyncFrameToContour = false;
+        this.shouldSyncContourToFrame = false;
+        this.contourDataSource = frame;
+        this.applyContourSourceHistogram();
+    };
 
     @action toggleFrameContourLock = () => {
         if (this.isFrameLockedToContour) {

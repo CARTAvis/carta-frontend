@@ -627,3 +627,47 @@ describe("AppStore.requestCubeHistogram", () => {
         expect(setHistogramRequirements).toHaveBeenCalledWith(expect.objectContaining({fileId: 3, regionId: -2, histograms: [expect.objectContaining({coordinate: "Qz", channel: -2})]}));
     });
 });
+
+describe("AppStore contour data source histogram", () => {
+    const appStore = AppStore.Instance;
+    const histograms = {numBins: 2, binWidth: 1, firstBinCenter: 0.5, bins: [1, 2]};
+    const makeFrame = () =>
+        ({
+            frameInfo: {fileId: 7},
+            stokes: 0,
+            channel: 2,
+            renderConfig: {setStokesIndex: jest.fn(), setHistChannel: jest.fn(), updateChannelHistogram: jest.fn()}
+        }) as any;
+    const histogramOf = (channel: number) => ({fileId: 7, regionId: -1, stokes: 0, channel, histograms}) as unknown as CARTA.RegionHistogramData;
+
+    // No image is open, so no view shows the image of the Contour dialog.
+    afterEach(() => {
+        jest.restoreAllMocks();
+        runInAction(() => (appStore.contourDataSource = null));
+        if (!appStore.isFrameLockedToContour) {
+            appStore.toggleFrameContourLock();
+        }
+    });
+
+    test("applies the histogram of the image that the Contour dialog shows when no view shows the image", () => {
+        const frame = makeFrame();
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+
+        appStore.setContourDataSourceUnlocked(frame);
+        appStore.handleRegionHistogramStream(histogramOf(1));
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        appStore.handleRegionHistogramStream(histogramOf(2));
+
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+    });
+
+    test("applies a histogram that arrived before the image became the Contour dialog's image", () => {
+        const frame = makeFrame();
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+
+        appStore.handleRegionHistogramStream(histogramOf(2));
+        appStore.setContourDataSourceUnlocked(frame);
+
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+    });
+});
