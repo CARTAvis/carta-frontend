@@ -1486,8 +1486,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (config.intensityUnit !== undefined) {
             this.setMultiProfileIntensityUnit(config.intensityUnit);
         }
-        // A zoom range belongs to the profiles shown. Drop it when some of the profiles were not
-        // restored.
+        // The zoom range and the fitting guesses belong to the profiles shown. Drop them when some of
+        // the profiles were not restored.
         if (problems.length) {
             this.isShowingWorkspaceData = false;
         }
