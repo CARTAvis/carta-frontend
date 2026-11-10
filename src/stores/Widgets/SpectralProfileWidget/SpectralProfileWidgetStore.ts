@@ -809,9 +809,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
     /**
      * Returns a key for the profile that fitting uses, without the data of the profile: the image,
      * the region and its shape, the statistic, the Stokes, the spectral axis, the intensity unit
-     * and the smoothing. The key changes when the widget shows another profile, and not when more
-     * data of the same profile arrives. The key leaves out the region name. Then renaming the
-     * region keeps the fitting.
+     * and the type of smoothing. The key changes when the widget shows another profile, and not when
+     * more data of the same profile arrives. The key leaves out the region name. Then renaming the
+     * region keeps the fitting. The key also leaves out the size of the smoothing.
      */
     @computed private get fittedProfileKey(): string {
         const profile = this.profileSelectionStore.profiles[0];
@@ -1496,8 +1496,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
 
     /**
      * Zooms the widget to its saved range, and applies the fitting and moment generator settings.
-     * Apply these settings in this last step. A change of the spectral coordinate, the rest frame
-     * or the Y scale in an earlier step resets them.
+     * Apply these settings in this last step. The earlier steps change the image, the profile and
+     * the rest frame. Those changes reset the fitting and the moment settings.
      */
     @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         if (this.isShowingWorkspaceData) {
@@ -1515,8 +1515,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
             const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
-            // The guesses belong to the profile that was fitted. When the first step could not show
-            // that profile again, such as when its region was not restored, the guesses are 0. A
+            // The guesses belong to the profile that was fitted. When the first two steps could not
+            // show that profile again, the guesses are 0. For example, its region was not restored. A
             // workspace does not save the cursor position. So the guesses of a cursor profile are 0
             // too.
             const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;

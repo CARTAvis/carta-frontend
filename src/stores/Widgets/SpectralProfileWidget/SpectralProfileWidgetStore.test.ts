@@ -1007,6 +1007,15 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             expect(fitting.components.map(component => [component.center, component.amp, component.fwhm])).toEqual([[0, 2, 0]]);
         });
 
+        test("uses the default function when the saved function is not valid, though the widget used another function", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => widgetStore.fittingStore.setFunction(1));
+
+            restore(widgetStore, {...onRegion5, fitting: {...savedFitting, function: 7}});
+
+            expect(widgetStore.fittingStore.function).toBe(0);
+        });
+
         test("sets the guesses to 0 and says so when the region of the fitted profile was not restored", () => {
             const {widgetStore} = createFittingWidgetStore();
             const config = {regions: [{regionId: 5}], fitting: savedFitting};

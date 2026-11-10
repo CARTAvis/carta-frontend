@@ -2271,7 +2271,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Restore a profile, analysis or statistics widget in three steps. Point it at its image and
      * region, apply the rest of what it showed after it settles, and zoom it last. Pointing a
-     * widget at another image resets what it shows. Changing what it shows resets its zoom.
+     * widget at another image resets what it shows. Changing what it shows resets its zoom. The
+     * last step also applies the settings that the earlier steps reset, such as the fitting.
      */
     private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));

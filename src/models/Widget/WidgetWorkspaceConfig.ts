@@ -81,8 +81,8 @@ export interface WorkspaceIdReader {
  *
  * Each step can reset the result of a later step, so the widget settles between the steps. Each
  * step returns the problems as sentences about the widget. The third step can return nothing when
- * it has no problems. When the first two steps have problems, the third step does not apply the
- * zoom range.
+ * it has no problems. When the first step has problems, the third step does not apply the zoom
+ * range. A widget can also skip the zoom when the second step has problems.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;
