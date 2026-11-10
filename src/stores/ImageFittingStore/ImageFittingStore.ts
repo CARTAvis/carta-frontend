@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, NumberFormatType} from "enums";
-import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
+import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D, type WorkspaceImageFitting} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
@@ -11,6 +11,8 @@ import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, ge
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
+/** The largest number of components that a workspace restore reads. Then a damaged workspace cannot create very many components. */
+const MAX_WORKSPACE_COMPONENTS = 100;
 
 /** Manages the state and logic for multiple Gaussian image fitting. */
 export class ImageFittingStore {
@@ -248,6 +250,73 @@ export class ImageFittingStore {
             }
         );
     }
+
+    /**
+     * Returns the settings that a workspace saves. JSON cannot write NaN, so an initial value that
+     * is empty is saved as null.
+     *
+     * @param imageId - the workspace ID of the image that the dialog fits. Undefined when the dialog fits the active image.
+     * @param regionId - the region that the dialog fits, as the workspace saves it.
+     */
+    public toWorkspaceConfig = (imageId: number | undefined, regionId: number): WorkspaceImageFitting => {
+        const value = (number: number): number | null => (isFinite(number) ? number : null);
+        return {
+            imageId,
+            regionId,
+            components: this.components.map(component => ({
+                center: {x: value(component.center.x), y: value(component.center.y)},
+                amp: value(component.amplitude),
+                fwhm: {x: value(component.fwhm.x), y: value(component.fwhm.y)},
+                pa: value(component.pa),
+                fixed: [...component.fixedParams]
+            })),
+            autoInitialValues: this.isAutoInitVal,
+            backgroundOffset: this.backgroundOffset,
+            backgroundOffsetFixed: this.isBackgroundOffsetFixed,
+            solver: this.solverType,
+            createModelImage: this.shouldCreateModelImage,
+            createResidualImage: this.shouldCreateResidualImage
+        };
+    };
+
+    /**
+     * Applies the settings that a workspace saved. Starts from the defaults, so a value that is
+     * missing or not valid keeps its default.
+     *
+     * @param fileId - the image to fit, as a file ID of this session, or the ID of the active image.
+     * @param regionId - the region to fit, as a region ID of this session.
+     */
+    @action applyWorkspaceConfig = (config: WorkspaceImageFitting, fileId: number, regionId: number): void => {
+        const isTrue = (value: unknown): boolean => value === true;
+        const numberOrNaN = (value: unknown): number => (typeof value === "number" ? value : NaN);
+        this.clearComponents();
+        this.setSelectedFileId(fileId);
+        this.setSelectedRegionId(regionId);
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, MAX_WORKSPACE_COMPONENTS) : [];
+        if (components.length) {
+            this.setComponents(components.length);
+            components.forEach((saved, index) => {
+                const component = this.components[index];
+                // A setter keeps the default, NaN, for a value that is not a finite number, such as null.
+                component.setCenterX(numberOrNaN(saved.center?.x));
+                component.setCenterY(numberOrNaN(saved.center?.y));
+                component.setAmplitude(numberOrNaN(saved.amp));
+                component.setFwhmX(numberOrNaN(saved.fwhm?.x));
+                component.setFwhmY(numberOrNaN(saved.fwhm?.y));
+                component.setPa(numberOrNaN(saved.pa));
+                component.setFixedParams(Array.isArray(saved.fixed) ? saved.fixed.map(isTrue) : []);
+            });
+            this.setSelectedComponentIndex(0);
+        }
+        this.setIsAutoInitVal(config.autoInitialValues !== false);
+        this.setBackgroundOffset(typeof config.backgroundOffset === "number" ? config.backgroundOffset : 0);
+        this.isBackgroundOffsetFixed = config.backgroundOffsetFixed !== false;
+        if (this.solverOptions.some(option => option.value === config.solver)) {
+            this.setSolverType(config.solver);
+        }
+        this.shouldCreateModelImage = config.createModelImage !== false;
+        this.shouldCreateResidualImage = config.createResidualImage !== false;
+    };
 
     /**
      * Sends a fitting request using the current fitting settings.
@@ -705,6 +774,14 @@ class ImageFittingIndividualStore {
 
     @action togglePaFixed = () => {
         this.isPaFixed = !this.isPaFixed;
+    };
+
+    /** Sets whether each value is fixed, in the order of {@link fixedParams}. A flag that is missing is false. */
+    @action setFixedParams = (fixed: boolean[]) => {
+        this.centerFixed = {x: fixed[0] === true, y: fixed[1] === true};
+        this.isAmplitudeFixed = fixed[2] === true;
+        this.fwhmFixed = {x: fixed[3] === true, y: fixed[4] === true};
+        this.isPaFixed = fixed[5] === true;
     };
 
     constructor() {
