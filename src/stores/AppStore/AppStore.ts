@@ -2345,8 +2345,9 @@ export class AppStore {
         if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config?.fixedNumBins && !regionHistogramData.config?.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
-            if (this.contourDataSource?.frameInfo.fileId === regionHistogramData.fileId) {
-                this.applyContourSourceHistogram();
+            const frame = this.getFrame(regionHistogramData.fileId);
+            if (frame) {
+                this.applyHiddenFrameHistogram(frame);
             }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
@@ -2995,20 +2996,19 @@ export class AppStore {
         if (this.shouldSyncFrameToContour) {
             this.updateActiveImageByFrame(frame);
         }
-        this.applyContourSourceHistogram();
+        this.applyHiddenFrameHistogram(frame);
     };
 
     /**
-     * Applies the waiting channel histogram of the image that the Contour dialog shows, when no view
-     * shows that image. A channel histogram waits until a tile of its channel arrives, and no tile
-     * arrives for an image that no view shows. For example, a workspace restore can open an image
-     * that is never shown, and the Contour dialog can show it. Without this, the dialog would show
-     * no histogram for that image.
+     * Applies the waiting channel histogram of an image that no view shows, for the channel and the
+     * Stokes that the image is set to. A channel histogram waits until a tile of its channel arrives,
+     * and no tile arrives for an image that no view shows. For example, a workspace restore can open
+     * images that are never shown. The Contour dialog and the Histogram widget can still show such an
+     * image, and without its channel histogram they would show no histogram.
      */
-    private applyContourSourceHistogram = () => {
-        const frame = this.contourDataSource;
-        if (frame && !this.imageViewConfigStore.visibleFrames.includes(frame)) {
-            this.updateHistogram(frame.frameInfo.fileId, frame.stokes, frame.channel);
+    private applyHiddenFrameHistogram = (frame: FrameStore) => {
+        if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
+            this.updateHistogram(frame.frameInfo.fileId, frame.requiredStokes, frame.requiredChannel);
         }
     };
 
@@ -3024,7 +3024,7 @@ export class AppStore {
         this.shouldSyncFrameToContour = false;
         this.shouldSyncContourToFrame = false;
         this.contourDataSource = frame;
-        this.applyContourSourceHistogram();
+        this.applyHiddenFrameHistogram(frame);
     };
 
     @action toggleFrameContourLock = () => {
