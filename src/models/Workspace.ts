@@ -25,6 +25,7 @@ import {
     type RestFrameShiftMode,
     type SkyRefIs,
     type SpectralSystem,
+    type SpectralType,
     type VectorOverlaySource,
     type VelocityConvention,
     type WorkspaceItemKind
@@ -724,6 +725,8 @@ export interface Workspace {
         spectral?: number;
         raster?: number;
     };
+    /** The spectral coordinate that spectrally matched images are matched by, such as "VRAD". */
+    spectralMatchingType?: SpectralType;
     selectedFile?: number;
     /** The settings of the animator. */
     animator?: WorkspaceAnimator;
