@@ -535,8 +535,9 @@ describe("WorkspaceRestorer", () => {
         expect(stages).toEqual(
             expect.arrayContaining([
                 {stage: "Opening images", index: 1, count: 1, item: expect.any(String)},
-                {stage: "Opening catalogs", index: 1, count: 2, item: expect.stringContaining("I/355/gaiadr3")},
-                {stage: "Opening catalogs", index: 2, count: 2, item: expect.stringContaining("I/239/hip_main")}
+                // An online catalog is named as in the report, not as "from the VizieR query".
+                {stage: "Opening catalogs", index: 1, count: 2, item: "The VizieR catalog I/355/gaiadr3 on image.fits"},
+                {stage: "Opening catalogs", index: 2, count: 2, item: "The VizieR catalog I/239/hip_main on image.fits"}
             ])
         );
         expect(stages.at(-1)).toEqual(expect.objectContaining({stage: "Restoring the layout and widgets"}));
