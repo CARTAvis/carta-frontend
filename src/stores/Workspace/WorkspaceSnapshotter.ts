@@ -325,7 +325,7 @@ export class WorkspaceSnapshotter {
         this.workspace.catalogs = catalogs;
     }
 
-    /** Stage 4: what each catalog table and plot widget shows, naming catalogs by the workspace's own IDs. */
+    /** Stage 4: what each catalog widget and each profile, analysis and statistics widget shows. Catalogs and images are named by their workspace IDs. */
     private captureViews(): void {
         // Only the catalogs stage 3 saved: a widget must not name one this workspace does not carry.
         const savedCatalogIds = new Set((this.workspace.catalogs ?? []).map(catalog => catalog.id));
@@ -334,7 +334,7 @@ export class WorkspaceSnapshotter {
             this.workspace.catalogWidgets = catalogWidgets;
         }
 
-        // Save only the widgets that show an image that stage 1 saved, like the catalogs above.
+        // Name only the images that the workspace saves. A widget that shows another image is saved without its image. On restore, it shows the active image.
         const savedImageIds = new Set(this.workspace.files.map(file => file.id));
         const plotWidgets = this.appStore.widgetsStore.savedPlotWidgets({
             imageIdOf: fileId => {

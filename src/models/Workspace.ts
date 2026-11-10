@@ -399,7 +399,7 @@ export interface WorkspaceCatalogPlotConfig {
 
 /** The image and region that a widget shows, by their IDs in the workspace. When the image is left out, the widget shows the active image. */
 export interface WorkspaceWidgetBinding {
-    /** The Workspace ID of the image that the widget shows. Left out when the widget shows the active image. */
+    /** The Workspace ID of the image that the widget shows. Left out when the widget shows the active image, or an image that the workspace does not save. */
     imageId?: number;
     /** The region that the widget shows, by the ID that the region was saved with. */
     regions?: {imageId?: number; regionId: number}[];

@@ -1478,7 +1478,7 @@ export class WidgetsStore {
     }
 
     // region Widgets created from the registration table
-    /** Adds a store for a widget whose registration has `createStore`, and applies the settings that a layout saved for it. Returns the ID of the store, or null when the registration creates no store. */
+    /** Adds a store for a widget whose registration has `createStore`, and applies the settings that a layout saved for it. Returns the ID that the layout uses for the widget, or null when no store is created. This ID is not the `widgetId` of the widget. */
     @action addWidget(widgetType: string, id: string | null = null, widgetSettings: object | null = null): string | null {
         const widgets = this.widgetsMap.get(widgetType);
         const createStore = getWidgetMap().get(widgetType)?.createStore;
