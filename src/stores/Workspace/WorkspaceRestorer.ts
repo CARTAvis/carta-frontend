@@ -768,15 +768,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 fittingStore.setIsCancelling(false);
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestFitting(message, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `making ${subject}`,
-                        () => fittingStore.progress ?? 0,
-                        () => this.appStore.backendService.cancelRequestingFitting(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => fittingStore.progress ?? 0,
+                            () => this.appStore.backendService.cancelRequestingFitting(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         } else {
             const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);

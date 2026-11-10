@@ -1794,6 +1794,8 @@ export class AppStore {
      * @param isStillWanted - called when the fit is done. When it returns false, the model and
      *                        residual images are closed on the backend, and the result is not shown.
      * @returns the model and residual images added to the session.
+     * @throws The error of the backend, or why the fit did not succeed, during a workspace restore
+     *         only. The restore lists it in its report, so no toast shows it.
      */
     @flow.bound
     *requestFitting(message: CARTA.FittingRequest.$Properties, isStillWanted: () => boolean = () => true) {
@@ -1801,6 +1803,7 @@ export class AppStore {
             return [];
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         if (message.createModelImage || message.createResidualImage) {
             this.startFileLoading();
         }
@@ -1815,8 +1818,12 @@ export class AppStore {
         this.restartTaskProgress();
 
         const fittingImages: FrameStore[] = [];
+        let failure: unknown;
         try {
             const ack = yield this.backendService.requestFitting(message);
+            if (!ack.success && isRestoring) {
+                throw new Error(ack.message || "the fit did not succeed");
+            }
             if (ack.success && !isStillWanted()) {
                 this.discardGeneratedImages([ack.modelImage, ack.residualImage].filter(image => !!image));
             } else if (ack.success) {
@@ -1878,14 +1885,18 @@ export class AppStore {
                     }
                 }
             }
-            if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length) {
+            if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length && !isRestoring) {
                 AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
             }
-            if (ack.message) {
+            if (ack.message && !isRestoring) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
         } catch (err) {
-            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+            if (isRestoring) {
+                failure = err;
+            } else {
+                AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+            }
         }
 
         this.setActiveImageById(ImageType.FRAME, message.fileId ?? -1);
@@ -1893,6 +1904,9 @@ export class AppStore {
             this.endFileLoading();
         }
         this.imageFittingStore.resetFittingState();
+        if (failure !== undefined) {
+            throw failure;
+        }
         return fittingImages;
     }
 

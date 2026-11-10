@@ -1374,6 +1374,15 @@ describe("WorkspaceRestorer", () => {
                 });
             });
 
+            test("says why the fit failed", async () => {
+                const {requestFitting} = createGeneratingSession();
+                requestFitting.mockImplementation(() => Promise.reject(new Error("fit did not converge")));
+
+                const problems = await restore(createWorkspace({generatedImages: [{request: {...fittingRequest, regionId: RegionId.IMAGE}, images: [{id: 2, fittingImage: "model"}]}]}));
+
+                expect(problems).toEqual(["Could not make the image fitting images of image.fits: fit did not converge"]);
+            });
+
             test("is reported, and not made, when it is not one this version can make", async () => {
                 const {requestFitting} = createGeneratingSession();
 
