@@ -528,6 +528,8 @@ export class ProfileFittingStore {
         // `Object.values` of a numeric enum also returns the names, such as "GAUSSIAN". Accept only the numbers.
         if (typeof config.function === "number" && Object.values(FittingFunction).includes(config.function)) {
             this.setFunction(config.function);
+        } else {
+            this.setFunction(FittingFunction.GAUSSIAN);
         }
         if (typeof config.continuum === "number" && Object.values(FittingContinuum).includes(config.continuum)) {
             this.setContinuum(config.continuum);
