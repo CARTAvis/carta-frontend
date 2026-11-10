@@ -606,7 +606,7 @@ export class WidgetsStore {
 
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
-            // A widget type that creates no store still reaches the placeholder below, with no ID.
+            // `addWidgetByType` returns null for a type that creates no store. The widget is still created below, with no ID. An unknown type becomes a placeholder.
             const id = this.addWidgetByType(this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType), savedConfig.widgetSettings) as string;
             const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
