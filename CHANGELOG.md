@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the missing WCS for images whose FITS header contains an entry without a keyword ([#3024](https://github.com/CARTAvis/carta-frontend/issues/3024)).
 * Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder ([#2964](https://github.com/CARTAvis/carta-frontend/issues/2964)).
 * Fixed workspaces not restoring custom colormap colors, or the image of the Contour dialog when it does not follow the active image ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
+* Fixed text, compass and ruler annotations drawn at the wrong size when an image view first shows them, such as after a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed

@@ -60,6 +60,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable currentCursorPos: Point2D = {x: 0, y: 0};
     @observable private regionSelectionBox: RegionSelectionBox | null = null;
     @observable private frame: FrameStore;
+    /**
+     * The scale of the stage. The regions read the scale from the stage when they are drawn, and the
+     * stage gets its scale only after the regions are first drawn. So a change of the scale draws the
+     * regions again. Without this, an annotation that the view shows when it opens, such as one that a
+     * workspace restores, keeps a size that is not zoom invariant until the zoom changes.
+     */
+    @observable private stageScale: Point2D = {x: 1, y: 1};
 
     private readonly disposers: IReactionDisposer[] = [];
     private stageRef;
@@ -597,10 +604,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    @action private setStageScale = (scale: Point2D) => {
+        if (scale.x !== this.stageScale.x || scale.y !== this.stageScale.y) {
+            this.stageScale = scale;
+        }
+    };
+
     private syncStage = (refCenterMovement: Point2D, refFrameZoom: Point2D) => {
         const stage = this.stageRef.current;
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom.x) && isFinite(refFrameZoom.y)) {
-            stage.scale({x: refFrameZoom.x / AppStore.Instance.imageRatio, y: refFrameZoom.y / AppStore.Instance.imageRatio});
+            const scale = {x: refFrameZoom.x / AppStore.Instance.imageRatio, y: refFrameZoom.y / AppStore.Instance.imageRatio};
+            stage.scale(scale);
+            this.setStageScale(scale);
             const origin = {x: (this.props.width * (1 - refFrameZoom.x * this.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom.y)) / 2};
             const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom.x * this.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom.y / devicePixelRatio)};
             const newOrigin = add2D(origin, centerMovementCanvas);
@@ -627,6 +642,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 y: y - cursorPointTo.y * newStageZoom.y
             };
             stage.scale(newStageZoom);
+            this.setStageScale(newStageZoom);
             stage.position(newOrigin);
         }
     };
@@ -1037,6 +1053,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             width={this.props.width}
                             height={this.props.height}
                             stageRef={this.stageRef}
+                            stageScale={this.stageScale}
                             shouldSuppressSelect={this.shouldSuppressRegionSelection}
                         />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
@@ -1055,6 +1072,8 @@ interface RegionComponentsProps {
     width: number;
     height: number;
     stageRef: any;
+    /** The scale of the stage. A change draws the regions again. */
+    stageScale?: Point2D;
     shouldSuppressSelect?: (evt?: MouseEvent) => boolean;
 }
 
@@ -1096,6 +1115,7 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageRef: this.props.stageRef,
+                    stageScale: this.props.stageScale,
                     selected: regionSet.selectedRegionIds.has(r.regionId),
                     isFocused,
                     onSelect: this.handleSelect,
