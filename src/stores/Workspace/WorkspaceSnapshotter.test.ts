@@ -305,6 +305,20 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("animationChannelRange");
     });
 
+    test("saves the open analysis dialogs from the bottom one to the top one, and leaves out the other dialogs", () => {
+        const zIndexes = new Map([
+            ["contour-dialog", 3],
+            ["region-dialog", 1],
+            ["preference-dialog", 2]
+        ]);
+        createSession({
+            dialogStore: {dialogVisible: new Map([...zIndexes.keys()].map(id => [id, true]))},
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.openDialogs).toEqual(["region-dialog", "contour-dialog"]);
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};

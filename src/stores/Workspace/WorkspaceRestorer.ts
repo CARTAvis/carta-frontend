@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
+import {AnimationMode, ImageType, PlayMode, RegionId, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -157,7 +157,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         this.settle();
+        this.restoreDialogs();
         return this.issues;
+    }
+
+    /**
+     * Opens the analysis dialogs that were open, and closes the other analysis dialogs. Open them
+     * last, when the images and regions that they show are back.
+     */
+    private restoreDialogs(): void {
+        const saved = this.workspace.openDialogs;
+        if (!Array.isArray(saved)) {
+            return;
+        }
+        const dialogStore = this.appStore.dialogStore;
+        WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
+        saved.filter(id => WORKSPACE_DIALOGS.includes(id)).forEach(id => dialogStore.showDialog(id));
     }
 
     /**

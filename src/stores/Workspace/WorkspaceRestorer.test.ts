@@ -144,6 +144,7 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
+        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
             appStore.activeImage = {type: ImageType.FRAME, store: frame};
@@ -250,6 +251,24 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.animatorStore.setStep).not.toHaveBeenCalled();
         expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
         expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
+    });
+
+    test("opens the saved analysis dialogs in their order, and closes the other analysis dialogs, but not another dialog", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog", "preference-dialog"]}));
+
+        expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"]]);
+    });
+
+    test("leaves the dialogs as they are for a workspace saved without them", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({}));
+
+        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
     });
 
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {

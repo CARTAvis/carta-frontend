@@ -575,6 +575,12 @@ export interface Workspace {
      */
     contourDataSource?: {imageId: number};
     /**
+     * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
+     * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the
+     * dialogs as they are.
+     */
+    openDialogs?: string[];
+    /**
      * The color-blended image in front, when it is one, by the `imageListIndex` its entry in
      * `colorBlendingImages` carries. `selectedFile` then names the image it is blended onto.
      */

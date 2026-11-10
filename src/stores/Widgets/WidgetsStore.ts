@@ -712,7 +712,7 @@ export class WidgetsStore {
             if (config.componentId) {
                 config.componentId = config.id;
             }
-            if (savedConfig.defaultX > 0 && savedConfig.defaultY > 0) {
+            if (typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0) {
                 config.setDefaultPosition(savedConfig.defaultX, savedConfig.defaultY);
             } else {
                 const offset = this.getFloatingWidgetOffset();
@@ -1768,7 +1768,7 @@ export class WidgetsStore {
     };
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
-        if (widget.defaultX === undefined || widget.defaultY === undefined || !(widget.defaultX > 0 && widget.defaultY > 0)) {
+        if (widget.defaultX === undefined || widget.defaultY === undefined || !(widget.defaultX >= 0 && widget.defaultY >= 0)) {
             const offset = this.getFloatingWidgetOffset();
             widget.setDefaultPosition(offset, offset);
         }

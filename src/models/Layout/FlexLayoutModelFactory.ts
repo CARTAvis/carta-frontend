@@ -201,6 +201,9 @@ function convertStack(node: any): IJsonTabSetNode {
     if (node.activeItemIndex !== undefined && node.activeItemIndex >= 0 && node.activeItemIndex < children.length) {
         tabset.selected = node.activeItemIndex;
     }
+    if (node.maximized === true) {
+        tabset.maximized = true;
+    }
 
     return tabset;
 }
@@ -311,6 +314,9 @@ function extractTabSetNode(node: any): any {
 
     if (node.selected !== undefined && node.selected > 0) {
         result.activeItemIndex = node.selected;
+    }
+    if (node.maximized === true) {
+        result.maximized = true;
     }
 
     for (const child of children) {

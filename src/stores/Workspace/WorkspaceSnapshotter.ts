@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WorkspaceItemKind} from "enums";
+import {ImageType, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
@@ -367,6 +367,12 @@ export class WorkspaceSnapshotter {
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        // Save the open dialogs from the bottom one to the top one, so that a restore stacks them in this order.
+        const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        if (dialogStore?.dialogVisible) {
+            this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
+        }
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.
