@@ -121,6 +121,7 @@ export class WorkspaceRestorer {
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
+        this.restoreContourDataSource();
         yield* this.openCatalogs();
         if (!this.isCurrent) {
             return this.issues;
@@ -137,6 +138,24 @@ export class WorkspaceRestorer {
         this.restoreViews();
         this.settle();
         return this.issues;
+    }
+
+    /**
+     * Shows in the Contour dialog the image that it showed, when it did not follow the active image.
+     * Do this after the image in front is chosen. A change of the image in front changes the image of
+     * the dialog while the dialog follows it.
+     */
+    private restoreContourDataSource(): void {
+        const imageId = this.workspace.contourDataSource?.imageId;
+        if (typeof imageId !== "number") {
+            return;
+        }
+        const frame = this.frameOf(imageId);
+        if (frame) {
+            this.appStore.setContourDataSourceUnlocked(frame);
+        } else {
+            this.report(WorkspaceItemKind.Image, "", "The Contour dialog follows the active image, because the image that it showed was not restored");
+        }
     }
 
     /** Report something that could not be brought back, naming what it was about. */

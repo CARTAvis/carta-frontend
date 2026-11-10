@@ -127,6 +127,7 @@ function createSession() {
         setTimeSeriesMember: jest.fn(),
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
+        setContourDataSourceUnlocked: jest.fn(),
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
             appStore.activeImage = {type: ImageType.FRAME, store: frame};
@@ -201,6 +202,23 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+    });
+
+    test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE, {id: 2, source: {type: "file", filename: "other.fits"}}], contourDataSource: {imageId: 2}}));
+
+        expect(appStore.setContourDataSourceUnlocked).toHaveBeenCalledWith(appStore.frames[1]);
+    });
+
+    test("leaves the Contour dialog following the active image when the image it showed was not restored, and says so", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({contourDataSource: {imageId: 9}}));
+
+        expect(appStore.setContourDataSourceUnlocked).not.toHaveBeenCalled();
+        expect(problems).toEqual(["The Contour dialog follows the active image, because the image that it showed was not restored"]);
     });
 
     test("re-queries a saved SIMBAD source without changing the online query dialog", async () => {
