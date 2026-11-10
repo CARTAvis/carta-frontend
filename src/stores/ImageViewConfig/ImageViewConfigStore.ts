@@ -37,7 +37,6 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     /** The grid settings of this session. A setting that is not set here follows the user's preference. */
     @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
 
-    /** Whether multi-panel is enabled in this session. */
     @computed get isMultiPanelEnabled(): boolean {
         return this.grid.multiPanelEnabled ?? PreferenceStore.Instance.isImageMultiPanelEnabled;
     }
