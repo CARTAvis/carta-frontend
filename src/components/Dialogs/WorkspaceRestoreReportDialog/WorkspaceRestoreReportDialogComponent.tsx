@@ -101,19 +101,22 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             canOutsideClickClose={false}
         >
             <div className={Classes.DIALOG_BODY}>
-                <div className="report-summary" data-testid="workspace-restore-report-summary">
-                    {leftOutCount > 0 && (
-                        <Tag minimal intent={Intent.WARNING}>
-                            {countOf(leftOutCount, "item", "items")} not restored
-                        </Tag>
-                    )}
-                    {changedCount > 0 && <Tag minimal>{countOf(changedCount, "item", "items")} restored with changes</Tag>}
-                    {repointed.length > 0 && (
-                        <Tag minimal intent={Intent.PRIMARY}>
-                            {countOf(repointed.length, "file", "files")} from a new location
-                        </Tag>
-                    )}
-                </div>
+                {/* Sum up the sections only when there are two or more. One section says it by its title. */}
+                {[leftOutCount, changedCount, repointed.length].filter(count => count > 0).length > 1 && (
+                    <div className="report-summary" data-testid="workspace-restore-report-summary">
+                        {leftOutCount > 0 && (
+                            <Tag minimal intent={Intent.WARNING}>
+                                {countOf(leftOutCount, "item", "items")} not restored
+                            </Tag>
+                        )}
+                        {changedCount > 0 && <Tag minimal>{countOf(changedCount, "item", "items")} restored with changes</Tag>}
+                        {repointed.length > 0 && (
+                            <Tag minimal intent={Intent.PRIMARY}>
+                                {countOf(repointed.length, "file", "files")} from a new location
+                            </Tag>
+                        )}
+                    </div>
+                )}
                 {groups.leftOut.length > 0 && (
                     <section data-testid="workspace-restore-report-left-out">
                         <SectionTitle icon="remove">Not restored</SectionTitle>
@@ -184,7 +187,13 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                 </Tooltip>
                             )}
                         </div>
-                        <p>{report?.storedName !== undefined ? "The stored workspace still names the old files." : "This workspace cannot be changed, so it keeps the old locations."}</p>
+                        <p>
+                            {report?.storedName === undefined
+                                ? "This workspace cannot be changed, so it keeps the old locations."
+                                : writeBack === "written"
+                                  ? "The stored workspace now names the new files."
+                                  : "The stored workspace still names the old files."}
+                        </p>
                         <ul role="list">
                             {repointed.map(({from, to}, index) => (
                                 <li key={index} className="repointed-item">
