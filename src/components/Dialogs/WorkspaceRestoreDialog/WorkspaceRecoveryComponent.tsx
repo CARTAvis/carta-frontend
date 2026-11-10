@@ -27,6 +27,7 @@ const MirrorSelect = observer(({database}: {database: CatalogDatabase}) => {
         <Tooltip content="The mirror that a retry asks">
             <HTMLSelect
                 minimal
+                className="recovery-mirror-select"
                 options={mirrors.map(url => ({value: url, label: mirrorLabel(url)}))}
                 value={mirrorSiteStore.getActiveMirror(database)}
                 onChange={event => mirrorSiteStore.setActiveMirror(database, event.currentTarget.value)}

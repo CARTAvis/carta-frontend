@@ -95,9 +95,19 @@
         }
     }
 
-    // Cancel stands apart at the left of the footer.
+    // Cancel stands apart at the left of the footer. Its left edge lines up with the boxes above.
     .restore-cancel-apart {
         margin-right: auto;
+
+        .#{$ns}-button {
+            margin-left: 0;
+        }
+    }
+
+    // Show the hosts of the mirrors in the font of the file names.
+    .recovery-mirror-select select {
+        font-family: $pt-font-family-monospace;
+        font-size: 12px;
     }
 
     .restore-stage {

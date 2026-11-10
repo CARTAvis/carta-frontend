@@ -163,7 +163,7 @@ export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): 
     }
 }
 
-/** A piece of a report line. The piece is a file name or a path when `isFile` is true. */
+/** A piece of a report line. The piece is a file name, a path, a URL or the host of a mirror when `isFile` is true. */
 export interface TextPart {
     text: string;
     isFile: boolean;
@@ -180,8 +180,9 @@ function isFileName(word: string): boolean {
 }
 
 /**
- * Splits a report line into the file names and paths, and the rest. Then the report can show the
- * file names in another style.
+ * Splits a report line into the file names, paths, URLs and mirror hosts, and the rest. Then the
+ * report can show them in another style, such as "simbad.u-strasbg.fr" in "Request to mirror
+ * simbad.u-strasbg.fr failed".
  *
  * The whole subject is a file name when it reads as one, such as "my cube.fits". The words of the
  * subject and of the label can also be file names, such as "cube.fits" in "the moment images of
@@ -193,7 +194,11 @@ export function splitFileNames(text: string, subject: string, label?: string): T
     const words = `${subject} ${label ?? ""}`.split(/\s+/).filter(isFileName);
     const names = isFileName(subject) ? [subject, ...words] : words;
     // A path starts with a slash that does not follow a letter, a digit, an underscore, a slash or a colon. Then a URL is not taken as a path.
-    const patterns = ["(?<![\\w/:])/[^\\s:;,]*[^\\s:;,.)]", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
+    const path = "(?<![\\w/:])/[^\\s:;,]*[^\\s:;,.)]";
+    const url = "https?://[^\\s,;)]*[^\\s,;).]";
+    // A host follows the word "mirror", such as "Request to mirror simbad.u-strasbg.fr failed".
+    const mirrorHost = "(?<=\\b[Mm]irror )[\\w-]+(?:\\.[\\w-]+)+";
+    const patterns = [url, path, mirrorHost, ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
     const pattern = new RegExp(patterns.join("|"), "g");
     const parts: TextPart[] = [];
     let last = 0;

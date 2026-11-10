@@ -124,7 +124,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                         <p>{hasConsequences ? "These items are not in the session. Under each item is what was left out or changed because of it." : "These items are not in the session."}</p>
                         <ul role="list">
                             {groups.leftOut.map((item, index) => (
-                                <li key={index} className="left-out-item">
+                                <li key={index} className={classNames("left-out-item", item.issue.outcome === WorkspaceIssueOutcome.Skipped ? "is-skipped" : "is-failed")}>
                                     <div className="issue">
                                         <OutcomeTag issue={item.issue} />
                                         <IssueText issue={item.issue} text={describeIssue(item.issue, titleOfWidget)} />
