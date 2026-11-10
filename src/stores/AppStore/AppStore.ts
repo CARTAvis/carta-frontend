@@ -1726,10 +1726,17 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request an image fitting.
+     *
+     * @param isStillWanted - called when the fit is done. When it returns false, the model and
+     *                        residual images are closed on the backend, and the result is not shown.
+     * @returns the model and residual images added to the session.
+     */
     @flow.bound
-    *requestFitting(message: CARTA.FittingRequest.$Properties) {
+    *requestFitting(message: CARTA.FittingRequest.$Properties, isStillWanted: () => boolean = () => true) {
         if (!message) {
-            return;
+            return [];
         }
 
         if (message.createModelImage || message.createResidualImage) {
@@ -1745,10 +1752,26 @@ export class AppStore {
         frame?.resetFitting();
         this.restartTaskProgress();
 
+        const fittingImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestFitting(message);
-            if (ack.success) {
+            if (ack.success && !isStillWanted()) {
+                this.discardGeneratedImages([ack.modelImage, ack.residualImage].filter(image => !!image));
+            } else if (ack.success) {
+                const request: ImageGenerationRequest | undefined = frame
+                    ? {
+                          type: "fitting",
+                          source: frame,
+                          regionId: message.regionId ?? 0,
+                          fovInfo: message.fovInfo ?? undefined,
+                          initialValues: message.initialValues ?? [],
+                          fixedParams: message.fixedParams ?? [],
+                          offset: message.offset ?? 0,
+                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky
+                      }
+                    : undefined;
                 this.imageFittingStore.setResultString(
+                    frame ?? undefined,
                     message.regionId ?? 0,
                     message.fovInfo ?? {},
                     message.fixedParams ?? [],
@@ -1765,6 +1788,8 @@ export class AppStore {
                         this.fileCounter++;
                         const newModelFrame = this.getFrame(ack.modelImage.fileId);
                         if (newModelFrame) {
+                            newModelFrame.generation = request && {request, fittingImage: "model"};
+                            fittingImages.push(newModelFrame);
                             frame?.addFittingModelImage(newModelFrame);
                             if (this.spatialReference && frame === this.spatialReference) {
                                 newModelFrame.setSpatialReference(this.spatialReference);
@@ -1779,6 +1804,8 @@ export class AppStore {
                         this.fileCounter++;
                         const newResidualFrame = this.getFrame(ack.residualImage.fileId);
                         if (newResidualFrame) {
+                            newResidualFrame.generation = request && {request, fittingImage: "residual"};
+                            fittingImages.push(newResidualFrame);
                             frame?.addFittingResidualImage(newResidualFrame);
                             if (this.spatialReference && frame === this.spatialReference) {
                                 newResidualFrame.setSpatialReference(this.spatialReference);
@@ -1804,6 +1831,7 @@ export class AppStore {
             this.endFileLoading();
         }
         this.imageFittingStore.resetFittingState();
+        return fittingImages;
     }
 
     @action setAstReady = (isReady: boolean) => {
