@@ -1,5 +1,6 @@
 import * as React from "react";
-import {Button, ButtonGroup, HTMLSelect, Icon, Intent, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Icon, Intent, MenuItem} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
 import {type CatalogDatabase} from "enums";
@@ -16,24 +17,33 @@ function mirrorLabel(url: string): string {
     }
 }
 
-/** Lets the user choose the mirror that a retry sends the query to. The Online Data Query dialog uses the same choice. */
-const MirrorSelect = observer(({database}: {database: CatalogDatabase}) => {
+/**
+ * Names the mirror that a retry sends the query to. When more than one mirror is available, the
+ * name is a button that opens a menu, and the user can choose another mirror. The Online Data Query
+ * dialog uses the same choice, in the same style. The menu does not offer a mirror that the user
+ * turned off in that dialog, or that this page cannot reach.
+ */
+const MirrorChoice = observer(({database}: {database: CatalogDatabase}) => {
     const mirrorSiteStore = MirrorSiteStore.Instance;
     const mirrors = mirrorSiteStore.getMirrorSites(database).filter(url => !mirrorSiteStore.isMirrorUnavailable(database, url));
+    const activeMirror = mirrorSiteStore.getActiveMirror(database);
     if (mirrors.length < 2) {
-        return null;
+        return activeMirror ? <FileName text={mirrorLabel(activeMirror)} /> : null;
     }
     return (
-        <Tooltip content="The mirror that a retry asks">
-            <HTMLSelect
-                minimal
-                className="recovery-mirror-select"
-                options={mirrors.map(url => ({value: url, label: mirrorLabel(url)}))}
-                value={mirrorSiteStore.getActiveMirror(database)}
-                onChange={event => mirrorSiteStore.setActiveMirror(database, event.currentTarget.value)}
-                data-testid="workspace-recovery-mirror-select"
-            />
-        </Tooltip>
+        <Select<string>
+            items={mirrors}
+            activeItem={activeMirror ?? null}
+            filterable={false}
+            // Show the menu in a layer above the dialog, as the dialog shows itself above the app.
+            popoverProps={{minimal: true, portalClassName: "dialog-portal"}}
+            onItemSelect={url => mirrorSiteStore.setActiveMirror(database, url)}
+            itemRenderer={(url, {handleClick, handleFocus, modifiers}) => (
+                <MenuItem key={url} text={mirrorLabel(url)} roleStructure="listoption" selected={url === activeMirror} active={modifiers.active} onClick={handleClick} onFocus={handleFocus} />
+            )}
+        >
+            <Button size="small" className="recovery-mirror-button" text={activeMirror ? mirrorLabel(activeMirror) : "Choose a mirror"} endIcon="double-caret-vertical" data-testid="workspace-recovery-mirror-select" />
+        </Select>
     );
 });
 
@@ -109,8 +119,14 @@ export const WorkspaceRecoveryComponent = observer(({recovery}: {recovery: Works
                                         Skip
                                     </Button>
                                 </ButtonGroup>
-                                {item.database && <MirrorSelect database={item.database} />}
                             </div>
+                            {choice?.action === WorkspaceRecoveryAction.Retry && item.database && (
+                                <div className="recovery-note recovery-location recovery-mirror" data-testid="workspace-recovery-mirror">
+                                    <Icon icon="arrow-right" size={12} />
+                                    <span>Retries on</span>
+                                    <MirrorChoice database={item.database} />
+                                </div>
+                            )}
                             {choice?.action === WorkspaceRecoveryAction.Repoint && (
                                 <div className="recovery-note recovery-location" data-testid="workspace-recovery-location">
                                     <Icon icon="arrow-right" size={12} />
