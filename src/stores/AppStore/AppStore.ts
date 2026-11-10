@@ -141,13 +141,13 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
 
 /**
  * The stage that a workspace restore is in, and the item of the stage that it is working on. For
- * example, "Opening catalogs", item 2 of 5, "the VizieR query for I/239/hip_main".
+ * example, "Opening catalogs", item 2 of 5, "from the VizieR query for I/239/hip_main".
  */
 export interface WorkspaceRestoreProgress {
     stage: string;
-    /** The position of the item in the stage, counted from 1. */
+    /** The position of the item in this round of the stage, counted from 1. A retry starts a new round. */
     index?: number;
-    /** The number of items in the stage. */
+    /** The number of items in this round of the stage. */
     count?: number;
     /** The name of the item, as the user knows it. */
     item?: string;
@@ -1574,8 +1574,8 @@ export class AppStore {
      * @param isStillWanted - called when the images are made. When it returns false, the images are
      *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
-     * @throws The error of the backend, during a workspace restore only. The restore lists it in its
-     *         report.
+     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
+     *         the backend. The restore lists it in its report.
      */
     @flow.bound
     *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
@@ -1668,8 +1668,8 @@ export class AppStore {
      * @param isStillWanted - called when the image is made. When it returns false, the image is
      *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
-     * @throws The error of the backend, during a workspace restore only. The restore lists it in its
-     *         report, so no toast shows it.
+     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
+     *         the backend. The restore lists it in its report, so no toast shows it.
      */
     @flow.bound
     *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
