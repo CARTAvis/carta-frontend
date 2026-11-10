@@ -1438,7 +1438,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Stage 5: open every catalog against the image it belongs to.
      *
      * A mirror that times out is waited for only once. The later online catalogs on that mirror fail
-     * at once with the same reason.
+     * at once. Their reason says that the mirror timed out on an earlier query.
      */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
         const forgetTimedOutMirrors = CatalogApiService.Instance.rememberTimedOutMirrors();
