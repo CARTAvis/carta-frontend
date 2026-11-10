@@ -506,6 +506,20 @@ describe("WorkspaceRestorer", () => {
         expect(order).toEqual(["spectral-profiler-0-settings", "pv-generator-0", "histogram-0-settings", "catalog-plot-component-0"]);
     });
 
+    test("applies the saved fields of the online catalog query dialog", async () => {
+        createSession();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), objectName: "M17", vizierKeywords: "gaia"};
+
+        await restore(createWorkspace({onlineCatalogQuery}));
+
+        expect([configStore.objectName, configStore.vizierKeyWords]).toEqual(["M17", "gaia"]);
+        runInAction(() => {
+            configStore.resetObjectName();
+            configStore.setVizierKeyWords("");
+        });
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 

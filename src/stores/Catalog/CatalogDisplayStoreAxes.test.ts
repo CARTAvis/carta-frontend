@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, PreferenceKeys} from "enums";
+import {CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogType, CatalogUpdateMode, PreferenceKeys} from "enums";
 import {AppStore, CatalogDisplayStore, CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
 import {CatalogAxisEligibility, type CatalogAxisEligibilityResult, COORDINATE_SNIFF_SCAN_LIMIT, getCatalogAxisEligibility, getCoordinateDescriptorFromUnits, isCatalogNumericDataType} from "utilities";
 
@@ -543,6 +543,27 @@ describe("CatalogDisplayStore overlay axes", () => {
 
             expect(displayStore.xAxis).toBe("ra");
             expect(displayStore.yAxis).toBe("dec");
+        });
+    });
+
+    describe("the size tab", () => {
+        test("is saved when it shows the minor axis of an ellipse, and is chosen again after the shape", () => {
+            const {displayStore} = openCatalog(catalogFileId => createProfileStore(catalogFileId, CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]));
+            displayStore.setCatalogShape(CatalogOverlayShape.ELLIPSE_LINED);
+            displayStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+
+            const config = displayStore.toConfig();
+            expect(config.sizeAxisTab).toBe("minor");
+
+            displayStore.setCatalogShape(CatalogOverlayShape.CIRCLE_LINED);
+            expect(displayStore.applyConfig(config).success).toBe(true);
+            expect([displayStore.catalogShape, displayStore.sizeAxisTabId]).toEqual([CatalogOverlayShape.ELLIPSE_LINED, CatalogSettingsTabs.SIZE_MINOR]);
+        });
+
+        test("is left out for the major axis", () => {
+            const {displayStore} = openCatalog(catalogFileId => createProfileStore(catalogFileId, CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]));
+
+            expect(displayStore.toConfig()).not.toHaveProperty("sizeAxisTab");
         });
     });
 
