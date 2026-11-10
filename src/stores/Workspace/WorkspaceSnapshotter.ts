@@ -209,8 +209,10 @@ export class WorkspaceSnapshotter {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
         } else if (frame.regionSet?.regions.length) {
             // Regions are only the image's own while it is not matched to another one.
+            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []);
             workspaceFile.regionsSet = {
                 selectedRegion: frame.regionSet.focusedRegion?.regionId,
+                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
                 regions: this.captureRegions(frame)
             };
         }
@@ -351,7 +353,14 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
-            this.workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: selectedFrameId as number[], alpha: colorBlending.alpha});
+            this.workspace.colorBlendingImages.push({
+                imageListIndex: index,
+                selectedFrameId: selectedFrameId as number[],
+                alpha: colorBlending.alpha,
+                ...(colorBlending.isRasterVisible === false ? {rasterVisible: false} : {}),
+                ...(colorBlending.isContourVisible === false ? {contourVisible: false} : {}),
+                ...(colorBlending.isVectorOverlayVisible === false ? {vectorOverlayVisible: false} : {})
+            });
         }
     }
 
@@ -548,6 +557,9 @@ export class WorkspaceSnapshotter {
             this.workspace.dialogSettings = dialogSettings;
         }
         this.captureWidgetSettings();
+        const isCursorFrozen = this.appStore.isCursorFrozen === true;
+        const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(isCursorFrozen && cursorPosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
         this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};
