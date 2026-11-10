@@ -1,7 +1,19 @@
 import {CARTA} from "carta-protobuf";
 
 import {type HipsCoord, type HipsProjection, ImageType, RegionId, RegionOpacity, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
-import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceGenerationRequest, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {
+    CARTA_INFO,
+    type Point2D,
+    type Workspace,
+    WORKSPACE_VERSION,
+    type WorkspaceCatalog,
+    type WorkspaceCatalogSource,
+    type WorkspaceFile,
+    type WorkspaceFittingRequest,
+    type WorkspaceGenerationRequest,
+    type WorkspaceImageSource,
+    type WorkspaceIssue
+} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -206,6 +218,8 @@ export class WorkspaceSnapshotter {
                 return `the moment images of ${request.source.frameInfo.fileInfo.name}`;
             case "pv":
                 return `the PV image of ${request.source.frameInfo.fileInfo.name}`;
+            case "fitting":
+                return `the image fitting images of ${request.source.frameInfo.fileInfo.name}`;
             default:
                 return `the HiPS image of ${request.query.hips}`;
         }
@@ -362,7 +376,7 @@ export class WorkspaceSnapshotter {
                     return [];
                 }
                 const image = this.captureImage(frame, workspaceImageId, undefined);
-                return [{...image, name: frame.frameInfo.fileInfo.name ?? undefined, moment: frame.generation?.moment}];
+                return [{...image, name: frame.frameInfo.fileInfo.name ?? undefined, moment: frame.generation?.moment, fittingImage: frame.generation?.fittingImage}];
             });
             return images.length ? [{request: workspaceRequest, images}] : [];
         });
@@ -396,6 +410,9 @@ export class WorkspaceSnapshotter {
         if (request.type === "pv") {
             return {type: "pv", sourceImageId, regionId: request.regionId, width: request.width, channelRange: request.channelRange && {...request.channelRange}, reverse: request.reverse};
         }
+        if (request.type === "fitting") {
+            return WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId);
+        }
         // Save only the moments whose images are still shown. The other images were closed.
         const moments = frames.map(frame => frame.generation?.moment);
         return {
@@ -406,6 +423,30 @@ export class WorkspaceSnapshotter {
             channelRange: {...request.channelRange},
             mask: request.mask,
             pixelRange: {...request.pixelRange}
+        };
+    }
+
+    /**
+     * Returns an image fitting as the workspace saves it. An initial value that the backend
+     * generates is NaN, and JSON cannot write NaN, so such a value is saved as null.
+     */
+    private static workspaceFittingRequestOf(request: Extract<ImageGenerationRequest, {type: "fitting"}>, sourceImageId: number): WorkspaceFittingRequest {
+        const guess = (value: number | null | undefined): number | null => (typeof value === "number" && isFinite(value) ? value : null);
+        const [center, size] = (request.fovInfo?.controlPoints ?? []) as Point2D[];
+        return {
+            type: "fitting",
+            sourceImageId,
+            regionId: request.regionId,
+            fov: center && size ? {center: {x: center.x, y: center.y}, size: {x: size.x, y: size.y}, rotation: request.fovInfo?.rotation ?? 0} : undefined,
+            components: request.initialValues.map(component => ({
+                center: {x: guess(component.center?.x), y: guess(component.center?.y)},
+                amp: guess(component.amp),
+                fwhm: {x: guess(component.fwhm?.x), y: guess(component.fwhm?.y)},
+                pa: guess(component.pa)
+            })),
+            fixedParams: [...request.fixedParams],
+            offset: request.offset,
+            solver: request.solver
         };
     }
 

@@ -1200,7 +1200,12 @@ describe("WorkspaceRestorer", () => {
                 cancelRequestingMoment: jest.fn(),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
-                loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({})))
+                loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({}))),
+                requestFitting: jest.fn((message: CARTA.FittingRequest.$Properties, _isStillWanted?: () => boolean) =>
+                    Promise.resolve([...(message.createModelImage ? [addFrame({fittingImage: "model"})] : []), ...(message.createResidualImage ? [addFrame({fittingImage: "residual"})] : [])])
+                ),
+                imageFittingStore: {setIsFitting: jest.fn(), setIsCancelling: jest.fn(), progress: 0.3},
+                backendService: {cancelRequestingFitting: jest.fn()}
             };
             Object.assign(appStore, generating);
             // The backend answers a statistics request for a region with that region's statistics.
@@ -1249,6 +1254,69 @@ describe("WorkspaceRestorer", () => {
             expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
             expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
             expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        });
+
+        describe("an image fitting", () => {
+            const fittingRequest = {
+                type: "fitting" as const,
+                sourceImageId: 1,
+                regionId: 5,
+                components: [{center: {x: 12, y: null}, amp: 1.5, fwhm: {x: 3, y: 2}, pa: null}],
+                fixedParams: [false, false, true, false, false, false, true],
+                offset: 0.1,
+                solver: CARTA.FittingSolverType.Qr
+            };
+
+            test("is made again over the ID the backend gave the region, with only the images that the workspace saves", async () => {
+                const {appStore, requestFitting} = createGeneratingSession();
+                const workspace = createWorkspace({
+                    files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                    generatedImages: [{request: fittingRequest, images: [{id: 2, name: "image_residual.fits", fittingImage: "residual", renderConfig: {colorMap: "viridis"} as never}]}]
+                });
+
+                const restorer = await restored(workspace);
+
+                expect(requestFitting).toHaveBeenCalledWith(
+                    {
+                        fileId: 1,
+                        initialValues: [{center: {x: 12, y: NaN}, amp: 1.5, fwhm: {x: 3, y: 2}, pa: NaN}],
+                        fixedParams: fittingRequest.fixedParams,
+                        regionId: 105,
+                        fovInfo: null,
+                        createModelImage: false,
+                        createResidualImage: true,
+                        offset: 0.1,
+                        solver: CARTA.FittingSolverType.Qr
+                    },
+                    expect.any(Function)
+                );
+                const residual = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
+                expect(residual.generation.fittingImage).toBe("residual");
+                expect(residual.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
+            });
+
+            test("fits the saved field of view again", async () => {
+                const {requestFitting} = createGeneratingSession();
+                const fov = {center: {x: 10, y: 20}, size: {x: 40, y: 30}, rotation: 30};
+
+                await restore(createWorkspace({generatedImages: [{request: {...fittingRequest, regionId: 0, fov}, images: [{id: 2, fittingImage: "model"}]}]}));
+
+                expect(requestFitting.mock.calls[0][0]).toMatchObject({
+                    regionId: 0,
+                    fovInfo: {regionType: CARTA.RegionType.RECTANGLE, rotation: 30, controlPoints: [fov.center, fov.size]},
+                    createModelImage: true,
+                    createResidualImage: false
+                });
+            });
+
+            test("is reported, and not made, when it is not one this version can make", async () => {
+                const {requestFitting} = createGeneratingSession();
+
+                const problems = await restore(createWorkspace({generatedImages: [{request: {...fittingRequest, regionId: RegionId.IMAGE, fixedParams: [false]}, images: [{id: 2, fittingImage: "model"}]}]}));
+
+                expect(requestFitting).not.toHaveBeenCalled();
+                expect(problems).toEqual(["Could not make the image fitting images of image.fits: the request is not one this version can make"]);
+            });
         });
 
         test("keeps the images of an earlier request of the same image when it makes a later one", async () => {

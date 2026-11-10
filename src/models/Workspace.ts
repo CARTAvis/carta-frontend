@@ -367,7 +367,30 @@ export interface WorkspaceHipsRequest {
     rotationAngle: number;
 }
 
-export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest;
+/** A value of an initial guess of an image fitting. It is null when the backend generates the value. */
+type WorkspaceFittingGuess = number | null;
+
+/**
+ * An image fitting that made a model image, a residual image or both. The request names its image
+ * and region by their workspace IDs.
+ */
+export interface WorkspaceFittingRequest {
+    type: "fitting";
+    sourceImageId: number;
+    /** The region of the fit, by the ID that the region was saved with. 0 is the field of view in `fov`, and -1 is the whole image. */
+    regionId: number;
+    /** The field of view that was fitted, as a rectangle in the pixels of the source image. */
+    fov?: {center: Point2D; size: Point2D; rotation: number};
+    /** The initial values of each component. */
+    components: {center: {x: WorkspaceFittingGuess; y: WorkspaceFittingGuess}; amp: WorkspaceFittingGuess; fwhm: {x: WorkspaceFittingGuess; y: WorkspaceFittingGuess}; pa: WorkspaceFittingGuess}[];
+    /** Whether each value is fixed: six values for each component, in the order center x, center y, amplitude, FWHM x, FWHM y and P.A., and then the background offset. */
+    fixedParams: boolean[];
+    /** The initial background offset. */
+    offset: number;
+    solver: CARTA.FittingSolverType;
+}
+
+export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest | WorkspaceFittingRequest;
 
 /** An image that a request made. It is saved like a file image, but without a source, because a restore makes it again instead of opening it. */
 export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "directory" | "filename" | "hdu"> {
@@ -375,6 +398,8 @@ export interface WorkspaceGeneratedFile extends Omit<WorkspaceFile, "source" | "
     name?: string;
     /** For a moment image, the moment of the request that the image shows. */
     moment?: CARTA.Moment;
+    /** For an image that an image fitting made, whether it is the model or the residual. */
+    fittingImage?: "model" | "residual";
 }
 
 /**
@@ -686,8 +711,8 @@ export interface Workspace {
     catalogs?: WorkspaceCatalog[];
     colorBlendingImages?: WorkspaceColorBlending[];
     /**
-     * The moment, PV and HiPS images, by the requests that made them. Each request comes after the
-     * requests that made the images it uses.
+     * The moment, PV, HiPS and image fitting images, by the requests that made them. Each request
+     * comes after the requests that made the images it uses.
      */
     generatedImages?: WorkspaceGeneratedImages[];
     references?: {

@@ -8,11 +8,14 @@ import {
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
     MOMENT_TEXT,
+    type Point2D,
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
     type WorkspaceFile,
+    type WorkspaceFittingRequest,
+    type WorkspaceGeneratedFile,
     type WorkspaceGeneratedImages,
     type WorkspaceGenerationRequest,
     type WorkspaceHipsRequest,
@@ -489,6 +492,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return `the moment images of ${sourceName}`;
             case "pv":
                 return `the PV image of ${sourceName}`;
+            case "fitting":
+                return `the image fitting images of ${sourceName}`;
             default:
                 return `the HiPS image of ${request.survey}`;
         }
@@ -599,7 +604,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * made.
      */
     private *generateImages(regions: Promise<unknown>): Generator<Promise<unknown>, void, any> {
-        const requests = this.generatedImages.filter(({request}) => request.type === "moment" || request.type === "pv");
+        const requests = this.generatedImages.filter(({request}) => request.type === "moment" || request.type === "pv" || request.type === "fitting");
         if (!requests.length) {
             return;
         }
@@ -628,12 +633,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Run one saved moment or PV request again.
+     * Run one saved moment, PV or image fitting request again.
      *
      * @returns the images that it made, or none when the request could not be made or was skipped.
      */
-    private *makeImagesAgain({request}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[], any> {
-        if (request.type !== "moment" && request.type !== "pv") {
+    private *makeImagesAgain({request, images}: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[], any> {
+        if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
         const sourceInfo = this.images.get(request.sourceImageId);
@@ -678,6 +683,25 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                         `making ${subject}`,
                         () => source.requestingMomentsProgress,
                         () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
+                    )
+                );
+            }
+        } else if (request.type === "fitting") {
+            // Make only the images that the session still showed. The fit also shows its result again.
+            const message = WorkspaceRestorer.fittingMessageOf(request, source, regionId, images);
+            if (message) {
+                const fittingStore = this.appStore.imageFittingStore;
+                fittingStore.setIsFitting(true);
+                fittingStore.setIsCancelling(false);
+                const waiting = {isSkipped: false};
+                const made = (this.appStore.requestFitting(message, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                outcome = yield* awaited(
+                    this.waitForRequest(
+                        made,
+                        waiting,
+                        `making ${subject}`,
+                        () => fittingStore.progress ?? 0,
+                        () => this.appStore.backendService.cancelRequestingFitting(source.frameInfo.fileId)
                     )
                 );
             }
@@ -798,6 +822,45 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         };
     }
 
+    /**
+     * Returns the request that a saved image fitting makes, or nothing when this version cannot make
+     * it. The request makes only the model and residual images that the workspace saves.
+     */
+    private static fittingMessageOf(request: WorkspaceFittingRequest, source: FrameStore, regionId: number, images: WorkspaceGeneratedFile[]): CARTA.FittingRequest.$Properties | undefined {
+        const {components, fixedParams, fov} = request;
+        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+        const guess = (value: unknown): number => (isNumber(value) ? value : NaN);
+        const isPoint = (point: unknown): point is Point2D => isNumber((point as Point2D)?.x) && isNumber((point as Point2D)?.y);
+        const isFovValid = regionId !== 0 || (fov !== undefined && isPoint(fov.center) && isPoint(fov.size) && isNumber(fov.rotation));
+        if (
+            !Array.isArray(components) ||
+            !components.length ||
+            !Array.isArray(fixedParams) ||
+            fixedParams.length !== components.length * 6 + 1 ||
+            !fixedParams.every(isFixed => typeof isFixed === "boolean") ||
+            !Object.values(CARTA.FittingSolverType).includes(request.solver) ||
+            !isFovValid
+        ) {
+            return undefined;
+        }
+        return {
+            fileId: source.frameInfo.fileId,
+            initialValues: components.map(component => ({
+                center: {x: guess(component?.center?.x), y: guess(component?.center?.y)},
+                amp: guess(component?.amp),
+                fwhm: {x: guess(component?.fwhm?.x), y: guess(component?.fwhm?.y)},
+                pa: guess(component?.pa)
+            })),
+            fixedParams: [...fixedParams],
+            regionId,
+            fovInfo: regionId === 0 && fov ? {regionType: CARTA.RegionType.RECTANGLE, rotation: fov.rotation, controlPoints: [{...fov.center}, {...fov.size}]} : null,
+            createModelImage: images.some(image => image.fittingImage === "model"),
+            createResidualImage: images.some(image => image.fittingImage === "residual"),
+            offset: isNumber(request.offset) ? request.offset : 0,
+            solver: request.solver
+        };
+    }
+
     /** Returns the request that a saved PV request makes, or nothing when this version cannot make it. */
     private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
         const {width, channelRange} = request;
@@ -872,7 +935,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const adopted: WorkspaceFile[] = [];
         const unclaimed = [...frames];
         for (const [index, image] of images.entries()) {
-            const frameIndex = request.type === "moment" && typeof image.moment === "number" ? unclaimed.findIndex(frame => frame.generation?.moment === image.moment) : unclaimed.indexOf(frames[index]);
+            let frameIndex = unclaimed.indexOf(frames[index]);
+            if (request.type === "moment" && typeof image.moment === "number") {
+                frameIndex = unclaimed.findIndex(frame => frame.generation?.moment === image.moment);
+            } else if (request.type === "fitting") {
+                frameIndex = unclaimed.findIndex(frame => frame.generation?.fittingImage === image.fittingImage);
+            }
             const frame = frameIndex >= 0 ? unclaimed.splice(frameIndex, 1)[0] : undefined;
             if (!frame) {
                 if (frames.length) {

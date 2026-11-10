@@ -587,6 +587,53 @@ describe("WorkspaceSnapshotter", () => {
         });
     });
 
+    test("saves an image fitting with the model and residual images it made, and an initial value that the backend generates as null", () => {
+        const {appStore, frame} = createSession();
+        const request = {
+            type: "fitting",
+            source: frame,
+            regionId: 0,
+            fovInfo: {
+                regionType: CARTA.RegionType.RECTANGLE,
+                rotation: 30,
+                controlPoints: [
+                    {x: 10, y: 20},
+                    {x: 40, y: 30}
+                ]
+            },
+            initialValues: [{center: {x: 12, y: NaN}, amp: 1.5, fwhm: {x: 3, y: 2}, pa: NaN}],
+            fixedParams: [false, false, true, false, false, false, true],
+            offset: 0.1,
+            solver: CARTA.FittingSolverType.Qr
+        };
+        for (const [fileId, fittingImage] of [
+            [3, "model"],
+            [4, "residual"]
+        ] as const) {
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, fileId);
+            appStore.frames.push(createFrame(fileId, {frameInfo: {fileId, directory: "", hdu: "", fileInfo: {name: `image0_${fittingImage}.fits`}, generated: true}, generation: {request, fittingImage}}) as never);
+        }
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(issues).toEqual([]);
+        expect(workspace.generatedImages).toEqual([
+            {
+                request: {
+                    type: "fitting",
+                    sourceImageId: 1,
+                    regionId: 0,
+                    fov: {center: {x: 10, y: 20}, size: {x: 40, y: 30}, rotation: 30},
+                    components: [{center: {x: 12, y: null}, amp: 1.5, fwhm: {x: 3, y: 2}, pa: null}],
+                    fixedParams: [false, false, true, false, false, false, true],
+                    offset: 0.1,
+                    solver: CARTA.FittingSolverType.Qr
+                },
+                images: [expect.objectContaining({id: 2, name: "image0_model.fits", fittingImage: "model"}), expect.objectContaining({id: 3, name: "image0_residual.fits", fittingImage: "residual"})]
+            }
+        ]);
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};
