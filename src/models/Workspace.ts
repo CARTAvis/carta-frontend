@@ -17,11 +17,11 @@ import {
     type PlayMode,
     type RadiusUnits,
     type RedshiftType,
-    type SpectralLineQueryRangeType,
-    type SpectralLineQueryUnit,
     type RegionOpacity,
     type RestFrameShiftMode,
     type SkyRefIs,
+    type SpectralLineQueryRangeType,
+    type SpectralLineQueryUnit,
     type SpectralSystem,
     type SpectralType,
     type VectorOverlaySource,
@@ -229,6 +229,10 @@ export interface WorkspaceColorBlending {
     imageListIndex: number;
     selectedFrameId: number[];
     alpha: number[];
+    /** Whether the blended raster image, the contours and the vector overlays are shown. Left out when they are shown. */
+    rasterVisible?: boolean;
+    contourVisible?: boolean;
+    vectorOverlayVisible?: boolean;
 }
 
 /** One of the images making up a hypercube. */
@@ -304,6 +308,8 @@ export interface WorkspaceFile {
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     regionsSet?: {
         selectedRegion?: number;
+        /** The regions that were selected together, by their saved IDs. Left out when one region or none was selected. */
+        selectedRegions?: number[];
         regions?: WorkspaceRegion[];
     };
 }
@@ -606,6 +612,11 @@ export interface Workspace {
      * which is the default.
      */
     contourDataSource?: {imageId: number};
+    /**
+     * Whether the cursor was frozen, and where, in the pixels of the image in front. The position is
+     * saved only when the cursor was frozen. Then the cursor profiles show that position.
+     */
+    cursor?: {frozen: boolean; position?: Point2D};
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the

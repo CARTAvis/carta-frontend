@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, BeamType, FrequencyUnit, ImageType, PlayMode, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, type SpectralSystem, VelocityConvention, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, BeamType, FrequencyUnit, ImageType, PlayMode, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -168,7 +168,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
+        this.restoreCursor();
         return this.issues;
+    }
+
+    /**
+     * Freezes the cursor again where it was frozen, on the image in front, so that the cursor
+     * profiles show that position. A cursor that was not frozen follows the mouse.
+     */
+    private restoreCursor(): void {
+        const cursor = this.workspace.cursor;
+        if (!cursor || typeof cursor.frozen !== "boolean") {
+            return;
+        }
+        const position = cursor.position;
+        const frame = this.appStore.activeFrame;
+        if (cursor.frozen && frame && typeof position?.x === "number" && typeof position?.y === "number" && isFinite(position.x) && isFinite(position.y)) {
+            frame.setCursorPosition(position);
+            frame.updateCursorRegion(position);
+        }
+        this.appStore.setCursorFrozen(cursor.frozen);
     }
 
     /**
@@ -613,6 +632,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             })
         );
+        // Select again the regions that were selected together, with the focused region in focus.
+        const selectedRegions = fileInfo.regionsSet.selectedRegions;
+        if (Array.isArray(selectedRegions) && selectedRegions.length > 1) {
+            const ids = selectedRegions.flatMap(savedId => (typeof savedId === "number" && regionIds.has(savedId) ? [regionIds.get(savedId) as number] : []));
+            frame.regionSet.setSelectionByIds(ids, selectedRegion === undefined ? undefined : regionIds.get(selectedRegion));
+        }
     }
 
     /**
@@ -734,6 +759,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending.deleteSelectedFrame(0);
             }
             colorBlending?.setAlpha(0, alpha[0]);
+            // Hide the layers that were hidden. A new color-blended image shows all of them.
+            const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
+            if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
+                colorBlending.toggleRasterVisible();
+            }
+            if (saved?.contourVisible === false && colorBlending?.isContourVisible) {
+                colorBlending.toggleContourVisible();
+            }
+            if (saved?.vectorOverlayVisible === false && colorBlending?.isVectorOverlayVisible) {
+                colorBlending.toggleVectorOverlayVisible();
+            }
 
             for (let i = 0; i < selectedFrameId.length; i++) {
                 const frame = this.frameOf(selectedFrameId[i]);

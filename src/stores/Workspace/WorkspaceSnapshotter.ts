@@ -144,8 +144,10 @@ export class WorkspaceSnapshotter {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
         } else if (frame.regionSet?.regions.length) {
             // Regions are only the image's own while it is not matched to another one.
+            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []);
             workspaceFile.regionsSet = {
                 selectedRegion: frame.regionSet.focusedRegion?.regionId,
+                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
                 regions: this.captureRegions(frame)
             };
         }
@@ -275,7 +277,14 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
-            this.workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: selectedFrameId as number[], alpha: colorBlending.alpha});
+            this.workspace.colorBlendingImages.push({
+                imageListIndex: index,
+                selectedFrameId: selectedFrameId as number[],
+                alpha: colorBlending.alpha,
+                ...(colorBlending.isRasterVisible === false ? {rasterVisible: false} : {}),
+                ...(colorBlending.isContourVisible === false ? {contourVisible: false} : {}),
+                ...(colorBlending.isVectorOverlayVisible === false ? {vectorOverlayVisible: false} : {})
+            });
         }
     }
 
@@ -424,6 +433,9 @@ export class WorkspaceSnapshotter {
             this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
         }
         this.captureWidgetSettings();
+        const isCursorFrozen = this.appStore.isCursorFrozen === true;
+        const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(isCursorFrozen && cursorPosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.

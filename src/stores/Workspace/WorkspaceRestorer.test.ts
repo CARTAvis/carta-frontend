@@ -41,6 +41,8 @@ function createFrame(fileId: number) {
         isAxisZoomable: false,
         zoomLevel: 1,
         spatialReference: undefined,
+        setCursorPosition: jest.fn(),
+        updateCursorRegion: jest.fn(),
         setChannels: jest.fn((_channel: number, stokes: number) => {
             frame.requiredPolarizationIndex = stokes;
         }),
@@ -83,7 +85,8 @@ function createFrame(fileId: number) {
                 setOpacity: jest.fn(),
                 setDashLength: jest.fn()
             })),
-            selectSingleRegion: jest.fn()
+            selectSingleRegion: jest.fn(),
+            setSelectionByIds: jest.fn()
         },
         ...frameOverrides
     };
@@ -169,6 +172,7 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
+        setCursorFrozen: jest.fn(),
         dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
@@ -434,6 +438,40 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalled();
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
+    test("hides the layers of a color-blended image that were hidden", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {
+            id: 0,
+            selectedFrames: [],
+            deleteSelectedFrame: jest.fn(),
+            setAlpha: jest.fn(),
+            addSelectedFrame: jest.fn(),
+            isRasterVisible: true,
+            isContourVisible: true,
+            isVectorOverlayVisible: true,
+            toggleRasterVisible: jest.fn(),
+            toggleContourVisible: jest.fn(),
+            toggleVectorOverlayVisible: jest.fn()
+        };
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        await restore(createWorkspace({colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1], contourVisible: false}]}));
+
+        expect([colorBlending.toggleRasterVisible, colorBlending.toggleContourVisible, colorBlending.toggleVectorOverlayVisible].map(toggle => toggle.mock.calls.length)).toEqual([0, 1, 0]);
+    });
+
+    test("selects again the regions that were selected together, and freezes the cursor where it was frozen", async () => {
+        const {appStore} = createSession();
+        const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {selectedRegion: 2, selectedRegions: [1, 2, 9], regions: [region(1), region(2)]}}], cursor: {frozen: true, position: {x: 3, y: 4}}}));
+
+        const frame = appStore.frames[0] as any;
+        expect(frame.regionSet.setSelectionByIds).toHaveBeenCalledWith([101, 102], 102);
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+        expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
     });
 
     test("puts the color-blended image saved in front back there", async () => {

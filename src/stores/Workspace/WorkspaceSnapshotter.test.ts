@@ -460,6 +460,30 @@ describe("WorkspaceSnapshotter", () => {
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
     });
 
+    test("saves the layers of a color-blended image that are hidden", () => {
+        const {appStore, frame} = createSession();
+        const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5], isRasterVisible: true, isContourVisible: false, isVectorOverlayVisible: false};
+        appStore.imageViewConfigStore.colorBlendingImageMap = new Map([[0, colorBlending]]) as never;
+
+        expect(new WorkspaceSnapshotter().capture().workspace.colorBlendingImages?.[0]).toEqual({imageListIndex: 0, selectedFrameId: [1], alpha: [1, 0.5], contourVisible: false, vectorOverlayVisible: false});
+    });
+
+    test("saves the regions that are selected together, and the position of a frozen cursor", () => {
+        const {appStore, frame} = createSession();
+        const region = (regionId: number) => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name: "", color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
+        Object.assign(frame.regionSet, {regions: [region(5), region(6)], selectedRegionIds: new Set([5, 6]), focusedRegion: {regionId: 6}});
+        Object.assign(appStore, {isCursorFrozen: true});
+        Object.assign(frame, {cursorInfo: {posImageSpace: {x: 3, y: 4}}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet).toMatchObject({selectedRegion: 6, selectedRegions: [5, 6]});
+        expect(workspace.cursor).toEqual({frozen: true, position: {x: 3, y: 4}});
+
+        Object.assign(appStore, {isCursorFrozen: false});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false});
+    });
+
     test("names no color-blended image in front when the one there could not be saved", () => {
         const generatedFrame = createFrame(2, {frameInfo: {fileId: 2, directory: "", hdu: "", fileInfo: {name: "moment.fits"}, generated: true}});
         const {appStore, frame} = createSession();
