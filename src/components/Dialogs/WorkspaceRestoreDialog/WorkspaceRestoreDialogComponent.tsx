@@ -88,6 +88,12 @@ export const WorkspaceRestoreDialogComponent = observer(() => {
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                    {/* In Recovery, Cancel stands apart at the left, so that it is not taken for Continue. */}
+                    <Tooltip content="Stop opening the workspace, and close what it has opened so far" className={recovery ? "restore-cancel-apart" : undefined}>
+                        <AnchorButton onClick={appStore.cancelLoadingWorkspace} data-testid="workspace-restore-cancel-button">
+                            {recovery ? "Cancel restore" : "Cancel"}
+                        </AnchorButton>
+                    </Tooltip>
                     {recovery && (
                         <>
                             <Tooltip content="Skip every item in the list, and restore the rest of the workspace">
@@ -102,11 +108,6 @@ export const WorkspaceRestoreDialogComponent = observer(() => {
                             </Tooltip>
                         </>
                     )}
-                    <Tooltip content="Stop opening the workspace, and close what it has opened so far">
-                        <AnchorButton onClick={appStore.cancelLoadingWorkspace} data-testid="workspace-restore-cancel-button">
-                            Cancel
-                        </AnchorButton>
-                    </Tooltip>
                 </div>
             </div>
         </Dialog>
