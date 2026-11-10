@@ -577,6 +577,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 );
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
+                // A solid region is saved with no dashes. Make it solid again. Otherwise it keeps the
+                // dash length of the preferences.
+                if (Array.isArray(regionInfo.dashes) && regionInfo.dashes.length === 0) {
+                    region.setDashLength(0);
+                }
                 if (regionInfo.opacity === RegionOpacity.SemiTransparent || regionInfo.opacity === RegionOpacity.Invisible) {
                     region.setOpacity(regionInfo.opacity);
                 }
