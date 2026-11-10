@@ -1578,7 +1578,7 @@ export class CatalogDisplayStore {
      */
     private getMapColumnData(column: string, isDisabled: boolean): Float32Array {
         const catalogStore = CatalogStore.Instance;
-        // dummy value to trigger update when the overlay positions are rebuilt, since profileStore.rows.data is not observable
+        // Read the count, so that this recomputes when the overlay positions are rebuilt.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const plottedSourceCount = catalogStore.catalogCounts.get(this.catalogFileId);
         const catalogProfileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);

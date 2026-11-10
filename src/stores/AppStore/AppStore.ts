@@ -1481,7 +1481,7 @@ export class AppStore {
      * @param fileId - The image. When it is left out, the active image is used.
      * @param coordinate - The polarization to compute the histogram for, such as "Qz". When it is left out, the backend uses the Stokes that the frontend last sent for the image.
      *
-     * Send nothing while an earlier request is still being computed. Otherwise the backend would compute the histogram twice.
+     * Send nothing when the histogram is complete, or while an earlier request is still being computed. Otherwise the backend would compute the histogram twice.
      */
     @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
@@ -2516,7 +2516,8 @@ export class AppStore {
             const isCatalogError = errorData.tags?.some(tag => tag.toLowerCase().includes("catalog"));
             if (isFatal && isCatalogError) {
                 // By convention with the backend, an error tagged as a catalog's carries that
-                // catalog's file ID in its data field, which is how the failing restore is found.
+                // catalog's file ID in its data field. This is how the catalog whose request failed is
+                // found, whether or not a restore waits for it.
                 const errorDataId = errorData.data?.trim();
                 const catalogFileId = errorDataId ? Number(errorDataId) : NaN;
                 if (Number.isInteger(catalogFileId) && catalogFileId >= 0) {

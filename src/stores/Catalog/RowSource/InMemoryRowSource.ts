@@ -162,7 +162,7 @@ export class InMemoryRowSource implements CatalogRowSource {
         // Nothing is ever on its way.
     }
 
-    /** Keep the rows that pass every filter, and sort them again. */
+    /** Keep the rows that pass every filter on a shown column. Sort them again when a sort order is set. */
     private filterRows(filterConfigs: CARTA.FilterConfig[]) {
         this.filterIndexMap = getInitIndexMap(this.dataSize);
         filterConfigs.forEach(filterConfig => {
