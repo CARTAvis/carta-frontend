@@ -49,7 +49,7 @@ export interface CatalogRowRestore {
  * how its response is taken.
  */
 export interface CatalogRowSource {
-    /** The rows the table shows, by column index. */
+    /** The rows held that pass the Active Query, by column index. The table shows the first `visibleRowCount` of them. */
     readonly data: Map<number, ProcessedColumnData>;
     /** Every row held, before any filter is applied here. */
     readonly originalData: Map<number, ProcessedColumnData>;
@@ -65,7 +65,7 @@ export interface CatalogRowSource {
     readonly progress: number | undefined;
     /** The most rows the table is to show. */
     readonly rowLimit: number;
-    /** Whether rows that pass the Active Query are still to be loaded. */
+    /** Whether more rows that pass the Active Query can be loaded, up to the row limit. */
     readonly canLoadMore: boolean;
     /** Whether rows for the table are on their way. */
     readonly isLoading: boolean;

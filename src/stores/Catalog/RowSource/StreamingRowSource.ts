@@ -12,7 +12,7 @@ import {type CatalogActiveQuery, type CatalogOverlayAxes, type CatalogRowFilters
  * for them again.
  */
 export class StreamingRowSource implements CatalogRowSource {
-    /** The rows a catalog shows before any are asked for, and the size of each chunk after. */
+    /** How many rows a catalog shows before any are asked for. A reset asks for this many again. */
     public static readonly INIT_TABLE_ROWS = 50;
     private static readonly DataChunkSize = 50;
 

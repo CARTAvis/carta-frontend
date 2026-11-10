@@ -108,7 +108,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             dataset = profileStore.rows.data;
             numVisibleRows = profileStore.rows.visibleRowCount;
             if (profileStore.regionSelected && catalogDisplayStore.isShowingSelectedData) {
-                // Rows the table orders itself are shown through that order; the rest are shown as they are.
+                // Show only the selected rows. A table that orders its rows itself shows the selection through that order. Otherwise only the selected rows are passed to the table.
                 if (!profileStore.rows.tableOrder) {
                     dataset = profileStore.selectedData;
                 }

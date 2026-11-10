@@ -650,8 +650,8 @@ export class WorkspaceRestorer {
     /**
      * Stage 7: put back the arrangement the workspace was saved in.
      *
-     * Applied after the catalogs are loaded, so that the widgets and plots a layout brings back can
-     * be bound to their catalogs as they are created rather than having to wait for them. A
+     * Applied after the catalogs are loaded, so that each catalog widget that the layout creates
+     * starts on a loaded catalog. Stage 8 then points each widget at the catalog it was saved with. A
      * workspace saved before layouts were part of one leaves the session's arrangement alone.
      */
     private restoreLayout(): void {
