@@ -317,6 +317,8 @@ export interface WorkspaceFile {
      * not save, so only their order matters. Left out by a workspace saved before it kept the place.
      */
     imageListIndex?: number;
+    /** The result of the last image fitting of the image. Left out when the image has no result. */
+    fitResult?: WorkspaceImageFitResult;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -730,6 +732,44 @@ export interface WorkspaceSpectralFitResult {
     log: string;
 }
 
+/** A value of the Image Fitting dialog that the user can leave empty. It is null when it is empty. */
+type WorkspaceImageFittingValue = number | null;
+
+/**
+ * The settings of the Image Fitting dialog. The initial values are in the pixels and the units of the
+ * image that the dialog fits.
+ */
+export interface WorkspaceImageFitting {
+    /** The image to fit, by its workspace ID. Left out when the dialog fits the active image. */
+    imageId?: number;
+    /** The region to fit, by the ID that the region was saved with. 0 is the field of view, and -1 is the whole image. */
+    regionId: number;
+    components: {
+        center: {x: WorkspaceImageFittingValue; y: WorkspaceImageFittingValue};
+        amp: WorkspaceImageFittingValue;
+        fwhm: {x: WorkspaceImageFittingValue; y: WorkspaceImageFittingValue};
+        pa: WorkspaceImageFittingValue;
+        /** Whether each value is fixed, in the order center x, center y, amplitude, FWHM x, FWHM y and P.A. */
+        fixed: boolean[];
+    }[];
+    /** Whether the backend generates the initial values. */
+    autoInitialValues: boolean;
+    backgroundOffset: number;
+    backgroundOffsetFixed: boolean;
+    solver: CARTA.FittingSolverType;
+    createModelImage: boolean;
+    createResidualImage: boolean;
+}
+
+/** The result of the last image fitting of an image, as the Image Fitting dialog shows it. */
+export interface WorkspaceImageFitResult {
+    /** The text of the result. */
+    result: string;
+    log: string;
+    /** The ellipse of each component, in the pixels of the image: the center, the half axes and the rotation in degrees. */
+    ellipses: {center: Point2D; size: Point2D; rotation: number}[];
+}
+
 /** The moment generator settings of a spectral profiler. */
 export interface WorkspaceSpectralMoments {
     moments: CARTA.Moment[];
@@ -838,6 +878,8 @@ export interface Workspace {
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
     /** What each profile, analysis and statistics widget shows, by the stable ID of the widget. */
     plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
+    /** The settings of the Image Fitting dialog. */
+    imageFitting?: WorkspaceImageFitting;
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;

@@ -50,6 +50,7 @@ import {
 import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -2287,6 +2288,59 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this)));
+        this.restoreImageFitting();
+    }
+
+    /**
+     * Shows again the result of the last image fitting of each image, and applies the settings of the
+     * Image Fitting dialog. Apply them last. Making the model and residual images again fits the image
+     * again, and that fit clears the result first. So when that fit fails, the saved result still
+     * comes back. The region options of the dialog also need the regions to be back.
+     */
+    private restoreImageFitting(): void {
+        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+        const isPoint = (point: unknown): point is Point2D => isNumber((point as Point2D)?.x) && isNumber((point as Point2D)?.y);
+        const images = [...(this.workspace.files ?? []), ...this.generatedImages.flatMap(generated => generated.images)];
+        for (const image of images) {
+            const fitResult = image.fitResult;
+            const frame = this.frameOf(image.id);
+            if (!frame || !fitResult || typeof fitResult !== "object" || typeof fitResult.result !== "string") {
+                continue;
+            }
+            const ellipses = Array.isArray(fitResult.ellipses) ? fitResult.ellipses.filter(ellipse => isPoint(ellipse?.center) && isPoint(ellipse?.size) && isNumber(ellipse?.rotation)) : [];
+            frame.setFittingResult(fitResult.result);
+            frame.setFittingLog(typeof fitResult.log === "string" ? fitResult.log : "");
+            frame.setFittingResultRegionParams(ellipses.map(ellipse => ({points: [{...ellipse.center}, {...ellipse.size}], rotation: ellipse.rotation})));
+        }
+
+        const config = this.workspace.imageFitting;
+        if (!config || typeof config !== "object") {
+            return;
+        }
+        const subject = "Image Fitting";
+        const label = "The Image Fitting dialog";
+        let fileId = ACTIVE_FILE_ID;
+        let regionId = isNumber(config.regionId) ? config.regionId : 0;
+        if (typeof config.imageId === "number") {
+            const frame = this.frameOf(config.imageId);
+            if (frame) {
+                fileId = frame.frameInfo.fileId;
+            } else {
+                // A region belongs to its image, so fit the field of view of the active image.
+                const reason = "the image it fits was not restored, so it fits the active image";
+                this.report(WorkspaceItemKind.Dialog, subject, `${label}: ${reason}`, undefined, {label, reason, causeImageId: config.imageId});
+                regionId = regionId > 0 ? 0 : regionId;
+            }
+        }
+        if (regionId > 0) {
+            const restoredRegionId = this.regionIdOf(fileId === ACTIVE_FILE_ID ? undefined : config.imageId, regionId);
+            if (restoredRegionId === undefined) {
+                const reason = "the region it fits was not restored, so it fits the field of view";
+                this.report(WorkspaceItemKind.Dialog, subject, `${label}: ${reason}`, undefined, {label, reason});
+            }
+            regionId = restoredRegionId ?? 0;
+        }
+        this.appStore.imageFittingStore.applyWorkspaceConfig(config, fileId, regionId);
     }
 
     /**

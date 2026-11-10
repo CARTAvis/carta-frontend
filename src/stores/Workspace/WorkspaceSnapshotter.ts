@@ -16,6 +16,7 @@ import {
 } from "models";
 import {AppStore, CatalogOnlineQueryConfigStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
 
@@ -304,6 +305,15 @@ export class WorkspaceSnapshotter {
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
         if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
             workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        }
+        if (frame.fittingResult) {
+            // JSON cannot write NaN. A rotation that is not finite is saved as 0, as the ellipse is drawn with it.
+            const finite = (value: number): number => (isFinite(value) ? value : 0);
+            workspaceFile.fitResult = {
+                result: frame.fittingResult,
+                log: frame.fittingLog,
+                ellipses: frame.fittingResultRegionParams.map(({points, rotation}) => ({center: {x: points[0].x, y: points[0].y}, size: {x: points[1].x, y: points[1].y}, rotation: finite(rotation)}))
+            };
         }
 
         workspaceFile.center = frame.center;
@@ -601,6 +611,21 @@ export class WorkspaceSnapshotter {
         if (Object.keys(plotWidgets).length > 0) {
             this.workspace.plotWidgets = plotWidgets;
         }
+        this.captureImageFitting(savedImageIds);
+    }
+
+    /**
+     * Saves the settings of the Image Fitting dialog. When the dialog fits an image that the
+     * workspace does not save, the dialog fits the active image after a restore. A region belongs to
+     * its image, so the dialog then fits the field of view.
+     */
+    private captureImageFitting(savedImageIds: Set<number>): void {
+        const fittingStore = this.appStore.imageFittingStore;
+        const frame = fittingStore.selectedFileId === ACTIVE_FILE_ID ? undefined : this.appStore.getFrame(fittingStore.selectedFileId);
+        const imageId = frame ? this.imageIdOf(frame) : undefined;
+        const isImageSaved = imageId !== undefined && savedImageIds.has(imageId);
+        const regionId = frame && !isImageSaved && fittingStore.selectedRegionId > 0 ? 0 : fittingStore.selectedRegionId;
+        this.workspace.imageFitting = fittingStore.toWorkspaceConfig(isImageSaved ? imageId : undefined, regionId);
     }
 
     /**
