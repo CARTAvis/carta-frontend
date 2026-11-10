@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the misaligned column divider between the header and the rows of the Statistics widget for images with beam information ([#2979](https://github.com/CARTAvis/carta-frontend/issues/2979)).
 * Fixed the missing WCS for images whose FITS header contains an entry without a keyword ([#3024](https://github.com/CARTAvis/carta-frontend/issues/3024)).
 * Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder ([#2964](https://github.com/CARTAvis/carta-frontend/issues/2964)).
-* Fixed compass annotation labels keeping their old place after a label or font change, and losing their custom offsets when the compass is drawn again ([#3065](https://github.com/CARTAvis/carta-frontend/issues/3065)).
+* Fixed text, compass and ruler annotations drawn at the wrong size when an image view shows them again, such as after switching images, and compass labels keeping their old place after a label or font change or losing their custom offsets ([#3065](https://github.com/CARTAvis/carta-frontend/issues/3065)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

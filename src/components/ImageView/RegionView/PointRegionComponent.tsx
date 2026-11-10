@@ -19,6 +19,8 @@ interface PointRegionComponentProps {
     selected: boolean;
     isFocused: boolean;
     stageRef: any;
+    /** The scale of the stage. A change draws the region again, so that its zoom-invariant parts read the new scale. */
+    stageScale?: Point2D;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
