@@ -223,7 +223,11 @@ function createSession() {
         spectralReference: undefined,
         rasterScalingReference: undefined,
         preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
-        imageViewConfigStore: {createColorBlending: jest.fn(), imageNum: 1},
+        imageViewConfigStore: {
+            createColorBlending: jest.fn(),
+            imageNum: 1,
+            getImageListIndex: jest.fn((_type: ImageType, fileId: number) => appStore.frames.findIndex(frame => frame.frameInfo.fileId === fileId))
+        },
         catalogStore: {
             close: jest.fn(),
             interruptRequests: jest.fn(),
@@ -1783,6 +1787,27 @@ describe("WorkspaceRestorer", () => {
             expect(appStore.appendCatalog).toHaveBeenCalled();
             expect(restorer.fileIdOf(IMAGE.id)).toBeDefined();
             expect(appStore.workspaceRecovery).toBeUndefined();
+        });
+
+        test("puts an image from a new file back in its saved place among the images", async () => {
+            const {appStore} = createSession();
+            failToOpen(appStore, 1);
+            // The workspace has no color-blended images, so the image list holds the frames alone.
+            appStore.reorderFrame.mockImplementation((oldIndex: number, newIndex: number, length: number) => {
+                const moved = appStore.frames.splice(oldIndex, length);
+                appStore.frames.splice(newIndex, 0, ...moved);
+            });
+            appStore.onRecovery = recovery => {
+                recovery.setChoice(0, {action: WorkspaceRecoveryAction.Repoint, location: {directory: "/moved", filename: "first-moved.fits"}});
+                recovery.continue();
+            };
+            const files = [1, 2, 3].map(id => ({id, source: {type: "file" as const, filename: `image-${id}.fits`}}));
+
+            const restorer = await restored(createWorkspace({files}));
+
+            // The first image opens last, after the user chooses its new file, and then moves back to the front.
+            expect(appStore.frames.map(frame => frame.frameInfo.fileId)).toEqual(files.map(fileInfo => restorer.fileIdOf(fileInfo.id)));
+            expect(appStore.reorderFrame).toHaveBeenCalledWith(2, 0, 1);
         });
 
         test("asks again for an image that fails again, and reports it as skipped with the last reason", async () => {

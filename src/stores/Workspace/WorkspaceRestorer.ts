@@ -566,6 +566,33 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             "Opening images",
             (this.workspace.files ?? []).map(fileInfo => this.imageTask(fileInfo))
         );
+        this.putImagesInSavedOrder();
+    }
+
+    /**
+     * Puts the opened images in the order that the workspace saved them in. An image that opens
+     * after a retry or from a new file is added after the other images, so move it back to its
+     * saved place.
+     */
+    private putImagesInSavedOrder(): void {
+        if (!this.isCurrent) {
+            return;
+        }
+        const imageList = this.appStore.imageViewConfigStore;
+        const fileIds = (this.workspace.files ?? []).map(fileInfo => this.frameIds.get(fileInfo.id)).filter((fileId): fileId is number => fileId !== undefined);
+        const indexes = fileIds.map(fileId => imageList.getImageListIndex(ImageType.FRAME, fileId)).filter(index => index >= 0);
+        // The images of this restore take the places from the first of them on.
+        let place = Math.min(...indexes);
+        for (const fileId of fileIds) {
+            const index = imageList.getImageListIndex(ImageType.FRAME, fileId);
+            if (index < 0) {
+                continue;
+            }
+            if (index !== place) {
+                this.appStore.reorderFrame(index, place, 1);
+            }
+            place++;
+        }
     }
 
     /** Returns the task that opens one image, from its saved source or from the file the user chooses. */
