@@ -628,19 +628,19 @@ describe("AppStore.requestCubeHistogram", () => {
     });
 });
 
-describe("AppStore contour data source histogram", () => {
+describe("AppStore channel histogram of an image that no view shows", () => {
     const appStore = AppStore.Instance;
     const histograms = {numBins: 2, binWidth: 1, firstBinCenter: 0.5, bins: [1, 2]};
     const makeFrame = () =>
         ({
             frameInfo: {fileId: 7},
-            stokes: 0,
-            channel: 2,
+            requiredStokes: 0,
+            requiredChannel: 2,
             renderConfig: {setStokesIndex: jest.fn(), setHistChannel: jest.fn(), updateChannelHistogram: jest.fn()}
         }) as any;
     const histogramOf = (channel: number) => ({fileId: 7, regionId: -1, stokes: 0, channel, histograms}) as unknown as CARTA.RegionHistogramData;
 
-    // No image is open, so no view shows the image of the Contour dialog.
+    // No image is open, so no view shows the image.
     afterEach(() => {
         jest.restoreAllMocks();
         runInAction(() => (appStore.contourDataSource = null));
@@ -649,23 +649,25 @@ describe("AppStore contour data source histogram", () => {
         }
     });
 
-    test("applies the histogram of the image that the Contour dialog shows when no view shows the image", () => {
+    test("applies the histogram of the channel that the image is set to when it arrives", () => {
         const frame = makeFrame();
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
 
-        appStore.setContourDataSourceUnlocked(frame);
         appStore.handleRegionHistogramStream(histogramOf(1));
         expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
         appStore.handleRegionHistogramStream(histogramOf(2));
 
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        expect(frame.channel).toBe(2);
     });
 
-    test("applies a histogram that arrived before the image became the Contour dialog's image", () => {
+    test("applies a waiting histogram when the Contour dialog is set to the image", () => {
         const frame = makeFrame();
-        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
-
+        // The image is not known yet when its histogram arrives, so the histogram waits.
+        const getFrame = jest.spyOn(appStore, "getFrame").mockReturnValue(undefined);
         appStore.handleRegionHistogramStream(histogramOf(2));
+        getFrame.mockReturnValue(frame);
+
         appStore.setContourDataSourceUnlocked(frame);
 
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
