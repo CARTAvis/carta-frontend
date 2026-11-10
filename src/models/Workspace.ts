@@ -3,6 +3,7 @@ import {type CARTA} from "carta-protobuf";
 
 import {
     type AngularSizeUnit,
+    type AnimationMode,
     type CatalogDisplayMode,
     type CatalogOverlayShape,
     type CatalogPlotType,
@@ -12,7 +13,11 @@ import {
     type ContourDashMode,
     FrameScaling,
     type MultiProfileCategory,
+    type PlayMode,
     type RadiusUnits,
+    type RedshiftType,
+    type SpectralLineQueryRangeType,
+    type SpectralLineQueryUnit,
     type SpectralSystem,
     type VectorOverlaySource,
     type WorkspaceItemKind
@@ -257,6 +262,8 @@ export interface WorkspaceFile {
     filename?: string;
     hdu?: string;
     timeSeriesMember?: boolean;
+    /** The channels that the animator plays, as channel indices. Left out when it plays every channel. */
+    animationChannelRange?: [number, number];
     references?: {
         spatial?: number;
         spectral?: number;
@@ -474,10 +481,56 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
     restFrameRedshift?: number;
     xAxisRestFrameEnabled?: boolean;
     yAxisRestFrameEnabled?: boolean;
+    /** The spectral lines that a spectral line query plotted on the widget, at the frequencies they were plotted at, in MHz. The query shifted them by its redshift. */
+    spectralLines?: {species: string; value: number; qn: string}[];
+}
+
+/**
+ * The query settings of a spectral line query widget. A restore does not query again, so the
+ * table of lines is empty. The user queries again to see the lines.
+ */
+export interface WorkspaceSpectralLineQueryWidgetConfig {
+    rangeType: SpectralLineQueryRangeType;
+    /** The range, from and to, in `unit`. */
+    range: [number, number];
+    /** The center and the width on each side of it, in `unit`. */
+    rangeByCenter: [number, number];
+    unit: SpectralLineQueryUnit;
+    intensityLimitEnabled: boolean;
+    intensityLimit: number;
+    redshiftType: RedshiftType;
+    redshift: number;
+    /** The spectral profiler that the lines are plotted on, by its widget ID. */
+    spectralProfilerId?: string;
+}
+
+/** The settings of a PV generator widget. The PV image itself is saved with the request that made it. */
+export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding {
+    /** How many pixels wide the cut is averaged over. */
+    width: number;
+    reverse: boolean;
+    /** Whether a new PV image keeps the PV images made before it. */
+    keep: boolean;
+    xyRebin: number;
+    zRebin: number;
+    /** The spectral range, in the units of `channelUnit`. Left out when it is the whole spectral axis. */
+    channelRange?: [number, number];
+    channelUnit?: string;
+    /** The region that the preview shows, by the ID that the region was saved with. -1 is the whole image. */
+    previewRegionId: number;
+}
+
+/** The settings of the animator. */
+export interface WorkspaceAnimator {
+    frameRate: number;
+    step: number;
+    playMode: PlayMode;
+    /** What the animator steps through: the channels, the Stokes, the images or a time series. */
+    mode: AnimationMode;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */
-export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"render-config" | "spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes">;
+export type WorkspacePlotWidgetConfig = WidgetWorkspaceConfig<"render-config" | "spatial-profiler" | "spectral-profiler" | "histogram" | "stats" | "stokes" | "spectral-line-query" | "pv-generator">;
 
 /**
  * What one catalog table or plot widget shows. This is a Widget Config. It has no meaning for other
@@ -514,6 +567,8 @@ export interface Workspace {
         raster?: number;
     };
     selectedFile?: number;
+    /** The settings of the animator. */
+    animator?: WorkspaceAnimator;
     /**
      * The image that the Contour dialog shows. Left out while the dialog follows the active image,
      * which is the default.

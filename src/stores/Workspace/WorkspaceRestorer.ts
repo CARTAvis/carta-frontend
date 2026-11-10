@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {ImageType, RegionId, WorkspaceItemKind} from "enums";
+import {AnimationMode, ImageType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -137,6 +137,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreColorBlending();
         this.putFrontImageBack();
         this.restoreContourDataSource();
+        this.restoreAnimator();
         yield* this.openCatalogs();
         if (!this.isCurrent) {
             return this.issues;
@@ -157,6 +158,39 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         this.settle();
         return this.issues;
+    }
+
+    /**
+     * Applies the settings of the animator, and the channels that it plays of each image. Do this
+     * after the images open. Opening an image chooses what the animator steps through.
+     */
+    private restoreAnimator(): void {
+        const isInteger = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const range = fileInfo.animationChannelRange;
+            const depth = frame?.frameInfo.fileInfoExtended?.depth ?? 1;
+            if (frame && Array.isArray(range) && range.length === 2 && range.every(isInteger) && range[0] >= 0 && range[0] <= range[1] && range[1] < depth) {
+                frame.setAnimationRange([range[0], range[1]]);
+            }
+        }
+        const saved = this.workspace.animator;
+        if (!saved || typeof saved !== "object") {
+            return;
+        }
+        const animator = this.appStore.animatorStore;
+        if (isInteger(saved.frameRate) && saved.frameRate >= animator.minFrameRate && saved.frameRate <= animator.maxFrameRate) {
+            animator.setFrameRate(saved.frameRate);
+        }
+        if (isInteger(saved.step) && saved.step >= animator.minStep && saved.step <= animator.maxStep) {
+            animator.setStep(saved.step);
+        }
+        if (Object.values(PlayMode).includes(saved.playMode)) {
+            animator.setPlayMode(saved.playMode);
+        }
+        if (Object.values(AnimationMode).includes(saved.mode) && saved.mode !== AnimationMode.NONE) {
+            animator.setAnimationMode(saved.mode);
+        }
     }
 
     /**

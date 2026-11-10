@@ -3,8 +3,10 @@ import {
     type WorkspaceCatalogOverlayConfig,
     type WorkspaceCatalogPlotConfig,
     type WorkspaceHistogramWidgetConfig,
+    type WorkspacePvGeneratorWidgetConfig,
     type WorkspaceRenderConfigWidgetConfig,
     type WorkspaceSpatialProfileWidgetConfig,
+    type WorkspaceSpectralLineQueryWidgetConfig,
     type WorkspaceSpectralProfileWidgetConfig,
     type WorkspaceStatsWidgetConfig,
     type WorkspaceStokesAnalysisWidgetConfig
@@ -23,6 +25,8 @@ export interface WidgetWorkspaceConfigs {
     "spatial-profiler": WorkspaceSpatialProfileWidgetConfig;
     "spectral-profiler": WorkspaceSpectralProfileWidgetConfig;
     histogram: WorkspaceHistogramWidgetConfig;
+    "pv-generator": WorkspacePvGeneratorWidgetConfig;
+    "spectral-line-query": WorkspaceSpectralLineQueryWidgetConfig;
     stats: WorkspaceStatsWidgetConfig;
     stokes: WorkspaceStokesAnalysisWidgetConfig;
 }
