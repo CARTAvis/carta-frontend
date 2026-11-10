@@ -20,7 +20,8 @@ function formatTimeRemaining(milliseconds: number): string {
 /**
  * Shows the progress of a workspace restore: the stage, the item of the stage, and what the restore
  * waits for. When a stage has items that failed, it shows them instead, with a choice for each, until
- * the user continues. Cancel stops the restore at any time, and leaves the session empty.
+ * the user continues. Cancel stops the restore at any time. It clears the session if the restore
+ * has changed it.
  *
  * The dialog hides while the user chooses a file for an item in the file browser. Otherwise it would
  * cover the file browser.

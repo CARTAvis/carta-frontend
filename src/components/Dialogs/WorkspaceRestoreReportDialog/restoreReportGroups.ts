@@ -131,7 +131,7 @@ export function groupRestoreReport(issues: readonly WorkspaceIssue[]): RestoreRe
  * shows its message.
  *
  * @param titleOfWidget - returns the title that a widget shows, by its stable ID.
- * @param shouldShowReason - whether to add the reason. An item listed under its cause does not need it.
+ * @param shouldShowReason - whether to add the reason. A left-out item that is listed under its cause does not need it.
  */
 export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: string) => string, shouldShowReason: boolean = true): string {
     const isWidget = issue.kind === WorkspaceItemKind.PlotWidget || issue.kind === WorkspaceItemKind.CatalogWidget || issue.kind === WorkspaceItemKind.CatalogPlot;
@@ -145,7 +145,7 @@ export function describeIssue(issue: WorkspaceIssue, titleOfWidget: (widgetId: s
 /**
  * Returns the text before the titles of a group of widgets. The text says what the widgets show now.
  *
- * @param isUnderCause - whether the group is listed under the item that caused it. In that case, the text calls that item "it".
+ * @param isUnderCause - whether the group is listed under the item that caused it. In that case, the text for the effects on the active image calls that item "it".
  */
 export function describeWidgetGroup(group: WidgetGroup, isUnderCause: boolean): string {
     const isOne = group.widgetIds.length === 1;
@@ -192,7 +192,7 @@ function isFileName(word: string): boolean {
 export function splitFileNames(text: string, subject: string, label?: string): TextPart[] {
     const words = `${subject} ${label ?? ""}`.split(/\s+/).filter(isFileName);
     const names = isFileName(subject) ? [subject, ...words] : words;
-    // A path starts with a slash that does not follow a letter, a slash or a colon, so that a URL is not taken as a path.
+    // A path starts with a slash that does not follow a letter, a digit, an underscore, a slash or a colon. Then a URL is not taken as a path.
     const patterns = ["(?<![\\w/:])/[^\\s:;,]*[^\\s:;,.)]", ...names.sort((a, b) => b.length - a.length).map(escapeRegExp)];
     const pattern = new RegExp(patterns.join("|"), "g");
     const parts: TextPart[] = [];

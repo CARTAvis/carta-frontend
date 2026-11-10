@@ -226,9 +226,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly generatedImageNames = new Map<number, string>();
     /** The images that moment images have been made from so far. */
     private readonly momentSources = new Set<FrameStore>();
-    /** The workspace IDs of the images that the user skipped. */
+    /** The workspace IDs of the images that the user skipped, and of the images made from them. */
     private readonly skippedImageIds = new Set<number>();
-    /** The workspace IDs of the images whose item failed, and that Recovery may still open. */
+    /** The workspace IDs of the images that Recovery may still open. These are the images of the failed and the deferred items. */
     private readonly awaitedImageIds = new Set<number>();
     /** The files that the user chose, for the images and catalogs that opened from them. */
     public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
