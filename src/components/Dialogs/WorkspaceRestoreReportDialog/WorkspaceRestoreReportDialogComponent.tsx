@@ -30,7 +30,12 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             portalClassName="dialog-portal"
             className={classNames("workspace-restore-report-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
             icon="warning-sign"
-            title={`Workspace "${report?.name ?? ""}" was not fully restored`}
+            title={
+                <>
+                    Workspace restore report
+                    <span className="report-workspace-name">{report?.name}</span>
+                </>
+            }
             isOpen={!!appStore.workspaceRestoreReport}
             onClose={appStore.closeWorkspaceRestoreReport}
             canOutsideClickClose={false}

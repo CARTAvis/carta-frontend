@@ -3,6 +3,17 @@
 .workspace-restore-report-dialog {
     width: 600px;
 
+    // Show the name of the workspace after the title, in a lighter color.
+    .report-workspace-name {
+        margin-left: 8px;
+        font-weight: normal;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
     .#{$ns}-dialog-body {
         max-height: 60vh;
         overflow-y: auto;
