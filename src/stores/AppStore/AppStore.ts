@@ -380,7 +380,7 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
-    /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
+    /** The step that a workspace load is waiting for, with its progress and its Skip. It is undefined when the load waits for nothing. */
     @observable.ref workspaceLoadingStep: WorkspaceLoadingStep | undefined = undefined;
 
     @action restartTaskProgress = () => {

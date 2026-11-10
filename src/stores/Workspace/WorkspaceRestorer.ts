@@ -209,8 +209,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
-        // The backend registers the regions and computes the cube histograms while the catalogs open.
-        // The restore waits for both before it applies the layout.
+        // The backend registers the regions while the images are configured. Moment and PV images
+        // wait for the regions. The cube histograms are computed while the catalogs open. The
+        // restore waits for both before it applies the layout.
         const regions = this.configureImages(this.allImages);
         yield* this.generateImages(regions);
         if (!this.isCurrent) {
@@ -684,8 +685,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 2b: query each HiPS image again. A HiPS query does not depend on any other data in the
-     * session, so it runs together with the opening of the file images.
+     * Stage 2b: query each HiPS image again, after the file images are open. A HiPS query does not
+     * depend on any other data in the session.
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
         for (const {request, images} of this.generatedImages) {
@@ -1146,8 +1147,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
             this.adoptImage(image, frame);
-            // The session matches a moment image to its source image by itself. Turn the match off
-            // for an image that was saved unmatched.
+            // When the source image is the spatial reference, the session matches a moment image to it
+            // by itself. Turn the match off for an image that was saved unmatched.
             if (frame.spatialReference && image.references?.spatial === undefined) {
                 this.appStore.setSpatialMatchingEnabled(frame, false);
             }
@@ -1165,8 +1166,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Returns the image to put in front: the image that was saved in front, or else the first
-     * restored image. Each image that a request made again was put in front when it arrived.
+     * Puts an image in front: the image that was saved in front, or else the first restored image.
+     * Each image that a request made again was put in front when it arrived.
      */
     private chooseFrontImage(): void {
         // The image saved in front can be missing. It could not be opened or made again, or it was
@@ -1240,8 +1241,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Stage 2a: restore the rest frequency that converts the spectral axis of each image. Skip an
-     * image whose rest frequency is the one in its header.
+     * Restore the rest frequency that converts the spectral axis of the given images. Run it after
+     * the images open and before they are matched. Skip an image whose rest frequency is the one in
+     * its header.
      */
     private restoreRestFrequencies(images: WorkspaceFile[]): void {
         for (const fileInfo of images) {
