@@ -452,7 +452,7 @@ export function describeCatalogSource(source: WorkspaceCatalogSource): string {
     if (source.type === "file") {
         return source.filename;
     }
-    // Read after "the catalog", as every message naming a catalog does.
+    // Reads after "the catalog", as in "the catalog from the SIMBAD query".
     const service = source.type === "simbad" ? "SIMBAD" : "VizieR";
     const tableDescription = source.table ? ` for ${source.table}` : "";
     return `from the ${service} query${tableDescription}`;

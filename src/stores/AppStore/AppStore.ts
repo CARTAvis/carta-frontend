@@ -3037,7 +3037,7 @@ export class AppStore {
 
         const {workspace, issues} = new WorkspaceSnapshotter().capture();
         issues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
-        // One toast however many there are, as for a restore: a toast each would bury the screen.
+        // Show one toast for all the issues. A toast for each issue would cover the screen.
         if (issues.length) {
             AppToaster.show(WarningToast(`${issues.length} item(s) could not be saved in workspace "${name}". See the log for details.`));
         }
