@@ -896,7 +896,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             return runInAction(() => widgetStore.applyWorkspaceView(config, ids));
         };
 
-        test("saves the fitting guesses with the units of the axes, a guess that is not finite as 0, and leaves out the fit results", () => {
+        test("saves the fitting guesses with the units of the axes, a guess that is not finite as 0, and leaves out a fit result that the profile does not have", () => {
             const {widgetStore} = createFittingWidgetStore();
             const fitting = widgetStore.fittingStore;
             runInAction(() => {
@@ -907,8 +907,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
                 fitting.setLockedYIntercept(true);
                 fitting.components[0].setCenter(100);
                 fitting.components[0].setLockedFwhm(true);
-                fitting.setHasResult(true);
-                fitting.setResultLog("fitted");
+                fitting.setResultLog("fitted before the reset");
             });
 
             const saved = widgetStore.toWorkspaceConfig(savesTheImage).fitting;
@@ -926,6 +925,122 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
                 residualVisible: true,
                 xUnit: "Frequency (GHz), LSRK",
                 yUnit: "Jy/beam"
+            });
+        });
+
+        test("saves the fit result, with a value that is not finite as null", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const fitting = widgetStore.fittingStore;
+            runInAction(() => {
+                fitting.components[0].setCenter(100);
+                fitting.setResultYIntercept(0.4);
+                fitting.setResultYInterceptError(0.01);
+                fitting.setResultSlope(0);
+                fitting.setResultSlopeError(Number.NaN);
+                const component = fitting.components[0];
+                component.setResultCenter(101);
+                component.setResultCenterError(0.1);
+                component.setResultAmp(2);
+                component.setResultAmpError(0.2);
+                component.setResultFwhm(3);
+                component.setResultFwhmError(Number.NaN);
+                component.setResultIntegral(6.4);
+                component.setResultIntegralError(0.6);
+                fitting.setResultLog("fitted");
+                fitting.setHasResult(true);
+            });
+
+            const saved = widgetStore.toWorkspaceConfig(savesTheImage).fitting;
+
+            expect(saved?.result).toEqual({
+                yIntercept: 0.4,
+                yInterceptError: 0.01,
+                slope: 0,
+                slopeError: null,
+                components: [{center: 101, centerError: 0.1, amp: 2, ampError: 0.2, fwhm: 3, fwhmError: null, integral: 6.4, integralError: 0.6}],
+                log: "fitted"
+            });
+        });
+
+        describe("a saved fit result", () => {
+            const savedResult = {
+                yIntercept: 0.5,
+                yInterceptError: 0.01,
+                slope: 0.1,
+                slopeError: null,
+                components: [
+                    {center: 100, centerError: 0.1, amp: 2, ampError: 0.2, fwhm: 3, fwhmError: null, integral: 6.4, integralError: 0.6},
+                    {center: 105, centerError: 0.2, amp: 1, ampError: 0.1, fwhm: 2, fwhmError: 0.3, integral: 2.1, integralError: 0.2}
+                ],
+                log: "fitted"
+            };
+
+            /** Gives region 5 a profile that arrives in parts, from 100 to 110 GHz. */
+            const streamRegion5 = () => {
+                const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
+                AppStore.Instance.spectralProfiles.get(7)!.set(5, {getProfile: jest.fn(() => data.get())} as never);
+                return data;
+            };
+
+            test("is shown when the whole profile has arrived, with the residual computed from the profile", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+
+                const problems = restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: savedResult}});
+
+                const fitting = widgetStore.fittingStore;
+                expect(problems).toEqual([]);
+                expect(fitting.hasResult).toBe(false);
+
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(fitting.hasResult).toBe(true);
+                expect([fitting.resultYIntercept, fitting.resultYInterceptError, fitting.resultSlope, fitting.resultSlopeError]).toEqual([0.5, 0.01, 0.1, Number.NaN]);
+                expect(fitting.components.map(component => [component.resultCenter, component.resultAmp, component.resultFwhm, component.resultFwhmError, component.resultIntegral])).toEqual([
+                    [100, 2, 3, Number.NaN, 6.4],
+                    [105, 1, 2, 0.3, 2.1]
+                ]);
+                expect(fitting.resultLog).toBe("fitted");
+                // The saved function is Lorentzian. At 100 GHz the first component is at its peak, 2,
+                // and the second adds 1 * 1 / (25 + 1). The continuum adds 0.5 + 0.1 * 100.
+                const model = 2 + 1 / 26 + 0.5 + 10;
+                expect(fitting.residualPoint2DArray[0].x).toBe(100);
+                expect(fitting.residualPoint2DArray[0].y).toBeCloseTo(4 - model, 10);
+                expect(fitting.modelPoint2DArray[0].y).toBeCloseTo(model, 10);
+            });
+
+            test("is not shown when the guesses are 0, and the report says so", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                streamRegion5();
+                const config = {...onRegion5, fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK", result: savedResult}};
+
+                const problems = restore(widgetStore, config);
+
+                expect(problems).toEqual([
+                    'the fitting guesses were made in "Velocity (km/s), LSRK" on the x axis and "Jy/beam" on the y axis, but the profile now shows "Frequency (GHz), LSRK" on the x axis and "Jy/beam" on the y axis. The guesses are 0, and the fit result is not shown'
+                ]);
+                expect([widgetStore.fittingStore.hasResult, widgetStore.fittingStore.isWaitingForWorkspaceResult]).toEqual([false, false]);
+            });
+
+            test("is not shown when it does not have one entry for each component", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+
+                restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: {...savedResult, components: savedResult.components.slice(1)}}});
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(widgetStore.fittingStore.hasResult).toBe(false);
+            });
+
+            test("is dropped when the widget shows another profile before the profile has arrived", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+                restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: savedResult}});
+
+                runInAction(() => widgetStore.smoothingStore.setType(SmoothingType.BOXCAR));
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(widgetStore.fittingStore.hasResult).toBe(false);
             });
         });
 

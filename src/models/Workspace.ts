@@ -678,8 +678,8 @@ export interface WorkspaceAnimator {
 }
 
 /**
- * The fitting settings of a spectral profiler: the function, the continuum and the initial guesses.
- * The fit results are not saved. The user fits again after a restore.
+ * The fitting settings of a spectral profiler: the function, the continuum, the initial guesses and
+ * the fit result.
  */
 export interface WorkspaceSpectralFitting {
     /** The fitting function, saved as its number: 0 is Gaussian and 1 is Lorentzian. */
@@ -702,6 +702,32 @@ export interface WorkspaceSpectralFitting {
      */
     xUnit: string;
     yUnit: string;
+    /**
+     * The fit result, in the same units as the guesses. Left out when the profile has no fit result.
+     * The residual is not saved. A restore computes it from the profile and the result.
+     */
+    result?: WorkspaceSpectralFitResult;
+}
+
+/** The result of a spectral fitting. A value that is not finite, such as the error of a locked value, is saved as null. */
+export interface WorkspaceSpectralFitResult {
+    yIntercept: number | null;
+    yInterceptError: number | null;
+    slope: number | null;
+    slopeError: number | null;
+    /** The result of each component, in the order of the components of the guesses. */
+    components: {
+        center: number | null;
+        centerError: number | null;
+        amp: number | null;
+        ampError: number | null;
+        fwhm: number | null;
+        fwhmError: number | null;
+        integral: number | null;
+        integralError: number | null;
+    }[];
+    /** The log of the fit, as the "View log" button shows it. */
+    log: string;
 }
 
 /** The moment generator settings of a spectral profiler. */

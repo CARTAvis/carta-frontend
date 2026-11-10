@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring moment, PV and HiPS images in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Added a progress dialog with Cancel and an end-of-restore report to opening a workspace, and a thumbnail of the whole app to saved workspaces ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
-* Added support for restoring the spectral profiler's fitting and moment generator settings in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
+* Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).

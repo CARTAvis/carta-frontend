@@ -578,6 +578,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             )
         );
 
+        // Show a restored fit result when the whole profile has arrived. The residual is computed
+        // from the profile, so a part of the profile is not enough.
+        this.disposers.push(
+            reaction(
+                () => this.fittingStore.isWaitingForWorkspaceResult && this.isFittingProfileComplete,
+                isReady => {
+                    if (isReady) {
+                        this.fittingStore.showWorkspaceResult();
+                    }
+                }
+            )
+        );
+
         this.disposers.push(
             reaction(
                 () => this.yAxisRestFrameScale,
@@ -1522,13 +1535,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;
             const isSameProfile = this.isShowingWorkspaceData && !isCursorProfile;
             this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
-            if (ProfileFittingStore.hasWorkspaceGuesses(fitting)) {
+            const hasResult = !!fitting.result && typeof fitting.result === "object";
+            if (ProfileFittingStore.hasWorkspaceGuesses(fitting) || hasResult) {
+                const zero = hasResult ? "the guesses are 0, and the fit result is not shown" : "the guesses are 0";
                 if (!this.isShowingWorkspaceData) {
-                    problems.push("the profile that its fitting guesses were made for was not restored, so the guesses are 0");
+                    problems.push(`the profile that its fitting guesses were made for was not restored, so ${zero}`);
                 } else if (isCursorProfile) {
-                    problems.push("its fitting guesses were made for the profile at the cursor, whose position is not saved, so the guesses are 0");
+                    problems.push(`its fitting guesses were made for the profile at the cursor, whose position is not saved, so ${zero}`);
                 } else if (!isSameUnits) {
-                    problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The guesses are 0`);
+                    problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The ${zero.slice("the ".length)}`);
                 }
             }
         }
