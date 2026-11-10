@@ -1913,6 +1913,10 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
         // The axes are what the Workspace was saved with, None included; choosing them again would
         // replace them.
         this.setAutoSelectImageOverlayAxesAttempted(true);
+        // Choose the size tab last. A change of the shape chooses the major axis.
+        if (config?.sizeAxisTab === "minor" && this.catalogShape === CatalogOverlayShape.ELLIPSE_LINED) {
+            this.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+        }
 
         return {success: true, errors: []};
     };
@@ -1932,6 +1936,7 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {
+            ...(this.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? {sizeAxisTab: "minor" as const} : {}),
             color: this.catalogColor,
             highlightColor: this.highlightColor,
             shape: this.catalogShape,

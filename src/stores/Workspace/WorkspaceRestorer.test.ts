@@ -326,6 +326,20 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toEqual(["The settings panel of this widget was not opened, because the widget was not restored"]);
     });
 
+    test("applies the saved fields of the online catalog query dialog", async () => {
+        createSession();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), objectName: "M17", vizierKeywords: "gaia"};
+
+        await restore(createWorkspace({onlineCatalogQuery}));
+
+        expect([configStore.objectName, configStore.vizierKeyWords]).toEqual(["M17", "gaia"]);
+        runInAction(() => {
+            configStore.resetObjectName();
+            configStore.setVizierKeyWords("");
+        });
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 

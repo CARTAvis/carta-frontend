@@ -5,6 +5,7 @@ import {
     type AngularSizeUnit,
     type AnimationMode,
     type BeamType,
+    type CatalogDatabase,
     type CatalogDisplayMode,
     type CatalogOverlayShape,
     type CatalogPlotType,
@@ -14,6 +15,7 @@ import {
     type ContourDashMode,
     FrameScaling,
     type MultiProfileCategory,
+    type NumberFormatType,
     type PlayMode,
     type RadiusUnits,
     type RedshiftType,
@@ -187,6 +189,8 @@ export interface WorkspaceCatalogTableConfig {
  * Which rows the catalog holds is not part of this; that is {@link WorkspaceCatalogTableConfig}.
  */
 export interface WorkspaceCatalogConfig {
+    /** The size tab of the catalog settings, when it is the minor axis of an ellipse. Left out for the major axis. */
+    sizeAxisTab?: "minor";
     color?: string;
     highlightColor?: string;
     shape?: CatalogOverlayShape;
@@ -542,6 +546,20 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
     previewRegionId: number;
 }
 
+/** The fields of the online catalog query dialog. The results of a query are saved with each catalog. */
+export interface WorkspaceOnlineCatalogQuery {
+    database: CatalogDatabase;
+    /** The center, in the pixels of the image in front, as the dialog keeps it. */
+    center: {x?: string; y?: string};
+    coordinateSystem: CatalogSystemType;
+    coordinateFormat: NumberFormatType;
+    radius: number;
+    radiusUnits: RadiusUnits;
+    maxObjects: number;
+    objectName: string;
+    vizierKeywords: string;
+}
+
 /** The settings of the animator. */
 export interface WorkspaceAnimator {
     frameRate: number;
@@ -617,6 +635,8 @@ export interface Workspace {
      * saved only when the cursor was frozen. Then the cursor profiles show that position.
      */
     cursor?: {frozen: boolean; position?: Point2D};
+    /** The fields of the online catalog query dialog. */
+    onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the

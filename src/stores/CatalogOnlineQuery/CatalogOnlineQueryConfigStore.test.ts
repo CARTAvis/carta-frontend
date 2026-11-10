@@ -1,4 +1,4 @@
-import {RadiusUnits} from "enums";
+import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits} from "enums";
 
 import {CatalogOnlineQueryConfigStore, type VizierItem} from "./CatalogOnlineQueryConfigStore";
 
@@ -64,5 +64,46 @@ describe("CatalogOnlineQueryConfigStore search radius", () => {
         store.resetSearchRadius();
 
         expect(store.searchRadius).toBe(radiusInDegree * 60);
+    });
+});
+
+describe("CatalogOnlineQueryConfigStore in a workspace", () => {
+    test("saves the fields of the dialog and applies them again", () => {
+        const store = new CatalogOnlineQueryConfigStore();
+        store.setCatalogDB(CatalogDatabase.VIZIER);
+        store.setCoordsType(CatalogSystemType.Galactic);
+        store.setCoordsFormat(NumberFormatType.HMS);
+        store.setRadiusUnits(RadiusUnits.ARCMINUTES);
+        store.setSearchRadius(12);
+        store.updateCenterPixelCoord({x: 10.5, y: 20});
+        store.setMaxObjects(50);
+        store.setObjectName("M17");
+        store.setVizierKeyWords("gaia");
+
+        const config = store.toWorkspaceConfig();
+        const restored = new CatalogOnlineQueryConfigStore();
+        restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)));
+
+        expect(restored.toWorkspaceConfig()).toEqual(config);
+        expect(config).toEqual({
+            database: CatalogDatabase.VIZIER,
+            center: {x: "10.5", y: "20"},
+            coordinateSystem: CatalogSystemType.Galactic,
+            coordinateFormat: NumberFormatType.HMS,
+            radius: 12,
+            radiusUnits: RadiusUnits.ARCMINUTES,
+            maxObjects: 50,
+            objectName: "M17",
+            vizierKeywords: "gaia"
+        });
+    });
+
+    test("keeps the value of the session for each saved value that is not valid", () => {
+        const store = new CatalogOnlineQueryConfigStore();
+        const before = store.toWorkspaceConfig();
+
+        store.applyWorkspaceConfig({database: "NED", center: {x: "a", y: "1"}, coordinateSystem: "B1950", radius: -1, radiusUnits: "miles", maxObjects: 0.5} as never);
+
+        expect(store.toWorkspaceConfig()).toEqual(before);
     });
 });

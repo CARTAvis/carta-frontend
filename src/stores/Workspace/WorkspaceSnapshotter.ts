@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 import {ImageType, RegionOpacity, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
-import {AppStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -436,6 +436,7 @@ export class WorkspaceSnapshotter {
         const isCursorFrozen = this.appStore.isCursorFrozen === true;
         const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
         this.workspace.cursor = {frozen: isCursorFrozen, ...(isCursorFrozen && cursorPosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
+        this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.

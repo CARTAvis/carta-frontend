@@ -16,7 +16,7 @@ import {
     type WorkspaceIssue
 } from "models";
 import {CatalogApiService} from "services";
-import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -169,6 +169,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreDialogs();
         this.restoreWidgetSettings();
         this.restoreCursor();
+        if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
+            // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
+            CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
+        }
         return this.issues;
     }
 
