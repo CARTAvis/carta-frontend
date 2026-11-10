@@ -48,11 +48,20 @@ import {
     type WorkspacePvRequest
 } from "models";
 import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
+
+/** Returns the host of a URL, such as "simbad.u-strasbg.fr", or the whole URL when it cannot be parsed. */
+function hostOf(url: string): string {
+    try {
+        return new URL(url).host;
+    } catch {
+        return url;
+    }
+}
 
 /** Which of the session's references an image is matched to. */
 type ReferenceKind = "spatial" | "spectral" | "raster";
@@ -212,6 +221,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly catalogIds = new Map<number, number>();
     /** The Workspace ID of the first catalog whose query a mirror did not answer, by the URL of the mirror. */
     private readonly timedOutCatalogIds = new Map<string, number>();
+    /**
+     * The mirrors whose online catalog query failed in this restore, by URL. The number is the
+     * round of the latest failure. A larger number means a later round.
+     */
+    private readonly failedMirrorRounds = new Map<string, number>();
+    /** The number of rounds of the catalog stage so far. */
+    private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
     /** The image the session is left with in front once the restore is done. */
@@ -1847,8 +1863,37 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             "Opening catalogs",
             (this.workspace.catalogs ?? []).map(catalogInfo => this.catalogTask(catalogInfo)),
             // Each round of attempts waits for a timed-out mirror once. A retry waits for it again.
-            () => CatalogApiService.Instance.rememberTimedOutMirrors()
+            () => {
+                this.catalogRound++;
+                const forgetTimedOutMirrors = CatalogApiService.Instance.rememberTimedOutMirrors();
+                return () => {
+                    forgetTimedOutMirrors();
+                    this.moveOffFailedMirrors();
+                };
+            }
         );
+    }
+
+    /**
+     * Make a mirror that failed in this round no longer the active one, so that Recovery offers a
+     * retry on another mirror first. The new mirror is the available one that failed longest ago, or
+     * one that has not failed. The active mirror of each database lasts only for this session.
+     */
+    private moveOffFailedMirrors(): void {
+        const mirrorSiteStore = MirrorSiteStore.Instance;
+        for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {
+            const activeMirror = mirrorSiteStore.getActiveMirror(database);
+            const activeRound = activeMirror ? this.failedMirrorRounds.get(activeMirror) : undefined;
+            if (activeRound !== this.catalogRound) {
+                continue;
+            }
+            const roundOf = (mirror: string) => this.failedMirrorRounds.get(mirror) ?? 0;
+            const available = mirrorSiteStore.getMirrorSites(database).filter(mirror => !mirrorSiteStore.isMirrorUnavailable(database, mirror));
+            const next = available.reduce<string | undefined>((best, mirror) => (best === undefined || roundOf(mirror) < roundOf(best) ? mirror : best), undefined);
+            if (next && roundOf(next) < activeRound) {
+                mirrorSiteStore.setActiveMirror(database, next);
+            }
+        }
     }
 
     /**
@@ -1910,7 +1955,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return "done";
         }
 
-        const query = {isSkipped: false};
+        const query: {isSkipped: boolean; mirrorUrl?: string} = {isSkipped: false};
         let catalogFileId: number | undefined;
         let reason: string | undefined;
         let causeCatalogId: number | undefined;
@@ -1924,6 +1969,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         } catch (err) {
             console.error(err);
             reason = reasonOf(err);
+            if (query.mirrorUrl && !query.isSkipped) {
+                this.failedMirrorRounds.set(query.mirrorUrl, this.catalogRound);
+            }
             // A query that did not wait for a mirror is listed under the first query that waited for it.
             if (err instanceof MirrorTimeoutError) {
                 if (err.didTimeOutEarlier) {
@@ -1969,9 +2017,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Open one catalog the way the workspace says it was opened, re-running a query if that is what it was.
      *
      * While an online query runs, the restore dialog offers to skip it. Then the user does not have
-     * to wait for a mirror that does not answer. A skipped query sets `query.isSkipped`.
+     * to wait for a mirror that does not answer. A skipped query sets `query.isSkipped`. The query
+     * sets `query.mirrorUrl` to the mirror that it asks.
      */
-    private *openCatalogSource(source: WorkspaceCatalogSource, targetFrameId: number | undefined, description: string, query: {isSkipped: boolean}): Generator<Promise<unknown>, number | undefined, any> {
+    private *openCatalogSource(source: WorkspaceCatalogSource, targetFrameId: number | undefined, description: string, query: {isSkipped: boolean; mirrorUrl?: string}): Generator<Promise<unknown>, number | undefined, any> {
         if (source.type === "file") {
             const fileId = yield* awaitedFlow<number | undefined>(this.appStore.appendCatalog(source.directory ?? "", source.filename, StreamingRowSource.INIT_TABLE_ROWS, targetFrameId));
             return typeof fileId === "number" ? fileId : undefined;
@@ -1980,8 +2029,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             query.isSkipped = true;
             CatalogApiService.Instance.cancelPendingQueries("The online catalog query was skipped");
         };
+        query.mirrorUrl = MirrorSiteStore.Instance.getActiveMirror(source.type === "simbad" ? CatalogDatabase.SIMBAD : CatalogDatabase.VIZIER);
         const step = this.startStep();
-        step.show({description: `Waiting for the catalog ${description}`, progress: 0, onSkip: skip});
+        step.show({
+            description: query.mirrorUrl ? `Waiting for the mirror ${hostOf(query.mirrorUrl)}` : `Waiting for the catalog ${description}`,
+            progress: 0,
+            onSkip: skip,
+            deadline: Date.now() + CatalogApiService.QUERY_TIMEOUT_MS
+        });
         try {
             if (source.type === "simbad") {
                 const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));

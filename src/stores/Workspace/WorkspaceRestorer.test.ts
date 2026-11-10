@@ -25,7 +25,7 @@ import {
 } from "enums";
 import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
@@ -1864,6 +1864,60 @@ describe("WorkspaceRestorer", () => {
             expect(issues).toEqual([]);
         });
 
+        test("offers the retry on a mirror that has not failed, and then on the mirror that failed longest ago", async () => {
+            const {appStore} = createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+            const asked: string[] = [];
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockImplementation(() => {
+                asked.push(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)!);
+                return Promise.reject(new Error("Request failed"));
+            });
+            const offered: string[] = [];
+            appStore.onRecovery = recovery => {
+                offered.push(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)!);
+                if (offered.length < 3) {
+                    recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                    recovery.continue();
+                } else {
+                    recovery.skipAll();
+                }
+            };
+
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+
+            expect(asked).toEqual([first, second, first]);
+            expect(offered).toEqual([second, first, second]);
+            // The active mirror lasts for the session. Put it back for the other tests.
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+        });
+
+        test("keeps the mirror that the user chose when another query failed on a different mirror", async () => {
+            const {appStore} = createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog")
+                .mockImplementationOnce(() => {
+                    // The user chooses another mirror while the query runs.
+                    mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, second);
+                    return Promise.reject(new Error("Request failed"));
+                })
+                .mockResolvedValue({fileId: 12, dataSize: 3});
+            let offered: string | undefined;
+            appStore.onRecovery = recovery => {
+                offered = mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD);
+                recovery.skipAll();
+            };
+
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+
+            expect(offered).toBe(second);
+            // The active mirror lasts for the session. Put it back for the other tests.
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+        });
+
         test("waits for a timed-out mirror again when the user retries", async () => {
             const {appStore} = createSession();
             const timeout = new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT);
@@ -1905,8 +1959,11 @@ describe("WorkspaceRestorer", () => {
             const restoring = restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
             await new Promise(resolve => setTimeout(resolve));
             const steps = appStore.setWorkspaceLoadingStep.mock.calls.map(([step]) => step as WorkspaceLoadingStep | undefined);
-            const step = steps.find(candidate => candidate?.description === "Waiting for the catalog from the SIMBAD query");
-            expect(step?.onSkip).toBeDefined();
+            const step = steps.find(candidate => candidate?.onSkip);
+            // The step names the mirror that it waits for, and says when the query gives up.
+            expect(step?.description).toBe(`Waiting for the mirror ${new URL(MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD)!).host}`);
+            expect(step?.deadline).toBeGreaterThan(Date.now());
+            expect(step!.deadline! - Date.now()).toBeLessThanOrEqual(CatalogApiService.QUERY_TIMEOUT_MS);
             step!.onSkip!();
             const issues = await restoring;
 

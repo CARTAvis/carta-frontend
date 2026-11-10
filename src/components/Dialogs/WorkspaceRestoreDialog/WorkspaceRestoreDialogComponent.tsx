@@ -5,6 +5,8 @@ import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
 
+import {FileNameText} from "../WorkspaceRestoreReportDialog/FileNameText";
+
 import {WorkspaceRecoveryComponent} from "./WorkspaceRecoveryComponent";
 
 import "./WorkspaceRestoreDialogComponent.scss";
@@ -16,6 +18,24 @@ function formatTimeRemaining(milliseconds: number): string {
     const secondsText = String(seconds % 60).padStart(2, "0");
     return minutes > 0 ? `${minutes}m${secondsText}s` : `${secondsText}s`;
 }
+
+/**
+ * Counts down to the time when a step stops waiting, such as "Gives up in 42s". It shows nothing
+ * once that time has passed.
+ */
+const Countdown = ({deadline}: {deadline: number}) => {
+    const [now, setNow] = React.useState(Date.now);
+    React.useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, [deadline]);
+    const remaining = deadline - now;
+    return remaining > 0 ? (
+        <span className="restore-step-time" data-testid="workspace-restore-step-countdown">
+            Gives up in {Math.ceil(remaining / 1000)}s
+        </span>
+    ) : null;
+};
 
 /**
  * Shows the progress of a workspace restore: the stage, the item of the stage, and what the restore
@@ -67,9 +87,10 @@ export const WorkspaceRestoreDialogComponent = observer(() => {
                             <div className="restore-step" data-testid="workspace-restore-step">
                                 <div className="restore-step-text">
                                     <span className="restore-step-description" title={step.description}>
-                                        {step.description}
+                                        {/* Show a mirror host or a path in the step in the font of the file names. */}
+                                        <FileNameText text={step.description} subject="" />
                                     </span>
-                                    {timeRemaining ? <span className="restore-step-time">{formatTimeRemaining(timeRemaining)} left</span> : null}
+                                    {step.deadline !== undefined ? <Countdown deadline={step.deadline} /> : timeRemaining ? <span className="restore-step-time">{formatTimeRemaining(timeRemaining)} left</span> : null}
                                 </div>
                                 <div className="restore-step-progress">
                                     <ProgressBar value={step.progress || undefined} animate={!step.progress} stripes={!step.progress} intent="primary" />

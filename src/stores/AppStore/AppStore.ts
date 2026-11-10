@@ -176,6 +176,8 @@ export interface WorkspaceLoadingStep {
     progress: number;
     /** Skips this step and continues with the rest of the load, when that is possible. */
     onSkip?: () => void;
+    /** When the step stops waiting, in milliseconds since 1970, as `Date.now()` gives. The dialog counts down to it. */
+    deadline?: number;
 }
 
 export class AppStore {
