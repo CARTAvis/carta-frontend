@@ -756,6 +756,18 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toWorkspaceConfig({imageIdOf: () => 1})).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
     });
 
+    test("saves the spectral lines that a query plotted on it, and plots them again, leaving out a line that is not valid", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.addSpectralLines([{species: "CO", value: 115271.2, qn: "1-0"}]));
+
+        const config = widgetStore.toWorkspaceConfig(WORKSPACE_IDS);
+        expect(config.spectralLines).toEqual([{species: "CO", value: 115271.2, qn: "1-0"}]);
+
+        const restored = createWidgetStore().widgetStore;
+        runInAction(() => restored.applyWorkspaceConfig({spectralLines: [...(config.spectralLines ?? []), {species: "HCN", value: "x", qn: "1-0"}]} as never, WORKSPACE_IDS));
+        expect(restored.toWorkspaceConfig(WORKSPACE_IDS).spectralLines).toEqual(config.spectralLines);
+    });
+
     test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {
         const {widgetStore} = createWidgetStore();
         runInAction(() => {

@@ -131,6 +131,12 @@ export class WorkspaceSnapshotter {
             source: WorkspaceSnapshotter.imageSourceOf(frame),
             timeSeriesMember: this.appStore.timeSeriesStore.isMember(frame) || undefined
         };
+        // Save the range of the animator only when it is not every channel.
+        const [firstChannel, lastChannel] = frame.animationChannelRange ?? [];
+        const depth = frame.frameInfo.fileInfoExtended?.depth ?? 1;
+        if (typeof firstChannel === "number" && typeof lastChannel === "number" && (firstChannel !== 0 || lastChannel !== depth - 1)) {
+            workspaceFile.animationChannelRange = [firstChannel, lastChannel];
+        }
         workspaceFile.references = {};
 
         if (frame.spatialReference) {
@@ -361,6 +367,8 @@ export class WorkspaceSnapshotter {
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        const animator = this.appStore.animatorStore;
+        this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.
         const contourImageId = this.appStore.isFrameLockedToContour ? undefined : this.imageIdOf(this.appStore.contourDataSource);
         if (contourImageId !== undefined) {

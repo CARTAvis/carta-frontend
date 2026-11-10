@@ -1311,6 +1311,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             restFrameRedshift: this.restFrameRedshift,
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
+            ...(this.spectralLinesMHz.length ? {spectralLines: this.spectralLinesMHz.map(({species, value, qn}) => ({species, value, qn}))} : {}),
             ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
         };
     };
@@ -1341,6 +1342,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         // Point the widget at its image and region again, because choosing the category can undo
         // this. The first step already returned the problems with the image and region.
         this.applyWorkspaceBindingOf(config, ids);
+        // The lines are in MHz, the unit that the widget keeps them in, so they do not depend on the image.
+        if (Array.isArray(config.spectralLines)) {
+            this.addSpectralLines(
+                config.spectralLines.filter(line => typeof line?.species === "string" && typeof line.value === "number" && isFinite(line.value) && typeof line.qn === "string").map(({species, value, qn}) => ({species, value, qn}))
+            );
+        }
 
         const selection = this.profileSelectionStore;
         const category = selection.activeProfileCategory;

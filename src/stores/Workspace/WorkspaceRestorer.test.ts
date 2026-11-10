@@ -108,7 +108,7 @@ function createSession() {
     };
 
     const appStore = {
-        animatorStore: {stopAnimation: jest.fn()},
+        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -232,6 +232,24 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+    });
+
+    test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
+        const {appStore} = createSession();
+        appStore.appendFile.mockImplementationOnce(() => {
+            const frame = {...createFrame(1), frameInfo: {fileId: 1, fileInfoExtended: {depth: 10}}, setAnimationRange: jest.fn()};
+            appStore.frameMap.set(1, frame as never);
+            appStore.frames.push(frame as never);
+            return Promise.resolve(frame as never);
+        });
+
+        await restore(createWorkspace({files: [{...IMAGE, animationChannelRange: [2, 5]}], animator: {frameRate: 8, step: 99, playMode: 2, mode: 1} as never}));
+
+        expect((appStore.frames[0] as any).setAnimationRange).toHaveBeenCalledWith([2, 5]);
+        expect(appStore.animatorStore.setFrameRate).toHaveBeenCalledWith(8);
+        expect(appStore.animatorStore.setStep).not.toHaveBeenCalled();
+        expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
+        expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
     });
 
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {

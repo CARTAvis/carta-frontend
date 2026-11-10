@@ -88,6 +88,10 @@ export class AnimatorStore {
         this.step = val;
     };
 
+    @action setPlayMode = (playMode: PlayMode) => {
+        this.playMode = playMode;
+    };
+
     @flow.bound *startAnimation() {
         if (this.shouldStartAnimationDisable) {
             return;

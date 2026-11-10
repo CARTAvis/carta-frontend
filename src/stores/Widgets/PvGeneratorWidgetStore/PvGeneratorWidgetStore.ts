@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspacePvGeneratorWidgetConfig} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -10,7 +11,21 @@ import {length2D} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-export class PvGeneratorWidgetStore extends RegionWidgetStore {
+/** The settings that a PV generator widget saves in a layout. */
+export interface PvGeneratorWidgetConfig {
+    /** The own ID of the widget. It stays the same in every session that applies the layout. */
+    widgetId: string;
+}
+
+/** The largest rebin factor that a restore reads. */
+const MAX_WORKSPACE_REBIN = 1000;
+
+function isPositiveInteger(value: unknown, max: number): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= max;
+}
+
+export class PvGeneratorWidgetStore extends RegionWidgetStore implements ConfigurableStore<PvGeneratorWidgetConfig, Persisted<PvGeneratorWidgetConfig>>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
+    widgetId: string = "";
     @observable width: number = 3;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
     @observable shouldKeep: boolean = false;
@@ -218,6 +233,86 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             )
         );
     }
+
+    public applyConfig = (widgetSettings: Persisted<PvGeneratorWidgetConfig>): void => {
+        if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
+        }
+    };
+
+    public toConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
+
+    /** Returns the name of the spectral coordinate of the range, such as "Frequency (GHz), LSRK". A restore applies the range only in the same coordinate. */
+    private get channelUnit(): string {
+        const frame = this.effectiveFrame;
+        return [frame?.spectralCoordinate, frame?.spectralSystem].filter(Boolean).join(", ");
+    }
+
+    /**
+     * Returns the settings that a workspace saves. Leaves out a range of the whole spectral axis, so
+     * that a restore in another spectral coordinate does not report a range that the user did not
+     * choose.
+     */
+    public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspacePvGeneratorWidgetConfig => {
+        const bounds = this.effectiveFrame?.channelValueBounds;
+        const {min, max} = this.range;
+        const isWholeAxis = !bounds || (min === bounds.min && max === bounds.max);
+        const hasRange = !isWholeAxis && typeof min === "number" && typeof max === "number";
+        return {
+            ...this.toWorkspaceBinding(ids),
+            width: this.width,
+            reverse: this.isReverse,
+            keep: this.shouldKeep,
+            xyRebin: this.xyRebin,
+            zRebin: this.zRebin,
+            ...(hasRange ? {channelRange: [min, max] as [number, number], channelUnit: this.channelUnit} : {}),
+            previewRegionId: this.previewRegionId
+        };
+    };
+
+    public applyWorkspaceBinding = (config: WorkspacePvGeneratorWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
+
+    /** Applies the saved settings. A value that is not valid keeps its default. The reverse setting does not change the preference. */
+    @action public applyWorkspaceConfig = (config: WorkspacePvGeneratorWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        if (isPositiveInteger(config.width, Number.MAX_SAFE_INTEGER)) {
+            this.setWidth(config.width);
+        }
+        if (typeof config.reverse === "boolean") {
+            this.isReverse = config.reverse;
+        }
+        this.setKeep(config.keep === true);
+        if (isPositiveInteger(config.xyRebin, MAX_WORKSPACE_REBIN)) {
+            this.setXYRebin(config.xyRebin);
+        }
+        if (isPositiveInteger(config.zRebin, MAX_WORKSPACE_REBIN)) {
+            this.setZRebin(config.zRebin);
+        }
+        const problems: string[] = [];
+        if (typeof config.previewRegionId === "number" && config.previewRegionId !== RegionId.IMAGE && config.previewRegionId !== RegionId.NONE) {
+            const imageId = config.imageId;
+            const regionId = ids.regionIdOf(imageId, config.previewRegionId);
+            if (regionId !== undefined) {
+                this.setPreviewRegionId(regionId);
+            } else {
+                problems.push("the region that its preview showed was not restored, so the preview shows the whole image");
+            }
+        }
+        return problems;
+    };
+
+    /**
+     * Applies the saved spectral range. Apply it last. A change of the image or of its spectral
+     * coordinate resets the range to the whole spectral axis.
+     */
+    @action public applyWorkspaceView = (config: WorkspacePvGeneratorWidgetConfig): void => {
+        const range = config.channelRange;
+        if (!this.isShowingWorkspaceData || !Array.isArray(range) || range.length !== 2 || !range.every(value => typeof value === "number" && isFinite(value))) {
+            return;
+        }
+        if (config.channelUnit === this.channelUnit) {
+            this.setSpectralRange({min: range[0], max: range[1]});
+        }
+    };
 
     public dispose = () => {
         this.disposers.forEach(disposer => disposer());
