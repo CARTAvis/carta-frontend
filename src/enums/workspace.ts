@@ -6,9 +6,7 @@ export enum WorkspaceDialogMode {
 
 /** Why a restore left an item out of the session. */
 export enum WorkspaceIssueOutcome {
-    /** The restore tried to open or make the item, and could not. */
     Failed = "failed",
-    /** The user skipped the item. */
     Skipped = "skipped"
 }
 
