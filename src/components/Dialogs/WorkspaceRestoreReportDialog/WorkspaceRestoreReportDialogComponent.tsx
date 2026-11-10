@@ -29,7 +29,7 @@ const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnd
     );
 };
 
-/** Shows a file name or a path. A long path breaks after a slash, not inside a name. */
+/** Shows a file name or a path. A long path breaks after a slash where it can. */
 const FileName = ({text}: {text: string}) => (
     <span className="file-name">
         {text.split(/(?<=\/)/).map((piece, index) => (
