@@ -79,7 +79,7 @@ function createFrame(fileId: number) {
         regionSet: {
             addExistingRegionAsync: jest.fn(async (points: unknown) => {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
-                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn()};
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
             }),
             selectSingleRegion: jest.fn()
         },
@@ -1193,6 +1193,15 @@ describe("WorkspaceRestorer", () => {
 
             const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setOpacity: jest.Mock}[];
             expect(restoredRegions.map(restoredRegion => restoredRegion.setOpacity.mock.calls)).toEqual([[[0]], [[0.5]], [], []]);
+        });
+
+        test("makes a region saved with no dashes solid, whatever dash length the preferences give", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), dashes: []}, {...region(2), dashes: [4]}, region(3)]}}]}));
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setDashLength: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setDashLength.mock.calls)).toEqual([[[0]], [], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {
