@@ -1,20 +1,29 @@
 import * as React from "react";
-import {AnchorButton, Classes, Dialog, H4, Intent, Tag, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, H5, Icon, type IconName, Intent, Tag, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {WorkspaceIssueOutcome} from "enums";
-import {type WorkspaceIssue} from "models";
+import {describeCatalogSource, describeImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 
-import {describeIssue, describeWidgetGroup, groupRestoreReport, splitFileNames, type WidgetGroup} from "./restoreReportGroups";
+import {FileName, FileNameText} from "./FileNameText";
+import {describeIssue, describeWidgetGroup, groupRestoreReport, type WidgetGroup} from "./restoreReportGroups";
 
 import "./WorkspaceRestoreReportDialogComponent.scss";
 
-/** Returns a path such as /data/cube.fits, from a directory that may be empty. */
-function pathOf(directory: string | undefined, filename: string): string {
-    return directory ? `${directory.replace(/\/$/, "")}/${filename}` : filename;
+/** Returns the count of a thing, such as "1 item" or "2 items". */
+function countOf(count: number, singular: string, plural: string): string {
+    return `${count} ${count === 1 ? singular : plural}`;
 }
+
+/** Shows the title of a section of the report, with an icon. */
+const SectionTitle = ({icon, children}: {icon: IconName; children: React.ReactNode}) => (
+    <H5 className="report-section-title">
+        <Icon icon={icon} />
+        {children}
+    </H5>
+);
 
 /**
  * Marks an item as failed or skipped. An item that is listed under its cause has a lighter tag. Then
@@ -29,22 +38,8 @@ const OutcomeTag = ({issue, isUnderCause = false}: {issue: WorkspaceIssue; isUnd
     );
 };
 
-/** Shows a file name or a path. A long path breaks after a slash where it can. */
-const FileName = ({text}: {text: string}) => (
-    <span className="file-name">
-        {text.split(/(?<=\/)/).map((piece, index) => (
-            <React.Fragment key={index}>
-                {index > 0 && <wbr />}
-                {piece}
-            </React.Fragment>
-        ))}
-    </span>
-);
-
 /** Shows a report line, with the file names and paths in a monospace font. */
-const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => (
-    <span>{splitFileNames(text, issue.subject, issue.label).map((part, index) => (part.isFile ? <FileName key={index} text={part.text} /> : <React.Fragment key={index}>{part.text}</React.Fragment>))}</span>
-);
+const IssueText = ({issue, text}: {issue: WorkspaceIssue; text: string}) => <FileNameText text={text} subject={issue.subject} label={issue.label} />;
 
 /** Lists widgets by their titles, after the text that says what they show now. */
 const WidgetGroupLine = ({group, isUnderCause, titleOfWidget}: {group: WidgetGroup; isUnderCause: boolean; titleOfWidget: (widgetId: string) => string}) => (
@@ -81,7 +76,13 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const groups = groupRestoreReport(issues);
     const titleOfWidget = (widgetId: string) => appStore.widgetsStore.titleOfWidget(widgetId);
     const hasConsequences = groups.leftOut.some(item => item.leftOut.length > 0 || item.widgets.length > 0 || item.changed.length > 0);
-    const repointed = [...(report?.repointed?.images.values() ?? []), ...(report?.repointed?.catalogs.values() ?? [])].map(({to}) => to);
+    // The file that the workspace saved, and the file that the user chose for it.
+    const repointed = [
+        ...[...(report?.repointed?.images.values() ?? [])].map(({from, to}) => ({from: describeImageSource(from), to})),
+        ...[...(report?.repointed?.catalogs.values() ?? [])].map(({from, to}) => ({from: describeCatalogSource(from), to}))
+    ];
+    const leftOutCount = issues.filter(issue => issue.outcome).length;
+    const changedCount = issues.length - leftOutCount;
     const writeBack = appStore.workspaceWriteBack;
 
     return (
@@ -100,9 +101,22 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             canOutsideClickClose={false}
         >
             <div className={Classes.DIALOG_BODY}>
+                <div className="report-summary" data-testid="workspace-restore-report-summary">
+                    {leftOutCount > 0 && (
+                        <Tag minimal intent={Intent.WARNING}>
+                            {countOf(leftOutCount, "item", "items")} not restored
+                        </Tag>
+                    )}
+                    {changedCount > 0 && <Tag minimal>{countOf(changedCount, "item", "items")} restored with changes</Tag>}
+                    {repointed.length > 0 && (
+                        <Tag minimal intent={Intent.PRIMARY}>
+                            {countOf(repointed.length, "file", "files")} from a new location
+                        </Tag>
+                    )}
+                </div>
                 {groups.leftOut.length > 0 && (
                     <section data-testid="workspace-restore-report-left-out">
-                        <H4>Not restored</H4>
+                        <SectionTitle icon="remove">Not restored</SectionTitle>
                         <p>{hasConsequences ? "These items are not in the session. Under each item is what was left out or changed because of it." : "These items are not in the session."}</p>
                         <ul role="list">
                             {groups.leftOut.map((item, index) => (
@@ -136,7 +150,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                 )}
                 {groups.changed.length > 0 && (
                     <section data-testid="workspace-restore-report-changed">
-                        <H4>Restored with changes</H4>
+                        <SectionTitle icon="changes">Restored with changes</SectionTitle>
                         <p>These items are in the session, but not as they were saved.</p>
                         <ul role="list">
                             {groups.changed.map((item, index) =>
@@ -153,12 +167,37 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                 )}
                 {repointed.length > 0 && (
                     <section data-testid="workspace-restore-report-repointed">
-                        <H4>Opened from new locations ({repointed.length})</H4>
-                        <p>{report?.storedName !== undefined ? "The stored workspace still names the old files until you save the new locations in it." : "This workspace cannot be changed, so it keeps the old locations."}</p>
-                        <ul>
-                            {repointed.map((source, index) => (
-                                <li key={index}>
-                                    <span>{pathOf(source.directory, source.filename)}</span>
+                        <div className="report-section-header">
+                            <SectionTitle icon="folder-shared-open">Opened from new locations</SectionTitle>
+                            {report?.storedName !== undefined && (
+                                <Tooltip content={writeBack === "outdated" ? "The stored workspace changed after this restore, so it was not changed" : "Change only the locations of these files in the stored workspace"}>
+                                    <AnchorButton
+                                        size="small"
+                                        icon={writeBack === "written" ? "tick" : "floppy-disk"}
+                                        loading={writeBack === "writing"}
+                                        disabled={writeBack !== "none"}
+                                        onClick={appStore.writeBackRepointedLocations}
+                                        data-testid="workspace-restore-report-write-back-button"
+                                    >
+                                        {writeBack === "written" ? "Saved in workspace" : writeBack === "outdated" ? "Not saved" : "Save in workspace"}
+                                    </AnchorButton>
+                                </Tooltip>
+                            )}
+                        </div>
+                        <p>{report?.storedName !== undefined ? "The stored workspace still names the old files." : "This workspace cannot be changed, so it keeps the old locations."}</p>
+                        <ul role="list">
+                            {repointed.map(({from, to}, index) => (
+                                <li key={index} className="repointed-item">
+                                    <div>
+                                        <FileName text={from} />
+                                        <Icon icon="arrow-right" size={12} className="repointed-arrow" />
+                                        <FileName text={to.filename} />
+                                    </div>
+                                    {/* The file browser names a folder from the top-level folder, so the path has no leading slash. */}
+                                    <div className="repointed-folder">
+                                        Folder: {to.directory ? <FileName text={to.directory} /> : "the top-level folder"}
+                                        {to.directory ? " (from the top-level folder)" : ""}
+                                    </div>
                                 </li>
                             ))}
                         </ul>
@@ -167,19 +206,6 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                    {repointed.length > 0 && report?.storedName !== undefined && (
-                        <Tooltip content="Change only the locations of these files in the stored workspace">
-                            <AnchorButton
-                                icon={writeBack === "written" ? "tick" : "floppy-disk"}
-                                loading={writeBack === "writing"}
-                                disabled={writeBack !== "none"}
-                                onClick={appStore.writeBackRepointedLocations}
-                                data-testid="workspace-restore-report-write-back-button"
-                            >
-                                {writeBack === "written" ? "New locations saved" : writeBack === "outdated" ? "New locations not saved" : "Save new locations in workspace"}
-                            </AnchorButton>
-                        </Tooltip>
-                    )}
                     <AnchorButton intent={Intent.PRIMARY} onClick={appStore.closeWorkspaceRestoreReport} data-testid="workspace-restore-report-close-button">
                         Close
                     </AnchorButton>

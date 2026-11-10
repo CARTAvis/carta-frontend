@@ -20,7 +20,62 @@
     }
 
     section + section {
-        margin-top: 16px;
+        margin-top: 20px;
+    }
+
+    // Count the items of each section in one line at the top.
+    .report-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .report-section-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 4px;
+
+        .#{$ns}-icon {
+            color: $pt-icon-color;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-icon-color;
+            }
+        }
+    }
+
+    // Put the button that saves the new locations at the right of the section title.
+    .report-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 4px;
+
+        .report-section-title {
+            margin: 0;
+        }
+    }
+
+    li.repointed-item {
+        display: block;
+
+        .repointed-arrow {
+            margin: 0 6px;
+            vertical-align: middle;
+        }
+
+        .repointed-folder {
+            margin-top: 2px;
+            font-size: 12px;
+            color: $pt-text-color-muted;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-text-color-muted;
+            }
+        }
     }
 
     ul {
@@ -77,16 +132,5 @@
     .outcome-tag {
         flex-shrink: 0;
         min-width: 80px;
-    }
-
-    // Show file names and paths in a monospace font, so that they stand out from the words around them.
-    .file-name {
-        font-family: $pt-font-family-monospace;
-        font-size: 12px;
-        padding: 0 2px;
-        margin: 0 -1px;
-        border-radius: 3px;
-        background: rgba($gray3, 0.15);
-        overflow-wrap: anywhere;
     }
 }

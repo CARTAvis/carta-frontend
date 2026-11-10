@@ -8,7 +8,26 @@
     }
 
     .workspace-recovery {
+        .recovery-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .recovery-status {
+            color: $pt-text-color-muted;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-text-color-muted;
+            }
+        }
+
         ul {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             max-height: 50vh;
             margin: 0;
             padding: 0;
@@ -16,26 +35,69 @@
             list-style: none;
         }
 
-        li {
-            padding: 8px 0;
+        // Show each item in a box, with its text at the left and its choices at the right.
+        .recovery-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 8px 12px;
+            padding: 10px 12px;
+            border: 1px solid $pt-divider-black;
+            border-radius: $pt-border-radius;
             overflow-wrap: anywhere;
 
-            & + li {
-                border-top: 1px solid $pt-divider-black;
+            .#{$ns}-dark & {
+                border-color: $pt-dark-divider-white;
+            }
+        }
+
+        .recovery-label {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+
+            .#{$ns}-icon {
+                flex-shrink: 0;
+                position: relative;
+                top: 2px;
+            }
+        }
+
+        .recovery-reason,
+        .recovery-note {
+            margin-top: 2px;
+            margin-left: 20px;
+            font-size: 12px;
+            color: $pt-text-color-muted;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-text-color-muted;
+            }
+        }
+
+        .recovery-location {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-left: 4px;
+            color: $pt-intent-primary;
+
+            .#{$ns}-dark & {
+                color: $blue5;
             }
         }
 
         .recovery-actions {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 6px;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
         }
+    }
 
-        .recovery-note {
-            margin-top: 4px;
-            color: $pt-text-color-muted;
-        }
+    // Cancel stands apart at the left of the footer.
+    .restore-cancel-apart {
+        margin-right: auto;
     }
 
     .restore-stage {

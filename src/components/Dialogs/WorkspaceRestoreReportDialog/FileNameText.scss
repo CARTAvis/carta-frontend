@@ -1,0 +1,12 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+// Show file names and paths in a monospace font, so that they stand out from the words around them.
+.workspace-file-name {
+    font-family: $pt-font-family-monospace;
+    font-size: 12px;
+    padding: 0 2px;
+    margin: 0 -1px;
+    border-radius: 3px;
+    background: rgba($gray3, 0.15);
+    overflow-wrap: anywhere;
+}
