@@ -1329,7 +1329,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Stage 3b: make the moment and PV images again, in the saved order, each from its restored
-     * image and over its restored region. A request can use an image, or a region on an image, that
+     * image and over its restored region. A request that is retried, or that waits for its image,
+     * runs after the others. A request can use an image, or a region on an image, that
      * an earlier request made. So configure the images of each request before the next request is
      * made.
      */
@@ -2194,9 +2195,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Returns how the restore report names a catalog, such as "The catalog sources.vot" or "The
-     * SIMBAD catalog on cube.fits". The name of the image tells apart two online catalogs from the
-     * same service.
+     * Returns how the restore report and the progress name a catalog, such as "The catalog
+     * sources.vot" or "The SIMBAD catalog on cube.fits". The name of the image tells apart two online
+     * catalogs from the same service.
      */
     private labelOfCatalog(catalogInfo: WorkspaceCatalog): string {
         const source = catalogInfo.source;
@@ -2213,7 +2214,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogTask(catalogInfo: WorkspaceCatalog): RestoreTask {
         const state = {source: catalogInfo.source, isRepointed: false};
         return {
-            subject: () => describeCatalogSource(state.source),
+            subject: () => (state.source.type === "file" ? describeCatalogSource(state.source) : this.labelOfCatalog(catalogInfo)),
             imageIds: [],
             catalogIds: [catalogInfo.id],
             attempt: () => this.attemptCatalog(catalogInfo, state),
@@ -2348,7 +2349,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (!this.isCurrent) {
                 return;
             }
-            this.showProgress("Applying the catalog settings", index + 1, catalogs.length, describeCatalogSource(catalogInfo.source));
+            this.showProgress("Applying the catalog settings", index + 1, catalogs.length, catalogInfo.source.type === "file" ? describeCatalogSource(catalogInfo.source) : this.labelOfCatalog(catalogInfo));
             const request = this.startCatalogConfig(catalogInfo);
             if (!request) {
                 continue;
