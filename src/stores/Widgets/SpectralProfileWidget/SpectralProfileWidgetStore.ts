@@ -1431,7 +1431,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             regionId: this.momentRegionId,
             ...(isWholeAxis ? {} : {channelRange: [channelMin, channelMax], channelUnit: this.spectralUnitOf(false)}),
             mask: this.momentMask,
-            ...(maskMin === 0 && maskMax === 1 ? {} : {maskRange: [maskMin, maskMax], maskUnit: this.intensityUnitOf(false)})
+            ...(maskMin === 0 && maskMax === 1 ? {} : {maskRange: [maskMin, maskMax], maskUnit: this.intensityUnitOf(false)}),
+            ...(this.shouldKeep ? {keep: true} : {})
         };
     };
 
@@ -1556,6 +1557,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
 
     @action private applyWorkspaceMoments = (moments: WorkspaceSpectralMoments, imageId: number | undefined, ids: WorkspaceIdReader): string[] => {
         const problems: string[] = [];
+        this.setKeep(moments.keep === true);
         if (Array.isArray(moments.moments)) {
             const selected = moments.moments.filter(moment => Object.values(CARTA.Moment).includes(moment));
             this.selectedMoments = selected.filter((moment, index) => selected.indexOf(moment) === index && this.isMomentSupported(moment));

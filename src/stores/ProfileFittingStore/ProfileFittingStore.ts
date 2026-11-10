@@ -510,6 +510,8 @@ export class ProfileFittingStore {
             autoDetectWithContinuum: this.isAutoDetectWithCont,
             autoDetectWithFitting: this.isAutoDetectWithFitting,
             residualVisible: this.isResidualEnabled,
+            ...(this.selectedIndex > 0 ? {selectedComponent: this.selectedIndex} : {}),
+            ...(this.hasAutoDetectResult ? {autoDetectedComponents: this.detectedComponentN} : {}),
             xUnit,
             yUnit,
             ...(this.hasResult ? {result: this.toWorkspaceResult()} : {})
@@ -582,6 +584,15 @@ export class ProfileFittingStore {
         this.setIsAutoDetectWithCont(isTrue(config.autoDetectWithContinuum));
         this.setIsAutoDetectWithFitting(isTrue(config.autoDetectWithFitting));
         this.setEnableResidual(config.residualVisible !== false);
+        const selected = config.selectedComponent;
+        if (typeof selected === "number" && Number.isInteger(selected) && selected >= 0 && selected < this.components.length) {
+            this.setSelectedIndex(selected);
+        }
+        const detected = config.autoDetectedComponents;
+        if (typeof detected === "number" && Number.isInteger(detected) && detected >= 0) {
+            this.setDetectedComponentN(detected);
+            this.setHasAutoDetectResult(true);
+        }
         if (shouldApplyGuesses) {
             this.applyWorkspaceResult(config.result);
         }

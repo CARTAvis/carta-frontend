@@ -697,6 +697,10 @@ export interface WorkspaceSpectralFitting {
     autoDetectWithContinuum: boolean;
     autoDetectWithFitting: boolean;
     residualVisible: boolean;
+    /** The component whose guesses the settings show, counted from 0. Left out for the first component. */
+    selectedComponent?: number;
+    /** How many components auto detect found, when the settings show its message. Left out when auto detect has not run. */
+    autoDetectedComponents?: number;
     /**
      * The units of the x and y axes that the guesses are in, such as "Frequency (GHz), LSRK, rest
      * frame" and "Jy/beam". A restore applies the guesses only when it shows the same profile in
@@ -782,6 +786,8 @@ export interface WorkspaceSpectralMoments {
     /** The range of pixel values that the mask uses, in the units of `maskUnit`. Left out when it is the default, 0 to 1. */
     maskRange?: [number, number];
     maskUnit?: string;
+    /** Whether new moment images keep the moment images made before them. Left out when they replace them. */
+    keep?: boolean;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */
