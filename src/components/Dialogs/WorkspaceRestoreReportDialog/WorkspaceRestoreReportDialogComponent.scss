@@ -91,9 +91,47 @@
         padding: 4px 0;
     }
 
-    // Stack the lines of a left-out item. The item shows what it caused below its own line.
-    li.left-out-item {
+    // Say what a section holds in a smaller, lighter line under its title.
+    section > p {
+        margin: 0 0 8px;
+        font-size: 12px;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
+    // Show each item of a section in a box, as the Recovery items are.
+    section > ul {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        > li {
+            padding: 8px 12px;
+            border: 1px solid $pt-divider-black;
+            border-radius: $pt-border-radius;
+
+            .#{$ns}-dark & {
+                border-color: $pt-dark-divider-white;
+            }
+        }
+    }
+
+    // Stack the lines of a left-out item. The item shows what it caused below its own line. The left
+    // edge of the box has the color of the outcome.
+    section > ul > li.left-out-item {
         display: block;
+        border-left-width: 3px;
+
+        &.is-skipped {
+            border-left-color: $orange3;
+        }
+
+        &.is-failed {
+            border-left-color: $red3;
+        }
 
         .issue {
             display: flex;
@@ -102,15 +140,16 @@
         }
     }
 
-    // Indent the list of what an item caused, so that its left line starts under the text of the
-    // item, after the outcome tag.
+    // List what an item caused under a line, so that it starts under the text of the item, after the
+    // outcome tag.
     .consequences {
-        margin: 4px 0 0 88px;
-        padding-left: 12px;
-        border-left: 2px solid rgba($gray3, 0.4);
+        margin: 8px 0 0 88px;
+        padding-top: 6px;
+        border-top: 1px dashed $pt-divider-black;
         color: $pt-text-color-muted;
 
         .#{$ns}-dark & {
+            border-top-color: $pt-dark-divider-white;
             color: $pt-dark-text-color-muted;
         }
 

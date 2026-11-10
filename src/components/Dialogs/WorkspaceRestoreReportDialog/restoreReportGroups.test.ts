@@ -184,8 +184,9 @@ describe("finding the file names in a report line", () => {
         expect(files("The PV image of cube.fits.moment.maximum", "the PV image of cube.fits.moment.maximum")).toEqual(["cube.fits.moment.maximum"]);
     });
 
-    test("finds a file name in the label, but not the host name of a mirror in the reason", () => {
-        expect(files("The SIMBAD catalog on cube.fits: Mirror simbad.u-strasbg.fr did not respond", "from the SIMBAD query", "The SIMBAD catalog on cube.fits")).toEqual(["cube.fits"]);
+    test("finds a file name in the label, and the host of a mirror in the reason", () => {
+        expect(files("The SIMBAD catalog on cube.fits: Mirror simbad.u-strasbg.fr did not respond", "from the SIMBAD query", "The SIMBAD catalog on cube.fits")).toEqual(["cube.fits", "simbad.u-strasbg.fr"]);
+        expect(files("Request to mirror vizier.cds.unistra.fr failed.", "from the VizieR query")).toEqual(["vizier.cds.unistra.fr"]);
     });
 
     test("finds a file name with a space when it is the whole subject", () => {
@@ -196,8 +197,8 @@ describe("finding the file names in a report line", () => {
         expect(files("File /data/cube.fits.", "cube.fits")).toEqual(["/data/cube.fits"]);
     });
 
-    test("finds no file name in a URL, a version or a line without file names", () => {
-        expect(files("The HiPS image of https://alasky.cds.unistra.fr/DSS/DSS2", "the HiPS image of https://alasky.cds.unistra.fr/DSS/DSS2")).toEqual([]);
+    test("finds a whole URL, and no file name in a version or a line without file names", () => {
+        expect(files("The HiPS image of https://alasky.cds.unistra.fr/DSS/DSS2.", "the HiPS image of https://alasky.cds.unistra.fr/DSS/DSS2")).toEqual(["https://alasky.cds.unistra.fr/DSS/DSS2"]);
         expect(files("The image v1.2 of cube", "v1.2")).toEqual([]);
         expect(files("The catalog from the SIMBAD query", "from the SIMBAD query")).toEqual([]);
     });
