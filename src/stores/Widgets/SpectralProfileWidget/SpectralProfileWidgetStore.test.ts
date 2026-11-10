@@ -1044,6 +1044,25 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             });
         });
 
+        test("saves the component that the fitting settings show, the auto detect message and the keep switch of the moments, and applies them again", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.fittingStore.setComponents(3);
+                widgetStore.fittingStore.setSelectedIndex(1);
+                widgetStore.fittingStore.setDetectedComponentN(3);
+                widgetStore.fittingStore.setHasAutoDetectResult(true);
+                widgetStore.setKeep(true);
+            });
+
+            const config = widgetStore.toWorkspaceConfig(savesTheImage);
+            expect([config.fitting?.selectedComponent, config.fitting?.autoDetectedComponents, config.moments?.keep]).toEqual([1, 3, true]);
+
+            const restored = createFittingWidgetStore().widgetStore;
+            restore(restored, {...onRegion5, fitting: config.fitting, moments: config.moments});
+            const fitting = restored.fittingStore;
+            expect([fitting.selectedIndex, fitting.hasAutoDetectResult, fitting.detectedComponentN, restored.shouldKeep]).toEqual([1, true, 3, true]);
+        });
+
         test("names the rest frame in the units of the fitting guesses, and not in the units of the moment ranges", () => {
             const {widgetStore} = createFittingWidgetStore();
             runInAction(() => {
