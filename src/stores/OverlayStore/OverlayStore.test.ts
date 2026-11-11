@@ -289,6 +289,18 @@ describe("the WCS overlay in a layout", () => {
         expect(problems).toEqual(["Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially"]);
     });
 
+    test("keeps image coordinates when the images were matched in image coordinates, as a workspace restore matches them", () => {
+        const reference = {spatialReference: null};
+        mockAppStore.frames = [reference, {spatialReference: reference}];
+        const overlay = createOverlay();
+        overlay.global.system = SystemType.Image;
+
+        const problems = overlay.applyConfig({global: {system: SystemType.Image}});
+
+        expect(overlay.global.system).toBe(SystemType.Image);
+        expect(problems).toEqual([]);
+    });
+
     test("keeps a custom number format when the system that the layout saved gives other formats", () => {
         const overlay = createOverlay();
         overlay.global.setValidWcs(true);

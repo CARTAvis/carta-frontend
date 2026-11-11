@@ -134,7 +134,8 @@ export class FileBrowserStore {
             const mode: BrowserMode.File | BrowserMode.Catalog = kind === "image" ? BrowserMode.File : BrowserMode.Catalog;
             const pick = {mode, resolve};
             this.setFilePick(pick);
-            this.openFileBrowser(mode, false);
+            // The Workspace dialog stays open when it asks for the file. A restore has closed it already.
+            this.openFileBrowser(mode, false, true);
             // The browser can also be closed by another dialog. The pick ends then too.
             const disposeReaction = reaction(
                 () => this.filePick === pick && !!DialogStore.Instance.dialogVisible.get(DialogId.FileBrowser),
@@ -206,10 +207,10 @@ export class FileBrowserStore {
         this.openFileBrowser(mode, shouldAppend);
     };
 
-    @action private openFileBrowser = (mode: BrowserMode, shouldAppend: boolean) => {
+    @action private openFileBrowser = (mode: BrowserMode, shouldAppend: boolean, shouldKeepWorkspaceDialog = false) => {
         this.isAppendingFrame = shouldAppend;
         this.browserMode = mode;
-        DialogStore.Instance.showDialog(DialogId.FileBrowser);
+        DialogStore.Instance.showDialog(DialogId.FileBrowser, {shouldKeepWorkspaceDialog});
         this.fileList = null;
         this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";

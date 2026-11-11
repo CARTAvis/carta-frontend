@@ -5,10 +5,9 @@
         height: 100%;
         overflow: hidden;
         margin-top: 10px;
-
         margin-bottom: 5px;
 
-        .#{$ns}-input-group {
+        .workspace-name-input {
             margin: 10px 2px 2px;
         }
     }
@@ -19,64 +18,107 @@
         display: flex;
         margin: 0 2px 2px;
 
-        .workspace-table-container {
+        .workspace-list-container {
+            flex: none;
+            width: 260px;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 0 1px rgba($black, 0.15);
+        }
 
-            .#{$ns}-non-ideal-state {
-                position: absolute;
-                z-index: 1;
+        .workspace-search-input {
+            margin: 6px;
+        }
+
+        .workspace-list-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 100px;
+            border-bottom: 1px solid rgba($black, 0.15);
+
+            .sort-button {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                padding: 4px 8px;
+                border: none;
+                background: none;
+                color: inherit;
+                font-size: $pt-font-size-small;
+                text-align: left;
+                cursor: pointer;
+
+                &:hover {
+                    background-color: rgba($gray3, 0.15);
+                }
+            }
+        }
+
+        .workspace-list {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .workspace-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 100px;
+            line-height: 24px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid rgba($black, 0.08);
+
+            > span {
+                padding: 0 8px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .time-cell {
+                color: $pt-text-color-muted;
+            }
+
+            &:hover {
+                background-color: rgba($gray3, 0.15);
+            }
+
+            &.is-selected {
+                background-color: rgba($blue3, 0.2);
+
+                .time-cell {
+                    color: inherit;
+                }
             }
         }
 
         .workspace-info-container {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
         }
     }
 
-    .workspace-table {
-        box-shadow: inset 0 0 0 1px rgba($black, 0.15) !important;
-
-        .#{$ns}-icon {
-            color: $gray2;
+    &.#{$ns}-dark .workspace-container {
+        .workspace-list-container {
+            box-shadow: inset 0 0 0 1px rgba($black, 0.4);
         }
 
-        .#{$ns}-table-cell {
-            user-select: text;
-            cursor: pointer;
-            box-shadow:
-                inset 0 -1px 0 rgba($black, 0.15),
-                inset -1px 0 0 rgba($black, 0.05) !important;
-            line-height: 22px;
-            height: 22px;
+        .workspace-list-header {
+            border-bottom-color: rgba($black, 0.4);
         }
 
-        &.#{$ns}-dark {
-            box-shadow: inset 0 0 0 1px rgba($black, 0.4) !important;
+        .workspace-row {
+            border-bottom-color: rgba($white, 0.06);
 
-            .#{$ns}-icon {
-                color: $gray4;
+            .time-cell {
+                color: $pt-dark-text-color-muted;
             }
 
-            .#{$ns}-table-cell {
-                user-select: text;
-                box-shadow:
-                    inset 0 -1px 0 rgba($black, 0.4),
-                    inset -1px 0 0 rgba($black, 0.1) !important;
+            &.is-selected .time-cell {
+                color: inherit;
             }
-
-            .#{$ns}-table-quadrant {
-                background-color: $pt-dark-code-background-color !important;
-            }
-        }
-
-        padding: 1px;
-
-        .#{$ns}-table-selection-region {
-            left: 0 !important;
-            right: 0 !important;
-            width: auto !important;
         }
     }
 }
