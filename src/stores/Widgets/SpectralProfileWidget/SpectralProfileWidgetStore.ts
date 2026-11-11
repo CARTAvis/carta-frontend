@@ -37,6 +37,7 @@ import {
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
+    type WorkspaceSpectralMoments,
     type WorkspaceSpectralProfileWidgetConfig
 } from "models";
 import {TelemetryService} from "services";
@@ -58,6 +59,19 @@ import {
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
+
+/** Returns the name of a unit for a sentence, such as "Jy/beam" in quotes. An empty unit, as for a profile without an intensity unit, is "no unit". */
+function describeUnit(unit: unknown): string {
+    return typeof unit === "string" && unit ? `"${unit}"` : "no unit";
+}
+
+function describeUnits(xUnit: unknown, yUnit: unknown): string {
+    return `${describeUnit(xUnit)} on the x axis and ${describeUnit(yUnit)} on the y axis`;
+}
+
+function isRange(range: unknown): range is [number, number] {
+    return Array.isArray(range) && range.length === 2 && range.every(value => typeof value === "number" && isFinite(value));
+}
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
 type XTransformTarget = "display" | "observed";
@@ -554,6 +568,29 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             )
         );
 
+        // Clear the fitting when the widget shows another profile. Do not clear it when more data of
+        // the same profile arrives. Then the guesses that the user typed or that a workspace
+        // restored stay while a large cube streams its profile.
+        this.disposers.push(
+            reaction(
+                () => this.fittedProfileKey,
+                () => this.fittingStore.reset()
+            )
+        );
+
+        // Show a restored fit result when the whole profile has arrived. The residual is computed
+        // from the profile, so a part of the profile is not enough.
+        this.disposers.push(
+            reaction(
+                () => this.fittingStore.isWaitingForWorkspaceResult && this.isFittingProfileComplete,
+                isReady => {
+                    if (isReady) {
+                        this.fittingStore.showWorkspaceResult();
+                    }
+                }
+            )
+        );
+
         this.disposers.push(
             reaction(
                 () => this.yAxisRestFrameScale,
@@ -780,6 +817,46 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             `y-axis flux-density transformation: ${this.isYAxisRestFrameActive ? "F_nu,rest = F_nu,observed / (1 + z)" : "not applied"}`,
             this.restFrameShiftMode === RestFrameShiftMode.RADIAL_VELOCITY ? `radial velocity (${this.restFrameVelocityConvention}, km/s): ${this.restFrameRadialVelocity}` : `redshift (z): ${this.restFrameRedshift}`
         ];
+    }
+
+    /**
+     * Returns a key for the profile that fitting uses, without the data of the profile: the image,
+     * the region and its shape, the statistic, the Stokes, the spectral axis, the intensity unit
+     * and the type of smoothing. The key changes when the widget shows another profile, and not when
+     * more data of the same profile arrives. The key leaves out the region name. Then renaming the
+     * region keeps the fitting. The key also leaves out the size of the smoothing.
+     */
+    @computed private get fittedProfileKey(): string {
+        const profile = this.profileSelectionStore.profiles[0];
+        if (!profile) {
+            return "";
+        }
+        const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
+        const region = profile.regionId === null ? undefined : frame?.getRegion(profile.regionId);
+        const channelValues = profile.channelValues;
+        const selection = this.profileSelectionStore;
+        return JSON.stringify([
+            profile.fileId,
+            profile.regionId,
+            region?.controlPoints,
+            region?.rotation,
+            selection.selectedStatsTypes,
+            selection.selectedCoordinates,
+            // The coordinate "z" follows the Stokes of the image. When that Stokes changes, the
+            // profile changes. A profile in a fixed Stokes, such as "Iz", stays the same.
+            selection.selectedCoordinates[0] === "z" ? frame?.requiredStokes : undefined,
+            channelValues?.[0],
+            channelValues?.[channelValues.length - 1],
+            channelValues?.length,
+            profile.intensityUnit,
+            this.intensityUnit,
+            this.smoothingStore.type
+        ]);
+    }
+
+    /** Whether all the data of the profile that fitting uses has arrived. Auto detect and Fit wait for it. Then they never use only a part of the profile. */
+    @computed get isFittingProfileComplete(): boolean {
+        return (this.profileSelectionStore.profiles[0]?.data?.progress ?? 0) >= 1;
     }
 
     @computed get displayChannelValueRange(): NumberRange {
@@ -1313,7 +1390,49 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
             ...(this.spectralLinesMHz.length ? {spectralLines: this.spectralLinesMHz.map(({species, value, qn}) => ({species, value, qn}))} : {}),
-            ...(this.isShowingSavedImage(ids) ? toWorkspacePlotRange(this) : {})
+            ...(this.isShowingSavedImage(ids)
+                ? {
+                      ...toWorkspacePlotRange(this),
+                      fitting: this.fittingStore.toWorkspaceConfig(this.spectralUnitOf(this.isXAxisRestFrameActive), this.intensityUnitOf(this.isYAxisRestFrameActive)),
+                      moments: this.toWorkspaceMoments()
+                  }
+                : {})
+        };
+    };
+
+    /**
+     * Returns the name of the spectral coordinate of the x values, such as "Frequency (GHz), LSRK,
+     * rest frame". A restore compares the saved name with the current name. This checks that the
+     * saved values still fit.
+     */
+    private spectralUnitOf = (isRestFrame: boolean): string => {
+        const frame = this.effectiveFrame;
+        return [frame?.spectralCoordinate, frame?.spectralSystem, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
+    };
+
+    /** Returns the name of the unit of the y values, such as "Jy/beam" or "Jy/beam, rest frame". */
+    private intensityUnitOf = (isRestFrame: boolean): string => {
+        return [this.yUnit, isRestFrame ? "rest frame" : undefined].filter(Boolean).join(", ");
+    };
+
+    /**
+     * Returns the moment generator settings. The ranges are in the observed frame, as the store
+     * keeps them. Leaves out a range that is the default: a channel range of the whole spectral
+     * axis, or a mask range of 0 to 1. Then a restore in other units does not report a range that
+     * the user did not choose.
+     */
+    private toWorkspaceMoments = (): WorkspaceSpectralMoments => {
+        const bounds = this.effectiveFrame?.channelValueBounds;
+        const [channelMin, channelMax] = this.channelValueRange;
+        const [maskMin, maskMax] = this.maskRange;
+        const isWholeAxis = !bounds || (channelMin === bounds.min && channelMax === bounds.max);
+        return {
+            moments: [...this.selectedMoments],
+            regionId: this.momentRegionId,
+            ...(isWholeAxis ? {} : {channelRange: [channelMin, channelMax], channelUnit: this.spectralUnitOf(false)}),
+            mask: this.momentMask,
+            ...(maskMin === 0 && maskMax === 1 ? {} : {maskRange: [maskMin, maskMax], maskUnit: this.intensityUnitOf(false)}),
+            ...(this.shouldKeep ? {keep: true} : {})
         };
     };
 
@@ -1381,18 +1500,99 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         if (config.intensityUnit !== undefined) {
             this.setMultiProfileIntensityUnit(config.intensityUnit);
         }
-        // A zoom range belongs to the profiles shown. Drop it when some of the profiles were not
-        // restored.
+        // The zoom range and the fitting guesses belong to the profiles shown. Drop them when some of
+        // the profiles were not restored.
         if (problems.length) {
             this.isShowingWorkspaceData = false;
         }
         return problems;
     };
 
-    public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig): void => {
+    /**
+     * Zooms the widget to its saved range, and applies the fitting and moment generator settings.
+     * Apply these settings in this last step. The earlier steps change the image, the profile and
+     * the rest frame. Those changes reset the fitting and the moment settings.
+     */
+    @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }
+        // The settings belong to the image that the widget showed. When that image was not
+        // restored, skip them. The first step already reported the image.
+        const isShowingSavedImage = config.imageId === undefined ? ids.wasActiveImageRestored() : ids.fileIdOf(config.imageId) !== undefined;
+        if (!isShowingSavedImage) {
+            return [];
+        }
+        const problems: string[] = [];
+        const fitting = config.fitting;
+        if (fitting && typeof fitting === "object") {
+            const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
+            const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
+            const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
+            // The guesses belong to the profile that was fitted. When the first two steps could not
+            // show that profile again, the guesses are 0. For example, its region was not restored. A
+            // workspace does not save the cursor position. So the guesses of a cursor profile are 0
+            // too.
+            const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;
+            const isSameProfile = this.isShowingWorkspaceData && !isCursorProfile;
+            this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
+            const hasResult = !!fitting.result && typeof fitting.result === "object";
+            if (ProfileFittingStore.hasWorkspaceGuesses(fitting) || hasResult) {
+                const zero = hasResult ? "the guesses are 0, and the fit result is not shown" : "the guesses are 0";
+                if (!this.isShowingWorkspaceData) {
+                    problems.push(`the profile that its fitting guesses were made for was not restored, so ${zero}`);
+                } else if (isCursorProfile) {
+                    problems.push(`its fitting guesses were made for the profile at the cursor, whose position is not saved, so ${zero}`);
+                } else if (!isSameUnits) {
+                    problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The ${zero.slice("the ".length)}`);
+                }
+            }
+        }
+        const moments = config.moments;
+        if (moments && typeof moments === "object") {
+            problems.push(...this.applyWorkspaceMoments(moments, config.imageId, ids));
+        }
+        return problems;
+    };
+
+    @action private applyWorkspaceMoments = (moments: WorkspaceSpectralMoments, imageId: number | undefined, ids: WorkspaceIdReader): string[] => {
+        const problems: string[] = [];
+        this.setKeep(moments.keep === true);
+        if (Array.isArray(moments.moments)) {
+            const selected = moments.moments.filter(moment => Object.values(CARTA.Moment).includes(moment));
+            this.selectedMoments = selected.filter((moment, index) => selected.indexOf(moment) === index && this.isMomentSupported(moment));
+        }
+        if (Object.values(CARTA.MomentMask).includes(moments.mask)) {
+            this.setMomentMask(moments.mask);
+        }
+        if (moments.regionId === RegionId.IMAGE || moments.regionId === RegionId.ACTIVE) {
+            this.selectMomentRegion(moments.regionId);
+        } else if (typeof moments.regionId === "number") {
+            const regionId = ids.regionIdOf(imageId, moments.regionId);
+            if (regionId !== undefined) {
+                this.selectMomentRegion(regionId);
+            } else {
+                this.selectMomentRegion(RegionId.IMAGE);
+                problems.push("the region that its moments were made from was not restored, so the moments are made from the whole image");
+            }
+        }
+        if (isRange(moments.channelRange)) {
+            const unit = this.spectralUnitOf(false);
+            if (moments.channelUnit === unit) {
+                this.setSelectedChannelRange(moments.channelRange[0], moments.channelRange[1]);
+            } else {
+                problems.push(`the spectral range of its moments was in ${describeUnit(moments.channelUnit)}, but the profile now shows ${describeUnit(unit)}. The range covers the whole spectral axis`);
+            }
+        }
+        if (isRange(moments.maskRange)) {
+            const unit = this.intensityUnitOf(false);
+            if (moments.maskUnit === unit) {
+                this.setSelectedMaskRange(moments.maskRange[0], moments.maskRange[1]);
+            } else {
+                problems.push(`the mask range of its moments was in ${describeUnit(moments.maskUnit)}, but the profile now shows ${describeUnit(unit)}. The mask range keeps its default`);
+            }
+        }
+        return problems;
     };
 
     public toConfig = (): SpectralProfileWidgetConfig => {

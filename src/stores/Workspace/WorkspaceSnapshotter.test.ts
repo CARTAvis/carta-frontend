@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
 import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
@@ -94,6 +95,8 @@ function createSession(overrides: Record<string, any> = {}) {
             }))
         },
         getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
+        // The Image Fitting dialog fits the active image over the field of view, as it does by default.
+        imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
@@ -640,6 +643,38 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(new WorkspaceSnapshotter().capture().workspace.files?.[0].imageListIndex).toBe(3);
         expect(appStore.imageViewConfigStore.getImageListIndex).toHaveBeenCalledWith(ImageType.FRAME, 0);
+    });
+
+    test("saves the result of the last image fitting of an image, with a rotation that is not finite as 0", () => {
+        const {frame} = createSession();
+        Object.assign(frame, {
+            fittingResult: "Component #1",
+            fittingLog: "the log",
+            fittingResultRegionParams: [
+                {
+                    points: [
+                        {x: 1, y: 2},
+                        {x: 2, y: 2.5}
+                    ],
+                    rotation: NaN
+                }
+            ]
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].fitResult).toEqual({result: "Component #1", log: "the log", ellipses: [{center: {x: 1, y: 2}, size: {x: 2, y: 2.5}, rotation: 0}]});
+    });
+
+    test("saves the image that the Image Fitting dialog fits by its workspace ID, and the active image over the field of view when that image is not saved", () => {
+        const {appStore} = createSession();
+        Object.assign(appStore.imageFittingStore, {selectedFileId: 0, selectedRegionId: 5});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: 1, regionId: 5});
+
+        Object.assign(appStore.imageFittingStore, {selectedFileId: 7});
+        appStore.getFrame = (fileId: number) => (fileId === 7 ? (createFrame(7) as never) : undefined);
+        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: undefined, regionId: 0});
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {

@@ -3,11 +3,13 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {FittingContinuum, FittingFunction} from "enums";
-import {type Point2D} from "models";
+import {type Point2D, type WorkspaceSpectralFitResult, type WorkspaceSpectralFitting} from "models";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
 export class ProfileFittingStore {
+    /** The largest number of components that a restore reads. The panel offers up to 20 components, and auto detect can find more. */
+    public static readonly MAX_WORKSPACE_COMPONENTS = 100;
     @observable function: FittingFunction = FittingFunction.GAUSSIAN;
     @observable components: ProfileFittingIndividualStore[] = [new ProfileFittingIndividualStore()];
     @observable continuum: FittingContinuum = FittingContinuum.NONE;
@@ -32,6 +34,8 @@ export class ProfileFittingStore {
     @observable detectedComponentN: number = 0;
     @observable isResidualEnabled: boolean = true;
     @observable originData: {x: number[]; y: Float32Array | Float64Array} = {x: [], y: new Float32Array()};
+    /** Whether a restored fit result waits for the whole profile. The result is shown when the profile has arrived. */
+    @observable isWaitingForWorkspaceResult: boolean = false;
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
@@ -377,6 +381,7 @@ export class ProfileFittingStore {
         this.setIsCursorSelectingSlope(false);
         this.setIsCursorSelectingComponentOn(false);
         this.setHasAutoDetectResult(false);
+        this.isWaitingForWorkspaceResult = false;
     };
 
     @action setFunction = (val: FittingFunction) => {
@@ -469,6 +474,180 @@ export class ProfileFittingStore {
 
     @action setOriginData = (x: number[], y: Float32Array | Float64Array) => {
         this.originData = {x, y};
+    };
+
+    /** Returns whether saved fitting settings have an initial guess that is not 0. A guess of 0 is the default. */
+    public static hasWorkspaceGuesses = (config: WorkspaceSpectralFitting): boolean => {
+        const isGuess = (value: unknown): boolean => typeof value === "number" && isFinite(value) && value !== 0;
+        const components = Array.isArray(config.components) ? config.components : [];
+        return isGuess(config.yIntercept) || isGuess(config.slope) || components.some(component => isGuess(component?.center) || isGuess(component?.amp) || isGuess(component?.fwhm));
+    };
+
+    /**
+     * Returns the fitting settings that a workspace saves. The fit results are left out.
+     *
+     * @param xUnit - the unit of the x axis that the guesses are in
+     * @param yUnit - the unit of the y axis that the guesses are in
+     */
+    public toWorkspaceConfig = (xUnit: string, yUnit: string): WorkspaceSpectralFitting => {
+        // JSON writes a value that is not finite as null. Save 0, the default, instead.
+        const finite = (value: number): number => (isFinite(value) ? value : 0);
+        return {
+            function: this.function,
+            continuum: this.continuum,
+            yIntercept: finite(this.yIntercept),
+            slope: finite(this.slope),
+            yInterceptLocked: this.isLockedYIntercept,
+            slopeLocked: this.isLockedSlope,
+            components: this.components.map(component => ({
+                center: finite(component.center),
+                amp: finite(component.amp),
+                fwhm: finite(component.fwhm),
+                centerLocked: component.isLockedCenter,
+                ampLocked: component.isLockedAmp,
+                fwhmLocked: component.isLockedFwhm
+            })),
+            autoDetectWithContinuum: this.isAutoDetectWithCont,
+            autoDetectWithFitting: this.isAutoDetectWithFitting,
+            residualVisible: this.isResidualEnabled,
+            ...(this.selectedIndex > 0 ? {selectedComponent: this.selectedIndex} : {}),
+            ...(this.hasAutoDetectResult ? {autoDetectedComponents: this.detectedComponentN} : {}),
+            xUnit,
+            yUnit,
+            ...(this.hasResult ? {result: this.toWorkspaceResult()} : {})
+        };
+    };
+
+    /** Returns the fit result that a workspace saves. JSON cannot write a value that is not finite, so such a value is saved as null. */
+    private toWorkspaceResult = (): WorkspaceSpectralFitResult => {
+        const finiteOrNull = (value: number): number | null => (isFinite(value) ? value : null);
+        return {
+            yIntercept: finiteOrNull(this.resultYIntercept),
+            yInterceptError: finiteOrNull(this.resultYInterceptError),
+            slope: finiteOrNull(this.resultSlope),
+            slopeError: finiteOrNull(this.resultSlopeError),
+            components: this.components.map(component => ({
+                center: finiteOrNull(component.resultCenter),
+                centerError: finiteOrNull(component.resultCenterError),
+                amp: finiteOrNull(component.resultAmp),
+                ampError: finiteOrNull(component.resultAmpError),
+                fwhm: finiteOrNull(component.resultFwhm),
+                fwhmError: finiteOrNull(component.resultFwhmError),
+                integral: finiteOrNull(component.resultIntegral),
+                integralError: finiteOrNull(component.resultIntegralError)
+            })),
+            log: this.resultLog
+        };
+    };
+
+    /**
+     * Applies the fitting settings that a workspace saved. Starts from the defaults, so a value that
+     * is missing or not valid keeps its default.
+     *
+     * @param shouldApplyGuesses - whether to apply the initial guesses and the fit result. The caller
+     *                             passes false when the guesses do not fit the profile shown now,
+     *                             such as when they are in other units. Then the guesses are 0, there
+     *                             is no fit result, and the other settings are still applied.
+     */
+    @action applyWorkspaceConfig = (config: WorkspaceSpectralFitting, shouldApplyGuesses: boolean): void => {
+        const numberOr = (value: unknown, fallback: number): number => (shouldApplyGuesses && typeof value === "number" && isFinite(value) ? value : fallback);
+        const isTrue = (value: unknown): boolean => value === true;
+        this.reset();
+        // `Object.values` of a numeric enum also returns the names, such as "GAUSSIAN". Accept only the numbers.
+        if (typeof config.function === "number" && Object.values(FittingFunction).includes(config.function)) {
+            this.setFunction(config.function);
+        } else {
+            this.setFunction(FittingFunction.GAUSSIAN);
+        }
+        if (typeof config.continuum === "number" && Object.values(FittingContinuum).includes(config.continuum)) {
+            this.setContinuum(config.continuum);
+        }
+        this.setYIntercept(numberOr(config.yIntercept, 0));
+        this.setSlope(numberOr(config.slope, 0));
+        this.setLockedYIntercept(isTrue(config.yInterceptLocked));
+        this.setLockedSlope(isTrue(config.slopeLocked));
+        // Read a limited number of components. Then a damaged workspace cannot create very many components.
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, ProfileFittingStore.MAX_WORKSPACE_COMPONENTS) : [];
+        if (components.length) {
+            this.setComponents(components.length, true);
+            components.forEach((saved, index) => {
+                const component = this.components[index];
+                component.setCenter(numberOr(saved.center, 0));
+                component.setAmp(numberOr(saved.amp, 0));
+                component.setFwhm(numberOr(saved.fwhm, 0));
+                component.setLockedCenter(isTrue(saved.centerLocked));
+                component.setLockedAmp(isTrue(saved.ampLocked));
+                component.setLockedFwhm(isTrue(saved.fwhmLocked));
+            });
+            this.setSelectedIndex(0);
+        }
+        this.setIsAutoDetectWithCont(isTrue(config.autoDetectWithContinuum));
+        this.setIsAutoDetectWithFitting(isTrue(config.autoDetectWithFitting));
+        this.setEnableResidual(config.residualVisible !== false);
+        const selected = config.selectedComponent;
+        if (typeof selected === "number" && Number.isInteger(selected) && selected >= 0 && selected < this.components.length) {
+            this.setSelectedIndex(selected);
+        }
+        const detected = config.autoDetectedComponents;
+        if (typeof detected === "number" && Number.isInteger(detected) && detected >= 0) {
+            this.setDetectedComponentN(detected);
+            this.setHasAutoDetectResult(true);
+        }
+        if (shouldApplyGuesses) {
+            this.applyWorkspaceResult(config.result);
+        }
+    };
+
+    /**
+     * Applies a saved fit result. The result is shown when the whole profile has arrived. Then
+     * {@link showWorkspaceResult} computes the residual. A result that does not have one entry for
+     * each component is not applied.
+     */
+    @action private applyWorkspaceResult = (result: WorkspaceSpectralFitResult | undefined): void => {
+        if (!result || typeof result !== "object" || !Array.isArray(result.components) || result.components.length !== this.components.length) {
+            return;
+        }
+        const numberOrNaN = (value: unknown): number => (typeof value === "number" && isFinite(value) ? value : NaN);
+        this.setResultYIntercept(numberOrNaN(result.yIntercept));
+        this.setResultYInterceptError(numberOrNaN(result.yInterceptError));
+        this.setResultSlope(numberOrNaN(result.slope));
+        this.setResultSlopeError(numberOrNaN(result.slopeError));
+        this.components.forEach((component, index) => {
+            const saved = result.components[index] && typeof result.components[index] === "object" ? result.components[index] : ({} as Partial<WorkspaceSpectralFitResult["components"][number]>);
+            component.setResultCenter(numberOrNaN(saved.center));
+            component.setResultCenterError(numberOrNaN(saved.centerError));
+            component.setResultAmp(numberOrNaN(saved.amp));
+            component.setResultAmpError(numberOrNaN(saved.ampError));
+            component.setResultFwhm(numberOrNaN(saved.fwhm));
+            component.setResultFwhmError(numberOrNaN(saved.fwhmError));
+            component.setResultIntegral(numberOrNaN(saved.integral));
+            component.setResultIntegralError(numberOrNaN(saved.integralError));
+        });
+        this.setResultLog(typeof result.log === "string" ? result.log : "");
+        this.isWaitingForWorkspaceResult = true;
+    };
+
+    /**
+     * Shows a restored fit result on the profile that has arrived. Computes the residual as the
+     * fitting does: the profile minus the model. Then the workspace does not need to save the
+     * residual, which has one value for each channel.
+     */
+    @action showWorkspaceResult = (): void => {
+        const data = this.fittingData;
+        this.isWaitingForWorkspaceResult = false;
+        if (!data) {
+            return;
+        }
+        const model = (x: number): number => {
+            let y = this.resultSlope * x + this.resultYIntercept;
+            for (const component of this.components) {
+                y += this.function === FittingFunction.LORENTZIAN ? lorentzian(x, component.resultAmp, component.resultCenter, component.resultFwhm) : gaussian(x, component.resultAmp, component.resultCenter, component.resultFwhm);
+            }
+            return y;
+        };
+        this.setOriginData(data.x, data.y);
+        this.setResultResidual(Float64Array.from(data.x, (x, index) => data.y[index] - model(x)));
+        this.setHasResult(true);
     };
 }
 

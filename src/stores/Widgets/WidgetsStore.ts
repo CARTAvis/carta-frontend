@@ -495,22 +495,26 @@ export class WidgetsStore {
 
     /**
      * Points each profile, analysis and statistics widget at the image and region that the
-     * workspace saved. {@link restorePlotWidgets} applies the rest after the widgets settle.
+     * workspace saved. {@link restorePlotWidgets} applies what the widgets show after they settle.
      */
     @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids));
     }
 
-    /** Applies the rest of what the workspace saved to each profile, analysis and statistics widget. */
+    /** Applies what the workspace saved of what each profile, analysis and statistics widget shows. The last step applies the zoom, and the settings that this step would reset. */
     @action public restorePlotWidgets(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
         return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceConfig(config, ids));
     }
 
-    /** Zooms each profile, analysis and statistics widget to its saved range, after what the widget shows has settled. */
-    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
-        this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
-            widgetStore.applyWorkspaceView(config);
-            return [];
+    /**
+     * Zooms each profile, analysis and statistics widget to its saved range, after what the widget
+     * shows has settled. Also applies the settings that the earlier steps would reset, such as the
+     * fitting settings of a spectral profiler.
+     */
+    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
+            const problems = widgetStore.applyWorkspaceView(config, ids);
+            return Array.isArray(problems) ? problems : [];
         });
     }
 

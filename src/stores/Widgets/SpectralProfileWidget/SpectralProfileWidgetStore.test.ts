@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SmoothingType, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
@@ -726,7 +726,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
-        runInAction(() => widgetStore.applyWorkspaceView(config));
+        runInAction(() => widgetStore.applyWorkspaceView(config, WORKSPACE_IDS));
 
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect([widgetStore.minY, widgetStore.maxY]).toEqual([1, 2]);
@@ -738,7 +738,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         const problems = runInAction(() => widgetStore.applyWorkspaceConfig(config, {...WORKSPACE_IDS, regionIdOf: () => undefined}));
-        runInAction(() => widgetStore.applyWorkspaceView(config));
+        runInAction(() => widgetStore.applyWorkspaceView(config, WORKSPACE_IDS));
 
         expect(problems).toEqual(["some of the regions whose profiles it showed were not restored"]);
         expect(widgetStore.minX).toBeUndefined();
@@ -750,7 +750,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
         runInAction(() => widgetStore.applyWorkspaceBinding(config, WORKSPACE_IDS));
         runInAction(() => widgetStore.applyWorkspaceConfig(config, WORKSPACE_IDS));
-        runInAction(() => widgetStore.applyWorkspaceView(config));
+        runInAction(() => widgetStore.applyWorkspaceView(config, WORKSPACE_IDS));
 
         expect([widgetStore.minX, widgetStore.maxX, widgetStore.minY, widgetStore.maxY]).toEqual([100, 110, 1, 2]);
         expect(widgetStore.toWorkspaceConfig({imageIdOf: () => 1})).toEqual(expect.objectContaining({minX: 100, maxX: 110, minY: 1, maxY: 2}));
@@ -779,6 +779,478 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         const config = widgetStore.toWorkspaceConfig({imageIdOf: fileId => (fileId === 7 ? 2 : undefined)});
 
         expect(config).toEqual(expect.objectContaining({profileCategory: MultiProfileCategory.IMAGE, imageIds: [2], profileColors: [{key: 2, color: "#ff0000"}]}));
+    });
+
+    describe("when the fitting is cleared", () => {
+        /** Creates a widget whose profile arrives in parts. The region of the profile can change its shape, and the image has Stokes I and Q. */
+        const createStreamingWidgetStore = () => {
+            const {frame} = createWidgetStore();
+            const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
+            const region = observable({controlPoints: [{x: 1, y: 1}], rotation: 0});
+            frame.getRegion.mockReturnValue(region as never);
+            const stokes = observable.box(0);
+            Object.defineProperty(frame, "requiredStokes", {get: () => stokes.get()});
+            Object.assign(frame, {hasStokes: true, polarizationInfo: ["Stokes I", "Stokes Q"]});
+            (AppStore.Instance.spectralProfiles.get(7)!.get(0)!.getProfile as jest.Mock).mockImplementation(() => data.get());
+            const store = new SpectralProfileWidgetStore();
+            runInAction(() => {
+                store.fittingStore.setYIntercept(0.5);
+                store.fittingStore.components[0].setCenter(105);
+            });
+            return {store, data, region, stokes};
+        };
+
+        test("keeps the guesses while more data of the same profile arrives, and waits for all of it before Auto detect and Fit", () => {
+            const {store, data} = createStreamingWidgetStore();
+            expect(store.isFittingProfileComplete).toBe(false);
+
+            runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+            expect(store.isFittingProfileComplete).toBe(true);
+            expect([store.fittingStore.yIntercept, store.fittingStore.components[0].center]).toEqual([0.5, 105]);
+            store.dispose();
+        });
+
+        test("clears the guesses when the region of the profile moves", () => {
+            const {store, region} = createStreamingWidgetStore();
+
+            runInAction(() => (region.controlPoints[0] = {x: 2, y: 1}));
+
+            expect([store.fittingStore.yIntercept, store.fittingStore.components[0].center]).toEqual([0, 0]);
+            store.dispose();
+        });
+
+        test("clears the guesses when the Stokes of the image changes, as the profile follows it", () => {
+            const {store, stokes} = createStreamingWidgetStore();
+
+            runInAction(() => stokes.set(1));
+
+            expect(store.fittingStore.yIntercept).toBe(0);
+            store.dispose();
+        });
+
+        test("keeps the guesses of a profile in a fixed Stokes when the Stokes of the image changes", () => {
+            const {store, stokes} = createStreamingWidgetStore();
+            runInAction(() => store.profileSelectionStore.applyWorkspaceSelection({coordinates: ["Iz"]}));
+            runInAction(() => store.fittingStore.setYIntercept(0.5));
+
+            runInAction(() => stokes.set(1));
+
+            expect(store.fittingStore.yIntercept).toBe(0.5);
+            store.dispose();
+        });
+
+        test("clears the guesses when the smoothing type changes", () => {
+            const {store} = createStreamingWidgetStore();
+
+            runInAction(() => store.smoothingStore.setType(SmoothingType.BOXCAR));
+
+            expect(store.fittingStore.yIntercept).toBe(0);
+            store.dispose();
+        });
+    });
+
+    describe("fitting and moment settings in a workspace", () => {
+        /** Creates a widget on a frame in Frequency (GHz), LSRK, from 100 to 110. Its profile is in Jy/beam. */
+        const createFittingWidgetStore = () => {
+            const created = createWidgetStore();
+            Object.assign(created.frame, {spectralCoordinate: "Frequency (GHz)", spectralSystem: "LSRK", channelValueBounds: {min: 100, max: 110}});
+            return created;
+        };
+        const savesTheImage = {imageIdOf: (): number | undefined => 1};
+
+        const savedFitting = {
+            function: 1,
+            continuum: 1,
+            yIntercept: 0.5,
+            slope: 0.1,
+            yInterceptLocked: true,
+            slopeLocked: false,
+            components: [
+                {center: 100, amp: 2, fwhm: 3, centerLocked: true, ampLocked: false, fwhmLocked: false},
+                {center: 105, amp: 1, fwhm: 2, centerLocked: false, ampLocked: true, fwhmLocked: true}
+            ],
+            autoDetectWithContinuum: true,
+            autoDetectWithFitting: true,
+            residualVisible: false,
+            xUnit: "Frequency (GHz), LSRK",
+            yUnit: "Jy/beam"
+        };
+
+        /** A config that points the widget at region 5. Region 5 comes back with the same ID. */
+        const onRegion5 = {regions: [{regionId: 5}]};
+
+        const savedMoments = {
+            moments: [CARTA.Moment.MEAN_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+            regionId: 5,
+            channelRange: [101, 108] as [number, number],
+            channelUnit: "Frequency (GHz), LSRK",
+            mask: CARTA.MomentMask.Include,
+            maskRange: [0.2, 0.8] as [number, number],
+            maskUnit: "Jy/beam"
+        };
+
+        const restore = (widgetStore: SpectralProfileWidgetStore, config: object, ids = WORKSPACE_IDS) => {
+            runInAction(() => widgetStore.applyWorkspaceBinding(config, ids));
+            runInAction(() => widgetStore.applyWorkspaceConfig(config, ids));
+            return runInAction(() => widgetStore.applyWorkspaceView(config, ids));
+        };
+
+        test("saves the fitting guesses with the units of the axes, a guess that is not finite as 0, and leaves out a fit result that the profile does not have", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const fitting = widgetStore.fittingStore;
+            runInAction(() => {
+                fitting.setFunction(1);
+                fitting.setContinuum(0);
+                fitting.setYIntercept(0.5);
+                fitting.setSlope(Number.NaN);
+                fitting.setLockedYIntercept(true);
+                fitting.components[0].setCenter(100);
+                fitting.components[0].setLockedFwhm(true);
+                fitting.setResultLog("fitted before the reset");
+            });
+
+            const saved = widgetStore.toWorkspaceConfig(savesTheImage).fitting;
+
+            expect(saved).toEqual({
+                function: 1,
+                continuum: 0,
+                yIntercept: 0.5,
+                slope: 0,
+                yInterceptLocked: true,
+                slopeLocked: false,
+                components: [{center: 100, amp: 0, fwhm: 0, centerLocked: false, ampLocked: false, fwhmLocked: true}],
+                autoDetectWithContinuum: false,
+                autoDetectWithFitting: false,
+                residualVisible: true,
+                xUnit: "Frequency (GHz), LSRK",
+                yUnit: "Jy/beam"
+            });
+        });
+
+        test("saves the fit result, with a value that is not finite as null", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const fitting = widgetStore.fittingStore;
+            runInAction(() => {
+                fitting.components[0].setCenter(100);
+                fitting.setResultYIntercept(0.4);
+                fitting.setResultYInterceptError(0.01);
+                fitting.setResultSlope(0);
+                fitting.setResultSlopeError(Number.NaN);
+                const component = fitting.components[0];
+                component.setResultCenter(101);
+                component.setResultCenterError(0.1);
+                component.setResultAmp(2);
+                component.setResultAmpError(0.2);
+                component.setResultFwhm(3);
+                component.setResultFwhmError(Number.NaN);
+                component.setResultIntegral(6.4);
+                component.setResultIntegralError(0.6);
+                fitting.setResultLog("fitted");
+                fitting.setHasResult(true);
+            });
+
+            const saved = widgetStore.toWorkspaceConfig(savesTheImage).fitting;
+
+            expect(saved?.result).toEqual({
+                yIntercept: 0.4,
+                yInterceptError: 0.01,
+                slope: 0,
+                slopeError: null,
+                components: [{center: 101, centerError: 0.1, amp: 2, ampError: 0.2, fwhm: 3, fwhmError: null, integral: 6.4, integralError: 0.6}],
+                log: "fitted"
+            });
+        });
+
+        describe("a saved fit result", () => {
+            const savedResult = {
+                yIntercept: 0.5,
+                yInterceptError: 0.01,
+                slope: 0.1,
+                slopeError: null,
+                components: [
+                    {center: 100, centerError: 0.1, amp: 2, ampError: 0.2, fwhm: 3, fwhmError: null, integral: 6.4, integralError: 0.6},
+                    {center: 105, centerError: 0.2, amp: 1, ampError: 0.1, fwhm: 2, fwhmError: 0.3, integral: 2.1, integralError: 0.2}
+                ],
+                log: "fitted"
+            };
+
+            /** Gives region 5 a profile that arrives in parts, from 100 to 110 GHz. */
+            const streamRegion5 = () => {
+                const data = observable.box<{progress: number; values: Float32Array}>({progress: 0.5, values: new Float32Array([4])}, {deep: false});
+                AppStore.Instance.spectralProfiles.get(7)!.set(5, {getProfile: jest.fn(() => data.get())} as never);
+                return data;
+            };
+
+            test("is shown when the whole profile has arrived, with the residual computed from the profile", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+
+                const problems = restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: savedResult}});
+
+                const fitting = widgetStore.fittingStore;
+                expect(problems).toEqual([]);
+                expect(fitting.hasResult).toBe(false);
+
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(fitting.hasResult).toBe(true);
+                expect([fitting.resultYIntercept, fitting.resultYInterceptError, fitting.resultSlope, fitting.resultSlopeError]).toEqual([0.5, 0.01, 0.1, Number.NaN]);
+                expect(fitting.components.map(component => [component.resultCenter, component.resultAmp, component.resultFwhm, component.resultFwhmError, component.resultIntegral])).toEqual([
+                    [100, 2, 3, Number.NaN, 6.4],
+                    [105, 1, 2, 0.3, 2.1]
+                ]);
+                expect(fitting.resultLog).toBe("fitted");
+                // The saved function is Lorentzian. At 100 GHz the first component is at its peak, 2,
+                // and the second adds 1 * 1 / (25 + 1). The continuum adds 0.5 + 0.1 * 100.
+                const model = 2 + 1 / 26 + 0.5 + 10;
+                expect(fitting.residualPoint2DArray[0].x).toBe(100);
+                expect(fitting.residualPoint2DArray[0].y).toBeCloseTo(4 - model, 10);
+                expect(fitting.modelPoint2DArray[0].y).toBeCloseTo(model, 10);
+            });
+
+            test("is not shown when the guesses are 0, and the report says so", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                streamRegion5();
+                const config = {...onRegion5, fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK", result: savedResult}};
+
+                const problems = restore(widgetStore, config);
+
+                expect(problems).toEqual([
+                    'the fitting guesses were made in "Velocity (km/s), LSRK" on the x axis and "Jy/beam" on the y axis, but the profile now shows "Frequency (GHz), LSRK" on the x axis and "Jy/beam" on the y axis. The guesses are 0, and the fit result is not shown'
+                ]);
+                expect([widgetStore.fittingStore.hasResult, widgetStore.fittingStore.isWaitingForWorkspaceResult]).toEqual([false, false]);
+            });
+
+            test("is not shown when it does not have one entry for each component", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+
+                restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: {...savedResult, components: savedResult.components.slice(1)}}});
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(widgetStore.fittingStore.hasResult).toBe(false);
+            });
+
+            test("is dropped when the widget shows another profile before the profile has arrived", () => {
+                const {widgetStore} = createFittingWidgetStore();
+                const data = streamRegion5();
+                restore(widgetStore, {...onRegion5, fitting: {...savedFitting, result: savedResult}});
+
+                runInAction(() => widgetStore.smoothingStore.setType(SmoothingType.BOXCAR));
+                runInAction(() => data.set({progress: 1, values: new Float32Array([4, 8])}));
+
+                expect(widgetStore.fittingStore.hasResult).toBe(false);
+            });
+        });
+
+        test("saves the component that the fitting settings show, the auto detect message and the keep switch of the moments, and applies them again", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.fittingStore.setComponents(3);
+                widgetStore.fittingStore.setSelectedIndex(1);
+                widgetStore.fittingStore.setDetectedComponentN(3);
+                widgetStore.fittingStore.setHasAutoDetectResult(true);
+                widgetStore.setKeep(true);
+            });
+
+            const config = widgetStore.toWorkspaceConfig(savesTheImage);
+            expect([config.fitting?.selectedComponent, config.fitting?.autoDetectedComponents, config.moments?.keep]).toEqual([1, 3, true]);
+
+            const restored = createFittingWidgetStore().widgetStore;
+            restore(restored, {...onRegion5, fitting: config.fitting, moments: config.moments});
+            const fitting = restored.fittingStore;
+            expect([fitting.selectedIndex, fitting.hasAutoDetectResult, fitting.detectedComponentN, restored.shouldKeep]).toEqual([1, true, 3, true]);
+        });
+
+        test("names the rest frame in the units of the fitting guesses, and not in the units of the moment ranges", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.setRestFrameRedshift(1);
+                widgetStore.setXAxisRestFrameEnabled(true);
+                widgetStore.setYAxisRestFrameEnabled(true);
+                widgetStore.setSelectedChannelRange(101, 108);
+                widgetStore.setSelectedMaskRange(0.2, 0.8);
+            });
+
+            const config = widgetStore.toWorkspaceConfig(savesTheImage);
+
+            expect([config.fitting?.xUnit, config.fitting?.yUnit]).toEqual(["Frequency (GHz), LSRK, rest frame", "Jy/beam, rest frame"]);
+            expect([config.moments?.channelUnit, config.moments?.maskUnit]).toEqual(["Frequency (GHz), LSRK", "Jy/beam"]);
+        });
+
+        test("leaves out the fitting and moment settings when the workspace does not save the image", () => {
+            const {widgetStore} = createFittingWidgetStore();
+
+            const config = widgetStore.toWorkspaceConfig(WORKSPACE_IDS);
+
+            expect(config).not.toHaveProperty("fitting");
+            expect(config).not.toHaveProperty("moments");
+        });
+
+        test("restores the fitting guesses, though showing the rest frame resets them", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {...onRegion5, restFrameRedshift: 1, yAxisRestFrameEnabled: true, fitting: {...savedFitting, yUnit: "Jy/beam, rest frame"}};
+
+            const problems = restore(widgetStore, config);
+
+            const fitting = widgetStore.fittingStore;
+            expect(problems).toEqual([]);
+            expect([fitting.function, fitting.continuum, fitting.yIntercept, fitting.slope, fitting.isLockedYIntercept, fitting.isLockedSlope]).toEqual([1, 1, 0.5, 0.1, true, false]);
+            expect(fitting.components.map(component => [component.center, component.amp, component.fwhm, component.isLockedCenter, component.isLockedAmp, component.isLockedFwhm])).toEqual([
+                [100, 2, 3, true, false, false],
+                [105, 1, 2, false, true, true]
+            ]);
+            expect([fitting.isAutoDetectWithCont, fitting.isAutoDetectWithFitting, fitting.isResidualEnabled, fitting.hasResult]).toEqual([true, true, false, false]);
+        });
+
+        test("sets the guesses to 0 and says so when the profile shows other units, and applies the other fitting settings", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {...onRegion5, fitting: {...savedFitting, xUnit: "Velocity (km/s), LSRK"}};
+
+            const problems = restore(widgetStore, config);
+
+            const fitting = widgetStore.fittingStore;
+            expect(problems).toEqual([
+                'the fitting guesses were made in "Velocity (km/s), LSRK" on the x axis and "Jy/beam" on the y axis, but the profile now shows "Frequency (GHz), LSRK" on the x axis and "Jy/beam" on the y axis. The guesses are 0'
+            ]);
+            expect([fitting.function, fitting.continuum, fitting.yIntercept, fitting.slope, fitting.isLockedYIntercept, fitting.isResidualEnabled]).toEqual([1, 1, 0, 0, true, false]);
+            expect(fitting.components.map(component => [component.center, component.amp, component.fwhm, component.isLockedCenter, component.isLockedFwhm])).toEqual([
+                [0, 0, 0, true, false],
+                [0, 0, 0, false, true]
+            ]);
+        });
+
+        test("does not report fitting guesses in other units when every guess is 0", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const guessesOfZero = {yIntercept: 0, slope: 0, components: [{center: 0, amp: 0, fwhm: 0, centerLocked: false, ampLocked: false, fwhmLocked: false}]};
+            const config = {fitting: {...savedFitting, ...guessesOfZero, xUnit: "Channel"}};
+
+            expect(restore(widgetStore, config)).toEqual([]);
+            expect(widgetStore.fittingStore.function).toBe(1);
+        });
+
+        test("keeps the default of each saved fitting value that is not valid", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {...onRegion5, fitting: {...savedFitting, function: "LORENTZIAN", continuum: "FIRST_ORDER", yIntercept: Number.NaN, components: [{center: "100", amp: 2}], residualVisible: "no"}};
+
+            restore(widgetStore, config);
+
+            const fitting = widgetStore.fittingStore;
+            expect([fitting.function, fitting.continuum, fitting.yIntercept, fitting.isResidualEnabled]).toEqual([0, -1, 0, true]);
+            expect(fitting.components.map(component => [component.center, component.amp, component.fwhm])).toEqual([[0, 2, 0]]);
+        });
+
+        test("uses the default function when the saved function is not valid, though the widget used another function", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => widgetStore.fittingStore.setFunction(1));
+
+            restore(widgetStore, {...onRegion5, fitting: {...savedFitting, function: 7}});
+
+            expect(widgetStore.fittingStore.function).toBe(0);
+        });
+
+        test("sets the guesses to 0 and says so when the region of the fitted profile was not restored", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {regions: [{regionId: 5}], fitting: savedFitting};
+
+            const problems = restore(widgetStore, config, {...WORKSPACE_IDS, regionIdOf: () => undefined});
+
+            expect(problems).toEqual(["the profile that its fitting guesses were made for was not restored, so the guesses are 0"]);
+            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept, widgetStore.fittingStore.components[0].center]).toEqual([1, 0, 0]);
+        });
+
+        test("sets the guesses of a profile at the cursor to 0, as the cursor position is not saved", () => {
+            const {widgetStore} = createFittingWidgetStore();
+
+            const problems = restore(widgetStore, {fitting: savedFitting});
+
+            expect(problems).toEqual(["its fitting guesses were made for the profile at the cursor, whose position is not saved, so the guesses are 0"]);
+            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept]).toEqual([1, 0]);
+        });
+
+        test("does not apply the settings of an image that was not restored", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const config = {imageId: 4, fitting: savedFitting, moments: savedMoments};
+
+            const problems = restore(widgetStore, config);
+
+            expect(problems).toEqual([]);
+            expect(widgetStore.fittingStore.function).toBe(0);
+            expect(widgetStore.selectedMoments).toEqual([CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]);
+        });
+
+        test("saves the moment generator settings, with the region by its ID", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.selectMoment(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+                widgetStore.selectMomentRegion(5);
+                widgetStore.setMomentMask(CARTA.MomentMask.Exclude);
+                widgetStore.setSelectedChannelRange(101, 108);
+                widgetStore.setSelectedMaskRange(0.2, 0.8);
+            });
+
+            expect(widgetStore.toWorkspaceConfig(savesTheImage).moments).toEqual({
+                moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM],
+                regionId: 5,
+                channelRange: [101, 108],
+                channelUnit: "Frequency (GHz), LSRK",
+                mask: CARTA.MomentMask.Exclude,
+                maskRange: [0.2, 0.8],
+                maskUnit: "Jy/beam"
+            });
+        });
+
+        test("leaves out a moment range that is the default, so a restore in other units does not report it", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            runInAction(() => {
+                widgetStore.setSelectedChannelRange(100, 110);
+                widgetStore.setSelectedMaskRange(0, 1);
+            });
+
+            const moments = widgetStore.toWorkspaceConfig(savesTheImage).moments;
+
+            expect(moments).toEqual({moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: RegionId.IMAGE, mask: CARTA.MomentMask.None});
+            expect(restore(createFittingWidgetStore().widgetStore, {moments})).toEqual([]);
+        });
+
+        test("restores the moments, the region they are made from, the mask and the ranges", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const regionIdOf = jest.fn((_imageId: number | undefined, regionId: number): number | undefined => regionId + 10);
+            const ids = {...WORKSPACE_IDS, regionIdOf};
+
+            const problems = restore(widgetStore, {moments: savedMoments}, ids);
+
+            expect(problems).toEqual([]);
+            // The widget follows the active image. So the region is looked up on the image that was in front.
+            expect(regionIdOf).toHaveBeenCalledWith(undefined, 5);
+            expect(widgetStore.selectedMoments).toEqual([CARTA.Moment.MEAN_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]);
+            expect(widgetStore.momentRegionId).toBe(15);
+            expect(widgetStore.momentMask).toBe(CARTA.MomentMask.Include);
+            expect([[...widgetStore.channelValueRange], [...widgetStore.maskRange]]).toEqual([
+                [101, 108],
+                [0.2, 0.8]
+            ]);
+        });
+
+        test("says what it could not restore of the moment settings, and keeps the rest", () => {
+            const {widgetStore} = createFittingWidgetStore();
+            const ids = {...WORKSPACE_IDS, regionIdOf: (): number | undefined => undefined};
+            const moments = {...savedMoments, channelUnit: "Channel", maskUnit: "K"};
+            runInAction(() => widgetStore.selectMomentRegion(RegionId.ACTIVE));
+
+            const problems = restore(widgetStore, {moments}, ids);
+
+            expect(problems).toEqual([
+                "the region that its moments were made from was not restored, so the moments are made from the whole image",
+                'the spectral range of its moments was in "Channel", but the profile now shows "Frequency (GHz), LSRK". The range covers the whole spectral axis',
+                'the mask range of its moments was in "K", but the profile now shows "Jy/beam". The mask range keeps its default'
+            ]);
+            expect(widgetStore.selectedMoments).toEqual(savedMoments.moments);
+            expect(widgetStore.momentMask).toBe(CARTA.MomentMask.Include);
+            expect(widgetStore.momentRegionId).toBe(RegionId.IMAGE);
+            expect([...widgetStore.maskRange]).toEqual([0, 1]);
+        });
     });
 
     test("keeps the previous canonical redshift when either input is invalid", () => {

@@ -26,6 +26,7 @@ import {
 import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
@@ -98,6 +99,9 @@ function createFrame(fileId: number) {
         setOffsetCenter: jest.fn((x: number, y: number) => isFinite(x) && isFinite(y)),
         setSkyRefIs: jest.fn(),
         toggleOffsetCoord: jest.fn(),
+        setFittingResult: jest.fn(),
+        setFittingLog: jest.fn(),
+        setFittingResultRegionParams: jest.fn(),
         regionSet: {
             addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({
                 regionId: await RegisterRegion(savedRegionId),
@@ -154,6 +158,7 @@ function createSession() {
 
     const appStore = {
         animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn()},
+        imageFittingStore: {applyWorkspaceConfig: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -245,7 +250,7 @@ function createSession() {
             catalogPlotWidgets: new Map(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined)
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -954,6 +959,7 @@ describe("WorkspaceRestorer", () => {
     test("points the profile and analysis widgets at their images and regions, and gives them the rest once they have settled", async () => {
         const {appStore, calls} = createSession();
         const plotWidgets = {"stats-0": {type: "stats" as const, imageId: 1}};
+        const viewIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "stats-0", message: "Could not fully restore the widget stats-0: the fitting guesses were made in other units"};
         let didSettleBeforeTheRest = false;
         appStore.widgetsStore.restorePlotWidgetBindings.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetBindings");
@@ -966,6 +972,7 @@ describe("WorkspaceRestorer", () => {
         });
         appStore.widgetsStore.restorePlotWidgetViews.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetViews");
+            return [viewIssue];
         });
 
         const restorer = new WorkspaceRestorer(createWorkspace({layout: LAYOUT, plotWidgets}), WorkspaceRestorer.claimGeneration());
@@ -974,6 +981,9 @@ describe("WorkspaceRestorer", () => {
         while (!step.done) {
             step = generator.next(await step.value);
         }
+        // The last step reports what it could not apply, such as fitting guesses in other units.
+        expect(step.value).toContainEqual(viewIssue);
+        expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledWith(plotWidgets, restorer);
 
         expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews"]);
         expect(didSettleBeforeTheRest).toBe(true);
@@ -1254,6 +1264,67 @@ describe("WorkspaceRestorer", () => {
             const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}, matched]}));
 
             expect(restorer.regionIdOf(2, 1)).toBe(101);
+        });
+    });
+
+    describe("the image fitting", () => {
+        const savedRegion = {id: 5, type: 3, rotation: 0, points: []};
+        const imageFitting = {
+            imageId: 1,
+            regionId: 5,
+            components: [{center: {x: 1, y: 2}, amp: 3, fwhm: {x: 4, y: 5}, pa: 6, fixed: [true, false, false, false, false, false]}],
+            autoInitialValues: false,
+            backgroundOffset: 0.1,
+            backgroundOffsetFixed: false,
+            solver: CARTA.FittingSolverType.Qr,
+            createModelImage: true,
+            createResidualImage: false
+        };
+
+        test("shows the fit result of an image again, and applies the dialog settings over the ID the backend gave the region", async () => {
+            const {appStore} = createSession();
+            const fitResult = {result: "Component #1", log: "the log", ellipses: [{center: {x: 1, y: 2}, size: {x: 2, y: 2.5}, rotation: 6}]};
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedRegion]}, fitResult}], imageFitting}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual([]);
+            expect(frame.setFittingResult).toHaveBeenCalledWith("Component #1");
+            expect(frame.setFittingLog).toHaveBeenCalledWith("the log");
+            expect(frame.setFittingResultRegionParams).toHaveBeenCalledWith([
+                {
+                    points: [
+                        {x: 1, y: 2},
+                        {x: 2, y: 2.5}
+                    ],
+                    rotation: 6
+                }
+            ]);
+            expect(appStore.imageFittingStore.applyWorkspaceConfig).toHaveBeenCalledWith(imageFitting, frame.frameInfo.fileId, 105);
+        });
+
+        test("fits the field of view of the active image when the image it fitted was not restored, and says so", async () => {
+            const {appStore} = createSession();
+
+            const issues = await restoreIssues(createWorkspace({imageFitting: {...imageFitting, imageId: 9}}));
+
+            expect(issues).toEqual([
+                expect.objectContaining({
+                    kind: WorkspaceItemKind.Dialog,
+                    message: "The Image Fitting dialog: the image it fits was not restored, so it fits the active image",
+                    causeImageId: 9
+                })
+            ]);
+            expect(appStore.imageFittingStore.applyWorkspaceConfig).toHaveBeenCalledWith(expect.anything(), ACTIVE_FILE_ID, 0);
+        });
+
+        test("fits the field of view when the region it fitted was not restored, and says so", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({imageFitting}));
+
+            expect(problems).toEqual(["The Image Fitting dialog: the region it fits was not restored, so it fits the field of view"]);
+            expect(appStore.imageFittingStore.applyWorkspaceConfig).toHaveBeenCalledWith(expect.anything(), appStore.frames[0].frameInfo.fileId, 0);
         });
     });
 

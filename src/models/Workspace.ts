@@ -13,6 +13,8 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     type ContourDashMode,
+    type FittingContinuum,
+    type FittingFunction,
     FrameScaling,
     type HipsCoord,
     type HipsProjection,
@@ -315,6 +317,8 @@ export interface WorkspaceFile {
      * not save, so only their order matters. Left out by a workspace saved before it kept the place.
      */
     imageListIndex?: number;
+    /** The result of the last image fitting of the image. Left out when the image has no result. */
+    fitResult?: WorkspaceImageFitResult;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -611,6 +615,10 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
     yAxisRestFrameEnabled?: boolean;
     /** The spectral lines that a spectral line query plotted on the widget, at the frequencies they were plotted at, in MHz. The query shifted them by its redshift. */
     spectralLines?: {species: string; value: number; qn: string}[];
+    /** The fitting settings. Left out when the widget does not show an image that the workspace saves. */
+    fitting?: WorkspaceSpectralFitting;
+    /** The moment generator settings. Left out when the widget does not show an image that the workspace saves. */
+    moments?: WorkspaceSpectralMoments;
 }
 
 /**
@@ -669,6 +677,117 @@ export interface WorkspaceAnimator {
     playMode: PlayMode;
     /** What the animator steps through: the channels, the Stokes, the images or a time series. */
     mode: AnimationMode;
+}
+
+/**
+ * The fitting settings of a spectral profiler: the function, the continuum, the initial guesses and
+ * the fit result.
+ */
+export interface WorkspaceSpectralFitting {
+    /** The fitting function, saved as its number: 0 is Gaussian and 1 is Lorentzian. */
+    function: FittingFunction;
+    /** The order of the continuum, saved as its number: -1 is none, 0 is constant and 1 is linear. */
+    continuum: FittingContinuum;
+    yIntercept: number;
+    slope: number;
+    yInterceptLocked: boolean;
+    slopeLocked: boolean;
+    /** The initial guesses of each component. */
+    components: {center: number; amp: number; fwhm: number; centerLocked: boolean; ampLocked: boolean; fwhmLocked: boolean}[];
+    autoDetectWithContinuum: boolean;
+    autoDetectWithFitting: boolean;
+    residualVisible: boolean;
+    /** The component whose guesses the settings show, counted from 0. Left out for the first component. */
+    selectedComponent?: number;
+    /** How many components auto detect found, when the settings show its message. Left out when auto detect has not run. */
+    autoDetectedComponents?: number;
+    /**
+     * The units of the x and y axes that the guesses are in, such as "Frequency (GHz), LSRK, rest
+     * frame" and "Jy/beam". A restore applies the guesses only when it shows the same profile in
+     * the same units.
+     */
+    xUnit: string;
+    yUnit: string;
+    /**
+     * The fit result, in the same units as the guesses. Left out when the profile has no fit result.
+     * The residual is not saved. A restore computes it from the profile and the result.
+     */
+    result?: WorkspaceSpectralFitResult;
+}
+
+/** The result of a spectral fitting. A value that is not finite, such as the error of a locked value, is saved as null. */
+export interface WorkspaceSpectralFitResult {
+    yIntercept: number | null;
+    yInterceptError: number | null;
+    slope: number | null;
+    slopeError: number | null;
+    /** The result of each component, in the order of the components of the guesses. */
+    components: {
+        center: number | null;
+        centerError: number | null;
+        amp: number | null;
+        ampError: number | null;
+        fwhm: number | null;
+        fwhmError: number | null;
+        integral: number | null;
+        integralError: number | null;
+    }[];
+    /** The log of the fit, as the "View log" button shows it. */
+    log: string;
+}
+
+/** A value of the Image Fitting dialog that the user can leave empty. It is null when it is empty. */
+type WorkspaceImageFittingValue = number | null;
+
+/**
+ * The settings of the Image Fitting dialog. The initial values are in the pixels and the units of the
+ * image that the dialog fits.
+ */
+export interface WorkspaceImageFitting {
+    /** The image to fit, by its workspace ID. Left out when the dialog fits the active image. */
+    imageId?: number;
+    /** The region to fit, by the ID that the region was saved with. 0 is the field of view, and -1 is the whole image. */
+    regionId: number;
+    components: {
+        center: {x: WorkspaceImageFittingValue; y: WorkspaceImageFittingValue};
+        amp: WorkspaceImageFittingValue;
+        fwhm: {x: WorkspaceImageFittingValue; y: WorkspaceImageFittingValue};
+        pa: WorkspaceImageFittingValue;
+        /** Whether each value is fixed, in the order center x, center y, amplitude, FWHM x, FWHM y and P.A. */
+        fixed: boolean[];
+    }[];
+    /** Whether the backend generates the initial values. */
+    autoInitialValues: boolean;
+    backgroundOffset: number;
+    backgroundOffsetFixed: boolean;
+    solver: CARTA.FittingSolverType;
+    createModelImage: boolean;
+    createResidualImage: boolean;
+}
+
+/** The result of the last image fitting of an image, as the Image Fitting dialog shows it. */
+export interface WorkspaceImageFitResult {
+    /** The text of the result. */
+    result: string;
+    log: string;
+    /** The ellipse of each component, in the pixels of the image: the center, the half axes and the rotation in degrees. */
+    ellipses: {center: Point2D; size: Point2D; rotation: number}[];
+}
+
+/** The moment generator settings of a spectral profiler. */
+export interface WorkspaceSpectralMoments {
+    moments: CARTA.Moment[];
+    /** The region that the moments are made from, by the ID that the region was saved with. -1 is the whole image, and -3 is the active region. */
+    regionId: number;
+    /** The spectral range, in the units of `channelUnit`. Left out when it is the whole spectral axis. */
+    channelRange?: [number, number];
+    channelUnit?: string;
+    mask: CARTA.MomentMask;
+    /** The range of pixel values that the mask uses, in the units of `maskUnit`. Left out when it is the default, 0 to 1. */
+    maskRange?: [number, number];
+    maskUnit?: string;
+    /** Whether new moment images keep the moment images made before them. Left out when they replace them. */
+    keep?: boolean;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */
@@ -765,6 +884,8 @@ export interface Workspace {
     catalogWidgets?: {[widgetId: string]: WorkspaceCatalogWidgetConfig};
     /** What each profile, analysis and statistics widget shows, by the stable ID of the widget. */
     plotWidgets?: {[widgetId: string]: WorkspacePlotWidgetConfig};
+    /** The settings of the Image Fitting dialog. */
+    imageFitting?: WorkspaceImageFitting;
     layout?: WorkspaceLayout;
     thumbnail?: string;
     date?: number;
