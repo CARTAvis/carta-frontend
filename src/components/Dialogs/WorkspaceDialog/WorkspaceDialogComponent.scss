@@ -107,18 +107,6 @@
         }
     }
 
-    // The footer shows the button that saves the changes on the left, and the other buttons on the right.
-    .workspace-footer {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        .workspace-footer-status {
-            flex: 1;
-            min-width: 0;
-        }
-    }
-
     &.#{$ns}-dark .workspace-container {
         .workspace-list-container {
             background-color: $pt-dark-code-background-color;
