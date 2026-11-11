@@ -15,7 +15,8 @@ const FILE_STATUS: Record<WorkspaceFileStatus, {text: string; intent: Intent}> =
     checking: {text: "Checking", intent: Intent.NONE},
     found: {text: "Found", intent: Intent.SUCCESS},
     missing: {text: "Missing", intent: Intent.DANGER},
-    moved: {text: "New location", intent: Intent.WARNING}
+    moved: {text: "New location", intent: Intent.WARNING},
+    region: {text: "Region", intent: Intent.NONE}
 };
 
 /** Returns the host of a mirror, such as simbad.u-strasbg.fr, or the whole URL when it cannot be read. */
@@ -88,6 +89,10 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
 
     const fileRow = (file: WorkspaceCheckedFile, label: React.ReactNode, isPart: boolean) => {
         const status = preflight.statusOf(file);
+        // A name that is not a file is a region of the expression. It is not listed.
+        if (status === "region") {
+            return null;
+        }
         return (
             <div key={file.key} className={classNames("summary-row", {"is-part": isPart})} data-testid="workspace-info-file">
                 <Tooltip className="row-name" content={preflight.pathOf(file)} placement="top-start" hoverOpenDelay={300}>
@@ -193,7 +198,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                             <React.Fragment key={image.id}>
                                 <div className="summary-row is-heading" data-testid="workspace-info-combined-image">
                                     <span className="row-name">{label}</span>
-                                    {shouldShowChecks && !image.files.length && <StatusTag text="Checked when opened" intent={Intent.NONE} testId="workspace-info-file-status" />}
+                                    {shouldShowChecks && image.isCheckedWhenOpened && <StatusTag text="Checked when opened" intent={Intent.WARNING} testId="workspace-info-file-status" />}
                                     {shouldShowChecks && <span className="row-action" />}
                                 </div>
                                 {image.files.map(file => fileRow(file, file.filename, true))}

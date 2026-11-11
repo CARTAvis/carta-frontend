@@ -124,6 +124,32 @@ describe("WorkspacePreflightStore", () => {
         expect(store.changeDescriptions).toHaveLength(6);
     });
 
+    test("does not count a name in brackets that no file has as missing, because it may name a region", async () => {
+        mockFiles(["data/cube.fits"]);
+        const store = new WorkspacePreflightStore(
+            "lel",
+            createWorkspace({
+                files: [
+                    {id: 1, source: {type: "lel", directory: "data", expression: "cube.fits[centre] + 'broken"}},
+                    {id: 2, source: {type: "lel", directory: "data", expression: "cube.fits[centre]"}}
+                ],
+                generatedImages: [],
+                catalogs: []
+            }),
+            true
+        );
+
+        await store.check();
+
+        expect(store.images.map(image => image.isCheckedWhenOpened)).toEqual([true, false]);
+        expect(store.images[1].files.map(file => [file.filename, store.statusOf(file)])).toEqual([
+            ["cube.fits", "found"],
+            ["centre", "region"]
+        ]);
+        expect(store.missingFiles).toEqual([]);
+        expect(store.leftOutCount).toBe(0);
+    });
+
     test("uses one new folder for every file of an expression", () => {
         mockFiles([]);
         const store = new WorkspacePreflightStore("copied", createWorkspace(), true);
