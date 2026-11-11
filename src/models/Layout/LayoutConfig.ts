@@ -276,6 +276,9 @@ export class LayoutConfig {
                     if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
                         simpleChild.activeItemIndex = child.activeItemIndex;
                     }
+                    if (child.type === "stack" && child.maximized === true) {
+                        simpleChild.maximized = true;
+                    }
                     if (child.width) {
                         simpleChild.width = child.width;
                     }
