@@ -17,7 +17,12 @@ export type WorkspaceFileStatus =
     /** The file is not where the workspace saved it, and the user has not chosen a new location. */
     | "missing"
     /** The file is at the new location that the user chose. */
-    | "moved";
+    | "moved"
+    /**
+     * No file has the name, and the expression may name a region of an image with it, as in
+     * `cube.fits[centre]`. The restore finds out when it opens the expression.
+     */
+    | "region";
 
 /** One file that a workspace reads, and its place in the workspace. */
 export interface WorkspaceCheckedFile {
@@ -34,6 +39,8 @@ export interface WorkspaceCheckedFile {
     directory: string;
     filename: string;
     hdu?: string;
+    /** Whether the name in an expression may be the name of a region instead of a file. See `getLelFileNames`. */
+    canBeRegion?: boolean;
 }
 
 /** A new location that the user chose for a file. A file of an expression changes only its folder. */
@@ -58,6 +65,8 @@ export interface WorkspaceImageSummary {
     files: WorkspaceCheckedFile[];
     /** Whether the image is an expression or a hypercube, which lists each of its files. */
     hasParts: boolean;
+    /** Whether the files of an expression cannot be found from its text, as when a quote is not closed. The restore checks them when it opens the expression. */
+    isCheckedWhenOpened: boolean;
 }
 
 /** One catalog that a workspace opens, as the Workspace dialog lists it. */
@@ -173,7 +182,8 @@ export class WorkspacePreflightStore {
                 regionCount: regionCount(file),
                 isGenerated: false,
                 files,
-                hasParts: file.source?.type === "lel" || file.source?.type === "hypercube"
+                hasParts: file.source?.type === "lel" || file.source?.type === "hypercube",
+                isCheckedWhenOpened: file.source?.type === "lel" && !getLelFileNames(file.source.expression).isComplete
             };
         });
         const generated = (this.workspace.generatedImages ?? []).flatMap(({images}) =>
@@ -184,7 +194,8 @@ export class WorkspacePreflightStore {
                 regionCount: regionCount(image as WorkspaceFile),
                 isGenerated: true,
                 files: [],
-                hasParts: false
+                hasParts: false,
+                isCheckedWhenOpened: false
             }))
         );
         return [...opened, ...generated];
@@ -237,7 +248,15 @@ export class WorkspacePreflightStore {
                     hdu: stokesFile.hdu ?? source.hdu
                 }));
             case "lel":
-                return getLelFileNames(source.expression).map(filename => ({key: `${key}-expression-${filename}`, kind: "image", itemId: fileInfo.id, part: "expression", directory: source.directory ?? "", filename}));
+                return getLelFileNames(source.expression).names.map(({name, canBeRegion}) => ({
+                    key: `${key}-expression-${name}`,
+                    kind: "image",
+                    itemId: fileInfo.id,
+                    part: "expression",
+                    directory: source.directory ?? "",
+                    filename: name,
+                    canBeRegion
+                }));
             default:
                 return [];
         }
@@ -360,7 +379,12 @@ export class WorkspacePreflightStore {
         if (count !== this.checkCount) {
             return;
         }
-        runInAction(() => files.forEach((file, index) => this.statuses.set(file.key, results[index] ? (this.moves.has(file.key) ? "moved" : "found") : "missing")));
+        runInAction(() =>
+            files.forEach((file, index) => {
+                const status = results[index] ? (this.moves.has(file.key) ? "moved" : "found") : file.canBeRegion ? "region" : "missing";
+                this.statuses.set(file.key, status);
+            })
+        );
     };
 
     /** Tests every mirror. */
