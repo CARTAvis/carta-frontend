@@ -361,8 +361,8 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
 
 /**
  * The button that saves the new locations and mirrors that the user chose in the Workspace dialog.
- * It shows only while there are changes. The dialog puts it beside its own buttons, so that a long
- * summary does not hide it.
+ * It shows only while there are changes. The dialog puts it beside its Delete and Open buttons, so
+ * that a long summary does not hide it.
  */
 export const WorkspaceSaveChanges = observer((props: {preflight: WorkspacePreflightStore; onSaved?: () => void}) => {
     const {preflight} = props;
