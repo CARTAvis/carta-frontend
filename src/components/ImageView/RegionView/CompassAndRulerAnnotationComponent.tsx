@@ -32,6 +32,8 @@ interface CompassRulerAnnotationProps {
     selected: boolean;
     isFocused: boolean;
     stageRef: any;
+    /** The scale of the stage. The component does not read it. A new value only makes the region draw again, so that the parts with a fixed size on screen use the new scale. */
+    stageScale?: Point2D;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -229,15 +231,15 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         eastXOffset += Math.cos(eastAngle) * eastTranslation;
         eastYOffset += Math.sin(eastAngle) * eastTranslation;
 
-        region.setNorthTextOffset(northXOffset, true, true);
-        region.setNorthTextOffset(northYOffset, false, true);
-        region.setEastTextOffset(eastXOffset, true, true);
-        region.setEastTextOffset(eastYOffset, false, true);
+        region.setTextOffsetsFromLabels({x: northXOffset, y: northYOffset}, {x: eastXOffset, y: eastYOffset});
     };
 
+    // Check after each render whether the text offsets must be computed again. The size of the labels is known only after the labels are drawn.
     React.useEffect(() => {
-        updateOffset();
-    }, []);
+        if (region.shouldUpdateTextOffsets) {
+            updateOffset();
+        }
+    });
 
     const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);
     const eastArrowScales = getDirectionalStageScale(eastPointArray, props.stageRef.current);

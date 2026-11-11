@@ -19,6 +19,8 @@ interface PointRegionComponentProps {
     selected: boolean;
     isFocused: boolean;
     stageRef: any;
+    /** The scale of the stage. The component does not read it. A new value only makes the region draw again, so that the parts with a fixed size on screen use the new scale. */
+    stageScale?: Point2D;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }

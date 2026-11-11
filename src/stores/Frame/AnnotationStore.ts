@@ -1,7 +1,7 @@
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {Font, FontStyle} from "enums";
 import {type Point2D} from "models";
@@ -214,6 +214,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
     @observable hasNorthArrowhead: boolean = true;
     @observable hasEastArrowhead: boolean = true;
+    /** The value of `labelLayout` when the text offsets were last set. It is undefined until then. */
+    @observable private textOffsetLayout: string | undefined;
 
     constructor(
         backendService: BackendService,
@@ -292,12 +294,35 @@ export class CompassAnnotationStore extends RegionStore {
         }
     }
 
+    /** Returns the labels, the font size, the font style and the font as one string. These decide the size of the label text. */
+    @computed get labelLayout(): string {
+        return JSON.stringify([this.northLabel, this.eastLabel, this.fontSize, this.fontStyle, this.font]);
+    }
+
+    /**
+     * Returns true when the text offsets must be computed from the size of the labels. This is the
+     * case for a new compass, and after a label, the font size, the font style or the font changes.
+     * When the compass is drawn again with the same labels and font, the offsets that the user set or
+     * that were restored are kept.
+     */
+    @computed get shouldUpdateTextOffsets(): boolean {
+        return this.textOffsetLayout !== this.labelLayout;
+    }
+
+    /** Sets the text offsets that the compass component computed from the size of its labels. Also records the value of `labelLayout` that these offsets are for. */
+    @action setTextOffsetsFromLabels = (northTextOffset: Point2D, eastTextOffset: Point2D) => {
+        this.northTextOffset = northTextOffset;
+        this.eastTextOffset = eastTextOffset;
+        this.textOffsetLayout = this.labelLayout;
+    };
+
     @action setNorthTextOffset = (offset: number, isX: boolean, shouldSkipTimestampUpdate: boolean = false) => {
         if (isX) {
             this.northTextOffset = {...this.northTextOffset, x: offset};
         } else {
             this.northTextOffset = {...this.northTextOffset, y: offset};
         }
+        this.textOffsetLayout = this.labelLayout;
         if (!shouldSkipTimestampUpdate) {
             this.modifiedTimestamp = performance.now();
         }
@@ -309,6 +334,7 @@ export class CompassAnnotationStore extends RegionStore {
         } else {
             this.eastTextOffset = {...this.eastTextOffset, y: offset};
         }
+        this.textOffsetLayout = this.labelLayout;
         if (!shouldSkipTimestampUpdate) {
             this.modifiedTimestamp = performance.now();
         }
@@ -403,10 +429,15 @@ export class CompassAnnotationStore extends RegionStore {
         this.setPointerWidth(annotationStyles.pointerWidth ?? this.pointerWidth);
         this.setPointerLength(annotationStyles.pointerLength ?? this.pointerLength);
         this.setLength(annotationStyles.length ?? this.length, true);
-        this.setNorthTextOffset(annotationStyles.northTextOffset?.x ?? this.northTextOffset.x, true);
-        this.setNorthTextOffset(annotationStyles.northTextOffset?.y ?? this.northTextOffset.y, false);
-        this.setEastTextOffset(annotationStyles.eastTextOffset?.x ?? this.eastTextOffset.x, true);
-        this.setEastTextOffset(annotationStyles.eastTextOffset?.y ?? this.eastTextOffset.y, false);
+        // Set the text offsets only when the styles have them. Otherwise the compass computes the offsets from the size of its labels when it is drawn.
+        if (annotationStyles.northTextOffset) {
+            this.setNorthTextOffset(annotationStyles.northTextOffset.x, true);
+            this.setNorthTextOffset(annotationStyles.northTextOffset.y, false);
+        }
+        if (annotationStyles.eastTextOffset) {
+            this.setEastTextOffset(annotationStyles.eastTextOffset.x, true);
+            this.setEastTextOffset(annotationStyles.eastTextOffset.y, false);
+        }
         this.setNorthArrowhead(annotationStyles.isNorthArrow ?? this.hasNorthArrowhead);
         this.setEastArrowhead(annotationStyles.isEastArrow ?? this.hasEastArrowhead);
     };
