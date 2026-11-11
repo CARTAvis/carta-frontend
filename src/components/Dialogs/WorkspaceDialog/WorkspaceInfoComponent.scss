@@ -251,6 +251,27 @@
     justify-content: center;
     cursor: zoom-out;
 
+    // The preview fades with the backdrop. Without this, it stays until the transition of the backdrop ends.
+    &.#{$ns}-overlay-enter,
+    &.#{$ns}-overlay-appear {
+        opacity: 0;
+    }
+
+    &.#{$ns}-overlay-enter-active,
+    &.#{$ns}-overlay-appear-active {
+        opacity: 1;
+        transition: opacity 200ms ease-out;
+    }
+
+    &.#{$ns}-overlay-exit {
+        opacity: 1;
+    }
+
+    &.#{$ns}-overlay-exit-active {
+        opacity: 0;
+        transition: opacity 200ms ease-in;
+    }
+
     img {
         display: block;
         max-width: 90vw;
