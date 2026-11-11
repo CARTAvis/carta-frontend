@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {Alert, AnchorButton, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -158,7 +158,6 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     {name}
                     {shouldShowChecks && (
                         <HTMLSelect
-                            minimal
                             className="mirror-select"
                             value={mirror.chosen}
                             options={mirrors.map(site => ({value: site, label: hostOf(site)}))}
@@ -177,18 +176,11 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
         );
     };
 
-    const groupTitle = (icon: IconName, title: string) => (
-        <div className="summary-group-title">
-            <Icon icon={icon} size={12} />
-            {title}
-        </div>
-    );
-
     const changeCount = preflight.changeDescriptions.length;
     const images = preflight.images;
     const catalogs = preflight.catalogs;
 
-    const isExpanded = (id: string, level: WorkspaceCheckLevel) => toggled.get(id) ?? (shouldShowChecks && level === "left-out");
+    const isExpanded = (id: string, level: WorkspaceCheckLevel, isOpenByDefault = false) => toggled.get(id) ?? (isOpenByDefault || (shouldShowChecks && level === "left-out"));
     const toggleNode = (node: TreeNodeInfo) => {
         if (node.hasCaret) {
             setToggled(new Map(toggled).set(String(node.id), !node.isExpanded));
@@ -249,10 +241,11 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
     const missingCatalogs = catalogs.filter(catalog => catalog.file && preflight.levelOfCatalog(catalog) === "left-out").length;
     const hasMirrorNoAnswer = catalogs.some(catalog => !catalog.file && preflight.levelOfCatalog(catalog) === "left-out");
     const summaryOf = (level: WorkspaceCheckLevel, parts: string[]) => (level === "checking" ? "Checking" : parts.filter(Boolean).join(", ") || "All found");
-    const groupNode = (id: string, icon: IconName, title: string, count: number, level: WorkspaceCheckLevel, summary: string, childNodes: TreeNodeInfo[]): TreeNodeInfo => ({
+    const groupNode = (id: string, icon: IconName, title: string, count: number, level: WorkspaceCheckLevel | undefined, summary: string, childNodes: TreeNodeInfo[]): TreeNodeInfo => ({
         id,
         hasCaret: true,
-        isExpanded: isExpanded(id, level),
+        // A group without a level has nothing to check. It shows its contents until the user closes it.
+        isExpanded: isExpanded(id, level ?? "ok", level === undefined),
         icon,
         className: "summary-group",
         label: (
@@ -261,7 +254,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     {title}
                     <span className="row-details"> ({count})</span>
                 </span>
-                {shouldShowChecks && <LevelIcon level={level} text={summary} />}
+                {shouldShowChecks && level !== undefined && <LevelIcon level={level} text={summary} />}
             </div>
         ),
         childNodes
@@ -292,6 +285,22 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                       catalogNodes
                   )
               ]
+            : []),
+        ...(preflight.restoredSettings.length
+            ? [
+                  groupNode("settings", "settings", "Also restored", preflight.restoredSettings.length, undefined, "", [
+                      leaf(
+                          "settings-list",
+                          <div className="restored-settings" data-testid="workspace-info-settings">
+                              {preflight.restoredSettings.map(setting => (
+                                  <Tag key={setting} minimal className="setting-tag">
+                                      {setting}
+                                  </Tag>
+                              ))}
+                          </div>
+                      )
+                  ])
+              ]
             : [])
     ];
 
@@ -308,21 +317,9 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     </div>
                 </div>
             </div>
-            {(images.length > 0 || catalogs.length > 0) && <Tree className="summary-tree" contents={treeNodes} onNodeClick={toggleNode} onNodeExpand={toggleNode} onNodeCollapse={toggleNode} />}
-            {preflight.restoredSettings.length > 0 && (
-                <section data-testid="workspace-info-settings">
-                    {groupTitle("settings", "Also restored")}
-                    <div className="restored-settings">
-                        {preflight.restoredSettings.map(setting => (
-                            <Tag key={setting} minimal round={false}>
-                                {setting}
-                            </Tag>
-                        ))}
-                    </div>
-                </section>
-            )}
+            {treeNodes.length > 0 && <Tree className="summary-tree" contents={treeNodes} onNodeClick={toggleNode} onNodeExpand={toggleNode} onNodeCollapse={toggleNode} />}
             {shouldShowChecks && preflight.canSave && (changeCount > 0 || preflight.hasSavedChanges) && (
-                <Callout className="save-changes" intent={Intent.PRIMARY} icon={changeCount ? "map-marker" : "tick"} data-testid="workspace-info-save-changes">
+                <Callout compact className="save-changes" intent={Intent.PRIMARY} icon={changeCount ? "map-marker" : "tick"} data-testid="workspace-info-save-changes">
                     <span>{changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}</span>
                     {changeCount > 0 && (
                         <Tooltip
@@ -335,7 +332,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                             }
                             placement="top"
                         >
-                            <AnchorButton
+                            <Button
                                 size="small"
                                 icon="floppy-disk"
                                 text="Save to workspace"
