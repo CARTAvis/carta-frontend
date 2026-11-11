@@ -314,11 +314,9 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
         <div className="workspace-info" data-testid="workspace-info">
             <div className="summary-header">
                 {preflight.thumbnail ? (
-                    <Tooltip content="Show larger" placement="bottom" hoverOpenDelay={500} className="workspace-thumbnail-target">
-                        <button type="button" className="workspace-thumbnail" onClick={() => setIsPreviewOpen(true)} data-testid="workspace-info-thumbnail">
-                            <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
-                        </button>
-                    </Tooltip>
+                    <button type="button" className="workspace-thumbnail" onClick={() => setIsPreviewOpen(true)} data-testid="workspace-info-thumbnail">
+                        <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
+                    </button>
                 ) : (
                     <div className="workspace-thumbnail is-empty" data-testid="workspace-info-thumbnail">
                         <Icon icon="media" size={20} />
@@ -362,7 +360,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                 </Callout>
             )}
             {/* The larger preview has no frame. A click anywhere or the Escape key closes it. */}
-            <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={true} canOutsideClickClose={true} transitionDuration={200}>
+            <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={false} transitionDuration={300}>
                 <div className="workspace-preview-overlay" onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview">
                     <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
                 </div>
