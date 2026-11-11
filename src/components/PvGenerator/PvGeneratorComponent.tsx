@@ -142,7 +142,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === PvGeneratorComponent.WidgetConfig.type) {
             // Assign the next unique ID
-            const id = appStore.widgetsStore.addPvGeneratorWidget();
+            const id = appStore.widgetsStore.addWidget(PvGeneratorComponent.WidgetConfig.type);
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
                 this.widgetId = id; // Update the stored widget ID
