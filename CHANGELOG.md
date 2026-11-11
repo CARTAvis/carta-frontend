@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for displaying beam overlays on every channel when per-channel beam data is available, with configurable placement in image settings ([#2942](https://github.com/CARTAvis/carta-frontend/issues/2942)).
 * Added support for restoring catalogs and the widget layout in workspaces ([#2950](https://github.com/CARTAvis/carta-frontend/issues/2950)).
 * Added support for restoring percentile ranges from the cube histogram in workspaces ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
+* Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query and PV generator settings, the plotted spectral lines and the animator settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).

@@ -163,10 +163,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.disposers.length = 0;
     }
 
+    /** Whether the widget size has been measured. The first measurement keeps the zoom range of the scatter plot. Each later resize resets it. */
+    private hasMeasuredSize = false;
+
     @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
-        this.widgetStore.clearScatterPlotXYBounds();
+        if (this.hasMeasuredSize) {
+            this.widgetStore.clearScatterPlotXYBounds();
+        }
+        this.hasMeasuredSize = true;
     };
 
     // true: red->blue, false: blue->red. chartjs plot tick lables with increasing order by default, no need to check for CDELT

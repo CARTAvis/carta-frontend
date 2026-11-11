@@ -736,6 +736,31 @@ export class SpectralProfileSelectionStore {
         }
     };
 
+    /**
+     * Shows the profiles that the workspace saved, when they are still valid. Sets the category
+     * without the defaults that choosing a category sets. The rest of the selection replaces those
+     * defaults.
+     */
+    @action applyWorkspaceSelection = (selection: {category?: MultiProfileCategory; fileIds?: number[]; regionIds?: number[]; statsTypes?: CARTA.StatsType[]; coordinates?: string[]}) => {
+        if (selection.category !== undefined) {
+            this.activeProfileCategory = selection.category;
+        }
+        if (selection.fileIds?.length) {
+            this.selectedFileIds = selection.fileIds.slice(0, MAXIMUM_PROFILES);
+        }
+        if (selection.regionIds?.length) {
+            this.selectedRegionIds = selection.regionIds.slice(0, MAXIMUM_PROFILES);
+        }
+        const statsTypes = selection.statsTypes?.filter(statsType => SUPPORTED_STATISTICS_TYPES.includes(statsType));
+        if (statsTypes?.length) {
+            this.selectedStatsTypes = statsTypes.slice(0, MAXIMUM_PROFILES);
+        }
+        const coordinates = selection.coordinates?.filter(coordinate => VALID_COORDINATES.includes(coordinate));
+        if (coordinates?.length) {
+            this.selectedCoordinates = coordinates.slice(0, MAXIMUM_PROFILES);
+        }
+    };
+
     @action private initSingleMode = () => {
         this.activeProfileCategory = MultiProfileCategory.NONE;
         this.selectedRegionIds = [RegionId.ACTIVE];

@@ -84,9 +84,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             autorun(() => {
                 if (appStore.activeFrame) {
                     const newHist = appStore.activeFrame.renderConfig.histogram;
+                    // A zoom range that the widget already has, such as one that a workspace
+                    // restored, belongs to the first histogram that the widget sees. Only a later
+                    // histogram resets the zoom range.
                     if (newHist !== this.cachedHistogram) {
+                        if (this.cachedHistogram !== undefined) {
+                            this.widgetStore.clearXYBounds();
+                        }
                         this.cachedHistogram = newHist;
-                        this.widgetStore.clearXYBounds();
                     }
                 }
                 const widgetStore = this.widgetStore;
@@ -103,6 +108,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+    }
+
+    componentDidMount() {
+        this.cachedFrame = AppStore.Instance.activeFrame as FrameStore;
     }
 
     componentDidUpdate() {

@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 import {ImageType, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
@@ -129,6 +131,12 @@ export class WorkspaceSnapshotter {
             source: WorkspaceSnapshotter.imageSourceOf(frame),
             timeSeriesMember: this.appStore.timeSeriesStore.isMember(frame) || undefined
         };
+        // Save the range of the animator only when it is not every channel.
+        const [firstChannel, lastChannel] = frame.animationChannelRange ?? [];
+        const depth = frame.frameInfo.fileInfoExtended?.depth ?? 1;
+        if (typeof firstChannel === "number" && typeof lastChannel === "number" && (firstChannel !== 0 || lastChannel !== depth - 1)) {
+            workspaceFile.animationChannelRange = [firstChannel, lastChannel];
+        }
         workspaceFile.references = {};
 
         if (frame.spatialReference) {
@@ -140,6 +148,15 @@ export class WorkspaceSnapshotter {
                 regions: this.captureRegions(frame)
             };
         }
+
+        if (frame.spectralCoordsSupported?.has(frame.spectralCoordinate)) {
+            workspaceFile.spectralCoordinate = frame.spectralCoordinate;
+        }
+        if (frame.spectralCoordsSupported?.has(frame.spectralCoordinateSecondary)) {
+            workspaceFile.spectralCoordinateSecondary = frame.spectralCoordinateSecondary;
+        }
+        workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
+        workspaceFile.intensityUnit = frame.intensityUnit;
 
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
@@ -187,7 +204,8 @@ export class WorkspaceSnapshotter {
                 locked: region.isLocked,
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
-                annotationStyles: (region as any).getAnnotationStyles?.()
+                annotationStyles: (region as any).getAnnotationStyles?.(),
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
             }));
     }
 
@@ -313,13 +331,25 @@ export class WorkspaceSnapshotter {
         this.workspace.catalogs = catalogs;
     }
 
-    /** Stage 4: what each catalog table and plot widget shows, naming catalogs by the workspace's own IDs. */
+    /** Stage 4: what each catalog widget and each profile, analysis and statistics widget shows. Catalogs and images are named by their workspace IDs. */
     private captureViews(): void {
         // Only the catalogs stage 3 saved: a widget must not name one this workspace does not carry.
         const savedCatalogIds = new Set((this.workspace.catalogs ?? []).map(catalog => catalog.id));
         const catalogWidgets = this.appStore.catalogStore.widgetBindings.savedCatalogWidgets(savedCatalogIds);
         if (Object.keys(catalogWidgets).length > 0) {
             this.workspace.catalogWidgets = catalogWidgets;
+        }
+
+        // Name only the images that the workspace saves. A widget that shows another image is saved without its image. On restore, it shows the active image.
+        const savedImageIds = new Set(this.workspace.files.map(file => file.id));
+        const plotWidgets = this.appStore.widgetsStore.savedPlotWidgets({
+            imageIdOf: fileId => {
+                const imageId = this.imageIdOf(this.appStore.getFrame(fileId));
+                return imageId !== undefined && savedImageIds.has(imageId) ? imageId : undefined;
+            }
+        });
+        if (Object.keys(plotWidgets).length > 0) {
+            this.workspace.plotWidgets = plotWidgets;
         }
     }
 
@@ -337,6 +367,8 @@ export class WorkspaceSnapshotter {
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        const animator = this.appStore.animatorStore;
+        this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.
         const contourImageId = this.appStore.isFrameLockedToContour ? undefined : this.imageIdOf(this.appStore.contourDataSource);
         if (contourImageId !== undefined) {

@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
+import {CARTA} from "carta-protobuf";
 
 import {CatalogSystemType, ImageType, WorkspaceItemKind} from "enums";
 import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
@@ -19,6 +20,11 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         zoomAxis: "both",
         channel: 3,
         stokes: 0,
+        spectralCoordsSupported: new Map([["Radio velocity (km/s)", {}]]),
+        spectralCoordinate: "Radio velocity (km/s)",
+        spectralCoordinateSecondary: "Channel",
+        spectralSystem: "LSRK",
+        intensityUnit: "Jy/beam",
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
@@ -67,6 +73,7 @@ function createSession(overrides: Record<string, any> = {}) {
         spectralReference: undefined,
         rasterScalingReference: undefined,
         timeSeriesStore: {isMember: jest.fn(() => false)},
+        animatorStore: {frameRate: 5, step: 1, playMode: 0, animationMode: 0},
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
@@ -74,7 +81,14 @@ function createSession(overrides: Record<string, any> = {}) {
             getCatalogDisplayStore: jest.fn(() => displayStore),
             widgetBindings: {savedCatalogWidgets: jest.fn((_savedCatalogIds: ReadonlySet<number>): Record<string, unknown> => ({}))}
         },
-        widgetsStore: {catalogWidgets: new Map()},
+        widgetsStore: {
+            catalogWidgets: new Map(),
+            savedPlotWidgets: jest.fn((ids: {imageIdOf: (fileId: number) => number | undefined}): Record<string, unknown> => ({
+                "stats-0": {type: "stats", imageId: ids.imageIdOf(0), coordinate: "z"},
+                "stats-1": {type: "stats", imageId: ids.imageIdOf(5)}
+            }))
+        },
+        getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
@@ -112,6 +126,37 @@ describe("WorkspaceSnapshotter", () => {
             renderConfig: {colorMap: "inferno"}
         });
         expect(workspace.selectedFile).toBe(1);
+    });
+
+    test("captures the spectral settings an image is shown in, leaving out a coordinate it does not support", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0]).toMatchObject({spectralCoordinate: "Radio velocity (km/s)", spectralSystem: "LSRK", intensityUnit: "Jy/beam"});
+        expect(workspace.files?.[0]).not.toHaveProperty("spectralCoordinateSecondary");
+    });
+
+    test("captures the sample width of a line region, and of no other kind", () => {
+        const region = (regionId: number, regionType: CARTA.RegionType) => ({
+            regionId,
+            regionType,
+            rotation: 0,
+            controlPoints: [{x: 0, y: 0}],
+            name: "",
+            color: "#ffffff",
+            lineWidth: 2,
+            isLocked: false,
+            dashLength: 0,
+            lineRegionSampleWidth: 5
+        });
+        const frame = createFrame(0, {regionSet: {regions: [region(1, CARTA.RegionType.LINE), region(2, CARTA.RegionType.RECTANGLE)], focusedRegion: undefined}});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.lineRegionSampleWidth)).toEqual([5, undefined]);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("captures a catalog against the image it is overlaid on", () => {
@@ -164,6 +209,15 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.catalogWidgets).toEqual({"widget-a": {type: "catalog-overlay", catalogId: 1}});
         expect(appStore.catalogStore.widgetBindings.savedCatalogWidgets).toHaveBeenCalledWith(new Set(workspace.catalogs?.map(catalog => catalog.id)));
+    });
+
+    test("saves what each profile and analysis widget shows, naming only the images the workspace carries", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.plotWidgets).toEqual({"stats-0": {type: "stats", imageId: 1, coordinate: "z"}, "stats-1": {type: "stats"}});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("saves no catalog widgets when no widget shows a loaded catalog", () => {
@@ -235,6 +289,20 @@ describe("WorkspaceSnapshotter", () => {
 
         Object.assign(appStore, {isFrameLockedToContour: true});
         expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("contourDataSource");
+    });
+
+    test("saves the animator settings, and the channels it plays of an image only when they are not every channel", () => {
+        const {appStore, frame} = createSession();
+        Object.assign(appStore.animatorStore, {frameRate: 8, step: 2, playMode: 2, animationMode: 1});
+        Object.assign(frame, {animationChannelRange: [2, 5], frameInfo: {...frame.frameInfo, fileInfoExtended: {depth: 10}}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.animator).toEqual({frameRate: 8, step: 2, playMode: 2, mode: 1});
+        expect(workspace.files?.[0].animationChannelRange).toEqual([2, 5]);
+
+        Object.assign(frame, {animationChannelRange: [0, 9]});
+        expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("animationChannelRange");
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {
