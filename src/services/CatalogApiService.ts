@@ -1,4 +1,4 @@
-import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
+import axios, {AxiosError, type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
@@ -12,11 +12,16 @@ import {TelemetryService} from "./TelemetryService";
 export class CatalogApiService {
     public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
+    /** How long a SIMBAD or VizieR request waits for the mirror to answer, in milliseconds. */
+    public static readonly QUERY_TIMEOUT_MS = 60000;
+
     private static staticInstance: CatalogApiService;
     private axiosInstanceSimbad: AxiosInstance;
     private axiosInstanceVizier: AxiosInstance;
     private cancelTokenSourceSimbad: CancelTokenSource;
     private cancelTokenSourceVizier: CancelTokenSource;
+    /** The mirrors that timed out since `rememberTimedOutMirrors` was called, by URL. */
+    private timedOutMirrors: Set<string> | undefined;
 
     public static get Instance() {
         if (!CatalogApiService.staticInstance) {
@@ -179,12 +184,41 @@ export class CatalogApiService {
         }
     };
 
+    /**
+     * Remember the mirrors that time out, until the returned function is called. While a mirror is
+     * remembered, a request to it fails at once with the timeout error, and does not wait again.
+     *
+     * A workspace restore uses this while it opens its catalogs. Then a mirror that does not answer
+     * makes the restore wait once, not once for each catalog on it. The mirror is not marked
+     * unavailable: the next restore or query tries it again.
+     */
+    public rememberTimedOutMirrors = (): (() => void) => {
+        const mirrors = new Set<string>();
+        this.timedOutMirrors = mirrors;
+        return () => {
+            // A later call replaces the set. Then this call does not own it any more.
+            if (this.timedOutMirrors === mirrors) {
+                this.timedOutMirrors = undefined;
+            }
+        };
+    };
+
     private getFromActiveMirror = (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
         try {
             const activeMirrorUrl = this.getActiveMirrorUrl(database);
-            return instance.get(this.joinUrl(activeMirrorUrl, path)).catch(error => {
+            // Take the set now. If the request times out after a later call replaced the set, the
+            // mirror is not added to the later set.
+            const timedOutMirrors = this.timedOutMirrors;
+            if (timedOutMirrors?.has(activeMirrorUrl)) {
+                return Promise.reject(this.createMirrorTimeoutError(activeMirrorUrl, true));
+            }
+            return instance.get(this.joinUrl(activeMirrorUrl, path), {timeout: CatalogApiService.QUERY_TIMEOUT_MS, transitional: {clarifyTimeoutError: true}}).catch(error => {
                 if (axios.isCancel(error)) {
                     throw error;
+                }
+                if (axios.isAxiosError(error) && error.code === AxiosError.ETIMEDOUT) {
+                    timedOutMirrors?.add(activeMirrorUrl);
+                    throw this.createMirrorTimeoutError(activeMirrorUrl);
                 }
                 throw this.createMirrorRequestError(activeMirrorUrl, error);
             });
@@ -193,15 +227,30 @@ export class CatalogApiService {
         }
     };
 
-    private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {
-        let mirrorLabel = mirrorUrl;
+    /** Returns the host of a mirror URL, such as simbad.example, or the whole URL when it cannot be parsed. */
+    private mirrorLabel = (mirrorUrl: string): string => {
         try {
-            mirrorLabel = new URL(mirrorUrl).host;
+            return new URL(mirrorUrl).host;
         } catch {
-            // Use the full URL when it cannot be parsed.
+            return mirrorUrl;
         }
+    };
+
+    /**
+     * Returns the error for a mirror that did not respond in time.
+     *
+     * @param didTimeOutEarlier - true when this request did not wait, because the mirror timed out
+     * on an earlier request. Then the user can see that the restore waited only once.
+     */
+    private createMirrorTimeoutError = (mirrorUrl: string, didTimeOutEarlier = false): Error => {
+        const seconds = CatalogApiService.QUERY_TIMEOUT_MS / 1000;
+        const query = didTimeOutEarlier ? " to an earlier query" : "";
+        return new Error(`Mirror ${this.mirrorLabel(mirrorUrl)} did not respond within ${seconds} seconds${query}. The mirror may be unavailable. Select another mirror site and retry.`);
+    };
+
+    private createMirrorRequestError = (mirrorUrl: string, error: any): Error => {
         const details = error?.message ? ` Details: ${error.message}` : "";
-        return new Error(`Request to mirror ${mirrorLabel} failed. The mirror may be unavailable. Select another mirror site and retry.${details}`);
+        return new Error(`Request to mirror ${this.mirrorLabel(mirrorUrl)} failed. The mirror may be unavailable. Select another mirror site and retry.${details}`);
     };
 
     private getActiveMirrorUrl = (database: CatalogDatabase): string => {

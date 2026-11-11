@@ -1,4 +1,4 @@
-import axios, {type AxiosInstance} from "axios";
+import axios, {AxiosError, type AxiosInstance} from "axios";
 
 import {CatalogDatabase, CatalogSystemType, CatalogType, RadiusUnits} from "enums";
 import {type WorkspaceCatalogQuerySource} from "models";
@@ -31,6 +31,7 @@ jest.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemet
 interface TestableCatalogApiService {
     axiosInstanceSimbad: AxiosInstance;
     getSimbadCatalog: (query: string) => Promise<unknown>;
+    rememberTimedOutMirrors: () => () => void;
     normalizeMirrorUrl: (database: CatalogDatabase, url?: string) => string | null;
     joinUrl: (baseUrl: string, path: string) => string;
 }
@@ -44,7 +45,64 @@ describe("CatalogApiService active mirror", () => {
         await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed. The mirror may be unavailable. Select another mirror site and retry. Details: Network Error");
 
         expect(get).toHaveBeenCalledTimes(1);
-        expect(get).toHaveBeenCalledWith("https://active.example/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=test");
+        expect(get).toHaveBeenCalledWith(
+            "https://active.example/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=test",
+            expect.objectContaining({timeout: CatalogApiService.QUERY_TIMEOUT_MS, transitional: expect.objectContaining({clarifyTimeoutError: true})})
+        );
+    });
+
+    test("does not take an aborted request for a mirror that timed out", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        // Without `clarifyTimeoutError`, axios gives a timeout this code too.
+        const get = jest.fn().mockRejectedValue(new AxiosError("Request aborted", AxiosError.ECONNABORTED));
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+
+        const forget = service.rememberTimedOutMirrors();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed. The mirror may be unavailable. Select another mirror site and retry. Details: Request aborted");
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Request to mirror active.example failed.");
+        forget();
+
+        expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    test("names the mirror that did not respond within the time limit", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        const get = jest.fn().mockRejectedValue(new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT));
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Mirror active.example did not respond within 60 seconds. The mirror may be unavailable. Select another mirror site and retry.");
+        // Outside `rememberTimedOutMirrors`, every request waits for the mirror again.
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
+        expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    test("fails at once for a mirror that timed out while it is remembered, and waits again after", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        const get = jest.fn().mockRejectedValue(new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT));
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+
+        const forget = service.rememberTimedOutMirrors();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("Mirror active.example did not respond within 60 seconds to an earlier query. The mirror may be unavailable. Select another mirror site and retry.");
+        expect(get).toHaveBeenCalledTimes(1);
+
+        forget();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
+        expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    test("keeps the mirrors of a later call when an earlier call forgets its own", async () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        const get = jest.fn().mockRejectedValue(new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT));
+        service.axiosInstanceSimbad = {get} as unknown as AxiosInstance;
+
+        const forgetEarlier = service.rememberTimedOutMirrors();
+        service.rememberTimedOutMirrors();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
+        forgetEarlier();
+        await expect(service.getSimbadCatalog("test")).rejects.toThrow("did not respond");
+
+        expect(get).toHaveBeenCalledTimes(1);
     });
 
     test("preserves user cancellation without reporting a mirror failure", async () => {
