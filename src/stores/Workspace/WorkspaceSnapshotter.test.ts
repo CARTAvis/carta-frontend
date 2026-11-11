@@ -96,7 +96,21 @@ function createSession(overrides: Record<string, any> = {}) {
         },
         getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         // The Image Fitting dialog fits the active image over the field of view, as it does by default.
-        imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
+        imageFittingStore: {
+            selectedFileId: ACTIVE_FILE_ID,
+            selectedRegionId: 0,
+            toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({
+                imageId,
+                regionId,
+                components: [],
+                autoInitialValues: false,
+                backgroundOffset: 0,
+                backgroundOffsetFixed: true,
+                solver: 0,
+                createModelImage: false,
+                createResidualImage: false
+            }))
+        },
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         overlaySettings: {
             toConfig: jest.fn((shouldIncludePreferenceSettings: boolean) => ({isVisible: true, grid: shouldIncludePreferenceSettings ? {isVisible: false, width: 1} : {width: 1}})),
@@ -674,11 +688,13 @@ describe("WorkspaceSnapshotter", () => {
         const {appStore} = createSession();
         Object.assign(appStore.imageFittingStore, {selectedFileId: 0, selectedRegionId: 5});
 
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: 1, regionId: 5});
+        new WorkspaceSnapshotter().capture();
+        expect(appStore.imageFittingStore.toWorkspaceConfig).toHaveBeenLastCalledWith(1, 5);
 
         Object.assign(appStore.imageFittingStore, {selectedFileId: 7});
         appStore.getFrame = (fileId: number) => (fileId === 7 ? (createFrame(7) as never) : undefined);
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: undefined, regionId: 0});
+        new WorkspaceSnapshotter().capture();
+        expect(appStore.imageFittingStore.toWorkspaceConfig).toHaveBeenLastCalledWith(undefined, 0);
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {

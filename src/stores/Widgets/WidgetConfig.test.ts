@@ -5,7 +5,6 @@ import {type ConfigurableStore, type Persisted} from "models";
 // Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
-import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {AnimatorWidgetStore} from "./AnimatorWidgetStore/AnimatorWidgetStore";
 import {HistogramWidgetStore} from "./HistogramWidgetStore/HistogramWidgetStore";
@@ -109,9 +108,9 @@ describe("widget config in a layout", () => {
     const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/carta-widget", definitions: LAYOUT_SCHEMA.definitions});
 
     test.each(LAYOUT_WIDGETS)("a %s widget writes only fields the layout schema declares", (id, createStore) => {
-        const declared = LAYOUT_SCHEMA.definitions[id]?.properties.widgetSettings.properties;
+        const declared = LAYOUT_SCHEMA.definitions[id].properties.widgetSettings.properties;
 
-        expect(undeclaredFields(`layout/${id}`, declared, createStore().toConfig())).toEqual([]);
+        expect(Object.keys(createStore().toConfig()).filter(key => !(key in declared))).toEqual([]);
     });
 
     test.each(LAYOUT_WIDGETS)("a %s widget writes settings the layout schema accepts", (id, createStore) => {
@@ -159,7 +158,9 @@ describe("image view grid and WCS overlay in a layout", () => {
     });
 
     test("writes only fields the layout schema declares", () => {
-        expect(undeclaredFields("layout/image-view", LAYOUT_SCHEMA.definitions["image-view"]?.properties.widgetSettings.properties, imageViewSettings()!)).toEqual([]);
+        const declared = LAYOUT_SCHEMA.definitions["image-view"].properties.widgetSettings.properties;
+
+        expect(Object.keys(imageViewSettings()!).filter(key => !(key in declared))).toEqual([]);
     });
 
     test("writes settings the layout schema accepts", () => {
