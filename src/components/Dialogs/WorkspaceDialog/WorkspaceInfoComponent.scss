@@ -13,10 +13,6 @@
         gap: 12px;
         margin-bottom: 8px;
 
-        .workspace-thumbnail-target {
-            flex: none;
-        }
-
         .workspace-thumbnail {
             display: flex;
             align-items: center;
@@ -243,34 +239,19 @@
     }
 }
 
+// This element darkens the screen and holds the preview, so that both fade at the same time. The preview
+// also grows and shrinks the way that a Blueprint dialog does.
+$preview-duration: $pt-transition-duration * 3;
+
 .workspace-preview-overlay {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: $pt-z-index-overlay;
+    background-color: rgba($black, 0.7);
     cursor: zoom-out;
-
-    // The preview fades with the backdrop. Without this, it stays until the transition of the backdrop ends.
-    &.#{$ns}-overlay-enter,
-    &.#{$ns}-overlay-appear {
-        opacity: 0;
-    }
-
-    &.#{$ns}-overlay-enter-active,
-    &.#{$ns}-overlay-appear-active {
-        opacity: 1;
-        transition: opacity 200ms ease-out;
-    }
-
-    &.#{$ns}-overlay-exit {
-        opacity: 1;
-    }
-
-    &.#{$ns}-overlay-exit-active {
-        opacity: 0;
-        transition: opacity 200ms ease-in;
-    }
 
     img {
         display: block;
@@ -278,6 +259,44 @@
         max-height: 90vh;
         border-radius: 4px;
         box-shadow: $pt-elevation-shadow-4;
+    }
+
+    &.#{$ns}-overlay-enter,
+    &.#{$ns}-overlay-appear {
+        opacity: 0;
+
+        img {
+            transform: scale(0.5);
+        }
+    }
+
+    &.#{$ns}-overlay-enter-active,
+    &.#{$ns}-overlay-appear-active {
+        opacity: 1;
+        transition: opacity $preview-duration $pt-transition-ease;
+
+        img {
+            transform: scale(1);
+            transition: transform $preview-duration $pt-transition-ease-bounce;
+        }
+    }
+
+    &.#{$ns}-overlay-exit {
+        opacity: 1;
+
+        img {
+            transform: scale(1);
+        }
+    }
+
+    &.#{$ns}-overlay-exit-active {
+        opacity: 0;
+        transition: opacity $preview-duration $pt-transition-ease;
+
+        img {
+            transform: scale(0.5);
+            transition: transform $preview-duration $pt-transition-ease-bounce;
+        }
     }
 }
 
