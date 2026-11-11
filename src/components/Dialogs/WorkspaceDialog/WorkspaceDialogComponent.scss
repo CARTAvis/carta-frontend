@@ -27,10 +27,6 @@
             box-shadow: inset 0 0 0 1px rgba($black, 0.15);
         }
 
-        .workspace-search-input {
-            margin: 6px;
-        }
-
         .workspace-list-header {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 100px;
@@ -63,7 +59,8 @@
         .workspace-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 100px;
-            line-height: 24px;
+            line-height: 22px;
+            font-size: $pt-font-size-small;
             cursor: pointer;
             user-select: none;
             border-bottom: 1px solid rgba($black, 0.08);
