@@ -155,16 +155,20 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                   : {text: isNew ? "New mirror" : "Answered", intent: isNew ? Intent.WARNING : Intent.SUCCESS};
         return (
             <div key={catalogId} className="summary-row" data-testid="workspace-info-online-catalog">
-                <span className="row-name">
-                    {name}
+                {/* The mirror is on a second line, so that a long name does not hide it. */}
+                <span className="row-name is-stacked">
+                    <span>{name}</span>
                     {shouldShowChecks && (
-                        <HTMLSelect
-                            className="mirror-select"
-                            value={mirror.chosen}
-                            options={mirrors.map(site => ({value: site, label: hostOf(site)}))}
-                            onChange={ev => preflight.testMirror(database, ev.currentTarget.value)}
-                            data-testid="workspace-info-mirror-select"
-                        />
+                        <span className="mirror-line">
+                            <span className="row-details">Mirror</span>
+                            <HTMLSelect
+                                className="mirror-select"
+                                value={mirror.chosen}
+                                options={mirrors.map(site => ({value: site, label: hostOf(site)}))}
+                                onChange={ev => preflight.testMirror(database, ev.currentTarget.value)}
+                                data-testid="workspace-info-mirror-select"
+                            />
+                        </span>
                     )}
                 </span>
                 {shouldShowChecks && <StatusTag {...status} testId="workspace-info-mirror-status" />}
