@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceItemKind} from "enums";
 import {
     type ConfigurableStore,
     CreateWidgetButton,
@@ -43,7 +43,7 @@ import {
     type WorkspacePlotWidgetConfig
 } from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
+import {AppStore, CatalogStore, HelpStore, LayoutStore} from "stores";
 import {
     ACTIVE_FILE_ID,
     type AnimatorWidgetStore,
@@ -712,7 +712,7 @@ export class WidgetsStore {
             if (config.componentId) {
                 config.componentId = config.id;
             }
-            if (savedConfig.defaultX > 0 && savedConfig.defaultY > 0) {
+            if (typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0) {
                 config.setDefaultPosition(savedConfig.defaultX, savedConfig.defaultY);
             } else {
                 const offset = this.getFloatingWidgetOffset();
@@ -723,6 +723,12 @@ export class WidgetsStore {
     };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
+        // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
+        const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
+        if (imageViews.length) {
+            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+        }
+
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
                 const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType);
@@ -1173,6 +1179,8 @@ export class WidgetsStore {
         }
 
         switch (widgetType) {
+            case ImageViewComponent.WidgetConfig.type:
+                return AppStore.Instance.imageViewConfigStore.toConfig();
             case CatalogOverlayComponent.WidgetConfig.type:
                 return this.catalogWidgets.get(widgetID)?.toLayoutSettings(CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
             case CatalogPlotComponent.WidgetConfig.type:
@@ -1371,16 +1379,13 @@ export class WidgetsStore {
         if (channelMapStore.isChannelMapEnabled) {
             channelMapStore.setChannelMapEnabled(false);
         } else {
-            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.isImageMultiPanelEnabled);
+            const imageViewConfig = AppStore.Instance.imageViewConfigStore;
+            imageViewConfig.setMultiPanelEnabled(!imageViewConfig.isMultiPanelEnabled);
         }
     };
 
     onChannelMapButtonClick = () => {
         AppStore.Instance.channelMapStore.setChannelMapEnabled(!AppStore.Instance.channelMapStore.isChannelMapEnabled);
-    };
-
-    setImageMultiPanelEnabled = (isMultiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, isMultiPanelEnabled);
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
@@ -1733,6 +1738,30 @@ export class WidgetsStore {
         }
     };
 
+    /**
+     * Returns the ID that a workspace saves for a widget: the `widgetId` of its store when it has
+     * one, and otherwise the ID that the layout uses for it. The `widgetId` stays the same when a
+     * layout adds the widget again, and the layout ID can change.
+     */
+    workspaceIdOf = (widgetType: string, id: string): string => {
+        const store = this.widgetsMap.get(widgetType)?.get(id);
+        return WidgetsStore.isIdentified(store) && store.widgetId ? store.widgetId : id;
+    };
+
+    /**
+     * Returns the ID that the layout uses for the widget that a workspace saved as `workspaceId`.
+     * Returns undefined when no such widget is open.
+     */
+    layoutIdOf = (widgetType: string, workspaceId: string): string | undefined => {
+        const widgets = this.widgetsMap.get(widgetType);
+        if (widgets) {
+            return [...widgets.keys()].find(id => this.workspaceIdOf(widgetType, id) === workspaceId);
+        }
+        // A widget without a store, such as the animator. The image view uses its type as its ID.
+        const isOpen = workspaceId === widgetType || this.floatingWidgets.some(w => w.id === workspaceId) || !!LayoutStore.Instance.layoutModel?.getNodeById(workspaceId);
+        return isOpen ? workspaceId : undefined;
+    };
+
     @action addFloatingSettingsWidget(id: string | null = null, parentId: string, type: string) {
         // Generate new id if none passed in
         if (!id) {
@@ -1763,7 +1792,7 @@ export class WidgetsStore {
     };
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
-        if (widget.defaultX === undefined || widget.defaultY === undefined || !(widget.defaultX > 0 && widget.defaultY > 0)) {
+        if (widget.defaultX === undefined || widget.defaultY === undefined || !(widget.defaultX >= 0 && widget.defaultY >= 0)) {
             const offset = this.getFloatingWidgetOffset();
             widget.setDefaultPosition(offset, offset);
         }

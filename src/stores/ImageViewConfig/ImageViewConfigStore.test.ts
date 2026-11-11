@@ -1,4 +1,4 @@
-import {ImagePanelMode, ImageType} from "enums";
+import {ImagePanelMode, ImageType, PreferenceKeys} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
@@ -47,7 +47,8 @@ jest.mock("stores", () => {
         imagePanelColumns: 3,
         imagePanelRows: 2,
         imagePanelMode: ImagePanelMode.None,
-        isImageMultiPanelEnabled: true
+        isImageMultiPanelEnabled: true,
+        setPreference: jest.fn()
     };
 
     return {
@@ -291,6 +292,7 @@ describe("ImageViewConfigStore", () => {
     describe("image panel dimensions", () => {
         beforeEach(() => {
             imageViewConfigStore.removeAllImages();
+            imageViewConfigStore.applyConfig(null);
             mockChannelMapStore.isChannelMapEnabled = false;
             mockPreferenceStore.isImageMultiPanelEnabled = true;
             mockPreferenceStore.imagePanelMode = ImagePanelMode.Dynamic;
@@ -322,6 +324,72 @@ describe("ImageViewConfigStore", () => {
 
             expect(imageViewConfigStore.numImageColumns).toBe(1);
             expect(imageViewConfigStore.numImageRows).toBe(1);
+        });
+    });
+
+    describe("the grid of a session", () => {
+        const grid = {multiPanelEnabled: true, panelMode: ImagePanelMode.Fixed, panelColumns: 3, panelRows: 1};
+
+        beforeEach(() => {
+            imageViewConfigStore.removeAllImages();
+            imageViewConfigStore.applyConfig(null);
+            mockChannelMapStore.isChannelMapEnabled = false;
+            mockPreferenceStore.isImageMultiPanelEnabled = false;
+            mockPreferenceStore.imagePanelMode = ImagePanelMode.Dynamic;
+            mockPreferenceStore.imagePanelColumns = 2;
+            mockPreferenceStore.imagePanelRows = 2;
+            mockPreferenceStore.setPreference.mockClear();
+        });
+
+        it("follows the user's preferences until a grid is applied or set", () => {
+            expect(imageViewConfigStore.toConfig()).toEqual({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 2});
+            expect(imageViewConfigStore.imagePanelMode).toBe(ImagePanelMode.None);
+        });
+
+        it("applies a saved grid to the session without changing the user's preferences", () => {
+            imageViewConfigStore.applyConfig(grid);
+
+            expect(imageViewConfigStore.toConfig()).toEqual(grid);
+            expect(imageViewConfigStore.imagePanelMode).toBe(ImagePanelMode.Fixed);
+            expect(imageViewConfigStore.numImageColumns).toBe(3);
+            expect(imageViewConfigStore.numImageRows).toBe(1);
+            expect(mockPreferenceStore.setPreference).not.toHaveBeenCalled();
+        });
+
+        it("keeps each setting a control sets as the user's default", () => {
+            imageViewConfigStore.setMultiPanelEnabled(true);
+            imageViewConfigStore.setMultiPanelMode(ImagePanelMode.Fixed);
+            imageViewConfigStore.setPanelColumns(3);
+            imageViewConfigStore.setPanelRows(1);
+
+            expect(imageViewConfigStore.toConfig()).toEqual(grid);
+            expect(mockPreferenceStore.setPreference.mock.calls).toEqual([
+                [PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, true],
+                [PreferenceKeys.IMAGE_PANEL_MODE, ImagePanelMode.Fixed],
+                [PreferenceKeys.IMAGE_PANEL_COLUMNS, 3],
+                [PreferenceKeys.IMAGE_PANEL_ROWS, 1]
+            ]);
+        });
+
+        it("ignores a panel count the controls would not accept", () => {
+            imageViewConfigStore.setPanelColumns(0);
+            imageViewConfigStore.setPanelRows(1.5);
+
+            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining({panelColumns: 2, panelRows: 2}));
+            expect(mockPreferenceStore.setPreference).not.toHaveBeenCalled();
+        });
+
+        it("follows the user's preference for each saved setting it cannot take", () => {
+            imageViewConfigStore.applyConfig({multiPanelEnabled: "yes", panelMode: ImagePanelMode.None, panelColumns: 0, panelRows: 4});
+
+            expect(imageViewConfigStore.toConfig()).toEqual({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 4});
+        });
+
+        it("returns to the user's preferences when a layout without a grid is applied", () => {
+            imageViewConfigStore.applyConfig(grid);
+            imageViewConfigStore.applyConfig(null);
+
+            expect(imageViewConfigStore.toConfig()).toEqual({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 2});
         });
     });
 

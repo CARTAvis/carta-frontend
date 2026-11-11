@@ -201,8 +201,12 @@ export class LayoutConfig {
         // Enrich docked widgets with widget settings
         LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
 
-        // Handle floating widgets
-        appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
+        // Save the floating widgets from the bottom one to the top one. A layout adds them again in
+        // this order, and each widget it adds is put on top. So they are stacked as they were.
+        const zIndexManager = appStore.zIndexManager;
+        const zIndexOf = (config: WidgetConfig): number => zIndexManager?.findIndex(config.componentId ? config.componentId : config.id) ?? 0;
+        const floatingWidgets = [...(appStore.widgetsStore.floatingWidgets ?? [])].sort((a, b) => zIndexOf(a) - zIndexOf(b));
+        floatingWidgets.forEach((config: WidgetConfig) => {
             // skip saving floating settings panel
             if (config?.type === "floating-settings") {
                 return;
@@ -212,8 +216,9 @@ export class LayoutConfig {
                 id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
                 defaultHeight: config.defaultHeight ? config.defaultHeight : "",
-                defaultX: config.defaultX ? config.defaultX : "",
-                defaultY: config.defaultY ? config.defaultY : ""
+                // A position of 0 is at the left or top edge, so save it too.
+                defaultX: typeof config.defaultX === "number" ? config.defaultX : "",
+                defaultY: typeof config.defaultY === "number" ? config.defaultY : ""
             };
             // add widget settings
             const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
@@ -270,6 +275,9 @@ export class LayoutConfig {
                     };
                     if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
                         simpleChild.activeItemIndex = child.activeItemIndex;
+                    }
+                    if (child.type === "stack" && child.maximized === true) {
+                        simpleChild.maximized = true;
                     }
                     if (child.width) {
                         simpleChild.width = child.width;

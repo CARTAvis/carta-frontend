@@ -305,6 +305,56 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("animationChannelRange");
     });
 
+    test("saves the open analysis dialogs from the bottom one to the top one, and leaves out the other dialogs", () => {
+        const zIndexes = new Map([
+            ["contour-dialog", 3],
+            ["region-dialog", 1],
+            ["preference-dialog", 2]
+        ]);
+        createSession({
+            dialogStore: {dialogVisible: new Map([...zIndexes.keys()].map(id => [id, true]))},
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.openDialogs).toEqual(["region-dialog", "contour-dialog"]);
+    });
+
+    test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, and leaves out a PV preview", () => {
+        const zIndexes = new Map([
+            ["spectral-profiler-0-settings", 4],
+            ["image-view-settings", 2]
+        ]);
+        createSession({
+            widgetsStore: {
+                floatingWidgets: [
+                    {
+                        type: "floating-settings",
+                        id: "spectral-profiler-0-settings",
+                        parentId: "spectral-profiler-0",
+                        parentType: "spectral-profiler",
+                        title: "Z Profile Settings: Region #1 ",
+                        defaultX: 0,
+                        defaultY: 30,
+                        defaultWidth: 650,
+                        defaultHeight: 400
+                    },
+                    {type: "floating-settings", id: "image-view-settings", parentId: "image-view", parentType: "image-view", title: "Image View Settings", defaultX: 25, defaultY: 25, defaultWidth: 400, defaultHeight: 300},
+                    {type: "floating-settings", id: "pv-preview", parentId: "pv-generator-0", parentType: "pv-generator", title: "PV Preview Viewer"},
+                    {type: "spectral-profiler", id: "spectral-profiler-0"}
+                ],
+                workspaceIdOf: (type: string, id: string) => (id === "spectral-profiler-0" ? "spectral-profiler-3" : id),
+                catalogWidgets: new Map(),
+                savedPlotWidgets: () => ({})
+            },
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.openWidgetSettings).toEqual([
+            {widgetId: "image-view", widgetType: "image-view", title: "Image View", x: 25, y: 25, width: 400, height: 300},
+            {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400}
+        ]);
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};

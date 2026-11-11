@@ -551,6 +551,20 @@ export interface WorkspaceLayout {
     floating: any[];
 }
 
+/** An open settings panel of a widget, and where it was. */
+export interface WorkspaceWidgetSettingsPanel {
+    /** The stable ID of the widget that the panel sets, such as "spectral-profiler-0". */
+    widgetId: string;
+    /** The type of that widget, such as "spectral-profiler". */
+    widgetType: string;
+    /** The title of that widget. The panel is titled after it. */
+    title: string;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+}
+
 export interface Workspace {
     id?: string;
     name?: string;
@@ -574,6 +588,18 @@ export interface Workspace {
      * which is the default.
      */
     contourDataSource?: {imageId: number};
+    /**
+     * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
+     * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the
+     * dialogs as they are.
+     */
+    openDialogs?: string[];
+    /**
+     * The settings panels of widgets that were open as floating panels, from the bottom one to the
+     * top one. Left out by a workspace saved before it kept them. A restore then leaves the panels
+     * as they are.
+     */
+    openWidgetSettings?: WorkspaceWidgetSettingsPanel[];
     /**
      * The color-blended image in front, when it is one, by the `imageListIndex` its entry in
      * `colorBlendingImages` carries. `selectedFile` then names the image it is blended onto.

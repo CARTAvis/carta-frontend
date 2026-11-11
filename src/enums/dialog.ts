@@ -17,6 +17,12 @@ export enum DialogId {
     Hotkey = "hotkey-dialog"
 }
 
+/**
+ * The dialogs that a workspace keeps open. These show the data of the session. The other dialogs,
+ * such as the file browser or the preferences, are not part of a workspace.
+ */
+export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery];
+
 export enum LayoutDialogMode {
     DynamicLayout,
     Layout
