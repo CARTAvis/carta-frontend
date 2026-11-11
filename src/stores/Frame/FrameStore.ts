@@ -109,6 +109,48 @@ export interface FrameInfo {
     previewSourceFileId?: number;
 }
 
+/**
+ * How a generated image was made, in terms of this session. All images from one request share one
+ * record. This lets a workspace save the request once.
+ */
+export type ImageGenerationRequest =
+    | {
+          type: "moment";
+          source: FrameStore;
+          regionId: number;
+          moments: CARTA.Moment[];
+          channelRange: {min: number; max: number};
+          mask: CARTA.MomentMask;
+          pixelRange: {min: number; max: number};
+      }
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
+    | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties}
+    | {
+          type: "fitting";
+          source: FrameStore;
+          /** The region of the fit. 0 is the field of view in `fovInfo`, and -1 is the whole image. */
+          regionId: number;
+          fovInfo?: CARTA.RegionInfo.$Properties;
+          /** The initial values of each component. A value that the backend generates is NaN. */
+          initialValues: CARTA.GaussianComponent.$Properties[];
+          fixedParams: boolean[];
+          offset: number;
+          solver: CARTA.FittingSolverType;
+      };
+
+/**
+ * The request that a generated image came from. For a moment image, also the moment that the image
+ * shows. For an image of an image fitting, also whether it is the model or the residual.
+ */
+export interface ImageGeneration {
+    request: ImageGenerationRequest;
+    moment?: CARTA.Moment;
+    fittingImage?: FittingImageKind;
+}
+
+/** The two images that an image fitting can make. */
+export type FittingImageKind = "model" | "residual";
+
 export const WCS_PRECISION = 10;
 const SPECTRAL_CTYPE_PATTERN = /freq|vrad|vopt|wave|awav|velo/i;
 
@@ -221,6 +263,8 @@ export class FrameStore {
     @observable secondaryRasterScalingImages: FrameStore[] = [];
     @observable momentImages: FrameStore[] = [];
     @observable pvImages: FrameStore[] = [];
+    /** How a moment, PV, HiPS or image fitting image was made, so that a workspace can make it again. */
+    generation: ImageGeneration | undefined = undefined;
     @observable generatedPVRegionId: number = 0;
     @observable fittingResult: string = "";
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];
