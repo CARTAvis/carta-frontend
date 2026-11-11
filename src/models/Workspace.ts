@@ -415,6 +415,11 @@ export interface Workspace {
     };
     selectedFile?: number;
     /**
+     * The image that the Contour dialog shows. Left out while the dialog follows the active image,
+     * which is the default.
+     */
+    contourDataSource?: {imageId: number};
+    /**
      * The color-blended image in front, when it is one, by the `imageListIndex` its entry in
      * `colorBlendingImages` carries. `selectedFile` then names the image it is blended onto.
      */

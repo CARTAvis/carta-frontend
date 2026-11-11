@@ -1,3 +1,5 @@
+import {comparer, reaction} from "mobx";
+
 import {ImageType, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, describeImageSource, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
@@ -5,6 +7,12 @@ import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWo
 import {type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
+
+/**
+ * How long a cube histogram can go without progress before a restore stops waiting for it, in
+ * milliseconds. The backend reports the progress every two seconds while it computes.
+ */
+const CUBE_HISTOGRAM_STALL_TIMEOUT = 60_000;
 
 /** One catalog whose rows have been asked for, and what the answer has to be judged against. */
 interface CatalogConfigRequest {
@@ -109,8 +117,11 @@ export class WorkspaceRestorer {
             return this.issues;
         }
         this.configureImages();
+        // The backend computes the cube histograms while the catalogs open. The restore waits for them before it applies the layout.
+        const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
+        this.restoreContourDataSource();
         yield* this.openCatalogs();
         if (!this.isCurrent) {
             return this.issues;
@@ -119,10 +130,32 @@ export class WorkspaceRestorer {
         if (!this.isCurrent) {
             return this.issues;
         }
+        yield* awaited(cubeHistograms);
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.restoreLayout();
         this.restoreViews();
         this.settle();
         return this.issues;
+    }
+
+    /**
+     * Shows in the Contour dialog the image that it showed, when it did not follow the active image.
+     * Do this after the image in front is chosen. A change of the image in front changes the image of
+     * the dialog while the dialog follows it.
+     */
+    private restoreContourDataSource(): void {
+        const imageId = this.workspace.contourDataSource?.imageId;
+        if (typeof imageId !== "number") {
+            return;
+        }
+        const frame = this.frameOf(imageId);
+        if (frame) {
+            this.appStore.setContourDataSourceUnlocked(frame);
+        } else {
+            this.report(WorkspaceItemKind.Image, "", "The Contour dialog follows the active image, because the image that it showed was not restored");
+        }
     }
 
     /** Report something that could not be brought back, naming what it was about. */
@@ -291,6 +324,86 @@ export class WorkspaceRestorer {
                 }
             }
         }
+    }
+
+    /**
+     * Stage 3a: compute again the cube histograms that the percentile ranges of images came from.
+     *
+     * A workspace is a snapshot, so a restored image with such a range still follows the cube
+     * histogram. The backend computes only one cube histogram at a time for a session, so the
+     * restore asks for them one after another. The range applied in stage 3 stays until the cube
+     * histogram is complete. For an unchanged file, the percentile then gives the same range again.
+     * When the cube histogram of an image does not come, the image keeps its saved range as a
+     * custom range.
+     */
+    private async restoreCubeHistograms(): Promise<void> {
+        const pending = (this.workspace.files ?? []).flatMap(fileInfo => {
+            const frame = this.frameOf(fileInfo.id);
+            return frame?.renderConfig.isUsingCubeHistogram ? [{fileInfo, frame}] : [];
+        });
+        for (const {fileInfo, frame} of pending) {
+            const isOpen = () => this.appStore.frames.includes(frame);
+            if (!this.isCurrent) {
+                // A later load took over and kept these images. Do not leave any of them waiting for a
+                // cube histogram that nobody will request.
+                if (isOpen()) {
+                    frame.renderConfig.keepRangeWithoutCubeHistogram(frame.requiredPolarizationIndex);
+                }
+                continue;
+            }
+
+            const imageName = describeImageSource(fileInfo.source);
+            // Name the restored Stokes in the request, and store the result under that Stokes. Without a
+            // coordinate, the backend uses the Stokes that the frontend last sent for the image. The
+            // frontend sends it only while the image is in view, through a throttled update, so the
+            // backend may still have another Stokes.
+            const stokesIndex = frame.requiredPolarizationIndex;
+            frame.renderConfig.awaitCompleteCubeHistogram();
+            frame.renderConfig.setStokesIndex(stokesIndex);
+            this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
+            const isComplete = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
+            if (!isComplete && isOpen()) {
+                frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
+                this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
+                if (this.isCurrent) {
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not compute the cube histogram of ${imageName}; its percentile range is kept as a custom range; select Per-cube to compute it again`);
+                }
+            }
+        }
+        if (this.isCurrent) {
+            this.appStore.setWorkspaceLoadingStep(undefined);
+        }
+    }
+
+    /**
+     * Wait for the cube histogram of an image, and return whether it completes. It does not complete
+     * when the image is closed (a later workspace load closes every image), or when the backend stops
+     * reporting progress.
+     */
+    private waitForCubeHistogram(frame: FrameStore, description: string): Promise<boolean> {
+        return new Promise(resolve => {
+            let stallTimer: ReturnType<typeof setTimeout> | undefined;
+            const finish = (isComplete: boolean, dispose: () => void) => {
+                clearTimeout(stallTimer);
+                dispose();
+                resolve(isComplete);
+            };
+            const disposeReaction = reaction(
+                () => ({progress: frame.renderConfig.cubeHistogramProgress, isOpen: this.appStore.frames.includes(frame)}),
+                ({progress, isOpen}, _previous, self) => {
+                    if (!isOpen || progress >= 1) {
+                        finish(isOpen, () => self.dispose());
+                        return;
+                    }
+                    if (this.isCurrent) {
+                        this.appStore.setWorkspaceLoadingStep({description, progress});
+                    }
+                    clearTimeout(stallTimer);
+                    stallTimer = setTimeout(() => finish(false, disposeReaction), CUBE_HISTOGRAM_STALL_TIMEOUT);
+                },
+                {fireImmediately: true, equals: comparer.structural}
+            );
+        });
     }
 
     /** Stage 4: rebuild the color-blended images made up of the images just opened. */
@@ -556,8 +669,8 @@ export class WorkspaceRestorer {
     /**
      * Stage 7: put back the arrangement the workspace was saved in.
      *
-     * Applied after the catalogs are loaded, so that the widgets and plots a layout brings back can
-     * be bound to their catalogs as they are created rather than having to wait for them. A
+     * Applied after the catalogs are loaded, so that each catalog widget that the layout creates
+     * starts on a loaded catalog. Stage 8 then points each widget at the catalog it was saved with. A
      * workspace saved before layouts were part of one leaves the session's arrangement alone.
      */
     private restoreLayout(): void {

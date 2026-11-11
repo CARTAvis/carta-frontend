@@ -19,8 +19,8 @@ type WorkspaceUnderConstruction = Workspace & Required<Pick<Workspace, "files" |
  * Takes what the running session is showing and turns it into a workspace, one named stage at a
  * time.
  *
- * This is the counterpart of {@link WorkspaceRestorer}: the stages here mirror the ones there, so
- * that whatever a stage writes has a stage that reads it back. The snapshotter owns which items
+ * This is the counterpart of {@link WorkspaceRestorer}. Each stage here has a stage there that reads
+ * back what it writes. The stage numbers of the two classes do not match. The snapshotter owns which items
  * are captured and the IDs they refer to each other by. What each piece of state means stays with
  * whoever owns it: a frame's own config stores, a catalog's profile store for its table and query,
  * and its display store for how it is drawn.
@@ -337,6 +337,11 @@ export class WorkspaceSnapshotter {
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        // The Contour dialog follows the active image by default. Save only the image it shows when it does not.
+        const contourImageId = this.appStore.isFrameLockedToContour ? undefined : this.imageIdOf(this.appStore.contourDataSource);
+        if (contourImageId !== undefined) {
+            this.workspace.contourDataSource = {imageId: contourImageId};
+        }
         const activeImage = this.appStore.activeImage;
         if (activeImage?.type === ImageType.COLOR_BLENDING) {
             const index = this.appStore.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, activeImage.store.id);

@@ -607,3 +607,69 @@ describe("scaleZoomForImageRatio", () => {
         expect(scaleZoomForImageRatio({effectiveZoomLevel: {x: 2, y: 4}, isAxisZoomable: true, zoomLevel: 4} as any, 2)).toEqual({x: 4, y: 8});
     });
 });
+
+describe("AppStore.requestCubeHistogram", () => {
+    const appStore = AppStore.Instance;
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("asks only once for a cube histogram that is still being computed", () => {
+        const renderConfig = {cubeHistogramProgress: 0, isCubeHistogramRequested: false, markCubeHistogramRequested: jest.fn(() => (renderConfig.isCubeHistogramRequested = true))};
+        jest.spyOn(appStore, "getFrame").mockReturnValue({frameInfo: {fileId: 3}, renderConfig} as any);
+        const setHistogramRequirements = jest.spyOn(appStore.backendService, "setHistogramRequirements").mockImplementation(() => undefined as any);
+
+        appStore.requestCubeHistogram(3, "Qz");
+        appStore.requestCubeHistogram(3);
+
+        expect(setHistogramRequirements).toHaveBeenCalledTimes(1);
+        expect(setHistogramRequirements).toHaveBeenCalledWith(expect.objectContaining({fileId: 3, regionId: -2, histograms: [expect.objectContaining({coordinate: "Qz", channel: -2})]}));
+    });
+});
+
+describe("AppStore channel histogram of an image that no view shows", () => {
+    const appStore = AppStore.Instance;
+    const histograms = {numBins: 2, binWidth: 1, firstBinCenter: 0.5, bins: [1, 2]};
+    const makeFrame = () =>
+        ({
+            frameInfo: {fileId: 7},
+            requiredStokes: 0,
+            requiredChannel: 2,
+            renderConfig: {setStokesIndex: jest.fn(), setHistChannel: jest.fn(), updateChannelHistogram: jest.fn()}
+        }) as any;
+    const histogramOf = (channel: number) => ({fileId: 7, regionId: -1, stokes: 0, channel, histograms}) as unknown as CARTA.RegionHistogramData;
+
+    // No image is open, so no view shows the image.
+    afterEach(() => {
+        jest.restoreAllMocks();
+        runInAction(() => (appStore.contourDataSource = null));
+        if (!appStore.isFrameLockedToContour) {
+            appStore.toggleFrameContourLock();
+        }
+    });
+
+    test("applies the histogram of the channel that the image is set to when it arrives", () => {
+        const frame = makeFrame();
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+
+        appStore.handleRegionHistogramStream(histogramOf(1));
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        appStore.handleRegionHistogramStream(histogramOf(2));
+
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        expect(frame.channel).toBe(2);
+    });
+
+    test("applies a waiting histogram when the Contour dialog is set to the image", () => {
+        const frame = makeFrame();
+        // The image is not known yet when its histogram arrives, so the histogram waits.
+        const getFrame = jest.spyOn(appStore, "getFrame").mockReturnValue(undefined);
+        appStore.handleRegionHistogramStream(histogramOf(2));
+        getFrame.mockReturnValue(frame);
+
+        appStore.setContourDataSourceUnlocked(frame);
+
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+    });
+});

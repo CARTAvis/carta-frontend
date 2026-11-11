@@ -120,8 +120,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
-        // The panel edits one catalog widget's state, and is the one place that state is brought
-        // into being if the panel is reached before the widget itself has any.
+        // Create the store of the widget, if the panel opens before the widget has one.
         WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId);
 
         makeObservable(this);

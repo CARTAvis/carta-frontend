@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -69,7 +69,29 @@ export class ContourDialogComponent extends React.Component {
                         widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                     }
                 }
-            })
+            }),
+            // A restored image can use the cube histogram for its contour levels while nothing has asked
+            // the backend for it yet. Ask for it when the contour dialog is open, because the dialog
+            // generates the levels from it.
+            reaction(
+                () => {
+                    const appStore = AppStore.Instance;
+                    const renderConfig = appStore.contourDataSource?.renderConfig;
+                    const isWaiting =
+                        appStore.dialogStore.dialogVisible.get(DialogId.Contour) &&
+                        !appStore.isLoadingWorkspace &&
+                        renderConfig?.isUsingCubeHistogramContours &&
+                        !renderConfig.isCubeHistogramRequested &&
+                        renderConfig.cubeHistogramProgress < 1.0;
+                    return isWaiting ? appStore.contourDataSource?.frameInfo.fileId : undefined;
+                },
+                fileId => {
+                    if (fileId !== undefined) {
+                        AppStore.Instance.requestCubeHistogram(fileId);
+                    }
+                },
+                {fireImmediately: true}
+            )
         );
     }
 
@@ -522,7 +544,7 @@ export class ContourDialogComponent extends React.Component {
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.isCubeHistogramRequested && dataSource.renderConfig.cubeHistogramProgress < 1.0 && !appStore.isLoadingWorkspace}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}

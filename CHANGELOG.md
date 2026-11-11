@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for using string-type coordinate columns in catalog overlays, covering sexagesimal, decimal degree, decimal hour, radian, compact HHMMSS, CASA dot-separated, and Unicode angle formats, detected from the column units or from its values ([#2954](https://github.com/CARTAvis/carta-frontend/issues/2954)).
 * Added support for displaying beam overlays on every channel when per-channel beam data is available, with configurable placement in image settings ([#2942](https://github.com/CARTAvis/carta-frontend/issues/2942)).
 * Added support for restoring catalogs and the widget layout in workspaces ([#2950](https://github.com/CARTAvis/carta-frontend/issues/2950)).
+* Added support for restoring percentile ranges from the cube histogram in workspaces ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the misaligned column divider between the header and the rows of the Statistics widget for images with beam information ([#2979](https://github.com/CARTAvis/carta-frontend/issues/2979)).
 * Fixed the missing WCS for images whose FITS header contains an entry without a keyword ([#3024](https://github.com/CARTAvis/carta-frontend/issues/3024)).
 * Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder ([#2964](https://github.com/CARTAvis/carta-frontend/issues/2964)).
+* Fixed workspaces not restoring custom colormap colors, or the image of the Contour dialog when it does not follow the active image ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).
