@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring rest frequencies, rest frames, beam overlays, offset coordinates, region opacity, the spectral matching type, the selection of several regions, the hidden layers of a color-blended image, a frozen cursor, the fields of the online catalog query dialog and the chosen size tab of the catalog settings in workspaces ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Added support for restoring moment, PV and HiPS images in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Added a progress dialog with Cancel and an end-of-restore report to opening a workspace, and a thumbnail of the whole app to saved workspaces ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
+* Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
@@ -50,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed text, compass and ruler annotations drawn at the wrong size when an image view first shows them, such as after a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed workspaces putting moment, PV, HiPS and image fitting images at the end of the image list ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Fixed online SIMBAD and VizieR queries waiting forever for a mirror that does not respond; they now stop after 60 seconds ([#3058](https://github.com/CARTAvis/carta-frontend/issues/3058)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).

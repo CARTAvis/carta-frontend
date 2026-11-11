@@ -251,7 +251,8 @@ export class WorkspaceSnapshotter {
         const workspaceFile: WorkspaceFile = {
             id: workspaceImageId,
             source,
-            timeSeriesMember: this.appStore.timeSeriesStore.isMember(frame) || undefined
+            timeSeriesMember: this.appStore.timeSeriesStore.isMember(frame) || undefined,
+            imageListIndex: this.appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.frameInfo.fileId)
         };
         // Save the range of the animator only when it is not every channel.
         const [firstChannel, lastChannel] = frame.animationChannelRange ?? [];

@@ -5,10 +5,27 @@ import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
 
 import {AppToaster} from "components/Shared";
-import {BeamType, CatalogSystemType, HipsCoord, HipsProjection, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
-import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
+import {
+    BeamType,
+    CatalogDatabase,
+    CatalogSystemType,
+    HipsCoord,
+    HipsProjection,
+    ImageType,
+    RadiusUnits,
+    RegionId,
+    RegionOpacity,
+    RestFrameShiftMode,
+    SkyRefIs,
+    SpectralSystem,
+    VelocityConvention,
+    WorkspaceIssueEffect,
+    WorkspaceIssueOutcome,
+    WorkspaceItemKind
+} from "enums";
+import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
 
 /** The parts of the render config of an image that the restorer uses. The progress of the cube histogram is observable, as in the real store. */
@@ -162,6 +179,15 @@ function createSession() {
         cancelCubeHistogramRequest: jest.fn(),
         setWorkspaceLoadingStep: jest.fn(),
         setWorkspaceRestoreProgress: jest.fn(),
+        /** The Recovery that the restore waits on. By default the user skips every item at once. */
+        workspaceRecovery: undefined as WorkspaceRecoveryStore | undefined,
+        onRecovery: (recovery: WorkspaceRecoveryStore) => recovery.skipAll(),
+        setWorkspaceRecovery: jest.fn((recovery: WorkspaceRecoveryStore | undefined) => {
+            appStore.workspaceRecovery = recovery;
+            if (recovery) {
+                appStore.onRecovery(recovery);
+            }
+        }),
         frameMap: frames,
         setSpatialReference: jest.fn((frame: unknown) => {
             appStore.spatialReference = frame as never;
@@ -197,7 +223,11 @@ function createSession() {
         spectralReference: undefined,
         rasterScalingReference: undefined,
         preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
-        imageViewConfigStore: {createColorBlending: jest.fn(), imageNum: 1},
+        imageViewConfigStore: {
+            createColorBlending: jest.fn(),
+            imageNum: 1,
+            getImageListIndex: jest.fn((_type: ImageType, fileId: number) => appStore.frames.findIndex(frame => frame.frameInfo.fileId === fileId))
+        },
         catalogStore: {
             close: jest.fn(),
             interruptRequests: jest.fn(),
@@ -404,7 +434,7 @@ describe("WorkspaceRestorer", () => {
         expect(load).toHaveBeenCalledWith(source, ["I/355/gaiadr3"], 1);
 
         load.mockClear();
-        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query");
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source: {...source, table: undefined}, associatedImageId: 1}]}))).toContain("Could not load the catalog from the VizieR query: the query names no table");
         expect(load).not.toHaveBeenCalled();
     });
 
@@ -455,6 +485,12 @@ describe("WorkspaceRestorer", () => {
         expect(messages).toHaveLength(2);
         expect(messages[0]).toMatch(/: Mirror .+ did not respond within 60 seconds\. The mirror may be unavailable\. Select another mirror site and retry$/);
         expect(messages[1]).toMatch(/: Mirror .+ did not respond within 60 seconds to an earlier query\. The mirror may be unavailable\. Select another mirror site and retry$/);
+        // The report lists the second catalog under the first catalog. The first query waited for the mirror.
+        const catalogs = issues.filter(issue => issue.kind === WorkspaceItemKind.Catalog);
+        expect(catalogs.map(({label, catalogIds, causeCatalogId}) => ({label, catalogIds, causeCatalogId}))).toEqual([
+            {label: "The SIMBAD catalog on image.fits", catalogIds: [1], causeCatalogId: undefined},
+            {label: "The SIMBAD catalog on image.fits", catalogIds: [2], causeCatalogId: 1}
+        ]);
 
         // The next restore tries the mirror again.
         await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
@@ -499,8 +535,9 @@ describe("WorkspaceRestorer", () => {
         expect(stages).toEqual(
             expect.arrayContaining([
                 {stage: "Opening images", index: 1, count: 1, item: expect.any(String)},
-                {stage: "Opening catalogs", index: 1, count: 2, item: expect.stringContaining("I/355/gaiadr3")},
-                {stage: "Opening catalogs", index: 2, count: 2, item: expect.stringContaining("I/239/hip_main")}
+                // An online catalog is named as in the report, not as "from the VizieR query".
+                {stage: "Opening catalogs", index: 1, count: 2, item: "The VizieR catalog I/355/gaiadr3 on image.fits"},
+                {stage: "Opening catalogs", index: 2, count: 2, item: "The VizieR catalog I/239/hip_main on image.fits"}
             ])
         );
         expect(stages.at(-1)).toEqual(expect.objectContaining({stage: "Restoring the layout and widgets"}));
@@ -864,6 +901,38 @@ describe("WorkspaceRestorer", () => {
         expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
     });
 
+    test("names the saved image that a widget showed when the widget shows the active image instead", async () => {
+        const {appStore} = createSession();
+        const widgetIssue = (widgetId: string, effect: WorkspaceIssueEffect) => ({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: widgetId, reason: widgetId, effect});
+        appStore.widgetsStore.restorePlotWidgetBindings.mockReturnValue([
+            widgetIssue("stats-0", WorkspaceIssueEffect.ActiveImage),
+            widgetIssue("render-config-0", WorkspaceIssueEffect.ActiveImage),
+            widgetIssue("histogram-0", WorkspaceIssueEffect.ActiveRegion)
+        ]);
+        appStore.widgetsStore.restorePlotWidgets.mockReturnValue([{kind: WorkspaceItemKind.PlotWidget, subject: "spectral-profiler-0", message: "spectral-profiler-0", reason: SOME_IMAGES_NOT_RESTORED}]);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                selectedFile: 1,
+                plotWidgets: {
+                    "stats-0": {type: "stats", imageId: 5},
+                    "render-config-0": {type: "render-config"},
+                    "histogram-0": {type: "histogram", imageId: 1},
+                    "spectral-profiler-0": {type: "spectral-profiler", imageId: 1, imageIds: [1, 6, 7]}
+                }
+            })
+        );
+
+        // A widget that saved no image followed the image in front, and it still follows the active
+        // image. A missing region names no image. A profiler names the first image that is missing.
+        expect(issues.map(issue => [issue.subject, issue.effect, issue.causeImageId])).toEqual([
+            ["stats-0", WorkspaceIssueEffect.ActiveImage, 5],
+            ["render-config-0", WorkspaceIssueEffect.ActiveImageFollowed, 1],
+            ["histogram-0", WorkspaceIssueEffect.ActiveRegion, undefined],
+            ["spectral-profiler-0", undefined, 6]
+        ]);
+    });
+
     test("reports an invalid embedded layout the layout store could not apply", async () => {
         const {appStore} = createSession();
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
@@ -929,17 +998,25 @@ describe("WorkspaceRestorer", () => {
 
         const issues = await restoreIssues(createWorkspace({catalogs: [CATALOG], layout: {...LAYOUT, docked: {type: "row", content: []}}}));
 
+        // The session skips each item that Recovery offers. The catalog goes with its image.
+        // The image issue names the saved image that it leaves out. The catalog issue names that image as its cause.
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Image,
             subject: "image.fits",
             message: "Could not open the image image.fits",
-            outcome: WorkspaceIssueOutcome.Failed
+            outcome: WorkspaceIssueOutcome.Skipped,
+            label: "The image image.fits",
+            imageIds: [IMAGE.id]
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Catalog,
             subject: "sources.vot",
-            message: "Could not load the catalog sources.vot: the image it belongs to was not restored",
-            outcome: WorkspaceIssueOutcome.Failed
+            message: "Skipped the catalog sources.vot: the image it belongs to was skipped",
+            outcome: WorkspaceIssueOutcome.Skipped,
+            label: "The catalog sources.vot",
+            reason: "the image it belongs to was skipped",
+            causeImageId: IMAGE.id,
+            catalogIds: [CATALOG.id]
         });
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
@@ -1450,6 +1527,134 @@ describe("WorkspaceRestorer", () => {
             expect(problems).toEqual(["Could not make the moment images of image.fits: Moment generation failed: no spectral axis"]);
         });
 
+        test("lets the user retry a moment request that failed, and keeps the images that a later request made", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+            const original = requestMoment.getMockImplementation()!;
+            requestMoment.mockImplementationOnce(() => Promise.reject(new Error("Moment generation failed: the backend is busy")));
+            const items: unknown[] = [];
+            appStore.onRecovery = recovery => {
+                items.push(...recovery.items);
+                recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                recovery.continue();
+            };
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+
+            const issues = await restoreIssues(
+                createWorkspace({
+                    generatedImages: [
+                        {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                        {request: {...wholeImage, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]}, images: [{id: 3, moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}]}
+                    ]
+                })
+            );
+
+            expect(items).toEqual([expect.objectContaining({kind: WorkspaceItemKind.GeneratedImage, message: "Could not make the moment images of image.fits: Moment generation failed: the backend is busy", canRetry: true})]);
+            expect(issues).toEqual([]);
+            expect(original).toBeDefined();
+            // The retry comes after the later request made its images. So the retry keeps those images.
+            expect(requestMoment.mock.calls.map(([message]) => [message.moments, message.keep])).toEqual([
+                [[CARTA.Moment.MAX_OF_THE_SPECTRUM], false],
+                [[CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], false],
+                [[CARTA.Moment.MAX_OF_THE_SPECTRUM], true]
+            ]);
+        });
+
+        test("makes a request from a generated image after Recovery makes that image, and skips it with that image", async () => {
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+            const workspace = createWorkspace({
+                generatedImages: [
+                    {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, name: "maximum.fits", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                    {request: {...wholeImage, sourceImageId: 2, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]}, images: [{id: 3, moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}]}
+                ]
+            });
+
+            for (const action of [WorkspaceRecoveryAction.Retry, WorkspaceRecoveryAction.Skip] as const) {
+                const {appStore, requestMoment} = createGeneratingSession();
+                requestMoment.mockImplementationOnce(() => Promise.reject(new Error("Moment generation failed")));
+                const subjects: string[][] = [];
+                appStore.onRecovery = recovery => {
+                    subjects.push(recovery.items.map(item => item.subject));
+                    recovery.setChoice(0, {action});
+                    recovery.continue();
+                };
+
+                const issues = await restoreIssues(workspace);
+
+                // The later request waits for the image, and is not offered on its own.
+                expect(subjects).toEqual([["the moment images of image.fits"]]);
+                if (action === WorkspaceRecoveryAction.Retry) {
+                    expect(issues).toEqual([]);
+                    expect(requestMoment).toHaveBeenCalledTimes(3);
+                    expect(requestMoment.mock.calls[2][1]).toBe(appStore.frames[1]);
+                } else {
+                    expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
+                        ["Could not make the moment images of image.fits: Moment generation failed", WorkspaceIssueOutcome.Skipped],
+                        ["Skipped making the moment images of maximum.fits: the image it is made from was skipped", WorkspaceIssueOutcome.Skipped]
+                    ]);
+                    expect(requestMoment).toHaveBeenCalledTimes(1);
+                }
+                jest.restoreAllMocks();
+            }
+        });
+
+        test("keeps a chain of requests waiting for the first one, and skips the whole chain with it", async () => {
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
+            const workspace = createWorkspace({
+                generatedImages: [
+                    {request: {...wholeImage, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, name: "maximum.fits", moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]},
+                    {request: {...wholeImage, sourceImageId: 2, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]}, images: [{id: 3, name: "integrated.fits", moment: CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM}]},
+                    {request: {...wholeImage, sourceImageId: 3, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 4, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}
+                ]
+            });
+
+            for (const action of [WorkspaceRecoveryAction.Retry, WorkspaceRecoveryAction.Skip] as const) {
+                const {appStore, requestMoment} = createGeneratingSession();
+                requestMoment.mockImplementationOnce(() => Promise.reject(new Error("Moment generation failed")));
+                appStore.onRecovery = recovery => {
+                    recovery.setChoice(0, {action});
+                    recovery.continue();
+                };
+
+                const issues = await restoreIssues(workspace);
+
+                if (action === WorkspaceRecoveryAction.Retry) {
+                    expect(issues).toEqual([]);
+                    expect(requestMoment).toHaveBeenCalledTimes(4);
+                } else {
+                    expect(issues.map(({outcome}) => outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
+                    expect(issues[2].message).toBe("Skipped making the moment images of integrated.fits: the image it is made from was skipped");
+                }
+                jest.restoreAllMocks();
+            }
+        });
+
+        test("puts the images back in the order of the saved image list, with a generated image between the images that were opened", async () => {
+            const {appStore} = createGeneratingSession();
+            // The workspace has no color-blended images, so the image list holds the frames alone.
+            appStore.reorderFrame.mockImplementation((oldIndex: number, newIndex: number, length: number) => {
+                const moved = appStore.frames.splice(oldIndex, length);
+                appStore.frames.splice(newIndex, 0, ...moved);
+            });
+            const files = [
+                {...IMAGE, imageListIndex: 2},
+                {id: 4, source: {type: "file" as const, filename: "other.fits"}, imageListIndex: 0}
+            ];
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]};
+
+            const restorer = await restored(createWorkspace({files, generatedImages: [{request: wholeImage, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, imageListIndex: 1}]}]}));
+
+            expect(appStore.frames.map(frame => frame.frameInfo.fileId)).toEqual([4, 2, 1].map(id => restorer.fileIdOf(id)));
+        });
+
+        test("keeps the order in which the images were opened for a workspace saved without the places of the images", async () => {
+            const {appStore} = createGeneratingSession();
+            const wholeImage = {...momentRequest, regionId: RegionId.IMAGE, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]};
+
+            await restore(createWorkspace({generatedImages: [{request: wholeImage, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(appStore.reorderFrame).not.toHaveBeenCalled();
+        });
+
         test("keeps the images of an earlier request of the same image when it makes a later one", async () => {
             const {requestMoment} = createGeneratingSession();
             const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};
@@ -1484,13 +1689,19 @@ describe("WorkspaceRestorer", () => {
             const issues = await restoreIssues(workspace);
             const problems = issues.map(issue => issue.message);
 
-            expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Failed]);
+            // What is made of the skipped images is skipped with them.
+            expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
             const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
-            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Could not make the PV image of image.fits.moment.maximum: the image it is made from was not restored"]);
+            expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);
+            // The report lists the PV request under the moment request, by the image that the PV request is made from.
+            expect(issues.map(({label, reason, imageIds, causeImageId}) => ({label, reason, imageIds, causeImageId}))).toEqual([
+                {label: "The moment images of image.fits", reason: undefined, imageIds: [2], causeImageId: undefined},
+                {label: "The PV image of image.fits.moment.maximum", reason: "the image it is made from was skipped", imageIds: [3], causeImageId: 2}
+            ]);
             expect(appStore.setWorkspaceLoadingStep).toHaveBeenCalledWith(expect.objectContaining({description: "Making the moment images of image.fits", progress: 0.5}));
         });
 
@@ -1558,6 +1769,367 @@ describe("WorkspaceRestorer", () => {
 
             expect(appStore.setSpatialMatchingEnabled).toHaveBeenCalledWith(appStore.frames[0], true);
             expect(appStore.setSpatialMatchingEnabled.mock.invocationCallOrder[0]).toBeGreaterThan(requestMoment.mock.invocationCallOrder[0]);
+        });
+    });
+
+    describe("Recovery", () => {
+        const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};
+
+        /** Makes `appendFile` fail for the first `count` calls, and open the image after. */
+        function failToOpen(appStore: ReturnType<typeof createSession>["appStore"], count: number) {
+            const open = appStore.appendFile;
+            const appendFile = jest.fn((...args: unknown[]) => (appendFile.mock.calls.length <= count ? Promise.reject(new Error(`File /data/${args[1]} does not exist.`)) : (open as (...args: unknown[]) => Promise<unknown>)(...args)));
+            appStore.appendFile = appendFile as never;
+            return appendFile;
+        }
+
+        test("pauses after the images, and opens an image from the file that the user chooses", async () => {
+            const {appStore} = createSession();
+            const appendFile = failToOpen(appStore, 1);
+            const recoveries: WorkspaceRecoveryStore[] = [];
+            appStore.onRecovery = recovery => {
+                recoveries.push(recovery);
+                recovery.setChoice(0, {action: WorkspaceRecoveryAction.Repoint, location: {directory: "/moved", filename: "image-moved.fits", hdu: "0"}});
+                recovery.continue();
+            };
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{id: 5, type: 3, rotation: 0, points: []}]}}], catalogs: [CATALOG]}));
+
+            expect(recoveries).toHaveLength(1);
+            expect(recoveries[0].stage).toBe("Opening images");
+            expect(recoveries[0].items).toEqual([
+                {
+                    kind: WorkspaceItemKind.Image,
+                    subject: "image.fits",
+                    message: "Could not open the image image.fits: File /data/image.fits does not exist",
+                    label: "The image image.fits",
+                    reason: "File /data/image.fits does not exist",
+                    repointKind: "image",
+                    canRetry: false,
+                    dependents: ["1 region", "the catalog sources.vot"]
+                }
+            ]);
+            expect(appendFile.mock.calls[1].slice(0, 3)).toEqual(["/moved", "image-moved.fits", "0"]);
+            expect(restorer.repointed.images.get(IMAGE.id)).toEqual({from: IMAGE.source, to: {type: "file", directory: "/moved", filename: "image-moved.fits", hdu: "0"}});
+            // The catalog of the image opens, and nothing is reported.
+            expect(appStore.appendCatalog).toHaveBeenCalled();
+            expect(restorer.fileIdOf(IMAGE.id)).toBeDefined();
+            expect(appStore.workspaceRecovery).toBeUndefined();
+        });
+
+        test("puts an image from a new file back in its saved place among the images", async () => {
+            const {appStore} = createSession();
+            failToOpen(appStore, 1);
+            // The workspace has no color-blended images, so the image list holds the frames alone.
+            appStore.reorderFrame.mockImplementation((oldIndex: number, newIndex: number, length: number) => {
+                const moved = appStore.frames.splice(oldIndex, length);
+                appStore.frames.splice(newIndex, 0, ...moved);
+            });
+            appStore.onRecovery = recovery => {
+                recovery.setChoice(0, {action: WorkspaceRecoveryAction.Repoint, location: {directory: "/moved", filename: "first-moved.fits"}});
+                recovery.continue();
+            };
+            const files = [1, 2, 3].map(id => ({id, source: {type: "file" as const, filename: `image-${id}.fits`}}));
+
+            const restorer = await restored(createWorkspace({files}));
+
+            // The first image opens last, after the user chooses its new file, and then moves back to the front.
+            expect(appStore.frames.map(frame => frame.frameInfo.fileId)).toEqual(files.map(fileInfo => restorer.fileIdOf(fileInfo.id)));
+            expect(appStore.reorderFrame).toHaveBeenCalledWith(2, 0, 1);
+        });
+
+        test("asks again for an image that fails again, and reports it as skipped with the last reason", async () => {
+            const {appStore} = createSession();
+            failToOpen(appStore, 2);
+            let round = 0;
+            appStore.onRecovery = recovery => {
+                round++;
+                if (round === 1) {
+                    recovery.setChoice(0, {action: WorkspaceRecoveryAction.Repoint, location: {directory: "/moved", filename: "wrong.fits"}});
+                    recovery.continue();
+                } else {
+                    // The image keeps the name that the workspace gives it, with the file that was tried.
+                    expect(recovery.items[0].message).toBe("Could not open the image image.fits from wrong.fits: File /data/wrong.fits does not exist");
+                    recovery.skipAll();
+                }
+            };
+
+            const restorer = await restored(createWorkspace({catalogs: [CATALOG]}));
+            const issues = (restorer as unknown as {issues: WorkspaceIssue[]}).issues;
+
+            expect(round).toBe(2);
+            expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
+                ["Could not open the image image.fits from wrong.fits: File /data/wrong.fits does not exist", WorkspaceIssueOutcome.Skipped],
+                ["Skipped the catalog sources.vot: the image it belongs to was skipped", WorkspaceIssueOutcome.Skipped]
+            ]);
+            // The file did not open, so the workspace keeps its saved location.
+            expect(restorer.repointed.images.size).toBe(0);
+        });
+
+        test("retries an online catalog after the user chooses another mirror", async () => {
+            const {appStore} = createSession();
+            const load = jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockRejectedValueOnce(new Error("Request to mirror simbad.example failed")).mockResolvedValue({fileId: 12, dataSize: 3});
+            const items: unknown[] = [];
+            appStore.onRecovery = recovery => {
+                items.push(...recovery.items);
+                recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                recovery.continue();
+            };
+
+            const issues = await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+
+            expect(items).toEqual([
+                expect.objectContaining({
+                    kind: WorkspaceItemKind.Catalog,
+                    message: "Could not load the catalog from the SIMBAD query: Request to mirror simbad.example failed",
+                    canRetry: true,
+                    database: CatalogDatabase.SIMBAD,
+                    repointKind: undefined
+                })
+            ]);
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(issues).toEqual([]);
+        });
+
+        test("offers the retry on a mirror that has not failed, and then on the mirror that failed longest ago", async () => {
+            const {appStore} = createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+            const asked: string[] = [];
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockImplementation(() => {
+                asked.push(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)!);
+                return Promise.reject(new Error("Request failed"));
+            });
+            const offered: string[] = [];
+            appStore.onRecovery = recovery => {
+                offered.push(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)!);
+                if (offered.length < 3) {
+                    recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                    recovery.continue();
+                } else {
+                    recovery.skipAll();
+                }
+            };
+
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+
+            expect(asked).toEqual([first, second, first]);
+            expect(offered).toEqual([second, first, second]);
+            // The active mirror lasts for the session. Put it back for the other tests.
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+        });
+
+        test("keeps the mirror that the user chose when another query failed on a different mirror", async () => {
+            const {appStore} = createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog")
+                .mockImplementationOnce(() => {
+                    // The user chooses another mirror while the query runs.
+                    mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, second);
+                    return Promise.reject(new Error("Request failed"));
+                })
+                .mockResolvedValue({fileId: 12, dataSize: 3});
+            let offered: string | undefined;
+            appStore.onRecovery = recovery => {
+                offered = mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD);
+                recovery.skipAll();
+            };
+
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+
+            expect(offered).toBe(second);
+            // The active mirror lasts for the session. Put it back for the other tests.
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+        });
+
+        test("waits for a timed-out mirror again when the user retries", async () => {
+            const {appStore} = createSession();
+            const timeout = new AxiosError("timeout of 60000ms exceeded", AxiosError.ETIMEDOUT);
+            const service = CatalogApiService.Instance as unknown as {axiosInstanceSimbad: {get: (url: string) => Promise<unknown>}};
+            const get = jest.spyOn(service.axiosInstanceSimbad, "get").mockRejectedValue(timeout);
+            let round = 0;
+            appStore.onRecovery = recovery => {
+                round++;
+                if (round === 1) {
+                    recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                    recovery.setChoice(1, {action: WorkspaceRecoveryAction.Retry});
+                    recovery.continue();
+                } else {
+                    recovery.skipAll();
+                }
+            };
+
+            await restoreIssues(
+                createWorkspace({
+                    catalogs: [
+                        {id: 1, source, associatedImageId: 1},
+                        {id: 2, source: {...source, radius: 3}, associatedImageId: 1}
+                    ]
+                })
+            );
+
+            // Each round waits for the mirror once.
+            expect(round).toBe(2);
+            expect(get).toHaveBeenCalledTimes(2);
+        });
+
+        test("skips an online query that the user does not wait for, without Recovery", async () => {
+            const {appStore} = createSession();
+            // The query never answers. Cancelling the pending queries rejects it. Axios does the same.
+            let rejectQuery: ((reason: unknown) => void) | undefined;
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockImplementation(() => new Promise((_, reject) => (rejectQuery = reject)));
+            jest.spyOn(CatalogApiService.Instance, "cancelPendingQueries").mockImplementation(() => rejectQuery?.({__CANCEL__: true, message: "The online catalog query was skipped"}));
+
+            const restoring = restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}));
+            await new Promise(resolve => setTimeout(resolve));
+            const steps = appStore.setWorkspaceLoadingStep.mock.calls.map(([step]) => step as WorkspaceLoadingStep | undefined);
+            const step = steps.find(candidate => candidate?.onSkip);
+            // The step names the mirror that it waits for, and says when the query gives up.
+            expect(step?.description).toBe(`Waiting for the mirror ${new URL(MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD)!).host}`);
+            expect(step?.deadline).toBeGreaterThan(Date.now());
+            expect(step!.deadline! - Date.now()).toBeLessThanOrEqual(CatalogApiService.QUERY_TIMEOUT_MS);
+            step!.onSkip!();
+            const issues = await restoring;
+
+            expect(issues).toEqual([
+                {kind: WorkspaceItemKind.Catalog, subject: "from the SIMBAD query", message: "Skipped the catalog from the SIMBAD query", outcome: WorkspaceIssueOutcome.Skipped, label: "The SIMBAD catalog on image.fits", catalogIds: [1]}
+            ]);
+            expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalledWith(expect.anything());
+            expect(appStore.setWorkspaceLoadingStep).toHaveBeenLastCalledWith(undefined);
+        });
+
+        test("stops waiting for the user when a newer load supersedes the restore", async () => {
+            const {appStore} = createSession();
+            failToOpen(appStore, 1);
+            let recovery: WorkspaceRecoveryStore | undefined;
+            appStore.onRecovery = waiting => {
+                recovery = waiting;
+            };
+
+            const restoring = restoreIssues(createWorkspace({catalogs: [CATALOG]}));
+            await new Promise(resolve => setTimeout(resolve));
+            expect(recovery?.canContinue).toBe(false);
+            WorkspaceRestorer.claimGeneration();
+            const issues = await restoring;
+
+            // The superseded restore reports nothing more, and opens no catalog.
+            expect(issues).toEqual([]);
+            expect(appStore.appendCatalog).not.toHaveBeenCalled();
+            expect(appStore.workspaceRecovery).toBeUndefined();
+        });
+
+        test("lists what goes with an image that the user skips", async () => {
+            const {appStore} = createSession();
+            failToOpen(appStore, 1);
+            let dependents: string[] = [];
+            appStore.onRecovery = recovery => {
+                dependents = recovery.items[0].dependents;
+                recovery.skipAll();
+            };
+            const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}, references: {spatial: 1}, contourConfig: {} as never, vectorOverlayConfig: {} as never};
+
+            await restoreIssues(
+                createWorkspace({
+                    files: [IMAGE, second],
+                    references: {spatial: 1},
+                    catalogs: [CATALOG],
+                    colorBlendingImages: [{imageListIndex: 0, selectedFrameId: [1, 2], alpha: [1, 1, 1]}],
+                    generatedImages: [{request: {type: "pv", sourceImageId: 1, regionId: RegionId.IMAGE, width: 3, reverse: false}, images: [{id: 3}]}]
+                } as Partial<Workspace>)
+            );
+
+            expect(dependents).toEqual(["the catalog sources.vot", "the PV image of image.fits", "the spatial matching of second.fits", "its place in 1 color-blended image"]);
+        });
+
+        test("shows the step that started last, and does not remove the step of another wait when its own ends", () => {
+            const {appStore} = createSession();
+            type Steps = {startStep: () => {show: (step: WorkspaceLoadingStep) => void; end: () => void}};
+            const restorer = new WorkspaceRestorer(createWorkspace(), WorkspaceRestorer.claimGeneration()) as unknown as Steps;
+            const histogram = {description: "Computing the cube histogram of image.fits", progress: 0.2, onSkip: jest.fn()};
+            const query = {description: "Waiting for the catalog from the SIMBAD query", progress: 0, onSkip: jest.fn()};
+            const shown = () => appStore.setWorkspaceLoadingStep.mock.calls.at(-1)?.[0];
+
+            // The query ends first.
+            const histogramStep = restorer.startStep();
+            histogramStep.show(histogram);
+            const queryStep = restorer.startStep();
+            queryStep.show(query);
+            histogramStep.show({...histogram, progress: 0.4});
+            expect(shown()).toBe(query);
+            queryStep.end();
+            expect(shown()).toEqual({...histogram, progress: 0.4});
+            histogramStep.end();
+            expect(shown()).toBeUndefined();
+
+            // The histogram ends first.
+            const laterHistogram = restorer.startStep();
+            laterHistogram.show(histogram);
+            const laterQuery = restorer.startStep();
+            laterQuery.show(query);
+            laterHistogram.end();
+            expect(shown()).toBe(query);
+            laterQuery.end();
+            expect(shown()).toBeUndefined();
+        });
+
+        test("writes only the sources of the images and catalogs the user chose new files for", () => {
+            const stored = createWorkspace({
+                files: [
+                    {id: 1, directory: "/old", filename: "image.fits", source: {type: "file", directory: "/old", filename: "image.fits"}, channel: 3},
+                    {id: 2, source: {type: "file", filename: "kept.fits"}}
+                ],
+                catalogs: [CATALOG, {...CATALOG, id: 2}]
+            });
+
+            const patched = WorkspaceRestorer.withRepointedSources(stored, {
+                images: new Map([[1, {from: {type: "file" as const, directory: "/old", filename: "image.fits"}, to: {type: "file" as const, directory: "/new", filename: "image.fits"}}]]),
+                catalogs: new Map([[2, {from: CATALOG.source, to: {type: "file" as const, directory: "/new", filename: "other.vot"}}]])
+            })!;
+
+            expect(patched.files).toEqual([{id: 1, source: {type: "file", directory: "/new", filename: "image.fits"}, channel: 3}, stored.files![1]]);
+            expect(patched.catalogs).toEqual([CATALOG, {...CATALOG, id: 2, source: {type: "file", directory: "/new", filename: "other.vot"}}]);
+            expect({...patched, files: undefined, catalogs: undefined}).toEqual({...stored, files: undefined, catalogs: undefined});
+        });
+
+        test("changes no source that the stored workspace no longer has, as after it was saved again", () => {
+            const stored = createWorkspace({
+                files: [
+                    {id: 1, source: {type: "file", filename: "another.fits"}},
+                    {id: 2, source: {type: "file", filename: "image.fits"}}
+                ]
+            });
+            const to = {type: "file" as const, directory: "/new", filename: "image.fits"};
+
+            expect(WorkspaceRestorer.withRepointedSources(stored, {images: new Map([[1, {from: {type: "file", filename: "image.fits"}, to}]]), catalogs: new Map()})).toBeUndefined();
+            const patched = WorkspaceRestorer.withRepointedSources(stored, {
+                images: new Map([
+                    [1, {from: {type: "file", filename: "image.fits"}, to}],
+                    [2, {from: {type: "file", filename: "image.fits"}, to}]
+                ]),
+                catalogs: new Map()
+            });
+            expect(patched?.files).toEqual([stored.files![0], {id: 2, source: to}]);
+        });
+
+        test("reports an image or a VizieR catalog that cannot be opened as it is saved, without Recovery", async () => {
+            const {appStore} = createSession();
+            const vizier: WorkspaceCatalogQuerySource = {...source, type: "vizier"};
+
+            const issues = await restoreIssues(
+                createWorkspace({
+                    files: [IMAGE, {id: 2, source: {type: "future"} as never}],
+                    catalogs: [{id: 1, source: vizier, associatedImageId: 1}]
+                })
+            );
+
+            expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
+                ["Could not open the image an image of an unknown kind: the source is not one this version can open", WorkspaceIssueOutcome.Failed],
+                ["Could not load the catalog from the VizieR query: the query names no table", WorkspaceIssueOutcome.Failed]
+            ]);
+            expect(appStore.setWorkspaceRecovery).not.toHaveBeenCalled();
         });
     });
 });

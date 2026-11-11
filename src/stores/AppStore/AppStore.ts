@@ -32,6 +32,7 @@ import {
     type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
+    WorkspaceConfig,
     type WorkspaceFile,
     type WorkspaceIssue
 } from "models";
@@ -65,7 +66,8 @@ import {
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
+import {type WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
+import {type WorkspaceRepointedSources, WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 import {
     Distinct,
@@ -158,6 +160,14 @@ export interface WorkspaceRestoreReport {
     /** The name of the workspace, as the user knows it. */
     name: string;
     issues: WorkspaceIssue[];
+    /** The files that the user chose during the restore, for the images and catalogs that opened from them. */
+    repointed?: WorkspaceRepointedSources;
+    /**
+     * The name that the workspace is stored under, when the new locations can be written to it. It
+     * is set when the user opened the workspace by this name and may change it. It is not set for a
+     * workspace opened through a shared link.
+     */
+    storedName?: string;
 }
 
 /** What a workspace load is waiting for. */
@@ -166,6 +176,8 @@ export interface WorkspaceLoadingStep {
     progress: number;
     /** Skips this step and continues with the rest of the load, when that is possible. */
     onSkip?: () => void;
+    /** When the step stops waiting, in milliseconds since 1970, as `Date.now()` gives. The dialog counts down to it. */
+    deadline?: number;
 }
 
 export class AppStore {
@@ -408,6 +420,10 @@ export class AppStore {
     @observable.ref workspaceRestoreProgress: WorkspaceRestoreProgress | undefined = undefined;
     /** The report of the last restore, while the report dialog is open. */
     @observable.ref workspaceRestoreReport: WorkspaceRestoreReport | undefined = undefined;
+    /** The items of a restore stage that failed, while the restore waits for the user to choose what to do with them. */
+    @observable.ref workspaceRecovery: WorkspaceRecoveryStore | undefined = undefined;
+    /** The state of writing the new locations of the last report to the stored workspace. */
+    @observable workspaceWriteBack: "none" | "writing" | "written" | "outdated" = "none";
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -2911,6 +2927,9 @@ export class AppStore {
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
         const generation = WorkspaceRestorer.claimGeneration();
+        this.workspaceRecovery?.abandon();
+        this.workspaceRecovery = undefined;
+        this.fileBrowserStore.cancelFilePick();
 
         try {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
@@ -2925,7 +2944,8 @@ export class AppStore {
             this.setLoadingWorkspaceName(workspace.name || name);
 
             this.hasRestoreChangedSession = true;
-            const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
+            const restorer = new WorkspaceRestorer(workspace, generation);
+            const restoreIssues: WorkspaceIssue[] = yield* restorer.restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
@@ -2935,8 +2955,9 @@ export class AppStore {
             const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
-            if (restoreIssues.length) {
-                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues});
+            const {repointed} = restorer;
+            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size) {
+                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined});
             }
             return true;
         } catch (err) {
@@ -2952,6 +2973,10 @@ export class AppStore {
 
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
+        this.workspaceRecovery?.abandon();
+        this.workspaceRecovery = undefined;
+        // A file that the user is still choosing for this restore is no longer wanted.
+        this.fileBrowserStore.cancelFilePick();
         this.isLoadingWorkspace = false;
         this.hasRestoreChangedSession = false;
         this.workspaceLoadingStep = undefined;
@@ -2964,8 +2989,75 @@ export class AppStore {
     };
 
     @action private showWorkspaceRestoreReport = (report: WorkspaceRestoreReport) => {
+        this.workspaceWriteBack = "none";
         this.workspaceRestoreReport = report;
     };
+
+    @action setWorkspaceRecovery = (recovery: WorkspaceRecoveryStore | undefined) => {
+        this.workspaceRecovery = recovery;
+    };
+
+    @action private setWorkspaceWriteBack = (state: "none" | "writing" | "written" | "outdated") => {
+        this.workspaceWriteBack = state;
+    };
+
+    /**
+     * Write the files that the user chose during the last restore to the stored workspace. Change
+     * only the sources of those images and catalogs, and keep everything else that is stored. A
+     * restore never does this by itself.
+     */
+    @flow.bound
+    public *writeBackRepointedLocations() {
+        const report = this.workspaceRestoreReport;
+        const storedName = report?.storedName;
+        if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none") {
+            return false;
+        }
+        // Change the state only while the report that started the write is still shown. A later
+        // restore may show its own report before this write ends.
+        const setState = (state: "none" | "writing" | "written" | "outdated") => {
+            if (this.workspaceRestoreReport === report) {
+                this.setWorkspaceWriteBack(state);
+            }
+        };
+        setState("writing");
+        try {
+            // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
+            // form were written back, the write would change more than the sources.
+            const stored: Workspace | undefined = yield this.apiService.getStoredWorkspace(storedName);
+            if (!stored) {
+                throw new Error(`Could not read workspace "${storedName}"`);
+            }
+            // Compare the two as JSON. JSON drops the fields that the upgrade sets to undefined.
+            const asJson = (workspace: Workspace) => JSON.parse(JSON.stringify(workspace));
+            if (!_.isEqual(asJson(WorkspaceConfig.upgradeForRuntime(stored)), asJson(stored))) {
+                setState("outdated");
+                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
+                return false;
+            }
+            const patched = WorkspaceRestorer.withRepointedSources(stored, report.repointed);
+            if (!patched) {
+                setState("outdated");
+                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved again after it was opened, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
+                return false;
+            }
+            const saved: Workspace | undefined = yield this.apiService.setWorkspace(storedName, patched);
+            if (!saved) {
+                throw new Error(`Could not write workspace "${storedName}"`);
+            }
+            if (this.activeWorkspace?.name === storedName) {
+                this.activeWorkspace = WorkspaceConfig.upgradeForRuntime(saved);
+            }
+            setState("written");
+            AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${report.name}"`, intent: "success", timeout: 3000});
+            return true;
+        } catch (err) {
+            console.error(err);
+            setState("none");
+            AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${report.name}"`, intent: "danger", timeout: 3000});
+            return false;
+        }
+    }
 
     @action closeWorkspaceRestoreReport = () => {
         this.workspaceRestoreReport = undefined;
@@ -3000,6 +3092,7 @@ export class AppStore {
         // The load stops as soon as it sees that it no longer owns the session. Images and catalogs
         // that are still on their way are closed when they arrive.
         WorkspaceRestorer.claimGeneration();
+        this.workspaceRecovery?.abandon();
         if (this.hasRestoreChangedSession) {
             WorkspaceRestorer.clearSession();
         }

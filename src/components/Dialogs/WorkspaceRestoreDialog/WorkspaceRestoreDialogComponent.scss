@@ -1,5 +1,98 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .workspace-restore-dialog {
     width: 480px;
+
+    &:has(.workspace-recovery) {
+        width: 600px;
+    }
+
+    .workspace-recovery {
+        .restore-stage {
+            margin-bottom: 10px;
+        }
+
+        ul {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 50vh;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        // Show each item in a box: its name, the reason, the choices, and what the choice does.
+        .recovery-item {
+            padding: 10px 12px;
+            border: 1px solid $pt-divider-black;
+            border-radius: $pt-border-radius;
+            overflow-wrap: anywhere;
+
+            .#{$ns}-dark & {
+                border-color: $pt-dark-divider-white;
+            }
+        }
+
+        .recovery-label {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        // Indent the lines under the name, so that they start under its text, after the icon.
+        .recovery-reason,
+        .recovery-note,
+        .recovery-actions {
+            margin-left: 20px;
+        }
+
+        .recovery-reason,
+        .recovery-note {
+            margin-top: 2px;
+            font-size: 12px;
+            color: $pt-text-color-muted;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-text-color-muted;
+            }
+        }
+
+        .recovery-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .recovery-location {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-top: 6px;
+            color: $pt-intent-primary;
+
+            .#{$ns}-dark & {
+                color: $blue5;
+            }
+        }
+
+        // Center the parts of the mirror line. The mirror button is taller than the text.
+        .recovery-mirror {
+            align-items: center;
+        }
+    }
+
+    // Cancel stands apart at the left of the footer. Its left edge lines up with the boxes above.
+    .restore-cancel-apart {
+        margin-right: auto;
+
+        .#{$ns}-button {
+            margin-left: 0;
+        }
+    }
 
     .restore-stage {
         font-weight: 600;

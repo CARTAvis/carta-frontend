@@ -40,6 +40,15 @@ export function isWidgetWorkspaceConfigOf<TType extends WidgetWorkspaceType>(con
     return config.type === type;
 }
 
+/** The problem that a widget reports when its saved image was not restored. The restore report names the image as the cause. */
+export const IMAGE_NOT_RESTORED = "the image it showed was not restored, so it shows the active image";
+
+/** The problem that a widget reports when its saved region was not restored. */
+export const REGION_NOT_RESTORED = "the region it showed was not restored, so it shows the active region";
+
+/** The problem that a spectral profiler reports when some of the images whose profiles it showed were not restored. */
+export const SOME_IMAGES_NOT_RESTORED = "some of the images whose profiles it showed were not restored";
+
 /** Gives the workspace IDs of the data that a widget shows, while a workspace is saved. */
 export interface WorkspaceIdWriter {
     /** Returns the workspace ID of an image, or nothing when the workspace does not save the image. */

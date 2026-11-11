@@ -2,7 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {type ConfigurableStore, IMAGE_NOT_RESTORED, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceRenderConfigWidgetConfig} from "models";
 import {AppStore} from "stores";
 import {isAutoColor} from "utilities";
 
@@ -137,7 +137,7 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
 
     public applyWorkspaceBinding = (_config: WorkspaceRenderConfigWidgetConfig, ids: WorkspaceIdReader): string[] => {
         this.isShowingWorkspaceData = ids.wasActiveImageRestored();
-        return this.isShowingWorkspaceData ? [] : ["the image it showed was not restored, so it shows the active image"];
+        return this.isShowingWorkspaceData ? [] : [IMAGE_NOT_RESTORED];
     };
 
     public applyWorkspaceConfig = (): string[] => [];

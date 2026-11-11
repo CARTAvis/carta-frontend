@@ -27,7 +27,7 @@ import {
     StokesAnalysisComponent
 } from "components";
 import {PopoutEventForwarder} from "components/PopoutEventForwarder";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceItemKind} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, WidgetType, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {
     type ConfigurableStore,
     CreateWidgetButton,
@@ -35,7 +35,9 @@ import {
     FlexLayoutDomMarker,
     getWidgetMap,
     type IdentifiedWidgetStore,
+    IMAGE_NOT_RESTORED,
     type Persisted,
+    REGION_NOT_RESTORED,
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
@@ -520,11 +522,47 @@ export class WidgetsStore {
         Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
             this.widgetsMap.get(config.type)?.forEach(widgetStore => {
                 if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
-                    apply(widgetStore, config).forEach(problem => issues.push({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`}));
+                    apply(widgetStore, config).forEach(problem =>
+                        issues.push({
+                            kind: WorkspaceItemKind.PlotWidget,
+                            subject: widgetId,
+                            message: `Could not fully restore the widget ${widgetId}: ${problem}`,
+                            reason: problem,
+                            effect: problem === IMAGE_NOT_RESTORED ? WorkspaceIssueEffect.ActiveImage : problem === REGION_NOT_RESTORED ? WorkspaceIssueEffect.ActiveRegion : undefined
+                        })
+                    );
                 }
             });
         });
         return issues;
+    }
+
+    /**
+     * Returns the title that a widget shows, such as "X Profile: Cursor", by the stable ID of the
+     * widget. Returns the default title of its type when the widget is not open. The type is taken
+     * from the start of the ID, such as "catalog-plot" for "catalog-plot-0".
+     */
+    public titleOfWidget(widgetId: string): string {
+        for (const [type, widgets] of this.widgetsMap) {
+            for (const [id, widgetStore] of widgets) {
+                if ((widgetStore as {widgetId?: unknown} | undefined)?.widgetId === widgetId) {
+                    return this.titleOfComponent(id) || (getWidgetMap().get(type)?.config.title ?? type);
+                }
+            }
+        }
+        // A catalog plot keeps its stable ID with the catalog binding, not in its store.
+        const plotId = CatalogStore.Instance.widgetBindings.shownPlotOf(widgetId);
+        const plotTitle = plotId === undefined ? undefined : this.titleOfComponent(plotId);
+        if (plotTitle) {
+            return plotTitle;
+        }
+        const type = [...getWidgetMap().keys()].filter(candidate => widgetId.startsWith(`${candidate}-`)).sort((a, b) => b.length - a.length)[0];
+        return (type && getWidgetMap().get(type)?.config.title) || widgetId;
+    }
+
+    /** Returns the title of a floating widget or of a docked tab, by its component ID. */
+    private titleOfComponent(componentId: string): string | undefined {
+        return this.floatingWidgets.find(widget => widget.id === componentId)?.title ?? (LayoutStore.Instance.layoutModel?.getNodeById(componentId) as TabNode | undefined)?.getName?.();
     }
 
     private static isConfigurable = (store: unknown): store is ConfigurableStore<object, Persisted<object>> => {

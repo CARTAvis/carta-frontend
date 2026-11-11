@@ -1,12 +1,12 @@
 import type {OptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
 import {BrowserMode, DialogId, FileFilterMode, FileInfoType, FrequencyUnit, ImageType, PreferenceKeys, RegionId, SelectionMode} from "enums";
 import {FileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceStore} from "stores";
+import {AppStore, DialogStore, PreferenceStore, type WorkspaceFileLocation} from "stores";
 import {RegionStore} from "stores/Frame";
 import {getDataTypeString, getHeaderNumericValue, type ProcessedColumnData} from "utilities";
 
@@ -115,6 +115,72 @@ export class FileBrowserStore {
         this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
     };
 
+    /**
+     * The file that a workspace restore asks the user to choose, while the file browser is open for
+     * it. The browser then returns the chosen file, and does not open it.
+     */
+    @observable.ref filePick: {mode: BrowserMode.File | BrowserMode.Catalog; resolve: (location: WorkspaceFileLocation | undefined) => void} | undefined = undefined;
+
+    /**
+     * Open the file browser for the user to choose an image or a catalog file, and do not open the
+     * file. A workspace restore uses this. So the browser opens during a restore, when the other
+     * modes do not open.
+     *
+     * @returns the chosen file, or undefined when the user closes the browser without one.
+     */
+    public pickFile = (kind: "image" | "catalog"): Promise<WorkspaceFileLocation | undefined> => {
+        this.finishFilePick(undefined);
+        return new Promise(resolve => {
+            const mode: BrowserMode.File | BrowserMode.Catalog = kind === "image" ? BrowserMode.File : BrowserMode.Catalog;
+            const pick = {mode, resolve};
+            this.setFilePick(pick);
+            this.openFileBrowser(mode, false);
+            // The browser can also be closed by another dialog. The pick ends then too.
+            const disposeReaction = reaction(
+                () => this.filePick === pick && !!DialogStore.Instance.dialogVisible.get(DialogId.FileBrowser),
+                isOpen => {
+                    if (!isOpen) {
+                        disposeReaction();
+                        if (this.filePick === pick) {
+                            this.finishFilePick(undefined);
+                        }
+                    }
+                }
+            );
+        });
+    };
+
+    /** Return the selected file to the restore that asked for it, and close the browser. */
+    @action choosePickedFile = () => {
+        const pick = this.filePick;
+        const filename = this.selectedFile?.name;
+        const directory = pick?.mode === BrowserMode.Catalog ? this.catalogFileList?.directory : this.fileList?.directory;
+        if (!pick || !filename || directory == null) {
+            return;
+        }
+        this.saveStartingDirectory();
+        this.finishFilePick({directory, filename, hdu: pick.mode === BrowserMode.File ? this.selectedHDU || undefined : undefined});
+        this.hideFileBrowser();
+    };
+
+    @action private setFilePick = (pick: FileBrowserStore["filePick"]) => {
+        this.filePick = pick;
+    };
+
+    /** End a pick without a file, and close the browser that is open for it. A restore that ends uses this. */
+    @action cancelFilePick = () => {
+        if (this.filePick) {
+            this.finishFilePick(undefined);
+            this.hideFileBrowser();
+        }
+    };
+
+    @action private finishFilePick = (location: WorkspaceFileLocation | undefined) => {
+        const pick = this.filePick;
+        this.filePick = undefined;
+        pick?.resolve(location);
+    };
+
     @action showFileBrowser = (mode: BrowserMode, shouldAppend = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
@@ -135,6 +201,12 @@ export class FileBrowserStore {
                     return;
                 }
         }
+        // Opening the browser for anything else ends a pick.
+        this.finishFilePick(undefined);
+        this.openFileBrowser(mode, shouldAppend);
+    };
+
+    @action private openFileBrowser = (mode: BrowserMode, shouldAppend: boolean) => {
         this.isAppendingFrame = shouldAppend;
         this.browserMode = mode;
         DialogStore.Instance.showDialog(DialogId.FileBrowser);
@@ -154,6 +226,7 @@ export class FileBrowserStore {
 
     @action hideFileBrowser = () => {
         DialogStore.Instance.hideDialog(DialogId.FileBrowser);
+        this.finishFilePick(undefined);
     };
 
     @action setFileList = (fileListResponse: CARTA.FileListResponse.$Properties) => {

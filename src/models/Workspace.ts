@@ -30,6 +30,7 @@ import {
     type SpectralType,
     type VectorOverlaySource,
     type VelocityConvention,
+    type WorkspaceIssueEffect,
     type WorkspaceIssueOutcome,
     type WorkspaceItemKind
 } from "enums";
@@ -309,6 +310,11 @@ export interface WorkspaceFile {
     offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */
     restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
+    /**
+     * The place of the image in the image list. The places count the images that the workspace does
+     * not save, so only their order matters. Left out by a workspace saved before it kept the place.
+     */
+    imageListIndex?: number;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
@@ -782,6 +788,29 @@ export interface WorkspaceIssue {
      * item out. Undefined when the item is in the session, but not as it was saved.
      */
     outcome?: WorkspaceIssueOutcome;
+    /**
+     * How the restore report names the item, such as "The image cube.fits". The report shows the
+     * label next to the outcome tag. So the label does not need to say "Skipped" or "Could not".
+     * The report names a widget by its title instead.
+     */
+    label?: string;
+    /** Why the item is not restored as saved, without the name of the item. The report shows it after the label. */
+    reason?: string;
+    /** The Workspace IDs of the saved images that are not in the session because of this item. */
+    imageIds?: number[];
+    /** The Workspace ID of the saved image that caused this issue. The issue happened because this image is not in the session. */
+    causeImageId?: number;
+    /** The Workspace IDs of the saved catalogs that are not in the session because of this item. */
+    catalogIds?: number[];
+    /** The Workspace ID of the saved catalog that caused this issue. For example, the catalog is not in the session, or it is the first query to a mirror that timed out. */
+    causeCatalogId?: number;
+    /** How a widget differs from the workspace. The report groups the widgets with the same effect. */
+    effect?: WorkspaceIssueEffect;
+    /**
+     * What the widget shows now, when it differs between widgets with the same effect, such as "the
+     * catalog sources.vot" for a catalog widget. The report groups the widgets with the same detail.
+     */
+    effectDetail?: string;
 }
 
 export interface WorkspaceListItem {
