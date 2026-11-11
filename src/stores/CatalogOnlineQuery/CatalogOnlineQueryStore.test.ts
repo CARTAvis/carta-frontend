@@ -5,7 +5,7 @@ import {CatalogApiService} from "services";
 import {CatalogOnlineQueryConfigStore} from "./CatalogOnlineQueryConfigStore";
 import {CatalogOnlineQueryStore} from "./CatalogOnlineQueryStore";
 
-jest.mock("services", () => ({CatalogApiService: {captureQuery: jest.fn(), Instance: {loadSimbadCatalog: jest.fn(), loadVizierCatalogs: jest.fn()}}}));
+jest.mock("services", () => ({CatalogApiService: {captureQuery: jest.fn(), showQueryError: jest.fn(), Instance: {loadSimbadCatalog: jest.fn(), loadVizierCatalogs: jest.fn()}}}));
 jest.mock("./CatalogOnlineQueryConfigStore", () => ({CatalogOnlineQueryConfigStore: {Instance: {catalogDB: "SIMBAD", selectedVizierSource: []}}}));
 
 describe("CatalogOnlineQueryStore source-driven loading", () => {
@@ -26,6 +26,18 @@ describe("CatalogOnlineQueryStore source-driven loading", () => {
 
         expect(CatalogApiService.Instance.loadSimbadCatalog).toHaveBeenCalledWith(source);
         expect(store.resultSize).toBe(3);
+        expect(store.isQuerying).toBe(false);
+    });
+
+    test("shows the error of a query that failed, and no result", async () => {
+        const error = new Error("Request to mirror simbad.example failed");
+        jest.mocked(CatalogApiService.Instance.loadSimbadCatalog).mockRejectedValue(error);
+        const store = new CatalogOnlineQueryStore();
+
+        await store.queryCatalogs();
+
+        expect(CatalogApiService.showQueryError).toHaveBeenCalledWith(error);
+        expect(store.resultSize).toBe(0);
         expect(store.isQuerying).toBe(false);
     });
 

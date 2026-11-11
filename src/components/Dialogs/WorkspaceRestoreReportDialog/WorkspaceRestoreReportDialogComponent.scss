@@ -1,0 +1,45 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.workspace-restore-report-dialog {
+    width: 600px;
+
+    // Show the name of the workspace after the title, in a lighter color.
+    .report-workspace-name {
+        margin-left: 8px;
+        font-weight: normal;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
+    .#{$ns}-dialog-body {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    section + section {
+        margin-top: 16px;
+    }
+
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    li {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 4px 0;
+        overflow-wrap: anywhere;
+    }
+
+    .#{$ns}-tag {
+        flex-shrink: 0;
+        min-width: 56px;
+        justify-content: center;
+    }
+}

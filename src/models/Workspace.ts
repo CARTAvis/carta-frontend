@@ -30,6 +30,7 @@ import {
     type SpectralType,
     type VectorOverlaySource,
     type VelocityConvention,
+    type WorkspaceIssueOutcome,
     type WorkspaceItemKind
 } from "enums";
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
@@ -451,7 +452,7 @@ export function describeCatalogSource(source: WorkspaceCatalogSource): string {
     if (source.type === "file") {
         return source.filename;
     }
-    // Read after "the catalog", as every message naming a catalog does.
+    // Reads after "the catalog", as in "the catalog from the SIMBAD query".
     const service = source.type === "simbad" ? "SIMBAD" : "VizieR";
     const tableDescription = source.table ? ` for ${source.table}` : "";
     return `from the ${service} query${tableDescription}`;
@@ -776,6 +777,11 @@ export interface WorkspaceIssue {
     subject: string;
     /** What happened, as a whole sentence naming the subject. */
     message: string;
+    /**
+     * Set by a restore when the item is not in the session, so a save of the session leaves the
+     * item out. Undefined when the item is in the session, but not as it was saved.
+     */
+    outcome?: WorkspaceIssueOutcome;
 }
 
 export interface WorkspaceListItem {

@@ -139,6 +139,27 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     }
 }
 
+/**
+ * The stage that a workspace restore is in, and the item of the stage that it is working on. For
+ * example, "Opening catalogs", item 2 of 5, "from the VizieR query for I/239/hip_main".
+ */
+export interface WorkspaceRestoreProgress {
+    stage: string;
+    /** The position of the item in this round of the stage, counted from 1. A retry starts a new round. */
+    index?: number;
+    /** The number of items in this round of the stage. */
+    count?: number;
+    /** The name of the item, as the user knows it. */
+    item?: string;
+}
+
+/** What the last workspace restore could not bring back as saved. */
+export interface WorkspaceRestoreReport {
+    /** The name of the workspace, as the user knows it. */
+    name: string;
+    issues: WorkspaceIssue[];
+}
+
 /** What a workspace load is waiting for. */
 export interface WorkspaceLoadingStep {
     description: string;
@@ -382,6 +403,11 @@ export class AppStore {
     @observable isLoadingWorkspace: boolean = false;
     /** The step that a workspace load is waiting for, with its progress and its Skip. It is undefined when the load waits for nothing. */
     @observable.ref workspaceLoadingStep: WorkspaceLoadingStep | undefined = undefined;
+    /** The name of the workspace that is loading, as the user knows it. */
+    @observable loadingWorkspaceName: string = "";
+    @observable.ref workspaceRestoreProgress: WorkspaceRestoreProgress | undefined = undefined;
+    /** The report of the last restore, while the report dialog is open. */
+    @observable.ref workspaceRestoreReport: WorkspaceRestoreReport | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -748,6 +774,23 @@ export class AppStore {
     };
 
     /**
+     * Tell the user that a file could not be loaded.
+     *
+     * A workspace restore does not show the alert. It lists the file in its report, with the
+     * reason. Then the user does not have to close an alert for each file that the restore could
+     * not open.
+     *
+     * @param isRestoring - Whether a workspace restore was running when the load started. Take it
+     * before the request goes out. If the user cancels the restore while the request is in flight,
+     * `isLoadingWorkspace` is already false when the error arrives.
+     */
+    private alertLoadError(message: string, isRestoring: boolean) {
+        if (!isRestoring) {
+            this.alertStore.showAlert(message);
+        }
+    }
+
+    /**
      * Loads a file at the given path and adds it as a frame to the application.
      *
      * @param path - The path to the parent directory of the file to load, or of the file itself.
@@ -762,6 +805,7 @@ export class AppStore {
      */
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, isImageArithmetic: boolean, shouldSetAsActive: boolean = true, shouldUpdateStartingDirectory: boolean = true) {
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         this.openingImageCount++;
 
@@ -801,7 +845,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.alertLoadError(`Error loading file: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         } finally {
@@ -816,12 +860,17 @@ export class AppStore {
      * @throws If there is an error loading the file.
      */
     @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest.$Properties) {
+        const isRestoring = this.isLoadingWorkspace;
         this.openingImageCount++;
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
             const ack: CARTA.RemoteFileResponse.$Properties = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
+                // A workspace restore reports the failed query with the reason, in its report.
+                if (isRestoring) {
+                    throw new Error(ack.message || "the query returned no image");
+                }
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
@@ -841,7 +890,7 @@ export class AppStore {
             yield this.delay(10);
             return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
+            this.alertLoadError(`HiPS data query failed: ${err}`, isRestoring);
             throw err;
         } finally {
             this.openingImageCount--;
@@ -849,6 +898,7 @@ export class AppStore {
     }
 
     loadConcatStokes = async (stokesFiles: CARTA.StokesFile.$Properties[], directory: string, hdu: string) => {
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         this.openingImageCount++;
         try {
@@ -868,7 +918,7 @@ export class AppStore {
             return ack.openFileAck?.fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading files: ${err}`);
+            this.alertLoadError(`Error loading files: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         } finally {
@@ -1245,13 +1295,14 @@ export class AppStore {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
 
         try {
             const fileId: number | undefined = yield this.catalogStore.open(frame, async catalogFileId => {
                 const ack = await this.backendService.loadCatalogFile(directory, file, catalogFileId, previewDataSize);
                 if (!ack.success || !ack.dataSize) {
-                    throw new Error("No catalog file loaded");
+                    throw new Error(ack.message || "No catalog file loaded");
                 }
                 const catalogInfo: CatalogInfo = {fileId: catalogFileId, directory, fileInfo: ack.fileInfo ?? {}, dataSize: ack.dataSize};
                 return new CatalogProfileStore(catalogInfo, (ack.headers ?? []) as CARTA.CatalogHeader[], ProtobufProcessing.processCatalogData(ack.previewData ?? {}), CatalogType.FILE);
@@ -1265,7 +1316,7 @@ export class AppStore {
             return fileId;
         } catch (err) {
             console.error(err);
-            this.alertStore.showAlert(`Error loading catalogs: ${err}`);
+            this.alertLoadError(`Error loading catalogs: ${err}`, isRestoring);
             this.endFileLoading();
             throw err;
         }
@@ -1523,6 +1574,8 @@ export class AppStore {
      * @param isStillWanted - called when the images are made. When it returns false, the images are
      *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
+     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
+     *         the backend. The restore lists it in its report.
      */
     @flow.bound
     *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
@@ -1533,6 +1586,7 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
         if (!message.keep) {
@@ -1585,6 +1639,9 @@ export class AppStore {
             frame.resetMomentRequestState();
             this.endFileLoading();
             console.error(err);
+            if (isRestoring) {
+                throw err;
+            }
         }
         return momentImages;
     }
@@ -1611,6 +1668,8 @@ export class AppStore {
      * @param isStillWanted - called when the image is made. When it returns false, the image is
      *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
+     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
+     *         the backend. The restore lists it in its report, so no toast shows it.
      */
     @flow.bound
     *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
@@ -1621,6 +1680,7 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame
         if (!shouldKeepExisting) {
@@ -1668,6 +1728,9 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
+            if (isRestoring) {
+                throw err;
+            }
             AppToaster.show(ErrorToast(err));
         }
         return pvImage;
@@ -1731,6 +1794,8 @@ export class AppStore {
      * @param isStillWanted - called when the fit is done. When it returns false, the model and
      *                        residual images are closed on the backend, and the result is not shown.
      * @returns the model and residual images added to the session.
+     * @throws The error of the backend, or why the fit did not succeed, during a workspace restore
+     *         only. The restore lists it in its report, so no toast shows it.
      */
     @flow.bound
     *requestFitting(message: CARTA.FittingRequest.$Properties, isStillWanted: () => boolean = () => true) {
@@ -1738,6 +1803,7 @@ export class AppStore {
             return [];
         }
 
+        const isRestoring = this.isLoadingWorkspace;
         if (message.createModelImage || message.createResidualImage) {
             this.startFileLoading();
         }
@@ -1752,8 +1818,12 @@ export class AppStore {
         this.restartTaskProgress();
 
         const fittingImages: FrameStore[] = [];
+        let failure: unknown;
         try {
             const ack = yield this.backendService.requestFitting(message);
+            if (!ack.success && isRestoring) {
+                throw new Error(ack.message || "the fit did not succeed");
+            }
             if (ack.success && !isStillWanted()) {
                 this.discardGeneratedImages([ack.modelImage, ack.residualImage].filter(image => !!image));
             } else if (ack.success) {
@@ -1815,14 +1885,18 @@ export class AppStore {
                     }
                 }
             }
-            if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length) {
+            if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length && !isRestoring) {
                 AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
             }
-            if (ack.message) {
+            if (ack.message && !isRestoring) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
         } catch (err) {
-            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+            if (isRestoring) {
+                failure = err;
+            } else {
+                AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+            }
         }
 
         this.setActiveImageById(ImageType.FRAME, message.fileId ?? -1);
@@ -1830,6 +1904,9 @@ export class AppStore {
             this.endFileLoading();
         }
         this.imageFittingStore.resetFittingState();
+        if (failure !== undefined) {
+            throw failure;
+        }
         return fittingImages;
     }
 
@@ -2824,6 +2901,13 @@ export class AppStore {
     @flow.bound
     public *loadWorkspace(name: string, isKey = false) {
         this.isLoadingWorkspace = true;
+        this.loadingWorkspaceName = isKey ? "" : name;
+        this.closeWorkspaceRestoreReport();
+        this.workspaceRestoreProgress = {stage: "Reading the workspace"};
+        // Skip the step that an earlier load still waits for, and remove it from the dialog. The
+        // earlier load does not remove the step itself once this load owns the session.
+        this.workspaceLoadingStep?.onSkip?.();
+        this.workspaceLoadingStep = undefined;
         // A load started while this one is still running owns the session from here on, and this one
         // stops rather than mixing its workspace into the other's.
         const generation = WorkspaceRestorer.claimGeneration();
@@ -2838,18 +2922,22 @@ export class AppStore {
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
+            this.setLoadingWorkspaceName(workspace.name || name);
 
+            this.hasRestoreChangedSession = true;
             const restoreIssues: WorkspaceIssue[] = yield* new WorkspaceRestorer(workspace, generation).restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            if (restoreIssues.length) {
-                restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
-                AppToaster.show(WarningToast(`${restoreIssues.length} item(s) in workspace "${name}" were not restored as saved. See the log for details.`));
-            }
+            restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
 
+            // Take the name before `finishLoadingWorkspace` clears it. The report shows the name.
+            const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
+            if (restoreIssues.length) {
+                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues});
+            }
             return true;
         } catch (err) {
             console.error(err);
@@ -2865,7 +2953,58 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.hasRestoreChangedSession = false;
         this.workspaceLoadingStep = undefined;
+        this.workspaceRestoreProgress = undefined;
+        this.loadingWorkspaceName = "";
+    };
+
+    @action private setLoadingWorkspaceName = (name: string) => {
+        this.loadingWorkspaceName = name;
+    };
+
+    @action private showWorkspaceRestoreReport = (report: WorkspaceRestoreReport) => {
+        this.workspaceRestoreReport = report;
+    };
+
+    @action closeWorkspaceRestoreReport = () => {
+        this.workspaceRestoreReport = undefined;
+    };
+
+    /** Set the stage that a workspace restore is in. */
+    @action setWorkspaceRestoreProgress = (progress: WorkspaceRestoreProgress | undefined) => {
+        this.workspaceRestoreProgress = progress;
+    };
+
+    /**
+     * Whether a restore has started to change the session, and has not finished. A restore that a
+     * later load stops leaves this true, because the session still has what it opened.
+     */
+    private hasRestoreChangedSession = false;
+
+    /**
+     * Stop the workspace load that is running, and close everything that it has opened so far. The
+     * session is then empty.
+     *
+     * While the load still reads the workspace, no restore has changed the session yet. Then Cancel
+     * keeps the images that the user has open.
+     */
+    @action cancelLoadingWorkspace = () => {
+        if (!this.isLoadingWorkspace) {
+            return;
+        }
+        const name = this.loadingWorkspaceName;
+        // Skip the step that the load is waiting for. Then the backend also stops what it computes
+        // for the step, such as moment images.
+        this.workspaceLoadingStep?.onSkip?.();
+        // The load stops as soon as it sees that it no longer owns the session. Images and catalogs
+        // that are still on their way are closed when they arrive.
+        WorkspaceRestorer.claimGeneration();
+        if (this.hasRestoreChangedSession) {
+            WorkspaceRestorer.clearSession();
+        }
+        this.finishLoadingWorkspace();
+        AppToaster.show({icon: "disable", message: name ? `Cancelled opening workspace "${name}"` : "Cancelled opening the workspace", timeout: 3000});
     };
 
     /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
@@ -2912,14 +3051,18 @@ export class AppStore {
 
         const {workspace, issues} = new WorkspaceSnapshotter().capture();
         issues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
-        // One toast however many there are, as for a restore: a toast each would bury the screen.
+        // Show one toast for all the issues. A toast for each issue would cover the screen.
         if (issues.length) {
             AppToaster.show(WarningToast(`${issues.length} item(s) could not be saved in workspace "${name}". See the log for details.`));
         }
 
-        const thumbnail = yield exportScreenshot();
+        // The thumbnail shows the whole app, so that the workspace can be told apart by its layout too.
+        // It is 1024 pixels wide, so that the text of the widgets can be read on high-density screens.
+        const thumbnail = yield exportScreenshot(false, 1024);
         if (thumbnail) {
             workspace.thumbnail = thumbnail;
+        } else {
+            this.logStore.addWarning(`Could not take the thumbnail of workspace "${name}". The workspace is saved without one.`, ["workspace"]);
         }
 
         const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
