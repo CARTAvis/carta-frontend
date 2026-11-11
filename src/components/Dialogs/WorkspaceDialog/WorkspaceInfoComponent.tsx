@@ -362,7 +362,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                 </Callout>
             )}
             {/* The larger preview has no frame. A click anywhere or the Escape key closes it. */}
-            <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={true} canOutsideClickClose={true}>
+            <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={true} canOutsideClickClose={true} transitionDuration={200}>
                 <div className="workspace-preview-overlay" onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview">
                     <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
                 </div>
