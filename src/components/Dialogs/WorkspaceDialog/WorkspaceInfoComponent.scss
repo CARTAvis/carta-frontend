@@ -212,25 +212,6 @@
     }
 }
 
-.workspace-save-changes {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-
-    .save-changes-text {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: $pt-intent-primary;
-        white-space: nowrap;
-    }
-}
-
-.#{$ns}-dark .workspace-save-changes .save-changes-text {
-    color: $blue5;
-}
-
 .#{$ns}-dark .workspace-info {
     .summary-header .summary-counts,
     .summary-row .row-details {
