@@ -1,47 +1,146 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .workspace-info {
     overflow-y: auto;
-    margin-left: 10px;
+    padding: 2px 10px 10px 12px;
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    min-width: 0;
 
-    .workspace-thumbnail {
-        flex: 2;
+    .summary-header {
         display: flex;
-        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
 
-        img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-    }
+        .workspace-thumbnail {
+            flex: none;
+            width: 120px;
+            height: 68px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
 
-    .workspace-properties {
-        margin-top: 10px;
-        flex: 1;
-
-        .info-table {
-            .entry {
-                vertical-align: top;
-
-                ul {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                }
+            img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
             }
         }
 
-        .entry-title {
-            font-weight: bold;
-            padding-right: 10px;
-            padding-bottom: 5px;
+        .summary-title {
+            min-width: 0;
         }
 
-        .entry-value {
+        .summary-name {
+            font-weight: 600;
             overflow-wrap: anywhere;
-            padding-bottom: 5px;
+        }
+
+        .summary-counts {
+            color: $pt-text-color-muted;
         }
     }
+
+    section {
+        margin-top: 12px;
+    }
+
+    .summary-group-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: $pt-font-size-small;
+        color: $pt-text-color-muted;
+        margin-bottom: 2px;
+    }
+
+    // The name, the status and the action of each row line up in three columns.
+    .summary-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto 72px;
+        gap: 8px;
+        align-items: center;
+        min-height: 30px;
+        border-bottom: 1px solid rgba($black, 0.1);
+
+        &.is-heading {
+            border-bottom: none;
+            min-height: 26px;
+        }
+
+        &.is-part {
+            padding-left: 16px;
+        }
+
+        .row-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+
+            > span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .row-details {
+            color: $pt-text-color-muted;
+        }
+
+        .status-tag {
+            justify-self: start;
+        }
+
+        .row-action {
+            justify-self: end;
+        }
+
+        .mirror-select {
+            flex: none;
+            max-width: 190px;
+        }
+    }
+
+    .restored-settings {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .save-changes {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+}
+
+.#{$ns}-dark .workspace-info {
+    .summary-header .summary-counts,
+    .summary-group-title,
+    .summary-row .row-details {
+        color: $pt-dark-text-color-muted;
+    }
+
+    .summary-row {
+        border-bottom-color: rgba($white, 0.1);
+    }
+}
+
+.change-list {
+    font-family: $pt-font-family-monospace;
+    font-size: $pt-font-size-small;
+}
+
+.folder-move {
+    font-family: $pt-font-family-monospace;
+    font-size: $pt-font-size-small;
+    overflow-wrap: anywhere;
 }

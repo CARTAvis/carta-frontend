@@ -1,157 +1,271 @@
 import * as React from "react";
-import {useCallback, useEffect, useState} from "react";
-import {Callout, HTMLTable, NonIdealState, Spinner} from "@blueprintjs/core";
-import {type CARTA} from "carta-protobuf";
-import {useMap} from "usehooks-ts";
+import {useState} from "react";
+import {Alert, AnchorButton, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
+import {observer} from "mobx-react";
 
-import {describeImageSource, getWorkspaceFilePaths, type Workspace, type WorkspaceFile, type WorkspaceListItem} from "models";
-import {AppStore} from "stores";
+import {type CatalogDatabase} from "enums";
+import {AppStore, MirrorSiteStore} from "stores";
+import {type WorkspaceCheckedFile, type WorkspaceFileStatus, type WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
 
 import "./WorkspaceInfoComponent.scss";
 
-function getFileStatus(info: CARTA.FileInfoResponse.$Properties | undefined): string {
-    if (!info) {
-        return "not checked";
+/** How the status of a file reads, and its color. */
+const FILE_STATUS: Record<WorkspaceFileStatus, {text: string; intent: Intent}> = {
+    checking: {text: "Checking", intent: Intent.NONE},
+    found: {text: "Found", intent: Intent.SUCCESS},
+    missing: {text: "Missing", intent: Intent.DANGER},
+    moved: {text: "New location", intent: Intent.WARNING}
+};
+
+/** Returns the host of a mirror, such as simbad.u-strasbg.fr, or the whole URL when it cannot be read. */
+function hostOf(url: string): string {
+    try {
+        return new URL(url).host;
+    } catch {
+        return url;
     }
-    return info.success ? "valid" : "failed";
 }
 
-export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceListItem}) => {
-    const {workspaceListItem} = props;
+/** Returns "1 region" or "3 regions". */
+function countOf(count: number, noun: string): string {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
 
-    const [isFetchingWorkspace, setIsFetchingWorkspace] = useState(false);
-    const [workspace, setWorkspace] = useState<Workspace>();
-    const [errorMessage, setErrorMessage] = useState("");
-    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.FileInfoResponse.$Properties>();
+/** The status tag of a row. */
+const StatusTag = (props: {text: string; intent: Intent; testId: string}) => (
+    <Tag minimal intent={props.intent} className="status-tag" data-testid={props.testId}>
+        {props.text}
+    </Tag>
+);
 
-    const fetchFileInfo = useCallback(
-        async (workspace: Workspace) => {
-            if (!workspace?.files?.length) {
-                return;
-            }
+interface FolderMove {
+    from: string;
+    to: string;
+    files: WorkspaceCheckedFile[];
+}
 
-            const appStore = AppStore.Instance;
-            for (const file of workspace.files) {
-                // An image arithmetic expression names no file to look up, so it is left unchecked.
-                const paths = getWorkspaceFilePaths(file.source);
-                if (!paths.length) {
-                    continue;
-                }
+/**
+ * The summary of the workspace selected in the Workspace dialog: its images and their regions, its
+ * catalogs, and the other settings that it restores. In the Open mode, it also shows whether each
+ * file is found, and lets the user choose new locations for missing files and other mirrors.
+ */
+export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePreflightStore; isFetching: boolean; errorMessage?: string; shouldShowChecks: boolean; onSaved?: () => void}) => {
+    const {preflight, shouldShowChecks} = props;
+    const [folderMove, setFolderMove] = useState<FolderMove>();
+    const appStore = AppStore.Instance;
 
-                try {
-                    let info: CARTA.FileInfoResponse.$Properties = {success: true};
-                    for (const path of paths) {
-                        info = await appStore.backendService.getFileInfo(path.directory, path.filename, path.hdu);
-                        if (!info.success) {
-                            break;
-                        }
-                    }
-                    workspaceFileInfoMapActions.set(file, info);
-                } catch (err) {
-                    workspaceFileInfoMapActions.set(file, {success: false, message: err});
-                }
-            }
-        },
-        [workspaceFileInfoMapActions]
-    );
-
-    const fetchWorkspace = useCallback(
-        async (name: string) => {
-            setIsFetchingWorkspace(true);
-            setWorkspace(undefined);
-            workspaceFileInfoMapActions.reset();
-            try {
-                const res = await AppStore.Instance.apiService.getWorkspace(name);
-                if (res) {
-                    setWorkspace(res);
-                    await fetchFileInfo(res);
-                }
-            } catch (err) {
-                console.error(err);
-                setErrorMessage(err);
-            }
-            setIsFetchingWorkspace(false);
-        },
-        [fetchFileInfo, workspaceFileInfoMapActions]
-    );
-
-    useEffect(() => {
-        if (workspaceListItem) {
-            fetchWorkspace(workspaceListItem.name);
-        }
-    }, [workspaceListItem]);
-
-    if (!workspaceListItem) {
+    if (props.isFetching) {
+        return <NonIdealState className="workspace-info" icon={<Spinner />} title="Reading the workspace" />;
+    } else if (props.errorMessage) {
+        return <NonIdealState className="workspace-info" icon="error" title={props.errorMessage} />;
+    } else if (!preflight) {
         return <NonIdealState className="workspace-info" icon="folder-open" title="No workspace selected" />;
-    } else if (isFetchingWorkspace) {
-        return <NonIdealState className="workspace-info" icon={<Spinner />} title="Fetching workspace" />;
-    } else if (!workspace) {
-        return <NonIdealState className="workspace-info" icon="error" title={errorMessage || "Error fetching workspace"} />;
-    } else if (!workspace.files?.length) {
-        return <NonIdealState className="workspace-info" icon="error" title="Empty workspace" />;
     }
 
-    let totalRegions = 0;
-    for (const file of workspace.files) {
-        if (!file.references?.spatial || file.id === workspace.references?.spatial) {
-            totalRegions += file.regionsSet?.regions?.length ?? 0;
+    const locate = async (file: WorkspaceCheckedFile) => {
+        const oldDirectory = preflight.directoryOf(file);
+        const location = await appStore.fileBrowserStore.pickFile(file.kind);
+        if (!location) {
+            return;
         }
-    }
+        preflight.setLocation(file, {directory: location.directory, filename: location.filename, hdu: location.hdu});
+        const move = preflight.getFolderMove(file, oldDirectory);
+        if (move.files.length && move.from !== move.to) {
+            setFolderMove(move);
+        } else {
+            preflight.check();
+        }
+    };
 
-    const spatialReference = workspace.files?.find(f => f.id === workspace.references?.spatial);
-    const spectralReference = workspace.files?.find(f => f.id === workspace.references?.spectral);
-    const rasterReference = workspace.files?.find(f => f.id === workspace.references?.raster);
+    const endFolderMove = (shouldMove: boolean) => {
+        if (folderMove && shouldMove) {
+            preflight.moveFolder(folderMove);
+        }
+        setFolderMove(undefined);
+        preflight.check();
+    };
 
-    return (
-        <div className="workspace-info">
-            <Callout className="workspace-thumbnail">{workspace.thumbnail ? <img src={workspace.thumbnail} /> : <NonIdealState icon="media" title="No thumbnail" />}</Callout>
-            <Callout className="workspace-properties">
-                <HTMLTable className="info-table">
-                    <tbody>
-                        <tr className="entry">
-                            <td className="entry-title">Name</td>
-                            <td className="entry-value">{workspaceListItem.name}</td>
-                        </tr>
-                        <tr className="entry">
-                            <td className="entry-title">Number of regions</td>
-                            <td className="entry-value">{totalRegions}</td>
-                        </tr>
-                        {spatialReference ? (
-                            <tr className="entry">
-                                <td className="entry-title">Spatial reference</td>
-                                <td className="entry-value">{describeImageSource(spatialReference.source)}</td>
-                            </tr>
-                        ) : null}
-                        {spectralReference ? (
-                            <tr className="entry">
-                                <td className="entry-title">Spectral reference</td>
-                                <td className="entry-value">{describeImageSource(spectralReference.source)}</td>
-                            </tr>
-                        ) : null}
-                        {rasterReference ? (
-                            <tr className="entry">
-                                <td className="entry-title">Raster scaling reference</td>
-                                <td className="entry-value">{describeImageSource(rasterReference.source)}</td>
-                            </tr>
-                        ) : null}
-                        <tr className="entry">
-                            <td className="entry-title">Files</td>
-                            <td className="entry-value">
-                                <ul>
-                                    {workspace.files.map(f => {
-                                        const info = workspaceFileInfoMap.get(f);
-                                        return (
-                                            <li key={f.id}>
-                                                {describeImageSource(f.source)} ({getFileStatus(info)})
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </td>
-                        </tr>
-                    </tbody>
-                </HTMLTable>
-            </Callout>
+    const fileRow = (file: WorkspaceCheckedFile, label: React.ReactNode, isPart: boolean) => {
+        const status = preflight.statusOf(file);
+        return (
+            <div key={file.key} className={classNames("summary-row", {"is-part": isPart})} data-testid="workspace-info-file">
+                <Tooltip className="row-name" content={preflight.pathOf(file)} placement="top-start" hoverOpenDelay={300}>
+                    <span>{label}</span>
+                </Tooltip>
+                {shouldShowChecks && <StatusTag {...FILE_STATUS[status]} testId="workspace-info-file-status" />}
+                {shouldShowChecks && <span className="row-action">{status === "missing" && <AnchorButton size="small" text="Locate" onClick={() => locate(file)} data-testid="workspace-info-locate-button" />}</span>}
+            </div>
+        );
+    };
+
+    const nameWithDetails = (name: string, details: (string | undefined)[]) => {
+        const text = details.filter(Boolean).join(" · ");
+        return (
+            <>
+                {name}
+                {text && <span className="row-details"> · {text}</span>}
+            </>
+        );
+    };
+
+    const mirrorRow = (catalogId: number, name: string, database: CatalogDatabase) => {
+        const mirror = preflight.mirrors.get(database);
+        if (!mirror) {
+            return null;
+        }
+        const mirrorSiteStore = MirrorSiteStore.Instance;
+        const mirrors = mirrorSiteStore.getMirrorSites(database).filter(site => !mirrorSiteStore.isMirrorUnavailable(database, site));
+        const isNew = mirror.chosen !== mirror.saved && mirror.saved !== undefined;
+        const status =
+            mirror.state === "testing"
+                ? {text: "Testing", intent: Intent.NONE}
+                : mirror.state === "no-answer"
+                  ? {text: "No answer", intent: Intent.DANGER}
+                  : {text: isNew ? "New mirror" : "Answered", intent: isNew ? Intent.WARNING : Intent.SUCCESS};
+        return (
+            <div key={catalogId} className="summary-row" data-testid="workspace-info-online-catalog">
+                <span className="row-name">
+                    {name}
+                    {shouldShowChecks && (
+                        <HTMLSelect
+                            minimal
+                            className="mirror-select"
+                            value={mirror.chosen}
+                            options={mirrors.map(site => ({value: site, label: hostOf(site)}))}
+                            onChange={ev => preflight.testMirror(database, ev.currentTarget.value)}
+                            data-testid="workspace-info-mirror-select"
+                        />
+                    )}
+                </span>
+                {shouldShowChecks && <StatusTag {...status} testId="workspace-info-mirror-status" />}
+                {shouldShowChecks && (
+                    <span className="row-action">
+                        <AnchorButton size="small" text="Test" disabled={mirror.state === "testing"} onClick={() => preflight.testMirror(database, mirror.chosen)} data-testid="workspace-info-mirror-test-button" />
+                    </span>
+                )}
+            </div>
+        );
+    };
+
+    const groupTitle = (icon: IconName, title: string) => (
+        <div className="summary-group-title">
+            <Icon icon={icon} size={12} />
+            {title}
         </div>
     );
-};
+
+    const changeCount = preflight.changeDescriptions.length;
+    const images = preflight.images;
+    const catalogs = preflight.catalogs;
+
+    return (
+        <div className="workspace-info" data-testid="workspace-info">
+            <div className="summary-header">
+                <Callout className="workspace-thumbnail" data-testid="workspace-info-thumbnail">
+                    {preflight.thumbnail ? <img src={preflight.thumbnail} alt="" /> : <Icon icon="media" size={20} />}
+                </Callout>
+                <div className="summary-title">
+                    <div className="summary-name">{preflight.name}</div>
+                    <div className="summary-counts" data-testid="workspace-info-counts">
+                        {[countOf(images.length, "image"), countOf(catalogs.length, "catalog"), countOf(preflight.regionCount, "region")].join(" · ")}
+                    </div>
+                </div>
+            </div>
+            {images.length > 0 && (
+                <section data-testid="workspace-info-images">
+                    {groupTitle("media", "Images")}
+                    {images.map(image => {
+                        const label = nameWithDetails(image.name, [image.references, image.regionCount ? countOf(image.regionCount, "region") : undefined]);
+                        if (image.isGenerated) {
+                            return (
+                                <div key={image.id} className="summary-row" data-testid="workspace-info-generated-image">
+                                    <span className="row-name">{label}</span>
+                                    {shouldShowChecks && <StatusTag text="Made again" intent={Intent.PRIMARY} testId="workspace-info-generated-status" />}
+                                    {shouldShowChecks && <span className="row-action" />}
+                                </div>
+                            );
+                        }
+                        if (!image.hasParts) {
+                            return image.files.map(file => fileRow(file, label, false));
+                        }
+                        return (
+                            <React.Fragment key={image.id}>
+                                <div className="summary-row is-heading" data-testid="workspace-info-combined-image">
+                                    <span className="row-name">{label}</span>
+                                    {shouldShowChecks && !image.files.length && <StatusTag text="Checked when opened" intent={Intent.NONE} testId="workspace-info-file-status" />}
+                                    {shouldShowChecks && <span className="row-action" />}
+                                </div>
+                                {image.files.map(file => fileRow(file, file.filename, true))}
+                            </React.Fragment>
+                        );
+                    })}
+                </section>
+            )}
+            {catalogs.length > 0 && (
+                <section data-testid="workspace-info-catalogs">
+                    {groupTitle("th", "Catalogs")}
+                    {catalogs.map(catalog => (catalog.file ? fileRow(catalog.file, catalog.name, false) : catalog.database !== undefined ? mirrorRow(catalog.id, catalog.name, catalog.database) : null))}
+                </section>
+            )}
+            {preflight.restoredSettings.length > 0 && (
+                <section data-testid="workspace-info-settings">
+                    {groupTitle("settings", "Also restored")}
+                    <div className="restored-settings">
+                        {preflight.restoredSettings.map(setting => (
+                            <Tag key={setting} minimal round={false}>
+                                {setting}
+                            </Tag>
+                        ))}
+                    </div>
+                </section>
+            )}
+            {shouldShowChecks && preflight.canSave && (changeCount > 0 || preflight.hasSavedChanges) && (
+                <Callout className="save-changes" intent={Intent.PRIMARY} icon={changeCount ? "map-marker" : "tick"} data-testid="workspace-info-save-changes">
+                    <span>{changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}</span>
+                    {changeCount > 0 && (
+                        <Tooltip
+                            content={
+                                <div className="change-list">
+                                    {preflight.changeDescriptions.map(text => (
+                                        <div key={text}>{text}</div>
+                                    ))}
+                                </div>
+                            }
+                            placement="top"
+                        >
+                            <AnchorButton
+                                size="small"
+                                icon="floppy-disk"
+                                text="Save to workspace"
+                                loading={preflight.isSaving}
+                                onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()}
+                                data-testid="workspace-info-save-button"
+                            />
+                        </Tooltip>
+                    )}
+                </Callout>
+            )}
+            <Alert
+                className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
+                isOpen={!!folderMove}
+                confirmButtonText={folderMove ? `Move ${folderMove.files.length} more` : undefined}
+                cancelButtonText="Only this file"
+                intent={Intent.PRIMARY}
+                onConfirm={() => endFolderMove(true)}
+                onCancel={() => endFolderMove(false)}
+            >
+                {folderMove && (
+                    <>
+                        <p>
+                            {countOf(folderMove.files.length, "other missing file")} {folderMove.files.length === 1 ? "is" : "are"} under the same folder. Move {folderMove.files.length === 1 ? "it" : "them"} the same way?
+                        </p>
+                        <p className="folder-move">
+                            {folderMove.from || "/"} → {folderMove.to || "/"}
+                        </p>
+                    </>
+                )}
+            </Alert>
+        </div>
+    );
+});
