@@ -29,3 +29,19 @@ describe("LayoutConfig.createConfigToSave", () => {
         ]);
     });
 });
+
+describe("LayoutConfig.createConfigToApply", () => {
+    test("keeps a maximized stack maximized", () => {
+        const applied: any[] = [];
+        LayoutConfig.createConfigToApply(
+            applied,
+            [
+                {type: "stack", content: []},
+                {type: "stack", maximized: true, content: []}
+            ],
+            []
+        );
+
+        expect(applied.map(stack => stack.maximized)).toEqual([undefined, true]);
+    });
+});
