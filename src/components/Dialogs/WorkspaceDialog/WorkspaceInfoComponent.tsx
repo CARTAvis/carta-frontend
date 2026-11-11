@@ -129,13 +129,14 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
         );
     };
 
+    // The details are on a second line, so that a long name does not hide them.
     const nameWithDetails = (name: string, details: (string | undefined)[]) => {
         const text = details.filter(Boolean).join(" · ");
         return (
-            <>
-                {name}
-                {text && <span className="row-details"> · {text}</span>}
-            </>
+            <span className="name-with-details">
+                <span className="row-title">{name}</span>
+                {text && <span className="row-details">{text}</span>}
+            </span>
         );
     };
 
