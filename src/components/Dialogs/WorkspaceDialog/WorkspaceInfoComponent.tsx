@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {Alert, AnchorButton, Button, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Callout, Classes, Dialog, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -74,6 +74,7 @@ interface FolderMove {
 export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePreflightStore; isFetching: boolean; errorMessage?: string; shouldShowChecks: boolean; onSaved?: () => void}) => {
     const {preflight, shouldShowChecks} = props;
     const [folderMove, setFolderMove] = useState<FolderMove>();
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     // The nodes that the user opened or closed. A group with a red mark opens by itself until the user closes it.
     const [toggled, setToggled] = useState<Map<string, boolean>>(new Map());
     const appStore = AppStore.Instance;
@@ -307,9 +308,17 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
     return (
         <div className="workspace-info" data-testid="workspace-info">
             <div className="summary-header">
-                <Callout className="workspace-thumbnail" data-testid="workspace-info-thumbnail">
-                    {preflight.thumbnail ? <img src={preflight.thumbnail} alt="" /> : <Icon icon="media" size={20} />}
-                </Callout>
+                {preflight.thumbnail ? (
+                    <Tooltip content="Show larger" placement="bottom" hoverOpenDelay={500} className="workspace-thumbnail-target">
+                        <button type="button" className="workspace-thumbnail" onClick={() => setIsPreviewOpen(true)} data-testid="workspace-info-thumbnail">
+                            <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
+                        </button>
+                    </Tooltip>
+                ) : (
+                    <div className="workspace-thumbnail is-empty" data-testid="workspace-info-thumbnail">
+                        <Icon icon="media" size={20} />
+                    </div>
+                )}
                 <div className="summary-title">
                     <div className="summary-name">{preflight.name}</div>
                     <div className="summary-counts" data-testid="workspace-info-counts">
@@ -319,8 +328,11 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
             </div>
             {treeNodes.length > 0 && <Tree className="summary-tree" contents={treeNodes} onNodeClick={toggleNode} onNodeExpand={toggleNode} onNodeCollapse={toggleNode} />}
             {shouldShowChecks && preflight.canSave && (changeCount > 0 || preflight.hasSavedChanges) && (
-                <Callout compact className="save-changes" intent={Intent.PRIMARY} icon={changeCount ? "map-marker" : "tick"} data-testid="workspace-info-save-changes">
-                    <span>{changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}</span>
+                <Callout compact className="save-changes" intent={Intent.PRIMARY} icon={null} data-testid="workspace-info-save-changes">
+                    <span className="save-changes-text">
+                        <Icon icon={changeCount ? "map-marker" : "tick"} intent={Intent.PRIMARY} />
+                        {changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}
+                    </span>
                     {changeCount > 0 && (
                         <Tooltip
                             content={
@@ -344,6 +356,15 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     )}
                 </Callout>
             )}
+            <Dialog
+                className={classNames("workspace-preview-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
+                isOpen={isPreviewOpen && !!preflight.thumbnail}
+                onClose={() => setIsPreviewOpen(false)}
+                title={preflight.name}
+                canOutsideClickClose={true}
+            >
+                <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview" />
+            </Dialog>
             <Alert
                 className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
                 isOpen={!!folderMove}
