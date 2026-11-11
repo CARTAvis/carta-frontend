@@ -13,7 +13,7 @@ import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore"
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
-import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
+import {WorkspaceInfoComponent, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
 
 import "./WorkspaceDialogComponent.scss";
 
@@ -297,7 +297,7 @@ export const WorkspaceDialogComponent = observer(() => {
                         <div className="workspace-list">{listContent}</div>
                     </div>
                     <div className="workspace-info-container">
-                        {workspaceList?.length ? <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} onSaved={fetchWorkspaces} /> : null}
+                        {workspaceList?.length ? <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} /> : null}
                     </div>
                 </div>
                 <InputGroup
@@ -314,7 +314,8 @@ export const WorkspaceDialogComponent = observer(() => {
                     onKeyDown={handleKeyDown}
                 />
             </div>
-            <div className={Classes.DIALOG_FOOTER}>
+            <div className={classNames(Classes.DIALOG_FOOTER, "workspace-footer")}>
+                <div className="workspace-footer-status">{isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}</div>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
                     {mode === WorkspaceDialogMode.Save ? (

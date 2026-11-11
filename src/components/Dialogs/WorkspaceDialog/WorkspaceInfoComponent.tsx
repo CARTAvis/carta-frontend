@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {Alert, AnchorButton, Button, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Overlay2, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Overlay2, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -71,7 +71,7 @@ interface FolderMove {
  * catalogs, and the other settings that it restores. In the Open mode, it also shows whether each
  * file is found, and lets the user choose new locations for missing files and other mirrors.
  */
-export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePreflightStore; isFetching: boolean; errorMessage?: string; shouldShowChecks: boolean; onSaved?: () => void}) => {
+export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePreflightStore; isFetching: boolean; errorMessage?: string; shouldShowChecks: boolean}) => {
     const {preflight, shouldShowChecks} = props;
     const [folderMove, setFolderMove] = useState<FolderMove>();
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -182,7 +182,6 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
         );
     };
 
-    const changeCount = preflight.changeDescriptions.length;
     const images = preflight.images;
     const catalogs = preflight.catalogs;
 
@@ -330,35 +329,6 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                 </div>
             </div>
             {treeNodes.length > 0 && <Tree className="summary-tree" contents={treeNodes} onNodeClick={toggleNode} onNodeExpand={toggleNode} onNodeCollapse={toggleNode} />}
-            {shouldShowChecks && preflight.canSave && (changeCount > 0 || preflight.hasSavedChanges) && (
-                <Callout compact className="save-changes" intent={Intent.PRIMARY} icon={null} data-testid="workspace-info-save-changes">
-                    <span className="save-changes-text">
-                        <Icon icon={changeCount ? "map-marker" : "tick"} intent={Intent.PRIMARY} />
-                        {changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}
-                    </span>
-                    {changeCount > 0 && (
-                        <Tooltip
-                            content={
-                                <div className="change-list">
-                                    {preflight.changeDescriptions.map(text => (
-                                        <div key={text}>{text}</div>
-                                    ))}
-                                </div>
-                            }
-                            placement="top"
-                        >
-                            <Button
-                                size="small"
-                                icon="floppy-disk"
-                                text="Save to workspace"
-                                loading={preflight.isSaving}
-                                onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()}
-                                data-testid="workspace-info-save-button"
-                            />
-                        </Tooltip>
-                    )}
-                </Callout>
-            )}
             {/* The larger preview has no frame. A click anywhere or the Escape key closes it. */}
             <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={false} transitionDuration={300}>
                 <div className="workspace-preview-overlay" onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview">
@@ -385,6 +355,41 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     </>
                 )}
             </Alert>
+        </div>
+    );
+});
+
+/**
+ * The new locations that the user chose in the Workspace dialog and has not saved to the workspace,
+ * with a button that saves them. The dialog shows it beside its own buttons, so that a long summary
+ * does not hide it.
+ */
+export const WorkspaceSaveChanges = observer((props: {preflight: WorkspacePreflightStore; onSaved?: () => void}) => {
+    const {preflight} = props;
+    const changeCount = preflight.changeDescriptions.length;
+    if (!preflight.canSave || (changeCount === 0 && !preflight.hasSavedChanges)) {
+        return null;
+    }
+    return (
+        <div className="workspace-save-changes" data-testid="workspace-info-save-changes">
+            <span className="save-changes-text">
+                <Icon icon={changeCount ? "map-marker" : "tick"} intent={Intent.PRIMARY} />
+                {changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}
+            </span>
+            {changeCount > 0 && (
+                <Tooltip
+                    content={
+                        <div className="change-list">
+                            {preflight.changeDescriptions.map(text => (
+                                <div key={text}>{text}</div>
+                            ))}
+                        </div>
+                    }
+                    placement="top"
+                >
+                    <Button icon="floppy-disk" text="Save to workspace" loading={preflight.isSaving} onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()} data-testid="workspace-info-save-button" />
+                </Tooltip>
+            )}
         </div>
     );
 });
