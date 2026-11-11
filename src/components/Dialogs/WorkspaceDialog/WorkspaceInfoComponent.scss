@@ -212,16 +212,20 @@
     }
 }
 
-.workspace-preview-dialog {
-    width: auto;
-    max-width: 90vw;
-    padding-bottom: 0;
+.workspace-preview-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
 
     img {
         display: block;
         max-width: 90vw;
-        max-height: 80vh;
-        cursor: zoom-out;
+        max-height: 90vh;
+        border-radius: 4px;
+        box-shadow: $pt-elevation-shadow-4;
     }
 }
 
