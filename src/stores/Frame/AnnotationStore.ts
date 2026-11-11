@@ -214,7 +214,7 @@ export class CompassAnnotationStore extends RegionStore {
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
     @observable hasNorthArrowhead: boolean = true;
     @observable hasEastArrowhead: boolean = true;
-    /** The labels and font that the text offsets were set for, as `labelLayout` gives them. */
+    /** The value of `labelLayout` when the text offsets were last set. It is undefined until then. */
     @observable private textOffsetLayout: string | undefined;
 
     constructor(
@@ -294,21 +294,22 @@ export class CompassAnnotationStore extends RegionStore {
         }
     }
 
-    /** Returns the labels and the font. They decide the size of the label text. */
+    /** Returns the labels, the font size, the font style and the font as one string. These decide the size of the label text. */
     @computed get labelLayout(): string {
         return JSON.stringify([this.northLabel, this.eastLabel, this.fontSize, this.fontStyle, this.font]);
     }
 
     /**
-     * Whether the text offsets must be worked out from the size of the labels. This is true for a new
-     * compass, and after a label or the font changes. Offsets that the user set, or that were
-     * restored, are kept when the compass is drawn again.
+     * Returns true when the text offsets must be computed from the size of the labels. This is the
+     * case for a new compass, and after a label, the font size, the font style or the font changes.
+     * When the compass is drawn again with the same labels and font, the offsets that the user set or
+     * that were restored are kept.
      */
     @computed get shouldUpdateTextOffsets(): boolean {
         return this.textOffsetLayout !== this.labelLayout;
     }
 
-    /** Sets the text offsets that the compass worked out from the size of its labels. */
+    /** Sets the text offsets that the compass component computed from the size of its labels. Also records the value of `labelLayout` that these offsets are for. */
     @action setTextOffsetsFromLabels = (northTextOffset: Point2D, eastTextOffset: Point2D) => {
         this.northTextOffset = northTextOffset;
         this.eastTextOffset = eastTextOffset;
@@ -428,7 +429,7 @@ export class CompassAnnotationStore extends RegionStore {
         this.setPointerWidth(annotationStyles.pointerWidth ?? this.pointerWidth);
         this.setPointerLength(annotationStyles.pointerLength ?? this.pointerLength);
         this.setLength(annotationStyles.length ?? this.length, true);
-        // Keep saved offsets. Without them, the compass works out the offsets from its labels.
+        // Set the text offsets only when the styles have them. Otherwise the compass computes the offsets from the size of its labels when it is drawn.
         if (annotationStyles.northTextOffset) {
             this.setNorthTextOffset(annotationStyles.northTextOffset.x, true);
             this.setNorthTextOffset(annotationStyles.northTextOffset.y, false);
