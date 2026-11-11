@@ -18,14 +18,26 @@ import {
     RestFrameShiftMode,
     SkyRefIs,
     SpectralSystem,
+    SystemType,
     VelocityConvention,
     WorkspaceIssueEffect,
     WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
-import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
+import {SOME_IMAGES_NOT_RESTORED, type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {BackendService, CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, WorkspaceIdRegistry, type WorkspaceLoadingStep, WorkspaceRecoveryAction, type WorkspaceRecoveryStore, type WorkspaceRestoreProgress, WorkspaceRestorer} from "stores";
+import {
+    AppStore,
+    CatalogOnlineQueryConfigStore,
+    MirrorSiteStore,
+    WorkspaceIdRegistry,
+    type WorkspaceLeftOutItems,
+    type WorkspaceLoadingStep,
+    WorkspaceRecoveryAction,
+    type WorkspaceRecoveryStore,
+    type WorkspaceRestoreProgress,
+    WorkspaceRestorer
+} from "stores";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {fingerprintCatalogSelection} from "utilities";
 
@@ -262,7 +274,7 @@ function createSession() {
                 return true;
             })
         },
-        overlaySettings: {applyTextConfig: jest.fn()}
+        overlaySettings: {applyTextConfig: jest.fn(), global: {system: SystemType.Auto}}
     };
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
@@ -294,8 +306,8 @@ async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
 }
 
 /** Runs the restore to the end, and returns the restorer so that the test can check the ID maps. */
-async function restored(workspace: Workspace): Promise<WorkspaceRestorer> {
-    const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration());
+async function restored(workspace: Workspace, leftOut?: WorkspaceLeftOutItems): Promise<WorkspaceRestorer> {
+    const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration(), leftOut);
     await drive(restorer);
     return restorer;
 }
@@ -2015,6 +2027,62 @@ describe("WorkspaceRestorer", () => {
             expect(issues).toEqual([]);
         });
 
+        test("shows image coordinates before the images open, when the layout saved image coordinates", async () => {
+            const {appStore} = createSession();
+            const systems: string[] = [];
+            const open = appStore.appendFile;
+            appStore.appendFile = jest.fn((...args: unknown[]) => {
+                systems.push(appStore.overlaySettings.global.system);
+                return (open as (...args: unknown[]) => Promise<unknown>)(...args);
+            }) as never;
+            const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "stack", content: [{type: "component", id: "image-view", widgetSettings: {wcsOverlay: {global: {system: SystemType.Image}}}}]}]}, floating: []};
+
+            await restored(createWorkspace({layout: layout as never}));
+
+            // The images are matched pixel to pixel, as they were matched when the workspace was saved.
+            expect(systems).toEqual([SystemType.Image]);
+        });
+
+        test("skips the images and catalogs that the user chose to open the workspace without, and does not ask about them", async () => {
+            const {appStore} = createSession();
+            const appendFile = failToOpen(appStore, 0);
+            const load = jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockResolvedValue({fileId: 12, dataSize: 3});
+            const onRecovery = jest.fn();
+            appStore.onRecovery = onRecovery;
+            const kept = {id: 2, source: {type: "file" as const, filename: "kept.fits"}};
+
+            const restorer = await restored(createWorkspace({files: [IMAGE, kept], catalogs: [CATALOG, {id: 2, source, associatedImageId: 2}]}), {imageIds: [IMAGE.id], catalogIds: [2]});
+            const issues = (restorer as unknown as {issues: WorkspaceIssue[]}).issues;
+
+            expect(onRecovery).not.toHaveBeenCalled();
+            expect(appendFile.mock.calls.map(call => call[1])).toEqual(["kept.fits"]);
+            expect(load).not.toHaveBeenCalled();
+            expect(issues.map(({message, outcome}) => [message, outcome])).toEqual([
+                ["Left out the image image.fits: a file was missing when the workspace was opened", WorkspaceIssueOutcome.Skipped],
+                ["Skipped the catalog sources.vot: the image it belongs to was skipped", WorkspaceIssueOutcome.Skipped],
+                ["Left out the SIMBAD catalog on kept.fits: its mirror did not answer when the workspace was opened", WorkspaceIssueOutcome.Skipped]
+            ]);
+        });
+
+        test("queries the mirror that the workspace saved, when the mirror is available", async () => {
+            createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+            const asked: string[] = [];
+            jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockImplementation(() => {
+                asked.push(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)!);
+                return Promise.resolve({fileId: 12, dataSize: 3});
+            });
+
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}], catalogMirrors: {[CatalogDatabase.SIMBAD]: second}}));
+            await restoreIssues(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}], catalogMirrors: {[CatalogDatabase.SIMBAD]: "https://unknown.example"}}));
+
+            // An unknown mirror leaves the mirror of the session as it is.
+            expect(asked).toEqual([second, second]);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, first);
+        });
+
         test("offers the retry on a mirror that has not failed, and then on the mirror that failed longest ago", async () => {
             const {appStore} = createSession();
             const mirrorSiteStore = MirrorSiteStore.Instance;
@@ -2216,6 +2284,37 @@ describe("WorkspaceRestorer", () => {
             expect(patched.files).toEqual([{id: 1, source: {type: "file", directory: "/new", filename: "image.fits"}, channel: 3}, stored.files![1]]);
             expect(patched.catalogs).toEqual([CATALOG, {...CATALOG, id: 2, source: {type: "file", directory: "/new", filename: "other.vot"}}]);
             expect({...patched, files: undefined, catalogs: undefined}).toEqual({...stored, files: undefined, catalogs: undefined});
+        });
+
+        test("writes the new sources of an expression and a hypercube, and the mirrors that the user chose", () => {
+            const lel = {type: "lel" as const, directory: "/old", expression: "a.fits - b.fits"};
+            const hypercube = {type: "hypercube" as const, directory: "/old", stokesFiles: [{filename: "q.fits"}, {filename: "u.fits"}]};
+            const stored = createWorkspace({
+                files: [
+                    {id: 1, source: lel},
+                    {id: 2, source: hypercube}
+                ],
+                catalogMirrors: {[CatalogDatabase.SIMBAD]: "https://old.example"}
+            });
+
+            const patched = WorkspaceRestorer.withRepointedSources(stored, {
+                images: new Map<number, {from: WorkspaceImageSource; to: WorkspaceImageSource}>([
+                    [1, {from: lel, to: {...lel, directory: "/new"}}],
+                    [2, {from: hypercube, to: {...hypercube, stokesFiles: [{filename: "q.fits", directory: "/new"}, {filename: "u.fits"}]}}]
+                ]),
+                catalogs: new Map(),
+                mirrors: new Map([
+                    [CatalogDatabase.SIMBAD, {from: "https://old.example", to: "https://new.example"}],
+                    [CatalogDatabase.VIZIER, {from: "https://other.example", to: "https://new.example"}]
+                ])
+            })!;
+
+            expect(patched.files!.map(file => file.source)).toEqual([
+                {...lel, directory: "/new"},
+                {...hypercube, stokesFiles: [{filename: "q.fits", directory: "/new"}, {filename: "u.fits"}]}
+            ]);
+            // The workspace saved another VizieR mirror than the change starts from, so the VizieR mirror is kept.
+            expect(patched.catalogMirrors).toEqual({[CatalogDatabase.SIMBAD]: "https://new.example"});
         });
 
         test("changes no source that the stored workspace no longer has, as after it was saved again", () => {

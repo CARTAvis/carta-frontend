@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {type HipsCoord, type HipsProjection, ImageType, RegionId, RegionOpacity, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {CatalogDatabase, type HipsCoord, type HipsProjection, ImageType, RegionId, RegionOpacity, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     CARTA_INFO,
     type Point2D,
@@ -15,7 +15,7 @@ import {
     type WorkspaceImageSource,
     type WorkspaceIssue
 } from "models";
-import {AppStore, CatalogOnlineQueryConfigStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -600,6 +600,18 @@ export class WorkspaceSnapshotter {
         });
 
         this.workspace.catalogs = catalogs;
+        // Save the mirror that each online database answered from, so that the workspace asks the same mirror again.
+        const mirrors: Partial<Record<CatalogDatabase, string>> = {};
+        for (const {source} of catalogs) {
+            const database = source.type === "simbad" ? CatalogDatabase.SIMBAD : source.type === "vizier" ? CatalogDatabase.VIZIER : undefined;
+            const mirror = database ? MirrorSiteStore.Instance.getActiveMirror(database) : undefined;
+            if (database && mirror) {
+                mirrors[database] = mirror;
+            }
+        }
+        if (Object.keys(mirrors).length) {
+            this.workspace.catalogMirrors = mirrors;
+        }
     }
 
     /** Stage 4: what each catalog widget and each profile, analysis and statistics widget shows. Catalogs and images are named by their workspace IDs. */

@@ -1410,10 +1410,12 @@ export class OverlaySettings {
         this.global.applyConfig(global);
 
         // Set the system directly. setSystem asks the user before it turns off spatial matching.
-        // Image coordinates and spatial matching do not work together. Keep the matching, because
-        // a workspace saves it with the images.
+        // Images are matched in the coordinates that the session shows when they are matched. Keep
+        // the matching, because a workspace saves it with the images. A workspace restore shows
+        // image coordinates before it matches the images, so image coordinates are kept then.
         let system = savedOr(global?.system, isOneOf(Object.values(SystemType)), SystemType.Auto);
-        if (system === SystemType.Image && AppStore.Instance.frames.some(frame => frame.spatialReference)) {
+        const isMatchedInWorldCoordinates = this.global.system !== SystemType.Image && AppStore.Instance.frames.some(frame => frame.spatialReference);
+        if (system === SystemType.Image && isMatchedInWorldCoordinates) {
             system = SystemType.Auto;
             problems.push("Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially");
         }

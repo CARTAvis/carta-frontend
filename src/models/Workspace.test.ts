@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {describeCatalogSource, describeImageSource, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
+import {describeCatalogSource, describeImageSource, getLelFileNames, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
@@ -271,5 +271,16 @@ describe("describeImageSource", () => {
 
     test("says so when there is nothing to name", () => {
         expect(describeImageSource(undefined)).toBe("an image of an unknown kind");
+    });
+});
+
+describe("getLelFileNames", () => {
+    test("returns the quoted names and the unquoted names with a period or a slash, in the order of the expression", () => {
+        expect(getLelFileNames('cube.fits - "cont 1.fits" * 2.5')).toEqual(["cube.fits", "cont 1.fits"]);
+        expect(getLelFileNames("sqrt(sub/q.image^2 + 'u image'^2) / 1e-3 + cube.fits")).toEqual(["sub/q.image", "u image", "cube.fits"]);
+    });
+
+    test("leaves out numbers, temporary images and names that it cannot tell apart from an operator", () => {
+        expect(getLelFileNames("$1 + 0.5 + .25 + 1.5e3 + max")).toEqual([]);
     });
 });

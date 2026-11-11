@@ -463,6 +463,33 @@ export interface WorkspaceFilePath {
     hdu?: string;
 }
 
+/**
+ * Returns the file names that an image arithmetic (LEL) expression reads, such as `cube.fits` and
+ * `cont 1.fits` in `cube.fits - "cont 1.fits"`. A quoted name is a file name. An unquoted name is a
+ * file name when it has a period or a slash and is not a number. A name that the expression gives in
+ * another way, such as with an escaped character, is not found.
+ */
+export function getLelFileNames(expression: string): string[] {
+    const names: string[] = [];
+    const add = (name: string) => {
+        if (name && !names.includes(name)) {
+            names.push(name);
+        }
+    };
+    // Read the names in the order that the expression gives them.
+    for (const [, doubleQuoted, singleQuoted, token] of expression.matchAll(/"([^"]*)"|'([^']*)'|([A-Za-z0-9_.\/~$]+)/g)) {
+        if (token === undefined) {
+            add(doubleQuoted ?? singleQuoted ?? "");
+            continue;
+        }
+        const isNumber = /^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(token);
+        if (!isNumber && !token.startsWith("$") && /[./]/.test(token) && /[A-Za-z0-9]/.test(token)) {
+            add(token);
+        }
+    }
+    return names;
+}
+
 /** The files an image source names, which a hypercube has more than one of and an expression none of. */
 export function getWorkspaceFilePaths(source: WorkspaceImageSource | undefined): WorkspaceFilePath[] {
     switch (source?.type) {
@@ -881,6 +908,11 @@ export interface Workspace {
     cursor?: {frozen: boolean; position?: Point2D};
     /** The fields of the online catalog query dialog. */
     onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
+    /**
+     * The mirror that the online catalog queries of the workspace use, by database. A restore uses
+     * the mirror when it is available, and otherwise the mirror that the session uses.
+     */
+    catalogMirrors?: Partial<Record<CatalogDatabase, string>>;
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the

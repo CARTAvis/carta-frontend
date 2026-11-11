@@ -12,6 +12,8 @@ interface ShowDialogOptions {
     snippet?: Snippet;
     name?: string;
     newSnippet?: boolean;
+    /** Keeps the Workspace dialog open under the file browser. The Workspace dialog asks the file browser for a file then. */
+    shouldKeepWorkspaceDialog?: boolean;
 }
 
 export class DialogStore {
@@ -64,7 +66,9 @@ export class DialogStore {
                     break;
 
                 case DialogId.FileBrowser:
-                    this.hideDialog(DialogId.Workspace);
+                    if (!options?.shouldKeepWorkspaceDialog) {
+                        this.hideDialog(DialogId.Workspace);
+                    }
                     this.dialogVisible.set(DialogId.FileBrowser, true);
                     this.zIndexManager.assignIndex(DialogId.FileBrowser);
                     break;
