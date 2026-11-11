@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {ImageType, RegionOpacity, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
-import {AppStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -75,6 +75,7 @@ export class WorkspaceSnapshotter {
         references.spatial = this.imageIdOf(this.appStore.spatialReference);
         references.spectral = this.imageIdOf(this.appStore.spectralReference);
         references.raster = this.imageIdOf(this.appStore.rasterScalingReference);
+        this.workspace.spectralMatchingType = this.appStore.spectralMatchingType;
 
         let hasTemporaryFiles = false;
         for (const frame of this.appStore.frames) {
@@ -143,8 +144,10 @@ export class WorkspaceSnapshotter {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
         } else if (frame.regionSet?.regions.length) {
             // Regions are only the image's own while it is not matched to another one.
+            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []);
             workspaceFile.regionsSet = {
                 selectedRegion: frame.regionSet.focusedRegion?.regionId,
+                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
                 regions: this.captureRegions(frame)
             };
         }
@@ -157,6 +160,29 @@ export class WorkspaceSnapshotter {
         }
         workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
         workspaceFile.intensityUnit = frame.intensityUnit;
+        const restFreqStore = frame.restFreqStore;
+        const restFreq = restFreqStore?.customRestFreq;
+        if (restFreq && !restFreqStore.isInvalidInput && (restFreq.value !== restFreqStore.headerRestFreq.value || restFreq.unit !== restFreqStore.headerRestFreq.unit)) {
+            workspaceFile.restFrequency = {value: restFreq.value, unit: restFreq.unit};
+        }
+        if (frame.isRestFrameSupported) {
+            workspaceFile.restFrame = {
+                // Save the rest frame as off when the controls rejected the shift. The axis is not corrected in that case either.
+                enabled: frame.isRestFrameEnabled && frame.isRestFrameShiftInputValid,
+                redshift: frame.restFrameRedshift,
+                shiftMode: frame.restFrameShiftMode,
+                velocityConvention: frame.restFrameVelocityConvention
+            };
+        }
+
+        if (frame.beamProperties) {
+            const beam = frame.overlayBeamSettings;
+            workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
+        }
+        // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
+        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        }
 
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
@@ -205,7 +231,8 @@ export class WorkspaceSnapshotter {
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
-                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
+                opacity: region.opacity === RegionOpacity.Visible ? undefined : region.opacity
             }));
     }
 
@@ -250,7 +277,14 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
-            this.workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: selectedFrameId as number[], alpha: colorBlending.alpha});
+            this.workspace.colorBlendingImages.push({
+                imageListIndex: index,
+                selectedFrameId: selectedFrameId as number[],
+                alpha: colorBlending.alpha,
+                ...(colorBlending.isRasterVisible === false ? {rasterVisible: false} : {}),
+                ...(colorBlending.isContourVisible === false ? {contourVisible: false} : {}),
+                ...(colorBlending.isVectorOverlayVisible === false ? {vectorOverlayVisible: false} : {})
+            });
         }
     }
 
@@ -399,6 +433,10 @@ export class WorkspaceSnapshotter {
             this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
         }
         this.captureWidgetSettings();
+        const isCursorFrozen = this.appStore.isCursorFrozen === true;
+        const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(isCursorFrozen && cursorPosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
+        this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.

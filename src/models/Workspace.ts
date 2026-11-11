@@ -4,6 +4,8 @@ import {type CARTA} from "carta-protobuf";
 import {
     type AngularSizeUnit,
     type AnimationMode,
+    type BeamType,
+    type CatalogDatabase,
     type CatalogDisplayMode,
     type CatalogOverlayShape,
     type CatalogPlotType,
@@ -13,13 +15,19 @@ import {
     type ContourDashMode,
     FrameScaling,
     type MultiProfileCategory,
+    type NumberFormatType,
     type PlayMode,
     type RadiusUnits,
     type RedshiftType,
+    type RegionOpacity,
+    type RestFrameShiftMode,
+    type SkyRefIs,
     type SpectralLineQueryRangeType,
     type SpectralLineQueryUnit,
     type SpectralSystem,
+    type SpectralType,
     type VectorOverlaySource,
+    type VelocityConvention,
     type WorkspaceItemKind
 } from "enums";
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
@@ -181,6 +189,8 @@ export interface WorkspaceCatalogTableConfig {
  * Which rows the catalog holds is not part of this; that is {@link WorkspaceCatalogTableConfig}.
  */
 export interface WorkspaceCatalogConfig {
+    /** The size tab of the catalog settings, when it is the minor axis of an ellipse. Left out for the major axis. */
+    sizeAxisTab?: "minor";
     color?: string;
     highlightColor?: string;
     shape?: CatalogOverlayShape;
@@ -215,12 +225,18 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** The width in pixels that a spatial profile along a line or polyline region samples. */
     lineRegionSampleWidth?: number;
+    /** The opacity of the region: `SemiTransparent` (0.5) or `Invisible` (0). Left out when the region is `Visible` (1). */
+    opacity?: RegionOpacity;
 }
 
 export interface WorkspaceColorBlending {
     imageListIndex: number;
     selectedFrameId: number[];
     alpha: number[];
+    /** Whether the blended raster image, the contours and the vector overlays are shown. Left out when they are shown. */
+    rasterVisible?: boolean;
+    contourVisible?: boolean;
+    vectorOverlayVisible?: boolean;
 }
 
 /** One of the images making up a hypercube. */
@@ -282,12 +298,22 @@ export interface WorkspaceFile {
     spectralSystem?: SpectralSystem;
     /** The intensity unit of the spectral profiles of the image. */
     intensityUnit?: string;
+    /** The rest frequency that converts the spectral axis. Left out when it is the rest frequency in the header. */
+    restFrequency?: {value: number; unit: string};
+    /** The beam overlay settings of an image that has a beam. */
+    beam?: {visible: boolean; color: string; type: BeamType; width: number; shiftX: number; shiftY: number};
+    /** The offset coordinates, when they are shown. Saves the center in image pixels, and whether the center is the origin or the pole. */
+    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
+    /** The rest frame of the spectral axis, for an image that supports a rest frame. */
+    restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     regionsSet?: {
         selectedRegion?: number;
+        /** The regions that were selected together, by their saved IDs. Left out when one region or none was selected. */
+        selectedRegions?: number[];
         regions?: WorkspaceRegion[];
     };
 }
@@ -520,6 +546,20 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
     previewRegionId: number;
 }
 
+/** The fields of the online catalog query dialog. The results of a query are saved with each catalog. */
+export interface WorkspaceOnlineCatalogQuery {
+    database: CatalogDatabase;
+    /** The center, in the pixels of the image in front, as the dialog keeps it. */
+    center: {x?: string; y?: string};
+    coordinateSystem: CatalogSystemType;
+    coordinateFormat: NumberFormatType;
+    radius: number;
+    radiusUnits: RadiusUnits;
+    maxObjects: number;
+    objectName: string;
+    vizierKeywords: string;
+}
+
 /** The settings of the animator. */
 export interface WorkspaceAnimator {
     frameRate: number;
@@ -580,6 +620,8 @@ export interface Workspace {
         spectral?: number;
         raster?: number;
     };
+    /** The spectral coordinate that spectrally matched images are matched by, such as "VRAD". */
+    spectralMatchingType?: SpectralType;
     selectedFile?: number;
     /** The settings of the animator. */
     animator?: WorkspaceAnimator;
@@ -588,6 +630,13 @@ export interface Workspace {
      * which is the default.
      */
     contourDataSource?: {imageId: number};
+    /**
+     * Whether the cursor was frozen, and where, in the pixels of the image in front. The position is
+     * saved only when the cursor was frozen. Then the cursor profiles show that position.
+     */
+    cursor?: {frozen: boolean; position?: Point2D};
+    /** The fields of the online catalog query dialog. */
+    onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the

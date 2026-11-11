@@ -1,11 +1,12 @@
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, PlayMode, RegionId, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, BeamType, FrequencyUnit, ImageType, PlayMode, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, VelocityConvention, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
+    SPECTRAL_MATCHING_TYPES,
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
@@ -15,10 +16,10 @@ import {
     type WorkspaceIssue
 } from "models";
 import {CatalogApiService} from "services";
-import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
-import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /**
  * How long a cube histogram can go without progress before a restore stops waiting for it, in
@@ -126,7 +127,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         this.clearSession();
+        this.restoreSpectralMatchingType();
         yield* this.openImages();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        // End this step before the images are matched. A new rest frequency reaches the WCS of an
+        // image only when the step that set it ends. Matching the images uses this WCS.
+        this.restoreRestFrequencies();
+        yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
             return this.issues;
         }
@@ -159,7 +168,30 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
+        this.restoreCursor();
+        if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
+            // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
+            CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
+        }
         return this.issues;
+    }
+
+    /**
+     * Freezes the cursor again where it was frozen, on the image in front, so that the cursor
+     * profiles show that position. A cursor that was not frozen follows the mouse.
+     */
+    private restoreCursor(): void {
+        const cursor = this.workspace.cursor;
+        if (!cursor || typeof cursor.frozen !== "boolean") {
+            return;
+        }
+        const position = cursor.position;
+        const frame = this.appStore.activeFrame;
+        if (cursor.frozen && frame && typeof position?.x === "number" && typeof position?.y === "number" && isFinite(position.x) && isFinite(position.y)) {
+            frame.setCursorPosition(position);
+            frame.updateCursorRegion(position);
+        }
+        this.appStore.setCursorFrozen(cursor.frozen);
     }
 
     /**
@@ -273,6 +305,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.appStore.removeAllFrames();
     }
 
+    /**
+     * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
+     * images are matched, as matching an image moves it to the channel of its reference in this
+     * coordinate. A workspace saved before it kept this setting keeps the setting of the session.
+     */
+    private restoreSpectralMatchingType(): void {
+        const type = this.workspace.spectralMatchingType;
+        if (type === undefined) {
+            return;
+        }
+        if (SPECTRAL_MATCHING_TYPES.includes(type)) {
+            this.appStore.setSpectralMatchingType(type);
+        } else {
+            this.report(WorkspaceItemKind.Image, "spectral matching", `Could not restore the spectral matching type ${String(type)}: it is not one this version knows, so images are matched by ${this.appStore.spectralMatchingType}`);
+        }
+    }
+
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */
     private *openImages(): Generator<Promise<unknown>, void, any> {
         for (const fileInfo of this.workspace.files ?? []) {
@@ -374,6 +423,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
 
             this.restoreSpectralSettings(frame, fileInfo);
+            this.restoreImageViewSettings(frame, fileInfo);
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
@@ -391,6 +441,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
+
+        this.restoreOffsetCoordinates();
 
         // The image saved in front may not be back: it could not be opened, or it was a generated
         // image the workspace does not carry. A session with images open has one in front.
@@ -433,6 +485,110 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
+     * Restores the offset coordinates of each image.
+     *
+     * The workspace saves offset coordinates only on an image that is not matched to another image.
+     * Pass them on to the images matched to it, as the controls do. Set them after every image is
+     * matched. Matching an image moves the offset center of the image that it is matched to.
+     */
+    private restoreOffsetCoordinates(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const offset = fileInfo.offsetCoordinates;
+            if (!frame || !offset || frame.spatialReference) {
+                continue;
+            }
+            const center = offset.center;
+            const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
+            if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
+                if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
+                    frame.setSkyRefIs(offset.skyRefIs);
+                }
+                if (!frame.isOffsetCoord) {
+                    frame.toggleOffsetCoord();
+                }
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
+            }
+        }
+    }
+
+    /**
+     * Stage 2a: restore the rest frequency that converts the spectral axis of each image. Skip an
+     * image whose rest frequency is the one in its header.
+     */
+    private restoreRestFrequencies(): void {
+        for (const fileInfo of this.workspace.files ?? []) {
+            const frame = this.frameOf(fileInfo.id);
+            const restFrequency = fileInfo.restFrequency;
+            if (!frame || !restFrequency) {
+                continue;
+            }
+            const {value, unit} = restFrequency;
+            if (typeof value === "number" && isFinite(value) && value > 0 && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+                frame.restFreqStore.setCustomUnit(unit as FrequencyUnit);
+                frame.restFreqStore.setCustomVal(value);
+            } else {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `Could not convert ${imageName} with the rest frequency ${value} ${unit}`);
+            }
+        }
+    }
+
+    /** The rest frame and beam the image was shown with, set on the image alone. */
+    private restoreImageViewSettings(frame: FrameStore, fileInfo: WorkspaceFile): void {
+        const unsupported: string[] = [];
+
+        const restFrame = fileInfo.restFrame;
+        if (restFrame) {
+            if (!frame.isRestFrameSupported) {
+                if (restFrame.enabled) {
+                    unsupported.push("its rest frame");
+                }
+            } else if (Object.values(RestFrameShiftMode).includes(restFrame.shiftMode) && Object.values(VelocityConvention).includes(restFrame.velocityConvention) && isValidRedshift(restFrame.redshift)) {
+                frame.setRestFrameShiftMode(restFrame.shiftMode);
+                frame.setRestFrameVelocityConvention(restFrame.velocityConvention);
+                frame.setRestFrameRedshift(restFrame.redshift);
+                frame.setRestFrameEnabled(restFrame.enabled === true);
+            } else {
+                unsupported.push("its rest frame");
+            }
+        }
+
+        const beam = fileInfo.beam;
+        if (beam && !frame.beamProperties) {
+            unsupported.push("its beam");
+        } else if (beam) {
+            const beamSettings = frame.overlayBeamSettings;
+            const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
+            if (typeof beam.visible === "boolean") {
+                beamSettings.setVisible(beam.visible);
+            }
+            if (typeof beam.color === "string" && beam.color) {
+                beamSettings.setColor(beam.color);
+            }
+            if (Object.values(BeamType).includes(beam.type)) {
+                beamSettings.setType(beam.type);
+            }
+            if (isNumber(beam.width) && beam.width > 0) {
+                beamSettings.setWidth(beam.width);
+            }
+            if (isNumber(beam.shiftX)) {
+                beamSettings.setShiftX(beam.shiftX);
+            }
+            if (isNumber(beam.shiftY)) {
+                beamSettings.setShiftY(beam.shiftY);
+            }
+        }
+
+        if (unsupported.length) {
+            const imageName = describeImageSource(fileInfo.source);
+            this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with ${unsupported.join(" or ")}`);
+        }
+    }
+
+    /**
      * Restores the regions of the image. An image that is matched to another image has no regions
      * of its own.
      *
@@ -463,6 +619,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 );
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
+                // A solid region is saved with no dashes. Make it solid again. Otherwise it keeps the
+                // dash length of the preferences.
+                if (Array.isArray(regionInfo.dashes) && regionInfo.dashes.length === 0) {
+                    region.setDashLength(0);
+                }
+                if (regionInfo.opacity === RegionOpacity.SemiTransparent || regionInfo.opacity === RegionOpacity.Invisible) {
+                    region.setOpacity(regionInfo.opacity);
+                }
                 const sampleWidth = regionInfo.lineRegionSampleWidth;
                 if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
                     region.setLineRegionSampleWidth(sampleWidth);
@@ -472,6 +636,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             })
         );
+        // Select again the regions that were selected together, with the focused region in focus.
+        const selectedRegions = fileInfo.regionsSet.selectedRegions;
+        if (Array.isArray(selectedRegions) && selectedRegions.length > 1) {
+            const ids = selectedRegions.flatMap(savedId => (typeof savedId === "number" && regionIds.has(savedId) ? [regionIds.get(savedId) as number] : []));
+            frame.regionSet.setSelectionByIds(ids, selectedRegion === undefined ? undefined : regionIds.get(selectedRegion));
+        }
     }
 
     /**
@@ -593,6 +763,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending.deleteSelectedFrame(0);
             }
             colorBlending?.setAlpha(0, alpha[0]);
+            // Hide the layers that were hidden. A new color-blended image shows all of them.
+            const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
+            if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
+                colorBlending.toggleRasterVisible();
+            }
+            if (saved?.contourVisible === false && colorBlending?.isContourVisible) {
+                colorBlending.toggleContourVisible();
+            }
+            if (saved?.vectorOverlayVisible === false && colorBlending?.isVectorOverlayVisible) {
+                colorBlending.toggleVectorOverlayVisible();
+            }
 
             for (let i = 0; i < selectedFrameId.length; i++) {
                 const frame = this.frameOf(selectedFrameId[i]);

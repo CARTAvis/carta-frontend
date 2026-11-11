@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
-import {type Point2D} from "models";
+import {type Point2D, type WorkspaceOnlineCatalogQuery} from "models";
 import {AppStore} from "stores";
 import {ASTSettingsString, clamp, convertRadius, getPixelValueFromWCS, RADIUS_UNITS_PER_DEGREE, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
@@ -57,6 +57,56 @@ export class CatalogOnlineQueryConfigStore {
         }
         return CatalogOnlineQueryConfigStore.staticInstance;
     }
+
+    /** Returns the fields of the dialog that a workspace saves. */
+    public toWorkspaceConfig = (): WorkspaceOnlineCatalogQuery => ({
+        database: this.catalogDB,
+        center: {x: this.centerPixelCoord.x, y: this.centerPixelCoord.y},
+        coordinateSystem: this.coordsType,
+        coordinateFormat: this.coordsFormat,
+        radius: this.searchRadius,
+        radiusUnits: this.radiusUnits,
+        maxObjects: this.maxObject,
+        objectName: this.objectName,
+        vizierKeywords: this.vizierKeyWords
+    });
+
+    /**
+     * Applies the fields that a workspace saved. A value that is not valid keeps the value of the
+     * session. Apply them after the image in front is chosen and the cursor is frozen. Both of these
+     * move the center of the dialog.
+     */
+    @action applyWorkspaceConfig = (config: WorkspaceOnlineCatalogQuery): void => {
+        const isNumberString = (value: unknown): value is string => typeof value === "string" && value.trim() !== "" && isFinite(Number(value));
+        if (Object.values(CatalogDatabase).includes(config.database)) {
+            this.setCatalogDB(config.database);
+        }
+        if (Object.values(CatalogSystemType).includes(config.coordinateSystem)) {
+            this.setCoordsType(config.coordinateSystem);
+        }
+        if (Object.values(NumberFormatType).includes(config.coordinateFormat)) {
+            this.setCoordsFormat(config.coordinateFormat);
+        }
+        if (Object.values(RadiusUnits).includes(config.radiusUnits)) {
+            this.radiusUnits = config.radiusUnits;
+        }
+        if (typeof config.radius === "number" && isFinite(config.radius) && config.radius > 0) {
+            this.setSearchRadius(config.radius);
+        }
+        if (isNumberString(config.center?.x) && isNumberString(config.center?.y)) {
+            this.updateCenterPixelCoord({x: Number(config.center.x), y: Number(config.center.y)});
+        }
+        const maxObjects = config.maxObjects;
+        if (typeof maxObjects === "number" && Number.isInteger(maxObjects) && maxObjects >= CatalogOnlineQueryConfigStore.MIN_OBJECTS && maxObjects <= CatalogOnlineQueryConfigStore.MAX_OBJECTS) {
+            this.setMaxObjects(maxObjects);
+        }
+        if (typeof config.objectName === "string") {
+            this.setObjectName(config.objectName);
+        }
+        if (typeof config.vizierKeywords === "string") {
+            this.setVizierKeyWords(config.vizierKeywords);
+        }
+    };
 
     public setFrameCenter() {
         const frame = this.activeFrame;

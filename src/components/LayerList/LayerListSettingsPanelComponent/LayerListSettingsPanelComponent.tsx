@@ -73,9 +73,15 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
                     focused={frameOption.frameIndex === this.widgetStore?.selectedFrameIndex}
-                    data-testid={"rest-freq-input-" + AppStore.Instance.frameNum}
+                    data-testid={"rest-freq-input-" + frameOption.frameIndex}
                 />
-                <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+                <HTMLSelect
+                    disabled={frameOption.disable}
+                    options={Object.values(FrequencyUnit)}
+                    value={restFreqStore.customRestFreq.unit}
+                    onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)}
+                    data-testid={"rest-freq-unit-dropdown-" + frameOption.frameIndex}
+                />
             </div>
         );
     };
