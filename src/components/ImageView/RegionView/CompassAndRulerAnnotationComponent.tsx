@@ -229,15 +229,15 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         eastXOffset += Math.cos(eastAngle) * eastTranslation;
         eastYOffset += Math.sin(eastAngle) * eastTranslation;
 
-        region.setNorthTextOffset(northXOffset, true, true);
-        region.setNorthTextOffset(northYOffset, false, true);
-        region.setEastTextOffset(eastXOffset, true, true);
-        region.setEastTextOffset(eastYOffset, false, true);
+        region.setTextOffsetsFromLabels({x: northXOffset, y: northYOffset}, {x: eastXOffset, y: eastYOffset});
     };
 
+    // Check after each render. The size of the labels is known only after they are drawn.
     React.useEffect(() => {
-        updateOffset();
-    }, []);
+        if (region.shouldUpdateTextOffsets) {
+            updateOffset();
+        }
+    });
 
     const northArrowScales = getDirectionalStageScale(northPointArray, props.stageRef.current);
     const eastArrowScales = getDirectionalStageScale(eastPointArray, props.stageRef.current);

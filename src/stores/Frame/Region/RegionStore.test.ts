@@ -292,3 +292,76 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
         expect(compass.length).toBe(MIN_EDITED_REGION_DIMENSION);
     });
 });
+
+describe("CompassAnnotationStore text offsets", () => {
+    const makeCompass = () =>
+        new CompassAnnotationStore(
+            BACKEND_SERVICE as any,
+            1,
+            MakeFrame(),
+            [
+                {x: 0, y: 0},
+                {x: 100, y: 100}
+            ],
+            CARTA.RegionType.ANNCOMPASS,
+            1
+        );
+
+    test("asks for text offsets for a new compass, and not again after they are set", () => {
+        const compass = makeCompass();
+        expect(compass.shouldUpdateTextOffsets).toBe(true);
+
+        compass.setTextOffsetsFromLabels({x: 7, y: 24}, {x: 20, y: 10});
+
+        expect(compass.northTextOffset).toEqual({x: 7, y: 24});
+        expect(compass.eastTextOffset).toEqual({x: 20, y: 10});
+        expect(compass.shouldUpdateTextOffsets).toBe(false);
+    });
+
+    test("asks for text offsets again when a label or the font changes", () => {
+        const changes: Array<(compass: CompassAnnotationStore) => void> = [
+            compass => compass.setLabel("North-Up", true),
+            compass => compass.setLabel("Left", false),
+            compass => compass.setFontSize(30),
+            compass => compass.setFontStyle("bold")
+        ];
+        for (const change of changes) {
+            const compass = makeCompass();
+            compass.setTextOffsetsFromLabels({x: 7, y: 24}, {x: 20, y: 10});
+            change(compass);
+            expect(compass.shouldUpdateTextOffsets).toBe(true);
+        }
+    });
+
+    test("keeps text offsets that the user set", () => {
+        const compass = makeCompass();
+        compass.setTextOffsetsFromLabels({x: 7, y: 24}, {x: 20, y: 10});
+
+        compass.setNorthTextOffset(-40, true);
+        compass.setNorthTextOffset(-20, false);
+
+        expect(compass.northTextOffset).toEqual({x: -40, y: -20});
+        expect(compass.shouldUpdateTextOffsets).toBe(false);
+    });
+
+    test("keeps the restored text offsets, with the restored labels and font", () => {
+        const compass = makeCompass();
+
+        compass.initializeStyles({...compass.getAnnotationStyles(), textLabel0: "North-Up", fontSize: 30, northTextOffset: {x: -40, y: -20}, eastTextOffset: {x: 30, y: 15}});
+
+        expect(compass.northTextOffset).toEqual({x: -40, y: -20});
+        expect(compass.eastTextOffset).toEqual({x: 30, y: 15});
+        expect(compass.shouldUpdateTextOffsets).toBe(false);
+    });
+
+    test("asks for text offsets when the restored styles have none", () => {
+        const compass = makeCompass();
+        const styles: any = {...compass.getAnnotationStyles(), textLabel0: "North-Up"};
+        delete styles.northTextOffset;
+        delete styles.eastTextOffset;
+
+        compass.initializeStyles(styles);
+
+        expect(compass.shouldUpdateTextOffsets).toBe(true);
+    });
+});
