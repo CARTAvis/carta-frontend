@@ -34,7 +34,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const [isFetching, setIsFetching] = useState(false);
     const [fetchErrorMessage, setFetchErrorMessage] = useState("");
     const [workspaceName, setWorkspaceName] = useState("");
-    // The text that filters the list. Typing a name sets it, and selecting a workspace clears it.
+    // The text that filters the list in the Open mode. Typing a name sets it, and selecting a workspace clears it.
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<{key: SortKey; isAscending: boolean}>({key: "date", isAscending: false});
     const [preflight, setPreflight] = useState<WorkspacePreflightStore>();
@@ -307,7 +307,9 @@ export const WorkspaceDialogComponent = observer(() => {
                     autoFocus={true}
                     onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
                         setWorkspaceName(ev.currentTarget.value);
-                        setSearch(ev.currentTarget.value);
+                        if (isOpenMode) {
+                            setSearch(ev.currentTarget.value);
+                        }
                     }}
                     onKeyDown={handleKeyDown}
                 />
