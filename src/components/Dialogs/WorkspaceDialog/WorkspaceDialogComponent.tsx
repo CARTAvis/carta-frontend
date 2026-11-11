@@ -291,7 +291,7 @@ export const WorkspaceDialogComponent = observer(() => {
                                 Name {sortIcon("name")}
                             </button>
                             <button type="button" className="sort-button" onClick={() => handleSortClicked("date")} data-testid="workspace-sort-date">
-                                Modified {sortIcon("date")}
+                                Last modified {sortIcon("date")}
                             </button>
                         </div>
                         <div className="workspace-list">{listContent}</div>
