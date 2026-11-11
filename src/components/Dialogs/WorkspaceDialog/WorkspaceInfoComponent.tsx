@@ -360,36 +360,27 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
 });
 
 /**
- * The new locations that the user chose in the Workspace dialog and has not saved to the workspace,
- * with a button that saves them. The dialog shows it beside its own buttons, so that a long summary
- * does not hide it.
+ * The button that saves the new locations and mirrors that the user chose in the Workspace dialog.
+ * It shows only while there are changes. The dialog puts it beside its own buttons, so that a long
+ * summary does not hide it.
  */
 export const WorkspaceSaveChanges = observer((props: {preflight: WorkspacePreflightStore; onSaved?: () => void}) => {
     const {preflight} = props;
-    const changeCount = preflight.changeDescriptions.length;
-    if (!preflight.canSave || (changeCount === 0 && !preflight.hasSavedChanges)) {
+    if (!preflight.canSave || !preflight.changeDescriptions.length) {
         return null;
     }
     return (
-        <div className="workspace-save-changes" data-testid="workspace-info-save-changes">
-            <span className="save-changes-text">
-                <Icon icon={changeCount ? "map-marker" : "tick"} intent={Intent.PRIMARY} />
-                {changeCount ? `${countOf(changeCount, "new location")} not saved yet` : "The new locations are saved to this workspace"}
-            </span>
-            {changeCount > 0 && (
-                <Tooltip
-                    content={
-                        <div className="change-list">
-                            {preflight.changeDescriptions.map(text => (
-                                <div key={text}>{text}</div>
-                            ))}
-                        </div>
-                    }
-                    placement="top"
-                >
-                    <Button icon="floppy-disk" text="Save to workspace" loading={preflight.isSaving} onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()} data-testid="workspace-info-save-button" />
-                </Tooltip>
-            )}
-        </div>
+        <Tooltip
+            content={
+                <div className="change-list">
+                    {preflight.changeDescriptions.map(text => (
+                        <div key={text}>{text}</div>
+                    ))}
+                </div>
+            }
+            placement="top"
+        >
+            <Button icon="floppy-disk" text="Save changes" loading={preflight.isSaving} onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()} data-testid="workspace-info-save-button" />
+        </Tooltip>
     );
 });
