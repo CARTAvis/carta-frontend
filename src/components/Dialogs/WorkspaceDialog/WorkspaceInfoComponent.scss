@@ -14,8 +14,8 @@
 
         .workspace-thumbnail {
             flex: none;
-            width: 120px;
-            height: 68px;
+            width: 200px;
+            height: 112px;
             padding: 0;
             display: flex;
             align-items: center;
@@ -41,19 +41,6 @@
         .summary-counts {
             color: $pt-text-color-muted;
         }
-    }
-
-    section {
-        margin-top: 12px;
-    }
-
-    .summary-group-title {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: $pt-font-size-small;
-        color: $pt-text-color-muted;
-        margin-bottom: 2px;
     }
 
     // The name, the status and the action of each row line up in three columns.
@@ -95,6 +82,7 @@
 
         .status-tag {
             justify-self: start;
+            border-radius: 4px;
         }
 
         .row-action {
@@ -114,6 +102,7 @@
         .#{$ns}-tree-node-content {
             height: auto;
             min-height: 30px;
+            border-bottom: 1px solid rgba($black, 0.1);
         }
 
         .#{$ns}-tree-node-label {
@@ -159,25 +148,37 @@
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
+        padding: 4px 0;
+
+        .setting-tag {
+            border-radius: 4px;
+        }
     }
 
     .save-changes {
-        margin-top: 14px;
+        margin-top: 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 10px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+
+        > .#{$ns}-icon:first-child {
+            top: 50%;
+            transform: translateY(-50%);
+        }
     }
 }
 
 .#{$ns}-dark .workspace-info {
     .summary-header .summary-counts,
-    .summary-group-title,
     .summary-row .row-details {
         color: $pt-dark-text-color-muted;
     }
 
-    .summary-row {
+    .summary-row,
+    .summary-tree .#{$ns}-tree-node-content {
         border-bottom-color: rgba($white, 0.1);
     }
 }

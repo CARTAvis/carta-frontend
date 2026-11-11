@@ -34,6 +34,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const [isFetching, setIsFetching] = useState(false);
     const [fetchErrorMessage, setFetchErrorMessage] = useState("");
     const [workspaceName, setWorkspaceName] = useState("");
+    // The text that filters the list. Typing a name sets it, and selecting a workspace clears it.
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<{key: SortKey; isAscending: boolean}>({key: "date", isAscending: false});
     const [preflight, setPreflight] = useState<WorkspacePreflightStore>();
@@ -77,6 +78,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const selectWorkspace = useCallback(
         async (entry: WorkspaceListItem) => {
             setWorkspaceName(entry.name);
+            setSearch("");
             if (selection.current === entry.name) {
                 return;
             }
@@ -284,7 +286,6 @@ export const WorkspaceDialogComponent = observer(() => {
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-list-container">
-                        <InputGroup className="workspace-search-input" leftIcon="search" placeholder="Search workspaces" value={search} onChange={ev => setSearch(ev.currentTarget.value)} data-testid="workspace-search-input" />
                         <div className="workspace-list-header">
                             <button type="button" className="sort-button" onClick={() => handleSortClicked("name")} data-testid="workspace-sort-name">
                                 Name {sortIcon("name")}
@@ -304,7 +305,10 @@ export const WorkspaceDialogComponent = observer(() => {
                     placeholder="Enter workspace name"
                     value={workspaceName}
                     autoFocus={true}
-                    onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setWorkspaceName(ev.currentTarget.value)}
+                    onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
+                        setWorkspaceName(ev.currentTarget.value);
+                        setSearch(ev.currentTarget.value);
+                    }}
                     onKeyDown={handleKeyDown}
                 />
             </div>
