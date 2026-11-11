@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {Alert, AnchorButton, Button, Callout, Classes, Dialog, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Callout, Classes, HTMLSelect, Icon, type IconName, Intent, NonIdealState, Overlay2, Spinner, Tag, Tooltip, Tree, type TreeNodeInfo} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -356,15 +356,12 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                     )}
                 </Callout>
             )}
-            <Dialog
-                className={classNames("workspace-preview-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
-                isOpen={isPreviewOpen && !!preflight.thumbnail}
-                onClose={() => setIsPreviewOpen(false)}
-                title={preflight.name}
-                canOutsideClickClose={true}
-            >
-                <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview" />
-            </Dialog>
+            {/* The larger preview has no frame. A click anywhere or the Escape key closes it. */}
+            <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={true} canOutsideClickClose={true}>
+                <div className="workspace-preview-overlay" onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview">
+                    <img src={preflight.thumbnail} alt={`The screen when "${preflight.name}" was saved`} />
+                </div>
+            </Overlay2>
             <Alert
                 className={classNames({[Classes.DARK]: appStore.isDarkTheme})}
                 isOpen={!!folderMove}
