@@ -18,31 +18,45 @@
         display: flex;
         margin: 0 2px 2px;
 
+        // The list looks like the table of the other file dialogs: a tinted header, and lines between the cells.
         .workspace-list-container {
             flex: none;
-            width: 260px;
+            width: 280px;
             height: 100%;
             display: flex;
             flex-direction: column;
+            padding: 1px;
+            background-color: $white;
             box-shadow: inset 0 0 0 1px rgba($black, 0.15);
         }
 
-        .workspace-list-header {
+        .workspace-list-header,
+        .workspace-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 100px;
-            border-bottom: 1px solid rgba($black, 0.15);
+            grid-template-columns: minmax(0, 1fr) 124px;
+        }
+
+        .workspace-list-header {
+            background-color: $light-gray5;
+            box-shadow: inset 0 -1px 0 $pt-divider-black;
 
             .sort-button {
                 display: flex;
                 align-items: center;
-                gap: 2px;
-                padding: 4px 8px;
+                gap: 4px;
+                height: 30px;
+                padding: 0 10px;
                 border: none;
                 background: none;
+                box-shadow: inset -1px 0 0 $pt-divider-black;
                 color: inherit;
-                font-size: $pt-font-size-small;
                 text-align: left;
+                white-space: nowrap;
                 cursor: pointer;
+
+                &:last-child {
+                    box-shadow: none;
+                }
 
                 &:hover {
                     background-color: rgba($gray3, 0.15);
@@ -57,23 +71,23 @@
         }
 
         .workspace-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 100px;
-            line-height: 22px;
             font-size: $pt-font-size-small;
+            line-height: 22px;
             cursor: pointer;
             user-select: none;
-            border-bottom: 1px solid rgba($black, 0.08);
 
             > span {
-                padding: 0 8px;
+                padding: 0 10px;
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
+                box-shadow:
+                    inset 0 -1px 0 rgba($black, 0.15),
+                    inset -1px 0 0 rgba($black, 0.05);
             }
 
-            .time-cell {
-                color: $pt-text-color-muted;
+            > span:last-child {
+                box-shadow: inset 0 -1px 0 rgba($black, 0.15);
             }
 
             &:hover {
@@ -82,10 +96,6 @@
 
             &.is-selected {
                 background-color: rgba($blue3, 0.2);
-
-                .time-cell {
-                    color: inherit;
-                }
             }
         }
 
@@ -99,22 +109,32 @@
 
     &.#{$ns}-dark .workspace-container {
         .workspace-list-container {
+            background-color: $pt-dark-code-background-color;
             box-shadow: inset 0 0 0 1px rgba($black, 0.4);
         }
 
         .workspace-list-header {
-            border-bottom-color: rgba($black, 0.4);
+            background-color: $dark-gray4;
+            box-shadow: inset 0 -1px 0 $pt-dark-divider-black;
+
+            .sort-button {
+                box-shadow: inset -1px 0 0 $pt-dark-divider-black;
+
+                &:last-child {
+                    box-shadow: none;
+                }
+            }
         }
 
         .workspace-row {
-            border-bottom-color: rgba($white, 0.06);
-
-            .time-cell {
-                color: $pt-dark-text-color-muted;
+            > span {
+                box-shadow:
+                    inset 0 -1px 0 rgba($black, 0.4),
+                    inset -1px 0 0 rgba($black, 0.1);
             }
 
-            &.is-selected .time-cell {
-                color: inherit;
+            > span:last-child {
+                box-shadow: inset 0 -1px 0 rgba($black, 0.4);
             }
         }
     }
