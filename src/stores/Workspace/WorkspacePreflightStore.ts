@@ -24,6 +24,27 @@ export type WorkspaceFileStatus =
      */
     | "region";
 
+/**
+ * How an image, a catalog or a group of them stands before the workspace opens. The Workspace
+ * dialog shows a group with the level of its worst item.
+ */
+export type WorkspaceCheckLevel =
+    /** A check has not ended yet. */
+    | "checking"
+    /** Everything is found, or is made again when the workspace opens. */
+    | "ok"
+    /** Something is checked only when the workspace opens, such as an expression that cannot be read. */
+    | "attention"
+    /** The workspace opens without the item: a file is missing, or the mirror of a query does not answer. */
+    | "left-out";
+
+const LEVEL_ORDER: WorkspaceCheckLevel[] = ["ok", "attention", "left-out", "checking"];
+
+/** Returns the level of a group: a check that has not ended, then the worst level of its items. */
+function worstLevel(levels: WorkspaceCheckLevel[]): WorkspaceCheckLevel {
+    return levels.reduce<WorkspaceCheckLevel>((worst, level) => (LEVEL_ORDER.indexOf(level) > LEVEL_ORDER.indexOf(worst) ? level : worst), "ok");
+}
+
 /** One file that a workspace reads, and its place in the workspace. */
 export interface WorkspaceCheckedFile {
     /** Tells the files of one workspace apart, such as "image-3" or "image-4-stokes-1". */
@@ -273,6 +294,36 @@ export class WorkspacePreflightStore {
     };
 
     statusOf = (file: WorkspaceCheckedFile): WorkspaceFileStatus => this.statuses.get(file.key) ?? "checking";
+
+    /** Returns how an image stands before the workspace opens. */
+    levelOfImage = (image: WorkspaceImageSummary): WorkspaceCheckLevel => {
+        const statuses = image.files.map(file => this.statusOf(file));
+        if (statuses.includes("checking")) {
+            return "checking";
+        }
+        if (statuses.includes("missing")) {
+            return "left-out";
+        }
+        return image.isCheckedWhenOpened ? "attention" : "ok";
+    };
+
+    /** Returns how a catalog stands before the workspace opens. */
+    levelOfCatalog = (catalog: WorkspaceCatalogSummary): WorkspaceCheckLevel => {
+        if (catalog.file) {
+            const status = this.statusOf(catalog.file);
+            return status === "checking" ? "checking" : status === "missing" ? "left-out" : "ok";
+        }
+        const state = catalog.database === undefined ? undefined : this.mirrors.get(catalog.database)?.state;
+        return state === "testing" ? "checking" : state === "no-answer" ? "left-out" : "ok";
+    };
+
+    @computed get imagesLevel(): WorkspaceCheckLevel {
+        return worstLevel(this.images.map(this.levelOfImage));
+    }
+
+    @computed get catalogsLevel(): WorkspaceCheckLevel {
+        return worstLevel(this.catalogs.map(this.levelOfCatalog));
+    }
 
     /** Whether a check of a file or a mirror has not ended yet. */
     @computed get isChecking(): boolean {

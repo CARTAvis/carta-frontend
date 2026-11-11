@@ -150,6 +150,21 @@ describe("WorkspacePreflightStore", () => {
         expect(store.leftOutCount).toBe(0);
     });
 
+    test("gives each image, each catalog and each group the level of its worst check", async () => {
+        mockFiles(["data/alice/band6/cube.fits", "data/alice/band6/cont 1.fits", "data/alice/pol/q.fits", "data/alice/pol/u.fits"]);
+        jest.spyOn(CatalogApiService.Instance, "benchmarkMirror").mockResolvedValue(null);
+        const store = new WorkspacePreflightStore("copied", createWorkspace(), true);
+        expect(store.imagesLevel).toBe("checking");
+
+        await Promise.all([store.check(), store.testMirrors()]);
+
+        expect(store.images.map(store.levelOfImage)).toEqual(["ok", "ok", "ok", "ok"]);
+        expect(store.imagesLevel).toBe("ok");
+        // The catalog file is missing, and the mirror of the query does not answer.
+        expect(store.catalogs.map(store.levelOfCatalog)).toEqual(["left-out", "left-out"]);
+        expect(store.catalogsLevel).toBe("left-out");
+    });
+
     test("uses one new folder for every file of an expression", () => {
         mockFiles([]);
         const store = new WorkspacePreflightStore("copied", createWorkspace(), true);

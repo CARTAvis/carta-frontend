@@ -107,6 +107,54 @@
         }
     }
 
+    // Images and catalogs are groups that the user opens. Each row keeps its three columns inside a tree node.
+    .summary-tree {
+        margin-top: 12px;
+
+        .#{$ns}-tree-node-content {
+            height: auto;
+            min-height: 30px;
+        }
+
+        .#{$ns}-tree-node-label {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-group > .#{$ns}-tree-node-content {
+            font-weight: 600;
+        }
+
+        .summary-row {
+            border-bottom: none;
+            padding-right: 6px;
+
+            &.is-group {
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+        }
+    }
+
+    .level-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: $pt-font-size-small;
+        font-weight: normal;
+
+        &.is-left-out {
+            color: $pt-intent-danger;
+        }
+
+        &.is-attention {
+            color: $pt-intent-warning;
+        }
+
+        &.is-ok {
+            color: $pt-intent-success;
+        }
+    }
+
     .restored-settings {
         display: flex;
         flex-wrap: wrap;
