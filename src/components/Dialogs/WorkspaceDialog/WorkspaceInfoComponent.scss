@@ -105,9 +105,24 @@
             justify-self: end;
         }
 
+        .row-name.is-stacked {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            padding: 4px 0;
+        }
+
+        .mirror-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding-left: 12px;
+            max-width: 100%;
+        }
+
         .mirror-select {
             flex: none;
-            max-width: 190px;
+            min-width: 0;
         }
     }
 
