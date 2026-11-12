@@ -65,6 +65,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {type WorkspaceLeftOutItems, type WorkspaceRepointedSources, WorkspaceRestorer, type WorkspaceSourceChanges} from "stores/Workspace/WorkspaceRestorer";
@@ -373,15 +374,18 @@ export class AppStore {
         }
     };
 
-    /** The workspace this session was opened with, if any. */
-    public static startingWorkspace(): {name: string; isKey: boolean} | undefined {
+    /**
+     * The workspace this session was opened with, if any. `checkWindowSize` is true when the address
+     * asks the restore to check the size of the browser window.
+     */
+    public static startingWorkspace(): {name: string; isKey: boolean; checkWindowSize?: boolean} | undefined {
         const url = new URL(window.location.href);
         const key = url.searchParams.get("key");
         if (key) {
             return {name: key, isKey: true};
         }
         const name = url.searchParams.get("workspace");
-        return name ? {name, isKey: false} : undefined;
+        return name ? {name, isKey: false, checkWindowSize: url.searchParams.get(CHECK_WINDOW_SIZE_PARAM) === "true"} : undefined;
     }
 
     @flow.bound
@@ -394,7 +398,7 @@ export class AppStore {
         // Load workspace first if it exists
         if (startingWorkspace) {
             try {
-                yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey);
+                yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey, undefined, {checkWindowSize: startingWorkspace.checkWindowSize});
             } catch (err) {
                 console.error(err);
             }
@@ -2954,8 +2958,10 @@ export class AppStore {
      * @param prepared - the workspace that the Workspace dialog already read and checked, with the
      * new locations that the user chose, and the items to open it without. Without it, the workspace
      * is read by its name.
+     * @param options - `checkWindowSize` asks the restore to report when the browser window does not
+     * have the size that the workspace was saved in.
      */
-    public *loadWorkspace(name: string, isKey = false, prepared?: {workspace: Workspace; leftOut?: WorkspaceLeftOutItems}) {
+    public *loadWorkspace(name: string, isKey = false, prepared?: {workspace: Workspace; leftOut?: WorkspaceLeftOutItems}, options?: {checkWindowSize?: boolean}) {
         this.isLoadingWorkspace = true;
         this.loadingWorkspaceName = isKey ? "" : name;
         this.closeWorkspaceRestoreReport();
@@ -2984,7 +2990,7 @@ export class AppStore {
             this.setLoadingWorkspaceName(workspace.name || name);
 
             this.hasRestoreChangedSession = true;
-            const restorer = new WorkspaceRestorer(workspace, generation, prepared?.leftOut);
+            const restorer = new WorkspaceRestorer(workspace, generation, prepared?.leftOut, options);
             const restoreIssues: WorkspaceIssue[] = yield* restorer.restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;

@@ -860,6 +860,29 @@ describe("WorkspaceRestorer", () => {
             expect(problems).toEqual([]);
         });
 
+        test("reports a browser window of another size in a window that was opened to match the saved size", async () => {
+            createSession();
+            const imageView = {width: 640, height: 400, devicePixelRatio: 1, viewport: {width: window.innerWidth + 100, height: window.innerHeight}};
+            const workspace = createWorkspace({imageView});
+
+            const problems = (await drive(new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration(), undefined, {checkWindowSize: true}))).map(issue => issue.message);
+
+            expect(problems).toEqual([`This browser window is ${window.innerWidth}×${window.innerHeight}, not ${window.innerWidth + 100}×${window.innerHeight} as when the workspace was saved, so the images may not show exactly as saved`]);
+        });
+
+        test("does not report a browser window of the saved size", async () => {
+            createSession();
+            const workspace = createWorkspace({imageView: {width: 640, height: 400, devicePixelRatio: 1, viewport: {width: window.innerWidth, height: window.innerHeight}}});
+
+            expect(await drive(new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration(), undefined, {checkWindowSize: true}))).toEqual([]);
+        });
+
+        test("keeps the saved zoom in a background tab, because the tab does not report the new size", async () => {
+            jest.spyOn(document, "hidden", "get").mockReturnValue(true);
+
+            expect((await restoreIntoView({width: 1280, height: 800, devicePixelRatio: 1})).setZoom).not.toHaveBeenCalled();
+        });
+
         test("compares with the device pixel ratio of this screen", async () => {
             const {setZoom} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 1}, {width: 640, height: 400, devicePixelRatio: 2});
 

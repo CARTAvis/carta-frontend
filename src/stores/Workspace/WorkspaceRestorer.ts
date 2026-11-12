@@ -52,7 +52,7 @@ import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, scaleFrameZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {getFieldOfViewScale, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
+import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -296,7 +296,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     constructor(
         private readonly workspace: Workspace,
         private readonly generation: number,
-        leftOut?: WorkspaceLeftOutItems
+        leftOut?: WorkspaceLeftOutItems,
+        private readonly options?: {checkWindowSize?: boolean}
     ) {
         this.leftOutImageIds = new Set(leftOut?.imageIds);
         this.leftOutCatalogIds = new Set(leftOut?.catalogIds);
@@ -418,6 +419,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.checkWindowSize();
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
@@ -2526,7 +2528,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         yield* awaited(waitForStableSize(() => ({width: frame.renderWidth, height: frame.renderHeight})));
-        if (!this.isCurrent) {
+        // A background tab does not report the new size of the image view. Keep the saved zoom
+        // there, because a scale from the old size would be wrong.
+        if (!this.isCurrent || document.hidden) {
             return;
         }
         // A size of 1 or less means that the image view is not shown.
@@ -2543,6 +2547,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     scaleFrameZoom(restored, scale);
                 }
             }
+        }
+    }
+
+    /**
+     * Reports when the browser window does not have the size that the workspace was saved in. Only a
+     * window that was opened to match the saved size checks this, because the user asked for that
+     * size. The browser can open a window of another size, for example when the screen is smaller,
+     * or when the page is zoomed. In other windows, the Open Workspace dialog shows the sizes.
+     */
+    private checkWindowSize(): void {
+        const viewport = this.workspace.imageView?.viewport;
+        if (!this.options?.checkWindowSize || !isValidImageViewSize(viewport)) {
+            return;
+        }
+        const current = {width: window.innerWidth, height: window.innerHeight};
+        if (!isSameSize(viewport, current)) {
+            this.report(WorkspaceItemKind.Layout, "", `This browser window is ${formatSize(current)}, not ${formatSize(viewport)} as when the workspace was saved, so the images may not show exactly as saved`);
         }
     }
 
