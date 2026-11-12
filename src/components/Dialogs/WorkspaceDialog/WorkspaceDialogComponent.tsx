@@ -13,7 +13,7 @@ import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore"
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
-import {WorkspaceInfoComponent, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
+import {WorkspaceInfoComponent, WorkspaceOpenInWindow, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
 
 import "./WorkspaceDialogComponent.scss";
 
@@ -318,6 +318,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
                     <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
+                    {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} onOpened={handleCloseClicked} />}
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text="Save" disabled={isFetching || !workspaceName.trim()} />
                     ) : (

@@ -76,6 +76,15 @@ describe("WorkspacePreflightStore", () => {
         expect(store.restoredSettings).toEqual(["Layout", "Image matching"]);
     });
 
+    test("gives the browser window that the workspace was saved in, and nothing for a workspace saved without it", () => {
+        mockFiles([]);
+        const saved = new WorkspacePreflightStore("copied", createWorkspace({imageView: {width: 640, height: 400, devicePixelRatio: 2, fullWidth: 700, fullHeight: 450, viewport: {width: 1600, height: 900}}}), true);
+        expect(saved.savedWindow).toEqual({viewport: {width: 1600, height: 900}});
+
+        expect(new WorkspacePreflightStore("copied", createWorkspace({imageView: {width: 640, height: 400, devicePixelRatio: 2}}), true).savedWindow).toBeUndefined();
+        expect(new WorkspacePreflightStore("copied", createWorkspace(), true).savedWindow).toBeUndefined();
+    });
+
     test("finds the missing files, and opens the workspace without the images and catalogs that read them", async () => {
         mockFiles(["data/alice/band6/cube.fits", "data/alice/band6/cont 1.fits", "data/alice/pol/q.fits"]);
         const store = new WorkspacePreflightStore("copied", createWorkspace(), true);

@@ -282,7 +282,8 @@ export class AppStore {
     @observable imageRatio: number = 1;
     @observable isExportingImage: boolean = false;
     @observable private isCanvasUpdated: boolean = false;
-    @observable private devicePixelRatio: number = devicePixelRatio;
+    /** The device pixel ratio of the screen. Unlike `pixelRatio`, it does not include the `imageRatio` of an image export. */
+    @observable devicePixelRatio: number = devicePixelRatio;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();

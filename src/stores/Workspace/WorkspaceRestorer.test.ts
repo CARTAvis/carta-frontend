@@ -834,27 +834,33 @@ describe("WorkspaceRestorer", () => {
         }
 
         test("scales the zoom, so that the same area of the image shows in a smaller view", async () => {
-            const {problems, setZoom} = await restoreIntoView({width: 1280, height: 800, pixelRatio: 1});
+            const {problems, setZoom} = await restoreIntoView({width: 1280, height: 800, devicePixelRatio: 1});
 
             expect(setZoom).toHaveBeenCalledWith(0.5, true);
             expect(problems).toEqual([]);
         });
 
         test("compares the views in screen pixels, because the zoom counts screen pixels", async () => {
-            const {setZoom} = await restoreIntoView({width: 640, height: 400, pixelRatio: 2});
+            const {setZoom} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 2});
 
             expect(setZoom).toHaveBeenCalledWith(0.5, true);
         });
 
-        test("fits the whole saved area in a view of another shape, and reports the sides where more shows", async () => {
-            const {problems, setZoom} = await restoreIntoView({width: 800, height: 400, pixelRatio: 1});
+        test("fits the whole saved area in a view of another shape, without a report", async () => {
+            const {problems, setZoom} = await restoreIntoView({width: 800, height: 400, devicePixelRatio: 1});
 
             expect(setZoom).toHaveBeenCalledWith(0.8, true);
-            expect(problems).toEqual(["The image view has another shape than when the workspace was saved (800×400, now 640×400). More of each image shows at the top and bottom."]);
+            expect(problems).toEqual([]);
+        });
+
+        test("does not report a browser window of another size, because matching it is optional", async () => {
+            const {problems} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 2, viewport: {width: window.innerWidth + 100, height: window.innerHeight}});
+
+            expect(problems).toEqual([]);
         });
 
         test("keeps the saved zoom in a view of the same size, and for a workspace saved without the size", async () => {
-            expect((await restoreIntoView({width: 640, height: 400, pixelRatio: 1})).setZoom).not.toHaveBeenCalled();
+            expect((await restoreIntoView({width: 640, height: 400, devicePixelRatio: 1})).setZoom).not.toHaveBeenCalled();
             expect((await restoreIntoView(undefined)).setZoom).not.toHaveBeenCalled();
         });
     });

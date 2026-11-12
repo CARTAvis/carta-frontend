@@ -686,7 +686,14 @@ export class WorkspaceSnapshotter {
         // A size of 1 or less means that the image view is not shown, so the size is left out.
         const frame = this.appStore.activeFrame;
         if (frame && frame.renderWidth > 1 && frame.renderHeight > 1) {
-            this.workspace.imageView = {width: frame.renderWidth, height: frame.renderHeight, pixelRatio: this.appStore.pixelRatio};
+            this.workspace.imageView = {
+                width: frame.renderWidth,
+                height: frame.renderHeight,
+                devicePixelRatio: this.appStore.devicePixelRatio,
+                fullWidth: this.appStore.fullViewWidth,
+                fullHeight: this.appStore.fullViewHeight,
+                viewport: {width: window.innerWidth, height: window.innerHeight}
+            };
         }
     }
 

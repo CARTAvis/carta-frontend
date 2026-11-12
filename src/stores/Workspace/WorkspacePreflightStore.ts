@@ -238,6 +238,23 @@ export class WorkspacePreflightStore {
         return describeRestoredSettings(this.workspace);
     }
 
+    /**
+     * The browser window that the workspace was saved in: the size of its viewport. It is undefined
+     * for a workspace saved without it. With the same window, the layout of the workspace gives the
+     * image view the same size. The device pixel ratio is left out, because it changes only how sharp
+     * the images are, not which area of each image shows.
+     */
+    @computed get savedWindow(): {viewport: {width: number; height: number}} | undefined {
+        const imageView = this.workspace.imageView;
+        const isPositive = (value: unknown): value is number => typeof value === "number" && isFinite(value) && value > 0;
+        const width = imageView?.viewport?.width;
+        const height = imageView?.viewport?.height;
+        if (!isPositive(width) || !isPositive(height)) {
+            return undefined;
+        }
+        return {viewport: {width, height}};
+    }
+
     @computed get thumbnail(): string | undefined {
         return this.workspace.thumbnail;
     }

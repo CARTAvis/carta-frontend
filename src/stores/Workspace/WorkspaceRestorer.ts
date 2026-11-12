@@ -52,7 +52,7 @@ import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, scaleFrameZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {describeViewShapeChange, getFieldOfViewScale, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
+import {getFieldOfViewScale, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -2514,7 +2514,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Scales the zoom of each image by how the image view changed size since the workspace was
      * saved, so that the area of each image that showed fits in the view again. Wait for the size
      * first, because the image view takes its size from the layout. When the view has another
-     * shape, more of each image shows on two sides, and the report names them.
+     * shape, more of each image shows on two sides. The report does not say so: the Open Workspace
+     * dialog shows the saved sizes before the workspace opens.
      */
     private *restoreFieldOfView(): Generator<Promise<unknown>, void, any> {
         const saved = this.workspace.imageView;
@@ -2531,7 +2532,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!(current.width > 1 && current.height > 1)) {
             return;
         }
-        const scale = getFieldOfViewScale(saved, current, this.appStore.pixelRatio);
+        const scale = getFieldOfViewScale(saved, current, this.appStore.devicePixelRatio);
         if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
             // A matched image follows the zoom of its reference image, so only the other images are scaled.
             for (const workspaceFileId of this.frameIds.keys()) {
@@ -2540,10 +2541,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     scaleFrameZoom(restored, scale);
                 }
             }
-        }
-        const message = describeViewShapeChange(saved, current);
-        if (message) {
-            this.report(WorkspaceItemKind.Layout, "", message);
         }
     }
 
