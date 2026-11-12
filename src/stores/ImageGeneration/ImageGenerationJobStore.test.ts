@@ -287,13 +287,17 @@ describe("ImageGenerationJobStore", () => {
             expect(store.getJob(jobId).status).toBe("running");
         });
 
-        test("do not change the statistics that a widget asks for of the region", async () => {
+        test("wait for the answer to the statistics that a widget asks for, and leave them as they are", async () => {
             const {store, appStore, backend} = createSession();
-            appStore.statsRequirementsOf.mockReturnValue({statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean]}]});
+            const widgetConfigs = [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean]}];
+            appStore.statsRequirementsOf.mockReturnValue({statsConfigs: widgetConfigs});
             store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
-            await settle();
             expect(appStore.statsRequirementsOf).toHaveBeenCalledWith(1, CLOSED_REGION);
-            expect(backend.setStatsRequirements).not.toHaveBeenCalled();
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs)).toEqual([widgetConfigs]);
+            expect(appStore.requestMoment).not.toHaveBeenCalled();
+            await settle();
+            await settle();
+            expect(backend.setStatsRequirements).toHaveBeenCalledTimes(1);
             expect(appStore.requestMoment).toHaveBeenCalled();
         });
 
@@ -306,6 +310,16 @@ describe("ImageGenerationJobStore", () => {
             await settle();
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs)).toEqual([[expect.anything()], widgetConfigs]);
             expect(appStore.requestMoment).toHaveBeenCalled();
+        });
+
+        test("are reported as running until they end, also while they wait for the region data", async () => {
+            const {store, backend} = createSession();
+            backend.setStatsRequirements.mockImplementation(() => true);
+            expect(store.hasRunningJobs()).toBe(false);
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
+            expect(store.hasRunningJobs()).toBe(true);
+            store.cancelJob(jobId);
+            expect(store.hasRunningJobs()).toBe(false);
         });
 
         test("run one at a time for each image", () => {

@@ -276,6 +276,14 @@ export class ImageGenerationJobStore {
         }
     };
 
+    /**
+     * Returns whether a job is running. A running job adds its images to the session later, also
+     * while it waits for the region data.
+     */
+    hasRunningJobs(): boolean {
+        return Array.from(this.jobs.values()).some(job => job.isRunning);
+    }
+
     private jobOf(jobId: number): ImageGenerationJob {
         const job = this.jobs.get(jobId);
         if (!job) {

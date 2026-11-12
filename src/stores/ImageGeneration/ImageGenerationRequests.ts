@@ -100,10 +100,11 @@ export interface RegionDataWait<T extends string> {
  * The wait has no time limit. It ends when the backend answers, when the image is closed, or when
  * `stop` is called.
  *
- * When a statistics widget already asks for statistics of the region, the backend already keeps
- * the data. Then the wait is ready at once, and the request of the widget is left as it is. At the
- * end of the wait, the function sends the statistics that the widgets ask for again. Then a widget
- * that starts to ask during the wait keeps its statistics.
+ * When a statistics widget already asks for statistics of the region, the function sends the
+ * request of the widget again, and waits for the answer. The backend answers the same request
+ * again. A widget that has just asked may not have its answer yet, so the function does not skip
+ * the wait. At the end of the wait, the function sends what the widgets ask for at that time, or
+ * no statistics when no widget asks. It sends nothing when this is what it sent first.
  *
  * @param isOpen - returns whether the image is still open.
  * @param widgetStatsOf - returns the statistics that the widgets ask for of the region, as last sent
@@ -112,9 +113,8 @@ export interface RegionDataWait<T extends string> {
 export function waitForRegionData<T extends string>(frame: FrameStore, regionId: number, isOpen: () => boolean, widgetStatsOf: () => CARTA.SetStatsRequirements.$Properties | undefined): RegionDataWait<T> {
     const backendService = BackendService.Instance;
     const fileId = frame.frameInfo.fileId;
-    if (widgetStatsOf()?.statsConfigs?.length) {
-        return {ready: Promise.resolve("ready"), stop: () => {}};
-    }
+    const widgetConfigs = widgetStatsOf()?.statsConfigs;
+    const sentConfigs = widgetConfigs?.length ? widgetConfigs : [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}];
     let finish: (outcome: "ready" | "closed" | T) => void = () => {};
     const ready = new Promise<"ready" | "closed" | T>(resolve => {
         let isSettled = false;
@@ -125,8 +125,9 @@ export function waitForRegionData<T extends string>(frame: FrameStore, regionId:
             isSettled = true;
             subscription.unsubscribe();
             disposeReaction();
-            if (outcome !== "closed") {
-                backendService.setStatsRequirements({fileId, regionId, statsConfigs: widgetStatsOf()?.statsConfigs ?? []});
+            const configs = widgetStatsOf()?.statsConfigs ?? [];
+            if (outcome !== "closed" && !comparer.structural(configs, sentConfigs)) {
+                backendService.setStatsRequirements({fileId, regionId, statsConfigs: configs});
             }
             resolve(outcome);
         };
@@ -144,7 +145,7 @@ export function waitForRegionData<T extends string>(frame: FrameStore, regionId:
             },
             {equals: comparer.structural}
         );
-        backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
+        backendService.setStatsRequirements({fileId, regionId, statsConfigs: sentConfigs});
     });
     return {ready, stop: outcome => finish(outcome)};
 }

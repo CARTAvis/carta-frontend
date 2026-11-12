@@ -3200,7 +3200,8 @@ export class AppStore {
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
-        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
+        // A script job that makes images is checked apart for the same reason.
+        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog || this.imageGenerationJobs.hasRunningJobs()) {
             this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
             return false;
         }

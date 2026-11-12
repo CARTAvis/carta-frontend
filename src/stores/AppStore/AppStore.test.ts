@@ -559,6 +559,18 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("refuses to save while a script job still makes images, after another load has cleared the shared loading flag", async () => {
+        // A job that waits for the region data has not started to load a file yet.
+        jest.spyOn(appStore.imageGenerationJobs, "hasRunningJobs").mockReturnValue(true);
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toContain("still loading");
+        appStore.alertStore.dismissAlert();
+    });
+
     test("refuses to save while an online catalog query is still running", async () => {
         // The catalog is not in the session yet, so nothing is streaming: the query itself is what
         // the save has to wait for.
