@@ -132,7 +132,7 @@ export function restoreWorkspaceZoom(frame: FrameStore, workspaceZoom: Pick<Work
     }
 }
 
-function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
+export function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     const zoom = scaleZoomForImageRatio(frame, imageRatioScale);
     if (frame.isAxisZoomable) {
         frame.setAxisZoom(zoom.x, zoom.y);
