@@ -64,6 +64,8 @@ import {
     WidgetsStore
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
+import {ImageRequestCancelledError, type ImageRequestOptions} from "stores/ImageGeneration/ImageGenerationRequests";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -249,6 +251,8 @@ export class AppStore {
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
+    /** The jobs that make moment images and PV images for scripts. */
+    readonly imageGenerationJobs: ImageGenerationJobStore = new ImageGenerationJobStore(this);
 
     // WebAssembly Module status
     @observable isAstReady: boolean = false;
@@ -1625,14 +1629,13 @@ export class AppStore {
     /**
      * Request moment images of an image.
      *
-     * @param isStillWanted - called when the images are made. When it returns false, the images are
-     *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report.
+     * @throws When the spectral axis is not linear. When `options.shouldThrow` is true, also the
+     *         error of the backend, and an `ImageRequestCancelledError` when the request is
+     *         cancelled.
      */
     @flow.bound
-    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return [];
         }
@@ -1640,7 +1643,8 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
         if (!message.keep) {
@@ -1656,6 +1660,9 @@ export class AppStore {
         const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAcks && !isStillWanted()) {
                 this.discardGeneratedImages(ack.openFileAcks);
             } else if (!ack.cancel && ack.openFileAcks) {
@@ -1693,7 +1700,7 @@ export class AppStore {
             frame.resetMomentRequestState();
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (shouldThrow) {
                 throw err;
             }
         }
@@ -1719,14 +1726,13 @@ export class AppStore {
     /**
      * Request a PV image of an image.
      *
-     * @param isStillWanted - called when the image is made. When it returns false, the image is
-     *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report, so no toast shows it.
+     * @throws When the spectral axis is not linear. When `options.shouldThrow` is true, also the
+     *         error of the backend, and an `ImageRequestCancelledError` when the request is
+     *         cancelled. A toast shows the error of the backend only when it is not thrown.
      */
     @flow.bound
-    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return undefined;
         }
@@ -1734,7 +1740,8 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame
         if (!shouldKeepExisting) {
@@ -1749,6 +1756,9 @@ export class AppStore {
         let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAck && !isStillWanted()) {
                 this.discardGeneratedImages([ack.openFileAck]);
             } else if (!ack.cancel && ack.openFileAck) {
@@ -1782,7 +1792,7 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (shouldThrow) {
                 throw err;
             }
             AppToaster.show(ErrorToast(err));
