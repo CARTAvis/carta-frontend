@@ -890,6 +890,32 @@ describe("WorkspaceRestorer", () => {
             expect((await restoreIntoView({width: 1280, height: 800, devicePixelRatio: 1})).setZoom).not.toHaveBeenCalled();
         });
 
+        test("compares only the heights for an image that is stretched to the shape of the view, such as a PV image", async () => {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 500, renderHeight: 500, setZoom, isStretchedToView: true};
+            createSession();
+
+            await restore(createWorkspace({imageView: {width: 1000, height: 500, devicePixelRatio: 1}}));
+
+            expect(setZoom).not.toHaveBeenCalled();
+        });
+
+        test("uses the device pixel ratio from when the zoom was applied, because the app scales the zoom when the ratio changes later", async () => {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
+            const {appStore} = createSession();
+            (appStore as unknown as {devicePixelRatio: number}).devicePixelRatio = 1;
+            // The window moves to a screen with a ratio of 2 while the restore waits for the size.
+            jest.spyOn(window, "requestAnimationFrame").mockImplementationOnce(callback => {
+                (appStore as unknown as {devicePixelRatio: number}).devicePixelRatio = 2;
+                return window.setTimeout(() => callback(0), 0);
+            });
+
+            await restore(createWorkspace({imageView: {width: 640, height: 400, devicePixelRatio: 1}}));
+
+            expect(setZoom).not.toHaveBeenCalled();
+        });
+
         test("compares with the device pixel ratio of this screen", async () => {
             const {setZoom} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 1}, {width: 640, height: 400, devicePixelRatio: 2});
 

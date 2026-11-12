@@ -380,12 +380,13 @@ export class AppStore {
      */
     public static startingWorkspace(): {name: string; isKey: boolean; checkWindowSize?: boolean} | undefined {
         const url = new URL(window.location.href);
+        const shouldCheckWindowSize = url.searchParams.get(CHECK_WINDOW_SIZE_PARAM) === "true";
         const key = url.searchParams.get("key");
         if (key) {
-            return {name: key, isKey: true};
+            return {name: key, isKey: true, checkWindowSize: shouldCheckWindowSize};
         }
         const name = url.searchParams.get("workspace");
-        return name ? {name, isKey: false, checkWindowSize: url.searchParams.get(CHECK_WINDOW_SIZE_PARAM) === "true"} : undefined;
+        return name ? {name, isKey: false, checkWindowSize: shouldCheckWindowSize} : undefined;
     }
 
     @flow.bound
