@@ -338,15 +338,19 @@ export class FrameStore {
     }
 
     @computed get aspectRatio(): number {
-        if (isFinite(this.framePixelRatio)) {
-            return this.framePixelRatio;
+        if (this.isStretchedToView) {
+            return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
         }
+        return isFinite(this.framePixelRatio) ? this.framePixelRatio : 1.0;
+    }
 
-        if (this.isNormalImage && !this.isValidWcs) {
-            return 1.0;
-        }
-
-        return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
+    /**
+     * Whether the image is stretched to the shape of the image view, for example a PV image, whose
+     * axes have different units. The height of the view then sets how much of the image shows on
+     * both axes.
+     */
+    @computed get isStretchedToView(): boolean {
+        return !isFinite(this.framePixelRatio) && !(this.isNormalImage && !this.isValidWcs);
     }
 
     @computed get isNormalImage(): boolean {
