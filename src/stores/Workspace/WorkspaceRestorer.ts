@@ -1364,7 +1364,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private introduceRegionToBackend(frame: FrameStore, regionId: number, description: string): Promise<"ready" | "closed" | "superseded" | "skipped"> {
         const step = this.startStep();
-        const wait = waitForRegionData<"superseded" | "skipped">(frame, regionId, () => this.appStore.frames.includes(frame));
+        const wait = waitForRegionData<"superseded" | "skipped">(
+            frame,
+            regionId,
+            () => this.appStore.frames.includes(frame),
+            () => this.appStore.statsRequirementsOf(frame.frameInfo.fileId, regionId)
+        );
         const disposeReaction = reaction(
             () => this.isCurrent,
             isCurrent => {

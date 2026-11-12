@@ -1719,6 +1719,10 @@ export class AppStore {
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
+        if (frame) {
+            // A script job that still waits for the region data has sent no request to cancel.
+            this.imageGenerationJobs.cancelWaitingMomentJob(frame);
+        }
         if (frame && frame.requestingMomentsProgress < 1.0) {
             this.backendService.cancelRequestingMoment(fileId);
         }
@@ -4030,6 +4034,11 @@ export class AppStore {
         this.recalculateStatsRequirements();
         this.recalculateHistogramRequirements();
     };
+
+    /** Returns the statistics that the widgets ask for of a region, as last sent to the backend. */
+    statsRequirementsOf(fileId: number, regionId: number): CARTA.SetStatsRequirements | undefined {
+        return this.statsRequirements?.get(fileId)?.get(regionId);
+    }
 
     private recalculateStatsRequirements() {
         if (!this.activeFrame) {

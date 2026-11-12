@@ -1680,6 +1680,7 @@ describe("WorkspaceRestorer", () => {
             const generating = {
                 requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _options?: {isStillWanted?: () => boolean}) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
                 cancelRequestingMoment: jest.fn(),
+                statsRequirementsOf: jest.fn((_fileId: number, _regionId: number) => undefined),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
                 loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({}))),
