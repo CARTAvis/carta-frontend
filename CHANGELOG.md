@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings with its auto spatial matching switch, and the Image Fitting settings, results, selected component and coordinates, in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 * Added support for saving the WCS overlay settings, with the number formats that the workspace showed, in workspaces ([#3043](https://github.com/CARTAvis/carta-frontend/issues/3043)).
+* Added support for making moment and PV images from scripts, with their status, progress and cancel ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
