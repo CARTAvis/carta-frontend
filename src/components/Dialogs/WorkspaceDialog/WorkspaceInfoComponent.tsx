@@ -441,36 +441,52 @@ export const WorkspaceSaveChanges = observer((props: {preflight: WorkspacePrefli
  *
  * A page cannot change the size of its own window, but it can open a new window of a given size.
  * The new window starts a new session that opens the stored workspace. New locations that are not
- * saved yet are not in the stored workspace, so the button waits until the user saves them.
+ * saved yet are not in the stored workspace, so the button waits until the user saves them. When the
+ * workspace cannot be saved, the button opens the stored workspace without them.
+ *
+ * @param isDisabled - whether the dialog is busy, for example while it opens the workspace here.
  */
-export const WorkspaceOpenInWindow = observer((props: {preflight: WorkspacePreflightStore; onOpened?: () => void}) => {
+export const WorkspaceOpenInWindow = observer((props: {preflight: WorkspacePreflightStore; isDisabled?: boolean; onOpened?: () => void}) => {
     const {preflight} = props;
     const viewport = useViewportSize();
     const savedWindow = preflight.savedWindow;
     if (!savedWindow || isSameSize(savedWindow.viewport, viewport)) {
         return null;
     }
+    const {width, height} = savedWindow.viewport;
     const size = formatSize(savedWindow.viewport);
     const hasUnsavedChanges = preflight.changeDescriptions.length > 0;
+    const shouldSaveFirst = hasUnsavedChanges && preflight.canSave;
+    // The browser makes a window smaller when it does not fit on the screen. The size of the window
+    // includes its title bar and borders, so add those of this window to the saved viewport.
+    const borderWidth = Math.max(0, window.outerWidth - window.innerWidth);
+    const borderHeight = Math.max(0, window.outerHeight - window.innerHeight);
+    const isLargerThanScreen = width + borderWidth > window.screen.availWidth || height + borderHeight > window.screen.availHeight;
+    const notes = [
+        `Open the workspace in a new ${size} window, the size it was saved in. This window stays open.`,
+        hasUnsavedChanges && !preflight.canSave ? "The new window opens the stored workspace, without the new locations chosen here." : "",
+        preflight.leftOutCount > 0 ? "The new window checks the missing files again." : "",
+        isLargerThanScreen ? "The screen is smaller than this size, so the browser makes the window smaller." : ""
+    ];
     const open = () => {
-        const {width, height} = savedWindow.viewport;
         const opened = window.open(workspaceWindowUrl(window.location.href, preflight.name), "_blank", `popup,width=${Math.round(width)},height=${Math.round(height)}`);
-        if (opened) {
-            props.onOpened?.();
-        } else {
+        if (!opened) {
             AppToaster.show(WarningToast("The browser blocked the new window. Allow pop-ups for CARTA, and try again."));
+            return;
         }
+        if (isLargerThanScreen) {
+            AppToaster.show(WarningToast(`The screen is smaller than ${size}, so the new window is smaller than when the workspace was saved.`));
+        }
+        props.onOpened?.();
     };
     return (
         <Tooltip
             content={
-                <div className="window-tooltip">
-                    {hasUnsavedChanges ? "Save the changes first. The new window opens the stored workspace." : `Open the workspace in a new ${size} window, the size it was saved in. This window stays open.`}
-                </div>
+                <div className="window-tooltip">{props.isDisabled ? "The workspace is opening in this window." : shouldSaveFirst ? "Save the changes first. The new window opens the stored workspace." : notes.filter(Boolean).join(" ")}</div>
             }
             placement="top"
         >
-            <AnchorButton icon="share" text={`Open in ${size} window`} disabled={hasUnsavedChanges} onClick={open} data-testid="workspace-open-window-button" />
+            <AnchorButton icon="share" text={`Open in ${size} window`} disabled={shouldSaveFirst || props.isDisabled} onClick={open} data-testid="workspace-open-window-button" />
         </Tooltip>
     );
 });

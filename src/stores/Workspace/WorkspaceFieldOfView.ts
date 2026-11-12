@@ -54,10 +54,39 @@ export function workspaceWindowUrl(href: string, workspaceName: string): string 
 }
 
 /**
- * Resolves when the size that `read` returns stays the same for two checks in a row, or after
- * `maxWait` milliseconds. The image view takes its new size a few frames after a layout is applied.
+ * Resolves after the browser has drawn two frames, or after `timeout` milliseconds. This gives React
+ * time to show a new layout. The image view may learn its new size a little later, because its size
+ * reaches the store through a resize observer that is throttled. The checks in `waitForStableSize`
+ * cover that time. The timeout ends the wait in a background tab, where the browser does not draw
+ * frames.
  */
-export function waitForStableSize(read: () => ImageViewSize, interval = 50, maxWait = 1000): Promise<void> {
+function afterLayout(timeout = 200): Promise<void> {
+    return new Promise(resolve => {
+        let isDone = false;
+        const finish = () => {
+            if (!isDone) {
+                isDone = true;
+                clearTimeout(timer);
+                resolve();
+            }
+        };
+        const timer = setTimeout(finish, timeout);
+        if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+        }
+    });
+}
+
+/**
+ * Resolves when the image view has its new size. First wait for two frames, and then wait until the
+ * size that `read` returns stays the same for two checks in a row, or until `maxWait` milliseconds
+ * pass. The two steps together cover the time that React takes to show a new layout and the time
+ * that the image view takes to report its size. Without the first step, a layout that takes longer
+ * than two checks to show would still report the size of the old layout, and that size would count
+ * as the new one.
+ */
+export async function waitForStableSize(read: () => ImageViewSize, interval = 50, maxWait = 1000): Promise<void> {
+    await afterLayout();
     return new Promise(resolve => {
         const start = Date.now();
         let last = read();
