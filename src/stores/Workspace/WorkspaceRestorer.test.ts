@@ -830,6 +830,42 @@ describe("WorkspaceRestorer", () => {
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
+    describe("the field of view", () => {
+        /** Restores a workspace saved with a view of `saved`, into a view of 640 by 400 pixels. */
+        async function restoreIntoView(saved: Workspace["imageView"]) {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
+            createSession();
+            const problems = await restore(createWorkspace({imageView: saved}));
+            return {problems, setZoom};
+        }
+
+        test("scales the zoom, so that the same area of the image shows in a smaller view", async () => {
+            const {problems, setZoom} = await restoreIntoView({width: 1280, height: 800, pixelRatio: 1});
+
+            expect(setZoom).toHaveBeenCalledWith(0.5, true);
+            expect(problems).toEqual([]);
+        });
+
+        test("compares the views in screen pixels, because the zoom counts screen pixels", async () => {
+            const {setZoom} = await restoreIntoView({width: 640, height: 400, pixelRatio: 2});
+
+            expect(setZoom).toHaveBeenCalledWith(0.5, true);
+        });
+
+        test("fits the whole saved area in a view of another shape, and reports the sides where more shows", async () => {
+            const {problems, setZoom} = await restoreIntoView({width: 800, height: 400, pixelRatio: 1});
+
+            expect(setZoom).toHaveBeenCalledWith(0.8, true);
+            expect(problems).toEqual(["The image view has another shape than when the workspace was saved (800×400, now 640×400). More of each image shows at the top and bottom."]);
+        });
+
+        test("keeps the saved zoom in a view of the same size, and for a workspace saved without the size", async () => {
+            expect((await restoreIntoView({width: 640, height: 400, pixelRatio: 1})).setZoom).not.toHaveBeenCalled();
+            expect((await restoreIntoView(undefined)).setZoom).not.toHaveBeenCalled();
+        });
+    });
+
     test("gives up on an online query that is still on its way", async () => {
         createSession();
         const cancelPendingQueries = jest.spyOn(CatalogApiService.Instance, "cancelPendingQueries").mockImplementation(jest.fn());

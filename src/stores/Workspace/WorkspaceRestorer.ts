@@ -49,9 +49,10 @@ import {
     type WorkspacePvRequest
 } from "models";
 import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, scaleFrameZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
+import {describeViewShapeChange, getFieldOfViewScale, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -413,6 +414,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.showProgress("Restoring the layout and widgets");
         this.restoreLayout();
         yield* this.restoreViews();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        yield* this.restoreFieldOfView();
         if (!this.isCurrent) {
             return this.issues;
         }
@@ -2517,6 +2522,43 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */
+    /**
+     * Scales the zoom of each image by how the image view changed size since the workspace was
+     * saved, so that the area of each image that showed fits in the view again. Wait for the size
+     * first, because the image view takes its size from the layout. When the view has another
+     * shape, more of each image shows on two sides, and the report names them.
+     */
+    private *restoreFieldOfView(): Generator<Promise<unknown>, void, any> {
+        const saved = this.workspace.imageView;
+        const frame = this.appStore.activeFrame;
+        if (!isValidImageViewSize(saved) || !frame) {
+            return;
+        }
+        yield* awaited(waitForStableSize(() => ({width: frame.renderWidth, height: frame.renderHeight})));
+        if (!this.isCurrent) {
+            return;
+        }
+        // A size of 1 or less means that the image view is not shown.
+        const current = {width: frame.renderWidth, height: frame.renderHeight};
+        if (!(current.width > 1 && current.height > 1)) {
+            return;
+        }
+        const scale = getFieldOfViewScale(saved, current, this.appStore.pixelRatio);
+        if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
+            // A matched image follows the zoom of its reference image, so only the other images are scaled.
+            for (const workspaceFileId of this.frameIds.keys()) {
+                const restored = this.frameOf(workspaceFileId);
+                if (restored && !restored.spatialReference) {
+                    scaleFrameZoom(restored, scale);
+                }
+            }
+        }
+        const message = describeViewShapeChange(saved, current);
+        if (message) {
+            this.report(WorkspaceItemKind.Layout, "", message);
+        }
+    }
+
     private settle(): void {
         // Sync up raster scaling once all images are loaded and configured
         if (this.appStore.rasterScalingReference) {
