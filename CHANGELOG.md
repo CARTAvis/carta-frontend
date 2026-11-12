@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
 * Changed the naming of the Stokes Analysis TSV exports ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
 * Changed the Workspace dialog to check the files and catalog mirrors of a workspace before it opens, so that missing files can be located and saved to the workspace, or left out. Before a save, the dialog lists what the workspace cannot keep. Several workspaces can be deleted together, and a workspace can be saved while images are matched in image coordinates ([#3069](https://github.com/CARTAvis/carta-frontend/issues/3069)).
-* Changed workspaces to restore the same field of view in an image view of another size, and to report when the image view has another shape ([#3071](https://github.com/CARTAvis/carta-frontend/issues/3071)).
+* Changed workspaces to restore the same field of view in an image view of another size, and to show in the Open Workspace dialog the browser window that a workspace was saved in, with a button that opens the workspace in a new window of that size ([#3071](https://github.com/CARTAvis/carta-frontend/issues/3071)).
 
 ## [6.0.0]
 
