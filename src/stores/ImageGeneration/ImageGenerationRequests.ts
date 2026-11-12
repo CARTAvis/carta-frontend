@@ -5,10 +5,16 @@ import {MOMENT_TEXT, type WorkspaceMomentRequest, type WorkspacePvRequest} from 
 import {BackendService} from "services";
 import {type FrameStore} from "stores/Frame";
 
-/** The settings of a moment request, as a workspace saves them. The image and the region are given apart. */
+/**
+ * The settings of a moment request, as a workspace saves them. The image and the region are not
+ * part of these settings.
+ */
 export type MomentSettings = Omit<WorkspaceMomentRequest, "type" | "sourceImageId" | "regionId">;
 
-/** The settings of a PV request, as a workspace saves them. The image and the region are given apart. */
+/**
+ * The settings of a PV request, as a workspace saves them. The image and the region are not part of
+ * these settings.
+ */
 export type PvSettings = Omit<WorkspacePvRequest, "type" | "sourceImageId" | "regionId">;
 
 function isNumber(value: unknown): value is number {
@@ -84,11 +90,12 @@ export interface RegionDataWait<T extends string> {
  * Makes the backend keep the data of a region of an image, and waits until it does.
  *
  * The backend makes moments over a region only when it already keeps the region data of the
- * image. It starts to keep this data the first time that a widget asks for statistics, a histogram
- * or a profile of the region. When no widget has asked yet, for example during a workspace restore
- * or in a script, the moment request fails. So ask for one statistic of the region, wait for the
- * answer, and then cancel that request. Sending the request alone is not enough, because the
- * backend handles requests out of order, and the moment request could arrive first.
+ * image. The backend starts to keep this data when a widget first asks for statistics, a
+ * histogram or a profile of the region. When no widget has asked yet, for example during a
+ * workspace restore or in a script, the moment request fails. This function asks for one statistic
+ * of the region, waits for the answer, and then cancels that request. Sending the request without
+ * waiting is not enough. The backend handles requests out of order, so the moment request could
+ * arrive first.
  *
  * The wait has no time limit. It ends when the backend answers, when the image is closed, or when
  * `stop` is called.
@@ -141,8 +148,9 @@ export interface ImageRequestOptions {
     isStillWanted?: () => boolean;
     /**
      * Whether the request throws the error of the backend, and throws an `ImageRequestCancelledError`
-     * when it is cancelled. Otherwise the request returns no images. The default is true during a
-     * workspace restore, and false otherwise.
+     * when the request is cancelled. Otherwise the request returns no images. When this option is
+     * left out, the request throws the error of the backend only during a workspace restore, and
+     * never throws an `ImageRequestCancelledError`.
      */
     shouldThrow?: boolean;
 }

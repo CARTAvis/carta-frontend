@@ -43,7 +43,7 @@ describe("AppStore requests that make moment and PV images", () => {
         await expect(appStore.requestPV(pvMessage, frame, true)).resolves.toBeUndefined();
         expect(AppToaster.show).toHaveBeenCalledTimes(1);
         await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBe("PV generation failed");
-        // A thrown error is shown by the caller, not by a toast.
+        // A thrown error shows no toast.
         expect(AppToaster.show).toHaveBeenCalledTimes(1);
     });
 

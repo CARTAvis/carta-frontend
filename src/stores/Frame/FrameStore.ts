@@ -2676,8 +2676,10 @@ export class FrameStore {
 
     /**
      * Returns the index of the channel nearest to a spectral value in the given spectral type, unit
-     * and system. The spectral coordinate that the image shows does not change. For example, a
-     * script can give a velocity range for an image that shows frequencies.
+     * and system. A value outside the channels gives the first or last channel. Returns nothing
+     * when the value is not a number or the image has no channel information. The spectral
+     * coordinate that the image shows does not change. For example, a script can give a velocity
+     * range for an image that shows frequencies.
      */
     public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {

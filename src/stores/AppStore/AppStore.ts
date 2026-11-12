@@ -1630,9 +1630,10 @@ export class AppStore {
      * Request moment images of an image.
      *
      * @returns the moment images added to the session.
-     * @throws When the spectral axis is not linear. When `options.shouldThrow` is true, also the
-     *         error of the backend, and an `ImageRequestCancelledError` when the request is
-     *         cancelled.
+     * @throws When the spectral axis is not linear and a moment needs a linear axis. Also the
+     *         error of the backend when `options.shouldThrow` is true, or during a workspace
+     *         restore when `options.shouldThrow` is left out. Also an `ImageRequestCancelledError`
+     *         when the request is cancelled and `options.shouldThrow` is true.
      */
     @flow.bound
     *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, options: ImageRequestOptions = {}) {
@@ -1727,9 +1728,11 @@ export class AppStore {
      * Request a PV image of an image.
      *
      * @returns the PV image added to the session.
-     * @throws When the spectral axis is not linear. When `options.shouldThrow` is true, also the
-     *         error of the backend, and an `ImageRequestCancelledError` when the request is
-     *         cancelled. A toast shows the error of the backend only when it is not thrown.
+     * @throws When the spectral axis is not linear. Also the error of the backend when
+     *         `options.shouldThrow` is true, or during a workspace restore when
+     *         `options.shouldThrow` is left out. Also an `ImageRequestCancelledError` when the
+     *         request is cancelled and `options.shouldThrow` is true. A toast shows the error of
+     *         the backend only when the error is not thrown.
      */
     @flow.bound
     *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, options: ImageRequestOptions = {}) {
