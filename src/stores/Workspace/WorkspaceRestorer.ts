@@ -288,6 +288,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
+    /**
+     * The device pixel ratio when the saved zoom of each image was applied, by workspace image ID.
+     * When the window moves to a screen with another ratio later, the app scales the zoom by itself.
+     */
+    private readonly zoomPixelRatios = new Map<number, number>();
+
     /** The workspace IDs of the images that the user chose to open the workspace without. */
     private readonly leftOutImageIds: Set<number>;
     /** The workspace IDs of the catalogs that the user chose to open the workspace without. */
@@ -1110,6 +1116,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.center = fileInfo.center;
             }
             restoreWorkspaceZoom(frame, fileInfo);
+            this.zoomPixelRatios.set(fileInfo.id, this.appStore.devicePixelRatio);
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
@@ -2514,7 +2521,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Scales the zoom of each image by how the image view changed size since the workspace was
      * saved, so that the area of each image that showed fits in the view again. Wait for the size
-     * first, because the image view takes its size from the layout. When the view has another
+     * first, because the image view takes its size from the layout. For an image that is stretched
+     * to the shape of the view, such as a PV image, only the height of the view counts. When the view has another
      * shape, more of each image shows on two sides. The report does not say so: the Open Workspace
      * dialog shows the saved sizes before the workspace opens.
      */
@@ -2538,14 +2546,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!(current.width > 1 && current.height > 1)) {
             return;
         }
-        const scale = getFieldOfViewScale(saved, current, this.appStore.devicePixelRatio);
-        if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
-            // A matched image follows the zoom of its reference image, so only the other images are scaled.
-            for (const workspaceFileId of this.frameIds.keys()) {
-                const restored = this.frameOf(workspaceFileId);
-                if (restored && !restored.spatialReference) {
-                    scaleFrameZoom(restored, scale);
-                }
+        // A matched image follows the zoom of its reference image, so only the other images are scaled.
+        for (const workspaceFileId of this.frameIds.keys()) {
+            const restored = this.frameOf(workspaceFileId);
+            if (!restored || restored.spatialReference) {
+                continue;
+            }
+            const pixelRatio = this.zoomPixelRatios.get(workspaceFileId) ?? this.appStore.devicePixelRatio;
+            const scale = getFieldOfViewScale(saved, current, pixelRatio, restored.isStretchedToView);
+            if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
+                scaleFrameZoom(restored, scale);
             }
         }
     }

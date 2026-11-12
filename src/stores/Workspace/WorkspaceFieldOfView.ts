@@ -20,13 +20,18 @@ export function isValidImageViewSize(size: unknown): size is WorkspaceImageViewS
  * Returns the factor that scales the zoom of an image, so that the area of the image that showed in
  * the saved view fits in the current view. The zoom counts screen pixels, so the sizes are compared
  * in screen pixels. The smaller of the two factors is used, so that nothing that showed is cut off.
+ * An image that is stretched to the shape of the view, such as a PV image, shows as much on both
+ * axes as the height of the view allows. For such an image, set `isStretchedToView`, and only the
+ * heights are compared.
+ *
+ * @param devicePixelRatio - the device pixel ratio when the saved zoom was applied.
  */
-export function getFieldOfViewScale(saved: WorkspaceImageViewSize, current: ImageViewSize, devicePixelRatio: number): number {
+export function getFieldOfViewScale(saved: WorkspaceImageViewSize, current: ImageViewSize, devicePixelRatio: number, isStretchedToView = false): number {
     const savedPixelRatio = isPositive(saved.devicePixelRatio) ? saved.devicePixelRatio : 1;
     const currentPixelRatio = isPositive(devicePixelRatio) ? devicePixelRatio : 1;
     const scaleX = (current.width * currentPixelRatio) / (saved.width * savedPixelRatio);
     const scaleY = (current.height * currentPixelRatio) / (saved.height * savedPixelRatio);
-    return Math.min(scaleX, scaleY);
+    return isStretchedToView ? scaleY : Math.min(scaleX, scaleY);
 }
 
 /** Returns a size as "1600×900", in whole pixels. */
