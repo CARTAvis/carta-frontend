@@ -293,7 +293,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
             : []),
         ...(preflight.restoredSettings.length
             ? [
-                  groupNode("settings", "settings", "Also restored", preflight.restoredSettings.length, undefined, "", [
+                  groupNode("settings", "settings", "Others", preflight.restoredSettings.length, undefined, "", [
                       leaf(
                           "settings-list",
                           <div className="restored-settings" data-testid="workspace-info-settings">
