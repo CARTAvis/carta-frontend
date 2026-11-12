@@ -23,8 +23,8 @@ describe("WorkspaceFieldOfView", () => {
     });
 
     test("opens the workspace in a new window, and keeps only the parameters that connect to the server", () => {
-        expect(workspaceWindowUrl("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&file=a.fits&folder=data&workspace=old", "my view")).toBe("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&workspace=my+view");
-        expect(workspaceWindowUrl("http://localhost:3002/?key=abc", "ws")).toBe("http://localhost:3002/?workspace=ws");
+        expect(workspaceWindowUrl("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&file=a.fits&folder=data&workspace=old", "my view")).toBe("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&workspace=my+view&checkWindowSize=true");
+        expect(workspaceWindowUrl("http://localhost:3002/?key=abc", "ws")).toBe("http://localhost:3002/?workspace=ws&checkWindowSize=true");
     });
 
     test("waits for the size of a layout that takes longer to show than two checks", async () => {

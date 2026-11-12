@@ -40,16 +40,24 @@ export function isSameSize(a: ImageViewSize, b: ImageViewSize): boolean {
 }
 
 /**
- * Returns the address of a new CARTA window that opens the workspace `workspaceName` when it starts.
- * The address keeps the parameters that connect to the server, such as `socketUrl`, and drops the
- * parameters that open other files or another workspace.
+ * The parameter of a CARTA address that asks the restore to check the size of the browser window.
+ * The window that the Open Workspace dialog opens at the saved size has it.
+ */
+export const CHECK_WINDOW_SIZE_PARAM = "checkWindowSize";
+
+/**
+ * Returns the address of a new CARTA window that opens the workspace `workspaceName` when it starts,
+ * and checks that the window has the saved size. The address keeps the parameters that connect to
+ * the server, such as `socketUrl`, and drops the parameters that open other files or another
+ * workspace.
  */
 export function workspaceWindowUrl(href: string, workspaceName: string): string {
     const url = new URL(href);
-    for (const name of ["key", "workspace", "file", "files", "folder"]) {
+    for (const name of ["key", "workspace", "file", "files", "folder", CHECK_WINDOW_SIZE_PARAM]) {
         url.searchParams.delete(name);
     }
     url.searchParams.set("workspace", workspaceName);
+    url.searchParams.set(CHECK_WINDOW_SIZE_PARAM, "true");
     return url.toString();
 }
 
@@ -58,7 +66,8 @@ export function workspaceWindowUrl(href: string, workspaceName: string): string 
  * time to show a new layout. The image view may learn its new size a little later, because its size
  * reaches the store through a resize observer that is throttled. The checks in `waitForStableSize`
  * cover that time. The timeout ends the wait in a background tab, where the browser does not draw
- * frames.
+ * frames. A background tab does not report a new size either, so the caller checks
+ * `document.hidden` before it uses the size.
  */
 function afterLayout(timeout = 200): Promise<void> {
     return new Promise(resolve => {
