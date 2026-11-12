@@ -771,6 +771,16 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
     });
 
+    test("saves the size of the image view, and leaves it out when the image view is not shown", () => {
+        const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
+        createSession({frames: [frame], activeFrame: frame, pixelRatio: 2});
+        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toEqual({width: 640, height: 400, pixelRatio: 2});
+
+        const hidden = createFrame(0, {renderWidth: 1, renderHeight: 1});
+        createSession({frames: [hidden], activeFrame: hidden, pixelRatio: 2});
+        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
+    });
+
     test("saves the custom texts of the WCS overlay, and the custom title and colorbar label of each image, but not the default ones", () => {
         const {frame} = createSession();
         Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits", colorbarLabelCustomText: "Jy/beam", defaultColorbarLabelText: "Jy/beam"});

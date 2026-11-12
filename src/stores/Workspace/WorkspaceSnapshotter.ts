@@ -683,6 +683,11 @@ export class WorkspaceSnapshotter {
         });
         // The custom texts describe the images, so the workspace saves them.
         this.workspace.wcsOverlay = this.appStore.overlaySettings.toTextConfig();
+        // A size of 1 or less means that the image view is not shown, so the size is left out.
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.renderWidth > 1 && frame.renderHeight > 1) {
+            this.workspace.imageView = {width: frame.renderWidth, height: frame.renderHeight, pixelRatio: this.appStore.pixelRatio};
+        }
     }
 
     /**

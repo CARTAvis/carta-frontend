@@ -22,6 +22,7 @@ const RESTORED_SETTINGS: {[Field in keyof Required<Workspace>]: ((workspace: Wor
     selectedFile: null,
     catalogMirrors: null,
     layout: workspace => (workspace.layout ? "Layout" : undefined),
+    imageView: null,
     references: workspace => (workspace.references && Object.values(workspace.references).some(id => id !== undefined) ? "Image matching" : undefined),
     spectralMatchingType: null,
     colorBlendingImages: workspace => (workspace.colorBlendingImages?.length ? "Color blending" : undefined),

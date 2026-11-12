@@ -1020,8 +1020,25 @@ export interface Workspace {
     imageFitting?: WorkspaceImageFitting;
     wcsOverlay?: WorkspaceWcsOverlayText;
     layout?: WorkspaceLayout;
+    /**
+     * The size of the image view when the workspace was saved. A restore scales the zoom by how the
+     * size changed, so that the same area of each image shows. Left out by a workspace saved before
+     * it kept the size. A restore then uses the saved zoom as it is.
+     */
+    imageView?: WorkspaceImageViewSize;
     thumbnail?: string;
     date?: number;
+}
+
+/**
+ * The area of one image panel that images are drawn in, without the padding around the axes, in CSS
+ * pixels. In channel map mode it is the area of one channel. `pixelRatio` is the device pixel ratio
+ * of the screen, because the zoom counts screen pixels.
+ */
+export interface WorkspaceImageViewSize {
+    width: number;
+    height: number;
+    pixelRatio: number;
 }
 
 /**
