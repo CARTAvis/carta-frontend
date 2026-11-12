@@ -111,7 +111,10 @@ function createSession(overrides: Record<string, any> = {}) {
                 createResidualImage: false
             }))
         },
-        layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        layoutStore: {
+            isComponentHidden: jest.fn((_component: string) => false),
+            currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))
+        },
         overlaySettings: {
             toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: false}}))
         },
@@ -780,6 +783,15 @@ describe("WorkspaceSnapshotter", () => {
         const hidden = createFrame(0, {renderWidth: 1, renderHeight: 1});
         createSession({frames: [hidden], activeFrame: hidden, devicePixelRatio: 2});
         expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
+    });
+
+    test("leaves out the size of an image view that is closed or behind another tab, because it keeps the size from when it was last shown", () => {
+        const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
+        const {appStore} = createSession({frames: [frame], activeFrame: frame, devicePixelRatio: 1});
+        appStore.layoutStore.isComponentHidden.mockReturnValue(true);
+
+        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
+        expect(appStore.layoutStore.isComponentHidden).toHaveBeenCalledWith("image-view");
     });
 
     test("saves the size of an image in the image view while a PV preview is active, because the preview is drawn in the PV generator", () => {
