@@ -1,4 +1,4 @@
-import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
+import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node, type TabNode} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -156,6 +156,25 @@ export class LayoutStore {
         this.currentLayoutName = layoutName;
 
         return true;
+    };
+
+    /**
+     * Returns whether the layout shows no widget of the kind `component`, for example when the widget
+     * is closed or behind another tab. Returns false when there is no layout yet, because it is then
+     * not known. The layout marks a widget as shown when it draws it, so call this after the layout
+     * is drawn.
+     */
+    public isComponentHidden = (component: string): boolean => {
+        if (!this.layoutModel) {
+            return false;
+        }
+        let isShown = false;
+        this.layoutModel.visitNodes(node => {
+            if (node.getType() === "tab" && (node as TabNode).getComponent() === component && (node as TabNode).isVisible()) {
+                isShown = true;
+            }
+        });
+        return !isShown;
     };
 
     /** The layout the session is showing, in the form a saved layout and a workspace both hold it. */

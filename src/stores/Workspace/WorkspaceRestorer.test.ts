@@ -265,6 +265,7 @@ function createSession() {
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
         },
         layoutStore: {
+            isComponentHidden: jest.fn((_component: string) => false),
             applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _problems?: string[]) => {
                 calls.push("applyLayout");
                 return true;
@@ -890,6 +891,28 @@ describe("WorkspaceRestorer", () => {
 
             await restore(createWorkspace({imageView: {width: 1000, height: 500, devicePixelRatio: 1}}));
 
+            expect(setZoom).not.toHaveBeenCalled();
+        });
+
+        test("scales both axis zooms of a stretched image by the height of the view", async () => {
+            const setAxisZoom = jest.fn();
+            frameOverrides = {renderWidth: 500, renderHeight: 250, isStretchedToView: true, isAxisZoomable: true, effectiveZoomLevel: {x: 2, y: 4}, setAxisZoom};
+            createSession();
+
+            await restore(createWorkspace({imageView: {width: 1000, height: 500, devicePixelRatio: 1}}));
+
+            expect(setAxisZoom).toHaveBeenLastCalledWith(1, 2);
+        });
+
+        test("keeps the saved zoom when the image view is closed or behind another tab, because it does not report its new size", async () => {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
+            const {appStore} = createSession();
+            appStore.layoutStore.isComponentHidden.mockReturnValue(true);
+
+            await restore(createWorkspace({imageView: {width: 1280, height: 800, devicePixelRatio: 1}}));
+
+            expect(appStore.layoutStore.isComponentHidden).toHaveBeenCalledWith("image-view");
             expect(setZoom).not.toHaveBeenCalled();
         });
 

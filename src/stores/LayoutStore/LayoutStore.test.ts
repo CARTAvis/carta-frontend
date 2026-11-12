@@ -126,3 +126,44 @@ describe("LayoutStore layout configs", () => {
         MOCK_APP_STORE.widgetsStore.toWidgetSettingsConfig.mockReset();
     });
 });
+
+describe("LayoutStore.isComponentHidden", () => {
+    const layoutStore = LayoutStore.Instance;
+
+    /** Sets a layout whose tabs show the widgets `shown` and hide the widgets `hidden`. */
+    function setTabs(shown: string[], hidden: string[]) {
+        const tabs = [...shown.map(component => ({component, isVisible: true})), ...hidden.map(component => ({component, isVisible: false}))];
+        const model = {
+            visitNodes: (visit: (node: unknown) => void) => {
+                visit({getType: () => "row"});
+                tabs.forEach(tab => visit({getType: () => "tab", getComponent: () => tab.component, isVisible: () => tab.isVisible}));
+            }
+        };
+        runInAction(() => {
+            layoutStore.layoutModel = model as unknown as Model;
+        });
+    }
+
+    afterEach(() => {
+        runInAction(() => {
+            layoutStore.layoutModel = null;
+        });
+    });
+
+    test("says a widget is hidden when it is behind another tab or not in the layout", () => {
+        setTabs(["histogram"], ["image-view"]);
+        expect(layoutStore.isComponentHidden("image-view")).toBe(true);
+        expect(layoutStore.isComponentHidden("animator")).toBe(true);
+        expect(layoutStore.isComponentHidden("histogram")).toBe(false);
+    });
+
+    test("says a widget is shown when one of its tabs is shown, and when there is no layout yet", () => {
+        setTabs(["image-view"], ["image-view"]);
+        expect(layoutStore.isComponentHidden("image-view")).toBe(false);
+
+        runInAction(() => {
+            layoutStore.layoutModel = null;
+        });
+        expect(layoutStore.isComponentHidden("image-view")).toBe(false);
+    });
+});

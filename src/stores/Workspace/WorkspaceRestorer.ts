@@ -2536,9 +2536,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         yield* awaited(waitForStableSize(() => ({width: frame.renderWidth, height: frame.renderHeight})));
-        // A background tab does not report the new size of the image view. Keep the saved zoom
-        // there, because a scale from the old size would be wrong.
-        if (!this.isCurrent || document.hidden) {
+        // A background tab does not report the new size of the image view. An image view that is
+        // closed or behind another tab does not report it either. Keep the saved zoom then, because
+        // a scale from the old size would be wrong.
+        if (!this.isCurrent || document.hidden || this.appStore.layoutStore.isComponentHidden("image-view")) {
             return;
         }
         // A size of 1 or less means that the image view is not shown.
