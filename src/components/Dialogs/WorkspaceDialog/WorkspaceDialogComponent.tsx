@@ -432,7 +432,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
                     <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
-                    {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} onOpened={handleCloseClicked} />}
+                    {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} isDisabled={isFetching} onOpened={handleCloseClicked} />}
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />
                     ) : (
