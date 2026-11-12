@@ -1,6 +1,6 @@
 import {describe, expect, test} from "@jest/globals";
 
-import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, workspaceWindowUrl} from "./WorkspaceFieldOfView";
+import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize, workspaceWindowUrl} from "./WorkspaceFieldOfView";
 
 describe("WorkspaceFieldOfView", () => {
     test("uses the smaller scale of the width and the height, so that the saved area fits", () => {
@@ -25,5 +25,24 @@ describe("WorkspaceFieldOfView", () => {
     test("opens the workspace in a new window, and keeps only the parameters that connect to the server", () => {
         expect(workspaceWindowUrl("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&file=a.fits&folder=data&workspace=old", "my view")).toBe("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&workspace=my+view");
         expect(workspaceWindowUrl("http://localhost:3002/?key=abc", "ws")).toBe("http://localhost:3002/?workspace=ws");
+    });
+
+    test("waits for the size of a layout that takes longer to show than two checks", async () => {
+        let size = {width: 1600, height: 900};
+        let lastRead = size;
+        setTimeout(() => (size = {width: 800, height: 450}), 120);
+
+        await waitForStableSize(() => (lastRead = size), 50, 1000);
+
+        expect(lastRead).toEqual({width: 800, height: 450});
+    });
+
+    test("gives up after the longest wait when the size keeps changing", async () => {
+        let width = 100;
+        const start = Date.now();
+
+        await waitForStableSize(() => ({width: width++, height: 100}), 20, 200);
+
+        expect(Date.now() - start).toBeGreaterThanOrEqual(200);
     });
 });

@@ -824,11 +824,12 @@ describe("WorkspaceRestorer", () => {
     });
 
     describe("the field of view", () => {
-        /** Restores a workspace saved with a view of `saved`, into a view of 640 by 400 pixels. */
-        async function restoreIntoView(saved: Workspace["imageView"]) {
+        /** Restores a workspace saved with a view of `saved`, into a view of 640 by 400 pixels, or of `current`. */
+        async function restoreIntoView(saved: Workspace["imageView"], current: {width: number; height: number; devicePixelRatio?: number} = {width: 640, height: 400}) {
             const setZoom = jest.fn();
-            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
-            createSession();
+            frameOverrides = {renderWidth: current.width, renderHeight: current.height, setZoom};
+            const {appStore} = createSession();
+            (appStore as unknown as {devicePixelRatio?: number}).devicePixelRatio = current.devicePixelRatio;
             const problems = await restore(createWorkspace({imageView: saved}));
             return {problems, setZoom};
         }
@@ -857,6 +858,51 @@ describe("WorkspaceRestorer", () => {
             const {problems} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 2, viewport: {width: window.innerWidth + 100, height: window.innerHeight}});
 
             expect(problems).toEqual([]);
+        });
+
+        test("compares with the device pixel ratio of this screen", async () => {
+            const {setZoom} = await restoreIntoView({width: 640, height: 400, devicePixelRatio: 1}, {width: 640, height: 400, devicePixelRatio: 2});
+
+            expect(setZoom).toHaveBeenCalledWith(2, true);
+        });
+
+        test("scales only the reference image of spatially matched images, because the matched images follow it", async () => {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
+            const {appStore} = createSession();
+            appStore.setSpatialMatchingEnabled.mockImplementation((frame: {spatialReference?: unknown}, isEnabled: boolean) => {
+                frame.spatialReference = isEnabled ? appStore.spatialReference : undefined;
+            });
+            const matched = {id: 2, source: {type: "file" as const, filename: "other.fits"}, references: {spatial: 1}};
+
+            await restore(createWorkspace({files: [IMAGE, matched], references: {spatial: 1}, imageView: {width: 1280, height: 800, devicePixelRatio: 1}}));
+
+            const scaledFileIds = setZoom.mock.contexts.map(frame => (frame as {frameInfo: {fileId: number}}).frameInfo.fileId);
+            expect(appStore.frames[1].spatialReference).toBe(appStore.frames[0]);
+            expect(scaledFileIds).toEqual([appStore.frames[0].frameInfo.fileId]);
+        });
+
+        test("leaves the zoom alone when the image view is not shown", async () => {
+            expect((await restoreIntoView({width: 1280, height: 800, devicePixelRatio: 1}, {width: 1, height: 1})).setZoom).not.toHaveBeenCalled();
+        });
+
+        test("leaves the zoom alone when a newer load supersedes the restore while it waits for the size", async () => {
+            const setZoom = jest.fn();
+            frameOverrides = {renderWidth: 640, renderHeight: 400, setZoom};
+            const {appStore} = createSession();
+            // The newer load starts in the first frame that the wait asks for. The layout is applied
+            // just before the wait, so a frame asked for earlier would fail this check.
+            let hasLayoutBeforeFrame = false;
+            jest.spyOn(window, "requestAnimationFrame").mockImplementationOnce(callback => {
+                hasLayoutBeforeFrame = appStore.layoutStore.applyLayoutConfig.mock.calls.length > 0;
+                WorkspaceRestorer.claimGeneration();
+                return window.setTimeout(() => callback(0), 0);
+            });
+
+            await restore(createWorkspace({layout: LAYOUT, imageView: {width: 1280, height: 800, devicePixelRatio: 1}}));
+
+            expect(hasLayoutBeforeFrame).toBe(true);
+            expect(setZoom).not.toHaveBeenCalled();
         });
 
         test("keeps the saved zoom in a view of the same size, and for a workspace saved without the size", async () => {

@@ -783,6 +783,14 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
     });
 
+    test("saves the size of an image in the image view while a PV preview is active, because the preview is drawn in the PV generator", () => {
+        const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
+        const preview = createFrame(5, {renderWidth: 300, renderHeight: 200, isPreview: true});
+        createSession({frames: [frame], activeFrame: preview, devicePixelRatio: 1, fullViewWidth: 700, fullViewHeight: 480});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toMatchObject({width: 640, height: 400});
+    });
+
     test("saves the custom texts of the WCS overlay, and the custom title and colorbar label of each image, but not the default ones", () => {
         const {frame} = createSession();
         Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits", colorbarLabelCustomText: "Jy/beam", defaultColorbarLabelText: "Jy/beam"});

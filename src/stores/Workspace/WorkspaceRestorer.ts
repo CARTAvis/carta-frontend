@@ -2509,7 +2509,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return this.frameIds.get(workspaceImageId);
     }
 
-    /** Stage 9: settle the state that depends on everything else already being in place. */
     /**
      * Scales the zoom of each image by how the image view changed size since the workspace was
      * saved, so that the area of each image that showed fits in the view again. Wait for the size
@@ -2519,7 +2518,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private *restoreFieldOfView(): Generator<Promise<unknown>, void, any> {
         const saved = this.workspace.imageView;
-        const frame = this.appStore.activeFrame;
+        // A PV preview is drawn in the PV generator, not in the image view. The frames of the image
+        // list do not include previews.
+        const activeFrame = this.appStore.activeFrame;
+        const frame = activeFrame && !activeFrame.isPreview ? activeFrame : this.appStore.frames[0];
         if (!isValidImageViewSize(saved) || !frame) {
             return;
         }
@@ -2544,6 +2546,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
+    /** Stage 9: settle the state that depends on everything else already being in place. */
     private settle(): void {
         // Sync up raster scaling once all images are loaded and configured
         if (this.appStore.rasterScalingReference) {
