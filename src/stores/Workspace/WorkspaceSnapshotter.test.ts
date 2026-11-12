@@ -773,7 +773,9 @@ describe("WorkspaceSnapshotter", () => {
     test("saves the size of the image view, and leaves it out when the image view is not shown", () => {
         const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
         createSession({frames: [frame], activeFrame: frame, pixelRatio: 2});
-        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toEqual({width: 640, height: 400, pixelRatio: 2});
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        expect(workspace.imageView).toEqual({width: 640, height: 400, pixelRatio: 2});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
 
         const hidden = createFrame(0, {renderWidth: 1, renderHeight: 1});
         createSession({frames: [hidden], activeFrame: hidden, pixelRatio: 2});
