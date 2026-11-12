@@ -19,13 +19,20 @@ export interface SpectralRangeSettings {
     max: number;
     /** The spectral type of the values. The default is the type that the image shows. */
     type?: SpectralType;
-    /** The unit of the values. The default is the unit that the image shows, or the first unit of `type`. */
+    /**
+     * The unit of the values. The default is the unit that the image shows, when `type` is the type
+     * that the image shows. Otherwise the default is the first unit that the image supports for
+     * `type`.
+     */
     unit?: SpectralUnit;
     /** The spectral system of the values. The default is the system that the image shows. */
     system?: SpectralSystem;
 }
 
-/** The channels that a job uses. Give `channels` or `spectralRange`, not both. */
+/**
+ * The channels that a job uses. Give `channels` or `spectralRange`, not both. Give neither to use
+ * all channels.
+ */
 interface ChannelSettings {
     /** The first and last channel, as channel indices. */
     channels?: {min: number; max: number};
@@ -37,9 +44,9 @@ export interface MomentJobSettings extends ChannelSettings {
     moments: CARTA.Moment[];
     /** The closed region that the moments are made over. The default is the whole image. */
     regionId?: number;
-    /** The default is no mask. */
+    /** How the pixel range masks the cube. The default is no mask. */
     mask?: CARTA.MomentMask;
-    /** The pixel range of the mask. It is needed only with a mask. */
+    /** The pixel range of the mask. Give it when `mask` is set. The default is from 0 to 0. */
     pixelRange?: {min: number; max: number};
     /** Whether to keep the moment images made before. The default is true. */
     keep?: boolean;
@@ -64,7 +71,10 @@ export interface ImageGenerationJobState {
     /** The file ID of the image that the images are made from. */
     fileId: number;
     status: ImageGenerationJobStatus;
-    /** The progress of the job, from 0 to 1. */
+    /**
+     * The progress of the job, from 0 to 1. It is 0 while the job waits for the region data, and
+     * after the job fails or is cancelled.
+     */
     progress: number;
     /** The images that the job made. For a moment image, `moment` is the moment that it shows. */
     images: {fileId: number; moment?: CARTA.Moment}[];
@@ -72,7 +82,10 @@ export interface ImageGenerationJobState {
     error?: string;
 }
 
-/** Returns the message of an error, without the final period. */
+/**
+ * Returns the message of an error, without the final period. Returns "the request failed" when the
+ * error has no message.
+ */
 function reasonOf(err: unknown): string {
     const text = (err instanceof Error ? err.message : String(err ?? "")).trim().replace(/\.$/, "");
     return text || "the request failed";
@@ -82,9 +95,12 @@ class ImageGenerationJob {
     @observable status: ImageGenerationJobStatus = "running";
     @observable images: FrameStore[] = [];
     @observable error: string | undefined = undefined;
-    /** Ends the wait for the region data, while the job waits for it. */
+    /** Ends the wait for the region data. It is set only while the job waits for the data. */
     stopWaiting: (() => void) | undefined = undefined;
-    /** Whether the backend makes the images. Then cancelling the job cancels the backend request. */
+    /**
+     * Whether the request that makes the images has been sent. While it is true, cancelling the job
+     * also cancels the backend request.
+     */
     isRequesting = false;
 
     constructor(
@@ -149,8 +165,9 @@ export class ImageGenerationJobStore {
      * Starts a job that makes moment images of the image with the file ID `fileId`.
      *
      * @returns the ID of the job.
-     * @throws When the image is not open, when it already makes moment images, or when the
-     *         settings are not valid.
+     * @throws When a workspace is loading, when the image is not open, when it already makes
+     *         moment images, when a moment needs a linear spectral axis that the image does not
+     *         have, or when the settings are not valid.
      */
     startMoments = (fileId: number, settings: MomentJobSettings): number => {
         const frame = this.idleFrame(fileId, "moment");
@@ -181,8 +198,8 @@ export class ImageGenerationJobStore {
      * Starts a job that makes a PV image of the image with the file ID `fileId`.
      *
      * @returns the ID of the job.
-     * @throws When the image is not open, when it already makes a PV image, or when the settings
-     *         are not valid.
+     * @throws When a workspace is loading, when the image is not open, when it already makes a PV
+     *         image, when its spectral axis is not linear, or when the settings are not valid.
      */
     startPv = (fileId: number, settings: PvJobSettings): number => {
         const frame = this.idleFrame(fileId, "pv");
@@ -237,7 +254,12 @@ export class ImageGenerationJobStore {
         return job;
     }
 
-    /** Returns the open image with the file ID `fileId`, when it does not make images of the kind `kind` already. */
+    /**
+     * Returns the open image with the file ID `fileId`.
+     *
+     * @throws When a workspace is loading, when the image is not open, or when the image already
+     *         makes images of the kind `kind`.
+     */
     private idleFrame(fileId: number, kind: ImageGenerationJobKind): FrameStore {
         if (this.appStore.isLoadingWorkspace) {
             throw new Error("A workspace is loading");
@@ -259,7 +281,7 @@ export class ImageGenerationJobStore {
         return job;
     }
 
-    /** Ends a running job, and stops what it waits for. */
+    /** Ends a running job. Stops the wait for the region data, or cancels the backend request. */
     private stop(job: ImageGenerationJob, status: "failed" | "cancelled", error?: string) {
         if (!job.isRunning) {
             return;
@@ -277,7 +299,8 @@ export class ImageGenerationJobStore {
     }
 
     /**
-     * Runs a job: waits for the region data when the job needs it, and then makes the images.
+     * Runs a job. When the job needs the region data, waits for the data first. Then makes the
+     * images.
      * The job fails when its image is closed, when its region is deleted, or when a workspace
      * starts to load.
      *

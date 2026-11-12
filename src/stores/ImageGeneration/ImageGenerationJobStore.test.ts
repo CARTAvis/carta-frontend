@@ -87,7 +87,7 @@ function createSession() {
         cancelRequestingMoment: jest.fn(),
         cancelRequestingPV: jest.fn()
     };
-    // The backend answers a statistics request for a region with that region's statistics.
+    // The backend answers a statistics request for a region with the statistics of that region.
     const statsStream = new Subject<{fileId: number; regionId: number}>();
     const backend = {
         statsStream,
