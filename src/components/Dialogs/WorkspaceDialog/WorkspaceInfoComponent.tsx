@@ -4,8 +4,10 @@ import {Alert, AnchorButton, Button, Classes, HTMLSelect, Icon, type IconName, I
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {AppToaster, WarningToast} from "components/Shared";
 import {type CatalogDatabase} from "enums";
 import {AppStore, MirrorSiteStore} from "stores";
+import {formatSize, isSameSize, workspaceWindowUrl} from "stores/Workspace/WorkspaceFieldOfView";
 import {type WorkspaceCheckedFile, type WorkspaceCheckLevel, type WorkspaceFileStatus, type WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
 
 import "./WorkspaceInfoComponent.scss";
@@ -60,6 +62,17 @@ const LevelIcon = (props: {level: WorkspaceCheckLevel; text?: string}) => {
     );
 };
 
+/** Returns the size of the browser viewport, and updates it when the window changes size. */
+function useViewportSize(): {width: number; height: number} {
+    const [size, setSize] = useState({width: window.innerWidth, height: window.innerHeight});
+    useEffect(() => {
+        const update = () => setSize({width: window.innerWidth, height: window.innerHeight});
+        window.addEventListener("resize", update);
+        return () => window.removeEventListener("resize", update);
+    }, []);
+    return size;
+}
+
 interface FolderMove {
     from: string;
     to: string;
@@ -78,6 +91,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
     // The nodes that the user opened or closed. A group with a red mark opens by itself until the user closes it.
     const [toggled, setToggled] = useState<Map<string, boolean>>(new Map());
     const appStore = AppStore.Instance;
+    const viewport = useViewportSize();
 
     useEffect(() => setToggled(new Map()), [preflight]);
 
@@ -246,11 +260,11 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
     const missingCatalogs = catalogs.filter(catalog => catalog.file && preflight.levelOfCatalog(catalog) === "left-out").length;
     const hasMirrorNoAnswer = catalogs.some(catalog => !catalog.file && preflight.levelOfCatalog(catalog) === "left-out");
     const summaryOf = (level: WorkspaceCheckLevel, parts: string[]) => (level === "checking" ? "Checking" : parts.filter(Boolean).join(", ") || "All found");
-    const groupNode = (id: string, icon: IconName, title: string, count: number, level: WorkspaceCheckLevel | undefined, summary: string, childNodes: TreeNodeInfo[]): TreeNodeInfo => ({
+    // A group without a level has nothing to check. By default, it shows its contents until the user closes it.
+    const groupNode = (id: string, icon: IconName, title: string, count: number, level: WorkspaceCheckLevel | undefined, summary: string, childNodes: TreeNodeInfo[], isOpenByDefault = level === undefined): TreeNodeInfo => ({
         id,
         hasCaret: true,
-        // A group without a level has nothing to check. It shows its contents until the user closes it.
-        isExpanded: isExpanded(id, level ?? "ok", level === undefined),
+        isExpanded: isExpanded(id, level ?? "ok", isOpenByDefault),
         icon,
         className: "summary-group",
         label: (
@@ -264,6 +278,41 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
         ),
         childNodes
     });
+    // The browser window that the workspace was saved in. A user who wants the same picture can
+    // change the window until it matches. The rows follow the window as it changes size. The group
+    // opens by itself when a value is not the same, to the pixel.
+    const savedWindow = shouldShowChecks ? preflight.savedWindow : undefined;
+    let differentWindowRows = 0;
+    const windowRow = (id: string, name: string, saved: string, current: string, isSame: boolean, tooltip: string) => {
+        if (!isSame) {
+            differentWindowRows++;
+        }
+        return leaf(
+            id,
+            <div className="summary-row" data-testid={`workspace-info-${id}`}>
+                <Tooltip className="row-name" content={<div className="window-tooltip">{tooltip}</div>} placement="top-start" hoverOpenDelay={300}>
+                    {nameWithDetails(name, [`Saved ${saved}`, `now ${current}`])}
+                </Tooltip>
+                <StatusTag text={isSame ? "Same" : "Different"} intent={isSame ? Intent.SUCCESS : Intent.WARNING} testId={`workspace-info-${id}-status`} />
+                <span className="row-action" />
+            </div>
+        );
+    };
+    const windowNodes: TreeNodeInfo[] = [];
+    if (savedWindow) {
+        windowNodes.push(
+            windowRow(
+                "window-size",
+                "Size",
+                formatSize(savedWindow.viewport),
+                formatSize(viewport),
+                isSameSize(savedWindow.viewport, viewport),
+                "The size of the browser window, without its toolbars, when the workspace was saved. Change the window to this size, or open the workspace in a new window of this size, to see the images as they were saved."
+            )
+        );
+    }
+    const isWindowSame = differentWindowRows === 0;
+
     const treeNodes: TreeNodeInfo[] = [
         ...(images.length
             ? [
@@ -291,6 +340,7 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                   )
               ]
             : []),
+        ...(savedWindow ? [groupNode("window", "application", "Browser window", windowNodes.length, isWindowSame ? "ok" : "attention", isWindowSame ? "Same as saved" : "Not the same as saved", windowNodes, !isWindowSame)] : []),
         ...(preflight.restoredSettings.length
             ? [
                   groupNode("settings", "settings", "Others", preflight.restoredSettings.length, undefined, "", [
@@ -381,6 +431,46 @@ export const WorkspaceSaveChanges = observer((props: {preflight: WorkspacePrefli
             placement="top"
         >
             <Button icon="floppy-disk" text="Save changes" loading={preflight.isSaving} onClick={async () => (await preflight.saveChanges()).state === "written" && props.onSaved?.()} data-testid="workspace-info-save-button" />
+        </Tooltip>
+    );
+});
+
+/**
+ * The button that opens the workspace in a new window of the size that it was saved in. The dialog
+ * puts it beside its Open button. It shows only while the size of this window is not the same.
+ *
+ * A page cannot change the size of its own window, but it can open a new window of a given size.
+ * The new window starts a new session that opens the stored workspace. New locations that are not
+ * saved yet are not in the stored workspace, so the button waits until the user saves them.
+ */
+export const WorkspaceOpenInWindow = observer((props: {preflight: WorkspacePreflightStore; onOpened?: () => void}) => {
+    const {preflight} = props;
+    const viewport = useViewportSize();
+    const savedWindow = preflight.savedWindow;
+    if (!savedWindow || isSameSize(savedWindow.viewport, viewport)) {
+        return null;
+    }
+    const size = formatSize(savedWindow.viewport);
+    const hasUnsavedChanges = preflight.changeDescriptions.length > 0;
+    const open = () => {
+        const {width, height} = savedWindow.viewport;
+        const opened = window.open(workspaceWindowUrl(window.location.href, preflight.name), "_blank", `popup,width=${Math.round(width)},height=${Math.round(height)}`);
+        if (opened) {
+            props.onOpened?.();
+        } else {
+            AppToaster.show(WarningToast("The browser blocked the new window. Allow pop-ups for CARTA, and try again."));
+        }
+    };
+    return (
+        <Tooltip
+            content={
+                <div className="window-tooltip">
+                    {hasUnsavedChanges ? "Save the changes first. The new window opens the stored workspace." : `Open the workspace in a new ${size} window, the size it was saved in. This window stays open.`}
+                </div>
+            }
+            placement="top"
+        >
+            <AnchorButton icon="share" text={`Open in ${size} window`} disabled={hasUnsavedChanges} onClick={open} data-testid="workspace-open-window-button" />
         </Tooltip>
     );
 });

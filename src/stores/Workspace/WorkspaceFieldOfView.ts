@@ -6,9 +6,6 @@ export interface ImageViewSize {
     height: number;
 }
 
-/** The aspect ratios of two views that differ by this fraction or less count as the same shape. */
-export const VIEW_SHAPE_TOLERANCE = 0.02;
-
 function isPositive(value: unknown): value is number {
     return typeof value === "number" && isFinite(value) && value > 0;
 }
@@ -24,28 +21,36 @@ export function isValidImageViewSize(size: unknown): size is WorkspaceImageViewS
  * the saved view fits in the current view. The zoom counts screen pixels, so the sizes are compared
  * in screen pixels. The smaller of the two factors is used, so that nothing that showed is cut off.
  */
-export function getFieldOfViewScale(saved: WorkspaceImageViewSize, current: ImageViewSize, pixelRatio: number): number {
-    const savedPixelRatio = isPositive(saved.pixelRatio) ? saved.pixelRatio : 1;
-    const currentPixelRatio = isPositive(pixelRatio) ? pixelRatio : 1;
+export function getFieldOfViewScale(saved: WorkspaceImageViewSize, current: ImageViewSize, devicePixelRatio: number): number {
+    const savedPixelRatio = isPositive(saved.devicePixelRatio) ? saved.devicePixelRatio : 1;
+    const currentPixelRatio = isPositive(devicePixelRatio) ? devicePixelRatio : 1;
     const scaleX = (current.width * currentPixelRatio) / (saved.width * savedPixelRatio);
     const scaleY = (current.height * currentPixelRatio) / (saved.height * savedPixelRatio);
     return Math.min(scaleX, scaleY);
 }
 
+/** Returns a size as "1600×900", in whole pixels. */
+export function formatSize(size: ImageViewSize): string {
+    return `${Math.round(size.width)}×${Math.round(size.height)}`;
+}
+
+/** Returns whether two sizes are the same in whole pixels. */
+export function isSameSize(a: ImageViewSize, b: ImageViewSize): boolean {
+    return Math.round(a.width) === Math.round(b.width) && Math.round(a.height) === Math.round(b.height);
+}
+
 /**
- * Returns a message for the restore report when the current view has another shape than the saved
- * view, or undefined when the shapes are the same. The message names the sides where more of each
- * image shows, so that the user can make the view the same shape again.
+ * Returns the address of a new CARTA window that opens the workspace `workspaceName` when it starts.
+ * The address keeps the parameters that connect to the server, such as `socketUrl`, and drops the
+ * parameters that open other files or another workspace.
  */
-export function describeViewShapeChange(saved: WorkspaceImageViewSize, current: ImageViewSize): string | undefined {
-    const savedRatio = saved.width / saved.height;
-    const currentRatio = current.width / current.height;
-    if (Math.abs(currentRatio / savedRatio - 1) <= VIEW_SHAPE_TOLERANCE) {
-        return undefined;
+export function workspaceWindowUrl(href: string, workspaceName: string): string {
+    const url = new URL(href);
+    for (const name of ["key", "workspace", "file", "files", "folder"]) {
+        url.searchParams.delete(name);
     }
-    const sides = currentRatio > savedRatio ? "left and right" : "top and bottom";
-    const format = (size: ImageViewSize) => `${Math.round(size.width)}×${Math.round(size.height)}`;
-    return `The image view has another shape than when the workspace was saved (${format(saved)}, now ${format(current)}). More of each image shows at the ${sides}.`;
+    url.searchParams.set("workspace", workspaceName);
+    return url.toString();
 }
 
 /**

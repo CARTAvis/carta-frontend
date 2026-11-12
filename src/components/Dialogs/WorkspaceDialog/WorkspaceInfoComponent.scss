@@ -289,6 +289,11 @@ $preview-duration: $pt-transition-duration * 3;
     font-size: $pt-font-size-small;
 }
 
+// The tooltip of a row of the browser window is a few sentences, so it wraps.
+.window-tooltip {
+    max-width: 320px;
+}
+
 .folder-move {
     font-family: $pt-font-family-monospace;
     font-size: $pt-font-size-small;

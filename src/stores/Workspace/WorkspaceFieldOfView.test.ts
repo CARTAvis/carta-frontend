@@ -1,26 +1,29 @@
 import {describe, expect, test} from "@jest/globals";
 
-import {describeViewShapeChange, getFieldOfViewScale, isValidImageViewSize} from "./WorkspaceFieldOfView";
+import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, workspaceWindowUrl} from "./WorkspaceFieldOfView";
 
 describe("WorkspaceFieldOfView", () => {
     test("uses the smaller scale of the width and the height, so that the saved area fits", () => {
-        expect(getFieldOfViewScale({width: 1600, height: 900, pixelRatio: 1}, {width: 1280, height: 800}, 1)).toBeCloseTo(0.8);
-        expect(getFieldOfViewScale({width: 1000, height: 500, pixelRatio: 2}, {width: 1000, height: 500}, 1)).toBeCloseTo(0.5);
-        expect(getFieldOfViewScale({width: 1000, height: 500, pixelRatio: NaN}, {width: 1000, height: 500}, 2)).toBeCloseTo(2);
+        expect(getFieldOfViewScale({width: 1600, height: 900, devicePixelRatio: 1}, {width: 1280, height: 800}, 1)).toBeCloseTo(0.8);
+        expect(getFieldOfViewScale({width: 1000, height: 500, devicePixelRatio: 2}, {width: 1000, height: 500}, 1)).toBeCloseTo(0.5);
+        expect(getFieldOfViewScale({width: 1000, height: 500, devicePixelRatio: NaN}, {width: 1000, height: 500}, 2)).toBeCloseTo(2);
     });
 
-    test("names the sides where more of each image shows, and ignores a change of 2% or less", () => {
-        expect(describeViewShapeChange({width: 1600, height: 900, pixelRatio: 1}, {width: 1280, height: 800})).toBe(
-            "The image view has another shape than when the workspace was saved (1600×900, now 1280×800). More of each image shows at the top and bottom."
-        );
-        expect(describeViewShapeChange({width: 1000, height: 1000, pixelRatio: 1}, {width: 1500, height: 1000})).toContain("at the left and right");
-        expect(describeViewShapeChange({width: 1000, height: 1000, pixelRatio: 1}, {width: 1015, height: 1000})).toBeUndefined();
+    test("compares sizes in whole pixels", () => {
+        expect(isSameSize({width: 1600.4, height: 900}, {width: 1600, height: 900})).toBe(true);
+        expect(isSameSize({width: 1600, height: 900}, {width: 1599, height: 900})).toBe(false);
+        expect(formatSize({width: 757.6, height: 461})).toBe("758×461");
     });
 
     test("accepts only a size with a positive width and height", () => {
-        expect(isValidImageViewSize({width: 10, height: 20, pixelRatio: 1})).toBe(true);
+        expect(isValidImageViewSize({width: 10, height: 20, devicePixelRatio: 1})).toBe(true);
         expect(isValidImageViewSize({width: 0, height: 20})).toBe(false);
         expect(isValidImageViewSize("640x400")).toBe(false);
         expect(isValidImageViewSize(undefined)).toBe(false);
+    });
+
+    test("opens the workspace in a new window, and keeps only the parameters that connect to the server", () => {
+        expect(workspaceWindowUrl("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&file=a.fits&folder=data&workspace=old", "my view")).toBe("https://carta.example/?socketUrl=wss%3A%2F%2Fhost&workspace=my+view");
+        expect(workspaceWindowUrl("http://localhost:3002/?key=abc", "ws")).toBe("http://localhost:3002/?workspace=ws");
     });
 });
