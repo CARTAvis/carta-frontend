@@ -683,12 +683,14 @@ export class WorkspaceSnapshotter {
         });
         // The custom texts describe the images, so the workspace saves them.
         this.workspace.wcsOverlay = this.appStore.overlaySettings.toTextConfig();
-        // A size of 1 or less means that the image view is not shown, so the size is left out. A PV
-        // preview is drawn in the PV generator, not in the image view, so the size of another image
-        // is saved while a preview is active.
+        // Leave the size out when the image view is not shown. A size of 1 or less means that it was
+        // never shown. An image view that is closed or behind another tab keeps the size that it had
+        // when it was last shown, and that size can be wrong now. A PV preview is drawn in the PV
+        // generator, not in the image view, so the size of another image is saved while a preview is
+        // active.
         const activeFrame = this.appStore.activeFrame;
         const frame = activeFrame && !activeFrame.isPreview ? activeFrame : this.appStore.frames[0];
-        if (frame && frame.renderWidth > 1 && frame.renderHeight > 1) {
+        if (frame && frame.renderWidth > 1 && frame.renderHeight > 1 && !this.appStore.layoutStore.isComponentHidden("image-view")) {
             this.workspace.imageView = {
                 width: frame.renderWidth,
                 height: frame.renderHeight,

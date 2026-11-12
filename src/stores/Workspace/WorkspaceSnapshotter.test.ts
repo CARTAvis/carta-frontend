@@ -111,7 +111,7 @@ function createSession(overrides: Record<string, any> = {}) {
                 createResidualImage: false
             }))
         },
-        layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        layoutStore: {isComponentHidden: jest.fn((_component: string) => false), currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         overlaySettings: {
             toConfig: jest.fn((shouldIncludePreferenceSettings: boolean) => ({isVisible: true, grid: shouldIncludePreferenceSettings ? {isVisible: false, width: 1} : {width: 1}})),
             toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: false}}))
@@ -783,6 +783,15 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
     });
 
+    test("leaves out the size of an image view that is closed or behind another tab, because it keeps the size from when it was last shown", () => {
+        const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
+        const {appStore} = createSession({frames: [frame], activeFrame: frame, devicePixelRatio: 1});
+        appStore.layoutStore.isComponentHidden.mockReturnValue(true);
+
+        expect(new WorkspaceSnapshotter().capture().workspace.imageView).toBeUndefined();
+        expect(appStore.layoutStore.isComponentHidden).toHaveBeenCalledWith("image-view");
+    });
+
     test("saves the size of an image in the image view while a PV preview is active, because the preview is drawn in the PV generator", () => {
         const frame = createFrame(0, {renderWidth: 640, renderHeight: 400});
         const preview = createFrame(5, {renderWidth: 300, renderHeight: 200, isPreview: true});
@@ -838,7 +847,7 @@ describe("WorkspaceSnapshotter", () => {
 
     test("saves the overlay settings that have a preference in each image view of the layout, as they are shown", () => {
         const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view", widgetSettings: {panelRows: 1, wcsOverlay: {grid: {width: 1}}}}]}, floating: []};
-        createSession({layoutStore: {currentLayoutConfig: jest.fn(() => layout)}});
+        createSession({layoutStore: {isComponentHidden: jest.fn(() => false), currentLayoutConfig: jest.fn(() => layout)}});
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
