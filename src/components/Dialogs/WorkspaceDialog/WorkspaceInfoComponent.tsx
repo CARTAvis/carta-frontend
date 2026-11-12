@@ -457,25 +457,17 @@ export const WorkspaceOpenInWindow = observer((props: {preflight: WorkspacePrefl
     const size = formatSize(savedWindow.viewport);
     const hasUnsavedChanges = preflight.changeDescriptions.length > 0;
     const shouldSaveFirst = hasUnsavedChanges && preflight.canSave;
-    // The browser makes a window smaller when it does not fit on the screen. The size of the window
-    // includes its title bar and borders, so add those of this window to the saved viewport.
-    const borderWidth = Math.max(0, window.outerWidth - window.innerWidth);
-    const borderHeight = Math.max(0, window.outerHeight - window.innerHeight);
-    const isLargerThanScreen = width + borderWidth > window.screen.availWidth || height + borderHeight > window.screen.availHeight;
     const notes = [
         `Open the workspace in a new ${size} window, the size it was saved in. This window stays open.`,
         hasUnsavedChanges && !preflight.canSave ? "The new window opens the stored workspace, without the new locations chosen here." : "",
         preflight.leftOutCount > 0 ? "The new window checks the missing files again." : "",
-        isLargerThanScreen ? "The screen is smaller than this size, so the browser makes the window smaller." : ""
+        "If the new window is not this size, its restore report says so."
     ];
     const open = () => {
         const opened = window.open(workspaceWindowUrl(window.location.href, preflight.name), "_blank", `popup,width=${Math.round(width)},height=${Math.round(height)}`);
         if (!opened) {
             AppToaster.show(WarningToast("The browser blocked the new window. Allow pop-ups for CARTA, and try again."));
             return;
-        }
-        if (isLargerThanScreen) {
-            AppToaster.show(WarningToast(`The screen is smaller than ${size}, so the new window is smaller than when the workspace was saved.`));
         }
         props.onOpened?.();
     };
