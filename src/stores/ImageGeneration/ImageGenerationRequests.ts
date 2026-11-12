@@ -100,11 +100,21 @@ export interface RegionDataWait<T extends string> {
  * The wait has no time limit. It ends when the backend answers, when the image is closed, or when
  * `stop` is called.
  *
+ * When a statistics widget already asks for statistics of the region, the backend already keeps
+ * the data. Then the wait is ready at once, and the request of the widget is left as it is. At the
+ * end of the wait, the function sends the statistics that the widgets ask for again. Then a widget
+ * that starts to ask during the wait keeps its statistics.
+ *
  * @param isOpen - returns whether the image is still open.
+ * @param widgetStatsOf - returns the statistics that the widgets ask for of the region, as last sent
+ *                        to the backend.
  */
-export function waitForRegionData<T extends string>(frame: FrameStore, regionId: number, isOpen: () => boolean): RegionDataWait<T> {
+export function waitForRegionData<T extends string>(frame: FrameStore, regionId: number, isOpen: () => boolean, widgetStatsOf: () => CARTA.SetStatsRequirements.$Properties | undefined): RegionDataWait<T> {
     const backendService = BackendService.Instance;
     const fileId = frame.frameInfo.fileId;
+    if (widgetStatsOf()?.statsConfigs?.length) {
+        return {ready: Promise.resolve("ready"), stop: () => {}};
+    }
     let finish: (outcome: "ready" | "closed" | T) => void = () => {};
     const ready = new Promise<"ready" | "closed" | T>(resolve => {
         let isSettled = false;
@@ -116,7 +126,7 @@ export function waitForRegionData<T extends string>(frame: FrameStore, regionId:
             subscription.unsubscribe();
             disposeReaction();
             if (outcome !== "closed") {
-                backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
+                backendService.setStatsRequirements({fileId, regionId, statsConfigs: widgetStatsOf()?.statsConfigs ?? []});
             }
             resolve(outcome);
         };

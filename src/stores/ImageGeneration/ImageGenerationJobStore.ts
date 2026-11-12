@@ -98,8 +98,8 @@ class ImageGenerationJob {
     /** Ends the wait for the region data. It is set only while the job waits for the data. */
     stopWaiting: (() => void) | undefined = undefined;
     /**
-     * Whether the request that makes the images has been sent. While it is true, cancelling the job
-     * also cancels the backend request.
+     * Whether the request that makes the images has been sent and has not ended yet. While it is
+     * true, cancelling the job also cancels the backend request.
      */
     isRequesting = false;
     /** Resolves when the job ends. */
@@ -263,6 +263,19 @@ export class ImageGenerationJobStore {
         this.stop(this.jobOf(jobId), "cancelled");
     };
 
+    /**
+     * Cancels the moment job of the image `frame` when the job still waits for the region data. The
+     * GUI calls it when the user cancels in the progress dialog. A job that has sent its request
+     * ends with the answer of the backend to the cancel.
+     */
+    cancelWaitingMomentJob = (frame: FrameStore): void => {
+        for (const job of this.jobs.values()) {
+            if (job.isRunning && job.kind === "moment" && job.frame === frame && !job.isRequesting) {
+                this.stop(job, "cancelled");
+            }
+        }
+    };
+
     private jobOf(jobId: number): ImageGenerationJob {
         const job = this.jobs.get(jobId);
         if (!job) {
@@ -298,21 +311,12 @@ export class ImageGenerationJobStore {
         return job;
     }
 
-    /**
-     * Ends a running job. Stops the wait for the region data, or cancels the backend request.
-     *
-     * @param shouldResetFrame - whether to clear the request state of the image at once. Use it when
-     *                           no answer of the backend will clear the state, for example after
-     *                           the connection is lost.
-     */
-    private stop(job: ImageGenerationJob, status: "failed" | "cancelled", error?: string, shouldResetFrame = false) {
+    /** Ends a running job. Stops the wait for the region data, or cancels the backend request. */
+    private stop(job: ImageGenerationJob, status: "failed" | "cancelled", error?: string) {
         if (!job.isRunning) {
             return;
         }
         job.end(status, [], error);
-        if (shouldResetFrame) {
-            job.resetFrameRequestState();
-        }
         job.stopWaiting?.();
         if (job.isRequesting) {
             const fileId = job.frame.frameInfo.fileId;
@@ -330,6 +334,9 @@ export class ImageGenerationJobStore {
      * The job fails when its image is closed, when its region is deleted, when a workspace starts to
      * load, or when the connection to the backend is lost. The job ends at once when it is stopped,
      * also when the backend never answers its request.
+     * The connection is watched until the request ends, also after the job ends. The backend drops
+     * its requests when the connection is lost, and no answer comes. Then this function clears the
+     * request state of the image and ends the file loading of the session.
      *
      * @param regionId - the region of the job, or a negative ID when the job uses the whole image.
      * @param shouldWaitForRegionData - whether the backend must keep the data of the region first.
@@ -345,8 +352,14 @@ export class ImageGenerationJobStore {
             }),
             ({isOpen, hasRegion, isLoadingWorkspace, isConnected}) => {
                 if (!isConnected) {
-                    // The backend drops its requests when the connection is lost, so no answer will come.
-                    this.stop(job, "failed", "the connection to the backend was lost", true);
+                    const isRequestPending = job.isRequesting;
+                    this.stop(job, "failed", "the connection to the backend was lost");
+                    if (isRequestPending) {
+                        job.isRequesting = false;
+                        job.resetFrameRequestState();
+                        this.appStore.endFileLoading();
+                        disposeWatch();
+                    }
                 } else if (isLoadingWorkspace) {
                     this.stop(job, "failed", "a workspace was loaded");
                 } else if (!isOpen) {
@@ -360,7 +373,12 @@ export class ImageGenerationJobStore {
         let hasSentRequest = false;
         try {
             if (shouldWaitForRegionData) {
-                const wait = waitForRegionData<"stopped">(frame, regionId, () => this.appStore.frames.includes(frame));
+                const wait = waitForRegionData<"stopped">(
+                    frame,
+                    regionId,
+                    () => this.appStore.frames.includes(frame),
+                    () => this.appStore.statsRequirementsOf(frame.frameInfo.fileId, regionId)
+                );
                 job.stopWaiting = () => wait.stop("stopped");
                 const outcome = await wait.ready;
                 job.stopWaiting = undefined;
@@ -374,8 +392,13 @@ export class ImageGenerationJobStore {
             job.isRequesting = true;
             hasSentRequest = true;
             const requested = request();
-            // A request that ends after the job is stopped has nothing to report.
-            requested.catch(() => {});
+            // Stop watching the connection when the request ends. The handlers also catch the error
+            // of a request that ends after the job is stopped. Such a request has nothing to report.
+            const onRequestEnd = () => {
+                job.isRequesting = false;
+                disposeWatch();
+            };
+            requested.then(onRequestEnd, onRequestEnd);
             const images = await Promise.race([requested, job.ended.then(() => [])]);
             job.end("done", images);
         } catch (err) {
@@ -385,11 +408,10 @@ export class ImageGenerationJobStore {
                 job.end("failed", [], reasonOf(err));
             }
         } finally {
-            job.isRequesting = false;
             if (!hasSentRequest) {
                 job.resetFrameRequestState();
+                disposeWatch();
             }
-            disposeWatch();
         }
     }
 

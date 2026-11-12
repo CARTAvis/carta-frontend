@@ -92,7 +92,9 @@ function createSession() {
         requestMoment: jest.fn((_message: CARTA.MomentRequest.$Properties, _frame: unknown, _options: {isStillWanted?: () => boolean; shouldThrow?: boolean}) => moments.promise),
         requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean, _options: {isStillWanted?: () => boolean; shouldThrow?: boolean}) => pv.promise),
         cancelRequestingMoment: jest.fn(),
-        cancelRequestingPV: jest.fn()
+        cancelRequestingPV: jest.fn(),
+        endFileLoading: jest.fn(),
+        statsRequirementsOf: jest.fn((_fileId: number, _regionId: number): {statsConfigs: unknown[]} | undefined => undefined)
     };
     // The backend answers a statistics request for a region with the statistics of that region.
     const statsStream = new Subject<{fileId: number; regionId: number}>();
@@ -231,13 +233,79 @@ describe("ImageGenerationJobStore", () => {
         });
 
         test("fail at once when the connection to the backend is lost, although the backend never answers", async () => {
-            const {store, state, frame} = createSession();
+            const {store, appStore, state, frame} = createSession();
             const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
             await settle();
             runInAction(() => (state.connectionStatus = ConnectionStatus.CLOSED));
             await settle();
             expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "failed", error: "the connection to the backend was lost"}));
             expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
+            // The file operations of the GUI work again.
+            expect(appStore.endFileLoading).toHaveBeenCalledTimes(1);
+        });
+
+        test("clear the request state of the image when the connection is lost after a cancel that the backend never answers", async () => {
+            const {store, appStore, state, frame} = createSession();
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
+            await settle();
+            store.cancelJob(jobId);
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(1);
+
+            runInAction(() => (state.connectionStatus = ConnectionStatus.CLOSED));
+            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
+            expect(appStore.endFileLoading).toHaveBeenCalledTimes(1);
+        });
+
+        test("stop watching the connection when the backend answers the request", async () => {
+            const {store, appStore, state, frame, moments} = createSession();
+            store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
+            moments.resolve([]);
+            await settle();
+            runInAction(() => (state.connectionStatus = ConnectionStatus.CLOSED));
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(1);
+            expect(appStore.endFileLoading).not.toHaveBeenCalled();
+        });
+
+        test("are cancelled from the progress dialog of the GUI while they wait for the region data", async () => {
+            const {store, appStore, frame, backend} = createSession();
+            backend.setStatsRequirements.mockImplementation(() => true);
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
+
+            store.cancelWaitingMomentJob(frame as never);
+            await settle();
+            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(appStore.requestMoment).not.toHaveBeenCalled();
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
+        });
+
+        test("are left running by the progress dialog of the GUI once the request is sent", async () => {
+            const {store, frame} = createSession();
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
+            await settle();
+            store.cancelWaitingMomentJob(frame as never);
+            expect(store.getJob(jobId).status).toBe("running");
+        });
+
+        test("do not change the statistics that a widget asks for of the region", async () => {
+            const {store, appStore, backend} = createSession();
+            appStore.statsRequirementsOf.mockReturnValue({statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean]}]});
+            store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
+            await settle();
+            expect(appStore.statsRequirementsOf).toHaveBeenCalledWith(1, CLOSED_REGION);
+            expect(backend.setStatsRequirements).not.toHaveBeenCalled();
+            expect(appStore.requestMoment).toHaveBeenCalled();
+        });
+
+        test("send again the statistics that a widget starts to ask for during the wait", async () => {
+            const {store, appStore, backend} = createSession();
+            const widgetConfigs = [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean]}];
+            store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
+            appStore.statsRequirementsOf.mockReturnValue({statsConfigs: widgetConfigs});
+            await settle();
+            await settle();
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs)).toEqual([[expect.anything()], widgetConfigs]);
+            expect(appStore.requestMoment).toHaveBeenCalled();
         });
 
         test("run one at a time for each image", () => {
