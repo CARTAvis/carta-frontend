@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 import {Subject} from "rxjs";
 
-import {RegionId, SpectralSystem, SpectralType, SpectralUnit} from "enums";
+import {ConnectionStatus, RegionId, SpectralSystem, SpectralType, SpectralUnit} from "enums";
 import {BackendService} from "services";
 import {type AppStore} from "stores";
 import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
@@ -55,11 +55,12 @@ function createSession() {
             ]),
             spectralSystemsSupported: [SpectralSystem.LSRK, SpectralSystem.BARY],
             getRegion: (regionId: number) => regions.get(regionId),
-            findChannelIndexInCoordinate: jest.fn((value: number, _type?: unknown, _unit?: unknown, _system?: unknown) => Math.round(value)),
+            findChannelIndexInCoordinate: jest.fn((value: number, _type?: unknown, _unit?: unknown, _system?: unknown, _shouldReject?: boolean): number | undefined => Math.round(value)),
             resetMomentRequestState: jest.fn(),
             setIsRequestingMoments: jest.fn(),
             resetPvRequestState: jest.fn(),
-            setIsRequestingPV: jest.fn()
+            setIsRequestingPV: jest.fn(),
+            setIsRequestPVCancelling: jest.fn()
         },
         {
             getRegion: false,
@@ -68,11 +69,12 @@ function createSession() {
             setIsRequestingMoments: false,
             resetPvRequestState: false,
             setIsRequestingPV: false,
+            setIsRequestPVCancelling: false,
             spectralCoordsSupported: false,
             spectralSystemsSupported: false
         }
     );
-    const state = observable({frames: [frame] as unknown[], isLoadingWorkspace: false}, {frames: observable.shallow});
+    const state = observable({frames: [frame] as unknown[], isLoadingWorkspace: false, connectionStatus: ConnectionStatus.ACTIVE}, {frames: observable.shallow});
     const moments = deferred<unknown[]>();
     const pv = deferred<unknown>();
     const appStore = {
@@ -81,6 +83,11 @@ function createSession() {
         },
         get isLoadingWorkspace() {
             return state.isLoadingWorkspace;
+        },
+        backendService: {
+            get connectionStatus() {
+                return state.connectionStatus;
+            }
         },
         requestMoment: jest.fn((_message: CARTA.MomentRequest.$Properties, _frame: unknown, _options: {isStillWanted?: () => boolean; shouldThrow?: boolean}) => moments.promise),
         requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean, _options: {isStillWanted?: () => boolean; shouldThrow?: boolean}) => pv.promise),
@@ -207,6 +214,32 @@ describe("ImageGenerationJobStore", () => {
             expect(() => workspaceSession.store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]})).toThrow("A workspace is loading");
         });
 
+        test("stop the wait for the region data when they are cancelled", async () => {
+            const {store, appStore, frame, backend} = createSession();
+            backend.setStatsRequirements.mockImplementation(() => true);
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], regionId: CLOSED_REGION});
+            expect(frame.setIsRequestingMoments).toHaveBeenCalledWith(true);
+
+            store.cancelJob(jobId);
+            await settle();
+            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs.length)).toEqual([1, 0]);
+            expect(appStore.requestMoment).not.toHaveBeenCalled();
+            expect(appStore.cancelRequestingMoment).not.toHaveBeenCalled();
+            // The progress dialog of the GUI closes.
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
+        });
+
+        test("fail at once when the connection to the backend is lost, although the backend never answers", async () => {
+            const {store, state, frame} = createSession();
+            const jobId = store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
+            await settle();
+            runInAction(() => (state.connectionStatus = ConnectionStatus.CLOSED));
+            await settle();
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "failed", error: "the connection to the backend was lost"}));
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
+        });
+
         test("run one at a time for each image", () => {
             const {store} = createSession();
             store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
@@ -236,10 +269,16 @@ describe("ImageGenerationJobStore", () => {
         test("is converted from spectral values in the given coordinate, or in the coordinate the image shows", () => {
             const {frame} = createSession();
             expect(ImageGenerationJobStore.channelRangeOf(frame as never, {spectralRange: {min: 8.2, max: 3.4, type: SpectralType.VRAD, system: SpectralSystem.BARY}})).toEqual({min: 3, max: 8});
-            expect(frame.findChannelIndexInCoordinate).toHaveBeenCalledWith(8.2, SpectralType.VRAD, SpectralUnit.KMS, SpectralSystem.BARY);
+            expect(frame.findChannelIndexInCoordinate).toHaveBeenCalledWith(8.2, SpectralType.VRAD, SpectralUnit.KMS, SpectralSystem.BARY, true);
 
             ImageGenerationJobStore.channelRangeOf(frame as never, {spectralRange: {min: 1, max: 2}});
-            expect(frame.findChannelIndexInCoordinate).toHaveBeenLastCalledWith(2, SpectralType.FREQ, SpectralUnit.GHZ, SpectralSystem.LSRK);
+            expect(frame.findChannelIndexInCoordinate).toHaveBeenLastCalledWith(2, SpectralType.FREQ, SpectralUnit.GHZ, SpectralSystem.LSRK, true);
+        });
+
+        test("refuses spectral values that cannot be converted to channels", () => {
+            const {frame} = createSession();
+            frame.findChannelIndexInCoordinate.mockReturnValue(undefined);
+            expect(() => ImageGenerationJobStore.channelRangeOf(frame as never, {spectralRange: {min: 1, max: 2}})).toThrow("The spectral range cannot be converted to channels");
         });
 
         test("refuses a coordinate that the image does not support", () => {

@@ -1791,10 +1791,16 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
         } catch (err) {
+            // The backend answers a cancelled PV request as a failed request, so the error alone does
+            // not say that the request was cancelled. The image says it while it cancels.
+            const isCancelled = frame.isRequestPVCancelling;
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
+            if (options.shouldThrow && isCancelled) {
+                throw new ImageRequestCancelledError();
+            }
             if (shouldThrow) {
                 throw err;
             }

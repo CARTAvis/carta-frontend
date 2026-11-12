@@ -2680,8 +2680,12 @@ export class FrameStore {
      * when the value is not a number or the image has no channel information. The spectral
      * coordinate that the image shows does not change. For example, a script can give a velocity
      * range for an image that shows frequencies.
+     *
+     * @param shouldRejectUnconvertible - whether to return nothing when the value cannot be
+     *        converted to a channel, for example when the image has no spectral coordinate. Otherwise
+     *        such a value gives the first channel, as the GUI has always done.
      */
-    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
+    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null, shouldRejectUnconvertible = false): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }
@@ -2692,11 +2696,17 @@ export class FrameStore {
             }
             const axis = this.spectralAxis;
             const isNative = !!axis?.type && !!axis?.specsys && axis.type.code === (type as string) && axis.type.unit === (unit as string) && axis.specsys === (system as string);
+            if (shouldRejectUnconvertible && !this.channelInfo.fromWCS) {
+                return undefined;
+            }
             if ((axis && !axis.valid) || isNative) {
                 return this.channelInfo.getChannelIndexWCS(x);
             }
             // Convert the value to the native spectral coordinate of the image.
             const tx = AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
+            if (shouldRejectUnconvertible && !isFinite(tx)) {
+                return undefined;
+            }
             return this.channelInfo.getChannelIndexWCS(tx);
         }
         return undefined;

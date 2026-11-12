@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, comparer, computed, makeObservable, observable, reaction} from "mobx";
 
-import {RegionId, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
+import {ConnectionStatus, RegionId, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
 import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "models";
 import {type AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -102,6 +102,9 @@ class ImageGenerationJob {
      * also cancels the backend request.
      */
     isRequesting = false;
+    /** Resolves when the job ends. */
+    readonly ended: Promise<void>;
+    private resolveEnded: () => void = () => {};
 
     constructor(
         readonly id: number,
@@ -109,6 +112,7 @@ class ImageGenerationJob {
         readonly frame: FrameStore
     ) {
         makeObservable(this);
+        this.ended = new Promise(resolve => (this.resolveEnded = resolve));
     }
 
     @computed get isRunning(): boolean {
@@ -133,6 +137,17 @@ class ImageGenerationJob {
         this.status = status;
         this.images = images;
         this.error = error;
+        this.resolveEnded();
+    }
+
+    /** Clears the request state of the image, so that the progress dialog of the GUI closes. */
+    resetFrameRequestState() {
+        if (this.kind === "moment") {
+            this.frame.resetMomentRequestState();
+        } else {
+            this.frame.resetPvRequestState();
+            this.frame.setIsRequestPVCancelling(false);
+        }
     }
 
     get state(): ImageGenerationJobState {
@@ -185,9 +200,11 @@ export class ImageGenerationJobStore {
             throw new Error("The moment settings are not valid");
         }
         const job = this.addJob("moment", frame);
+        // Mark the image as busy at once. Then the GUI cannot start another request while the job
+        // waits for the region data.
+        frame.resetMomentRequestState();
+        frame.setIsRequestingMoments(true);
         void this.run(job, regionId, regionId > RegionId.CURSOR, async () => {
-            frame.resetMomentRequestState();
-            frame.setIsRequestingMoments(true);
             const made = this.appStore.requestMoment(message, frame, {isStillWanted: () => job.isRunning, shouldThrow: true}) as unknown as Promise<FrameStore[] | undefined>;
             return (await made) ?? [];
         });
@@ -217,9 +234,9 @@ export class ImageGenerationJobStore {
             throw new Error("The PV settings are not valid");
         }
         const job = this.addJob("pv", frame);
+        frame.resetPvRequestState();
+        frame.setIsRequestingPV(true);
         void this.run(job, settings.regionId, false, async () => {
-            frame.resetPvRequestState();
-            frame.setIsRequestingPV(true);
             const made = this.appStore.requestPV(message, frame, shouldKeep, {isStillWanted: () => job.isRunning, shouldThrow: true}) as unknown as Promise<FrameStore | undefined>;
             const image = await made;
             return image ? [image] : [];
@@ -281,12 +298,21 @@ export class ImageGenerationJobStore {
         return job;
     }
 
-    /** Ends a running job. Stops the wait for the region data, or cancels the backend request. */
-    private stop(job: ImageGenerationJob, status: "failed" | "cancelled", error?: string) {
+    /**
+     * Ends a running job. Stops the wait for the region data, or cancels the backend request.
+     *
+     * @param shouldResetFrame - whether to clear the request state of the image at once. Use it when
+     *                           no answer of the backend will clear the state, for example after
+     *                           the connection is lost.
+     */
+    private stop(job: ImageGenerationJob, status: "failed" | "cancelled", error?: string, shouldResetFrame = false) {
         if (!job.isRunning) {
             return;
         }
         job.end(status, [], error);
+        if (shouldResetFrame) {
+            job.resetFrameRequestState();
+        }
         job.stopWaiting?.();
         if (job.isRequesting) {
             const fileId = job.frame.frameInfo.fileId;
@@ -301,8 +327,9 @@ export class ImageGenerationJobStore {
     /**
      * Runs a job. When the job needs the region data, waits for the data first. Then makes the
      * images.
-     * The job fails when its image is closed, when its region is deleted, or when a workspace
-     * starts to load.
+     * The job fails when its image is closed, when its region is deleted, when a workspace starts to
+     * load, or when the connection to the backend is lost. The job ends at once when it is stopped,
+     * also when the backend never answers its request.
      *
      * @param regionId - the region of the job, or a negative ID when the job uses the whole image.
      * @param shouldWaitForRegionData - whether the backend must keep the data of the region first.
@@ -313,10 +340,14 @@ export class ImageGenerationJobStore {
             () => ({
                 isOpen: this.appStore.frames.includes(frame),
                 hasRegion: regionId <= RegionId.CURSOR || !!frame.getRegion(regionId),
-                isLoadingWorkspace: this.appStore.isLoadingWorkspace
+                isLoadingWorkspace: this.appStore.isLoadingWorkspace,
+                isConnected: this.appStore.backendService.connectionStatus === ConnectionStatus.ACTIVE
             }),
-            ({isOpen, hasRegion, isLoadingWorkspace}) => {
-                if (isLoadingWorkspace) {
+            ({isOpen, hasRegion, isLoadingWorkspace, isConnected}) => {
+                if (!isConnected) {
+                    // The backend drops its requests when the connection is lost, so no answer will come.
+                    this.stop(job, "failed", "the connection to the backend was lost", true);
+                } else if (isLoadingWorkspace) {
                     this.stop(job, "failed", "a workspace was loaded");
                 } else if (!isOpen) {
                     this.stop(job, "failed", "the image was closed");
@@ -324,8 +355,9 @@ export class ImageGenerationJobStore {
                     this.stop(job, "failed", "the region was deleted");
                 }
             },
-            {equals: (a, b) => a.isOpen === b.isOpen && a.hasRegion === b.hasRegion && a.isLoadingWorkspace === b.isLoadingWorkspace}
+            {equals: comparer.structural}
         );
+        let hasSentRequest = false;
         try {
             if (shouldWaitForRegionData) {
                 const wait = waitForRegionData<"stopped">(frame, regionId, () => this.appStore.frames.includes(frame));
@@ -340,7 +372,11 @@ export class ImageGenerationJobStore {
                 }
             }
             job.isRequesting = true;
-            const images = await request();
+            hasSentRequest = true;
+            const requested = request();
+            // A request that ends after the job is stopped has nothing to report.
+            requested.catch(() => {});
+            const images = await Promise.race([requested, job.ended.then(() => [])]);
             job.end("done", images);
         } catch (err) {
             if (err instanceof ImageRequestCancelledError) {
@@ -350,6 +386,9 @@ export class ImageGenerationJobStore {
             }
         } finally {
             job.isRequesting = false;
+            if (!hasSentRequest) {
+                job.resetFrameRequestState();
+            }
             disposeWatch();
         }
     }
@@ -390,8 +429,8 @@ export class ImageGenerationJobStore {
         if (spectralRange.system && !systems.includes(spectralRange.system)) {
             throw new Error(`The image does not support the spectral system ${spectralRange.system}`);
         }
-        const min = frame.findChannelIndexInCoordinate(spectralRange.min, type, unit, system);
-        const max = frame.findChannelIndexInCoordinate(spectralRange.max, type, unit, system);
+        const min = frame.findChannelIndexInCoordinate(spectralRange.min, type, unit, system, true);
+        const max = frame.findChannelIndexInCoordinate(spectralRange.max, type, unit, system, true);
         if (min === undefined || max === undefined || !isFinite(min) || !isFinite(max)) {
             throw new Error("The spectral range cannot be converted to channels");
         }

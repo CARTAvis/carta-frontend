@@ -59,4 +59,18 @@ describe("AppStore requests that make moment and PV images", () => {
         expect(AppToaster.show).not.toHaveBeenCalled();
         expect(frame.resetPvRequestState).toHaveBeenCalled();
     });
+
+    test("throw an ImageRequestCancelledError when the user cancels a PV request that is asked to throw", async () => {
+        // The backend answers a cancelled PV request with success false, so the request is rejected with the message.
+        const cancellingFrame = frame as unknown as {isRequestPVCancelling: boolean};
+        jest.spyOn(appStore.backendService, "requestPV").mockImplementation(() => {
+            cancellingFrame.isRequestPVCancelling = true;
+            return Promise.reject("PV image generator cancelled.");
+        });
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBeInstanceOf(ImageRequestCancelledError);
+
+        cancellingFrame.isRequestPVCancelling = false;
+        jest.spyOn(appStore.backendService, "requestPV").mockRejectedValue("PV generation failed");
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBe("PV generation failed");
+    });
 });
