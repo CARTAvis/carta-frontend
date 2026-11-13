@@ -809,6 +809,31 @@ describe("Catalog overlay widget in a layout", () => {
         expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")!.tableSeparatorPosition).toBe("40%");
     });
 
+    test("shows the catalog with the file ID 1 when a regular layout names no catalog, and saves its style only while that catalog is open, as CARTA v6.0 did", () => {
+        widgetsStore.initWidgets(
+            [
+                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {tableSeparatorPosition: "40%"}},
+                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}}
+            ],
+            [],
+            "regular"
+        );
+
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-1")).toBe(1);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "regular")).toBeUndefined();
+
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        catalogStore.getOrCreateCatalogDisplayStore(1);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "regular")).toEqual(expect.objectContaining({catalogFileId: 1, catalogColor: catalogStore.getCatalogDisplayStore(1)!.catalogColor}));
+    });
+
+    test("shows the first active catalog in a widget from the toolbar, which has no settings", () => {
+        (widgetsStore as any).addWidgetByType("catalog-overlay", null, "catalog-overlay-0", "regular");
+
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+    });
+
     test("applies nothing when a regular layout names no catalog, as CARTA v6.0 did", () => {
         (widgetsStore as any).addWidgetByType("catalog-overlay", {tableSeparatorPosition: "40%"}, "catalog-overlay-0", "regular");
 
