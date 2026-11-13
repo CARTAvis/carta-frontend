@@ -249,12 +249,14 @@ export interface WorkspaceColorBlending {
 
 /**
  * The custom texts of the WCS overlay that are the same for every image, and the switches that show
- * the custom texts. Each image saves its own custom title. The layout copy of the workspace saves
- * the other overlay settings with the image view, because those settings do not depend on any image.
+ * the custom texts. Each image saves its own custom title and colorbar label. The layout copy of
+ * the workspace saves the other overlay settings with the image view, because those settings do not
+ * depend on any image.
  */
 export interface WorkspaceWcsOverlayText {
     labels: {hasCustomText: boolean; customLabelX: string; customLabelY: string};
     title: {hasCustomText: boolean};
+    colorbar: {hasLabelCustomText: boolean};
 }
 
 /** One of the images making up a hypercube. */
@@ -333,6 +335,8 @@ export interface WorkspaceFile {
     fitResult?: WorkspaceImageFitResult;
     /** The custom title of the image in the WCS overlay. Left out when it is the default title, the file name. */
     titleCustomText?: string;
+    /** The custom label of the colorbar of the image. Left out when it is the default label. */
+    colorbarLabelCustomText?: string;
 
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;

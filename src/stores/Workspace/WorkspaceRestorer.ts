@@ -1000,6 +1000,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (typeof fileInfo.titleCustomText === "string") {
                 frame.setTitleCustomText(fileInfo.titleCustomText);
             }
+            if (typeof fileInfo.colorbarLabelCustomText === "string") {
+                frame.setColorbarLabelCustomText(fileInfo.colorbarLabelCustomText);
+            }
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);

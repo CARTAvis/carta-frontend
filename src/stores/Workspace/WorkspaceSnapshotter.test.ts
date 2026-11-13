@@ -113,7 +113,7 @@ function createSession(overrides: Record<string, any> = {}) {
         },
         layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         overlaySettings: {
-            toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))
+            toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: false}}))
         },
         ...overrides
     };
@@ -756,16 +756,19 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
     });
 
-    test("saves the custom texts of the WCS overlay, and the custom title of each image, but not the default one", () => {
+    test("saves the custom texts of the WCS overlay, and the custom title and colorbar label of each image, but not the default ones", () => {
         const {frame} = createSession();
-        Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits"});
+        Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits", colorbarLabelCustomText: "Jy/beam", defaultColorbarLabelText: "Jy/beam"});
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(workspace.wcsOverlay).toEqual({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}});
+        expect(workspace.wcsOverlay).toEqual({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: false}});
         expect(workspace.files?.[0].titleCustomText).toBe("M51 in Halpha");
-        Object.assign(frame, {titleCustomText: "image0.fits"});
-        expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("titleCustomText");
+        expect(workspace.files?.[0]).not.toHaveProperty("colorbarLabelCustomText");
+        Object.assign(frame, {titleCustomText: "image0.fits", colorbarLabelCustomText: "flux"});
+        const saved = new WorkspaceSnapshotter().capture().workspace.files?.[0];
+        expect(saved).not.toHaveProperty("titleCustomText");
+        expect(saved?.colorbarLabelCustomText).toBe("flux");
     });
 
     test("saves the custom title of a color-blended image, but not the default one", () => {
