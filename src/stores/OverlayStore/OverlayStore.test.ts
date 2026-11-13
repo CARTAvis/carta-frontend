@@ -22,6 +22,14 @@ const CUSTOM_OVERLAY: WcsOverlayConfig = {
     labels: {isVisible: false, isHidden: true, hasCustomColor: true, color: "auto-cerulean", font: 3, fontSize: 20, hasRaDecReference: false}
 };
 
+/** The settings of `CUSTOM_OVERLAY` that a layout saves: all but the color, the grid visibility and the label visibility, which have a preference. */
+const CUSTOM_LAYOUT_OVERLAY: WcsOverlayConfig = {
+    ...CUSTOM_OVERLAY,
+    global: {labelType: LabelType.Interior, tolerance: 5, system: SystemType.Galactic},
+    grid: {hasCustomColor: true, color: "auto-orange", width: 2, hasCustomGap: true, gapX: 0.5, gapY: 0.3},
+    labels: {isHidden: true, hasCustomColor: true, color: "auto-cerulean", font: 3, fontSize: 20, hasRaDecReference: false}
+};
+
 const LAYOUT_SCHEMA = require("carta-schemas/layout_schema_2.json");
 
 let mockAppStore: {frames: any[]; activeFrame: null; imageRatio: number; imageViewConfigStore: {visibleFrames: any[]}};
@@ -50,10 +58,11 @@ describe("the WCS overlay in a layout", () => {
 
         overlay.applyConfig(CUSTOM_OVERLAY);
 
-        expect(overlay.toConfig()).toEqual(CUSTOM_OVERLAY);
+        expect(overlay.toConfig()).toEqual(CUSTOM_LAYOUT_OVERLAY);
+        expect(overlay.toConfig(true)).toEqual(CUSTOM_OVERLAY);
         const other = createOverlay();
-        other.applyConfig(JSON.parse(JSON.stringify(overlay.toConfig())));
-        expect(other.toConfig()).toEqual(CUSTOM_OVERLAY);
+        other.applyConfig(JSON.parse(JSON.stringify(overlay.toConfig(true))));
+        expect(other.toConfig(true)).toEqual(CUSTOM_OVERLAY);
     });
 
     test("writes settings the layout schema accepts, with every setting changed", () => {
@@ -61,17 +70,27 @@ describe("the WCS overlay in a layout", () => {
         overlay.applyConfig(CUSTOM_OVERLAY);
         const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/carta-widget", definitions: LAYOUT_SCHEMA.definitions});
 
-        const widget = JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: {wcsOverlay: overlay.toConfig()}}));
+        const widget = JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: {wcsOverlay: overlay.toConfig(true)}}));
 
         expect(validateWidget(widget)).toBe(true);
     });
 
-    test("sets every setting back to its default when the layout saved none", () => {
-        const defaults = createOverlay().toConfig();
+    test("changes nothing when the layout saved no overlay, as a preset layout or an older layout", () => {
         const overlay = createOverlay();
         overlay.applyConfig(CUSTOM_OVERLAY);
 
         overlay.applyConfig(null);
+        overlay.applyConfig(undefined);
+
+        expect(overlay.toConfig(true)).toEqual(CUSTOM_OVERLAY);
+    });
+
+    test("sets every setting without a preference back to its default when the layout saved an empty overlay", () => {
+        const defaults = createOverlay().toConfig();
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+
+        overlay.applyConfig({});
 
         expect(overlay.toConfig()).toEqual(defaults);
     });
@@ -94,39 +113,38 @@ describe("the WCS overlay in a layout", () => {
         expect(overlay.toConfig()).toEqual(defaults);
     });
 
-    test("leaves the settings that a preference gives to the preference when the layout saved none", () => {
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, false);
+    test("keeps the settings that have a preference when the layout leaves them out", () => {
         const overlay = createOverlay();
-        overlay.applyConfig(CUSTOM_OVERLAY);
+        overlay.global.setColor("auto-green");
+        overlay.grid.setVisible(true);
 
         overlay.applyConfig({});
 
-        expect(overlay.global.color).toBe("auto-red");
+        expect(overlay.global.color).toBe("auto-green");
         expect(overlay.grid.isVisible).toBe(true);
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, false);
         expect(overlay.labels.isVisible).toBe(false);
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, false);
-        expect(overlay.grid.isVisible).toBe(false);
     });
 
-    test("leaves out of a layout the settings that follow the preferences, so that they still follow them when the layout is applied", () => {
+    test("leaves out of a layout the settings that have a preference, also when the session set them, so that the preferences still apply", () => {
         const overlay = createOverlay();
+        overlay.global.setColor("auto-green");
+        overlay.grid.setVisible(true);
         overlay.labels.setVisible(false);
 
         const config = overlay.toConfig();
 
         expect(config.global).not.toHaveProperty("color");
         expect(config.grid).not.toHaveProperty("isVisible");
-        expect(config.labels.isVisible).toBe(false);
+        expect(config.labels).not.toHaveProperty("isVisible");
         const other = createOverlay();
         other.applyConfig(JSON.parse(JSON.stringify(config)));
         setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, false);
         setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, true);
         expect(other.global.color).toBe("auto-red");
-        expect(other.grid.isVisible).toBe(true);
-        expect(other.labels.isVisible).toBe(false);
+        expect(other.grid.isVisible).toBe(false);
+        expect(other.labels.isVisible).toBe(true);
     });
 
     test("saves the settings that follow the preferences as they are shown, for a workspace", () => {
@@ -288,6 +306,6 @@ describe("the custom texts of the WCS overlay in a workspace", () => {
 
         overlay.applyTextConfig(undefined);
 
-        expect(overlay.toConfig()).toEqual(CUSTOM_OVERLAY);
+        expect(overlay.toConfig(true)).toEqual(CUSTOM_OVERLAY);
     });
 });

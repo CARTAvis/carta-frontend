@@ -248,16 +248,20 @@ export class OverlayGlobalSettings {
         this.customColor = color;
     };
 
-    /** @param shouldIncludePreferenceValues - whether to save the color also when it follows the user's preference. */
-    toConfig(shouldIncludePreferenceValues: boolean): OverlayGlobalConfig {
-        const color = shouldIncludePreferenceValues ? this.color : this.customColor;
-        return {labelType: this.labelType, ...(color === undefined ? {} : {color}), tolerance: this.tolerance, system: this.system};
+    /** @param shouldIncludePreferenceSettings - whether to save the color, which has a preference. */
+    toConfig(shouldIncludePreferenceSettings: boolean): OverlayGlobalConfig {
+        return {labelType: this.labelType, ...(shouldIncludePreferenceSettings ? {color: this.color} : {}), tolerance: this.tolerance, system: this.system};
     }
 
-    /** Applies everything but the coordinate system. {@link OverlaySettings.applyConfig} applies the system. */
+    /**
+     * Applies everything but the coordinate system. {@link OverlaySettings.applyConfig} applies the system.
+     * The color does not change when the config leaves it out.
+     */
     @action applyConfig(config: Persisted<OverlayGlobalConfig> | undefined) {
         this.labelType = savedOr(config?.labelType, isLabelType, LabelType.Exterior);
-        this.customColor = isColor(config?.color) ? config.color : undefined;
+        if (isColor(config?.color)) {
+            this.customColor = config.color;
+        }
         this.tolerance = savedOr(config?.tolerance, numberIn(0.1), 2);
     }
 
@@ -409,14 +413,16 @@ export class OverlayGridSettings {
         AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
     };
 
-    /** @param shouldIncludePreferenceValues - whether to save the visibility also when it follows the user's preference. */
-    toConfig(shouldIncludePreferenceValues: boolean): OverlayGridConfig {
-        const isVisible = shouldIncludePreferenceValues ? this.isVisible : this.isVisibleInSession;
-        return {...(isVisible === undefined ? {} : {isVisible}), hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
+    /** @param shouldIncludePreferenceSettings - whether to save the visibility, which has a preference. */
+    toConfig(shouldIncludePreferenceSettings: boolean): OverlayGridConfig {
+        return {...(shouldIncludePreferenceSettings ? {isVisible: this.isVisible} : {}), hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
     }
 
+    /** Applies the saved grid settings. The visibility does not change when the config leaves it out. */
     @action applyConfig(config: Persisted<OverlayGridConfig> | undefined) {
-        this.isVisibleInSession = isBoolean(config?.isVisible) ? config.isVisible : undefined;
+        if (isBoolean(config?.isVisible)) {
+            this.isVisibleInSession = config.isVisible;
+        }
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
         this.width = savedOr(config?.width, numberIn(0.001), 1);
@@ -897,11 +903,10 @@ export class OverlayLabelSettings {
         this.customLabelY = label;
     };
 
-    /** @param shouldIncludePreferenceValues - whether to save the visibility also when it follows the user's preference. */
-    toConfig(shouldIncludePreferenceValues: boolean): OverlayLabelConfig {
-        const isVisible = shouldIncludePreferenceValues ? this.isVisible : this.isVisibleInSession;
+    /** @param shouldIncludePreferenceSettings - whether to save the visibility, which has a preference. */
+    toConfig(shouldIncludePreferenceSettings: boolean): OverlayLabelConfig {
         return {
-            ...(isVisible === undefined ? {} : {isVisible}),
+            ...(shouldIncludePreferenceSettings ? {isVisible: this.isVisible} : {}),
             isHidden: this.isHidden,
             hasCustomColor: this.hasCustomColor,
             color: this.color,
@@ -911,9 +916,14 @@ export class OverlayLabelSettings {
         };
     }
 
-    /** Applies the saved label settings. The custom text is left as it is, because a workspace saves it. */
+    /**
+     * Applies the saved label settings. The custom text is left as it is, because a workspace saves it.
+     * The visibility does not change when the config leaves it out.
+     */
     @action applyConfig(config: Persisted<OverlayLabelConfig> | undefined) {
-        this.isVisibleInSession = isBoolean(config?.isVisible) ? config.isVisible : undefined;
+        if (isBoolean(config?.isVisible)) {
+            this.isVisibleInSession = config.isVisible;
+        }
         this.isHidden = savedOr(config?.isHidden, isBoolean, false);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
@@ -1231,40 +1241,43 @@ export class OverlaySettings {
     /**
      * Returns how the overlay looks, as a layout saves it.
      *
-     * A saved layout can be the user's preference layout, which is applied each time CARTA starts.
-     * So a layout leaves out each setting that follows the user's preference, and the setting keeps
-     * following the preference. A workspace keeps the settings as they are shown, so that it shows
-     * the same overlay on any computer.
+     * A layout leaves out the settings that have a preference: the color, the grid visibility and
+     * the label visibility. A saved layout can be the user's preference layout, which is applied each
+     * time CARTA starts. If it saved these settings, changing the preferences would have no effect.
+     * A workspace saves them as they are shown, so that it shows the same overlay on any computer.
      *
-     * @param shouldIncludePreferenceValues - whether to save the settings that follow the user's preference.
+     * @param shouldIncludePreferenceSettings - whether to save the settings that have a preference.
      */
-    toConfig(shouldIncludePreferenceValues: boolean = false): WcsOverlayConfig {
+    toConfig(shouldIncludePreferenceSettings: boolean = false): WcsOverlayConfig {
         return {
             isVisible: this.isVisible,
-            global: this.global.toConfig(shouldIncludePreferenceValues),
+            global: this.global.toConfig(shouldIncludePreferenceSettings),
             title: this.title.toConfig(),
-            grid: this.grid.toConfig(shouldIncludePreferenceValues),
+            grid: this.grid.toConfig(shouldIncludePreferenceSettings),
             border: this.border.toConfig(),
             axes: this.axes.toConfig(),
             ticks: this.ticks.toConfig(),
             numbers: this.numbers.toConfig(),
-            labels: this.labels.toConfig(shouldIncludePreferenceValues)
+            labels: this.labels.toConfig(shouldIncludePreferenceSettings)
         };
     }
 
     /**
-     * Applies how the overlay looks, as a layout saved it. The config replaces every setting. When
-     * the config leaves out a setting, or saves a value that is not valid, the setting goes back
-     * to its default. A setting that has a preference goes back to the preference. The
-     * user's preferences do not change. The custom texts and their switches do not change either,
-     * because a workspace saves them.
+     * Applies how the overlay looks, as a layout saved it. When the config leaves out a setting, or
+     * saves a value that is not valid, the setting goes back to its default. A setting that has a
+     * preference does not change when the config leaves it out. The user's preferences do not
+     * change. The custom texts and their switches do not change either, because a workspace saves them.
      *
-     * A config of null resets every setting.
+     * Without a config, as for a preset layout or a layout saved before layouts saved the overlay,
+     * nothing changes.
      *
      * @returns what could not be applied as it was saved.
      */
     @action applyConfig(config: Persisted<WcsOverlayConfig> | null | undefined): string[] {
         const problems: string[] = [];
+        if (!config || typeof config !== "object") {
+            return problems;
+        }
         const sectionOf = <T>(value: unknown): Persisted<T> | undefined => (value && typeof value === "object" ? (value as Persisted<T>) : undefined);
 
         this.isVisible = savedOr(config?.isVisible, isBoolean, true);

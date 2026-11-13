@@ -658,8 +658,8 @@ export class WorkspaceSnapshotter {
      */
     private captureLayout(): void {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
-        // A saved layout leaves out the overlay settings that follow the user's preferences. A
-        // workspace shows the same overlay on any computer, so its layout keeps them as they are shown.
+        // A saved layout leaves out the overlay settings that have a preference. A workspace shows
+        // the same overlay on any computer, so its layout keeps them as they are shown.
         const wcsOverlay = this.appStore.overlaySettings.toConfig(true);
         forEachImageView(this.workspace.layout, imageView => {
             if (imageView.widgetSettings) {
