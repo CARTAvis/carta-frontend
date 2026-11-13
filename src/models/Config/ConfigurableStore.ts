@@ -24,3 +24,24 @@ export interface ConfigurableStore<TConfig, TInput = TConfig> {
 export interface IdentifiedWidgetStore {
     widgetId: string;
 }
+
+/**
+ * The kind of layout that is saved or applied.
+ *
+ * - `regular`: a saved layout, a preset layout, the layout in the preferences, or a dynamic layout.
+ *   It keeps what CARTA v6.0 kept. It also keeps the settings added since then for the rest frame of
+ *   the spectral profiler, the mean and RMS of the histogram, and the time labels of the animator.
+ * - `workspace`: the copy of the layout that a workspace keeps. It also keeps what only a workspace
+ *   needs, such as the own ID of each widget and the settings of the image view grid.
+ */
+export type LayoutPersistence = "regular" | "workspace";
+
+/**
+ * A widget store that keeps more settings in the layout copy of a workspace than in a regular
+ * layout. `toWorkspaceLayoutConfig` returns the settings of a regular layout and the extra
+ * settings. `applyWorkspaceLayoutConfig` applies them.
+ */
+export interface WorkspaceLayoutConfigurable<TConfig> {
+    toWorkspaceLayoutConfig(): TConfig;
+    applyWorkspaceLayoutConfig(config: Persisted<TConfig>): void;
+}

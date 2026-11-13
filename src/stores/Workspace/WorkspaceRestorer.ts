@@ -334,6 +334,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        // The custom texts of the overlay describe the images of the workspace, so they come from the
+        // workspace only. A workspace that saved none, such as one of CARTA 6, sets them back to the
+        // defaults.
+        this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         // The backend registers the regions while the images are configured. Moment and PV images
         // wait for the regions. The cube histograms are computed while the catalogs open. The
         // restore waits for both before it applies the layout.
@@ -517,6 +521,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         appStore.animatorStore.stopAnimation();
         appStore.tileService.clearRequestQueue();
         appStore.removeAllFrames();
+        // A regular layout, such as the one of the preferences, can have made the display store of a
+        // catalog that never opened. A catalog of the workspace with that file ID would take its style.
+        appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
     }
 
     /**
@@ -990,6 +997,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             this.restoreSpectralSettings(frame, fileInfo);
             this.restoreImageViewSettings(frame, fileInfo);
+            if (typeof fileInfo.titleCustomText === "string") {
+                frame.setTitleCustomText(fileInfo.titleCustomText);
+            }
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
@@ -1806,10 +1816,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
 
         this.workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-        for (const {imageListIndex, selectedFrameId, alpha} of this.workspace.colorBlendingImages) {
+        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of this.workspace.colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+                if (typeof titleCustomText === "string") {
+                    colorBlending.setTitleCustomText(titleCustomText);
+                }
             }
             while (colorBlending?.selectedFrames.length) {
                 colorBlending.deleteSelectedFrame(0);
@@ -2260,10 +2273,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
 
-        // The layout store validates and upgrades a copy before replacing the current widgets.
-        if (!this.appStore.layoutStore.applyLayoutConfig(layout)) {
+        // The layout store validates and upgrades a copy before replacing the current widgets. It
+        // validates the copy by the definition of the layout in the workspace schema.
+        const problems: string[] = [];
+        if (!this.appStore.layoutStore.applyLayoutConfig(layout, "", "workspace", problems)) {
             this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
         }
+        problems.forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
     }
 
     /**

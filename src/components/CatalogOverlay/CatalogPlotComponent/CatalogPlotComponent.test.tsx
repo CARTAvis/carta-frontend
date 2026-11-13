@@ -283,8 +283,8 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(widgetsStore.catalogPlotWidgets.has(plotId)).toBe(false);
 
         expect(widgetsStore.catalogPlotWidgets.get(catalogStore.widgetBindings.displayedForWidget(plotId).widgetId)).toBe(displayed);
-        // A layout keeps the tab's identity and what survives any catalog, naming none.
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toEqual({widgetId: "plot-a", ...displayed.toLayoutSettings()});
+        // The layout copy of a workspace keeps the tab's identity and what survives any catalog, naming none.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId, "workspace")).toEqual({widgetId: "plot-a", ...displayed.toLayoutSettings()});
         component.componentWillUnmount();
     });
 
@@ -300,7 +300,7 @@ describe("CatalogPlotComponent restored plots", () => {
         expect(displayed).toBeDefined();
         expect(displayed).not.toBe(widgetsStore.catalogPlotWidgets.get(plotId));
 
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId)).toEqual({widgetId: "plot-a", ...displayed!.toLayoutSettings()});
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", plotId, "workspace")).toEqual({widgetId: "plot-a", ...displayed!.toLayoutSettings()});
         component.componentWillUnmount();
     });
 });

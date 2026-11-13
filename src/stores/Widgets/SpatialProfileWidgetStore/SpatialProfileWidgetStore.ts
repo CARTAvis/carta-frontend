@@ -4,20 +4,29 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, Polarizations, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
-import {type ConfigurableStore, type LineOption, type Persisted, VALID_XY_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceSpatialProfileWidgetConfig} from "models";
+import {
+    type ConfigurableStore,
+    type LineOption,
+    type Persisted,
+    VALID_XY_COORDINATES,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceLayoutConfigurable,
+    type WorkspaceSpatialProfileWidgetConfig
+} from "models";
 import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 const DEFAULT_STOKES = "current";
 
-/** What a spatial profiler widget saves of its plot. */
+/** What a spatial profiler widget saves of its plot in a regular layout. */
 export interface SpatialProfileWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
-    widgetId: string;
     coordinate: string;
     primaryLineColor: string;
     lineWidth: number;
@@ -25,12 +34,26 @@ export interface SpatialProfileWidgetConfig {
     wcsAxisVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    /** The range of the data that the widget last plotted. The settings panel shows it in its range inputs before the widget plots data. */
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
+}
+
+/** What a spatial profiler widget saves in the layout copy of a workspace. */
+export interface SpatialProfileWorkspaceLayoutConfig extends Omit<SpatialProfileWidgetConfig, LinePlotDataRangeField> {
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
+    widgetId: string;
     markerTextVisible: boolean;
     settingsTabId: SpatialProfilerSettingsTabs;
     smoothing: ProfileSmoothingConfig;
 }
 
-export class SpatialProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig> {
+export class SpatialProfileWidgetStore
+    extends RegionWidgetStore
+    implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceLayoutConfigurable<SpatialProfileWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig>
+{
     widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
@@ -384,13 +407,39 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         }
     };
 
+    /** Applies the settings of a regular layout. */
     public applyConfig = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
+        this.applyPlotSettings(widgetSettings);
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
+    };
+
+    /**
+     * Applies the settings in the layout copy of a workspace. The range of the data is not applied.
+     * The workspace restores the range that the widget was zoomed to.
+     */
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<SpatialProfileWorkspaceLayoutConfig>): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        this.applyPlotSettings(widgetSettings);
         if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (Object.values(SpatialProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpatialProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpatialProfilerSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
+        }
+    };
+
+    private applyPlotSettings = (widgetSettings: Persisted<SpatialProfileWidgetConfig>): void => {
         if (typeof widgetSettings.coordinate === "string" && VALID_XY_COORDINATES.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
@@ -412,30 +461,39 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (typeof widgetSettings.markerTextVisible === "boolean") {
-            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
-        }
-        if (Object.values(SpatialProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpatialProfilerSettingsTabs)) {
-            this.settingsTabId = widgetSettings.settingsTabId as SpatialProfilerSettingsTabs;
-        }
-        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
-            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
-        }
     };
 
+    /** Returns the settings of a regular layout. */
     public toConfig = (): SpatialProfileWidgetConfig => {
         return {
-            widgetId: this.widgetId,
-            markerTextVisible: this.isMarkerTextVisible,
-            settingsTabId: this.settingsTabId,
-            smoothing: this.smoothingStore.toConfig(),
             coordinate: this.coordinate,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.isWcsAxisVisible,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
+
+    /** Returns the settings in the layout copy of a workspace. It keeps no range of the data. */
+    public toWorkspaceLayoutConfig = (): SpatialProfileWorkspaceLayoutConfig => {
+        return {
+            coordinate: this.coordinate,
+            primaryLineColor: this.primaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            wcsAxisVisible: this.isWcsAxisVisible,
+            meanRmsVisible: this.isMeanRmsVisible,
+            plotType: this.plotType,
+            widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig()
         };
     };
 }

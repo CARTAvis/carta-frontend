@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, VelocityConvention} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceSpectralLineQueryWidgetConfig} from "models";
+import {type Persisted, type WorkspaceConfigurableWidget, type WorkspaceLayoutConfigurable, type WorkspaceSpectralLineQueryWidgetConfig} from "models";
 import {SplatalogueService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 import {
@@ -84,9 +84,9 @@ const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 const LINE_QUERY_VELOCITY_CONVENTION = VelocityConvention.RADIO;
 
-/** The settings that a spectral line query widget saves in a layout. */
+/** The settings that a spectral line query widget saves in the layout copy of a workspace. A regular layout saves no settings for it. */
 export interface SpectralLineQueryWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
 }
 
@@ -98,7 +98,7 @@ function isRange(value: unknown): value is [number, number] {
     return Array.isArray(value) && value.length === 2 && value.every(isFiniteNumber);
 }
 
-export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralLineQueryWidgetConfig, Persisted<SpectralLineQueryWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpectralLineQueryWidgetConfig> {
+export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable<SpectralLineQueryWidgetConfig>, WorkspaceConfigurableWidget<WorkspaceSpectralLineQueryWidgetConfig> {
     widgetId: string = "";
     @observable queryRangeType: SpectralLineQueryRangeType = SpectralLineQueryRangeType.Range;
     @observable queryRange: NumberRange = [0, 0];
@@ -597,13 +597,13 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
         }
     };
 
-    public applyConfig = (widgetSettings: Persisted<SpectralLineQueryWidgetConfig>): void => {
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<SpectralLineQueryWidgetConfig>): void => {
         if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
     };
 
-    public toConfig = (): SpectralLineQueryWidgetConfig => ({widgetId: this.widgetId});
+    public toWorkspaceLayoutConfig = (): SpectralLineQueryWidgetConfig => ({widgetId: this.widgetId});
 
     /** Returns the query settings that a workspace saves. The spectral profiler is named by its widget ID, which stays the same after a restore. */
     public toWorkspaceConfig = (): WorkspaceSpectralLineQueryWidgetConfig => {

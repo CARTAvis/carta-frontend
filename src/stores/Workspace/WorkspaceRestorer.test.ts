@@ -248,16 +248,21 @@ function createSession() {
         widgetsStore: {
             catalogWidgets: new Map(),
             catalogPlotWidgets: new Map(),
+            removeUnopenedLayoutDisplayStores: jest.fn(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
         },
         layoutStore: {
-            applyLayoutConfig: jest.fn((_layout?: unknown) => {
+            /** What applying the layout copy reports, as the WCS overlay of its image view reports it. */
+            layoutProblems: [] as string[],
+            applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string, problems?: string[]) => {
                 calls.push("applyLayout");
+                problems?.push(...appStore.layoutStore.layoutProblems);
                 return true;
             })
-        }
+        },
+        overlaySettings: {applyTextConfig: jest.fn()}
     };
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
@@ -319,6 +324,8 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+        // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
+        expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
     });
 
     test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
@@ -806,7 +813,8 @@ describe("WorkspaceRestorer", () => {
         const problems = await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
 
         expect(problems).toEqual([]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT);
+        // The layout copy of a workspace is applied in the workspace form, and validated by the workspace schema.
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT, "", "workspace", []);
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
@@ -944,7 +952,50 @@ describe("WorkspaceRestorer", () => {
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
         expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout);
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace", []);
+    });
+
+    test("reports each problem of the WCS overlay that the layout copy could not apply as a layout issue", async () => {
+        const {appStore} = createSession();
+        appStore.layoutStore.layoutProblems = ["Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially"];
+
+        expect(await restoreIssues(createWorkspace({layout: LAYOUT}))).toEqual([
+            {kind: WorkspaceItemKind.Layout, subject: "", message: "Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially", outcome: undefined}
+        ]);
+    });
+
+    test("applies the custom texts of the WCS overlay, and the custom title of each image and color-blended image", async () => {
+        const setTitleCustomText = jest.fn();
+        frameOverrides = {setTitleCustomText};
+        const {appStore} = createSession();
+        const colorBlending = {selectedFrames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn()};
+        appStore.imageViewConfigStore.createColorBlending.mockReturnValue(colorBlending);
+        const wcsOverlay = {labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}};
+
+        await restore(
+            createWorkspace({
+                files: [
+                    {...IMAGE, titleCustomText: "M51"},
+                    {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}
+                ],
+                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
+                wcsOverlay
+            })
+        );
+
+        expect(appStore.overlaySettings.applyTextConfig).toHaveBeenCalledWith(wcsOverlay);
+        // Both images share the mocks, so only the first image sets a text.
+        expect(setTitleCustomText.mock.calls).toEqual([["M51"]]);
+        expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
+    });
+
+    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of CARTA 6", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE]}));
+
+        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+        expect(appStore.overlaySettings.applyTextConfig).toHaveBeenCalledWith(undefined);
     });
 
     test("points the catalog widgets at the catalogs just loaded", async () => {

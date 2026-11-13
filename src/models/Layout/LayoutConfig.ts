@@ -1,15 +1,24 @@
 import Ajv from "ajv";
 
-import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, PresetLayout} from "models";
-import {AppStore, type WidgetConfig} from "stores";
+import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, type LayoutPersistence, PresetLayout} from "models";
+import {AppStore, CatalogStore, type WidgetConfig} from "stores";
 import {findDeep} from "utilities";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "./RegularLayoutWidgetSettings";
+
+/* eslint-disable @typescript-eslint/naming-convention */
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
+const workspaceSchema = require("carta-schemas/workspace_schema_2.json");
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class LayoutConfig {
     public static layoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
+    /** Validates the layout copy of a workspace, by the definition of the layout in the workspace schema. */
+    public static workspaceLayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile({$ref: "#/definitions/layout", definitions: workspaceSchema.definitions});
     public static currentSchemaVersion = 2;
+
+    /** The widget settings that a regular layout keeps, by widget type. See {@link REGULAR_LAYOUT_WIDGET_SETTINGS}. */
+    public static readonly REGULAR_WIDGET_SETTINGS = REGULAR_LAYOUT_WIDGET_SETTINGS;
 
     public static getPresetConfig = (presetName: string) => {
         if (!presetName) {
@@ -79,16 +88,24 @@ export class LayoutConfig {
     };
 
     /**
-     * Upgrade and validate a layout without changing the caller's object.
+     * Prepares a layout that is about to replace the live layout.
      *
-     * Layout validation applies defaults, so validating a workspace's embedded layout in place
-     * would mutate the workspace and make it possible to clear the current layout before a bad
-     * config is rejected. Keep this operation as the single preparation step for callers that
-     * are about to replace a live layout.
+     * A regular layout is applied as it is, as CARTA v6.0 applied it. It is upgraded and validated
+     * when it is loaded from the server or the local storage. A preset layout is in the current form.
+     *
+     * The layout copy of a workspace is upgraded and validated without changing the caller's object.
+     * Layout validation applies defaults, so validating the copy in place would mutate the
+     * workspace. It is validated by the definition of the layout in the workspace schema, before the
+     * current layout is cleared.
+     *
+     * @returns the layout to apply, or undefined when there is none or the layout copy of a workspace is not valid.
      */
-    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null): any | undefined => {
+    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null, persistence: LayoutPersistence): any | undefined => {
         if (!layout) {
             return undefined;
+        }
+        if (persistence !== "workspace") {
+            return layout;
         }
 
         let candidate: any;
@@ -100,8 +117,8 @@ export class LayoutConfig {
         }
 
         LayoutConfig.upgradeLayout(candidate);
-        if (!LayoutConfig.layoutValidator(candidate)) {
-            console.error("Layout validation failed:", LayoutConfig.layoutValidator.errors);
+        if (!LayoutConfig.workspaceLayoutValidator(candidate)) {
+            console.error("Layout validation failed:", LayoutConfig.workspaceLayoutValidator.errors);
             return undefined;
         }
         return candidate;
@@ -129,10 +146,12 @@ export class LayoutConfig {
     /**
      * Converts the app's abstract layout config into a FlexLayout IJsonModel.
      * Also collects component configs for initializing widget stores.
+     *
+     * @param persistence - the kind of layout.
      */
-    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[]) => {
+    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[], persistence: LayoutPersistence) => {
         // Convert the abstract config to FlexLayout model JSON first — this assigns unique IDs
-        const modelJson = createFlexLayoutModel({type: dockedConfig.type, content: dockedConfig.content});
+        const modelJson = createFlexLayoutModel({type: dockedConfig.type, content: dockedConfig.content}, persistence);
         // Then collect component configs (uses _assignedId set by createFlexLayoutModel)
         LayoutConfig.collectComponentConfigs(dockedConfig.content, componentConfigs);
         return modelJson;
@@ -182,15 +201,23 @@ export class LayoutConfig {
 
     /**
      * Creates the abstract config from the current FlexLayout model for saving. It names none of the
-     * session's images or catalogs, so a saved layout and the copy a workspace carries take one form.
+     * session's images.
+     *
+     * @param persistence - the kind of layout. A regular layout keeps what CARTA v6.0 kept: it keeps
+     *                      no maximized stack, saves the floating widgets in the order of the list of
+     *                      floating widgets, and saves a position of 0 as an empty value. The layout
+     *                      copy of a workspace also keeps the own ID of each widget and the settings
+     *                      that only a workspace needs, a maximized stack, and a floating widget at
+     *                      the left or top edge. It saves the floating widgets in their stacking order.
      */
-    public static createConfigToSave = (appStore: AppStore, modelJson: any) => {
+    public static createConfigToSave = (appStore: AppStore, modelJson: any, persistence: LayoutPersistence) => {
         if (!appStore || !modelJson) {
             return null;
         }
 
+        const isWorkspace = persistence === "workspace";
         // Extract abstract config from FlexLayout model JSON
-        const abstractConfig = extractAbstractConfig(modelJson);
+        const abstractConfig = extractAbstractConfig(modelJson, persistence);
 
         const configToSave = {
             layoutVersion: LayoutConfig.currentSchemaVersion,
@@ -199,13 +226,17 @@ export class LayoutConfig {
         };
 
         // Enrich docked widgets with widget settings
-        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked);
+        LayoutConfig.enrichSaveConfig(appStore, configToSave.docked, persistence);
 
-        // Save the floating widgets from the bottom one to the top one. A layout adds them again in
-        // this order, and each widget it adds is put on top. So they are stacked as they were.
-        const zIndexManager = appStore.zIndexManager;
-        const zIndexOf = (config: WidgetConfig): number => zIndexManager?.findIndex(config.componentId ? config.componentId : config.id) ?? 0;
-        const floatingWidgets = [...(appStore.widgetsStore.floatingWidgets ?? [])].sort((a, b) => zIndexOf(a) - zIndexOf(b));
+        // The layout copy of a workspace saves the floating widgets from the bottom one to the top
+        // one. A layout adds them again in this order, and each widget it adds is put on top. So they
+        // are stacked as they were.
+        const floatingWidgets = [...(appStore.widgetsStore.floatingWidgets ?? [])];
+        if (isWorkspace) {
+            const zIndexManager = appStore.zIndexManager;
+            const zIndexOf = (config: WidgetConfig): number => zIndexManager?.findIndex(config.componentId ? config.componentId : config.id) ?? 0;
+            floatingWidgets.sort((a, b) => zIndexOf(a) - zIndexOf(b));
+        }
         floatingWidgets.forEach((config: WidgetConfig) => {
             // skip saving floating settings panel
             if (config?.type === "floating-settings") {
@@ -216,14 +247,19 @@ export class LayoutConfig {
                 id: config.type,
                 defaultWidth: config.defaultWidth ? config.defaultWidth : "",
                 defaultHeight: config.defaultHeight ? config.defaultHeight : "",
-                // A position of 0 is at the left or top edge, so save it too.
-                defaultX: typeof config.defaultX === "number" ? config.defaultX : "",
-                defaultY: typeof config.defaultY === "number" ? config.defaultY : ""
+                // The layout copy of a workspace saves a position of 0 too. It is at the left or top edge.
+                defaultX: (isWorkspace ? typeof config.defaultX === "number" : config.defaultX) ? config.defaultX : "",
+                defaultY: (isWorkspace ? typeof config.defaultY === "number" : config.defaultY) ? config.defaultY : ""
             };
             // add widget settings
-            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            const widgetSettingsConfig = LayoutConfig.widgetSettingsToSave(appStore, config.type, config.id, persistence);
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
+            }
+            // A regular layout keeps the type of a catalog plot beside its settings.
+            const plotType = isWorkspace ? undefined : LayoutConfig.catalogPlotTypeOf(appStore, config.type, config.id);
+            if (plotType) {
+                floatingConfig.plotType = plotType;
             }
             configToSave.floating.push(floatingConfig);
         });
@@ -232,24 +268,59 @@ export class LayoutConfig {
     };
 
     /**
-     * Recursively enriches the abstract config with widget settings from current widget stores.
+     * Returns the settings that a layout saves for a widget. A regular layout saves only the settings
+     * in {@link REGULAR_WIDGET_SETTINGS}.
      */
-    private static enrichSaveConfig = (appStore: AppStore, node: any) => {
+    private static widgetSettingsToSave = (appStore: AppStore, widgetType: string, instanceId: string, persistence: LayoutPersistence): object | undefined => {
+        const widgetSettings = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId, persistence);
+        if (!widgetSettings || persistence === "workspace") {
+            return widgetSettings ?? undefined;
+        }
+        const regularSettings: Record<string, unknown> = {};
+        for (const field of LayoutConfig.REGULAR_WIDGET_SETTINGS[widgetType] ?? []) {
+            const value = (widgetSettings as Record<string, unknown>)[field];
+            if (value !== undefined) {
+                regularSettings[field] = value;
+            }
+        }
+        return Object.keys(regularSettings).length ? regularSettings : undefined;
+    };
+
+    /** Returns the type of the plot that a catalog plot widget shows, or undefined for any other widget. */
+    private static catalogPlotTypeOf = (appStore: AppStore, widgetType: string, instanceId: string): string | undefined => {
+        if (widgetType !== "catalog-plot") {
+            return undefined;
+        }
+        return CatalogStore.Instance.widgetBindings.layoutSettingsFor(instanceId)?.plotType ?? appStore.widgetsStore.catalogPlotWidgets.get(instanceId)?.plotType;
+    };
+
+    /**
+     * Recursively enriches the abstract config with widget settings from current widget stores. The
+     * settings are made again from the widget stores. So a regular layout does not keep the settings
+     * that a tab got from the layout copy of a workspace.
+     */
+    private static enrichSaveConfig = (appStore: AppStore, node: any, persistence: LayoutPersistence) => {
         if (!node || !node.content) {
             return;
         }
 
         for (const child of node.content) {
             if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                LayoutConfig.enrichSaveConfig(appStore, child);
+                LayoutConfig.enrichSaveConfig(appStore, child, persistence);
             } else if (child.type === "component" && child.id) {
                 // Use the original instance ID for widget store lookups (e.g. "catalog-plot-0")
                 // since child.id is the collapsed base type (e.g. "catalog-plot")
                 const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
+                const widgetSettingsConfig = LayoutConfig.widgetSettingsToSave(appStore, widgetType, instanceId, persistence);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
+                } else {
+                    delete child.widgetSettings;
+                }
+                const plotType = persistence === "workspace" ? undefined : LayoutConfig.catalogPlotTypeOf(appStore, widgetType, instanceId);
+                if (plotType) {
+                    child.plotType = plotType;
                 }
                 // Clean up internal field so it doesn't persist in saved layouts
                 delete child._instanceId;
@@ -260,8 +331,10 @@ export class LayoutConfig {
     /**
      * Legacy compatibility: Collects component configs from abstract layout tree.
      * Used when applying a layout to initialize widget stores before creating the FlexLayout model.
+     *
+     * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack maximized.
      */
-    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[], persistence: LayoutPersistence) => {
         if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -276,7 +349,7 @@ export class LayoutConfig {
                     if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
                         simpleChild.activeItemIndex = child.activeItemIndex;
                     }
-                    if (child.type === "stack" && child.maximized === true) {
+                    if (persistence === "workspace" && child.type === "stack" && child.maximized === true) {
                         simpleChild.maximized = true;
                     }
                     if (child.width) {
@@ -287,7 +360,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.createConfigToApply(simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.createConfigToApply(simpleChild.content, child.content, componentConfigs, persistence);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = child.id.replace(/-\d+$/, "");

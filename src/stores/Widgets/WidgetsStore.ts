@@ -36,12 +36,14 @@ import {
     getWidgetMap,
     type IdentifiedWidgetStore,
     IMAGE_NOT_RESTORED,
+    type LayoutPersistence,
     type Persisted,
     REGION_NOT_RESTORED,
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
     type WorkspaceIssue,
+    type WorkspaceLayoutConfigurable,
     type WorkspacePlotWidgetConfig
 } from "models";
 import {canPopoutWidget} from "models/Layout/FlexLayoutModelFactory";
@@ -53,6 +55,7 @@ import {
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
     type CatalogWidgetLayoutSettings,
+    type CatalogWidgetRegularLayoutSettings,
     CatalogWidgetStore,
     type EmptyWidgetStore,
     type HistogramWidgetStore,
@@ -181,6 +184,12 @@ export class WidgetsStore {
 
     private widgetsMap: Map<string, Map<string, object>>;
     private defaultFloatingWidgetOffset: number;
+    /** The table split of each catalog that the regular layout being applied has set the style of, by the file ID. */
+    private readonly layoutTableSeparatorPositions = new Map<number, string>();
+    /** The catalog widgets of the regular layout being applied that name no catalog, and so show the catalog with the file ID 1. */
+    private layoutCatalogWidgetsOnFirstCatalog: CatalogWidgetStore[] = [];
+    /** The file IDs of the display stores that a regular layout made for catalogs that were not open. */
+    private readonly layoutDisplayStoreFileIds = new Set<number>();
     private beingUnpinned: Set<string> = new Set();
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
@@ -574,6 +583,11 @@ export class WidgetsStore {
         return typeof configurable?.toConfig === "function" && typeof configurable?.applyConfig === "function";
     };
 
+    private static isWorkspaceLayoutConfigurable = (store: unknown): store is WorkspaceLayoutConfigurable<object> => {
+        const configurable = store as Partial<WorkspaceLayoutConfigurable<object>> | undefined;
+        return typeof configurable?.toWorkspaceLayoutConfig === "function" && typeof configurable?.applyWorkspaceLayoutConfig === "function";
+    };
+
     private static copyStylesToPopoutWindow(popoutWindow: Window): void {
         const popoutDoc = popoutWindow.document;
         // Guard: only copy once per popout window
@@ -616,19 +630,25 @@ export class WidgetsStore {
         }
     };
 
-    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null, preAssignedId: string | null = null): string | null => {
+    /**
+     * Adds the store of a widget that a layout creates, and applies the settings that the layout saved for it.
+     *
+     * @param persistence - the kind of layout. A regular layout gives a catalog plot no settings, as in CARTA v6.0.
+     */
+    private addWidgetByType = (widgetType: string, widgetSettings: object | null, preAssignedId: string | null, persistence: LayoutPersistence): string | null => {
+        const isWorkspace = persistence === "workspace";
         switch (widgetType) {
             case ImageViewComponent.WidgetConfig.type:
                 return ImageViewComponent.WidgetConfig.id;
             case CatalogOverlayComponent.WidgetConfig.type:
-                return this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId);
+                return this.initializeCatalogOverlayWidget(widgetSettings, preAssignedId, persistence);
             case CatalogPlotType.D2Scatter:
-                return this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId, widgetSettings);
+                return this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: "None", plotType: CatalogPlotType.D2Scatter}, preAssignedId, isWorkspace ? widgetSettings : null);
             case CatalogPlotType.Histogram:
-                return this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId, widgetSettings);
+                return this.initializeCatalogPlotWidget({xColumnName: "None", yColumnName: undefined, plotType: CatalogPlotType.Histogram}, preAssignedId, isWorkspace ? widgetSettings : null);
             default:
                 if (getWidgetMap().get(widgetType)?.createStore) {
-                    return this.addWidget(widgetType, preAssignedId, widgetSettings);
+                    return this.addWidget(widgetType, preAssignedId, widgetSettings, persistence);
                 }
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -638,23 +658,33 @@ export class WidgetsStore {
         }
     };
 
-    private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null): string | null => {
+    private initializeCatalogOverlayWidget = (widgetSettings: object | null, preAssignedId: string | null, persistence: LayoutPersistence): string | null => {
         const componentId = preAssignedId || this.getNextComponentId(CatalogOverlayComponent.WidgetConfig);
-        const settings = widgetSettings as CatalogWidgetLayoutSettings | null;
+        const settings = widgetSettings as (CatalogWidgetLayoutSettings & CatalogWidgetRegularLayoutSettings) | null;
         const activeCatalogFileIds = CatalogStore.Instance.activeCatalogFiles;
         const legacyCatalogFileId = settings?.catalogFileId;
-        const selectedCatalogId = legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0];
+        // A regular layout shows the catalog with the saved session file ID, as CARTA v6.0 did, also
+        // when no catalog with this file ID is open yet. When the layout names no catalog, it shows
+        // the catalog with the file ID 1, as CARTA v6.0 did. A widget from the toolbar has no
+        // settings, and shows the first active catalog. The layout copy of a workspace names no
+        // catalog. It uses a saved file ID only while that catalog is active, so that an obsolete ID
+        // never selects an unrelated catalog. The workspace points the widget at its catalog later.
+        const isRegular = persistence !== "workspace" && settings !== null;
+        const regularCatalogFileId = WidgetsStore.isLayoutCatalogFileId(legacyCatalogFileId) ? legacyCatalogFileId : 1;
+        const selectedCatalogId = isRegular ? regularCatalogFileId : legacyCatalogFileId !== undefined && activeCatalogFileIds.includes(legacyCatalogFileId) ? legacyCatalogFileId : activeCatalogFileIds[0];
         const widgetStore = this.getCatalogWidgetStore(componentId, selectedCatalogId);
 
-        // Layout V2 used a session-local catalog file ID. Keep it working when the catalog is
-        // still active, but never let an obsolete ID select an unrelated catalog after reload.
         // Settled before the rest of the settings go in, because what they carry is kept per
         // catalog: the widget store may be one that is already on another catalog, and the layout
         // may name one this session never opened.
         CatalogStore.Instance.widgetBindings.initTable(componentId, selectedCatalogId);
 
-        widgetStore.applyLayoutSettings(settings, selectedCatalogId);
-        this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
+        if (persistence === "workspace") {
+            widgetStore.applyLayoutSettings(settings, selectedCatalogId);
+            this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
+        } else {
+            this.applyRegularCatalogOverlaySettings(widgetStore, settings);
+        }
 
         // The display state of a catalog may not exist yet when a layout is restored. CatalogStore
         // creates it when the catalog finishes loading.
@@ -662,6 +692,73 @@ export class WidgetsStore {
             CatalogStore.Instance.getOrCreateCatalogDisplayStore(selectedCatalogId);
         }
         return componentId;
+    };
+
+    /**
+     * Returns the settings that a layout saved for a widget. A catalog widget of a layout gets empty
+     * settings when the layout saved none, so that it is told apart from a widget from the toolbar.
+     */
+    private static layoutSettingsOf = (widgetType: string, widgetSettings: object | null | undefined): object | null => {
+        return widgetSettings ?? (widgetType === CatalogOverlayComponent.WidgetConfig.type ? {} : null);
+    };
+
+    /** Returns whether a value is a session file ID of a catalog, as a regular layout saves it. */
+    private static isLayoutCatalogFileId = (value: unknown): value is number => {
+        return typeof value === "number" && Number.isInteger(value) && value >= 1;
+    };
+
+    /**
+     * Applies what a regular layout keeps for a catalog widget, as CARTA v6.0 applied it. Nothing is
+     * applied when the layout names no catalog. How the sources are drawn belongs to the catalog. So
+     * it is written to the display store of the catalog with the saved file ID, and only the settings
+     * that the layout has are written. When that catalog is not open yet, the display store is made
+     * now. Then the catalog that opens with this file ID is drawn in this way.
+     *
+     * CARTA v6.0 kept one store for each catalog. It applied the settings of only the first widget
+     * in a layout that names a catalog. A later widget that names the same catalog shared that
+     * store, so it also used the table split of the first widget. A widget whose layout names no
+     * catalog showed the catalog with the file ID 1. So it used the table split of the widget that
+     * names this catalog, in any place in the layout. {@link initWidgets} gives it that split.
+     */
+    private applyRegularCatalogOverlaySettings = (widgetStore: CatalogWidgetStore, settings: CatalogWidgetRegularLayoutSettings | null) => {
+        const catalogFileId = settings?.catalogFileId;
+        if (!settings) {
+            return;
+        }
+        if (!WidgetsStore.isLayoutCatalogFileId(catalogFileId)) {
+            this.layoutCatalogWidgetsOnFirstCatalog.push(widgetStore);
+            return;
+        }
+        const firstTableSeparatorPosition = this.layoutTableSeparatorPositions.get(catalogFileId);
+        if (firstTableSeparatorPosition !== undefined) {
+            widgetStore.setTableSeparatorPosition(firstTableSeparatorPosition);
+            return;
+        }
+        if (typeof settings.tableSeparatorPosition === "string") {
+            widgetStore.setTableSeparatorPosition(settings.tableSeparatorPosition);
+        }
+        this.layoutTableSeparatorPositions.set(catalogFileId, widgetStore.tableSeparatorPosition);
+        const catalogStore = CatalogStore.Instance;
+        if (!catalogStore.catalogProfileStores.has(catalogFileId) && !catalogStore.getCatalogDisplayStore(catalogFileId)) {
+            this.layoutDisplayStoreFileIds.add(catalogFileId);
+        }
+        catalogStore.getOrCreateCatalogDisplayStore(catalogFileId).applyLayoutStyle(settings);
+    };
+
+    /**
+     * Removes each display store that a regular layout made for a catalog that has not opened since.
+     * CARTA v6.0 removed the stores of its catalog widgets each time a layout was applied. A catalog
+     * that is still being opened gets its display store only when it is loaded, so its store is
+     * removed too. Then the catalog is drawn by the defaults, as in CARTA v6.0.
+     */
+    @action public removeUnopenedLayoutDisplayStores = () => {
+        const catalogStore = CatalogStore.Instance;
+        this.layoutDisplayStoreFileIds.forEach(fileId => {
+            if (!catalogStore.catalogProfileStores.has(fileId)) {
+                catalogStore.removeCatalogDisplayStore(fileId);
+            }
+        });
+        this.layoutDisplayStoreFileIds.clear();
     };
 
     private initializeCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps, preAssignedId: string | null, widgetSettings: object | null = null): string | null => {
@@ -729,22 +826,36 @@ export class WidgetsStore {
     };
 
     /**
-     * A catalog plot is created by the plot type in its settings, or, in a layout saved before that,
-     * by the plotType beside them. Any other widget's plotType setting is a line style, as a layout
-     * saved by an earlier build may also carry beside its settings, and names no widget to create.
+     * Returns the type of the widget to create. A regular layout keeps the type of a catalog plot
+     * beside its settings, and only that type is used, as in CARTA v6.0. The layout copy of a
+     * workspace keeps the type in the settings. Any other widget's plotType setting is a line style,
+     * as a layout saved by an earlier build may also carry beside its settings, and names no widget
+     * to create.
      */
-    private widgetTypeToCreate = (widgetType: string, widgetSettings: any, legacyPlotType: unknown): string => {
+    private widgetTypeToCreate = (widgetType: string, widgetSettings: any, nodePlotType: unknown, persistence: LayoutPersistence): string => {
         if (widgetType !== CatalogPlotComponent.WidgetConfig.type) {
             return widgetType;
         }
-        const plotType = widgetSettings?.plotType ?? legacyPlotType;
+        const plotType = persistence === "workspace" ? (widgetSettings?.plotType ?? nodePlotType) : nodePlotType;
         return typeof plotType === "string" && plotType ? plotType : widgetType;
     };
 
-    createFloatingWidget = (savedConfig: any) => {
+    /**
+     * Adds a floating widget that a layout saved.
+     *
+     * @param persistence - the kind of layout. A regular layout places a widget at a position of 0 by
+     *                      the default offset, and adds it without a stacking order, as in CARTA v6.0.
+     */
+    createFloatingWidget = (savedConfig: any, persistence: LayoutPersistence) => {
         if (savedConfig.id) {
+            const isWorkspace = persistence === "workspace";
             // `addWidgetByType` returns null for a type that creates no store. The widget is still created below, with no ID. An unknown type becomes a placeholder.
-            const id = this.addWidgetByType(this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType), savedConfig.widgetSettings) as string;
+            const id = this.addWidgetByType(
+                this.widgetTypeToCreate(savedConfig.id, savedConfig.widgetSettings, savedConfig.plotType, persistence),
+                WidgetsStore.layoutSettingsOf(savedConfig.id, savedConfig.widgetSettings),
+                null,
+                persistence
+            ) as string;
             const config = new WidgetConfig(id, getWidgetMap().get(savedConfig.id)?.config ?? PlaceholderComponent.WidgetConfig);
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
             if (catalogPlotWidgetStore) {
@@ -754,29 +865,50 @@ export class WidgetsStore {
             if (config.componentId) {
                 config.componentId = config.id;
             }
-            if (typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0) {
+            const hasPosition = isWorkspace
+                ? typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0
+                : savedConfig.defaultX > 0 && savedConfig.defaultY > 0;
+            if (hasPosition) {
                 config.setDefaultPosition(savedConfig.defaultX, savedConfig.defaultY);
             } else {
                 const offset = this.getFloatingWidgetOffset();
                 config.setDefaultPosition(offset, offset);
             }
-            this.addFloatingWidget(config);
+            if (isWorkspace) {
+                this.addFloatingWidget(config);
+            } else {
+                this.floatingWidgets.push(config);
+            }
         }
     };
 
-    public initWidgets = (componentConfigs: any[], floating: any[]) => {
-        // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
+    /**
+     * Adds the stores of the widgets that a layout creates.
+     *
+     * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image
+     *                      view grid and the WCS overlay.
+     * @returns what could not be applied as the layout saved it.
+     */
+    public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence): string[] => {
+        const problems: string[] = [];
+        this.layoutTableSeparatorPositions.clear();
+        this.layoutCatalogWidgetsOnFirstCatalog = [];
+        this.removeUnopenedLayoutDisplayStores();
+        // The grid and the WCS overlay belong to the session, not to one widget. Apply them once, from
+        // the first image view that saved its settings.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
-        if (imageViews.length) {
-            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+        if (persistence === "workspace" && imageViews.length) {
+            const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
+            AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
+            problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
         }
 
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
-                const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType);
+                const componentConfigId = this.widgetTypeToCreate(componentConfig.id, componentConfig.widgetSettings, componentConfig.plotType, persistence);
                 // Pass the pre-assigned ID from the FlexLayout model so widget store IDs match tab node IDs
                 const preAssignedId = componentConfig.props.id || null;
-                const itemId = this.addWidgetByType(componentConfigId, "widgetSettings" in componentConfig ? componentConfig.widgetSettings : null, preAssignedId);
+                const itemId = this.addWidgetByType(componentConfigId, WidgetsStore.layoutSettingsOf(componentConfig.id, componentConfig.widgetSettings), preAssignedId, persistence);
                 if (itemId) {
                     componentConfig.id = itemId;
                     componentConfig.props.id = itemId;
@@ -785,7 +917,14 @@ export class WidgetsStore {
         });
 
         // init floating widgets
-        floating.forEach(savedConfig => this.createFloatingWidget(savedConfig));
+        floating.forEach(savedConfig => this.createFloatingWidget(savedConfig, persistence));
+
+        const firstCatalogTableSeparatorPosition = this.layoutTableSeparatorPositions.get(1);
+        if (firstCatalogTableSeparatorPosition !== undefined) {
+            this.layoutCatalogWidgetsOnFirstCatalog.forEach(widgetStore => widgetStore.setTableSeparatorPosition(firstCatalogTableSeparatorPosition));
+        }
+        this.layoutCatalogWidgetsOnFirstCatalog = [];
+        return problems;
     };
 
     private getWidgetComponentId = (node: TabNode): string => {
@@ -1214,21 +1353,38 @@ export class WidgetsStore {
         return action;
     };
 
-    /** A widget's saved settings: what a Layout keeps, which names none of the session's data. */
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
+    /**
+     * Returns the settings that a layout saves for a widget.
+     *
+     * @param persistence - the kind of layout. A regular layout keeps what CARTA v6.0 kept. The
+     *                      layout copy of a workspace also keeps the own ID of the widget and the
+     *                      settings that only a workspace needs. It names none of the catalogs.
+     */
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined, persistence: LayoutPersistence) => {
         if (!widgetType || !widgetID) {
             return null;
         }
 
+        const isWorkspace = persistence === "workspace";
         switch (widgetType) {
             case ImageViewComponent.WidgetConfig.type:
-                return AppStore.Instance.imageViewConfigStore.toConfig();
-            case CatalogOverlayComponent.WidgetConfig.type:
-                return this.catalogWidgets.get(widgetID)?.toLayoutSettings(CatalogStore.Instance.widgetBindings.catalogOf(widgetID));
+                return isWorkspace ? {...AppStore.Instance.imageViewConfigStore.toConfig(), wcsOverlay: AppStore.Instance.overlaySettings.toConfig()} : undefined;
+            case CatalogOverlayComponent.WidgetConfig.type: {
+                const widgetStore = this.catalogWidgets.get(widgetID);
+                const catalogFileId = CatalogStore.Instance.widgetBindings.catalogOf(widgetID);
+                if (isWorkspace) {
+                    return widgetStore?.toLayoutSettings(catalogFileId);
+                }
+                return widgetStore?.toRegularLayoutSettings(catalogFileId, catalogFileId === undefined ? undefined : CatalogStore.Instance.getCatalogDisplayStore(catalogFileId));
+            }
             case CatalogPlotComponent.WidgetConfig.type:
-                return CatalogStore.Instance.widgetBindings.layoutSettingsFor(widgetID);
+                // A regular layout keeps the type of a catalog plot beside its settings, not in them.
+                return isWorkspace ? CatalogStore.Instance.widgetBindings.layoutSettingsFor(widgetID) : undefined;
             default: {
                 const widgetStore = this.widgetsMap.get(widgetType)?.get(widgetID);
+                if (isWorkspace && WidgetsStore.isWorkspaceLayoutConfigurable(widgetStore)) {
+                    return widgetStore.toWorkspaceLayoutConfig();
+                }
                 return WidgetsStore.isConfigurable(widgetStore) ? widgetStore.toConfig() : undefined;
             }
         }
@@ -1525,8 +1681,14 @@ export class WidgetsStore {
     }
 
     // region Widgets created from the registration table
-    /** Adds a store for a widget whose registration has `createStore`, and applies the settings that a layout saved for it. Returns the ID that the layout uses for the widget, or null when no store is created. This ID is not the `widgetId` of the widget. */
-    @action addWidget(widgetType: string, id: string | null = null, widgetSettings: object | null = null): string | null {
+    /**
+     * Adds a store for a widget whose registration has `createStore`, and applies the settings that a
+     * layout saved for it. Returns the ID that the layout uses for the widget, or null when no store
+     * is created. This ID is not the `widgetId` of the widget.
+     *
+     * @param persistence - the kind of layout that saved the settings.
+     */
+    @action addWidget(widgetType: string, id: string | null = null, widgetSettings: object | null = null, persistence: LayoutPersistence = "regular"): string | null {
         const widgets = this.widgetsMap.get(widgetType);
         const createStore = getWidgetMap().get(widgetType)?.createStore;
         if (!widgets || !createStore) {
@@ -1539,8 +1701,12 @@ export class WidgetsStore {
 
         if (id) {
             const widgetStore = createStore();
-            if (widgetSettings && WidgetsStore.isConfigurable(widgetStore)) {
-                widgetStore.applyConfig(widgetSettings);
+            if (widgetSettings) {
+                if (persistence === "workspace" && WidgetsStore.isWorkspaceLayoutConfigurable(widgetStore)) {
+                    widgetStore.applyWorkspaceLayoutConfig(widgetSettings);
+                } else if (WidgetsStore.isConfigurable(widgetStore)) {
+                    widgetStore.applyConfig(widgetSettings);
+                }
             }
             if (WidgetsStore.isIdentified(widgetStore)) {
                 widgetStore.widgetId = this.uniqueWidgetId(widgetStore.widgetId || id);
@@ -1904,7 +2070,8 @@ export class WidgetsStore {
             return;
         }
 
-        const id = this.addWidgetByType(widgetConfig.type);
+        // A widget that is dragged from the toolbar gets no saved settings.
+        const id = this.addWidgetByType(widgetConfig.type, null, null, "regular");
         if (!id) {
             return;
         }

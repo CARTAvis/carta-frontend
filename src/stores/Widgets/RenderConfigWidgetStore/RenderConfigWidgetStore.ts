@@ -2,16 +2,15 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
-import {type ConfigurableStore, IMAGE_NOT_RESTORED, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceRenderConfigWidgetConfig} from "models";
+import {type ConfigurableStore, IMAGE_NOT_RESTORED, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceLayoutConfigurable, type WorkspaceRenderConfigWidgetConfig} from "models";
 import {AppStore} from "stores";
 import {isAutoColor} from "utilities";
 
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
-/** What a render config widget saves of its histogram plot. */
+/** What a render config widget saves of its histogram plot in a regular layout. */
 export interface RenderConfigWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
-    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
@@ -19,9 +18,22 @@ export interface RenderConfigWidgetConfig {
     markerTextVisible: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    /** The range of the data that the widget last plotted. The settings panel shows it in its range inputs before the widget plots data. */
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
 }
 
-export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceRenderConfigWidgetConfig> {
+/** What a render config widget saves in the layout copy of a workspace. */
+export interface RenderConfigWorkspaceLayoutConfig extends Omit<RenderConfigWidgetConfig, LinePlotDataRangeField> {
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
+    widgetId: string;
+}
+
+export class RenderConfigWidgetStore
+    implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>>, WorkspaceLayoutConfigurable<RenderConfigWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceRenderConfigWidgetConfig>
+{
     widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
@@ -148,13 +160,30 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         }
     };
 
+    /** Applies the settings of a regular layout. */
     public applyConfig = (widgetSettings: Persisted<RenderConfigWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
+        this.applyPlotSettings(widgetSettings);
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
+    };
+
+    /**
+     * Applies the settings in the layout copy of a workspace. The range of the data is not applied.
+     * The workspace restores the range that the widget was zoomed to.
+     */
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<RenderConfigWorkspaceLayoutConfig>): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        this.applyPlotSettings(widgetSettings);
         if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
+    };
+
+    private applyPlotSettings = (widgetSettings: Persisted<RenderConfigWidgetConfig>): void => {
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -178,16 +207,32 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         }
     };
 
+    /** Returns the settings of a regular layout. */
     public toConfig = (): RenderConfigWidgetConfig => {
         return {
-            widgetId: this.widgetId,
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
             markerTextVisible: this.isMarkerTextVisible,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
         };
     };
+
+    /** Returns the settings in the layout copy of a workspace. It keeps no range of the data. */
+    public toWorkspaceLayoutConfig = (): RenderConfigWorkspaceLayoutConfig => ({
+        primaryLineColor: this.primaryLineColor,
+        lineWidth: this.lineWidth,
+        linePlotPointSize: this.linePlotPointSize,
+        logScaleY: this.isLogScaleY,
+        markerTextVisible: this.isMarkerTextVisible,
+        meanRmsVisible: this.isMeanRmsVisible,
+        plotType: this.plotType,
+        widgetId: this.widgetId
+    });
 }

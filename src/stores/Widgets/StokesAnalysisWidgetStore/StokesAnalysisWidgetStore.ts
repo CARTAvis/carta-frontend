@@ -5,7 +5,16 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {ColorMap, LineSettings, PlotType, RegionsType, ScatterSettings, type SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStokesAnalysisRange, type WorkspaceStokesAnalysisWidgetConfig} from "models";
+import {
+    type ConfigurableStore,
+    type Persisted,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceLayoutConfigurable,
+    type WorkspaceStokesAnalysisRange,
+    type WorkspaceStokesAnalysisWidgetConfig
+} from "models";
 import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
@@ -38,10 +47,8 @@ const STOKES_ANALYSIS_RANGES: [WorkspaceStokesAnalysisRange, WorkspaceStokesAnal
     ["quScatterEqualYmin", "quScatterEqualYmax"]
 ];
 
-/** What a Stokes analysis widget saves of its plots. */
+/** What a Stokes analysis widget saves of its plots in a regular layout. */
 export interface StokesAnalysisWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
-    widgetId: string;
     primaryLineColor: string;
     secondaryLineColor: string;
     lineWidth: number;
@@ -51,6 +58,12 @@ export interface StokesAnalysisWidgetConfig {
     scatterPlotPointSize: number;
     pointTransparency: number;
     equalAxes: boolean;
+}
+
+/** What a Stokes analysis widget saves in the layout copy of a workspace. */
+export interface StokesAnalysisWorkspaceLayoutConfig extends StokesAnalysisWidgetConfig {
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
+    widgetId: string;
     invertedColorMap: boolean;
     fractionalPolVisible: boolean;
     referenceAxesVisible: boolean;
@@ -58,7 +71,10 @@ export interface StokesAnalysisWidgetConfig {
     smoothing: ProfileSmoothingConfig;
 }
 
-export class StokesAnalysisWidgetStore extends RegionWidgetStore implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceStokesAnalysisWidgetConfig> {
+export class StokesAnalysisWidgetStore
+    extends RegionWidgetStore
+    implements ConfigurableStore<StokesAnalysisWidgetConfig, Persisted<StokesAnalysisWidgetConfig>>, WorkspaceLayoutConfigurable<StokesAnalysisWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceStokesAnalysisWidgetConfig>
+{
     widgetId: string = "";
     @observable sharedMinX: number | undefined = undefined;
     @observable sharedMaxX: number | undefined = undefined;
@@ -437,12 +453,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         }
     };
 
+    /** Applies the settings of a regular layout. */
     public applyConfig = (widgetSettings: Persisted<StokesAnalysisWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
-        }
-        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
-            this.widgetId = widgetSettings.widgetId;
         }
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
@@ -459,8 +473,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
+        // As CARTA v6.0 did, the colormap name is set, but the colors of the scatter plot are not made again.
         if (typeof widgetSettings.colorMap === "string") {
-            this.setColormap(widgetSettings.colorMap);
+            this.colorMap = widgetSettings.colorMap;
         }
         if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
@@ -470,6 +485,21 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         }
         if (typeof widgetSettings.equalAxes === "boolean") {
             this.areAxesEqual = widgetSettings.equalAxes;
+        }
+    };
+
+    /** Applies the settings in the layout copy of a workspace. */
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<StokesAnalysisWorkspaceLayoutConfig>): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        this.applyConfig(widgetSettings);
+        // Make the colors of the scatter plot for the colormap too.
+        if (typeof widgetSettings.colorMap === "string") {
+            this.setColormap(widgetSettings.colorMap);
+        }
+        if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
+            this.widgetId = widgetSettings.widgetId;
         }
         if (typeof widgetSettings.invertedColorMap === "boolean") {
             this.isInvertedColorMap = widgetSettings.invertedColorMap;
@@ -488,14 +518,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
         }
     };
 
+    /** Returns the settings of a regular layout. */
     public toConfig = (): StokesAnalysisWidgetConfig => {
         return {
-            widgetId: this.widgetId,
-            invertedColorMap: this.isInvertedColorMap,
-            fractionalPolVisible: this.isFractionalPolVisible,
-            referenceAxesVisible: this.shouldShowReferenceAxes,
-            settingsTabId: this.settingsTabId,
-            smoothing: this.smoothingStore.toConfig(),
             primaryLineColor: this.primaryLineColor,
             secondaryLineColor: this.secondaryLineColor,
             lineWidth: this.lineWidth,
@@ -505,6 +530,27 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore implements Conf
             scatterPlotPointSize: this.scatterPlotPointSize,
             pointTransparency: this.pointTransparency,
             equalAxes: this.areAxesEqual
+        };
+    };
+
+    /** Returns the settings in the layout copy of a workspace. */
+    public toWorkspaceLayoutConfig = (): StokesAnalysisWorkspaceLayoutConfig => {
+        return {
+            primaryLineColor: this.primaryLineColor,
+            secondaryLineColor: this.secondaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            plotType: this.plotType,
+            colorMap: this.colorMap,
+            scatterPlotPointSize: this.scatterPlotPointSize,
+            pointTransparency: this.pointTransparency,
+            equalAxes: this.areAxesEqual,
+            widgetId: this.widgetId,
+            invertedColorMap: this.isInvertedColorMap,
+            fractionalPolVisible: this.isFractionalPolVisible,
+            referenceAxesVisible: this.shouldShowReferenceAxes,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig()
         };
     };
 }

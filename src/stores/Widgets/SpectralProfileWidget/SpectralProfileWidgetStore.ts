@@ -37,12 +37,14 @@ import {
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
+    type WorkspaceLayoutConfigurable,
     type WorkspaceSpectralMoments,
     type WorkspaceSpectralProfileWidgetConfig
 } from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore, ProfileFittingStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "stores/Widgets/LinePlotDataRange";
 import {
     clamp,
     convertRestFrameSpectralValue,
@@ -94,24 +96,39 @@ export type MultiPlotData = {
     progress: number;
 };
 
-/** What a spectral profiler widget saves of its plot and rest frame. */
+/** What a spectral profiler widget saves of its plot and rest frame in a regular layout. */
 export interface SpectralProfileWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
-    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    /** The range of the data that the widget last plotted. The settings panel shows it in its range inputs before the widget plots data. */
+    minXVal: number | undefined;
+    maxXVal: number | undefined;
+    minYVal: number | undefined;
+    maxYVal: number | undefined;
+    xAxisRestFrameEnabled: boolean;
+    restFrameRedshift: number;
     restFrameShiftMode: RestFrameShiftMode;
     restFrameVelocityConvention: VelocityConvention;
+    yAxisRestFrameEnabled: boolean;
+}
+
+/** What a spectral profiler widget saves in the layout copy of a workspace. */
+export interface SpectralProfileWorkspaceLayoutConfig extends Omit<SpectralProfileWidgetConfig, LinePlotDataRangeField | "xAxisRestFrameEnabled" | "restFrameRedshift" | "yAxisRestFrameEnabled"> {
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
+    widgetId: string;
     markerTextVisible: boolean;
     secondaryAxisCursorInfoVisible: boolean;
     settingsTabId: SpectralProfilerSettingsTabs;
     smoothing: ProfileSmoothingConfig;
 }
 
-export class SpectralProfileWidgetStore extends RegionWidgetStore implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpectralProfileWidgetConfig> {
+export class SpectralProfileWidgetStore
+    extends RegionWidgetStore
+    implements ConfigurableStore<SpectralProfileWidgetConfig, Persisted<SpectralProfileWidgetConfig>>, WorkspaceLayoutConfigurable<SpectralProfileWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceSpectralProfileWidgetConfig>
+{
     widgetId: string = "";
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
@@ -1318,13 +1335,51 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
+    /** Applies the settings of a regular layout. */
     public applyConfig = (widgetSettings: Persisted<SpectralProfileWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
+        this.applyPlotSettings(widgetSettings);
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
+        if (typeof widgetSettings.xAxisRestFrameEnabled === "boolean") {
+            this.isXAxisRestFrameEnabled = widgetSettings.xAxisRestFrameEnabled;
+        }
+        if (typeof widgetSettings.restFrameRedshift === "number" && isValidRedshift(widgetSettings.restFrameRedshift)) {
+            this.restFrameRedshift = widgetSettings.restFrameRedshift;
+        }
+        if (typeof widgetSettings.yAxisRestFrameEnabled === "boolean") {
+            this.isYAxisRestFrameEnabled = widgetSettings.yAxisRestFrameEnabled;
+        }
+    };
+
+    /**
+     * Applies the settings in the layout copy of a workspace. The range of the data is not applied.
+     * The workspace restores the range that the widget was zoomed to.
+     */
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<SpectralProfileWorkspaceLayoutConfig>): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        this.applyPlotSettings(widgetSettings);
         if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (typeof widgetSettings.secondaryAxisCursorInfoVisible === "boolean") {
+            this.isSecondaryAxisCursorInfoVisible = widgetSettings.secondaryAxisCursorInfoVisible;
+        }
+        if (Object.values(SpectralProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpectralProfilerSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as SpectralProfilerSettingsTabs;
+        }
+        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
+            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
+        }
+    };
+
+    private applyPlotSettings = (widgetSettings: Persisted<SpectralProfileWidgetConfig>): void => {
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
             this.lineColorMap.set(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor);
@@ -1347,18 +1402,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         }
         if (typeof widgetSettings.restFrameVelocityConvention === "string" && Object.values(VelocityConvention).includes(widgetSettings.restFrameVelocityConvention as VelocityConvention)) {
             this.restFrameVelocityConvention = widgetSettings.restFrameVelocityConvention as VelocityConvention;
-        }
-        if (typeof widgetSettings.markerTextVisible === "boolean") {
-            this.isMarkerTextVisible = widgetSettings.markerTextVisible;
-        }
-        if (typeof widgetSettings.secondaryAxisCursorInfoVisible === "boolean") {
-            this.isSecondaryAxisCursorInfoVisible = widgetSettings.secondaryAxisCursorInfoVisible;
-        }
-        if (Object.values(SpectralProfilerSettingsTabs).includes(widgetSettings.settingsTabId as SpectralProfilerSettingsTabs)) {
-            this.settingsTabId = widgetSettings.settingsTabId as SpectralProfilerSettingsTabs;
-        }
-        if (widgetSettings.smoothing && typeof widgetSettings.smoothing === "object") {
-            this.smoothingStore.applyConfig(widgetSettings.smoothing as Persisted<ProfileSmoothingConfig>);
         }
     };
 
@@ -1595,20 +1638,44 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         return problems;
     };
 
+    /** Returns the settings of a regular layout. */
     public toConfig = (): SpectralProfileWidgetConfig => {
         return {
-            widgetId: this.widgetId,
-            markerTextVisible: this.isMarkerTextVisible,
-            secondaryAxisCursorInfoVisible: this.isSecondaryAxisCursorInfoVisible,
-            settingsTabId: this.settingsTabId,
-            smoothing: this.smoothingStore.toConfig(),
+            primaryLineColor: this.primaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            meanRmsVisible: this.isMeanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal,
+            xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
+            restFrameRedshift: this.restFrameRedshift,
+            restFrameShiftMode: this.restFrameShiftMode,
+            restFrameVelocityConvention: this.restFrameVelocityConvention,
+            yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled
+        };
+    };
+
+    /**
+     * Returns the settings in the layout copy of a workspace. It keeps no range of the data. It keeps
+     * no rest frame switches or redshift either: the workspace keeps them with what the widget shows.
+     */
+    public toWorkspaceLayoutConfig = (): SpectralProfileWorkspaceLayoutConfig => {
+        return {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             meanRmsVisible: this.isMeanRmsVisible,
             plotType: this.plotType,
             restFrameShiftMode: this.restFrameShiftMode,
-            restFrameVelocityConvention: this.restFrameVelocityConvention
+            restFrameVelocityConvention: this.restFrameVelocityConvention,
+            widgetId: this.widgetId,
+            markerTextVisible: this.isMarkerTextVisible,
+            secondaryAxisCursorInfoVisible: this.isSecondaryAxisCursorInfoVisible,
+            settingsTabId: this.settingsTabId,
+            smoothing: this.smoothingStore.toConfig()
         };
     };
 

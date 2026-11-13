@@ -96,8 +96,25 @@ function createSession(overrides: Record<string, any> = {}) {
         },
         getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         // The Image Fitting dialog fits the active image over the field of view, as it does by default.
-        imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
-        layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        imageFittingStore: {
+            selectedFileId: ACTIVE_FILE_ID,
+            selectedRegionId: 0,
+            toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({
+                imageId,
+                regionId,
+                components: [],
+                autoInitialValues: true,
+                backgroundOffset: 0,
+                backgroundOffsetFixed: true,
+                solver: 0,
+                createModelImage: false,
+                createResidualImage: false
+            }))
+        },
+        layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        overlaySettings: {
+            toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))
+        },
         ...overrides
     };
 
@@ -670,11 +687,13 @@ describe("WorkspaceSnapshotter", () => {
         const {appStore} = createSession();
         Object.assign(appStore.imageFittingStore, {selectedFileId: 0, selectedRegionId: 5});
 
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: 1, regionId: 5});
+        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual(expect.objectContaining({imageId: 1, regionId: 5}));
 
         Object.assign(appStore.imageFittingStore, {selectedFileId: 7});
         appStore.getFrame = (fileId: number) => (fileId === 7 ? (createFrame(7) as never) : undefined);
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: undefined, regionId: 0});
+        const imageFitting = new WorkspaceSnapshotter().capture().workspace.imageFitting;
+        expect(imageFitting?.imageId).toBeUndefined();
+        expect(imageFitting?.regionId).toBe(0);
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {
@@ -728,13 +747,46 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.selectedColorBlending).toBeUndefined();
     });
 
-    test("carries the arrangement the session was saved in", () => {
+    test("carries the arrangement the session was saved in, in its own copy of the layout", () => {
         const {appStore} = createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalled();
+        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalledWith("workspace");
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
+    });
+
+    test("saves the custom texts of the WCS overlay, and the custom title of each image, but not the default one", () => {
+        const {frame} = createSession();
+        Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits"});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.wcsOverlay).toEqual({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}});
+        expect(workspace.files?.[0].titleCustomText).toBe("M51 in Halpha");
+        Object.assign(frame, {titleCustomText: "image0.fits"});
+        expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("titleCustomText");
+    });
+
+    test("saves the custom title of a color-blended image, but not the default one", () => {
+        const custom = {selectedFrames: [], alpha: [1], filename: "Color Blending 1", titleCustomText: "RGB of M51"};
+        const plain = {selectedFrames: [], alpha: [1], filename: "Color Blending 2", titleCustomText: "Color Blending 2"};
+        createSession({
+            imageViewConfigStore: {
+                colorBlendingImageMap: new Map([
+                    [0, custom],
+                    [1, plain]
+                ]),
+                getImageListIndex: jest.fn((_type: unknown, id: number) => id + 1)
+            }
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.colorBlendingImages).toEqual([
+            {imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
+            {imageListIndex: 2, selectedFrameId: [], alpha: [1]}
+        ]);
     });
 
     test("reports an item the session never opened instead of giving it an ID", () => {
