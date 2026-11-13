@@ -93,9 +93,9 @@ describe("FlexLayoutModelFactory", () => {
         };
         const expectedConfig = JSON.parse(JSON.stringify(dockedConfig));
 
-        const modelJson = createFlexLayoutModel(dockedConfig);
+        const modelJson = createFlexLayoutModel(dockedConfig, "regular");
         const tabIds = CollectTabIds(modelJson.layout);
-        const extractedConfig = extractAbstractConfig(modelJson);
+        const extractedConfig = extractAbstractConfig(modelJson, "regular");
 
         expect(tabIds).toHaveLength(4);
         expect(new Set(tabIds).size).toBe(4);
@@ -129,19 +129,19 @@ describe("FlexLayoutModelFactory", () => {
             ]
         };
 
-        const modelJson = createFlexLayoutModel(dockedConfig);
+        const modelJson = createFlexLayoutModel(dockedConfig, "regular");
 
         expect(modelJson.layout.children?.map((child: any) => child.maximized)).toEqual([undefined, undefined]);
         // A stack that a user maximized after the layout was applied is not saved maximized either.
         (modelJson.layout.children?.[1] as any).maximized = true;
-        expect((StripInstanceIds(extractAbstractConfig(modelJson)) as any).content[1].maximized).toBeUndefined();
+        expect((StripInstanceIds(extractAbstractConfig(modelJson, "regular")) as any).content[1].maximized).toBeUndefined();
     });
 
     test("keeps the type of a catalog plot in the config of its tab in a regular layout, as in CARTA v6.0", () => {
-        const modelJson = createFlexLayoutModel({type: "row", content: [{type: "stack", content: [{type: "component", id: "catalog-plot", plotType: "Histogram"}]}]});
+        const modelJson = createFlexLayoutModel({type: "row", content: [{type: "stack", content: [{type: "component", id: "catalog-plot", plotType: "Histogram"}]}]}, "regular");
 
         expect(CollectTabs(modelJson.layout)[0].config.plotType).toBe("Histogram");
-        expect((StripInstanceIds(extractAbstractConfig(modelJson)) as any).content[0].content[0].plotType).toBe("Histogram");
+        expect((StripInstanceIds(extractAbstractConfig(modelJson, "regular")) as any).content[0].content[0].plotType).toBe("Histogram");
         expect((StripInstanceIds(extractAbstractConfig(modelJson, "workspace")) as any).content[0].content[0].plotType).toBeUndefined();
     });
 
@@ -159,12 +159,15 @@ describe("FlexLayoutModelFactory", () => {
             content: [{type: "component", id: "stats"}, badComponent]
         };
 
-        expect(() => createFlexLayoutModel(invalidConfig)).toThrow("bad id");
+        expect(() => createFlexLayoutModel(invalidConfig, "regular")).toThrow("bad id");
 
-        const recoveredModel = createFlexLayoutModel({
-            type: "row",
-            content: [{type: "component", id: "stats"}]
-        });
+        const recoveredModel = createFlexLayoutModel(
+            {
+                type: "row",
+                content: [{type: "component", id: "stats"}]
+            },
+            "regular"
+        );
 
         expect(CollectTabIds(recoveredModel.layout)).toStrictEqual(["stats-0"]);
     });
@@ -178,7 +181,7 @@ describe("FlexLayoutModelFactory", () => {
     });
 
     test("leaves spatial profiler tabs without a name until their widgets mount in a regular layout, as in CARTA v6.0", () => {
-        const model = createFlexLayoutModel(SPATIAL_PROFILER_TABS);
+        const model = createFlexLayoutModel(SPATIAL_PROFILER_TABS, "regular");
 
         const tabs = (model.layout.children[0] as any).children;
         expect(tabs.map(tab => tab.name)).toEqual(["Log", undefined, undefined, undefined, undefined]);
@@ -194,13 +197,16 @@ describe("FlexLayoutModelFactory", () => {
     });
 
     test("created FlexLayout model applies popout flags to live tabs", () => {
-        const modelJson = createFlexLayoutModel({
-            type: "row",
-            content: [
-                {type: "component", id: "stats"},
-                {type: "component", id: "image-view"}
-            ]
-        });
+        const modelJson = createFlexLayoutModel(
+            {
+                type: "row",
+                content: [
+                    {type: "component", id: "stats"},
+                    {type: "component", id: "image-view"}
+                ]
+            },
+            "regular"
+        );
         const tabs = CollectTabs(modelJson.layout);
         const statsTab = tabs.find(tab => tab.component === "stats");
         const imageViewTab = tabs.find(tab => tab.component === "image-view");

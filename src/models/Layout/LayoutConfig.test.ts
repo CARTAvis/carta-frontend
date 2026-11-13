@@ -64,7 +64,7 @@ describe("LayoutConfig.createConfigToSave", () => {
     });
 
     test("saves the floating widgets in the order of their list, and a position of 0 as an empty value, in a regular layout, as CARTA v6.0 did", () => {
-        const config = LayoutConfig.createConfigToSave(CreateSession() as never, MODEL_JSON);
+        const config = LayoutConfig.createConfigToSave(CreateSession() as never, MODEL_JSON, "regular");
 
         expect(config?.floating).toEqual([
             {type: "component", id: "log", defaultWidth: 300, defaultHeight: 200, defaultX: "", defaultY: ""},
@@ -82,7 +82,7 @@ describe("LayoutConfig.createConfigToSave", () => {
     });
 
     test("saves in a regular layout only the settings that CARTA v6.0 saved and the settings added since then, with the type of a catalog plot beside them", () => {
-        const config = LayoutConfig.createConfigToSave(CreateSession(WidgetSettings) as never, MODEL_JSON);
+        const config = LayoutConfig.createConfigToSave(CreateSession(WidgetSettings) as never, MODEL_JSON, "regular");
 
         expect(config?.docked).toEqual({
             type: "row",
@@ -98,7 +98,8 @@ describe("LayoutConfig.createConfigToSave", () => {
                 }
             ]
         });
-        expect(LayoutConfig.prepareLayout({...config, floating: []})).toBeDefined();
+        // A regular layout is applied as it was saved, with each floating widget.
+        expect(LayoutConfig.prepareLayout(config, "regular")).toBe(config);
     });
 
     test("saves in the layout copy of a workspace the widget IDs, the extra settings and the maximized stack", () => {
@@ -138,7 +139,7 @@ describe("LayoutConfig.createConfigToApply", () => {
 
     test("applies no maximized stack in a regular layout, as CARTA v6.0 did", () => {
         const applied: any[] = [];
-        LayoutConfig.createConfigToApply(applied, stacks, []);
+        LayoutConfig.createConfigToApply(applied, stacks, [], "regular");
 
         expect(applied.map(stack => stack.maximized)).toEqual([undefined, undefined]);
     });
@@ -154,7 +155,15 @@ describe("LayoutConfig.prepareLayout", () => {
     });
 
     test("accepts a layout saved by CARTA v6.0 as a regular layout", () => {
-        expect(LayoutConfig.prepareLayout(V6_LAYOUT)).toEqual(V6_LAYOUT);
+        expect(LayoutConfig.prepareLayout(V6_LAYOUT, "regular")).toEqual(V6_LAYOUT);
+        expect(LayoutConfig.layoutValidator(JSON.parse(JSON.stringify(V6_LAYOUT)))).toBe(true);
+    });
+
+    test("applies a regular layout without validating it, as CARTA v6.0 did", () => {
+        const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "pv-generator"}]}, floating: [{type: "component", id: "log", defaultX: "", defaultY: ""}]};
+
+        expect(LayoutConfig.prepareLayout(layout, "regular")).toBe(layout);
+        expect(LayoutConfig.layoutValidator(JSON.parse(JSON.stringify(layout)))).toBe(false);
     });
 
     test("validates the layout copy of a workspace by the workspace schema, which allows a PV preview tab, a maximized stack and a widget at the edge", () => {
@@ -178,7 +187,13 @@ describe("LayoutConfig.prepareLayout", () => {
 
         expect(LayoutConfig.prepareLayout(layout, "workspace")).toEqual(layout);
         // The layout schema does not allow these yet.
-        expect(LayoutConfig.prepareLayout(layout)).toBeUndefined();
+        expect(LayoutConfig.layoutValidator(JSON.parse(JSON.stringify(layout)))).toBe(false);
+    });
+
+    test("rejects the layout copy of a workspace with a value that is not valid", () => {
+        const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "histogram", widgetSettings: {lineWidth: 100}}]}, floating: []};
+
+        expect(LayoutConfig.prepareLayout(layout, "workspace")).toBeUndefined();
     });
 
     test("does not change the layout it validates", () => {
@@ -193,6 +208,7 @@ describe("LayoutConfig.prepareLayout", () => {
 
 describe("LayoutConfig.REGULAR_WIDGET_SETTINGS", () => {
     test("lists the settings of a layout saved by CARTA v6.0 and the settings added since then", () => {
+        // The fixture is written from the `toConfig` methods of CARTA v6.0.0, so it checks the list.
         Object.entries(REGULAR_WIDGET_SETTINGS).forEach(([type, settings]) => expect([...LayoutConfig.REGULAR_WIDGET_SETTINGS[type]].sort()).toEqual(Object.keys(settings).sort()));
         expect(Object.keys(LayoutConfig.REGULAR_WIDGET_SETTINGS).sort()).toEqual(Object.keys(REGULAR_WIDGET_SETTINGS).sort());
     });

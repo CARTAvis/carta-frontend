@@ -4,13 +4,12 @@ import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getIm
 import {AppStore, CatalogStore, type WidgetConfig} from "stores";
 import {findDeep} from "utilities";
 
+import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "./RegularLayoutWidgetSettings";
+
 /* eslint-disable @typescript-eslint/naming-convention */
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 const workspaceSchema = require("carta-schemas/workspace_schema_2.json");
 /* eslint-enable @typescript-eslint/naming-convention */
-
-/** The settings of the line plots that a regular layout keeps for a plot widget, as CARTA v6.0 kept them. */
-const LINE_PLOT_SETTINGS = ["primaryLineColor", "lineWidth", "linePlotPointSize", "plotType", "minXVal", "maxXVal", "minYVal", "maxYVal"] as const;
 
 export class LayoutConfig {
     public static layoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
@@ -18,22 +17,8 @@ export class LayoutConfig {
     public static workspaceLayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile({$ref: "#/definitions/layout", definitions: workspaceSchema.definitions});
     public static currentSchemaVersion = 2;
 
-    /**
-     * The widget settings that a regular layout keeps, by widget type. These are the settings that
-     * CARTA v6.0 kept, and the settings added since then for the rest frame of the spectral profiler,
-     * the mean and RMS of the histogram, and the time labels of the animator. A regular layout keeps
-     * no settings for the other widgets. A layout is saved with only these settings, so settings
-     * that a widget got from the layout copy of a workspace do not go into a regular layout.
-     */
-    public static readonly REGULAR_WIDGET_SETTINGS: Readonly<Record<string, readonly string[]>> = {
-        "render-config": [...LINE_PLOT_SETTINGS, "logScaleY", "markerTextVisible", "meanRmsVisible"],
-        "spatial-profiler": [...LINE_PLOT_SETTINGS, "coordinate", "wcsAxisVisible", "meanRmsVisible"],
-        "spectral-profiler": [...LINE_PLOT_SETTINGS, "meanRmsVisible", "xAxisRestFrameEnabled", "restFrameRedshift", "restFrameShiftMode", "restFrameVelocityConvention", "yAxisRestFrameEnabled"],
-        histogram: [...LINE_PLOT_SETTINGS, "logScaleY", "meanRmsVisible"],
-        stokes: ["primaryLineColor", "secondaryLineColor", "lineWidth", "linePlotPointSize", "plotType", "colorMap", "scatterPlotPointSize", "pointTransparency", "equalAxes"],
-        "catalog-overlay": ["catalogFileId", "catalogColor", "highlightColor", "catalogSize", "catalogShape", "tableSeparatorPosition", "thickness"],
-        animator: ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"]
-    };
+    /** The widget settings that a regular layout keeps, by widget type. See {@link REGULAR_LAYOUT_WIDGET_SETTINGS}. */
+    public static readonly REGULAR_WIDGET_SETTINGS = REGULAR_LAYOUT_WIDGET_SETTINGS;
 
     public static getPresetConfig = (presetName: string) => {
         if (!presetName) {
@@ -103,20 +88,25 @@ export class LayoutConfig {
     };
 
     /**
-     * Upgrade and validate a layout without changing the caller's object.
+     * Prepares a layout that is about to replace the live layout.
      *
-     * Layout validation applies defaults, so validating a workspace's embedded layout in place
-     * would mutate the workspace and make it possible to clear the current layout before a bad
-     * config is rejected. Keep this operation as the single preparation step for callers that
-     * are about to replace a live layout.
+     * A regular layout is only upgraded, in place, as CARTA v6.0 applied it. It is not validated
+     * here: a layout is validated when it is loaded from the server or the local storage.
      *
-     * @param persistence - the kind of layout. A regular layout is validated by the layout schema.
-     *                      The layout copy of a workspace is validated by the definition of the
-     *                      layout in the workspace schema.
+     * The layout copy of a workspace is upgraded and validated without changing the caller's object.
+     * Layout validation applies defaults, so validating the copy in place would mutate the
+     * workspace. It is validated by the definition of the layout in the workspace schema, before the
+     * current layout is cleared.
+     *
+     * @returns the layout to apply, or undefined when there is none or the layout copy of a workspace is not valid.
      */
-    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null, persistence: LayoutPersistence = "regular"): any | undefined => {
+    public static prepareLayout = (layout: {layoutVersion?: number; docked?: any; floating?: any[]} | undefined | null, persistence: LayoutPersistence): any | undefined => {
         if (!layout) {
             return undefined;
+        }
+        if (persistence !== "workspace") {
+            LayoutConfig.upgradeLayout(layout as any);
+            return layout;
         }
 
         let candidate: any;
@@ -128,9 +118,8 @@ export class LayoutConfig {
         }
 
         LayoutConfig.upgradeLayout(candidate);
-        const validator = persistence === "workspace" ? LayoutConfig.workspaceLayoutValidator : LayoutConfig.layoutValidator;
-        if (!validator(candidate)) {
-            console.error("Layout validation failed:", validator.errors);
+        if (!LayoutConfig.workspaceLayoutValidator(candidate)) {
+            console.error("Layout validation failed:", LayoutConfig.workspaceLayoutValidator.errors);
             return undefined;
         }
         return candidate;
@@ -161,7 +150,7 @@ export class LayoutConfig {
      *
      * @param persistence - the kind of layout.
      */
-    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[], persistence: LayoutPersistence = "regular") => {
+    public static createFlexLayoutModelJson = (dockedConfig: any, componentConfigs: any[], persistence: LayoutPersistence) => {
         // Convert the abstract config to FlexLayout model JSON first — this assigns unique IDs
         const modelJson = createFlexLayoutModel({type: dockedConfig.type, content: dockedConfig.content}, persistence);
         // Then collect component configs (uses _assignedId set by createFlexLayoutModel)
@@ -222,7 +211,7 @@ export class LayoutConfig {
      *                      that only a workspace needs, a maximized stack, and a floating widget at
      *                      the left or top edge. It saves the floating widgets in their stacking order.
      */
-    public static createConfigToSave = (appStore: AppStore, modelJson: any, persistence: LayoutPersistence = "regular") => {
+    public static createConfigToSave = (appStore: AppStore, modelJson: any, persistence: LayoutPersistence) => {
         if (!appStore || !modelJson) {
             return null;
         }
@@ -346,7 +335,7 @@ export class LayoutConfig {
      *
      * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack maximized.
      */
-    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[], persistence: LayoutPersistence = "regular") => {
+    public static createConfigToApply = (newParentContent: any, parentContent: any, componentConfigs: any[], persistence: LayoutPersistence) => {
         if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }

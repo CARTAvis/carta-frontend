@@ -76,7 +76,7 @@ export function getComponentTabJson(widgetType: string): IJsonTabNode | undefine
  *                      layout keeps the type of a catalog plot in the config of its tab, as in
  *                      CARTA v6.0.
  */
-export function createFlexLayoutModel(dockedConfig: any, persistence: LayoutPersistence = "regular"): IJsonModel {
+export function createFlexLayoutModel(dockedConfig: any, persistence: LayoutPersistence): IJsonModel {
     // Reset ID tracking for this model creation
     usedIds.clear();
     idCounters.clear();
@@ -275,7 +275,7 @@ function convertComponent(node: any, persistence: LayoutPersistence): IJsonTabNo
  * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack
  *                      maximized. A regular layout keeps the type of a catalog plot that its tab has.
  */
-export function extractAbstractConfig(modelJson: IJsonModel, persistence: LayoutPersistence = "regular"): {type: string; content: any[]} {
+export function extractAbstractConfig(modelJson: IJsonModel, persistence: LayoutPersistence): {type: string; content: any[]} {
     return extractNode(modelJson.layout, persistence);
 }
 

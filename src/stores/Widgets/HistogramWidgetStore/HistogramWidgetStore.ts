@@ -6,6 +6,7 @@ import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsTyp
 import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceHistogramWidgetConfig, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceLayoutConfigurable} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 import {applyWorkspacePlotRange, isWorkspaceRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
@@ -25,7 +26,7 @@ export interface HistogramWidgetConfig {
 }
 
 /** What a histogram widget saves in the layout copy of a workspace. */
-export interface HistogramWorkspaceLayoutConfig extends HistogramWidgetConfig {
+export interface HistogramWorkspaceLayoutConfig extends Omit<HistogramWidgetConfig, LinePlotDataRangeField> {
     /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
     settingsTabId: HistogramSettingsTabs;
@@ -478,18 +479,7 @@ export class HistogramWidgetStore
             return;
         }
         this.applyPlotSettings(widgetSettings);
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
     };
 
     /**
@@ -550,10 +540,15 @@ export class HistogramWidgetStore
         };
     };
 
-    /** Returns the settings in the layout copy of a workspace: the settings of a regular layout, the widget ID, the settings section and the bins. */
+    /** Returns the settings in the layout copy of a workspace. It keeps no range of the data. */
     public toWorkspaceLayoutConfig = (): HistogramWorkspaceLayoutConfig => {
         return {
-            ...this.toConfig(),
+            primaryLineColor: this.primaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.isLogScaleY,
+            meanRmsVisible: this.isMeanRmsVisible,
+            plotType: this.plotType,
             widgetId: this.widgetId,
             settingsTabId: this.settingsTabId,
             autoBins: this.isCurrentAutoBins,

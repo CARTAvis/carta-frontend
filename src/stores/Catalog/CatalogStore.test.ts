@@ -386,7 +386,7 @@ describe("Catalog plot workspace binding", () => {
 
         expect(layoutSettings).toEqual({widgetId: "catalog-plot-0", ...widgetsStore.catalogPlotWidgets.get(widgetId)!.toLayoutSettings()});
         // A regular layout keeps no settings for a catalog plot, as in CARTA v6.0.
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId)).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId, "regular")).toBeUndefined();
         expect(layoutSettings).not.toHaveProperty("catalogId");
         expect(layoutSettings).not.toHaveProperty("xColumnName");
     });
@@ -497,13 +497,13 @@ describe("Catalog plot workspace binding", () => {
         catalogStore.widgetBindings.show("catalog-plot-component-0", 2);
 
         // The tab is known by its first plot's ID, and saves catalog B with catalog B's settings.
-        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0");
+        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", "regular");
         const savedConfig = saved("catalog-plot-0");
         expect(savedConfig).toMatchObject({catalogId: 20, xColumnName: "FLUX_B", yColumnName: "MAG_B"});
 
         widgetsStore.catalogPlotWidgets.clear();
         catalogStore.widgetBindings.componentIds().forEach(id => catalogStore.widgetBindings.closeComponent(id));
-        widgetsStore.initWidgets([{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-0"}, widgetSettings: layoutSettings}], []);
+        widgetsStore.initWidgets([{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-0"}, widgetSettings: layoutSettings}], [], "regular");
         catalogStore.widgetBindings.restore({"catalog-plot-0": savedConfig}, [], new Map([[20, 2]]));
 
         expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-0").catalogFileId).toBe(2);
@@ -626,7 +626,8 @@ describe("Catalog table widget selection", () => {
                 {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {catalogFileId: 1}},
                 {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {catalogFileId: 1}}
             ],
-            []
+            [],
+            "regular"
         );
 
         expect(Array.from(widgetsStore.catalogWidgets.keys())).toEqual(["catalog-overlay-0", "catalog-overlay-1"]);
@@ -696,7 +697,8 @@ describe("Catalog table widget selection", () => {
                 {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {widgetId: "catalog-widget-primary"}},
                 {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {widgetId: "catalog-widget-primary"}}
             ],
-            []
+            [],
+            "regular"
         );
 
         const widgetIds = Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.widgetId);
@@ -716,7 +718,7 @@ describe("Catalog overlay widget in a layout", () => {
         catalogStore.catalogDisplayStores.clear();
         Array.from(widgetsStore.catalogWidgets.keys()).forEach(componentId => widgetsStore.deleteCatalogWidget(componentId));
         // Start a new layout, which forgets the catalogs that the last layout set the style of.
-        widgetsStore.initWidgets([], []);
+        widgetsStore.initWidgets([], [], "regular");
     });
 
     test("saves in a regular layout the catalog it shows, how its sources are drawn and where the table is split, as CARTA v6.0 saved them", () => {
@@ -727,7 +729,7 @@ describe("Catalog overlay widget in a layout", () => {
         widgetStore.setTableSeparatorPosition(v6Settings.tableSeparatorPosition);
         catalogStore.widgetBindings.initTable("catalog-overlay-0", 1);
 
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0")).toEqual(v6Settings);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "regular")).toEqual(v6Settings);
         // The layout copy of a workspace names no catalog, and keeps how it is drawn with the catalog.
         expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "workspace")).toEqual({
             widgetId: "catalog-overlay-0",
@@ -740,7 +742,7 @@ describe("Catalog overlay widget in a layout", () => {
     test("saves no settings in a regular layout for a widget that shows no catalog, as CARTA v6.0 did", () => {
         widgetsStore.getCatalogWidgetStore("catalog-overlay-0");
 
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0")).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "regular")).toBeUndefined();
     });
 
     test("applies a regular layout by writing only how the sources are drawn to the display store of the saved catalog", () => {
@@ -748,7 +750,7 @@ describe("Catalog overlay widget in a layout", () => {
         const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
         displayStore.setxAxis("RA");
 
-        (widgetsStore as any).addWidgetByType("catalog-overlay", {...v6Settings, widgetId: "table-a", headerTableColumnWidths: [1, 2, 3, 4, 5]}, "catalog-overlay-0");
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {...v6Settings, widgetId: "table-a", headerTableColumnWidths: [1, 2, 3, 4, 5]}, "catalog-overlay-0", "regular");
 
         expect(displayStore.toLayoutStyle()).toEqual({catalogColor: "#ff00ff", highlightColor: "#00ff00", catalogSize: 20, catalogShape: 2, thickness: 3});
         expect(displayStore.xAxis).toBe("RA");
@@ -759,10 +761,36 @@ describe("Catalog overlay widget in a layout", () => {
         expect(widgetStore.headerTableColumnWidths).toEqual([150, 75, 65, 100, 230]);
     });
 
-    test("keeps how the sources are drawn for the catalog that opens with the saved file ID, as CARTA v6.0 did", () => {
-        (widgetsStore as any).addWidgetByType("catalog-overlay", v6Settings, "catalog-overlay-0");
+    test("shows the catalog with the saved file ID, and keeps how its sources are drawn for when it opens, as CARTA v6.0 did", () => {
+        (widgetsStore as any).addWidgetByType("catalog-overlay", v6Settings, "catalog-overlay-0", "regular");
 
         expect(catalogStore.getCatalogDisplayStore(1)?.toLayoutStyle()).toEqual({catalogColor: "#ff00ff", highlightColor: "#00ff00", catalogSize: 20, catalogShape: 2, thickness: 3});
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBe(1);
+        // Saving the layout again keeps what it applied, though the catalog has not opened.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "regular")).toEqual(v6Settings);
+    });
+
+    test("removes the display store that a regular layout made for a catalog that did not open, when the next layout is applied", () => {
+        catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
+        widgetsStore.initWidgets(
+            [
+                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: v6Settings},
+                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {...v6Settings, catalogFileId: 2}}
+            ],
+            [],
+            "regular"
+        );
+        expect(Array.from(catalogStore.catalogDisplayStores.keys()).sort()).toEqual([1, 2]);
+
+        widgetsStore.initWidgets([], [], "regular");
+
+        // The display store of the open catalog stays.
+        expect(Array.from(catalogStore.catalogDisplayStores.keys())).toEqual([2]);
+    });
+
+    test("does not show a catalog that is not open for the layout copy of a workspace", () => {
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {catalogFileId: 1}, "catalog-overlay-0", "workspace");
+
         expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBeUndefined();
     });
 
@@ -772,15 +800,17 @@ describe("Catalog overlay widget in a layout", () => {
                 {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: v6Settings},
                 {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {...v6Settings, catalogColor: "#000000", tableSeparatorPosition: "10%"}}
             ],
-            []
+            [],
+            "regular"
         );
 
         expect(catalogStore.getCatalogDisplayStore(1)?.catalogColor).toBe("#ff00ff");
-        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")!.tableSeparatorPosition).not.toBe("10%");
+        // The second widget shared the store of the first in CARTA v6.0, so it has the table split of the first.
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")!.tableSeparatorPosition).toBe("40%");
     });
 
     test("applies nothing when a regular layout names no catalog, as CARTA v6.0 did", () => {
-        (widgetsStore as any).addWidgetByType("catalog-overlay", {tableSeparatorPosition: "40%"}, "catalog-overlay-0");
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {tableSeparatorPosition: "40%"}, "catalog-overlay-0", "regular");
 
         expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")!.tableSeparatorPosition).not.toBe("40%");
         expect(catalogStore.catalogDisplayStores.size).toBe(0);
