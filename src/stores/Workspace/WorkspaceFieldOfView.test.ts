@@ -9,9 +9,12 @@ describe("WorkspaceFieldOfView", () => {
         expect(getFieldOfViewScale({width: 1000, height: 500, devicePixelRatio: NaN}, {width: 1000, height: 500}, 2)).toBeCloseTo(2);
     });
 
-    test("compares sizes in whole pixels", () => {
+    test("counts sizes that differ by at most 2 pixels as the same", () => {
         expect(isSameSize({width: 1600.4, height: 900}, {width: 1600, height: 900})).toBe(true);
-        expect(isSameSize({width: 1600, height: 900}, {width: 1599, height: 900})).toBe(false);
+        expect(isSameSize({width: 795, height: 593}, {width: 795, height: 592})).toBe(true);
+        expect(isSameSize({width: 1600, height: 900}, {width: 1602, height: 898})).toBe(true);
+        expect(isSameSize({width: 1600, height: 900}, {width: 1597, height: 900})).toBe(false);
+        expect(isSameSize({width: 1600, height: 900}, {width: 1600, height: 903})).toBe(false);
         expect(formatSize({width: 757.6, height: 461})).toBe("758×461");
     });
 
