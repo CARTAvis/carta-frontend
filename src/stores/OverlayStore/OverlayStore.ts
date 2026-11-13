@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
 import {type Persisted, type WorkspaceWcsOverlayText} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
-import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
+import {ColorbarStore, type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {ASTSettingsString, clamp, getColorForTheme, getDefaultWcsFormats, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
@@ -59,6 +59,20 @@ function isLabelType(value: unknown): value is LabelType {
 
 function isNumberFormat(value: unknown): value is NumberFormatType {
     return isOneOf(Object.values(NumberFormatType))(value);
+}
+
+function isColorbarPosition(value: unknown): value is "right" | "top" | "bottom" {
+    return isOneOf(["right", "top", "bottom"] as const)(value);
+}
+
+/** The controls offer these rotations of the colorbar label, in degrees. */
+function isColorbarLabelRotation(value: unknown): value is number {
+    return isOneOf([-90, 90])(value);
+}
+
+/** The controls offer these rotations of the colorbar numbers, in degrees. */
+function isColorbarNumberRotation(value: unknown): value is number {
+    return isOneOf([-90, 0, 90])(value);
 }
 
 export interface OverlayGlobalConfig {
@@ -145,6 +159,46 @@ export interface OverlayLabelConfig {
 }
 
 /**
+ * The colorbar settings, as the layout copy of a workspace saves them. A new session starts with
+ * the preferences for the visibility, the interaction, the width, the position, the tick density
+ * and the label visibility.
+ */
+export interface OverlayColorbarConfig {
+    isVisible: boolean;
+    isInteractive: boolean;
+    width: number;
+    offset: number;
+    position: "right" | "top" | "bottom";
+    hasCustomColor: boolean;
+    color: string;
+    isBorderVisible: boolean;
+    borderWidth: number;
+    hasBorderCustomColor: boolean;
+    borderColor: string;
+    isTickVisible: boolean;
+    tickDensity: number;
+    tickLen: number;
+    tickWidth: number;
+    hasTickCustomColor: boolean;
+    tickColor: string;
+    isNumberVisible: boolean;
+    numberRotation: number;
+    numberFont: number;
+    numberFontSize: number;
+    hasNumberCustomPrecision: boolean;
+    numberPrecision: number;
+    hasNumberCustomColor: boolean;
+    numberColor: string;
+    isLabelVisible: boolean;
+    labelRotation: number;
+    labelFont: number;
+    labelFontSize: number;
+    hasLabelCustomColor: boolean;
+    labelColor: string;
+    isGradientVisible: boolean;
+}
+
+/**
  * How the WCS overlay looks, as the layout copy of a workspace saves it with the image view. A
  * regular layout saves none of these settings. The custom texts and the switches that show them
  * belong to the images. The workspace saves them elsewhere. See {@link WorkspaceWcsOverlayText}.
@@ -159,6 +213,7 @@ export interface WcsOverlayConfig {
     ticks: OverlayTickConfig;
     numbers: OverlayNumberConfig;
     labels: OverlayLabelConfig;
+    colorbar: OverlayColorbarConfig;
 }
 
 export class Padding {
@@ -1086,6 +1141,99 @@ export class OverlayColorbarSettings {
         this.isGradientVisible = isGradientVisible;
     };
 
+    toConfig(): OverlayColorbarConfig {
+        return {
+            isVisible: this.isVisible,
+            isInteractive: this.isInteractive,
+            width: this.width,
+            offset: this.offset,
+            position: this.position,
+            hasCustomColor: this.hasCustomColor,
+            color: this.color,
+            isBorderVisible: this.isBorderVisible,
+            borderWidth: this.borderWidth,
+            hasBorderCustomColor: this.hasBorderCustomColor,
+            borderColor: this.borderColor,
+            isTickVisible: this.isTickVisible,
+            tickDensity: this.tickDensity,
+            tickLen: this.tickLen,
+            tickWidth: this.tickWidth,
+            hasTickCustomColor: this.hasTickCustomColor,
+            tickColor: this.tickColor,
+            isNumberVisible: this.isNumberVisible,
+            numberRotation: this.numberRotation,
+            numberFont: this.numberFont,
+            numberFontSize: this.numberFontSize,
+            hasNumberCustomPrecision: this.hasNumberCustomPrecision,
+            numberPrecision: this.numberPrecision,
+            hasNumberCustomColor: this.hasNumberCustomColor,
+            numberColor: this.numberColor,
+            isLabelVisible: this.isLabelVisible,
+            labelRotation: this.labelRotation,
+            labelFont: this.labelFont,
+            labelFontSize: this.labelFontSize,
+            hasLabelCustomColor: this.hasLabelCustomColor,
+            labelColor: this.labelColor,
+            isGradientVisible: this.isGradientVisible
+        };
+    }
+
+    /**
+     * Applies the saved colorbar settings. A setting that has a preference does not change when the
+     * config leaves it out. Leaves the switch of the custom label text as it is, because a workspace
+     * saves it.
+     */
+    @action applyConfig(config: Persisted<OverlayColorbarConfig> | undefined) {
+        const isWidth = numberIn(1, 100);
+        const isTickDensity = numberIn(0.2, 20);
+        if (isBoolean(config?.isVisible)) {
+            this.isVisible = config.isVisible;
+        }
+        if (isBoolean(config?.isInteractive)) {
+            this.isInteractive = config.isInteractive;
+        }
+        if (isWidth(config?.width)) {
+            this.width = config.width;
+        }
+        if (isColorbarPosition(config?.position)) {
+            this.position = config.position;
+        }
+        if (isTickDensity(config?.tickDensity)) {
+            this.tickDensity = config.tickDensity;
+        }
+        if (isBoolean(config?.isLabelVisible)) {
+            this.isLabelVisible = config.isLabelVisible;
+        }
+        this.offset = savedOr(config?.offset, numberIn(0, 100), 5);
+        this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
+        this.color = savedOr(config?.color, isColor, AST_DEFAULT_COLOR);
+        this.isBorderVisible = savedOr(config?.isBorderVisible, isBoolean, true);
+        this.borderWidth = savedOr(config?.borderWidth, numberIn(0.5, 30), 1);
+        this.hasBorderCustomColor = savedOr(config?.hasBorderCustomColor, isBoolean, false);
+        this.borderColor = savedOr(config?.borderColor, isColor, AST_DEFAULT_COLOR);
+        this.isTickVisible = savedOr(config?.isTickVisible, isBoolean, true);
+        // The settings panel limits the tick length to the width, but a later change of the width
+        // keeps the tick length. So accept a tick length longer than the width, as it is shown.
+        this.tickLen = savedOr(config?.tickLen, numberIn(0.5), 6);
+        this.tickWidth = savedOr(config?.tickWidth, numberIn(0.5, 30), 1);
+        this.hasTickCustomColor = savedOr(config?.hasTickCustomColor, isBoolean, false);
+        this.tickColor = savedOr(config?.tickColor, isColor, AST_DEFAULT_COLOR);
+        this.isNumberVisible = savedOr(config?.isNumberVisible, isBoolean, true);
+        this.numberRotation = savedOr(config?.numberRotation, isColorbarNumberRotation, -90);
+        this.numberFont = savedOr(config?.numberFont, isFont, 0);
+        this.numberFontSize = savedOr(config?.numberFontSize, isFontSize, 12);
+        this.hasNumberCustomPrecision = savedOr(config?.hasNumberCustomPrecision, isBoolean, false);
+        this.numberPrecision = savedOr(config?.numberPrecision, (value): value is number => isCount(value) && value <= ColorbarStore.PRECISION_MAX, 3);
+        this.hasNumberCustomColor = savedOr(config?.hasNumberCustomColor, isBoolean, false);
+        this.numberColor = savedOr(config?.numberColor, isColor, AST_DEFAULT_COLOR);
+        this.labelRotation = savedOr(config?.labelRotation, isColorbarLabelRotation, -90);
+        this.labelFont = savedOr(config?.labelFont, isFont, 0);
+        this.labelFontSize = savedOr(config?.labelFontSize, isFontSize, 15);
+        this.hasLabelCustomColor = savedOr(config?.hasLabelCustomColor, isBoolean, false);
+        this.labelColor = savedOr(config?.labelColor, isColor, AST_DEFAULT_COLOR);
+        this.isGradientVisible = savedOr(config?.isGradientVisible, isBoolean, true);
+    }
+
     @computed get rightBorderPos(): number {
         return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;
     }
@@ -1234,7 +1382,8 @@ export class OverlaySettings {
             axes: this.axes.toConfig(),
             ticks: this.ticks.toConfig(),
             numbers: this.numbers.toConfig(),
-            labels: this.labels.toConfig()
+            labels: this.labels.toConfig(),
+            colorbar: this.colorbar.toConfig()
         };
     }
 
@@ -1280,6 +1429,7 @@ export class OverlaySettings {
         this.ticks.applyConfig(sectionOf(config?.ticks));
         this.numbers.applyConfig(sectionOf(config?.numbers));
         this.labels.applyConfig(sectionOf(config?.labels));
+        this.colorbar.applyConfig(sectionOf(config?.colorbar));
         // Set the formats from the system again. Without a custom format, the formats follow the system.
         this.setFormatsFromSystem();
         return problems;
@@ -1289,7 +1439,8 @@ export class OverlaySettings {
     toTextConfig(): WorkspaceWcsOverlayText {
         return {
             labels: {hasCustomText: this.labels.hasCustomText, customLabelX: this.labels.customLabelX, customLabelY: this.labels.customLabelY},
-            title: {hasCustomText: this.title.hasCustomText}
+            title: {hasCustomText: this.title.hasCustomText},
+            colorbar: {hasLabelCustomText: this.colorbar.hasLabelCustomText}
         };
     }
 
@@ -1299,6 +1450,7 @@ export class OverlaySettings {
         this.labels.customLabelX = savedOr(config?.labels?.customLabelX, isText, "");
         this.labels.customLabelY = savedOr(config?.labels?.customLabelY, isText, "");
         this.title.hasCustomText = savedOr(config?.title?.hasCustomText, isBoolean, false);
+        this.colorbar.hasLabelCustomText = savedOr(config?.colorbar?.hasLabelCustomText, isBoolean, false);
     }
 
     @action setFormatsFromSystem() {

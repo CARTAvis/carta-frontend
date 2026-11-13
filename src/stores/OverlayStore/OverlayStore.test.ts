@@ -7,7 +7,17 @@ import {AlertStore, AppStore, PreferenceStore} from "stores";
 
 import {OverlaySettings, type WcsOverlayConfig} from "./OverlayStore";
 
-const PREFERENCE_KEYS = [PreferenceKeys.WCS_OVERLAY_AST_COLOR, PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE];
+const PREFERENCE_KEYS = [
+    PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+    PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
+    PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
+    PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE
+];
 
 /** Every setting is different from its default. */
 const CUSTOM_OVERLAY: WcsOverlayConfig = {
@@ -19,15 +29,50 @@ const CUSTOM_OVERLAY: WcsOverlayConfig = {
     axes: {isVisible: true, hasCustomColor: true, color: "auto-gray", width: 1.5},
     ticks: {shouldDrawAll: false, hasCustomDensity: true, densityX: 2, densityY: 6, hasCustomColor: true, color: "auto-rose", width: 2.5, length: 3, majorLength: 5},
     numbers: {isVisible: false, isHidden: true, font: 1, fontSize: 14, hasCustomColor: true, color: "auto-lime", hasCustomFormat: true, formatX: NumberFormatType.HMS, formatY: NumberFormatType.DMS, hasCustomPrecision: true, precision: 5},
-    labels: {isVisible: false, isHidden: true, hasCustomColor: true, color: "auto-cerulean", font: 3, fontSize: 20, hasRaDecReference: false}
+    labels: {isVisible: false, isHidden: true, hasCustomColor: true, color: "auto-cerulean", font: 3, fontSize: 20, hasRaDecReference: false},
+    colorbar: {
+        isVisible: false,
+        isInteractive: false,
+        width: 30,
+        offset: 10,
+        position: "top",
+        hasCustomColor: true,
+        color: "#112233",
+        isBorderVisible: false,
+        borderWidth: 2,
+        hasBorderCustomColor: true,
+        borderColor: "#223344",
+        isTickVisible: false,
+        tickDensity: 2,
+        tickLen: 8,
+        tickWidth: 2,
+        hasTickCustomColor: true,
+        tickColor: "#334455",
+        isNumberVisible: false,
+        numberRotation: 0,
+        numberFont: 2,
+        numberFontSize: 16,
+        hasNumberCustomPrecision: true,
+        numberPrecision: 6,
+        hasNumberCustomColor: true,
+        numberColor: "#445566",
+        isLabelVisible: false,
+        labelRotation: 90,
+        labelFont: 5,
+        labelFontSize: 18,
+        hasLabelCustomColor: true,
+        labelColor: "#556677",
+        isGradientVisible: false
+    }
 };
 
-/** Returns a copy of an overlay config without the settings that have a preference: the color, the grid visibility and the label visibility. */
+/** Returns a copy of an overlay config without the settings that have a preference: the color, the grid and label visibility, and six colorbar settings. */
 function withoutPreferenceSettings(config: WcsOverlayConfig): object {
     const copy = JSON.parse(JSON.stringify(config));
     delete copy.global.color;
     delete copy.grid.isVisible;
     delete copy.labels.isVisible;
+    ["isVisible", "isInteractive", "width", "position", "tickDensity", "isLabelVisible"].forEach(key => delete copy.colorbar[key]);
     return copy;
 }
 
@@ -108,35 +153,60 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
             border: {width: 0.1},
             ticks: {length: 101, densityX: -1},
             numbers: {formatX: "hours", precision: 2.5},
-            labels: {isVisible: 1, fontSize: 6, font: 1.5}
+            labels: {isVisible: 1, fontSize: 6, font: 1.5},
+            colorbar: {width: 0, position: "left", tickDensity: 30, numberRotation: 45, labelRotation: 0, numberPrecision: 16, tickLen: 0.4}
         });
 
         expect(withoutPreferenceSettings(overlay.toConfig())).toEqual(withoutPreferenceSettings(defaults));
-        expect(overlay.toConfig()).toMatchObject({global: {color: CUSTOM_OVERLAY.global.color}, grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible}, labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible}});
+        const {width, position, tickDensity} = CUSTOM_OVERLAY.colorbar;
+        expect(overlay.toConfig()).toMatchObject({
+            global: {color: CUSTOM_OVERLAY.global.color},
+            grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible},
+            labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible},
+            colorbar: {width, position, tickDensity}
+        });
+    });
+
+    test("keeps a colorbar tick length longer than the colorbar is wide, as it is shown", () => {
+        const overlay = createOverlay();
+        overlay.colorbar.setWidth(20);
+        overlay.colorbar.setTickLen(15);
+        overlay.colorbar.setWidth(10);
+
+        const other = createOverlay();
+        other.applyConfig(overlay.toConfig());
+
+        expect(other.colorbar.tickLen).toBe(15);
     });
 
     test("keeps the settings that have a preference when the workspace leaves them out", () => {
+        setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, 40);
         const overlay = createOverlay();
         overlay.global.setColor("auto-green");
         overlay.grid.setVisible(true);
         overlay.labels.setVisible(false);
+        overlay.colorbar.setPosition("bottom");
 
         overlay.applyConfig({});
 
         expect(overlay.global.color).toBe("auto-green");
         expect(overlay.grid.isVisible).toBe(true);
         expect(overlay.labels.isVisible).toBe(false);
+        expect(overlay.colorbar.position).toBe("bottom");
+        expect(overlay.colorbar.width).toBe(40);
     });
 
-    test("saves the settings that have a preference as they are shown", () => {
+    test("saves the nine settings that have a preference as they are shown", () => {
         setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
         const overlay = createOverlay();
+        overlay.colorbar.setPosition("top");
 
         const config = overlay.toConfig();
 
         expect(config.global.color).toBe("auto-red");
         expect(config.grid.isVisible).toBe(false);
         expect(config.labels.isVisible).toBe(true);
+        expect(config.colorbar).toMatchObject({isVisible: true, isInteractive: true, width: 15, position: "top", tickDensity: 1, isLabelVisible: false});
     });
 
     test("accepts grid and axis widths above 30, as the settings panel does", () => {
@@ -228,11 +298,11 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
 
     test("leaves the custom texts and their switches alone, because a workspace saves them", () => {
         const overlay = createOverlay();
-        overlay.applyTextConfig({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}});
+        overlay.applyTextConfig({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}});
 
         overlay.applyConfig(null);
 
-        expect(overlay.toTextConfig()).toEqual({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}});
+        expect(overlay.toTextConfig()).toEqual({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}});
     });
 });
 
@@ -246,7 +316,7 @@ describe("the custom texts of the WCS overlay in a workspace", () => {
     });
 
     test("saves the texts and their switches, and applies them again", () => {
-        const texts = {labels: {hasCustomText: true, customLabelX: "RA (deg)", customLabelY: ""}, title: {hasCustomText: true}};
+        const texts = {labels: {hasCustomText: true, customLabelX: "RA (deg)", customLabelY: ""}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}};
         const overlay = createOverlay();
 
         overlay.applyTextConfig(texts);
@@ -257,11 +327,11 @@ describe("the custom texts of the WCS overlay in a workspace", () => {
 
     test("turns the custom texts off when the workspace saved none, or saved values of the wrong type", () => {
         const overlay = createOverlay();
-        overlay.applyTextConfig({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}});
+        overlay.applyTextConfig({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}});
 
         overlay.applyTextConfig({labels: {hasCustomText: "yes", customLabelX: 3}});
 
-        expect(overlay.toTextConfig()).toEqual({labels: {hasCustomText: false, customLabelX: "", customLabelY: ""}, title: {hasCustomText: false}});
+        expect(overlay.toTextConfig()).toEqual({labels: {hasCustomText: false, customLabelX: "", customLabelY: ""}, title: {hasCustomText: false}, colorbar: {hasLabelCustomText: false}});
     });
 
     test("leaves how the overlay looks alone", () => {
