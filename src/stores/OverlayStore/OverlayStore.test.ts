@@ -68,7 +68,8 @@ const CUSTOM_OVERLAY: WcsOverlayConfig = {
 
 /** The settings of `CUSTOM_OVERLAY` that a layout saves: all but the settings that have a preference. */
 const CUSTOM_LAYOUT_OVERLAY: WcsOverlayConfig = (() => {
-    const {isVisible, isInteractive, width, position, tickDensity, isLabelVisible, ...colorbar} = CUSTOM_OVERLAY.colorbar;
+    const preferenceKeys = ["isVisible", "isInteractive", "width", "position", "tickDensity", "isLabelVisible"];
+    const colorbar = Object.fromEntries(Object.entries(CUSTOM_OVERLAY.colorbar).filter(([key]) => !preferenceKeys.includes(key))) as WcsOverlayConfig["colorbar"];
     return {
         ...CUSTOM_OVERLAY,
         global: {labelType: LabelType.Interior, tolerance: 5, system: SystemType.Galactic},
@@ -161,7 +162,13 @@ describe("the WCS overlay in a layout", () => {
         });
 
         expect(overlay.toConfig()).toEqual(defaults);
-        expect(overlay.toConfig(true)).toMatchObject({global: {color: CUSTOM_OVERLAY.global.color}, grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible}, labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible}});
+        const {width, position, tickDensity} = CUSTOM_OVERLAY.colorbar;
+        expect(overlay.toConfig(true)).toMatchObject({
+            global: {color: CUSTOM_OVERLAY.global.color},
+            grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible},
+            labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible},
+            colorbar: {width, position, tickDensity}
+        });
     });
 
     test("keeps a colorbar tick length longer than the colorbar is wide, as it is shown", () => {
