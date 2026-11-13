@@ -196,17 +196,48 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
         expect(overlay.colorbar.width).toBe(40);
     });
 
-    test("saves the nine settings that have a preference as they are shown", () => {
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
+    test("saves the nine settings that have a preference as they are shown, not as the preferences give them", () => {
+        const preferences = PreferenceStore.Instance;
         const overlay = createOverlay();
-        overlay.colorbar.setPosition("top");
+        overlay.global.setColor(preferences.astColor === "auto-red" ? "auto-green" : "auto-red");
+        overlay.grid.setVisible(!preferences.isAstGridVisible);
+        overlay.labels.setVisible(!preferences.isAstLabelsVisible);
+        overlay.colorbar.setVisible(!preferences.isColorbarVisible);
+        overlay.colorbar.setInteractive(!preferences.isColorbarInteractive);
+        overlay.colorbar.setWidth(preferences.colorbarWidth + 5);
+        overlay.colorbar.setPosition(preferences.colorbarPosition === "top" ? "bottom" : "top");
+        overlay.colorbar.setTickDensity(preferences.colorbarTicksDensity + 1);
+        overlay.colorbar.setLabelVisible(!preferences.isColorbarLabelVisible);
+        const shown = {
+            color: overlay.global.color,
+            isGridVisible: overlay.grid.isVisible,
+            isLabelsVisible: overlay.labels.isVisible,
+            colorbar: {
+                isVisible: overlay.colorbar.isVisible,
+                isInteractive: overlay.colorbar.isInteractive,
+                width: overlay.colorbar.width,
+                position: overlay.colorbar.position,
+                tickDensity: overlay.colorbar.tickDensity,
+                isLabelVisible: overlay.colorbar.isLabelVisible
+            }
+        };
 
         const config = overlay.toConfig();
 
-        expect(config.global.color).toBe("auto-red");
-        expect(config.grid.isVisible).toBe(false);
-        expect(config.labels.isVisible).toBe(true);
-        expect(config.colorbar).toMatchObject({isVisible: true, isInteractive: true, width: 15, position: "top", tickDensity: 1, isLabelVisible: false});
+        expect(config.global.color).toBe(shown.color);
+        expect(config.grid.isVisible).toBe(shown.isGridVisible);
+        expect(config.labels.isVisible).toBe(shown.isLabelsVisible);
+        expect(config.colorbar).toMatchObject(shown.colorbar);
+        // Each saved value differs from what the preferences give.
+        expect(config.global.color).not.toBe(preferences.astColor);
+        expect(config.grid.isVisible).not.toBe(preferences.isAstGridVisible);
+        expect(config.labels.isVisible).not.toBe(preferences.isAstLabelsVisible);
+        expect(config.colorbar.isVisible).not.toBe(preferences.isColorbarVisible);
+        expect(config.colorbar.isInteractive).not.toBe(preferences.isColorbarInteractive);
+        expect(config.colorbar.width).not.toBe(preferences.colorbarWidth);
+        expect(config.colorbar.position).not.toBe(preferences.colorbarPosition);
+        expect(config.colorbar.tickDensity).not.toBe(preferences.colorbarTicksDensity);
+        expect(config.colorbar.isLabelVisible).not.toBe(preferences.isColorbarLabelVisible);
     });
 
     test("accepts grid and axis widths above 30, as the settings panel does", () => {
