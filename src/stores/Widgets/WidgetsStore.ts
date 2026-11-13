@@ -184,6 +184,8 @@ export class WidgetsStore {
 
     private widgetsMap: Map<string, Map<string, object>>;
     private defaultFloatingWidgetOffset: number;
+    /** The catalogs whose style the regular layout being applied has set. */
+    private readonly catalogFileIdsStyledByLayout = new Set<number>();
     private beingUnpinned: Set<string> = new Set();
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
@@ -694,6 +696,12 @@ export class WidgetsStore {
         if (!settings || typeof catalogFileId !== "number" || !Number.isInteger(catalogFileId) || catalogFileId < 1) {
             return;
         }
+        // CARTA v6.0 applied the settings of only the first widget in a layout that names a catalog.
+        // A later widget that names the same catalog shared the store of the first widget.
+        if (this.catalogFileIdsStyledByLayout.has(catalogFileId)) {
+            return;
+        }
+        this.catalogFileIdsStyledByLayout.add(catalogFileId);
         if (typeof settings.tableSeparatorPosition === "string") {
             widgetStore.setTableSeparatorPosition(settings.tableSeparatorPosition);
         }
@@ -820,6 +828,7 @@ export class WidgetsStore {
      * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image view grid.
      */
     public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence = "regular") => {
+        this.catalogFileIdsStyledByLayout.clear();
         // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (persistence === "workspace" && imageViews.length) {

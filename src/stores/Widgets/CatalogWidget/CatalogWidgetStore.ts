@@ -94,15 +94,27 @@ export class CatalogWidgetStore {
     };
 
     /**
-     * Returns what a regular layout keeps for this widget.
+     * Returns what a regular layout keeps for this widget. When the widget shows no catalog, it
+     * returns undefined, and the layout keeps no settings for the widget, as in CARTA v6.0.
      *
      * @param shownCatalogFileId - the catalog the widget shows.
-     * @param displayStore - the display store of that catalog. Without it, the layout keeps only where the table is split.
+     * @param displayStore - the display store of that catalog.
      */
-    public toRegularLayoutSettings = (shownCatalogFileId: number | undefined, displayStore: CatalogDisplayStore | undefined): CatalogWidgetRegularLayoutSettings => ({
-        ...(shownCatalogFileId !== undefined && displayStore ? {catalogFileId: shownCatalogFileId, ...displayStore.toLayoutStyle()} : {}),
-        tableSeparatorPosition: this.tableSeparatorPosition
-    });
+    public toRegularLayoutSettings = (shownCatalogFileId: number | undefined, displayStore: CatalogDisplayStore | undefined): CatalogWidgetRegularLayoutSettings | undefined => {
+        if (shownCatalogFileId === undefined || !displayStore) {
+            return undefined;
+        }
+        const style = displayStore.toLayoutStyle();
+        return {
+            catalogFileId: shownCatalogFileId,
+            catalogColor: style.catalogColor,
+            highlightColor: style.highlightColor,
+            catalogSize: style.catalogSize,
+            catalogShape: style.catalogShape,
+            tableSeparatorPosition: this.tableSeparatorPosition,
+            thickness: style.thickness
+        };
+    };
 
     /** @param shownCatalogFileId - the catalog the widget shows, whose section the layout keeps. */
     public toLayoutSettings = (shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
