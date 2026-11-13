@@ -15,9 +15,7 @@ export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
     "layout/spatial-profiler": ["widgetId", "markerTextVisible", "settingsTabId", "smoothing"],
     "layout/spectral-profiler": ["widgetId", "restFrameShiftMode", "restFrameVelocityConvention", "markerTextVisible", "secondaryAxisCursorInfoVisible", "settingsTabId", "smoothing"],
     "layout/stats": ["widgetId"],
-    "layout/stokes": ["widgetId", "invertedColorMap", "fractionalPolVisible", "referenceAxesVisible", "settingsTabId", "smoothing"],
-    "workspace/contour-config": ["colormapInverted"],
-    "workspace/vector-overlay-config": ["colormapInverted", "thresholdOption"]
+    "layout/stokes": ["widgetId", "invertedColorMap", "fractionalPolVisible", "referenceAxesVisible", "settingsTabId", "smoothing"]
 };
 
 /**
