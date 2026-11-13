@@ -49,9 +49,10 @@ import {
     type WorkspacePvRequest
 } from "models";
 import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, scaleFrameZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
+import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -287,6 +288,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
+    /**
+     * The device pixel ratio when the saved zoom of each image was applied, by workspace image ID.
+     * When the window moves to a screen with another ratio later, the app scales the zoom by itself.
+     */
+    private readonly zoomPixelRatios = new Map<number, number>();
+
     /** The workspace IDs of the images that the user chose to open the workspace without. */
     private readonly leftOutImageIds: Set<number>;
     /** The workspace IDs of the catalogs that the user chose to open the workspace without. */
@@ -295,7 +302,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     constructor(
         private readonly workspace: Workspace,
         private readonly generation: number,
-        leftOut?: WorkspaceLeftOutItems
+        leftOut?: WorkspaceLeftOutItems,
+        private readonly options?: {checkWindowSize?: boolean}
     ) {
         this.leftOutImageIds = new Set(leftOut?.imageIds);
         this.leftOutCatalogIds = new Set(leftOut?.catalogIds);
@@ -416,6 +424,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        yield* this.restoreFieldOfView();
+        if (!this.isCurrent) {
+            return this.issues;
+        }
+        this.checkWindowSize();
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
@@ -1114,6 +1127,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.center = fileInfo.center;
             }
             restoreWorkspaceZoom(frame, fileInfo);
+            this.zoomPixelRatios.set(fileInfo.id, this.appStore.devicePixelRatio);
 
             regions.push(this.restoreRegions(frame, fileInfo));
         }
@@ -2514,6 +2528,66 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Returns the file ID that a workspace image has in this session, or nothing when the image was not restored. */
     public fileIdOf(workspaceImageId: number): number | undefined {
         return this.frameIds.get(workspaceImageId);
+    }
+
+    /**
+     * Scales the zoom of each image by how the image view changed size since the workspace was
+     * saved, so that the area of each image that showed fits in the view again. Wait for the size
+     * first, because the image view takes its size from the layout. For an image that is stretched
+     * to the shape of the view, such as a PV image, only the height of the view counts. When the view has another
+     * shape, more of each image shows on two sides. The report does not say so: the Open Workspace
+     * dialog shows the saved sizes before the workspace opens.
+     */
+    private *restoreFieldOfView(): Generator<Promise<unknown>, void, any> {
+        const saved = this.workspace.imageView;
+        // A PV preview is drawn in the PV generator, not in the image view. The frames of the image
+        // list do not include previews.
+        const activeFrame = this.appStore.activeFrame;
+        const frame = activeFrame && !activeFrame.isPreview ? activeFrame : this.appStore.frames[0];
+        if (!isValidImageViewSize(saved) || !frame) {
+            return;
+        }
+        yield* awaited(waitForStableSize(() => ({width: frame.renderWidth, height: frame.renderHeight})));
+        // A background tab does not report the new size of the image view. An image view that is
+        // closed or behind another tab does not report it either. Keep the saved zoom then, because
+        // a scale from the old size would be wrong.
+        if (!this.isCurrent || document.hidden || this.appStore.layoutStore.isComponentHidden("image-view")) {
+            return;
+        }
+        // A size of 1 or less means that the image view is not shown.
+        const current = {width: frame.renderWidth, height: frame.renderHeight};
+        if (!(current.width > 1 && current.height > 1)) {
+            return;
+        }
+        // A matched image follows the zoom of its reference image, so only the other images are scaled.
+        for (const workspaceFileId of this.frameIds.keys()) {
+            const restored = this.frameOf(workspaceFileId);
+            if (!restored || restored.spatialReference) {
+                continue;
+            }
+            const pixelRatio = this.zoomPixelRatios.get(workspaceFileId) ?? this.appStore.devicePixelRatio;
+            const scale = getFieldOfViewScale(saved, current, pixelRatio, restored.isStretchedToView);
+            if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
+                scaleFrameZoom(restored, scale);
+            }
+        }
+    }
+
+    /**
+     * Reports when the browser window does not have the size that the workspace was saved in. Only a
+     * window that was opened to match the saved size checks this, because the user asked for that
+     * size. The browser can open a window of another size, for example when the screen is smaller,
+     * or when the page is zoomed. In other windows, the Open Workspace dialog shows the sizes.
+     */
+    private checkWindowSize(): void {
+        const viewport = this.workspace.imageView?.viewport;
+        if (!this.options?.checkWindowSize || !isValidImageViewSize(viewport)) {
+            return;
+        }
+        const current = {width: window.innerWidth, height: window.innerHeight};
+        if (!isSameSize(viewport, current)) {
+            this.report(WorkspaceItemKind.Layout, "", `This browser window is ${formatSize(current)}, not ${formatSize(viewport)} as when the workspace was saved, so the images may not show exactly as saved`);
+        }
     }
 
     /** Stage 9: settle the state that depends on everything else already being in place. */

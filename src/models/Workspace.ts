@@ -1021,8 +1021,36 @@ export interface Workspace {
     imageFitting?: WorkspaceImageFitting;
     wcsOverlay?: WorkspaceWcsOverlayText;
     layout?: WorkspaceLayout;
+    /**
+     * The size of the image view when the workspace was saved. A restore scales the zoom by how the
+     * size changed, so that the same area of each image shows. Left out by a workspace saved before
+     * it kept the size. A restore then uses the saved zoom as it is.
+     */
+    imageView?: WorkspaceImageViewSize;
     thumbnail?: string;
     date?: number;
+}
+
+/**
+ * The size of the image view when the workspace was saved. All sizes are in CSS pixels.
+ *
+ * A restore uses `width`, `height` and `devicePixelRatio` to show the same field of view. The Open
+ * Workspace dialog shows the saved browser window next to the current one, so that a user can change
+ * the window to match. A script can give the browser or the image view the same size before it opens
+ * the workspace, and can also match the device pixel ratio to get images of the same resolution.
+ */
+export interface WorkspaceImageViewSize {
+    /** The width of the area of one image panel that images are drawn in, without the padding around the axes. In channel map mode it is the area of one channel. */
+    width: number;
+    /** The height of that area. */
+    height: number;
+    /** The device pixel ratio of the screen. The zoom counts screen pixels, so the restore compares sizes in screen pixels. */
+    devicePixelRatio: number;
+    /** The size of the whole image view, with the padding and all panels. A script sets it with `set_view_area` in carta-python. */
+    fullWidth?: number;
+    fullHeight?: number;
+    /** The size of the browser viewport, from `window.innerWidth` and `window.innerHeight`. */
+    viewport?: {width: number; height: number};
 }
 
 /**

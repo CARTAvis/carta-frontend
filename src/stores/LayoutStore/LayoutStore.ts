@@ -1,4 +1,4 @@
-import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
+import {type BorderNode, DockLocation, type DropInfo, type ILayoutApi, Model, type Node, type TabNode} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -155,6 +155,35 @@ export class LayoutStore {
         this.currentLayoutName = layoutName;
 
         return true;
+    };
+
+    /**
+     * Returns whether the layout shows no widget of the kind `component`, for example when the widget
+     * is closed, behind another tab, in a closed border, or hidden by another maximized tab set.
+     * Returns false when there is no layout yet, because it is then not known. The layout marks the
+     * selected tab of each tab set as shown when it draws it, so call this after the layout is drawn.
+     */
+    public isComponentHidden = (component: string): boolean => {
+        const model = this.layoutModel;
+        if (!model) {
+            return false;
+        }
+        let isShown = false;
+        model.visitNodes(node => {
+            if (node.getType() !== "tab" || (node as TabNode).getComponent() !== component || !(node as TabNode).isVisible()) {
+                return;
+            }
+            const parent = node.getParent();
+            const maximized = model.getMaximizedTabset(node.getLayoutId());
+            if (parent?.getType() === "tabset" && maximized && maximized !== parent) {
+                return;
+            }
+            if (parent?.getType() === "border" && !(parent as BorderNode).isShowing()) {
+                return;
+            }
+            isShown = true;
+        });
+        return !isShown;
     };
 
     /**
