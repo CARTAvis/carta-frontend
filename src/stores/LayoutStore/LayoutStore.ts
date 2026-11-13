@@ -3,7 +3,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutDialogMode} from "enums";
-import {LayoutConfig, PresetLayout} from "models";
+import {LayoutConfig, type LayoutPersistence, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
@@ -113,10 +113,13 @@ export class LayoutStore {
      * @param config - the layout, in the form a saved layout and a workspace both hold it.
      * @param layoutName - the saved layout it came from, or "" when it is not a layout of its own,
      *                     as for the layout a workspace carries.
+     * @param persistence - the kind of layout. A regular layout is applied as in CARTA v6.0. The
+     *                      layout copy of a workspace is validated by the workspace schema, and also
+     *                      applies what only a workspace keeps, such as the image view grid.
      * @returns whether the layout could be applied.
      */
-    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = ""): boolean => {
-        const preparedConfig = LayoutConfig.prepareLayout(config);
+    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = "", persistence: LayoutPersistence = "regular"): boolean => {
+        const preparedConfig = LayoutConfig.prepareLayout(config, persistence);
         if (!preparedConfig) {
             return false;
         }
@@ -128,11 +131,11 @@ export class LayoutStore {
             content: []
         };
         // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
-        LayoutConfig.createConfigToApply(dockedConfig.content, preparedConfig.docked.content, []);
+        LayoutConfig.createConfigToApply(dockedConfig.content, preparedConfig.docked.content, [], persistence);
 
         // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
         const dockedComponentConfigs: any[] = [];
-        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
+        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs, persistence);
         const nextLayoutModel = Model.fromJson(modelJson);
         nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
             return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
@@ -142,7 +145,7 @@ export class LayoutStore {
         appStore.widgetsStore.clearPopoutPositions();
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? []);
+        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence);
 
         this.layoutModel = nextLayoutModel;
 
@@ -152,13 +155,17 @@ export class LayoutStore {
         return true;
     };
 
-    /** The layout the session is showing, in the form a saved layout and a workspace both hold it. */
-    public currentLayoutConfig = (): {layoutVersion: number; docked: any; floating: any[]} | undefined => {
+    /**
+     * The layout the session is showing.
+     *
+     * @param persistence - the kind of layout to write. A workspace writes its own copy of the layout.
+     */
+    public currentLayoutConfig = (persistence: LayoutPersistence = "regular"): {layoutVersion: number; docked: any; floating: any[]} | undefined => {
         const modelJson = this.layoutModel?.toJson();
         if (!modelJson?.layout) {
             return undefined;
         }
-        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson) ?? undefined;
+        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson, persistence) ?? undefined;
     };
 
     @flow.bound *saveLayout() {

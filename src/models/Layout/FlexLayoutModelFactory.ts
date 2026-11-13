@@ -1,5 +1,6 @@
 import {type IJsonModel, type IJsonRowNode, type IJsonTabNode, type IJsonTabSetNode} from "flexlayout-react";
 
+import type {LayoutPersistence} from "models/Config/ConfigurableStore";
 import {smoothStepOffset} from "utilities/math/math";
 
 /** Global settings for the FlexLayout model */
@@ -69,13 +70,18 @@ export function getComponentTabJson(widgetType: string): IJsonTabNode | undefine
  * - "tabset" node with tab children (IJsonTabSetNode)
  * - "tab" leaf node (IJsonTabNode)
  * - weight: relative sizing (defaults to 100)
+ *
+ * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack
+ *                      maximized and names a spatial profiler tab by its coordinate. A regular
+ *                      layout keeps the type of a catalog plot in the config of its tab, as in
+ *                      CARTA v6.0.
  */
-export function createFlexLayoutModel(dockedConfig: any): IJsonModel {
+export function createFlexLayoutModel(dockedConfig: any, persistence: LayoutPersistence = "regular"): IJsonModel {
     // Reset ID tracking for this model creation
     usedIds.clear();
     idCounters.clear();
     try {
-        const layoutNode = convertNode(dockedConfig);
+        const layoutNode = convertNode(dockedConfig, persistence);
         return {
             global: FLEXLAYOUT_GLOBAL_CONFIG,
             borders: [],
@@ -129,7 +135,7 @@ function getUniqueId(baseId: string): string {
     return candidate;
 }
 
-function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
+function convertNode(node: any, persistence: LayoutPersistence): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
     if (!node || !node.type) {
         return {type: "row", children: []} as IJsonRowNode;
     }
@@ -137,17 +143,17 @@ function convertNode(node: any): IJsonRowNode | IJsonTabSetNode | IJsonTabNode {
     switch (node.type) {
         case "row":
         case "column":
-            return convertRowOrColumn(node);
+            return convertRowOrColumn(node, persistence);
         case "stack":
-            return convertStack(node);
+            return convertStack(node, persistence);
         case "component":
-            return convertComponent(node);
+            return convertComponent(node, persistence);
         default:
             return {type: "row", children: []} as IJsonRowNode;
     }
 }
 
-function convertRowOrColumn(node: any): IJsonRowNode {
+function convertRowOrColumn(node: any, persistence: LayoutPersistence): IJsonRowNode {
     // In FlexLayout, a "row" lays out children horizontally by default.
     // GL's "column" lays out children vertically, which is a FlexLayout "row"
     // that is a child inside a parent row (FlexLayout handles orientation via nesting).
@@ -156,7 +162,7 @@ function convertRowOrColumn(node: any): IJsonRowNode {
     const content = node.content || [];
 
     for (const child of content) {
-        const converted = convertNode(child);
+        const converted = convertNode(child, persistence);
         if (converted.type === "tab") {
             // Wrap bare tabs in a tabset
             const tabset: IJsonTabSetNode = {
@@ -181,12 +187,12 @@ function convertRowOrColumn(node: any): IJsonRowNode {
     } as IJsonRowNode;
 }
 
-function convertStack(node: any): IJsonTabSetNode {
+function convertStack(node: any, persistence: LayoutPersistence): IJsonTabSetNode {
     const children: IJsonTabNode[] = [];
     const content = node.content || [];
 
     for (const child of content) {
-        const converted = convertNode(child);
+        const converted = convertNode(child, persistence);
         if (converted.type === "tab") {
             children.push(converted as IJsonTabNode);
         }
@@ -201,14 +207,14 @@ function convertStack(node: any): IJsonTabSetNode {
     if (node.activeItemIndex !== undefined && node.activeItemIndex >= 0 && node.activeItemIndex < children.length) {
         tabset.selected = node.activeItemIndex;
     }
-    if (node.maximized === true) {
+    if (persistence === "workspace" && node.maximized === true) {
         tabset.maximized = true;
     }
 
     return tabset;
 }
 
-function convertComponent(node: any): IJsonTabNode {
+function convertComponent(node: any, persistence: LayoutPersistence): IJsonTabNode {
     const widgetType = node.id?.replace(/-\d+$/, "") || node.id;
     const templateConfig = getComponentTabJson(widgetType);
 
@@ -238,15 +244,25 @@ function convertComponent(node: any): IJsonTabNode {
         tabNode.config = {...(tabNode.config || {}), imageViewWeight: getImageViewWeight()};
     }
 
-    // A tab not shown in its tabset is not mounted, so its widget cannot name it; name it as the widget would.
-    const coordinate = node.widgetSettings?.coordinate;
-    if (widgetType === "spatial-profiler" && typeof coordinate === "string" && coordinate) {
-        tabNode.name = `${coordinate.toUpperCase()} Profile: Cursor`;
+    if (widgetType === "spatial-profiler") {
+        // A tab not shown in its tabset is not mounted, so its widget cannot name it. The layout copy
+        // of a workspace names it as the widget would. A regular layout leaves the tab without a
+        // name until the widget mounts, as in CARTA v6.0.
+        const coordinate = node.widgetSettings?.coordinate;
+        if (persistence !== "workspace") {
+            delete tabNode.name;
+        } else if (typeof coordinate === "string" && coordinate) {
+            tabNode.name = `${coordinate.toUpperCase()} Profile: Cursor`;
+        }
     }
 
-    // Carry over widget settings into config. A catalog plot's type is among them.
+    // Carry over the widget settings into the config. In the layout copy of a workspace, the type of
+    // a catalog plot is in its settings. A regular layout keeps the type beside the settings.
     if (node.widgetSettings) {
         tabNode.config = {...(tabNode.config || {}), widgetSettings: node.widgetSettings};
+    }
+    if (persistence !== "workspace" && node.plotType) {
+        tabNode.config = {...(tabNode.config || {}), plotType: node.plotType};
     }
 
     return tabNode;
@@ -255,27 +271,30 @@ function convertComponent(node: any): IJsonTabNode {
 /**
  * Walks a FlexLayout model JSON and extracts the abstract config for saving.
  * This is the reverse of createFlexLayoutModel().
+ *
+ * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack
+ *                      maximized. A regular layout keeps the type of a catalog plot that its tab has.
  */
-export function extractAbstractConfig(modelJson: IJsonModel): {type: string; content: any[]} {
-    return extractNode(modelJson.layout);
+export function extractAbstractConfig(modelJson: IJsonModel, persistence: LayoutPersistence = "regular"): {type: string; content: any[]} {
+    return extractNode(modelJson.layout, persistence);
 }
 
-function extractNode(node: any): any {
+function extractNode(node: any, persistence: LayoutPersistence): any {
     if (!node) {
         return null;
     }
 
     if (node.type === "row") {
-        return extractRowNode(node);
+        return extractRowNode(node, persistence);
     } else if (node.type === "tabset") {
-        return extractTabSetNode(node);
+        return extractTabSetNode(node, persistence);
     } else if (node.type === "tab") {
-        return extractTabNode(node);
+        return extractTabNode(node, persistence);
     }
     return null;
 }
 
-function extractRowNode(node: any): any {
+function extractRowNode(node: any, persistence: LayoutPersistence): any {
     const children = node.children || [];
     const result: any = {
         // always save as "row" in the abstract format and let convertNode handle the "row"/"column" conversion
@@ -288,7 +307,7 @@ function extractRowNode(node: any): any {
     }
 
     for (const child of children) {
-        const extracted = extractNode(child);
+        const extracted = extractNode(child, persistence);
         if (extracted) {
             // Propagate weight as width
             if (child.weight && child.weight !== 100) {
@@ -301,7 +320,7 @@ function extractRowNode(node: any): any {
     return result;
 }
 
-function extractTabSetNode(node: any): any {
+function extractTabSetNode(node: any, persistence: LayoutPersistence): any {
     const children = node.children || [];
     const result: any = {
         type: "stack",
@@ -315,12 +334,12 @@ function extractTabSetNode(node: any): any {
     if (node.selected !== undefined && node.selected > 0) {
         result.activeItemIndex = node.selected;
     }
-    if (node.maximized === true) {
+    if (persistence === "workspace" && node.maximized === true) {
         result.maximized = true;
     }
 
     for (const child of children) {
-        const extracted = extractTabNode(child);
+        const extracted = extractTabNode(child, persistence);
         if (extracted) {
             result.content.push(extracted);
         }
@@ -329,7 +348,7 @@ function extractTabSetNode(node: any): any {
     return result;
 }
 
-function extractTabNode(node: any): any {
+function extractTabNode(node: any, persistence: LayoutPersistence): any {
     if (!node || node.type !== "tab") {
         return null;
     }
@@ -351,6 +370,10 @@ function extractTabNode(node: any): any {
     // Extract widget settings from config
     if (node.config?.widgetSettings) {
         result.widgetSettings = node.config.widgetSettings;
+    }
+
+    if (persistence !== "workspace" && node.config?.plotType) {
+        result.plotType = node.config.plotType;
     }
 
     return result;

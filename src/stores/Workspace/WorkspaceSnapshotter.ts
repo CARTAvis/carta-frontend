@@ -719,11 +719,13 @@ export class WorkspaceSnapshotter {
      * Stage 5: the arrangement the session is showing.
      *
      * A workspace carries its own copy, so that reopening it brings back the widgets showing its
-     * images and catalogs without depending on a separately saved layout. The layout names no
-     * catalog: which catalog a table or plot widget shows is kept in `catalogWidgets` instead.
+     * images and catalogs without depending on a separately saved layout. The copy is written in
+     * the workspace form. So it also keeps the own ID of each widget and the settings that only a
+     * workspace needs. The layout names no catalog: which catalog a table or plot widget shows is
+     * kept in `catalogWidgets` instead.
      */
     private captureLayout(): void {
-        const layout = this.appStore.layoutStore.currentLayoutConfig();
+        const layout = this.appStore.layoutStore.currentLayoutConfig("workspace");
         // Leave out the viewer of a PV preview, floating or docked. The PV generator widget saves the
         // preview and where a floating viewer is, and a restore makes the preview again. A viewer in
         // the layout would open again as a second, empty viewer. A docked viewer is saved with an ID

@@ -2,6 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {autorun, runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogType, CatalogUpdateMode, DragMode, ImageType, PreferenceKeys, WorkspaceItemKind} from "enums";
+import {V6_WIDGET_SETTINGS} from "models/Layout/V6Layout.fixture";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, PreferenceStore, WidgetsStore, WorkspaceIdRegistry} from "stores";
 import {type ProcessedColumnData} from "utilities";
@@ -375,15 +376,17 @@ describe("Catalog plot workspace binding", () => {
         expect(saved("catalog-plot-0")).toMatchObject({type: "catalog-plot", catalogId: 2, xColumnName: "RA", yColumnName: "DEC"});
     });
 
-    test("keeps a plot's identity in its layout settings, and nothing that names its catalog", () => {
+    test("keeps a plot's identity in the layout copy of a workspace, and nothing that names its catalog", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
         const widgetId = widgetsStore.addCatalogPlotWidget(scatterProps, "catalog-plot-0") as string;
         catalogStore.widgetBindings.register("catalog-plot-component-0", 5, widgetId);
 
-        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId);
+        const layoutSettings = widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId, "workspace");
 
         expect(layoutSettings).toEqual({widgetId: "catalog-plot-0", ...widgetsStore.catalogPlotWidgets.get(widgetId)!.toLayoutSettings()});
+        // A regular layout keeps no settings for a catalog plot, as in CARTA v6.0.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", widgetId)).toBeUndefined();
         expect(layoutSettings).not.toHaveProperty("catalogId");
         expect(layoutSettings).not.toHaveProperty("xColumnName");
     });
@@ -411,7 +414,12 @@ describe("Catalog plot workspace binding", () => {
         showCatalog(5);
         WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 2);
 
-        widgetsStore.initWidgets([{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-3"}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.D2Scatter}}], []);
+        const border = {xMin: 1, xMax: 2, yMin: 3, yMax: 4};
+        widgetsStore.initWidgets(
+            [{id: "catalog-plot", plotType: CatalogPlotType.D2Scatter, props: {id: "catalog-plot-3"}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.D2Scatter, dragMode: DragMode.Zoom, scatterBorder: border}}],
+            [],
+            "workspace"
+        );
         const issues = catalogStore.widgetBindings.restore({"plot-a": {type: "catalog-plot", catalogId: 2, xColumnName: "RA", yColumnName: "DEC"}}, [{id: 2, source: {type: "file", filename: "sources.vot"}}], new Map([[2, 5]]));
 
         expect(issues).toEqual([]);
@@ -421,6 +429,33 @@ describe("Catalog plot workspace binding", () => {
         expect(catalogStore.widgetBindings.shownPlotOf("plot-b")).toBeUndefined();
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-3")?.xColumnName).toBe("RA");
         expect(saved("plot-a")?.catalogId).toBe(2);
+        // The drag mode and borders that the layout copy kept are still there after the plot is pointed at its catalog.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-3", "workspace")).toEqual(expect.objectContaining({widgetId: "plot-a", dragMode: DragMode.Zoom, scatterBorder: border}));
+    });
+
+    test("keeps the drag mode and borders that the layout copy of a workspace kept for a plot, after the plot moves onto the catalog it was saved against", () => {
+        showCatalog(5);
+        catalogStore.catalogImageIds.set(6, 7);
+        catalogStore.catalogProfileStores.set(6, CreateEmptyProfileStore());
+        WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 6, 2);
+        const border = {xMin: 1, xMax: 2, yMin: 3, yMax: 4};
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-3"}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.D2Scatter, dragMode: DragMode.Zoom, scatterBorder: border}}], [], "workspace");
+        expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-3").catalogFileId).toBe(5);
+
+        const issues = catalogStore.widgetBindings.restore({"plot-a": {type: "catalog-plot", catalogId: 2, xColumnName: "RA", yColumnName: "DEC"}}, [{id: 2, source: {type: "file", filename: "sources.vot"}}], new Map([[2, 6]]));
+
+        expect(issues).toEqual([]);
+        expect(catalogStore.widgetBindings.displayedForWidget("catalog-plot-3").catalogFileId).toBe(6);
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-3", "workspace")).toEqual(expect.objectContaining({widgetId: "plot-a", dragMode: DragMode.Zoom, scatterBorder: border}));
+    });
+
+    test("keeps the drag mode and borders of a plot that shows no catalog in the layout copy of a workspace", () => {
+        const border = {xMin: 0, xMax: 1};
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-3"}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.Histogram, dragMode: false, histogramBorder: border}}], [], "workspace");
+
+        // No catalog is open, so the workspace keeps no catalog widget record for the plot.
+        expect(saved("plot-a")).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-3", "workspace")).toEqual({widgetId: "plot-a", plotType: CatalogPlotType.Histogram, dragMode: false, scatterBorder: undefined, histogramBorder: border});
     });
 
     test("moves a plot onto its catalog, discarding the plot that catalog already held", () => {
@@ -666,6 +701,81 @@ describe("Catalog table widget selection", () => {
 
         const widgetIds = Array.from(widgetsStore.catalogWidgets.values()).map(widgetStore => widgetStore.widgetId);
         expect(new Set(widgetIds).size).toBe(widgetIds.length);
+    });
+});
+
+describe("Catalog overlay widget in a layout", () => {
+    const catalogStore = CatalogStore.Instance;
+    const widgetsStore = WidgetsStore.Instance;
+    const v6Settings = V6_WIDGET_SETTINGS["catalog-overlay"];
+
+    beforeEach(() => {
+        jest.restoreAllMocks();
+        catalogStore.catalogProfileStores.clear();
+        catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
+        catalogStore.catalogDisplayStores.clear();
+        Array.from(widgetsStore.catalogWidgets.keys()).forEach(componentId => widgetsStore.deleteCatalogWidget(componentId));
+    });
+
+    test("saves in a regular layout the catalog it shows, how its sources are drawn and where the table is split, as CARTA v6.0 saved them", () => {
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
+        displayStore.applyLayoutStyle(v6Settings);
+        const widgetStore = widgetsStore.getCatalogWidgetStore("catalog-overlay-0", 1);
+        widgetStore.setTableSeparatorPosition(v6Settings.tableSeparatorPosition);
+        catalogStore.widgetBindings.initTable("catalog-overlay-0", 1);
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0")).toEqual(v6Settings);
+        // The layout copy of a workspace names no catalog, and keeps how it is drawn with the catalog.
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0", "workspace")).toEqual({
+            widgetId: "catalog-overlay-0",
+            tableSeparatorPosition: v6Settings.tableSeparatorPosition,
+            headerTableColumnWidths: [150, 75, 65, 100, 230],
+            settingsTabId: widgetStore.settingsTabFor(1)
+        });
+    });
+
+    test("applies a regular layout by writing only how the sources are drawn to the display store of the saved catalog", () => {
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
+        displayStore.setxAxis("RA");
+
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {...v6Settings, widgetId: "table-a", headerTableColumnWidths: [1, 2, 3, 4, 5]}, "catalog-overlay-0");
+
+        expect(displayStore.toLayoutStyle()).toEqual({catalogColor: "#ff00ff", highlightColor: "#00ff00", catalogSize: 20, catalogShape: 2, thickness: 3});
+        expect(displayStore.xAxis).toBe("RA");
+        const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0")!;
+        expect(widgetStore.tableSeparatorPosition).toBe("40%");
+        // What only the layout copy of a workspace keeps is not applied.
+        expect(widgetStore.widgetId).toBe("catalog-overlay-0");
+        expect(widgetStore.headerTableColumnWidths).toEqual([150, 75, 65, 100, 230]);
+    });
+
+    test("keeps how the sources are drawn for the catalog that opens with the saved file ID, as CARTA v6.0 did", () => {
+        (widgetsStore as any).addWidgetByType("catalog-overlay", v6Settings, "catalog-overlay-0");
+
+        expect(catalogStore.getCatalogDisplayStore(1)?.toLayoutStyle()).toEqual({catalogColor: "#ff00ff", highlightColor: "#00ff00", catalogSize: 20, catalogShape: 2, thickness: 3});
+        expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+    });
+
+    test("applies nothing when a regular layout names no catalog, as CARTA v6.0 did", () => {
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {tableSeparatorPosition: "40%"}, "catalog-overlay-0");
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")!.tableSeparatorPosition).not.toBe("40%");
+        expect(catalogStore.catalogDisplayStores.size).toBe(0);
+    });
+
+    test("ignores how the sources are drawn in the layout copy of a workspace, which restores each catalog's display itself", () => {
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
+        const style = displayStore.toLayoutStyle();
+
+        (widgetsStore as any).addWidgetByType("catalog-overlay", {...v6Settings, widgetId: "table-a", headerTableColumnWidths: [1, 2, 3, 4, 5]}, "catalog-overlay-0", "workspace");
+
+        expect(displayStore.toLayoutStyle()).toEqual(style);
+        const widgetStore = widgetsStore.catalogWidgets.get("catalog-overlay-0")!;
+        expect(widgetStore.widgetId).toBe("table-a");
+        expect(widgetStore.headerTableColumnWidths).toEqual([1, 2, 3, 4, 5]);
     });
 });
 

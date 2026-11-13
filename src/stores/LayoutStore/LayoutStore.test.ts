@@ -15,7 +15,8 @@ const MOCK_APP_STORE = {
 
 jest.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE},
-    AlertStore: {Instance: MOCK_APP_STORE.alertStore}
+    AlertStore: {Instance: MOCK_APP_STORE.alertStore},
+    CatalogStore: {Instance: {widgetBindings: {layoutSettingsFor: () => undefined}}}
 }));
 jest.mock("components/Shared", () => ({AppToaster: {show: jest.fn()}, SuccessToast: jest.fn()}));
 jest.mock("services", () => ({ApiService: {Instance: {}}}));
@@ -24,6 +25,7 @@ import {Model} from "flexlayout-react";
 import {runInAction} from "mobx";
 
 import {LayoutConfig, PresetLayout} from "models";
+import {V6_LAYOUT} from "models/Layout/V6Layout.fixture";
 import {findDeep} from "utilities";
 
 import {LayoutStore} from "./LayoutStore";
@@ -66,6 +68,45 @@ describe("LayoutStore layout configs", () => {
         expect(layoutStore.applyLayout(PresetLayout.CUBEVIEW)).toBe(true);
 
         expect(layoutStore.currentLayoutName).toBe(PresetLayout.CUBEVIEW);
+    });
+
+    test("applies a preset, a saved layout and a dynamic layout as regular layouts, which leave the image view grid alone", () => {
+        // A dynamic layout and the layout of the preferences are applied by name, as a preset is.
+        layoutStore.applyLayout(PresetLayout.CUBEVIEW);
+        layoutStore.applyLayoutConfig(V6_LAYOUT, "v6");
+
+        expect(MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls.map(call => call[2])).toEqual(["regular", "regular"]);
+    });
+
+    test("applies a layout saved by CARTA v6.0 with the settings it saved", () => {
+        expect(layoutStore.applyLayoutConfig(V6_LAYOUT, "v6")).toBe(true);
+
+        const [dockedConfigs, floatingConfigs] = MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls[0];
+        const histogram = dockedConfigs.find((config: any) => config.id === "histogram");
+        expect(histogram.widgetSettings).toEqual(findDeep(V6_LAYOUT.docked, (item: any) => item.id === "histogram")[0].widgetSettings);
+        expect(dockedConfigs.find((config: any) => config.id === "catalog-plot").plotType).toBe("Histogram");
+        expect(floatingConfigs).toEqual(V6_LAYOUT.floating);
+    });
+
+    test("applies the layout copy of a workspace in the workspace form, keeping a maximized stack and a PV preview tab", () => {
+        const layout = {
+            layoutVersion: 2,
+            docked: {
+                type: "row",
+                content: [
+                    {type: "stack", content: [{type: "component", id: "image-view"}]},
+                    {type: "stack", maximized: true, content: [{type: "component", id: "pv-preview"}]}
+                ]
+            },
+            floating: []
+        };
+
+        expect(layoutStore.applyLayoutConfig(layout, "", "workspace")).toBe(true);
+
+        expect(MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls[0][2]).toBe("workspace");
+        expect(findDeep(layoutStore.currentLayoutConfig("workspace")?.docked, (item: any) => item.maximized === true)).toHaveLength(1);
+        // A regular layout of the same arrangement keeps no maximized stack.
+        expect(findDeep(layoutStore.currentLayoutConfig()?.docked, (item: any) => item.maximized === true)).toHaveLength(0);
     });
 
     test("leaves the current layout in place when the config is not a valid layout", () => {

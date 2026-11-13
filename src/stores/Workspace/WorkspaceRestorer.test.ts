@@ -263,7 +263,7 @@ function createSession() {
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
-            applyLayoutConfig: jest.fn((_layout?: unknown) => {
+            applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string) => {
                 calls.push("applyLayout");
                 return true;
             })
@@ -1253,7 +1253,8 @@ describe("WorkspaceRestorer", () => {
         const problems = await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
 
         expect(problems).toEqual([]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT);
+        // The layout copy of a workspace is applied in the workspace form, and validated by the workspace schema.
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT, "", "workspace");
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
@@ -1391,7 +1392,7 @@ describe("WorkspaceRestorer", () => {
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
         expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout);
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace");
     });
 
     test("points the catalog widgets at the catalogs just loaded", async () => {

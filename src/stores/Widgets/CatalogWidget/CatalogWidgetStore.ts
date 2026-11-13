@@ -1,10 +1,19 @@
 import {action, makeObservable, observable} from "mobx";
 
 import {CatalogSettingsTabs, WorkspaceItemKind} from "enums";
-import {PreferenceStore} from "stores";
+import {type CatalogDisplayStore, type CatalogLayoutStyle, PreferenceStore} from "stores";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 
-/** State owned by one catalog widget rather than by the catalog it displays. */
+/**
+ * What a regular layout keeps for a catalog widget, as CARTA v6.0 kept it: the session file ID of
+ * the catalog that the widget shows, how its sources are drawn, and where the table is split.
+ */
+export interface CatalogWidgetRegularLayoutSettings extends Partial<CatalogLayoutStyle> {
+    catalogFileId?: number;
+    tableSeparatorPosition?: string;
+}
+
+/** State owned by one catalog widget rather than by the catalog it displays. The layout copy of a workspace keeps it. */
 export interface CatalogWidgetLayoutSettings {
     /** The widget's own identity, stable across the sessions a workspace spans. */
     widgetId?: string;
@@ -83,6 +92,17 @@ export class CatalogWidgetStore {
     @action forgetCatalog = (catalogFileId: number) => {
         this.settingsTabIdByCatalog.delete(catalogFileId);
     };
+
+    /**
+     * Returns what a regular layout keeps for this widget.
+     *
+     * @param shownCatalogFileId - the catalog the widget shows.
+     * @param displayStore - the display store of that catalog. Without it, the layout keeps only where the table is split.
+     */
+    public toRegularLayoutSettings = (shownCatalogFileId: number | undefined, displayStore: CatalogDisplayStore | undefined): CatalogWidgetRegularLayoutSettings => ({
+        ...(shownCatalogFileId !== undefined && displayStore ? {catalogFileId: shownCatalogFileId, ...displayStore.toLayoutStyle()} : {}),
+        tableSeparatorPosition: this.tableSeparatorPosition
+    });
 
     /** @param shownCatalogFileId - the catalog the widget shows, whose section the layout keeps. */
     public toLayoutSettings = (shownCatalogFileId?: number): CatalogWidgetLayoutSettings => ({
