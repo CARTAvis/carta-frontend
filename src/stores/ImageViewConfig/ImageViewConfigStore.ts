@@ -6,7 +6,7 @@ import {type ConfigurableStore, type ImageViewItem, type Persisted} from "models
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 
-/** The multi-panel grid of the image view. A layout saves the grid, because the grid works with any images. */
+/** The multi-panel grid of the image view. The layout copy of a workspace saves it. A saved layout does not. */
 export interface ImageViewGridConfig {
     multiPanelEnabled: boolean;
     /** How the grid is sized when multi-panel is enabled. */
@@ -92,9 +92,10 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     });
 
     /**
-     * Applies the grid that a layout saved, to this session only. A restore is not a user action,
-     * so the user's defaults do not change. When the layout leaves out a setting, or saves a value
-     * that the controls do not accept, that setting follows the user's preference.
+     * Applies the grid that the layout copy of a workspace saved, to this session only. A restore is
+     * not a user action, so the user's defaults do not change. When the layout copy leaves out a
+     * setting, or saves a value that the controls do not accept, that setting follows the user's
+     * preference.
      */
     @action applyConfig = (config: Persisted<ImageViewGridConfig> | null | undefined) => {
         const panelMode = config?.panelMode;
