@@ -155,9 +155,7 @@ describe("widget config in the workspace schema", () => {
     const validateWidget = new Ajv({strictTypes: false}).compile({$ref: "#/definitions/layout-carta-widget", definitions: WORKSPACE_SCHEMA.definitions});
 
     test.each(WORKSPACE_EXTRAS)("a %s widget writes only fields the layout definition of the workspace schema declares", (type, createStore) => {
-        const declared = WORKSPACE_SCHEMA.definitions[`layout-${type}`]?.properties.widgetSettings?.properties;
-
-        expect(undeclaredFields(`workspace/layout-${type}`, declared, createStore().toWorkspaceLayoutConfig())).toEqual([]);
+        expect(undeclaredFieldsDeep(WORKSPACE_SCHEMA.definitions[`layout-${type}`].properties.widgetSettings, createStore().toWorkspaceLayoutConfig())).toEqual([]);
     });
 
     test.each(WORKSPACE_EXTRAS)("a %s widget writes settings the workspace schema accepts", (type, createStore) => {
