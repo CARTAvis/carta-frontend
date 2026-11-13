@@ -788,6 +788,49 @@ describe("Catalog overlay widget in a layout", () => {
         expect(Array.from(catalogStore.catalogDisplayStores.keys())).toEqual([2]);
     });
 
+    test("removes the display store that a regular layout made for a catalog that did not open, also while another catalog is opening", () => {
+        widgetsStore.initWidgets([{id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {...v6Settings, catalogFileId: 2}}], [], "regular");
+        (catalogStore as any).pendingFileIds.add(1);
+
+        widgetsStore.initWidgets([], [], "regular");
+
+        (catalogStore as any).pendingFileIds.delete(1);
+        expect(catalogStore.getCatalogDisplayStore(2)).toBeUndefined();
+    });
+
+    test("removes the display store that a regular layout made for a catalog that did not open, before a workspace is restored", () => {
+        widgetsStore.initWidgets([{id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: v6Settings}], [], "regular");
+
+        widgetsStore.removeUnopenedLayoutDisplayStores();
+
+        expect(catalogStore.getCatalogDisplayStore(1)).toBeUndefined();
+    });
+
+    test("gives a widget whose regular layout names no catalog the table split of the widget that names catalog 1, as CARTA v6.0 did", () => {
+        widgetsStore.initWidgets(
+            [
+                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: {tableSeparatorPosition: "10%"}},
+                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: v6Settings}
+            ],
+            [],
+            "regular"
+        );
+
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-0")!.tableSeparatorPosition).toBe("40%");
+    });
+
+    test("sets the size of the sources as they are drawn, and leaves the size that the settings show, as CARTA v6.0 did", () => {
+        catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
+        const displayStore = catalogStore.getOrCreateCatalogDisplayStore(1);
+        const showedSize = displayStore.showedCatalogSize;
+
+        displayStore.applyLayoutStyle({catalogSize: 20});
+
+        expect(displayStore.catalogSize).toBe(20);
+        expect(displayStore.showedCatalogSize).toBe(showedSize);
+        expect(displayStore.toLayoutStyle().catalogSize).toBe(20);
+    });
+
     test("does not show a catalog that is not open for the layout copy of a workspace", () => {
         (widgetsStore as any).addWidgetByType("catalog-overlay", {catalogFileId: 1}, "catalog-overlay-0", "workspace");
 

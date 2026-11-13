@@ -257,6 +257,7 @@ function createSession() {
             catalogPlotWidgets: new Map(),
             pvGeneratorWidgets: new Map<string, unknown>(),
             floatingWidgets: [] as unknown[],
+            removeUnopenedLayoutDisplayStores: jest.fn(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
@@ -339,6 +340,8 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+        // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
+        expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
     });
 
     test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {

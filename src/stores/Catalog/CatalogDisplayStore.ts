@@ -120,7 +120,7 @@ function optionalFiniteNumber(value: unknown): number | undefined {
 export interface CatalogLayoutStyle {
     catalogColor: string;
     highlightColor: string;
-    /** The size of the sources, in screen pixels when the size is not angular. */
+    /** The size of the sources as they are drawn, in pixels. It is the size that the settings show, multiplied by the pixel size factor. */
     catalogSize: number;
     catalogShape: CatalogOverlayShape;
     thickness: number;
@@ -1971,8 +1971,9 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
         if (typeof style.highlightColor === "string") {
             this.setHighlightColor(style.highlightColor);
         }
+        // As CARTA v6.0 did, the size as it is drawn is set. The size that the settings show stays as it is.
         if (typeof style.catalogSize === "number" && style.catalogSize >= CatalogDisplayStore.MIN_OVERLAY_SIZE && style.catalogSize <= CatalogDisplayStore.MAX_OVERLAY_SIZE) {
-            this.setCatalogSize(style.catalogSize);
+            this.catalogSize = style.catalogSize;
         }
         if (CATALOG_OVERLAY_SHAPE_VALUES.includes(style.catalogShape as CatalogOverlayShape)) {
             this.setCatalogShape(style.catalogShape as CatalogOverlayShape);

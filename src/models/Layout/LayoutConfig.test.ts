@@ -160,9 +160,11 @@ describe("LayoutConfig.prepareLayout", () => {
     });
 
     test("applies a regular layout without validating it, as CARTA v6.0 did", () => {
-        const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "pv-generator"}]}, floating: [{type: "component", id: "log", defaultX: "", defaultY: ""}]};
+        const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "pv-generator"}]}, floating: [{type: "log", defaultX: "", defaultY: ""}]};
 
         expect(LayoutConfig.prepareLayout(layout, "regular")).toBe(layout);
+        // Nor upgraded: a layout is upgraded when it is loaded.
+        expect(layout.floating[0]).toEqual({type: "log", defaultX: "", defaultY: ""});
         expect(LayoutConfig.layoutValidator(JSON.parse(JSON.stringify(layout)))).toBe(false);
     });
 
