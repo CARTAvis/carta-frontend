@@ -2043,6 +2043,27 @@ describe("WorkspaceRestorer", () => {
             expect(systems).toEqual([SystemType.Image]);
         });
 
+        test.each([
+            ["saved world coordinates", {wcsOverlay: {global: {system: SystemType.Galactic}}}, SystemType.Galactic],
+            ["saved no overlay, as a workspace of CARTA 6", undefined, SystemType.Auto]
+        ])("leaves image coordinates before the images open, when the session shows them and the workspace %s", async (_, widgetSettings, expected) => {
+            const {appStore} = createSession();
+            appStore.overlaySettings.global.system = SystemType.Image;
+            const systems: string[] = [];
+            const open = appStore.appendFile;
+            appStore.appendFile = jest.fn((...args: unknown[]) => {
+                systems.push(appStore.overlaySettings.global.system);
+                return (open as (...args: unknown[]) => Promise<unknown>)(...args);
+            }) as never;
+            const imageView = {type: "component", id: "image-view", ...(widgetSettings ? {widgetSettings} : {})};
+            const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "stack", content: [imageView]}]}, floating: []};
+
+            await restored(createWorkspace(widgetSettings ? {layout: layout as never} : {}));
+
+            // The images are matched by sky position, as they were matched when the workspace was saved.
+            expect(systems).toEqual([expected]);
+        });
+
         test("skips the images and catalogs that the user chose to open the workspace without, and does not ask about them", async () => {
             const {appStore} = createSession();
             const appendFile = failToOpen(appStore, 0);

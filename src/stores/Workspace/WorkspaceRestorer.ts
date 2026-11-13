@@ -428,10 +428,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Shows the images in image coordinates before they open, when the layout saved image
-     * coordinates. Images are matched in the coordinates that the session shows: image coordinates
-     * match pixel to pixel, and world coordinates match by sky position. So the images are matched as
-     * they were saved. The layout applies the other settings of the WCS overlay later.
+     * Shows the images in the coordinate system that the layout copy saved, before they open. Images
+     * are matched in the coordinates that the session shows: image coordinates match pixel to pixel,
+     * and world coordinates match by sky position. So the images are matched as they were saved. When
+     * the workspace saved no valid system, as a workspace of CARTA 6, the session leaves image
+     * coordinates for automatic coordinates, so that the images are matched by sky position. The
+     * layout copy applies the other settings of the WCS overlay later.
      */
     private restoreImageCoordinates(): void {
         const findImageViewSettings = (item: any): any => {
@@ -451,8 +453,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         };
         const layout = this.workspace.layout as {docked?: unknown; floating?: unknown[]} | undefined;
         const settings = findImageViewSettings(layout?.docked) ?? (Array.isArray(layout?.floating) ? layout.floating.map(findImageViewSettings).find(Boolean) : undefined);
-        if (settings?.wcsOverlay?.global?.system === SystemType.Image) {
-            runInAction(() => (this.appStore.overlaySettings.global.system = SystemType.Image));
+        const savedSystem = settings?.wcsOverlay?.global?.system;
+        const global = this.appStore.overlaySettings.global;
+        const system = Object.values(SystemType).includes(savedSystem) ? (savedSystem as SystemType) : global.system === SystemType.Image ? SystemType.Auto : undefined;
+        if (system !== undefined) {
+            runInAction(() => (global.system = system));
         }
     }
 
