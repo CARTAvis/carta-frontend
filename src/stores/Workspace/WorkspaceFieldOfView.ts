@@ -39,9 +39,16 @@ export function formatSize(size: ImageViewSize): string {
     return `${Math.round(size.width)}×${Math.round(size.height)}`;
 }
 
-/** Returns whether two sizes are the same in whole pixels. */
+/**
+ * The largest difference in pixels, in the width or the height, that still counts as the same size.
+ * A browser can open a window 1 pixel smaller or larger than asked, for example 795×592 for 795×593.
+ * It rounds the size to whole device pixels.
+ */
+const SAME_SIZE_TOLERANCE = 2;
+
+/** Returns whether two sizes differ by at most `SAME_SIZE_TOLERANCE` pixels in the width and the height. */
 export function isSameSize(a: ImageViewSize, b: ImageViewSize): boolean {
-    return Math.round(a.width) === Math.round(b.width) && Math.round(a.height) === Math.round(b.height);
+    return Math.abs(a.width - b.width) <= SAME_SIZE_TOLERANCE && Math.abs(a.height - b.height) <= SAME_SIZE_TOLERANCE;
 }
 
 /**
