@@ -334,6 +334,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        // The custom texts of the overlay describe the images of the workspace, so they come from the
+        // workspace only. A workspace that saved none, such as one of CARTA 6, sets them back to the
+        // defaults.
         this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         // The backend registers the regions while the images are configured. Moment and PV images
         // wait for the regions. The cube histograms are computed while the catalogs open. The

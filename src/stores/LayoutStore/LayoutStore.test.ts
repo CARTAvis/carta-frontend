@@ -158,6 +158,16 @@ describe("LayoutStore layout configs", () => {
         expect(floatingConfigs).toEqual(saved?.floating);
     });
 
+    test("passes on what the WCS overlay of the layout copy of a workspace could not apply", () => {
+        MOCK_APP_STORE.widgetsStore.initWidgets.mockReturnValueOnce(["The overlay problem"]);
+        const problems: string[] = [];
+
+        expect(layoutStore.applyLayoutConfig(defaultConfig(), "", "workspace", problems)).toBe(true);
+
+        expect(problems).toEqual(["The overlay problem"]);
+        expect(MOCK_APP_STORE.alertStore.showAlert).not.toHaveBeenCalled();
+    });
+
     test("reports no layout config before a layout is shown", () => {
         expect(layoutStore.currentLayoutConfig()).toBeUndefined();
     });

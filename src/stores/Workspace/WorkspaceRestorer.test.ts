@@ -254,8 +254,11 @@ function createSession() {
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => [])
         },
         layoutStore: {
-            applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string, _problems?: string[]) => {
+            /** What applying the layout copy reports, as the WCS overlay of its image view reports it. */
+            layoutProblems: [] as string[],
+            applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string, problems?: string[]) => {
                 calls.push("applyLayout");
+                problems?.push(...appStore.layoutStore.layoutProblems);
                 return true;
             })
         },
@@ -952,12 +955,9 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace", []);
     });
 
-    test("reports what the layout could not apply as it was saved", async () => {
+    test("reports each problem of the WCS overlay that the layout copy could not apply as a layout issue", async () => {
         const {appStore} = createSession();
-        appStore.layoutStore.applyLayoutConfig.mockImplementation((_layout?: unknown, _layoutName?: string, _persistence?: string, problems?: string[]) => {
-            problems?.push("Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially");
-            return true;
-        });
+        appStore.layoutStore.layoutProblems = ["Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially"];
 
         expect(await restoreIssues(createWorkspace({layout: LAYOUT}))).toEqual([
             {kind: WorkspaceItemKind.Layout, subject: "", message: "Showed the WCS overlay in automatic coordinates instead of image coordinates, because the images are matched spatially", outcome: undefined}
@@ -989,7 +989,7 @@ describe("WorkspaceRestorer", () => {
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 
-    test("applies no layout and no WCS overlay when the workspace saved no layout, as a workspace of CARTA 6 does", async () => {
+    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of CARTA 6", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({files: [IMAGE]}));
