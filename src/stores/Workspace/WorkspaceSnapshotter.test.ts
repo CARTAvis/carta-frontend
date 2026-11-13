@@ -2,8 +2,8 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
-import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
+import {CatalogDatabase, CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
+import {AppStore, MirrorSiteStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -281,6 +281,20 @@ describe("WorkspaceSnapshotter", () => {
         });
         // Only an online catalog is fingerprinted, since it is queried again rather than stored.
         expect(workspace.catalogs?.[0].contentHash).toBeUndefined();
+        // A catalog file is not queried, so no mirror is saved.
+        expect(workspace.catalogMirrors).toBeUndefined();
+    });
+
+    test("saves the mirror that an online catalog was queried from", () => {
+        const {profileStore} = createSession();
+        profileStore.isFileBasedCatalog = false;
+        (profileStore.catalogInfo as {query: unknown}).query = {type: "simbad", center: {x: 1, y: 2}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: "arcmin", maxObjects: 10};
+        const mirror = MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(mirror).toBeDefined();
+        expect(workspace.catalogMirrors).toEqual({[CatalogDatabase.SIMBAD]: mirror});
     });
 
     test("saves the rows selected in a catalog, and whether only they are shown", () => {

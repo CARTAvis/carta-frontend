@@ -1,47 +1,296 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .workspace-info {
     overflow-y: auto;
-    margin-left: 10px;
+    padding: 2px 10px 10px 12px;
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    min-width: 0;
 
-    .workspace-thumbnail {
-        flex: 2;
+    // The preview sits beside the name. A click shows it larger.
+    .summary-header {
         display: flex;
-        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
 
-        img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-    }
+        .workspace-thumbnail {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            width: 240px;
+            height: 135px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background-color: rgba($gray3, 0.15);
+            overflow: hidden;
 
-    .workspace-properties {
-        margin-top: 10px;
-        flex: 1;
+            &:not(.is-empty) {
+                cursor: zoom-in;
+            }
 
-        .info-table {
-            .entry {
-                vertical-align: top;
+            &.is-empty {
+                color: $pt-icon-color;
+            }
 
-                ul {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                }
+            img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
             }
         }
 
-        .entry-title {
-            font-weight: bold;
-            padding-right: 10px;
-            padding-bottom: 5px;
+        .summary-title {
+            min-width: 0;
         }
 
-        .entry-value {
+        .summary-name {
+            font-weight: 600;
             overflow-wrap: anywhere;
-            padding-bottom: 5px;
+        }
+
+        .summary-counts {
+            color: $pt-text-color-muted;
         }
     }
+
+    // The name, the status and the action of each row line up in three columns.
+    .summary-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto 72px;
+        gap: 8px;
+        align-items: center;
+        min-height: 30px;
+        border-bottom: 1px solid rgba($black, 0.1);
+
+        &.is-heading {
+            border-bottom: none;
+            min-height: 26px;
+        }
+
+        &.is-part {
+            padding-left: 16px;
+        }
+
+        .row-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+
+            > span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .row-details {
+            color: $pt-text-color-muted;
+        }
+
+        .status-tag {
+            justify-self: start;
+            border-radius: 4px;
+        }
+
+        .row-action {
+            justify-self: end;
+        }
+
+        .name-with-details {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 3px 0;
+
+            > span {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .row-details {
+                font-size: $pt-font-size-small;
+            }
+        }
+
+        .row-name.is-stacked {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            padding: 4px 0;
+        }
+
+        .mirror-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 100%;
+        }
+
+        .mirror-select {
+            flex: none;
+            min-width: 0;
+        }
+    }
+
+    // Images and catalogs are groups that the user opens. Each row keeps its three columns inside a tree node.
+    .summary-tree {
+        margin-top: 12px;
+
+        .#{$ns}-tree-node-content {
+            height: auto;
+            min-height: 30px;
+        }
+
+        // The groups are told apart by a tinted heading and the space between them, not by lines.
+        .summary-group {
+            margin-bottom: 6px;
+
+            > .#{$ns}-tree-node-content {
+                border-radius: 4px;
+                background-color: rgba($gray3, 0.15);
+            }
+
+            > .#{$ns}-tree-node-content:hover {
+                background-color: rgba($gray3, 0.25);
+            }
+        }
+
+        .#{$ns}-tree-node-label {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-group > .#{$ns}-tree-node-content {
+            font-weight: 600;
+        }
+
+        .summary-row {
+            border-bottom: none;
+            padding-right: 6px;
+
+            &.is-group {
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+        }
+    }
+
+    .level-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: $pt-font-size-small;
+        font-weight: normal;
+
+        &.is-left-out {
+            color: $pt-intent-danger;
+        }
+
+        &.is-attention {
+            color: $pt-intent-warning;
+        }
+
+        &.is-ok {
+            color: $pt-intent-success;
+        }
+    }
+
+    .restored-settings {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px 0;
+
+        .setting-tag {
+            border-radius: 4px;
+        }
+    }
+}
+
+.#{$ns}-dark .workspace-info {
+    .summary-header .summary-counts,
+    .summary-row .row-details {
+        color: $pt-dark-text-color-muted;
+    }
+
+    .summary-row {
+        border-bottom-color: rgba($white, 0.1);
+    }
+}
+
+// This element darkens the screen and holds the preview, so that both fade at the same time. The preview
+// also grows and shrinks the way that a Blueprint dialog does.
+$preview-duration: $pt-transition-duration * 3;
+
+.workspace-preview-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: $pt-z-index-overlay;
+    background-color: rgba($black, 0.7);
+    cursor: zoom-out;
+
+    img {
+        display: block;
+        max-width: 90vw;
+        max-height: 90vh;
+        border-radius: 4px;
+        box-shadow: $pt-elevation-shadow-4;
+    }
+
+    &.#{$ns}-overlay-enter,
+    &.#{$ns}-overlay-appear {
+        opacity: 0;
+
+        img {
+            transform: scale(0.5);
+        }
+    }
+
+    &.#{$ns}-overlay-enter-active,
+    &.#{$ns}-overlay-appear-active {
+        opacity: 1;
+        transition: opacity $preview-duration $pt-transition-ease;
+
+        img {
+            transform: scale(1);
+            transition: transform $preview-duration $pt-transition-ease-bounce;
+        }
+    }
+
+    &.#{$ns}-overlay-exit {
+        opacity: 1;
+
+        img {
+            transform: scale(1);
+        }
+    }
+
+    &.#{$ns}-overlay-exit-active {
+        opacity: 0;
+        transition: opacity $preview-duration $pt-transition-ease;
+
+        img {
+            transform: scale(0.5);
+            transition: transform $preview-duration $pt-transition-ease-bounce;
+        }
+    }
+}
+
+.change-list {
+    font-family: $pt-font-family-monospace;
+    font-size: $pt-font-size-small;
+}
+
+.folder-move {
+    font-family: $pt-font-family-monospace;
+    font-size: $pt-font-size-small;
+    overflow-wrap: anywhere;
 }

@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Displayed statistic names instead of internal IDs in the profile fitting export ([#2983](https://github.com/CARTAvis/carta-frontend/issues/2983)).
 * Disabled moment maps, PV images and previews, and image export for data with nonlinear spectral axes such as WAVE-LOG. These features will be re-enabled when nonlinear spectral axes are supported ([#2890](https://github.com/CARTAvis/carta-frontend/issues/2890)).
 * Changed the naming of the Stokes Analysis TSV exports ([#2986](https://github.com/CARTAvis/carta-frontend/issues/2986)).
+* Changed the Workspace dialog to show what a workspace holds and to check its files and catalog mirrors before it opens, so that missing files can be located, moved together and saved to the workspace, and the workspace can open without what is still missing. A workspace can now also be saved while images are matched spatially in image coordinates ([#3069](https://github.com/CARTAvis/carta-frontend/issues/3069)).
 
 ## [6.0.0]
 

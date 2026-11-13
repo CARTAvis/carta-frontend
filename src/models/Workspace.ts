@@ -463,6 +463,116 @@ export interface WorkspaceFilePath {
     hdu?: string;
 }
 
+/** An image that an image arithmetic (LEL) expression reads. */
+export interface LelFileName {
+    /** The file name, relative to the folder of the expression. */
+    name: string;
+    /**
+     * Whether the name may be the name of a region instead. casacore reads a single name inside
+     * brackets, as in `cube.fits[centre]`, as an image when the file exists, and otherwise as a
+     * region that the image keeps.
+     */
+    canBeRegion: boolean;
+}
+
+/** Splits a lattice name at the colons that are not escaped, and removes the backslash escapes, as casacore does. */
+function splitLatticeName(text: string): string[] {
+    const parts = [""];
+    for (let i = 0; i < text.length; i++) {
+        if (text[i] === ":") {
+            parts.push("");
+            continue;
+        }
+        if (text[i] === "\\") {
+            i++;
+        }
+        if (i < text.length) {
+            parts[parts.length - 1] += text[i];
+        }
+    }
+    return parts;
+}
+
+const LEL_NUMBER = /^(\d+\.?\d*|\.\d+)([EeDd][+-]?\d+)?i?/;
+const LEL_TEMPORARY = /^\$[rR]?\d+/;
+// A name: letters, digits and ._~$, with characters escaped by a backslash. A colon part names a mask or a region.
+const LEL_NAME = /^(?:(?:[A-Za-z_~$]|\\.)(?:[A-Za-z0-9._~$]|\\.)*)?(?:::?(?:[A-Za-z_~$]|\\.)(?:[A-Za-z0-9._~$]|\\.)*)?/;
+const LEL_KEYWORD = /^(T|F|[Ii][Nn]|[Nn][Oo][Tt]|[Ii][Nn][Dd][Ee][Xx](\d+|[Ii][Nn]|[Nn][Oo][Tt][Ii][Nn]))$/;
+
+/**
+ * Returns the images that an image arithmetic (LEL) expression reads, by the rules of the casacore
+ * lexer (ImageExprGram.ll). For example, `cube_image - "cont 1.fits":mask0` reads `cube_image` and
+ * `cont 1.fits`.
+ *
+ * A name is an image unless it is a number, a keyword such as `T` or `IN`, a temporary image such as
+ * `$1`, or a function, which is followed by `(`. A quoted name or a name with a backslash escape is
+ * always an image. An unquoted `/` divides two images. A mask after one colon, and a region after two
+ * colons, are not part of the file name.
+ *
+ * @returns the images in the order of the expression, and whether the whole expression could be read.
+ * An expression with a quote that is not closed cannot be read to its end.
+ */
+export function getLelFileNames(expression: string): {names: LelFileName[]; isComplete: boolean} {
+    const names: LelFileName[] = [];
+    const add = (latticeName: string, isInBrackets: boolean) => {
+        const parts = splitLatticeName(latticeName);
+        const name = parts[0];
+        if (!name) {
+            // `::region` names a region of the last image, not a file.
+            return;
+        }
+        const canBeRegion = isInBrackets && parts.length === 1;
+        const existing = names.find(entry => entry.name === name);
+        if (existing) {
+            existing.canBeRegion = existing.canBeRegion && canBeRegion;
+        } else {
+            names.push({name, canBeRegion});
+        }
+    };
+    let bracketDepth = 0;
+    let i = 0;
+    while (i < expression.length) {
+        const rest = expression.slice(i);
+        const char = expression[i];
+        if (/\s/.test(char)) {
+            i++;
+        } else if (char === '"' || char === "'") {
+            // Quoted strings next to each other make one name, as "a'b"'c"d' makes a'bc"d.
+            let name = "";
+            while (expression[i] === '"' || expression[i] === "'") {
+                const end = expression.indexOf(expression[i], i + 1);
+                if (end < 0) {
+                    return {names, isComplete: false};
+                }
+                name += expression.slice(i + 1, end);
+                i = end + 1;
+            }
+            add(name, bracketDepth > 0);
+        } else if (LEL_NUMBER.test(rest)) {
+            i += rest.match(LEL_NUMBER)![0].length;
+        } else if (LEL_TEMPORARY.test(rest)) {
+            i += rest.match(LEL_TEMPORARY)![0].length;
+        } else {
+            const token = rest.match(LEL_NAME)?.[0] ?? "";
+            if (!token) {
+                if (char === "[") {
+                    bracketDepth++;
+                } else if (char === "]") {
+                    bracketDepth = Math.max(0, bracketDepth - 1);
+                }
+                i++;
+                continue;
+            }
+            i += token.length;
+            const isFunction = /^[A-Za-z_][A-Za-z_0-9]*$/.test(token) && /^\s*\(/.test(expression.slice(i));
+            if (!isFunction && !LEL_KEYWORD.test(token)) {
+                add(token, bracketDepth > 0);
+            }
+        }
+    }
+    return {names, isComplete: true};
+}
+
 /** The files an image source names, which a hypercube has more than one of and an expression none of. */
 export function getWorkspaceFilePaths(source: WorkspaceImageSource | undefined): WorkspaceFilePath[] {
     switch (source?.type) {
@@ -881,6 +991,11 @@ export interface Workspace {
     cursor?: {frozen: boolean; position?: Point2D};
     /** The fields of the online catalog query dialog. */
     onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
+    /**
+     * The mirror that the online catalog queries of the workspace use, by database. A restore uses
+     * the mirror when it is available, and otherwise the mirror that the session uses.
+     */
+    catalogMirrors?: Partial<Record<CatalogDatabase, string>>;
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the

@@ -5,10 +5,9 @@
         height: 100%;
         overflow: hidden;
         margin-top: 10px;
-
         margin-bottom: 5px;
 
-        .#{$ns}-input-group {
+        .workspace-name-input {
             margin: 10px 2px 2px;
         }
     }
@@ -19,64 +18,124 @@
         display: flex;
         margin: 0 2px 2px;
 
-        .workspace-table-container {
+        // The list looks like the table of the other file dialogs: a tinted header, and lines between the cells.
+        .workspace-list-container {
+            flex: none;
+            width: 280px;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 1px;
+            background-color: $white;
+            box-shadow: inset 0 0 0 1px rgba($black, 0.15);
+        }
 
-            .#{$ns}-non-ideal-state {
-                position: absolute;
-                z-index: 1;
+        .workspace-list-header,
+        .workspace-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 124px;
+        }
+
+        .workspace-list-header {
+            background-color: $light-gray5;
+            box-shadow: inset 0 -1px 0 $pt-divider-black;
+
+            .sort-button {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                height: 30px;
+                padding: 0 10px;
+                border: none;
+                background: none;
+                box-shadow: inset -1px 0 0 $pt-divider-black;
+                color: inherit;
+                text-align: left;
+                white-space: nowrap;
+                cursor: pointer;
+
+                &:last-child {
+                    box-shadow: none;
+                }
+
+                &:hover {
+                    background-color: rgba($gray3, 0.15);
+                }
+            }
+        }
+
+        .workspace-list {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .workspace-row {
+            font-size: $pt-font-size-small;
+            line-height: 22px;
+            cursor: pointer;
+            user-select: none;
+
+            > span {
+                padding: 0 10px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                box-shadow:
+                    inset 0 -1px 0 rgba($black, 0.15),
+                    inset -1px 0 0 rgba($black, 0.05);
+            }
+
+            > span:last-child {
+                box-shadow: inset 0 -1px 0 rgba($black, 0.15);
+            }
+
+            &:hover {
+                background-color: rgba($gray3, 0.15);
+            }
+
+            &.is-selected {
+                background-color: rgba($blue3, 0.2);
             }
         }
 
         .workspace-info-container {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
         }
     }
 
-    .workspace-table {
-        box-shadow: inset 0 0 0 1px rgba($black, 0.15) !important;
-
-        .#{$ns}-icon {
-            color: $gray2;
+    &.#{$ns}-dark .workspace-container {
+        .workspace-list-container {
+            background-color: $pt-dark-code-background-color;
+            box-shadow: inset 0 0 0 1px rgba($black, 0.4);
         }
 
-        .#{$ns}-table-cell {
-            user-select: text;
-            cursor: pointer;
-            box-shadow:
-                inset 0 -1px 0 rgba($black, 0.15),
-                inset -1px 0 0 rgba($black, 0.05) !important;
-            line-height: 22px;
-            height: 22px;
-        }
+        .workspace-list-header {
+            background-color: $dark-gray4;
+            box-shadow: inset 0 -1px 0 $pt-dark-divider-black;
 
-        &.#{$ns}-dark {
-            box-shadow: inset 0 0 0 1px rgba($black, 0.4) !important;
+            .sort-button {
+                box-shadow: inset -1px 0 0 $pt-dark-divider-black;
 
-            .#{$ns}-icon {
-                color: $gray4;
+                &:last-child {
+                    box-shadow: none;
+                }
             }
+        }
 
-            .#{$ns}-table-cell {
-                user-select: text;
+        .workspace-row {
+            > span {
                 box-shadow:
                     inset 0 -1px 0 rgba($black, 0.4),
-                    inset -1px 0 0 rgba($black, 0.1) !important;
+                    inset -1px 0 0 rgba($black, 0.1);
             }
 
-            .#{$ns}-table-quadrant {
-                background-color: $pt-dark-code-background-color !important;
+            > span:last-child {
+                box-shadow: inset 0 -1px 0 rgba($black, 0.4);
             }
-        }
-
-        padding: 1px;
-
-        .#{$ns}-table-selection-region {
-            left: 0 !important;
-            right: 0 !important;
-            width: auto !important;
         }
     }
 }

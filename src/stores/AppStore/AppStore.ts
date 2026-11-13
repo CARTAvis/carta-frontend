@@ -5,7 +5,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, runInAction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
@@ -67,7 +67,7 @@ import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStor
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
-import {type WorkspaceRepointedSources, WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
+import {type WorkspaceLeftOutItems, type WorkspaceRepointedSources, WorkspaceRestorer, type WorkspaceSourceChanges} from "stores/Workspace/WorkspaceRestorer";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 import {
     Distinct,
@@ -178,6 +178,38 @@ export interface WorkspaceLoadingStep {
     onSkip?: () => void;
     /** When the step stops waiting, in milliseconds since 1970, as `Date.now()` gives. The dialog counts down to it. */
     deadline?: number;
+}
+
+/** The result of writing new locations and mirrors to a stored workspace. */
+export type WorkspaceSourceWriteResult =
+    /** The workspace is written. `workspace` is the stored workspace after the write. */
+    | {state: "written"; workspace: Workspace}
+    /** The workspace was saved by an earlier version, and is not changed. */
+    | {state: "earlier-version"}
+    /** The stored workspace no longer has the sources that the changes start from. */
+    | {state: "outdated"}
+    /** The workspace could not be read or written. */
+    | {state: "failed"};
+
+/**
+ * Tells the user how writing new locations to a workspace ended.
+ *
+ * @param since - what happened to the workspace before the write, as in "saved again after it was opened".
+ */
+export function showSourceWriteToast(result: WorkspaceSourceWriteResult, name: string, since: "opened" | "read"): void {
+    switch (result.state) {
+        case "written":
+            AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${name}"`, intent: "success", timeout: 3000});
+            break;
+        case "earlier-version":
+            AppToaster.show({icon: "warning-sign", message: `Workspace "${name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
+            break;
+        case "outdated":
+            AppToaster.show({icon: "warning-sign", message: `Workspace "${name}" was saved again after it was ${since}, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
+            break;
+        default:
+            AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${name}"`, intent: "danger", timeout: 3000});
+    }
 }
 
 export class AppStore {
@@ -2915,7 +2947,14 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string, isKey = false) {
+    /**
+     * Opens a workspace and restores it into the session.
+     *
+     * @param prepared - the workspace that the Workspace dialog already read and checked, with the
+     * new locations that the user chose, and the items to open it without. Without it, the workspace
+     * is read by its name.
+     */
+    public *loadWorkspace(name: string, isKey = false, prepared?: {workspace: Workspace; leftOut?: WorkspaceLeftOutItems}) {
         this.isLoadingWorkspace = true;
         this.loadingWorkspaceName = isKey ? "" : name;
         this.closeWorkspaceRestoreReport();
@@ -2932,7 +2971,7 @@ export class AppStore {
         this.fileBrowserStore.cancelFilePick();
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
+            const workspace: Workspace = prepared?.workspace ?? (yield this.apiService.getWorkspace(name, isKey));
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
@@ -2944,7 +2983,7 @@ export class AppStore {
             this.setLoadingWorkspaceName(workspace.name || name);
 
             this.hasRestoreChangedSession = true;
-            const restorer = new WorkspaceRestorer(workspace, generation);
+            const restorer = new WorkspaceRestorer(workspace, generation, prepared?.leftOut);
             const restoreIssues: WorkspaceIssue[] = yield* restorer.restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
@@ -3021,43 +3060,51 @@ export class AppStore {
             }
         };
         setState("writing");
+        const result: WorkspaceSourceWriteResult = yield this.writeWorkspaceSourceChanges(storedName, report.repointed);
+        setState(result.state === "written" ? "written" : result.state === "failed" ? "none" : "outdated");
+        showSourceWriteToast(result, report.name, "opened");
+        return result.state === "written";
+    }
+
+    /**
+     * Write new locations and mirrors to a stored workspace. Change only those sources and mirrors,
+     * and keep everything else that is stored. A workspace written by an earlier version is not
+     * changed, because writing it back would change more than the sources.
+     *
+     * @returns the result, and the stored workspace after the write, upgraded to the form that a
+     * restore reads.
+     */
+    public writeWorkspaceSourceChanges = async (storedName: string, changes: WorkspaceSourceChanges): Promise<WorkspaceSourceWriteResult> => {
         try {
             // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
             // form were written back, the write would change more than the sources.
-            const stored: Workspace | undefined = yield this.apiService.getStoredWorkspace(storedName);
+            const stored = await this.apiService.getStoredWorkspace(storedName);
             if (!stored) {
                 throw new Error(`Could not read workspace "${storedName}"`);
             }
             // Compare the two as JSON. JSON drops the fields that the upgrade sets to undefined.
             const asJson = (workspace: Workspace) => JSON.parse(JSON.stringify(workspace));
             if (!_.isEqual(asJson(WorkspaceConfig.upgradeForRuntime(stored)), asJson(stored))) {
-                setState("outdated");
-                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
-                return false;
+                return {state: "earlier-version"};
             }
-            const patched = WorkspaceRestorer.withRepointedSources(stored, report.repointed);
+            const patched = WorkspaceRestorer.withRepointedSources(stored, changes);
             if (!patched) {
-                setState("outdated");
-                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved again after it was opened, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
-                return false;
+                return {state: "outdated"};
             }
-            const saved: Workspace | undefined = yield this.apiService.setWorkspace(storedName, patched);
+            const saved = await this.apiService.setWorkspace(storedName, patched);
             if (!saved) {
                 throw new Error(`Could not write workspace "${storedName}"`);
             }
+            const workspace = WorkspaceConfig.upgradeForRuntime(saved);
             if (this.activeWorkspace?.name === storedName) {
-                this.activeWorkspace = WorkspaceConfig.upgradeForRuntime(saved);
+                runInAction(() => (this.activeWorkspace = workspace));
             }
-            setState("written");
-            AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${report.name}"`, intent: "success", timeout: 3000});
-            return true;
+            return {state: "written", workspace};
         } catch (err) {
             console.error(err);
-            setState("none");
-            AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${report.name}"`, intent: "danger", timeout: 3000});
-            return false;
+            return {state: "failed"};
         }
-    }
+    };
 
     @action closeWorkspaceRestoreReport = () => {
         this.workspaceRestoreReport = undefined;

@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {describeCatalogSource, describeImageSource, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
+import {describeCatalogSource, describeImageSource, getLelFileNames, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
@@ -271,5 +271,37 @@ describe("describeImageSource", () => {
 
     test("says so when there is nothing to name", () => {
         expect(describeImageSource(undefined)).toBe("an image of an unknown kind");
+    });
+});
+
+describe("getLelFileNames", () => {
+    const namesOf = (expression: string) => getLelFileNames(expression).names.map(({name}) => name);
+
+    test("reads unquoted names as images, also without an extension, and leaves out functions, numbers and keywords", () => {
+        expect(namesOf("sqrt(cube_image^2 + band6.fits^2) * 2.5e-3 + 1.5i")).toEqual(["cube_image", "band6.fits"]);
+        expect(namesOf("iif(a.fits > 0 && T, a.fits, b.fits)")).toEqual(["a.fits", "b.fits"]);
+        expect(namesOf("max(INDEX1 IN [1:5], NOT F)")).toEqual([]);
+    });
+
+    test("reads an unquoted slash as a division, and a quoted or escaped slash as part of the name", () => {
+        expect(namesOf("sub/q.image")).toEqual(["sub", "q.image"]);
+        expect(namesOf('"sub/q image" - sub\\/u.image')).toEqual(["sub/q image", "sub/u.image"]);
+        expect(namesOf(`"a'b"'c"d' + x`)).toEqual([`a'bc"d`, "x"]);
+    });
+
+    test("leaves the mask and the region out of the file name, and leaves out temporary images", () => {
+        expect(namesOf('cube.fits:mask0 + "cont 1.fits:nomask" + cube.fits::reg1 + $1 * $r2 + ::reg2')).toEqual(["cube.fits", "cont 1.fits"]);
+    });
+
+    test("marks a single name inside brackets as one that may be a region", () => {
+        expect(getLelFileNames("cube.fits[centre] + other.fits[mask(cube.fits)]").names).toEqual([
+            {name: "cube.fits", canBeRegion: false},
+            {name: "centre", canBeRegion: true},
+            {name: "other.fits", canBeRegion: false}
+        ]);
+    });
+
+    test("says that an expression with a quote that is not closed cannot be read to its end", () => {
+        expect(getLelFileNames('a.fits + "b.fits')).toEqual({names: [{name: "a.fits", canBeRegion: false}], isComplete: false});
     });
 });
