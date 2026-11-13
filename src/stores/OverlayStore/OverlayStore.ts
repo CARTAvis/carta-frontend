@@ -63,7 +63,7 @@ function isNumberFormat(value: unknown): value is NumberFormatType {
 
 export interface OverlayGlobalConfig {
     labelType: LabelType;
-    /** Left out of a layout while the color follows the user's preference. */
+    /** Left out of a layout, because the color has a preference. A workspace saves it. */
     color?: string;
     /** The tolerance of the curves, in percent. */
     tolerance: number;
@@ -81,7 +81,7 @@ export interface OverlayTitleConfig {
 }
 
 export interface OverlayGridConfig {
-    /** Left out of a layout while the visibility follows the user's preference. */
+    /** Left out of a layout, because the visibility has a preference. A workspace saves it. */
     isVisible?: boolean;
     hasCustomColor: boolean;
     color: string;
@@ -134,7 +134,7 @@ export interface OverlayNumberConfig {
 }
 
 export interface OverlayLabelConfig {
-    /** Left out of a layout while the visibility follows the user's preference. */
+    /** Left out of a layout, because the visibility has a preference. A workspace saves it. */
     isVisible?: boolean;
     isHidden: boolean;
     hasCustomColor: boolean;
