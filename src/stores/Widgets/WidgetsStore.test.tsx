@@ -570,28 +570,30 @@ describe("WidgetsStore initWidgets", () => {
         expect(Array.from(widgetsStore.spatialProfileWidgets.values()).map(store => store.coordinate)).toEqual(["y", "y"]);
     });
 
-    test("creates a catalog plot by the plot type in its settings", () => {
+    test("creates a catalog plot of the layout copy of a workspace by the plot type in its settings", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], [], "workspace");
+
+        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+
+    test("ignores the plot type in the settings of a catalog plot of a regular layout, as CARTA v6.0 did", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], [], "regular");
 
-        expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+        expect(widgetsStore.catalogPlotWidgets.size).toBe(0);
     });
 
     test.each([
         ["histogram", CatalogPlotType.Histogram, HelpType.CATALOG_HISTOGRAM_PLOT],
         ["scatter", CatalogPlotType.D2Scatter, HelpType.CATALOG_SCATTER_PLOT]
-    ])("restores the floating %s plot help button from current and legacy layout settings", (_label, plotType, expectedHelpType) => {
+    ])("restores the floating %s plot help button from a regular layout and the layout copy of a workspace", (_label, plotType, expectedHelpType) => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets(
-            [],
-            [
-                {type: "component", id: "catalog-plot", widgetSettings: {plotType}},
-                {type: "component", id: "catalog-plot", plotType}
-            ],
-            "regular"
-        );
+        widgetsStore.initWidgets([], [{type: "component", id: "catalog-plot", widgetSettings: {plotType}}], "workspace");
+        widgetsStore.initWidgets([], [{type: "component", id: "catalog-plot", plotType}], "regular");
 
         expect(widgetsStore.floatingWidgets).toHaveLength(2);
         widgetsStore.floatingWidgets.forEach(config => {
