@@ -109,20 +109,53 @@ describe("LayoutStore layout configs", () => {
         expect(findDeep(layoutStore.currentLayoutConfig()?.docked, (item: any) => item.maximized === true)).toHaveLength(0);
     });
 
-    test("leaves the current layout in place when the config is not a valid layout", () => {
+    test("leaves the current layout in place when the layout copy of a workspace is not valid, or there is no layout", () => {
         layoutStore.applyLayoutConfig(defaultConfig());
         const layoutModel = layoutStore.layoutModel;
         MOCK_APP_STORE.widgetsStore.clearDockedWidgets.mockClear();
         MOCK_APP_STORE.widgetsStore.initWidgets.mockClear();
         jest.spyOn(console, "error").mockImplementation(jest.fn());
 
-        expect(layoutStore.applyLayoutConfig({docked: {type: "not-a-layout"}})).toBe(false);
+        expect(layoutStore.applyLayoutConfig({docked: {type: "not-a-layout"}}, "", "workspace")).toBe(false);
         expect(layoutStore.applyLayoutConfig(undefined)).toBe(false);
 
         expect(layoutStore.layoutModel).toBe(layoutModel);
         expect(MOCK_APP_STORE.widgetsStore.clearDockedWidgets).not.toHaveBeenCalled();
         expect(MOCK_APP_STORE.widgetsStore.initWidgets).not.toHaveBeenCalled();
         expect(layoutStore.currentLayoutName).toBe("");
+    });
+
+    test("applies a regular layout that it saved, with a floating widget at the edge and a PV generator and a channel map docked, as CARTA v6.0 did", () => {
+        const layout = {
+            layoutVersion: 2,
+            docked: {
+                type: "row",
+                content: [
+                    {
+                        type: "stack",
+                        content: [
+                            {type: "component", id: "image-view"},
+                            {type: "component", id: "pv-generator"},
+                            {type: "component", id: "channel-map-control"}
+                        ]
+                    }
+                ]
+            },
+            floating: []
+        };
+        expect(layoutStore.applyLayoutConfig(layout, "first")).toBe(true);
+        MOCK_APP_STORE.widgetsStore.floatingWidgets = [{id: "log", type: "log", defaultWidth: 300, defaultHeight: 200, defaultX: 0, defaultY: 0}];
+        MOCK_APP_STORE.widgetsStore.initWidgets.mockClear();
+
+        const saved = layoutStore.currentLayoutConfig();
+        MOCK_APP_STORE.widgetsStore.floatingWidgets = [];
+
+        // A regular layout is not validated when it is applied, only when it is loaded from the server.
+        expect(saved?.floating).toEqual([{type: "component", id: "log", defaultWidth: 300, defaultHeight: 200, defaultX: "", defaultY: ""}]);
+        expect(layoutStore.applyLayoutConfig(saved, "second")).toBe(true);
+        const [dockedConfigs, floatingConfigs] = MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls[0];
+        expect(dockedConfigs.map((config: any) => config.id)).toEqual(["image-view", "pv-generator", "channel-map-control"]);
+        expect(floatingConfigs).toEqual(saved?.floating);
     });
 
     test("reports no layout config before a layout is shown", () => {
@@ -136,7 +169,7 @@ describe("LayoutStore layout configs", () => {
 
         expect(config).toMatchObject({layoutVersion: LayoutConfig.currentSchemaVersion, floating: []});
         expect(DockedComponentIds(config?.docked)).toEqual(DockedComponentIds(defaultConfig()!.docked));
-        expect(LayoutConfig.prepareLayout(config)).toBeDefined();
+        expect(LayoutConfig.prepareLayout(config, "regular")).toBeDefined();
     });
 
     test("records a widget's plot type only in its settings", () => {

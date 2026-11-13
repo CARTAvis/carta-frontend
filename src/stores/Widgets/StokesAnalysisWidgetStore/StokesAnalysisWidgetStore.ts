@@ -533,10 +533,18 @@ export class StokesAnalysisWidgetStore
         };
     };
 
-    /** Returns the settings in the layout copy of a workspace: the settings of a regular layout, the widget ID, the plot options, the settings section and the smoothing. */
+    /** Returns the settings in the layout copy of a workspace. */
     public toWorkspaceLayoutConfig = (): StokesAnalysisWorkspaceLayoutConfig => {
         return {
-            ...this.toConfig(),
+            primaryLineColor: this.primaryLineColor,
+            secondaryLineColor: this.secondaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            plotType: this.plotType,
+            colorMap: this.colorMap,
+            scatterPlotPointSize: this.scatterPlotPointSize,
+            pointTransparency: this.pointTransparency,
+            equalAxes: this.areAxesEqual,
             widgetId: this.widgetId,
             invertedColorMap: this.isInvertedColorMap,
             fractionalPolVisible: this.isFractionalPolVisible,

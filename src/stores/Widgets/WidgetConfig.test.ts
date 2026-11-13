@@ -2,6 +2,7 @@ import Ajv from "ajv";
 
 import {HistogramSettingsTabs, PlotType, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs} from "enums";
 import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
+import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "models/Layout/RegularLayoutWidgetSettings";
 import {REGULAR_WIDGET_SETTINGS} from "models/Layout/V6Layout.fixture";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
@@ -40,8 +41,8 @@ const SMOOTHING = {
     lineColors: {q: "#ff0000"}
 };
 
-/** The range of the data that a new store has. The layout copy of a workspace does not apply a saved range. */
-const NO_DATA_RANGE = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+/** The settings that only a regular layout keeps: the range of the data, and the rest frame switches and redshift of a spectral profiler. */
+const REGULAR_ONLY_SETTINGS = ["minXVal", "maxXVal", "minYVal", "maxYVal", "xAxisRestFrameEnabled", "restFrameRedshift", "yAxisRestFrameEnabled"];
 
 type LayoutWidget = WorkspaceLayoutConfigurable<object> & Partial<ConfigurableStore<object, Persisted<object>>>;
 
@@ -72,14 +73,19 @@ function regularSettingsOf(type: string): object {
     return (REGULAR_WIDGET_SETTINGS as Record<string, object>)[type] ?? {};
 }
 
-/** Returns a copy of the settings without the range of the data. */
-function withoutDataRange(settings: object): object {
-    return Object.fromEntries(Object.entries(settings).filter(([key]) => !(key in NO_DATA_RANGE)));
+/** Returns a copy of the settings without the settings that only a regular layout keeps. */
+function withoutRegularOnlySettings(settings: object): object {
+    return Object.fromEntries(Object.entries(settings).filter(([key]) => !REGULAR_ONLY_SETTINGS.includes(key)));
+}
+
+/** Returns the settings that only a regular layout keeps. */
+function regularOnlySettingsOf(settings: object): object {
+    return Object.fromEntries(Object.entries(settings).filter(([key]) => REGULAR_ONLY_SETTINGS.includes(key)));
 }
 
 describe("widget config in a regular layout", () => {
     test.each(REGULAR_WIDGETS)("a %s widget saves the fields that CARTA v6.0 saved and the fields added since then, and nothing else", (type, createStore) => {
-        expect(Object.keys(createStore().toConfig()).sort()).toEqual(Object.keys(regularSettingsOf(type)).sort());
+        expect(Object.keys(createStore().toConfig()).sort()).toEqual([...REGULAR_LAYOUT_WIDGET_SETTINGS[type]].sort());
     });
 
     test.each(REGULAR_WIDGETS)("a %s widget applies a layout saved by CARTA v6.0 and returns it", (type, createStore) => {
@@ -112,19 +118,21 @@ describe("widget config in a regular layout", () => {
 describe("widget config in the layout copy of a workspace", () => {
     test.each(WORKSPACE_EXTRAS)("a %s widget returns the applied config", (type, createStore, extras) => {
         const store = createStore();
-        const config = {...withoutDataRange(regularSettingsOf(type)), ...extras};
+        const config = {...withoutRegularOnlySettings(regularSettingsOf(type)), ...extras};
 
         store.applyWorkspaceLayoutConfig(config);
 
-        expect(withoutDataRange(store.toWorkspaceLayoutConfig())).toEqual(config);
+        expect(store.toWorkspaceLayoutConfig()).toEqual(config);
     });
 
-    test.each(WORKSPACE_EXTRAS.filter(([type]) => "minXVal" in regularSettingsOf(type)))("a %s widget does not apply the range of the data that a regular layout keeps", (type, createStore) => {
+    test.each(WORKSPACE_EXTRAS.filter(([type]) => Object.keys(regularOnlySettingsOf(regularSettingsOf(type))).length))("a %s widget neither saves nor applies the settings that only a regular layout keeps", (type, createStore) => {
         const store = createStore();
+        const before = regularOnlySettingsOf((store as ConfigurableStore<object>).toConfig());
 
         store.applyWorkspaceLayoutConfig(regularSettingsOf(type));
 
-        expect(store.toWorkspaceLayoutConfig()).toEqual(expect.objectContaining(NO_DATA_RANGE));
+        expect(regularOnlySettingsOf((store as ConfigurableStore<object>).toConfig())).toEqual(before);
+        expect(regularOnlySettingsOf(store.toWorkspaceLayoutConfig())).toEqual({});
     });
 });
 

@@ -1,4 +1,5 @@
 import type React from "react";
+import Ajv from "ajv";
 import {Actions} from "flexlayout-react";
 import {runInAction} from "mobx";
 
@@ -10,6 +11,8 @@ import {CatalogStore} from "stores/Catalog/CatalogStore";
 import {LayoutStore} from "stores/LayoutStore/LayoutStore";
 
 import {WidgetConfig, WidgetsStore} from "./WidgetsStore";
+
+const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
 describe("WidgetsStore PV preview test ids", () => {
     const originalSelectTab = Actions.selectTab;
@@ -187,7 +190,7 @@ describe("WidgetsStore PV preview test ids", () => {
             relativeTimeUnit: RelativeTimeUnit.DAY
         });
 
-        expect(widgetsStore.toWidgetSettingsConfig("animator", "animator-7")).toEqual({
+        expect(widgetsStore.toWidgetSettingsConfig("animator", "animator-7", "regular")).toEqual({
             timeLabelFormat: TimeLabelFormat.RELATIVE,
             timeZoneMode: TimeZoneMode.IANA,
             ianaTimeZone: "Pacific/Honolulu",
@@ -247,7 +250,7 @@ describe("WidgetsStore PV preview test ids", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const id = widgetsStore.addWidget("layer-list")!;
 
-        expect(widgetsStore.toWidgetSettingsConfig("layer-list", id)).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("layer-list", id, "regular")).toBeUndefined();
     });
 
     test("gives a profile widget an ID of its own, kept in the settings that the layout copy of a workspace saves", () => {
@@ -283,9 +286,9 @@ describe("WidgetsStore PV preview test ids", () => {
         const spatialId = widgetsStore.addWidget("spatial-profiler", "spatial-profiler-5", {widgetId: "spatial-profiler-0", markerTextVisible: true})!;
 
         expect(widgetsStore.statsWidgets.get(statsId)!.widgetId).toBe("stats-5");
-        expect(widgetsStore.toWidgetSettingsConfig("stats", statsId)).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("stats", statsId, "regular")).toBeUndefined();
         expect(widgetsStore.spatialProfileWidgets.get(spatialId)!.isMarkerTextVisible).toBe(false);
-        expect(widgetsStore.toWidgetSettingsConfig("spatial-profiler", spatialId)).not.toHaveProperty("widgetId");
+        expect(widgetsStore.toWidgetSettingsConfig("spatial-profiler", spatialId, "regular")).not.toHaveProperty("widgetId");
     });
 
     test("saves what each statistics widget shows under its widget ID, and restores it to the widget with that ID", () => {
@@ -479,10 +482,10 @@ describe("WidgetsStore initWidgets", () => {
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(grid ? {widgetSettings: grid} : {})}], [{type: "component", id: "image-view", widgetSettings: grid}]);
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(grid ? {widgetSettings: grid} : {})}], [{type: "component", id: "image-view", widgetSettings: grid}], "regular");
 
         expect(imageViewConfigStore.applyConfig).not.toHaveBeenCalled();
-        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view")).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "regular")).toBeUndefined();
     });
 
     test("keeps the image view grid that the layout copy of a workspace saved when another image view in it saved none", () => {
@@ -529,7 +532,7 @@ describe("WidgetsStore initWidgets", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         const floating = [{type: "component", id: "log", defaultWidth: 300, defaultHeight: 200, defaultX: 0, defaultY: 0}];
 
-        widgetsStore.initWidgets([], floating);
+        widgetsStore.initWidgets([], floating, "regular");
         widgetsStore.initWidgets([], floating, "workspace");
 
         // A regular layout places a widget at a position of 0 by the default offset, as CARTA v6.0 did.
@@ -544,11 +547,11 @@ describe("WidgetsStore initWidgets", () => {
     test("gives a catalog plot of a regular layout no settings, as in CARTA v6.0, and the plot type that the layout keeps beside them", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram, widgetSettings: {plotType: CatalogPlotType.Histogram, dragMode: false}}], []);
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram, widgetSettings: {plotType: CatalogPlotType.Histogram, dragMode: false}}], [], "regular");
 
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.dragMode).toBe(DragMode.Select);
-        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0")).toBeUndefined();
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-plot", "catalog-plot-0", "regular")).toBeUndefined();
     });
 
     test("creates a line plot by its widget type, even when a layout records its line style as a plot type", () => {
@@ -561,7 +564,7 @@ describe("WidgetsStore initWidgets", () => {
             plotType: "Steps"
         };
 
-        widgetsStore.initWidgets([componentConfig], [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}, plotType: "Steps"}]);
+        widgetsStore.initWidgets([componentConfig], [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}, plotType: "Steps"}], "regular");
 
         expect(widgetsStore.spatialProfileWidgets.get("spatial-profiler-1")?.coordinate).toBe("y");
         expect(Array.from(widgetsStore.spatialProfileWidgets.values()).map(store => store.coordinate)).toEqual(["y", "y"]);
@@ -570,7 +573,7 @@ describe("WidgetsStore initWidgets", () => {
     test("creates a catalog plot by the plot type in its settings", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], []);
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], [], "regular");
 
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
     });
@@ -586,7 +589,8 @@ describe("WidgetsStore initWidgets", () => {
             [
                 {type: "component", id: "catalog-plot", widgetSettings: {plotType}},
                 {type: "component", id: "catalog-plot", plotType}
-            ]
+            ],
+            "regular"
         );
 
         expect(widgetsStore.floatingWidgets).toHaveLength(2);
@@ -596,11 +600,75 @@ describe("WidgetsStore initWidgets", () => {
         });
     });
 
+    test("creates a catalog plot of a regular layout by the plot type beside its settings, and one of the layout copy of a workspace by the type in them", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const docked = (id: string) => ({id: "catalog-plot", props: {id, docked: true}, plotType: CatalogPlotType.Histogram, widgetSettings: {plotType: CatalogPlotType.D2Scatter}});
+        const floating = {type: "component", id: "catalog-plot", plotType: CatalogPlotType.Histogram, widgetSettings: {plotType: CatalogPlotType.D2Scatter}};
+
+        widgetsStore.initWidgets([docked("catalog-plot-0")], [floating], "regular");
+        expect(Array.from(widgetsStore.catalogPlotWidgets.values()).map(store => store.plotType)).toEqual([CatalogPlotType.Histogram, CatalogPlotType.Histogram]);
+
+        widgetsStore.catalogPlotWidgets.clear();
+        widgetsStore.initWidgets([docked("catalog-plot-5")], [floating], "workspace");
+        expect(Array.from(widgetsStore.catalogPlotWidgets.values()).map(store => store.plotType)).toEqual([CatalogPlotType.D2Scatter, CatalogPlotType.D2Scatter]);
+    });
+
     test("creates a catalog plot by the plot type beside its settings in a layout saved before they held it", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram}], []);
+        widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram}], [], "regular");
 
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+});
+
+describe("WidgetsStore layout copy of a workspace", () => {
+    beforeEach(() => {
+        CatalogStore.Instance.widgetBindings.componentIds().forEach(componentId => CatalogStore.Instance.widgetBindings.closeComponent(componentId));
+    });
+
+    afterEach(() => {
+        CatalogStore.Instance.widgetBindings.componentIds().forEach(componentId => CatalogStore.Instance.widgetBindings.closeComponent(componentId));
+        jest.restoreAllMocks();
+    });
+
+    test("writes a layout copy that the whole workspace schema and the layout definition accept, with catalog plot borders and floating widgets", () => {
+        // Required here: importing the models before the stores reaches a component before its config is set.
+        const layoutConfig = require("models/Layout/LayoutConfig").LayoutConfig;
+        const zIndexManager = new FloatingObjzIndexManager();
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], toConfig: () => ({})}, zIndexManager} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
+        widgetsStore.initWidgets(
+            [
+                {id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {widgetId: "plot-a", plotType: CatalogPlotType.D2Scatter, scatterBorder: {xMin: 0, xMax: 1, yMin: 2, yMax: 3}}},
+                {id: "histogram", props: {id: "histogram-0", docked: true}, widgetSettings: {widgetId: "histogram-a"}}
+            ],
+            [
+                {type: "component", id: "log", defaultWidth: 300, defaultHeight: 200, defaultX: 0, defaultY: 0},
+                // A border made before the plot had data has values that are not finite. It is not saved.
+                {type: "component", id: "catalog-plot", defaultWidth: 400, defaultHeight: 300, defaultX: 10, defaultY: 20, widgetSettings: {plotType: CatalogPlotType.Histogram, histogramBorder: {xMin: NaN, xMax: NaN}}}
+            ],
+            "workspace"
+        );
+        const modelJson = {
+            global: {},
+            layout: {
+                type: "row",
+                children: [
+                    {type: "tabset", maximized: true, children: [{type: "tab", id: "catalog-plot-0", component: "catalog-plot"}]},
+                    {type: "tabset", children: [{type: "tab", id: "histogram-0", component: "histogram"}]}
+                ]
+            }
+        };
+
+        const layout = JSON.parse(JSON.stringify(layoutConfig.createConfigToSave({widgetsStore, zIndexManager} as any, modelJson, "workspace")));
+
+        expect(layout.floating.map((widget: any) => widget.widgetSettings?.histogramBorder)).toEqual([undefined, undefined]);
+        expect(layout.docked.content[0].content[0].widgetSettings).toEqual(expect.objectContaining({widgetId: "plot-a", scatterBorder: {xMin: 0, xMax: 1, yMin: 2, yMax: 3}}));
+        const workspace = {workspaceVersion: 2, frontendVersion: "6.1.0", files: [], layout};
+        const validateWorkspace = new Ajv({strictTypes: false, allErrors: true}).compile(WORKSPACE_SCHEMA);
+        expect(validateWorkspace(workspace)).toBe(true);
+        expect(layoutConfig.prepareLayout(layout, "workspace")).toEqual(layout);
     });
 });

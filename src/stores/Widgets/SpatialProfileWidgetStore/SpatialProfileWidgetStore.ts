@@ -19,6 +19,7 @@ import {AppStore, type ProfileSmoothingConfig, ProfileSmoothingStore} from "stor
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
@@ -41,7 +42,7 @@ export interface SpatialProfileWidgetConfig {
 }
 
 /** What a spatial profiler widget saves in the layout copy of a workspace. */
-export interface SpatialProfileWorkspaceLayoutConfig extends SpatialProfileWidgetConfig {
+export interface SpatialProfileWorkspaceLayoutConfig extends Omit<SpatialProfileWidgetConfig, LinePlotDataRangeField> {
     /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
     markerTextVisible: boolean;
@@ -412,18 +413,7 @@ export class SpatialProfileWidgetStore
             return;
         }
         this.applyPlotSettings(widgetSettings);
-        if (typeof widgetSettings.minXVal === "number") {
-            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
-        }
-        if (typeof widgetSettings.maxXVal === "number") {
-            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
-        }
-        if (typeof widgetSettings.minYVal === "number") {
-            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
-        }
-        if (typeof widgetSettings.maxYVal === "number") {
-            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
-        }
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
     };
 
     /**
@@ -490,10 +480,16 @@ export class SpatialProfileWidgetStore
         };
     };
 
-    /** Returns the settings in the layout copy of a workspace: the settings of a regular layout, the widget ID, the marker text, the settings section and the smoothing. */
+    /** Returns the settings in the layout copy of a workspace. It keeps no range of the data. */
     public toWorkspaceLayoutConfig = (): SpatialProfileWorkspaceLayoutConfig => {
         return {
-            ...this.toConfig(),
+            coordinate: this.coordinate,
+            primaryLineColor: this.primaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            wcsAxisVisible: this.isWcsAxisVisible,
+            meanRmsVisible: this.isMeanRmsVisible,
+            plotType: this.plotType,
             widgetId: this.widgetId,
             markerTextVisible: this.isMarkerTextVisible,
             settingsTabId: this.settingsTabId,

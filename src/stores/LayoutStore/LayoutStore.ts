@@ -196,7 +196,7 @@ export class LayoutStore {
             return;
         }
 
-        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson, "regular");
         if (!configToSave) {
             appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
             return;
