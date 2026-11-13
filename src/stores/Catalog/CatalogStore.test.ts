@@ -715,6 +715,8 @@ describe("Catalog overlay widget in a layout", () => {
         catalogStore.catalogDisplayStores.forEach(displayStore => displayStore.dispose?.());
         catalogStore.catalogDisplayStores.clear();
         Array.from(widgetsStore.catalogWidgets.keys()).forEach(componentId => widgetsStore.deleteCatalogWidget(componentId));
+        // Start a new layout, which forgets the catalogs that the last layout set the style of.
+        widgetsStore.initWidgets([], []);
     });
 
     test("saves in a regular layout the catalog it shows, how its sources are drawn and where the table is split, as CARTA v6.0 saved them", () => {
@@ -733,6 +735,12 @@ describe("Catalog overlay widget in a layout", () => {
             headerTableColumnWidths: [150, 75, 65, 100, 230],
             settingsTabId: widgetStore.settingsTabFor(1)
         });
+    });
+
+    test("saves no settings in a regular layout for a widget that shows no catalog, as CARTA v6.0 did", () => {
+        widgetsStore.getCatalogWidgetStore("catalog-overlay-0");
+
+        expect(widgetsStore.toWidgetSettingsConfig("catalog-overlay", "catalog-overlay-0")).toBeUndefined();
     });
 
     test("applies a regular layout by writing only how the sources are drawn to the display store of the saved catalog", () => {
@@ -756,6 +764,19 @@ describe("Catalog overlay widget in a layout", () => {
 
         expect(catalogStore.getCatalogDisplayStore(1)?.toLayoutStyle()).toEqual({catalogColor: "#ff00ff", highlightColor: "#00ff00", catalogSize: 20, catalogShape: 2, thickness: 3});
         expect(catalogStore.widgetBindings.catalogOf("catalog-overlay-0")).toBeUndefined();
+    });
+
+    test("applies the settings of only the first widget of a regular layout that names a catalog, as CARTA v6.0 did", () => {
+        widgetsStore.initWidgets(
+            [
+                {id: "catalog-overlay", props: {id: "catalog-overlay-0"}, widgetSettings: v6Settings},
+                {id: "catalog-overlay", props: {id: "catalog-overlay-1"}, widgetSettings: {...v6Settings, catalogColor: "#000000", tableSeparatorPosition: "10%"}}
+            ],
+            []
+        );
+
+        expect(catalogStore.getCatalogDisplayStore(1)?.catalogColor).toBe("#ff00ff");
+        expect(widgetsStore.catalogWidgets.get("catalog-overlay-1")!.tableSeparatorPosition).not.toBe("10%");
     });
 
     test("applies nothing when a regular layout names no catalog, as CARTA v6.0 did", () => {

@@ -177,13 +177,23 @@ describe("smoothing and Stokes settings in a layout", () => {
         expect(store.smoothingStore.toConfig()).toEqual(defaults);
     });
 
-    test("draws a Stokes analysis scatter plot in the colormap a layout saved", () => {
+    test("draws a Stokes analysis scatter plot in the colormap that the layout copy of a workspace saved", () => {
+        const store = new StokesAnalysisWidgetStore();
+        const defaultColors = store.colorPixel;
+
+        store.applyWorkspaceLayoutConfig({colorMap: "viridis"});
+
+        expect(store.colorMap).toBe("viridis");
+        expect(store.colorPixel).not.toBe(defaultColors);
+    });
+
+    test("sets only the colormap name of a Stokes analysis widget from a regular layout, as CARTA v6.0 did", () => {
         const store = new StokesAnalysisWidgetStore();
         const defaultColors = store.colorPixel;
 
         store.applyConfig({colorMap: "viridis"});
 
         expect(store.colorMap).toBe("viridis");
-        expect(store.colorPixel).not.toBe(defaultColors);
+        expect(store.colorPixel).toBe(defaultColors);
     });
 });

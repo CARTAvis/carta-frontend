@@ -473,8 +473,9 @@ export class StokesAnalysisWidgetStore
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
+        // As CARTA v6.0 did, the colormap name is set, but the colors of the scatter plot are not made again.
         if (typeof widgetSettings.colorMap === "string") {
-            this.setColormap(widgetSettings.colorMap);
+            this.colorMap = widgetSettings.colorMap;
         }
         if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
@@ -493,6 +494,10 @@ export class StokesAnalysisWidgetStore
             return;
         }
         this.applyConfig(widgetSettings);
+        // Make the colors of the scatter plot for the colormap too.
+        if (typeof widgetSettings.colorMap === "string") {
+            this.setColormap(widgetSettings.colorMap);
+        }
         if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
