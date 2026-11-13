@@ -1502,8 +1502,20 @@ export class FrameStore {
         this.titleCustomText = this.defaultTitleText;
         this.intensityUnit = this.headerUnit;
 
-        // Synchronize the colorbar with the preferences when the frame is created.
+        // synchronize AST overlay's color/grid/label with preference when frame is created
+        const astColor = preferenceStore.astColor;
         const overlaySettings = AppStore.Instance.overlaySettings;
+        if (astColor !== overlaySettings.global.color) {
+            overlaySettings.global.setColor(astColor);
+        }
+        const isAstGridVisible = preferenceStore.isAstGridVisible;
+        if (isAstGridVisible !== overlaySettings.grid.isVisible) {
+            overlaySettings.grid.setVisible(isAstGridVisible);
+        }
+        const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
+        if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
+            overlaySettings.labels.setVisible(isAstLabelsVisible);
+        }
         const isColorbarVisible = preferenceStore.isColorbarVisible;
         if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
             overlaySettings.colorbar.setVisible(isColorbarVisible);

@@ -170,8 +170,7 @@ export class Padding {
 
 export class OverlayGlobalSettings {
     @observable labelType: LabelType = LabelType.Exterior;
-    /** The color set in this session. When it is not set, the color follows the user's preference. */
-    @observable private customColor: string | undefined = undefined;
+    @observable color: string;
     @observable tolerance: number = 2; // percentage
     @observable system: SystemType = SystemType.Auto;
 
@@ -233,19 +232,14 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    @computed get color(): string {
-        return this.customColor ?? PreferenceStore.Instance.astColor;
-    }
-
     constructor() {
-        makeObservable<OverlayGlobalSettings, "customColor">(this);
-        // Pass every change of the color to AST. The color follows the preference until the session
-        // sets it, so the color can change without a call to setColor.
-        autorun(() => AST.setColor(getColorForTheme(this.color), AstColorsIndex.GLOBAL));
+        this.setColor(PreferenceStore.Instance.astColor);
+        makeObservable(this);
     }
 
     @action setColor = (color: string) => {
-        this.customColor = color;
+        this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.GLOBAL);
     };
 
     /** @param shouldIncludePreferenceSettings - whether to save the color, which has a preference. */
@@ -260,7 +254,7 @@ export class OverlayGlobalSettings {
     @action applyConfig(config: Persisted<OverlayGlobalConfig> | undefined) {
         this.labelType = savedOr(config?.labelType, isLabelType, LabelType.Exterior);
         if (isColor(config?.color)) {
-            this.customColor = config.color;
+            this.setColor(config.color);
         }
         this.tolerance = savedOr(config?.tolerance, numberIn(0.1), 2);
     }
@@ -373,8 +367,7 @@ export class OverlayTitleSettings {
 }
 
 export class OverlayGridSettings {
-    /** The visibility set in this session. When it is not set, the visibility follows the user's preference. */
-    @observable private isVisibleInSession: boolean | undefined = undefined;
+    @observable isVisible: boolean = PreferenceStore.Instance.isAstGridVisible;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
     @observable width: number = 1;
@@ -392,16 +385,12 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
-    @computed get isVisible(): boolean {
-        return this.isVisibleInSession ?? PreferenceStore.Instance.isAstGridVisible;
-    }
-
     constructor() {
-        makeObservable<OverlayGridSettings, "isVisibleInSession">(this);
+        makeObservable(this);
     }
 
     @action setVisible(isVisible: boolean = true) {
-        this.isVisibleInSession = isVisible;
+        this.isVisible = isVisible;
     }
 
     @action setCustomColor(hasCustomColor: boolean) {
@@ -421,7 +410,7 @@ export class OverlayGridSettings {
     /** Applies the saved grid settings. The visibility does not change when the config leaves it out. */
     @action applyConfig(config: Persisted<OverlayGridConfig> | undefined) {
         if (isBoolean(config?.isVisible)) {
-            this.isVisibleInSession = config.isVisible;
+            this.isVisible = config.isVisible;
         }
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
@@ -822,8 +811,7 @@ export class OverlayNumberSettings {
 }
 
 export class OverlayLabelSettings {
-    /** The visibility set in this session. When it is not set, the visibility follows the user's preference. */
-    @observable private isVisibleInSession: boolean | undefined = undefined;
+    @observable isVisible: boolean = PreferenceStore.Instance.isAstLabelsVisible;
     @observable isHidden: boolean = false;
     @observable hasCustomColor: boolean = false;
     @observable color: string = AST_DEFAULT_COLOR;
@@ -834,12 +822,8 @@ export class OverlayLabelSettings {
     @observable customLabelX: string = "";
     @observable customLabelY: string = "";
 
-    @computed get isVisible(): boolean {
-        return this.isVisibleInSession ?? PreferenceStore.Instance.isAstLabelsVisible;
-    }
-
     constructor() {
-        makeObservable<OverlayLabelSettings, "isVisibleInSession">(this);
+        makeObservable(this);
     }
 
     @computed get styleString() {
@@ -863,7 +847,7 @@ export class OverlayLabelSettings {
     }
 
     @action setVisible(isVisible: boolean = true) {
-        this.isVisibleInSession = isVisible;
+        this.isVisible = isVisible;
     }
 
     @action setHidden(isHidden: boolean) {
@@ -922,7 +906,7 @@ export class OverlayLabelSettings {
      */
     @action applyConfig(config: Persisted<OverlayLabelConfig> | undefined) {
         if (isBoolean(config?.isVisible)) {
-            this.isVisibleInSession = config.isVisible;
+            this.isVisible = config.isVisible;
         }
         this.isHidden = savedOr(config?.isHidden, isBoolean, false);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);

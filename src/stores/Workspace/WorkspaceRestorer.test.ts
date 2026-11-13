@@ -976,6 +976,15 @@ describe("WorkspaceRestorer", () => {
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 
+    test("applies no layout and no WCS overlay when the workspace saved no layout, as a workspace of CARTA 6 does", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE]}));
+
+        expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+        expect(appStore.overlaySettings.applyTextConfig).toHaveBeenCalledWith(undefined);
+    });
+
     test("reports an invalid embedded layout the layout store could not apply", async () => {
         const {appStore} = createSession();
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);

@@ -3,7 +3,7 @@ import Ajv from "ajv";
 import {HistogramSettingsTabs, PlotType, RestFrameShiftMode, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs, VelocityConvention} from "enums";
 import {type ConfigurableStore, type Persisted} from "models";
 // Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
-import {AppStore, WidgetsStore} from "stores";
+import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
@@ -126,7 +126,11 @@ describe("image view grid and WCS overlay in a layout", () => {
     const imageViewSettings = () => WidgetsStore.Instance.toWidgetSettingsConfig("image-view", "image-view-0");
 
     afterEach(() => {
-        AppStore.Instance.overlaySettings.applyConfig(null);
+        const overlaySettings = AppStore.Instance.overlaySettings;
+        overlaySettings.applyConfig({});
+        overlaySettings.global.setColor(PreferenceStore.Instance.astColor);
+        overlaySettings.grid.setVisible(PreferenceStore.Instance.isAstGridVisible);
+        overlaySettings.labels.setVisible(PreferenceStore.Instance.isAstLabelsVisible);
         ImageViewConfigStore.Instance.applyConfig(null);
     });
 
@@ -141,6 +145,17 @@ describe("image view grid and WCS overlay in a layout", () => {
         expect(ImageViewConfigStore.Instance.panelColumns).toBe(3);
         expect(AppStore.Instance.overlaySettings.grid.isVisible).toBe(false);
         expect(AppStore.Instance.overlaySettings.title.isVisible).toBe(true);
+    });
+
+    test("leaves out the overlay settings that have a preference, also after a workspace applied them", () => {
+        WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings: {wcsOverlay: {global: {color: "auto-red"}, grid: {isVisible: true}, labels: {isVisible: false}}}}], []);
+
+        const wcsOverlay = (imageViewSettings() as {wcsOverlay: Record<string, object>}).wcsOverlay;
+
+        expect(AppStore.Instance.overlaySettings.global.color).toBe("auto-red");
+        expect(wcsOverlay.global).not.toHaveProperty("color");
+        expect(wcsOverlay.grid).not.toHaveProperty("isVisible");
+        expect(wcsOverlay.labels).not.toHaveProperty("isVisible");
     });
 
     test("writes only fields the layout schema declares", () => {

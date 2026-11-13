@@ -95,38 +95,40 @@ describe("the WCS overlay in a layout", () => {
         expect(overlay.toConfig()).toEqual(defaults);
     });
 
-    test("uses the default for each value that the controls do not accept", () => {
+    test("uses the default for each value that the controls do not accept, and keeps a setting that has a preference", () => {
         const defaults = createOverlay().toConfig();
         const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
 
         overlay.applyConfig({
             isVisible: "no",
             global: {labelType: "Inside", color: "", tolerance: 0, system: "J2000"},
             title: {font: 99, fontSize: 200},
-            grid: {width: -1, gapX: 0},
+            grid: {isVisible: "yes", width: -1, gapX: 0},
             border: {width: 0.1},
             ticks: {length: 101, densityX: -1},
             numbers: {formatX: "hours", precision: 2.5},
-            labels: {fontSize: 6, font: 1.5}
+            labels: {isVisible: 1, fontSize: 6, font: 1.5}
         });
 
         expect(overlay.toConfig()).toEqual(defaults);
+        expect(overlay.toConfig(true)).toMatchObject({global: {color: CUSTOM_OVERLAY.global.color}, grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible}, labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible}});
     });
 
     test("keeps the settings that have a preference when the layout leaves them out", () => {
         const overlay = createOverlay();
         overlay.global.setColor("auto-green");
         overlay.grid.setVisible(true);
+        overlay.labels.setVisible(false);
 
         overlay.applyConfig({});
 
         expect(overlay.global.color).toBe("auto-green");
         expect(overlay.grid.isVisible).toBe(true);
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, false);
         expect(overlay.labels.isVisible).toBe(false);
     });
 
-    test("leaves out of a layout the settings that have a preference, also when the session set them, so that the preferences still apply", () => {
+    test("leaves out of a layout the settings that have a preference", () => {
         const overlay = createOverlay();
         overlay.global.setColor("auto-green");
         overlay.grid.setVisible(true);
@@ -137,17 +139,9 @@ describe("the WCS overlay in a layout", () => {
         expect(config.global).not.toHaveProperty("color");
         expect(config.grid).not.toHaveProperty("isVisible");
         expect(config.labels).not.toHaveProperty("isVisible");
-        const other = createOverlay();
-        other.applyConfig(JSON.parse(JSON.stringify(config)));
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, false);
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, true);
-        expect(other.global.color).toBe("auto-red");
-        expect(other.grid.isVisible).toBe(false);
-        expect(other.labels.isVisible).toBe(true);
     });
 
-    test("saves the settings that follow the preferences as they are shown, for a workspace", () => {
+    test("saves the settings that have a preference as they are shown, for a workspace", () => {
         setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
         const overlay = createOverlay();
 
@@ -167,18 +161,6 @@ describe("the WCS overlay in a layout", () => {
         expect(overlay.axes.width).toBe(45);
     });
 
-    test("keeps a setting that the session set when the preference changes", () => {
-        const overlay = createOverlay();
-        overlay.grid.setVisible(false);
-        overlay.labels.setVisible(true);
-
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, false);
-
-        expect(overlay.grid.isVisible).toBe(false);
-        expect(overlay.labels.isVisible).toBe(true);
-    });
-
     test("does not change the user's preferences", () => {
         const preferences = [...PreferenceStore.Instance.preferences.entries()];
         const overlay = createOverlay();
@@ -188,7 +170,7 @@ describe("the WCS overlay in a layout", () => {
         expect([...PreferenceStore.Instance.preferences.entries()]).toEqual(preferences);
     });
 
-    test("passes the colors to AST, also the global color that follows the preference", () => {
+    test("passes the colors to AST", () => {
         const overlay = createOverlay();
         (AST.setColor as jest.Mock).mockClear();
 
@@ -196,11 +178,6 @@ describe("the WCS overlay in a layout", () => {
         expect(AST.setColor).toHaveBeenCalledWith(expect.anything(), AstColorsIndex.GLOBAL);
         expect(AST.setColor).toHaveBeenCalledWith(expect.anything(), AstColorsIndex.GRID);
         expect(AST.setColor).toHaveBeenCalledWith(expect.anything(), AstColorsIndex.LABEL);
-
-        (AST.setColor as jest.Mock).mockClear();
-        overlay.applyConfig({});
-        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-green");
-        expect(AST.setColor).toHaveBeenCalledWith(expect.anything(), AstColorsIndex.GLOBAL);
     });
 
     test("sets the coordinate system at once, without asking the user and without turning off spatial matching", () => {

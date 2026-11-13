@@ -477,7 +477,7 @@ describe("WidgetsStore initWidgets", () => {
         expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
     });
 
-    test("returns the image view grid and the WCS overlay to their defaults and the user's preferences when a layout saved none", () => {
+    test("passes no grid and no WCS overlay on when a layout saved none", () => {
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
         const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);

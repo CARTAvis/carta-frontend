@@ -99,7 +99,7 @@ function createSession(overrides: Record<string, any> = {}) {
         imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
         layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         overlaySettings: {
-            toConfig: jest.fn((shouldIncludePreferenceValues: boolean) => ({isVisible: true, grid: shouldIncludePreferenceValues ? {isVisible: false, width: 1} : {width: 1}})),
+            toConfig: jest.fn((shouldIncludePreferenceSettings: boolean) => ({isVisible: true, grid: shouldIncludePreferenceSettings ? {isVisible: false, width: 1} : {width: 1}})),
             toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))
         },
         ...overrides
@@ -783,7 +783,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.layout?.docked.content[0]).toEqual({type: "component", id: "image-view"});
     });
 
-    test("keeps the overlay settings that follow the preferences in each image view of the layout, as they are shown", () => {
+    test("saves the overlay settings that have a preference in each image view of the layout, as they are shown", () => {
         const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view", widgetSettings: {panelRows: 1, wcsOverlay: {grid: {width: 1}}}}]}, floating: []};
         createSession({layoutStore: {currentLayoutConfig: jest.fn(() => layout)}});
 
