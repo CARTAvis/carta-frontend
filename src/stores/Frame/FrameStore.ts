@@ -2671,22 +2671,43 @@ export class FrameStore {
     }
 
     public findChannelIndexByValue = (x: number | null | undefined): number | undefined => {
+        return this.findChannelIndexInCoordinate(x, this.spectralType, this.spectralUnit, this.spectralSystem);
+    };
+
+    /**
+     * Returns the index of the channel nearest to a spectral value in the given spectral type, unit
+     * and system. A value outside the channels gives the first or last channel. Returns nothing
+     * when the value is not a number or the image has no channel information. The spectral
+     * coordinate that the image shows does not change. For example, a script can give a velocity
+     * range for an image that shows frequencies.
+     *
+     * @param shouldRejectUnconvertible - whether to return nothing when the value cannot be
+     *        converted to a channel, for example when the image has no spectral coordinate. Otherwise
+     *        such a value gives the first channel, as the GUI has always done.
+     */
+    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null, shouldRejectUnconvertible = false): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }
 
         if (this.channelInfo) {
-            if (this.isCoordChannel) {
+            if (this.isSpectralChannel && type === SpectralType.CHANNEL) {
                 return this.channelInfo.getChannelIndexSimple(x);
-            } else {
-                if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
-                    return this.channelInfo.getChannelIndexWCS(x);
-                } else {
-                    // invert x in selected widget wcs to frame's default wcs
-                    const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
-                    return this.channelInfo.getChannelIndexWCS(tx);
-                }
             }
+            const axis = this.spectralAxis;
+            const isNative = !!axis?.type && !!axis?.specsys && axis.type.code === (type as string) && axis.type.unit === (unit as string) && axis.specsys === (system as string);
+            if (shouldRejectUnconvertible && !this.channelInfo.fromWCS) {
+                return undefined;
+            }
+            if ((axis && !axis.valid) || isNative) {
+                return this.channelInfo.getChannelIndexWCS(x);
+            }
+            // Convert the value to the native spectral coordinate of the image.
+            const tx = AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
+            if (shouldRejectUnconvertible && !isFinite(tx)) {
+                return undefined;
+            }
+            return this.channelInfo.getChannelIndexWCS(tx);
         }
         return undefined;
     };

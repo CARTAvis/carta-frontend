@@ -27,7 +27,6 @@ import {
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
-    MOMENT_TEXT,
     type Point2D,
     SOME_IMAGES_NOT_RESTORED,
     SPECTRAL_MATCHING_TYPES,
@@ -44,13 +43,12 @@ import {
     type WorkspaceHipsRequest,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
-    type WorkspaceIssue,
-    type WorkspaceMomentRequest,
-    type WorkspacePvRequest
+    type WorkspaceIssue
 } from "models";
-import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
+import {CatalogApiService, MirrorTimeoutError} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, MirrorSiteStore, restoreWorkspaceZoom, scaleFrameZoom, StreamingRowSource, type WorkspaceLoadingStep} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
+import {momentMessageOf, pvMessageOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -1258,7 +1256,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             // request keeps the images that earlier requests made. This includes a request that the
             // user retries after a later request made its images. The backend numbers the names of
             // kept images, as it did when the images were first made.
-            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const message = momentMessageOf(request, source, regionId, this.momentSources.has(source));
             if (message && regionId > RegionId.CURSOR) {
                 const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
@@ -1273,7 +1271,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const made = (this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1314,11 +1312,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             }
         } else {
-            const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
+            const message = pvMessageOf(request, source, regionId, true);
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const made = (this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1357,87 +1355,34 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Gets the backend ready to make moments over a region of an image.
-     *
-     * The backend makes moments over a region only when it already keeps the region data of the
-     * image. It starts to keep this data the first time that a widget asks for statistics, a
-     * histogram or a profile of the region. In a normal session, a widget has always asked by then.
-     * During a restore, no widget has asked yet, so the moment request fails. So ask for one
-     * statistic of the region, wait for the answer, and then cancel that request. Sending the
-     * request alone is not enough, because the backend handles requests out of order, and the
-     * moment request could arrive first.
+     * Gets the backend ready to make moments over a region of an image, and shows the wait as a
+     * step of the restore. See `waitForRegionData` for why the wait is needed.
      *
      * The wait has no time limit. It ends when the backend answers, when the image is closed or a
      * later workspace load starts, or when the user skips it. Skipping it also skips the moment
      * request.
      */
     private introduceRegionToBackend(frame: FrameStore, regionId: number, description: string): Promise<"ready" | "closed" | "superseded" | "skipped"> {
-        const backendService = BackendService.Instance;
-        const fileId = frame.frameInfo.fileId;
-        return new Promise(resolve => {
-            let isSettled = false;
-            const step = this.startStep();
-            const finish = (outcome: "ready" | "closed" | "superseded" | "skipped") => {
-                if (isSettled) {
-                    return;
-                }
-                isSettled = true;
-                subscription.unsubscribe();
-                disposeReaction();
-                if (outcome !== "closed") {
-                    backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
-                }
-                step.end();
-                resolve(outcome);
-            };
-            const subscription = backendService.statsStream.subscribe(stats => {
-                if (stats?.fileId === fileId && stats.regionId === regionId) {
-                    finish("ready");
-                }
-            });
-            const disposeReaction = reaction(
-                () => ({isOpen: this.appStore.frames.includes(frame), isCurrent: this.isCurrent}),
-                ({isOpen, isCurrent}) => {
-                    if (!isOpen) {
-                        finish("closed");
-                    } else if (!isCurrent) {
-                        finish("superseded");
-                    }
-                },
-                {equals: comparer.structural}
-            );
-            step.show({description, progress: 0, onSkip: () => finish("skipped")});
-            backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
-        });
-    }
-
-    /** Returns the request that a saved moment request makes, or nothing when this version cannot make it. */
-    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number, shouldKeep: boolean): CARTA.MomentRequest.$Properties | undefined {
-        const {moments, channelRange, mask, pixelRange} = request;
-        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
-        if (
-            !Array.isArray(moments) ||
-            !moments.length ||
-            !moments.every(moment => MOMENT_TEXT.has(moment)) ||
-            !Number.isInteger(channelRange?.min) ||
-            !Number.isInteger(channelRange?.max) ||
-            !Object.values(CARTA.MomentMask).includes(mask) ||
-            !isNumber(pixelRange?.min) ||
-            !isNumber(pixelRange?.max)
-        ) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            moments,
-            axis: CARTA.MomentAxis.SPECTRAL,
+        const step = this.startStep();
+        const wait = waitForRegionData<"superseded" | "skipped">(
+            frame,
             regionId,
-            spectralRange: {min: channelRange.min, max: channelRange.max},
-            mask,
-            pixelRange: new CARTA.FloatBounds({min: pixelRange.min, max: pixelRange.max}),
-            keep: shouldKeep,
-            restFreq: source.restFreqStore?.restFreqInHz
-        };
+            () => this.appStore.frames.includes(frame),
+            () => this.appStore.statsRequirementsOf(frame.frameInfo.fileId, regionId)
+        );
+        const disposeReaction = reaction(
+            () => this.isCurrent,
+            isCurrent => {
+                if (!isCurrent) {
+                    wait.stop("superseded");
+                }
+            }
+        );
+        step.show({description, progress: 0, onSkip: () => wait.stop("skipped")});
+        return wait.ready.finally(() => {
+            disposeReaction();
+            step.end();
+        });
     }
 
     /**
@@ -1476,22 +1421,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             createResidualImage: images.some(image => image.fittingImage === "residual"),
             offset: isNumber(request.offset) ? request.offset : 0,
             solver: request.solver
-        };
-    }
-
-    /** Returns the request that a saved PV request makes, or nothing when this version cannot make it. */
-    private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
-        const {width, channelRange} = request;
-        if (!Number.isInteger(width) || width < 1 || (channelRange !== undefined && (!Number.isInteger(channelRange?.min) || !Number.isInteger(channelRange?.max)))) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            regionId,
-            width,
-            spectralRange: channelRange ? {min: channelRange.min, max: channelRange.max} : null,
-            reverse: request.reverse === true,
-            keep: true
         };
     }
 

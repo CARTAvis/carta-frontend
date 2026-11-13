@@ -64,6 +64,8 @@ import {
     WidgetsStore
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
+import {ImageRequestCancelledError, type ImageRequestOptions} from "stores/ImageGeneration/ImageGenerationRequests";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -249,6 +251,8 @@ export class AppStore {
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
+    /** The jobs that make moment images and PV images for scripts. */
+    readonly imageGenerationJobs: ImageGenerationJobStore = new ImageGenerationJobStore(this);
 
     // WebAssembly Module status
     @observable isAstReady: boolean = false;
@@ -1625,14 +1629,14 @@ export class AppStore {
     /**
      * Request moment images of an image.
      *
-     * @param isStillWanted - called when the images are made. When it returns false, the images are
-     *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report.
+     * @throws When the spectral axis is not linear and a moment needs a linear axis. Also the
+     *         error of the backend when `options.shouldThrow` is true, or during a workspace
+     *         restore when `options.shouldThrow` is left out. Also an `ImageRequestCancelledError`
+     *         when the request is cancelled and `options.shouldThrow` is true.
      */
     @flow.bound
-    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return [];
         }
@@ -1640,7 +1644,8 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
         if (!message.keep) {
@@ -1656,6 +1661,9 @@ export class AppStore {
         const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAcks && !isStillWanted()) {
                 this.discardGeneratedImages(ack.openFileAcks);
             } else if (!ack.cancel && ack.openFileAcks) {
@@ -1693,7 +1701,7 @@ export class AppStore {
             frame.resetMomentRequestState();
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (shouldThrow) {
                 throw err;
             }
         }
@@ -1711,6 +1719,10 @@ export class AppStore {
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
+        if (frame) {
+            // A script job that still waits for the region data has sent no request to cancel.
+            this.imageGenerationJobs.cancelWaitingMomentJob(frame);
+        }
         if (frame && frame.requestingMomentsProgress < 1.0) {
             this.backendService.cancelRequestingMoment(fileId);
         }
@@ -1719,14 +1731,15 @@ export class AppStore {
     /**
      * Request a PV image of an image.
      *
-     * @param isStillWanted - called when the image is made. When it returns false, the image is
-     *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report, so no toast shows it.
+     * @throws When the spectral axis is not linear. Also the error of the backend when
+     *         `options.shouldThrow` is true, or during a workspace restore when
+     *         `options.shouldThrow` is left out. Also an `ImageRequestCancelledError` when the
+     *         request is cancelled and `options.shouldThrow` is true. A toast shows the error of
+     *         the backend only when the error is not thrown.
      */
     @flow.bound
-    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return undefined;
         }
@@ -1734,7 +1747,8 @@ export class AppStore {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
         }
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame
         if (!shouldKeepExisting) {
@@ -1749,6 +1763,9 @@ export class AppStore {
         let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAck && !isStillWanted()) {
                 this.discardGeneratedImages([ack.openFileAck]);
             } else if (!ack.cancel && ack.openFileAck) {
@@ -1778,11 +1795,17 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
         } catch (err) {
+            // The backend answers a cancelled PV request as a failed request, so the error alone does
+            // not say that the request was cancelled. The image says it while it cancels.
+            const isCancelled = frame.isRequestPVCancelling;
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (options.shouldThrow && isCancelled) {
+                throw new ImageRequestCancelledError();
+            }
+            if (shouldThrow) {
                 throw err;
             }
             AppToaster.show(ErrorToast(err));
@@ -3177,7 +3200,8 @@ export class AppStore {
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
-        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
+        // A script job that makes images is checked apart for the same reason.
+        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog || this.imageGenerationJobs.hasRunningJobs()) {
             this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
             return false;
         }
@@ -4011,6 +4035,11 @@ export class AppStore {
         this.recalculateStatsRequirements();
         this.recalculateHistogramRequirements();
     };
+
+    /** Returns the statistics that the widgets ask for of a region, as last sent to the backend. */
+    statsRequirementsOf(fileId: number, regionId: number): CARTA.SetStatsRequirements | undefined {
+        return this.statsRequirements?.get(fileId)?.get(regionId);
+    }
 
     private recalculateStatsRequirements() {
         if (!this.activeFrame) {

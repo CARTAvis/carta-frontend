@@ -1678,8 +1678,9 @@ describe("WorkspaceRestorer", () => {
                 return frame;
             };
             const generating = {
-                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _isStillWanted?: () => boolean) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _options?: {isStillWanted?: () => boolean}) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
                 cancelRequestingMoment: jest.fn(),
+                statsRequirementsOf: jest.fn((_fileId: number, _regionId: number) => undefined),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
                 loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({}))),
@@ -1722,7 +1723,9 @@ describe("WorkspaceRestorer", () => {
 
             const restorer = await restored(workspace);
 
-            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], {
+                isStillWanted: expect.any(Function)
+            });
             // The backend is asked for a statistic of the region, and answers it, before the
             // moments are asked for.
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
@@ -1985,7 +1988,7 @@ describe("WorkspaceRestorer", () => {
             expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
-            const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
+            const {isStillWanted} = requestMoment.mock.calls[0][2] as {isStillWanted: () => boolean};
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings, and the Image Fitting settings and results, in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 * Added support for saving the WCS overlay settings in layouts and workspaces ([#3043](https://github.com/CARTAvis/carta-frontend/issues/3043)).
+* Added support for making moment and PV images from scripts, with their status, progress and cancel ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 ### Fixed
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
