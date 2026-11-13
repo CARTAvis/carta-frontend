@@ -4,11 +4,10 @@ import {HistogramSettingsTabs, PlotType, SmoothingType, SpatialProfilerSettingsT
 import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
 import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "models/Layout/RegularLayoutWidgetSettings";
 import {REGULAR_WIDGET_SETTINGS} from "models/Layout/V6Layout.fixture";
+// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
+import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
-
-// Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
-import "stores";
 
 import {AnimatorWidgetStore} from "./AnimatorWidgetStore/AnimatorWidgetStore";
 import {HistogramWidgetStore} from "./HistogramWidgetStore/HistogramWidgetStore";
@@ -167,11 +166,65 @@ describe("widget config in the workspace schema", () => {
         expect(validateWidget(widget)).toBe(true);
     });
 
-    test("writes the image view grid only with fields the workspace schema declares", () => {
-        const grid = ImageViewConfigStore.Instance.toConfig();
+    test("writes the image view grid and the WCS overlay only with fields the workspace schema declares", () => {
+        const imageViewSettings = WidgetsStore.Instance.toWidgetSettingsConfig("image-view", "image-view-0", "workspace") as object;
 
-        expect(undeclaredFields("workspace/layout-image-view", WORKSPACE_SCHEMA.definitions["layout-image-view"]?.properties.widgetSettings.properties, grid)).toEqual([]);
-        expect(validateWidget(JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: grid})))).toBe(true);
+        expect(undeclaredFieldsDeep(WORKSPACE_SCHEMA.definitions["layout-image-view"].properties.widgetSettings, imageViewSettings)).toEqual([]);
+        expect(validateWidget(JSON.parse(JSON.stringify({type: "component", id: "image-view", widgetSettings: imageViewSettings})))).toBe(true);
+    });
+});
+
+/** Returns the paths of the fields of a value that a schema does not declare, at any depth. */
+function undeclaredFieldsDeep(schema: {$ref?: string; properties?: Record<string, object>}, value: object, path: string = ""): string[] {
+    const resolved = schema.$ref ? WORKSPACE_SCHEMA.definitions[schema.$ref.replace("#/definitions/", "")] : schema;
+    return Object.entries(value).flatMap(([key, child]) => {
+        const declared = resolved.properties?.[key];
+        if (!declared) {
+            return [`${path}${key}`];
+        }
+        return child && typeof child === "object" && !Array.isArray(child) ? undeclaredFieldsDeep(declared, child, `${path}${key}.`) : [];
+    });
+}
+
+describe("image view grid and WCS overlay in a layout", () => {
+    const overlaySettings = () => AppStore.Instance.overlaySettings;
+
+    afterEach(() => {
+        overlaySettings().applyConfig({});
+        overlaySettings().global.setColor(PreferenceStore.Instance.astColor);
+        overlaySettings().grid.setVisible(PreferenceStore.Instance.isAstGridVisible);
+        overlaySettings().labels.setVisible(PreferenceStore.Instance.isAstLabelsVisible);
+        ImageViewConfigStore.Instance.applyConfig(null);
+    });
+
+    test("saves the WCS overlay with the grid in the layout copy of a workspace, with the settings that have a preference as they are shown", () => {
+        overlaySettings().global.setColor("auto-red");
+        overlaySettings().grid.setVisible(false);
+
+        const imageViewSettings = WidgetsStore.Instance.toWidgetSettingsConfig("image-view", "image-view-0", "workspace") as {wcsOverlay: any};
+
+        expect(imageViewSettings).toEqual({...ImageViewConfigStore.Instance.toConfig(), wcsOverlay: overlaySettings().toConfig()});
+        expect(imageViewSettings.wcsOverlay.global.color).toBe("auto-red");
+        expect(imageViewSettings.wcsOverlay.grid.isVisible).toBe(false);
+        expect(imageViewSettings.wcsOverlay.labels).toHaveProperty("isVisible");
+    });
+
+    test("saves no image view settings in a regular layout, as CARTA v6.0 did", () => {
+        expect(WidgetsStore.Instance.toWidgetSettingsConfig("image-view", "image-view-0", "regular")).toBeUndefined();
+    });
+
+    test("applies the WCS overlay that the layout copy of a workspace saved, and leaves it alone for a regular layout", () => {
+        const widgetSettings = {panelColumns: 3, wcsOverlay: {global: {color: "auto-red"}, grid: {isVisible: false}, title: {isVisible: true}}};
+
+        expect(WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings}], [], "regular")).toEqual([]);
+        expect(overlaySettings().global.color).toBe(PreferenceStore.Instance.astColor);
+        expect(overlaySettings().title.isVisible).toBe(false);
+
+        expect(WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings}], [], "workspace")).toEqual([]);
+        expect(ImageViewConfigStore.Instance.panelColumns).toBe(3);
+        expect(overlaySettings().global.color).toBe("auto-red");
+        expect(overlaySettings().grid.isVisible).toBe(false);
+        expect(overlaySettings().title.isVisible).toBe(true);
     });
 });
 

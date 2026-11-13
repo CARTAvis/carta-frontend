@@ -114,10 +114,13 @@ export class LayoutStore {
      * @param layoutName - the saved layout it came from, or "" for the layout copy of a workspace.
      * @param persistence - the kind of layout. A regular layout is applied as in CARTA v6.0. The
      *                      layout copy of a workspace is validated by the workspace schema, and also
-     *                      applies what only a workspace keeps, such as the image view grid.
+     *                      applies what only a workspace keeps, such as the image view grid and the
+     *                      WCS overlay.
+     * @param problems - receives what could not be applied as the layout saved it. Only the layout
+     *                   copy of a workspace can have such problems.
      * @returns whether the layout could be applied.
      */
-    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = "", persistence: LayoutPersistence = "regular"): boolean => {
+    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = "", persistence: LayoutPersistence = "regular", problems: string[] = []): boolean => {
         const preparedConfig = LayoutConfig.prepareLayout(config, persistence);
         if (!preparedConfig) {
             return false;
@@ -144,7 +147,7 @@ export class LayoutStore {
         appStore.widgetsStore.clearPopoutPositions();
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence);
+        problems.push(...appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence));
 
         this.layoutModel = nextLayoutModel;
 

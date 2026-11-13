@@ -112,6 +112,9 @@ function createSession(overrides: Record<string, any> = {}) {
             }))
         },
         layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        overlaySettings: {
+            toTextConfig: jest.fn(() => ({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}}))
+        },
         ...overrides
     };
 
@@ -751,6 +754,39 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalledWith("workspace");
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
+    });
+
+    test("saves the custom texts of the WCS overlay, and the custom title of each image, but not the default one", () => {
+        const {frame} = createSession();
+        Object.assign(frame, {titleCustomText: "M51 in Halpha", defaultTitleText: "image0.fits"});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.wcsOverlay).toEqual({labels: {hasCustomText: true, customLabelX: "Right ascension", customLabelY: ""}, title: {hasCustomText: true}});
+        expect(workspace.files?.[0].titleCustomText).toBe("M51 in Halpha");
+        Object.assign(frame, {titleCustomText: "image0.fits"});
+        expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("titleCustomText");
+    });
+
+    test("saves the custom title of a color-blended image, but not the default one", () => {
+        const custom = {selectedFrames: [], alpha: [1], filename: "Color Blending 1", titleCustomText: "RGB of M51"};
+        const plain = {selectedFrames: [], alpha: [1], filename: "Color Blending 2", titleCustomText: "Color Blending 2"};
+        createSession({
+            imageViewConfigStore: {
+                colorBlendingImageMap: new Map([
+                    [0, custom],
+                    [1, plain]
+                ]),
+                getImageListIndex: jest.fn((_type: unknown, id: number) => id + 1)
+            }
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.colorBlendingImages).toEqual([
+            {imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
+            {imageListIndex: 2, selectedFrameId: [], alpha: [1]}
+        ]);
     });
 
     test("reports an item the session never opened instead of giving it an ID", () => {

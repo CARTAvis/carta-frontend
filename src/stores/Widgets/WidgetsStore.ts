@@ -885,16 +885,22 @@ export class WidgetsStore {
     /**
      * Adds the stores of the widgets that a layout creates.
      *
-     * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image view grid.
+     * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image
+     *                      view grid and the WCS overlay.
+     * @returns what could not be applied as the layout saved it.
      */
-    public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence) => {
+    public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence): string[] => {
+        const problems: string[] = [];
         this.layoutTableSeparatorPositions.clear();
         this.layoutCatalogWidgetsOnFirstCatalog = [];
         this.removeUnopenedLayoutDisplayStores();
-        // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
+        // The grid and the WCS overlay belong to the session, not to one widget. Apply them once, from
+        // the first image view that saved its settings.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (persistence === "workspace" && imageViews.length) {
-            AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+            const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
+            AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
+            problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
         }
 
         componentConfigs.forEach(componentConfig => {
@@ -918,6 +924,7 @@ export class WidgetsStore {
             this.layoutCatalogWidgetsOnFirstCatalog.forEach(widgetStore => widgetStore.setTableSeparatorPosition(firstCatalogTableSeparatorPosition));
         }
         this.layoutCatalogWidgetsOnFirstCatalog = [];
+        return problems;
     };
 
     private getWidgetComponentId = (node: TabNode): string => {
@@ -1361,7 +1368,7 @@ export class WidgetsStore {
         const isWorkspace = persistence === "workspace";
         switch (widgetType) {
             case ImageViewComponent.WidgetConfig.type:
-                return isWorkspace ? AppStore.Instance.imageViewConfigStore.toConfig() : undefined;
+                return isWorkspace ? {...AppStore.Instance.imageViewConfigStore.toConfig(), wcsOverlay: AppStore.Instance.overlaySettings.toConfig()} : undefined;
             case CatalogOverlayComponent.WidgetConfig.type: {
                 const widgetStore = this.catalogWidgets.get(widgetID);
                 const catalogFileId = CatalogStore.Instance.widgetBindings.catalogOf(widgetID);

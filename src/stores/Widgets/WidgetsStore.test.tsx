@@ -462,51 +462,64 @@ describe("WidgetsStore initWidgets", () => {
         jest.restoreAllMocks();
     });
 
-    test("applies the image view grid that the layout copy of a workspace saved, and saves the session's grid in it", () => {
+    test("applies the image view grid and the WCS overlay that the layout copy of a workspace saved, and saves the session's grid and overlay in it", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const wcsOverlay = {isVisible: true, grid: {isVisible: false}};
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => grid)};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => ["The overlay problem"]), toConfig: jest.fn(() => wcsOverlay)};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], [], "workspace");
+        const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], [], "workspace");
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
-        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "workspace")).toEqual(grid);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
+        expect(problems).toEqual(["The overlay problem"]);
+        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "workspace")).toEqual({...grid, wcsOverlay});
     });
 
     test.each([
         ["saved a grid", {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1}],
         ["saved none", undefined]
-    ])("leaves the image view grid alone when a regular layout %s, as in CARTA v6.0, and saves no grid in it", (_, grid) => {
+    ])("leaves the image view grid and the WCS overlay alone when a regular layout %s, as in CARTA v6.0, and saves neither in it", (_, grid) => {
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => ({multiPanelEnabled: true}))};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => []), toConfig: jest.fn(() => ({isVisible: true}))};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const widgetSettings = grid ? {...grid, wcsOverlay: {grid: {isVisible: false}}} : undefined;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(grid ? {widgetSettings: grid} : {})}], [{type: "component", id: "image-view", widgetSettings: grid}], "regular");
+        const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(widgetSettings ? {widgetSettings} : {})}], [{type: "component", id: "image-view", widgetSettings}], "regular");
 
+        expect(problems).toEqual([]);
         expect(imageViewConfigStore.applyConfig).not.toHaveBeenCalled();
+        expect(overlaySettings.applyConfig).not.toHaveBeenCalled();
         expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "regular")).toBeUndefined();
     });
 
-    test("keeps the image view grid that the layout copy of a workspace saved when another image view in it saved none", () => {
+    test("keeps the image view grid and the WCS overlay that the layout copy of a workspace saved when another image view in it saved none", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+        const wcsOverlay = {grid: {isVisible: false}};
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: grid}], [{type: "component", id: "image-view"}], "workspace");
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], [{type: "component", id: "image-view"}], "workspace");
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[grid]]);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
     });
 
-    test("returns the image view grid to the user's preferences when the layout copy of a workspace saved none", () => {
+    test("returns the image view grid to the user's preferences, and leaves the WCS overlay as it is, when the layout copy of a workspace saved none", () => {
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}}], [], "workspace");
 
         expect(imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+        expect(overlaySettings.applyConfig).toHaveBeenCalledWith(null);
     });
 
     test("brings a floating histogram that the layout copy of a workspace restored to the front when selected", () => {
