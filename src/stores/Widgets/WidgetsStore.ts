@@ -186,6 +186,8 @@ export class WidgetsStore {
     private defaultFloatingWidgetOffset: number;
     /** The table split of each catalog that the regular layout being applied has set the style of, by the file ID. */
     private readonly layoutTableSeparatorPositions = new Map<number, string>();
+    /** The catalog widgets of the regular layout being applied that name no catalog, and so show the catalog with the file ID 1. */
+    private layoutCatalogWidgetsOnFirstCatalog: CatalogWidgetStore[] = [];
     /** The file IDs of the display stores that a regular layout made for catalogs that were not open. */
     private readonly layoutDisplayStoreFileIds = new Set<number>();
     private beingUnpinned: Set<string> = new Set();
@@ -714,11 +716,17 @@ export class WidgetsStore {
      *
      * CARTA v6.0 kept one store for each catalog. It applied the settings of only the first widget
      * in a layout that names a catalog. A later widget that names the same catalog shared that
-     * store, so it also used the table split of the first widget.
+     * store, so it also used the table split of the first widget. A widget whose layout names no
+     * catalog showed the catalog with the file ID 1. So it used the table split of the widget that
+     * names this catalog, in any place in the layout. {@link initWidgets} gives it that split.
      */
     private applyRegularCatalogOverlaySettings = (widgetStore: CatalogWidgetStore, settings: CatalogWidgetRegularLayoutSettings | null) => {
         const catalogFileId = settings?.catalogFileId;
-        if (!settings || !WidgetsStore.isLayoutCatalogFileId(catalogFileId)) {
+        if (!settings) {
+            return;
+        }
+        if (!WidgetsStore.isLayoutCatalogFileId(catalogFileId)) {
+            this.layoutCatalogWidgetsOnFirstCatalog.push(widgetStore);
             return;
         }
         const firstTableSeparatorPosition = this.layoutTableSeparatorPositions.get(catalogFileId);
@@ -738,15 +746,13 @@ export class WidgetsStore {
     };
 
     /**
-     * Removes each display store that the last regular layout made for a catalog that has not opened
-     * since. CARTA v6.0 removed the stores of its catalog widgets each time a layout was applied.
+     * Removes each display store that a regular layout made for a catalog that has not opened since.
+     * CARTA v6.0 removed the stores of its catalog widgets each time a layout was applied. A catalog
+     * that is still being opened gets its display store only when it is loaded, so its store is
+     * removed too. Then the catalog is drawn by the defaults, as in CARTA v6.0.
      */
-    private removeUnopenedLayoutDisplayStores = () => {
+    @action public removeUnopenedLayoutDisplayStores = () => {
         const catalogStore = CatalogStore.Instance;
-        if (catalogStore.isOpeningCatalog) {
-            // A catalog that is being opened may take one of these file IDs.
-            return;
-        }
         this.layoutDisplayStoreFileIds.forEach(fileId => {
             if (!catalogStore.catalogProfileStores.has(fileId)) {
                 catalogStore.removeCatalogDisplayStore(fileId);
@@ -883,6 +889,7 @@ export class WidgetsStore {
      */
     public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence) => {
         this.layoutTableSeparatorPositions.clear();
+        this.layoutCatalogWidgetsOnFirstCatalog = [];
         this.removeUnopenedLayoutDisplayStores();
         // The grid belongs to the session, not to one widget. Apply it once, from the first image view that saved a grid.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
@@ -905,6 +912,12 @@ export class WidgetsStore {
 
         // init floating widgets
         floating.forEach(savedConfig => this.createFloatingWidget(savedConfig, persistence));
+
+        const firstCatalogTableSeparatorPosition = this.layoutTableSeparatorPositions.get(1);
+        if (firstCatalogTableSeparatorPosition !== undefined) {
+            this.layoutCatalogWidgetsOnFirstCatalog.forEach(widgetStore => widgetStore.setTableSeparatorPosition(firstCatalogTableSeparatorPosition));
+        }
+        this.layoutCatalogWidgetsOnFirstCatalog = [];
     };
 
     private getWidgetComponentId = (node: TabNode): string => {

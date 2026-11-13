@@ -90,8 +90,8 @@ export class LayoutConfig {
     /**
      * Prepares a layout that is about to replace the live layout.
      *
-     * A regular layout is only upgraded, in place, as CARTA v6.0 applied it. It is not validated
-     * here: a layout is validated when it is loaded from the server or the local storage.
+     * A regular layout is applied as it is, as CARTA v6.0 applied it. It is upgraded and validated
+     * when it is loaded from the server or the local storage. A preset layout is in the current form.
      *
      * The layout copy of a workspace is upgraded and validated without changing the caller's object.
      * Layout validation applies defaults, so validating the copy in place would mutate the
@@ -105,7 +105,6 @@ export class LayoutConfig {
             return undefined;
         }
         if (persistence !== "workspace") {
-            LayoutConfig.upgradeLayout(layout as any);
             return layout;
         }
 
