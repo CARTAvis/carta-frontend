@@ -6,16 +6,15 @@
  * backend and the controller update their schemas pointer only once. Each of these fields is in an
  * object that the schema leaves open, so a workspace or layout that has the field still passes
  * validation. Remove an entry once the schema declares the field.
+ *
+ * The layout schema declares what a layout kept in CARTA v6.0. The fields listed for it here are the
+ * fields that a regular layout keeps since then: the rest frame of the spectral profiler, the mean
+ * and RMS of the histogram, and the time labels of the animator.
  */
 export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
     "layout/animator": ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"],
-    "layout/histogram": ["widgetId", "meanRmsVisible", "settingsTabId", "autoBins"],
-    "layout/image-view": ["multiPanelEnabled", "panelMode", "panelColumns", "panelRows"],
-    "layout/render-config": ["widgetId"],
-    "layout/spatial-profiler": ["widgetId", "markerTextVisible", "settingsTabId", "smoothing"],
-    "layout/spectral-profiler": ["widgetId", "restFrameShiftMode", "restFrameVelocityConvention", "markerTextVisible", "secondaryAxisCursorInfoVisible", "settingsTabId", "smoothing"],
-    "layout/stats": ["widgetId"],
-    "layout/stokes": ["widgetId", "invertedColorMap", "fractionalPolVisible", "referenceAxesVisible", "settingsTabId", "smoothing"]
+    "layout/histogram": ["meanRmsVisible"],
+    "layout/spectral-profiler": ["xAxisRestFrameEnabled", "restFrameRedshift", "restFrameShiftMode", "restFrameVelocityConvention", "yAxisRestFrameEnabled"]
 };
 
 /**

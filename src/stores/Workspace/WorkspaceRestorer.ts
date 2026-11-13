@@ -2260,8 +2260,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
 
-        // The layout store validates and upgrades a copy before replacing the current widgets.
-        if (!this.appStore.layoutStore.applyLayoutConfig(layout)) {
+        // The layout store validates and upgrades a copy before replacing the current widgets. It
+        // validates the copy by the definition of the layout in the workspace schema.
+        if (!this.appStore.layoutStore.applyLayoutConfig(layout, "", "workspace")) {
             this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
         }
     }

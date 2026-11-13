@@ -111,7 +111,7 @@ function createSession(overrides: Record<string, any> = {}) {
                 createResidualImage: false
             }))
         },
-        layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
 
@@ -744,12 +744,12 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.selectedColorBlending).toBeUndefined();
     });
 
-    test("carries the arrangement the session was saved in", () => {
+    test("carries the arrangement the session was saved in, in its own copy of the layout", () => {
         const {appStore} = createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalled();
+        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalledWith("workspace");
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
     });
 

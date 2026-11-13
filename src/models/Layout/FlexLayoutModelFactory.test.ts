@@ -43,6 +43,22 @@ const StripInstanceIds = (node: any): any => {
     return result;
 };
 
+const SPATIAL_PROFILER_TABS = {
+    type: "row",
+    content: [
+        {
+            type: "stack",
+            content: [
+                {type: "component", id: "log"},
+                {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}},
+                {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}},
+                {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "Iy"}},
+                {type: "component", id: "spatial-profiler"}
+            ]
+        }
+    ]
+};
+
 describe("FlexLayoutModelFactory", () => {
     test("round-trips abstract layout structure while preserving widget settings", () => {
         const dockedConfig = {
@@ -87,7 +103,7 @@ describe("FlexLayoutModelFactory", () => {
         expect(StripInstanceIds(extractedConfig)).toStrictEqual(expectedConfig);
     });
 
-    test("keeps a maximized stack maximized", () => {
+    test("keeps a maximized stack maximized in the layout copy of a workspace", () => {
         const dockedConfig = {
             type: "row",
             content: [
@@ -98,10 +114,35 @@ describe("FlexLayoutModelFactory", () => {
 
         const expectedConfig = JSON.parse(JSON.stringify(dockedConfig));
 
-        const modelJson = createFlexLayoutModel(dockedConfig);
+        const modelJson = createFlexLayoutModel(dockedConfig, "workspace");
 
         expect(modelJson.layout.children?.map((child: any) => child.maximized)).toEqual([undefined, true]);
-        expect(StripInstanceIds(extractAbstractConfig(modelJson))).toStrictEqual(expectedConfig);
+        expect(StripInstanceIds(extractAbstractConfig(modelJson, "workspace"))).toStrictEqual(expectedConfig);
+    });
+
+    test("neither applies nor saves a maximized stack in a regular layout, as in CARTA v6.0", () => {
+        const dockedConfig = {
+            type: "row",
+            content: [
+                {type: "stack", width: 60, content: [{type: "component", id: "image-view"}]},
+                {type: "stack", width: 40, maximized: true, content: [{type: "component", id: "log"}]}
+            ]
+        };
+
+        const modelJson = createFlexLayoutModel(dockedConfig);
+
+        expect(modelJson.layout.children?.map((child: any) => child.maximized)).toEqual([undefined, undefined]);
+        // A stack that a user maximized after the layout was applied is not saved maximized either.
+        (modelJson.layout.children?.[1] as any).maximized = true;
+        expect((StripInstanceIds(extractAbstractConfig(modelJson)) as any).content[1].maximized).toBeUndefined();
+    });
+
+    test("keeps the type of a catalog plot in the config of its tab in a regular layout, as in CARTA v6.0", () => {
+        const modelJson = createFlexLayoutModel({type: "row", content: [{type: "stack", content: [{type: "component", id: "catalog-plot", plotType: "Histogram"}]}]});
+
+        expect(CollectTabs(modelJson.layout)[0].config.plotType).toBe("Histogram");
+        expect((StripInstanceIds(extractAbstractConfig(modelJson)) as any).content[0].content[0].plotType).toBe("Histogram");
+        expect((StripInstanceIds(extractAbstractConfig(modelJson, "workspace")) as any).content[0].content[0].plotType).toBeUndefined();
     });
 
     test("clears generated ids after a failed conversion", () => {
@@ -128,26 +169,19 @@ describe("FlexLayoutModelFactory", () => {
         expect(CollectTabIds(recoveredModel.layout)).toStrictEqual(["stats-0"]);
     });
 
-    test("names spatial profiler tabs by their coordinate before their widgets mount", () => {
+    test("names spatial profiler tabs by their coordinate before their widgets mount in the layout copy of a workspace", () => {
         // A tab that is not the one shown in its tabset is not mounted, so it keeps this name.
-        const model = createFlexLayoutModel({
-            type: "row",
-            content: [
-                {
-                    type: "stack",
-                    content: [
-                        {type: "component", id: "log"},
-                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}},
-                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}},
-                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "Iy"}},
-                        {type: "component", id: "spatial-profiler"}
-                    ]
-                }
-            ]
-        });
+        const model = createFlexLayoutModel(SPATIAL_PROFILER_TABS, "workspace");
 
         const tabs = (model.layout.children[0] as any).children;
         expect(tabs.map(tab => tab.name)).toEqual(["Log", "X Profile: Cursor", "Y Profile: Cursor", "IY Profile: Cursor", "X Profile: Cursor"]);
+    });
+
+    test("leaves spatial profiler tabs without a name until their widgets mount in a regular layout, as in CARTA v6.0", () => {
+        const model = createFlexLayoutModel(SPATIAL_PROFILER_TABS);
+
+        const tabs = (model.layout.children[0] as any).children;
+        expect(tabs.map(tab => tab.name)).toEqual(["Log", undefined, undefined, undefined, undefined]);
     });
 
     test("only image-view tabs enable popout", () => {

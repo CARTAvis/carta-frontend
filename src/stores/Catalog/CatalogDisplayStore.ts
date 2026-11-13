@@ -20,6 +20,7 @@ import {
 import {
     type ConfigurableStore,
     FACTOR_TO_ARCSEC,
+    type Persisted,
     type WorkspaceCatalogAxisConfig,
     type WorkspaceCatalogColorAxisConfig,
     type WorkspaceCatalogConfig,
@@ -110,6 +111,19 @@ function finiteNumberOrDefault(value: unknown, fallback: number): number {
 
 function optionalFiniteNumber(value: unknown): number | undefined {
     return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * How the sources of a catalog are drawn, as a regular layout keeps it for a catalog widget. The
+ * settings belong to the catalog that the widget shows.
+ */
+export interface CatalogLayoutStyle {
+    catalogColor: string;
+    highlightColor: string;
+    /** The size of the sources, in screen pixels when the size is not angular. */
+    catalogSize: number;
+    catalogShape: CatalogOverlayShape;
+    thickness: number;
 }
 
 /** Outcome of applying a display config. A rejected config leaves the store untouched. */
@@ -1933,6 +1947,40 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
             copyClipBound(this.sizeColumnMax, this.sizeMinorColumnMax);
         }
     }
+
+    /** Returns how the sources are drawn, as a regular layout keeps it. */
+    public toLayoutStyle = (): CatalogLayoutStyle => ({
+        catalogColor: this.catalogColor,
+        highlightColor: this.highlightColor,
+        catalogSize: this.catalogSize,
+        catalogShape: this.catalogShape,
+        thickness: this.thickness
+    });
+
+    /**
+     * Applies how the sources are drawn, as a regular layout keeps it. Only the settings that the
+     * layout has and that are valid are applied. The other settings of the catalog stay as they are.
+     */
+    @action applyLayoutStyle = (style: Persisted<CatalogLayoutStyle> | null | undefined) => {
+        if (!style) {
+            return;
+        }
+        if (typeof style.catalogColor === "string") {
+            this.setCatalogColor(style.catalogColor);
+        }
+        if (typeof style.highlightColor === "string") {
+            this.setHighlightColor(style.highlightColor);
+        }
+        if (typeof style.catalogSize === "number" && style.catalogSize >= CatalogDisplayStore.MIN_OVERLAY_SIZE && style.catalogSize <= CatalogDisplayStore.MAX_OVERLAY_SIZE) {
+            this.setCatalogSize(style.catalogSize);
+        }
+        if (CATALOG_OVERLAY_SHAPE_VALUES.includes(style.catalogShape as CatalogOverlayShape)) {
+            this.setCatalogShape(style.catalogShape as CatalogOverlayShape);
+        }
+        if (typeof style.thickness === "number" && Number.isFinite(style.thickness)) {
+            this.setThickness(style.thickness);
+        }
+    };
 
     public toConfig = (): WorkspaceCatalogConfig => {
         return {

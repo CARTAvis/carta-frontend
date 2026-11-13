@@ -652,7 +652,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.restFrameRedshift).toBe(0.25);
         expect(widgetStore.isYAxisRestFrameActive).toBe(true);
         expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
-        expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRedshift");
+        expect(widgetStore.toConfig()).toEqual(expect.objectContaining({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
         widgetStore.setRestFrameRedshift(-1);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
@@ -686,13 +686,14 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
-    test("takes the redshift from a workspace, not from a layout", () => {
+    test("takes the rest frame switches and the redshift from a regular layout", () => {
         const {widgetStore} = createWidgetStore();
 
-        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25, xAxisRestFrameEnabled: true} as never));
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25, xAxisRestFrameEnabled: true, yAxisRestFrameEnabled: true}));
 
-        expect(widgetStore.restFrameRedshift).toBe(0);
-        expect(widgetStore.isXAxisRestFrameEnabled).toBe(false);
+        expect(widgetStore.restFrameRedshift).toBe(0.25);
+        expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
+        expect(widgetStore.isYAxisRestFrameEnabled).toBe(true);
     });
 
     test("shows the regions' profiles it was saved showing together, in the colours they were shown in", () => {

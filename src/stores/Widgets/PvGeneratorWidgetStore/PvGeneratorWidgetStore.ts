@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspacePvGeneratorWidgetConfig} from "models";
+import {type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceLayoutConfigurable, type WorkspacePvGeneratorWidgetConfig} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -11,9 +11,9 @@ import {length2D} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-/** The settings that a PV generator widget saves in a layout. */
+/** The settings that a PV generator widget saves in the layout copy of a workspace. A regular layout saves no settings for it. */
 export interface PvGeneratorWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
 }
 
@@ -24,7 +24,7 @@ function isPositiveInteger(value: unknown, max: number): value is number {
     return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= max;
 }
 
-export class PvGeneratorWidgetStore extends RegionWidgetStore implements ConfigurableStore<PvGeneratorWidgetConfig, Persisted<PvGeneratorWidgetConfig>>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
+export class PvGeneratorWidgetStore extends RegionWidgetStore implements WorkspaceLayoutConfigurable<PvGeneratorWidgetConfig>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
     widgetId: string = "";
     @observable width: number = 3;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
@@ -234,13 +234,13 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
         );
     }
 
-    public applyConfig = (widgetSettings: Persisted<PvGeneratorWidgetConfig>): void => {
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<PvGeneratorWidgetConfig>): void => {
         if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
     };
 
-    public toConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
+    public toWorkspaceLayoutConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
 
     /** Returns the name of the spectral coordinate of the range, such as "Frequency (GHz), LSRK". A restore applies the range only in the same coordinate. */
     private get channelUnit(): string {
