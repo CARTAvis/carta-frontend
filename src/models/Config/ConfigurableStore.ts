@@ -29,8 +29,6 @@ export interface IdentifiedWidgetStore {
  * The kind of layout that is saved or applied.
  *
  * - `regular`: a saved layout, a preset layout, the layout in the preferences, or a dynamic layout.
- *   It keeps what CARTA v6.0 kept. It also keeps the settings added since then for the rest frame of
- *   the spectral profiler, the mean and RMS of the histogram, and the time labels of the animator.
  * - `workspace`: the copy of the layout that a workspace keeps. It also keeps what only a workspace
  *   needs, such as the own ID of each widget and the settings of the image view grid.
  */

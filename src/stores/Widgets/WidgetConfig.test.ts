@@ -83,7 +83,7 @@ function regularOnlySettingsOf(settings: object): object {
 }
 
 describe("widget config in a regular layout", () => {
-    test.each(REGULAR_WIDGETS)("a %s widget saves the fields that CARTA v6.0 saved and the fields added since then, and nothing else", (type, createStore) => {
+    test.each(REGULAR_WIDGETS)("a %s widget saves the fields of a regular layout, and nothing else", (type, createStore) => {
         expect(Object.keys(createStore().toConfig()).sort()).toEqual(Object.keys(REGULAR_WIDGET_SETTINGS[type]).sort());
     });
 

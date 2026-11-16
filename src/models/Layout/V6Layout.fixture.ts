@@ -3,9 +3,8 @@
  *
  * Each object in {@link V6_WIDGET_SETTINGS} has the fields that the `toConfig` method of the widget
  * store returned in v6.0.0, in the same order. The values are not the defaults, so a test can see
- * whether a value was applied. {@link POST_V6_WIDGET_SETTINGS} has the fields that a regular layout
- * keeps since v6.0: the rest frame of the spectral profiler (#2898), the mean and RMS of the
- * histogram (#2976), and the time labels of the animator (#2881).
+ * whether a value was applied. {@link POST_V6_WIDGET_SETTINGS} has the other fields that a regular
+ * layout keeps.
  */
 export const V6_WIDGET_SETTINGS = {
     "render-config": {
@@ -102,7 +101,7 @@ export const POST_V6_WIDGET_SETTINGS = {
     }
 } as const;
 
-/** The widget settings that a regular layout keeps for each widget type: the v6.0 settings and the settings added since then. */
+/** The widget settings that a regular layout keeps for each widget type. */
 export const REGULAR_WIDGET_SETTINGS = {
     "render-config": V6_WIDGET_SETTINGS["render-config"],
     "spatial-profiler": V6_WIDGET_SETTINGS["spatial-profiler"],

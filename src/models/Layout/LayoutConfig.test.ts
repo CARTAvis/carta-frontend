@@ -81,7 +81,7 @@ describe("LayoutConfig.createConfigToSave", () => {
         ]);
     });
 
-    test("saves in a regular layout only the settings that CARTA v6.0 saved and the settings added since then, with the type of a catalog plot beside them", () => {
+    test("saves in a regular layout only the settings that the widget stores give for it, with the type of a catalog plot beside them", () => {
         const config = LayoutConfig.createConfigToSave(CreateSession(WidgetSettings) as never, MODEL_JSON, "regular");
 
         expect(config?.docked).toEqual({

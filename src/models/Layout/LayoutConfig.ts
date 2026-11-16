@@ -198,9 +198,9 @@ export class LayoutConfig {
      * Creates the abstract config from the current FlexLayout model for saving. It names none of the
      * session's images.
      *
-     * @param persistence - the kind of layout. A regular layout keeps what CARTA v6.0 kept: it keeps
-     *                      no maximized stack, saves the floating widgets in the order of the list of
-     *                      floating widgets, and saves a position of 0 as an empty value. The layout
+     * @param persistence - the kind of layout. A regular layout keeps no maximized stack. It saves
+     *                      the floating widgets in the order of the list of floating widgets, and
+     *                      saves a position of 0 as an empty value. The layout
      *                      copy of a workspace also keeps the own ID of each widget and the settings
      *                      that only a workspace needs, a maximized stack, and a floating widget at
      *                      the left or top edge. It saves the floating widgets in their stacking order.

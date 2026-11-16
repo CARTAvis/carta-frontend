@@ -1366,9 +1366,9 @@ export class WidgetsStore {
     /**
      * Returns the settings that a layout saves for a widget.
      *
-     * @param persistence - the kind of layout. A regular layout keeps what CARTA v6.0 kept. The
-     *                      layout copy of a workspace also keeps the own ID of the widget and the
-     *                      settings that only a workspace needs. It names none of the catalogs.
+     * @param persistence - the kind of layout. The layout copy of a workspace also keeps the own ID
+     *                      of the widget and the settings that only a workspace needs. It names none
+     *                      of the catalogs.
      */
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined, persistence: LayoutPersistence) => {
         if (!widgetType || !widgetID) {

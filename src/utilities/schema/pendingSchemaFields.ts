@@ -7,9 +7,8 @@
  * object that the schema leaves open, so a workspace or layout that has the field still passes
  * validation. Remove an entry once the schema declares the field.
  *
- * The layout schema declares what a layout kept in CARTA v6.0. The fields listed for it here are the
- * fields that a regular layout keeps since then: the rest frame of the spectral profiler, the mean
- * and RMS of the histogram, and the time labels of the animator.
+ * The fields listed for the layout are the fields of a regular layout that the layout schema does
+ * not declare yet.
  */
 export const PENDING_SCHEMA_FIELDS: Record<string, string[]> = {
     "layout/animator": ["timeLabelFormat", "timeZoneMode", "ianaTimeZone", "timeScale", "isoTimePrecision", "numericTimePrecision", "relativeTimeReference", "relativeReferenceMjdUtc", "relativeTimeUnit"],
