@@ -46,7 +46,7 @@ const WidgetSettings = (type: string, _id: string, persistence: string): object 
     const isWorkspace = persistence === "workspace";
     switch (type) {
         case "histogram":
-            return isWorkspace ? {...REGULAR_WIDGET_SETTINGS.histogram, widgetId: "histogram-a", autoBins: true} : {...REGULAR_WIDGET_SETTINGS.histogram, widgetId: "stale"};
+            return isWorkspace ? {...REGULAR_WIDGET_SETTINGS.histogram, widgetId: "histogram-a", autoBins: true} : REGULAR_WIDGET_SETTINGS.histogram;
         case "catalog-plot":
             return isWorkspace ? {widgetId: "plot-a", plotType: "Histogram", dragMode: false} : undefined;
         case "stats":
@@ -205,13 +205,5 @@ describe("LayoutConfig.prepareLayout", () => {
         LayoutConfig.prepareLayout(layout, "workspace");
 
         expect(layout).toEqual(copy);
-    });
-});
-
-describe("LayoutConfig.REGULAR_WIDGET_SETTINGS", () => {
-    test("lists the settings of a layout saved by CARTA v6.0 and the settings added since then", () => {
-        // The fixture is written from the `toConfig` methods of CARTA v6.0.0, so it checks the list.
-        Object.entries(REGULAR_WIDGET_SETTINGS).forEach(([type, settings]) => expect([...LayoutConfig.REGULAR_WIDGET_SETTINGS[type]].sort()).toEqual(Object.keys(settings).sort()));
-        expect(Object.keys(LayoutConfig.REGULAR_WIDGET_SETTINGS).sort()).toEqual(Object.keys(REGULAR_WIDGET_SETTINGS).sort());
     });
 });

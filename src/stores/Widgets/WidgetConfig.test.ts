@@ -2,7 +2,6 @@ import Ajv from "ajv";
 
 import {HistogramSettingsTabs, PlotType, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs} from "enums";
 import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
-import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "models/Layout/RegularLayoutWidgetSettings";
 import {REGULAR_WIDGET_SETTINGS} from "models/Layout/V6Layout.fixture";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
@@ -85,7 +84,7 @@ function regularOnlySettingsOf(settings: object): object {
 
 describe("widget config in a regular layout", () => {
     test.each(REGULAR_WIDGETS)("a %s widget saves the fields that CARTA v6.0 saved and the fields added since then, and nothing else", (type, createStore) => {
-        expect(Object.keys(createStore().toConfig()).sort()).toEqual([...REGULAR_LAYOUT_WIDGET_SETTINGS[type]].sort());
+        expect(Object.keys(createStore().toConfig()).sort()).toEqual(Object.keys(REGULAR_WIDGET_SETTINGS[type]).sort());
     });
 
     test.each(REGULAR_WIDGETS)("a %s widget applies a layout saved by CARTA v6.0 and returns it", (type, createStore) => {

@@ -4,8 +4,6 @@ import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getIm
 import {AppStore, CatalogStore, type WidgetConfig} from "stores";
 import {findDeep} from "utilities";
 
-import {REGULAR_LAYOUT_WIDGET_SETTINGS} from "./RegularLayoutWidgetSettings";
-
 /* eslint-disable @typescript-eslint/naming-convention */
 const layoutSchema = require("carta-schemas/layout_schema_2.json");
 const workspaceSchema = require("carta-schemas/workspace_schema_2.json");
@@ -16,9 +14,6 @@ export class LayoutConfig {
     /** Validates the layout copy of a workspace, by the definition of the layout in the workspace schema. */
     public static workspaceLayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile({$ref: "#/definitions/layout", definitions: workspaceSchema.definitions});
     public static currentSchemaVersion = 2;
-
-    /** The widget settings that a regular layout keeps, by widget type. See {@link REGULAR_LAYOUT_WIDGET_SETTINGS}. */
-    public static readonly REGULAR_WIDGET_SETTINGS = REGULAR_LAYOUT_WIDGET_SETTINGS;
 
     public static getPresetConfig = (presetName: string) => {
         if (!presetName) {
@@ -267,23 +262,9 @@ export class LayoutConfig {
         return configToSave;
     };
 
-    /**
-     * Returns the settings that a layout saves for a widget. A regular layout saves only the settings
-     * in {@link REGULAR_WIDGET_SETTINGS}.
-     */
+    /** Returns the settings that a layout saves for a widget, or undefined when the widget saves none. */
     private static widgetSettingsToSave = (appStore: AppStore, widgetType: string, instanceId: string, persistence: LayoutPersistence): object | undefined => {
-        const widgetSettings = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId, persistence);
-        if (!widgetSettings || persistence === "workspace") {
-            return widgetSettings ?? undefined;
-        }
-        const regularSettings: Record<string, unknown> = {};
-        for (const field of LayoutConfig.REGULAR_WIDGET_SETTINGS[widgetType] ?? []) {
-            const value = (widgetSettings as Record<string, unknown>)[field];
-            if (value !== undefined) {
-                regularSettings[field] = value;
-            }
-        }
-        return Object.keys(regularSettings).length ? regularSettings : undefined;
+        return appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId, persistence) ?? undefined;
     };
 
     /** Returns the type of the plot that a catalog plot widget shows, or undefined for any other widget. */
