@@ -39,6 +39,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
     @observable previewFullViewHeight: number = 1;
 
     private readonly disposers: IReactionDisposer[] = [];
+    /**
+     * The image that the spectral range was chosen on. A PV image has no spectral axis. When a new
+     * PV image becomes the active image, the widget keeps the range of the image that the cut was
+     * made on.
+     */
+    private rangeFrame: FrameStore | null = null;
+    /** Whether the image that the saved spectral range was chosen on was not restored. The range is then not applied. */
+    private isRangeImageMissing = false;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -221,12 +229,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
         makeObservable(this);
 
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
+        this.rangeFrame = this.effectiveFrame?.channelValueBounds ? this.effectiveFrame : null;
 
         this.disposers.push(
             reaction(
                 () => this.effectiveFrame?.channelValueBounds,
                 channelValueBounds => {
                     if (channelValueBounds) {
+                        this.rangeFrame = this.effectiveFrame ?? null;
                         this.setSpectralRange(channelValueBounds);
                     }
                 }
@@ -242,22 +252,31 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
 
     public toConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
 
+    /** Returns the image that the spectral range was chosen on, or nothing when that image was closed. */
+    private get spectralFrame(): FrameStore | null | undefined {
+        return this.rangeFrame && !this.rangeFrame.isDisposed ? this.rangeFrame : this.effectiveFrame;
+    }
+
     /** Returns the name of the spectral coordinate of the range, such as "Frequency (GHz), LSRK". A restore applies the range only in the same coordinate. */
     private get channelUnit(): string {
-        const frame = this.effectiveFrame;
+        const frame = this.spectralFrame;
         return [frame?.spectralCoordinate, frame?.spectralSystem].filter(Boolean).join(", ");
     }
 
     /**
      * Returns the settings that a workspace saves. Leaves out a range of the whole spectral axis, so
      * that a restore in another spectral coordinate does not report a range that the user did not
-     * choose.
+     * choose. When the range was chosen on an image that is not the image of the widget, such as
+     * the image of a PV cut while the PV image is active, saves that image with the range.
      */
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspacePvGeneratorWidgetConfig => {
-        const bounds = this.effectiveFrame?.channelValueBounds;
+        const frame = this.spectralFrame;
+        const bounds = frame?.channelValueBounds;
         const {min, max} = this.range;
         const isWholeAxis = !bounds || (min === bounds.min && max === bounds.max);
-        const hasRange = !isWholeAxis && typeof min === "number" && typeof max === "number";
+        const rangeImageId = frame && frame !== this.effectiveFrame ? ids.imageIdOf(frame.frameInfo.fileId) : undefined;
+        const isRangeImageSaved = !frame || frame === this.effectiveFrame || rangeImageId !== undefined;
+        const hasRange = !isWholeAxis && isRangeImageSaved && typeof min === "number" && typeof max === "number";
         return {
             ...this.toWorkspaceBinding(ids),
             width: this.width,
@@ -266,6 +285,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             xyRebin: this.xyRebin,
             zRebin: this.zRebin,
             ...(hasRange ? {channelRange: [min, max] as [number, number], channelUnit: this.channelUnit} : {}),
+            ...(hasRange && rangeImageId !== undefined ? {channelRangeImageId: rangeImageId} : {}),
             previewRegionId: this.previewRegionId
         };
     };
@@ -288,6 +308,17 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             this.setZRebin(config.zRebin);
         }
         const problems: string[] = [];
+        this.isRangeImageMissing = false;
+        if (typeof config.channelRangeImageId === "number") {
+            const fileId = ids.fileIdOf(config.channelRangeImageId);
+            const frame = fileId !== undefined ? AppStore.Instance.getFrame(fileId) : undefined;
+            if (frame) {
+                this.rangeFrame = frame;
+            } else {
+                this.isRangeImageMissing = true;
+                problems.push("the image that its spectral range was chosen on was not restored, so the range is the whole spectral axis");
+            }
+        }
         if (typeof config.previewRegionId === "number" && config.previewRegionId !== RegionId.IMAGE && config.previewRegionId !== RegionId.NONE) {
             const imageId = config.imageId;
             const regionId = ids.regionIdOf(imageId, config.previewRegionId);
@@ -302,11 +333,12 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
 
     /**
      * Applies the saved spectral range. Apply it last. A change of the image or of its spectral
-     * coordinate resets the range to the whole spectral axis.
+     * coordinate resets the range to the whole spectral axis. The range is not applied when the
+     * image that it was chosen on was not restored, because it would land on another image.
      */
     @action public applyWorkspaceView = (config: WorkspacePvGeneratorWidgetConfig): void => {
         const range = config.channelRange;
-        if (!this.isShowingWorkspaceData || !Array.isArray(range) || range.length !== 2 || !range.every(value => typeof value === "number" && isFinite(value))) {
+        if (this.isRangeImageMissing || !this.isShowingWorkspaceData || !Array.isArray(range) || range.length !== 2 || !range.every(value => typeof value === "number" && isFinite(value))) {
             return;
         }
         if (config.channelUnit === this.channelUnit) {

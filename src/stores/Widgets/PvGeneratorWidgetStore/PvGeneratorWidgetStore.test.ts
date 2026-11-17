@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {observable, runInAction} from "mobx";
 
 import {TelemetryService} from "../../../services";
 import {AppStore} from "../..";
@@ -100,6 +101,45 @@ describe("PvGeneratorWidgetStore in a workspace", () => {
         store.applyWorkspaceView({width: 3, reverse: false, keep: false, xyRebin: 1, zRebin: 1, previewRegionId: -1, channelRange: [2, 8], channelUnit: "Velocity (km/s), LSRK"});
 
         expect(store.range).toEqual({min: 0, max: 10});
+    });
+
+    test("keeps the range of the image of the cut while a PV image is active, and saves that image with the range", () => {
+        const cube = {channelValueBounds: {min: 0, max: 10}, spectralCoordinate: "Frequency (GHz)", spectralSystem: "LSRK", frameInfo: {fileId: 3}, getRegion: jest.fn(), regionSet: {regions: []}};
+        const pvImage = {channelValueBounds: null, spectralCoordinate: "", spectralSystem: "", frameInfo: {fileId: 4}, getRegion: jest.fn(), regionSet: {regions: []}};
+        const state = observable({activeFrame: cube as object}, {activeFrame: observable.ref});
+        const frames = [cube, pvImage];
+        const appStore = {
+            get activeFrame() {
+                return state.activeFrame;
+            },
+            frames,
+            getFrame: jest.fn((fileId: number) => frames.find(frame => frame.frameInfo.fileId === fileId)),
+            focusedRegion: undefined
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
+        const store = new PvGeneratorWidgetStore();
+        store.setSpectralRange({min: 2, max: 8});
+        runInAction(() => (state.activeFrame = pvImage));
+
+        const config = store.toWorkspaceConfig({imageIdOf: (fileId: number) => (fileId === 3 ? 1 : fileId === 4 ? 2 : undefined)});
+
+        expect(config).toMatchObject({channelRange: [2, 8], channelUnit: "Frequency (GHz), LSRK", channelRangeImageId: 1});
+
+        // The restore makes the PV image active again, and applies the range on the image of the cut.
+        const restored = new PvGeneratorWidgetStore();
+        runInAction(() => (state.activeFrame = pvImage));
+        expect(restored.applyWorkspaceConfig(config, {...reader, fileIdOf: (imageId: number) => (imageId === 1 ? 3 : undefined)})).toEqual([]);
+        restored.applyWorkspaceView(config);
+        expect(restored.range).toEqual({min: 2, max: 8});
+
+        // The image of the cut was not restored, and another cube in the same spectral coordinate is active.
+        const other = {...cube, channelValueBounds: {min: 0, max: 20}, frameInfo: {fileId: 5}};
+        frames.push(other);
+        runInAction(() => (state.activeFrame = other));
+        const missing = new PvGeneratorWidgetStore();
+        expect(missing.applyWorkspaceConfig(config, {...reader, fileIdOf: () => undefined})).toEqual(["the image that its spectral range was chosen on was not restored, so the range is the whole spectral axis"]);
+        missing.applyWorkspaceView(config);
+        expect(missing.range).toEqual({min: 0, max: 20});
     });
 
     test("says when the region of the preview was not restored", () => {

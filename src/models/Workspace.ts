@@ -517,6 +517,12 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
     /** The spectral range, in the units of `channelUnit`. Left out when it is the whole spectral axis. */
     channelRange?: [number, number];
     channelUnit?: string;
+    /**
+     * The Workspace ID of the image that the spectral range was chosen on. Left out when it is the
+     * image of the widget. A PV image has no spectral axis, so the range of the image of the cut is
+     * saved with that image while the PV image is active.
+     */
+    channelRangeImageId?: number;
     /** The region that the preview shows, by the ID that the region was saved with. -1 is the whole image. */
     previewRegionId: number;
 }
