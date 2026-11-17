@@ -365,6 +365,11 @@ describe("WorkspaceSnapshotter", () => {
         (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "pv-settings", type: "floating-settings", parentType: "pv-generator"}, {id: "histogram-0"}];
 
         expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}});
+
+        // A catalog plot is stacked by its component ID, so above the region dialog here.
+        zIndexes.set("catalog-plot-component-0", 3);
+        (appStore.widgetsStore as any).floatingWidgets.push({id: "catalog-plot-0", componentId: "catalog-plot-component-0"});
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}});
     });
 
     test("saves where an open dialog is and the name of the tab that it shows, when the user moved it and chose a tab", () => {

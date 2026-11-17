@@ -308,6 +308,13 @@ describe("WorkspaceRestorer", () => {
         const sharedProblems = await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
         expect(sharedProblems).toEqual([]);
+
+        // The opener has turned code snippets off.
+        appStore.dialogStore.showDialog.mockClear();
+        Object.assign(appStore, {preferenceStore: {...appStore.preferenceStore, isCodeSnippetsEnabled: false}});
+        const offProblems = await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
+        expect(offProblems).toContain("The Snippet dialog was not opened, because code snippets are turned off in the preferences");
     });
 
     test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
@@ -327,7 +334,7 @@ describe("WorkspaceRestorer", () => {
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
         const {appStore} = createSession();
         const zIndexManager = new FloatingObjzIndexManager();
-        ["stats-0", "histogram-0"].forEach(id => zIndexManager.assignIndex(id));
+        ["stats-0", "catalog-plot-component-0", "histogram-0"].forEach(id => zIndexManager.assignIndex(id));
         const dialogStore = appStore.dialogStore as any;
         dialogStore.dialogVisible = new Map();
         dialogStore.showDialog = jest.fn((id: string) => {
@@ -335,12 +342,13 @@ describe("WorkspaceRestorer", () => {
             zIndexManager.assignIndex(id);
         });
         Object.assign(appStore, {zIndexManager});
-        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "histogram-0"}];
+        // A catalog plot is stacked by its component ID.
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}, {id: "histogram-0"}];
 
-        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog"], dialogs: {"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}}}));
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog"], dialogs: {"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}}}));
 
-        const order = ["stats-0", "histogram-0", "region-dialog", "contour-dialog"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
-        expect(order).toEqual(["stats-0", "region-dialog", "histogram-0", "contour-dialog"]);
+        const order = ["stats-0", "catalog-plot-component-0", "histogram-0", "region-dialog", "contour-dialog"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["stats-0", "region-dialog", "catalog-plot-component-0", "histogram-0", "contour-dialog"]);
     });
 
     test("opens a saved dialog where it was, with the tab that it showed, and puts a dialog without a valid place or tab back to its defaults", async () => {

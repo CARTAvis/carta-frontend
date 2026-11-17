@@ -214,10 +214,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Opens the Snippet dialog with the saved snippet of the saved name. The dialog is empty when the
      * workspace belongs to another user, because the snippets of the opener are not the ones of that
-     * user. It is also empty when the opener has no snippet of that name, and the report says so.
+     * user. It is also empty when the opener has no snippet of that name, and the report says so. The
+     * dialog does not open when the opener has turned code snippets off, and the report says so.
      */
     private showSnippetDialog(): void {
         const dialogStore = this.appStore.dialogStore;
+        if (this.appStore.preferenceStore?.isCodeSnippetsEnabled === false) {
+            this.report(WorkspaceItemKind.Layout, "Snippet", "The Snippet dialog was not opened, because code snippets are turned off in the preferences");
+            return;
+        }
         const name = this.workspace.dialogSettings?.snippet?.name;
         const snippet = typeof name === "string" && this.workspace.editable !== false ? this.appStore.snippetStore.snippets.get(name) : undefined;
         if (snippet) {
@@ -310,7 +315,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const dialogStore = this.appStore.dialogStore;
         const zIndexManager = this.appStore.zIndexManager;
         const dialogs = saved.filter(id => WORKSPACE_DIALOGS.includes(id) && dialogStore.dialogVisible.get(id));
-        const widgets = this.appStore.widgetsStore.floatingWidgets.map(config => config.id).sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const widgets = this.appStore.widgetsStore.floatingWidgets.map(config => config.componentId || config.id).sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
         const order: string[] = [];
         let next = 0;
         for (const id of dialogs) {

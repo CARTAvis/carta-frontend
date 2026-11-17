@@ -431,9 +431,13 @@ export class WorkspaceSnapshotter {
         }));
     }
 
-    /** Returns the floating widgets and settings panels that a restore opens again. The settings panel of a PV preview is left out. */
+    /**
+     * Returns the floating widgets and settings panels that a restore opens again, by the IDs that
+     * they are stacked by. A catalog plot is stacked by its component ID. The settings panel of a PV
+     * preview is left out.
+     */
     private get restoredFloatingWidgetIds(): string[] {
-        return (this.appStore.widgetsStore?.floatingWidgets ?? []).filter(config => !(config.type === "floating-settings" && config.parentType === "pv-generator")).map(config => config.id);
+        return (this.appStore.widgetsStore?.floatingWidgets ?? []).filter(config => !(config.type === "floating-settings" && config.parentType === "pv-generator")).map(config => config.componentId || config.id);
     }
 
     /** Returns where an open dialog is, the tab that it shows, and how many floating widgets are below it. */
