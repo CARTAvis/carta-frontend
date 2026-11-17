@@ -159,7 +159,7 @@ export class FrameStore {
     public spatialTransformAST: AST.Mapping | null = null;
     private cursorMovementHandle: ReturnType<typeof setTimeout> | undefined = undefined;
     private readonly disposers: IReactionDisposer[] = [];
-    private isDisposed = false;
+    @observable public isDisposed = false;
 
     public restFreqStore: RestFreqStore;
 
@@ -1761,7 +1761,7 @@ export class FrameStore {
         makeObservable(this);
     }
 
-    public dispose = () => {
+    @action public dispose = () => {
         if (this.isDisposed) {
             return;
         }
