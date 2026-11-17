@@ -1,6 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {configure} from "mobx";
 
+import {CoordinateMode} from "enums";
 import {AppStore, ImageFittingStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -60,6 +61,7 @@ describe("ImageFittingStore in a workspace", () => {
         saved.toggleBackgroundOffsetFixed();
         saved.setSolverType(CARTA.FittingSolverType.Svd);
         saved.toggleCreateResidualImage();
+        saved.setCoordinate(CoordinateMode.World);
 
         const config = saved.toWorkspaceConfig(3, 5);
 
@@ -75,14 +77,27 @@ describe("ImageFittingStore in a workspace", () => {
             backgroundOffsetFixed: false,
             solver: CARTA.FittingSolverType.Svd,
             createModelImage: true,
-            createResidualImage: false
+            createResidualImage: false,
+            // Adding components selects the last one.
+            selectedComponent: 1,
+            coordinate: CoordinateMode.World
         });
 
         const restored = new ImageFittingStore();
         restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)), 7, 105);
 
         expect(restored.toWorkspaceConfig(3, 5)).toEqual(config);
-        expect([restored.selectedFileId, restored.selectedRegionId]).toEqual([7, 105]);
+        expect([restored.selectedFileId, restored.selectedRegionId, restored.selectedComponentIndex, restored.coordinate]).toEqual([7, 105, 1, CoordinateMode.World]);
+    });
+
+    test("applies saved world coordinates only to an image with square pixels", () => {
+        const frame = {hasSquarePixels: false, frameInfo: {fileId: 0}};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({frames: [frame], activeFrame: frame, frameNames: [], getFrame: () => frame} as unknown as AppStore);
+        const store = new ImageFittingStore();
+
+        store.applyWorkspaceConfig({coordinate: CoordinateMode.World} as never, -1, 0);
+
+        expect(store.coordinate).toBe(CoordinateMode.Image);
     });
 
     test("keeps the default of each saved value that is not valid", () => {

@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSizeUnit, NumberFormatType} from "enums";
+import {AngularSizeUnit, CoordinateMode, NumberFormatType} from "enums";
 import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D, type WorkspaceImageFitting} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, WCS_PRECISION} from "stores/Frame";
@@ -35,6 +35,8 @@ export class ImageFittingStore {
     @observable isAutoInitVal: boolean = true;
     /** Index of the component currently selected in the UI. */
     @observable selectedComponentIndex: number = 0;
+    /** Whether the Image Fitting dialog shows the values in image or world coordinates. */
+    @observable coordinate: CoordinateMode = CoordinateMode.Image;
     /** Constant background offset. */
     @observable backgroundOffset: number = 0;
     /** Indicates whether to fix the background offset when fitting. */
@@ -251,6 +253,10 @@ export class ImageFittingStore {
         );
     }
 
+    @action setCoordinate = (coordinate: CoordinateMode) => {
+        this.coordinate = coordinate;
+    };
+
     /**
      * Returns the settings that a workspace saves. JSON cannot write NaN, so an initial value that
      * is empty is saved as null.
@@ -275,7 +281,9 @@ export class ImageFittingStore {
             backgroundOffsetFixed: this.isBackgroundOffsetFixed,
             solver: this.solverType,
             createModelImage: this.shouldCreateModelImage,
-            createResidualImage: this.shouldCreateResidualImage
+            createResidualImage: this.shouldCreateResidualImage,
+            ...(this.selectedComponentIndex > 0 ? {selectedComponent: this.selectedComponentIndex} : {}),
+            ...(this.coordinate === CoordinateMode.World ? {coordinate: this.coordinate} : {})
         };
     };
 
@@ -306,8 +314,12 @@ export class ImageFittingStore {
                 component.setPa(numberOrNaN(saved.pa));
                 component.setFixedParams(Array.isArray(saved.fixed) ? saved.fixed.map(isTrue) : []);
             });
-            this.setSelectedComponentIndex(0);
+            const selected = config.selectedComponent;
+            this.setSelectedComponentIndex(typeof selected === "number" && Number.isInteger(selected) && selected >= 0 && selected < components.length ? selected : 0);
         }
+        // The dialog offers world coordinates only for an image with square pixels.
+        const canShowWorld = this.effectiveFrame?.hasSquarePixels !== false;
+        this.setCoordinate(config.coordinate === CoordinateMode.World && canShowWorld ? CoordinateMode.World : CoordinateMode.Image);
         this.setIsAutoInitVal(config.autoInitialValues !== false);
         this.setBackgroundOffset(typeof config.backgroundOffset === "number" ? config.backgroundOffset : 0);
         this.isBackgroundOffsetFixed = config.backgroundOffsetFixed !== false;

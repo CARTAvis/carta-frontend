@@ -884,6 +884,10 @@ export interface WorkspaceImageFitting {
     solver: CARTA.FittingSolverType;
     createModelImage: boolean;
     createResidualImage: boolean;
+    /** The component that the dialog shows, counted from 0. Left out for the first component. */
+    selectedComponent?: number;
+    /** Whether the dialog shows the values in image or world coordinates. Left out for image coordinates. */
+    coordinate?: CoordinateMode;
 }
 
 /** The result of the last image fitting of an image, as the Image Fitting dialog shows it. */
