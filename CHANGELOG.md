@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed workspaces not restoring custom colormap colors, or the image of the Contour dialog when it does not follow the active image ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 * Fixed text, compass and ruler annotations drawn at the wrong size when an image view first shows them, such as after a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed opening a workspace changing the last used folder of the file browser ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed a region that the backend refused stopping a workspace from being saved ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
