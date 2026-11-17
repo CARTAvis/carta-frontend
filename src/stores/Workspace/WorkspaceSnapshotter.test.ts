@@ -871,6 +871,15 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, mirrored: true});
     });
 
+    test("saves the auto spatial matching of moment images only when it is off", () => {
+        const {appStore} = createSession();
+
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("momentAutoMatching");
+
+        Object.assign(appStore, {shouldMatchMoment: false});
+        expect(new WorkspaceSnapshotter().capture().workspace.momentAutoMatching).toBe(false);
+    });
+
     test("saves the image that the Beam tab shows only when it is not the image in front", () => {
         const other = createFrame(1);
         WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);

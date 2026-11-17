@@ -1075,6 +1075,8 @@ export interface Workspace {
     };
     /** The image toolbar. */
     toolbar?: WorkspaceToolbar;
+    /** Whether new moment images of the spatial reference are matched to it. Left out when they are. */
+    momentAutoMatching?: boolean;
     /**
      * The image whose beam the Beam tab of the image view settings shows, by its workspace ID. Left
      * out when it is the image in front, which the tab follows.

@@ -872,6 +872,9 @@ export class WorkspaceSnapshotter {
         };
         this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
         this.workspace.hipsQuery = HipsQueryStore.Instance.toWorkspaceConfig();
+        if (this.appStore.shouldMatchMoment === false) {
+            this.workspace.momentAutoMatching = false;
+        }
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
         this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};

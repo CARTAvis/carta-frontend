@@ -395,6 +395,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreWidgetSettings();
         this.restoreStackingOrder();
         this.restoreToolbar();
+        // The "Auto spatial matching" switch of the moment generator. A workspace that leaves it out had it on.
+        if ((this.workspace.momentAutoMatching !== false) !== (this.appStore.shouldMatchMoment !== false)) {
+            this.appStore.toggleMomentToMatch();
+        }
         // The Beam tab follows the image in front. Show the saved image after the image in front is chosen.
         const beamFrame = typeof this.workspace.beamSettingsImageId === "number" ? this.frameOf(this.workspace.beamSettingsImageId) : undefined;
         if (beamFrame) {

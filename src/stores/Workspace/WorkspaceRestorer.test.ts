@@ -1033,6 +1033,19 @@ describe("WorkspaceRestorer", () => {
         runInAction(() => configStore.resetObjectName());
     });
 
+    test("turns the auto spatial matching of moment images off when it was off, and on again for a workspace that leaves it out", async () => {
+        const {appStore} = createSession();
+        const toggleMomentToMatch = jest.fn(() => ((appStore as any).shouldMatchMoment = !(appStore as any).shouldMatchMoment));
+        Object.assign(appStore, {shouldMatchMoment: true, toggleMomentToMatch});
+
+        await restore(createWorkspace({files: [IMAGE], momentAutoMatching: false}));
+        expect((appStore as any).shouldMatchMoment).toBe(false);
+
+        await restore(createWorkspace({files: [IMAGE]}));
+        expect((appStore as any).shouldMatchMoment).toBe(true);
+        expect(toggleMomentToMatch).toHaveBeenCalledTimes(2);
+    });
+
     test("shows the saved image on the Beam tab after the image in front is chosen", async () => {
         const {appStore} = createSession();
         const setSelectedFrame = jest.fn();
