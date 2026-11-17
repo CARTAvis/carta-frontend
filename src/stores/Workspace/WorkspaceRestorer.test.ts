@@ -3,6 +3,7 @@ import {observable, runInAction} from "mobx";
 
 import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
+import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
@@ -288,6 +289,25 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"]]);
+    });
+
+    test("puts each dialog back between the floating widgets as it was stacked", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        ["stats-0", "histogram-0"].forEach(id => zIndexManager.assignIndex(id));
+        const dialogStore = appStore.dialogStore as any;
+        dialogStore.dialogVisible = new Map();
+        dialogStore.showDialog = jest.fn((id: string) => {
+            dialogStore.dialogVisible.set(id, true);
+            zIndexManager.assignIndex(id);
+        });
+        Object.assign(appStore, {zIndexManager});
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "histogram-0"}];
+
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog"], dialogs: {"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}}}));
+
+        const order = ["stats-0", "histogram-0", "region-dialog", "contour-dialog"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["stats-0", "region-dialog", "histogram-0", "contour-dialog"]);
     });
 
     test("opens a saved dialog where it was, with the tab that it showed, and puts a dialog without a valid place or tab back to its defaults", async () => {

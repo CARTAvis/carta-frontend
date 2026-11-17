@@ -430,10 +430,22 @@ export class WorkspaceSnapshotter {
         }));
     }
 
-    /** Returns where an open dialog is and the tab that it shows. */
+    /** Returns the floating widgets and settings panels that a restore opens again. The settings panel of a PV preview is left out. */
+    private get restoredFloatingWidgetIds(): string[] {
+        return (this.appStore.widgetsStore?.floatingWidgets ?? []).filter(config => !(config.type === "floating-settings" && config.parentType === "pv-generator")).map(config => config.id);
+    }
+
+    /** Returns where an open dialog is, the tab that it shows, and how many floating widgets are below it. */
     private captureDialog(id: string): WorkspaceDialog {
         const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
         const dialog: WorkspaceDialog = {};
+        // Without floating widgets, the order of the dialogs alone is enough.
+        const widgetIds = this.restoredFloatingWidgetIds;
+        if (zIndexManager && widgetIds.length) {
+            const index = zIndexManager.findIndex(id) ?? 0;
+            dialog.widgetsBelow = widgetIds.filter(widgetId => (zIndexManager.findIndex(widgetId) ?? 0) < index).length;
+        }
         const geometry = dialogStore.dialogGeometries?.get(id);
         if (geometry) {
             Object.assign(dialog, geometry);

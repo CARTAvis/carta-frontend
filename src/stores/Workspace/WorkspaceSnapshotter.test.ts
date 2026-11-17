@@ -334,6 +334,28 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace).not.toHaveProperty("dialogs");
     });
 
+    test("saves how many floating widgets are below each open dialog, leaving out the settings panel of a PV preview", () => {
+        const zIndexes = new Map([
+            ["stats-0", 1],
+            ["region-dialog", 2],
+            ["pv-settings", 3],
+            ["histogram-0", 4],
+            ["contour-dialog", 5]
+        ]);
+        const {appStore} = createSession({
+            dialogStore: {
+                dialogVisible: new Map([
+                    ["region-dialog", true],
+                    ["contour-dialog", true]
+                ])
+            },
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "pv-settings", type: "floating-settings", parentType: "pv-generator"}, {id: "histogram-0"}];
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}});
+    });
+
     test("saves where an open dialog is and the name of the tab that it shows, when the user moved it and chose a tab", () => {
         createSession({
             dialogStore: {

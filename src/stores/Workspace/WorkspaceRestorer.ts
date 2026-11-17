@@ -164,6 +164,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
+        this.restoreStackingOrder();
         return this.issues;
     }
 
@@ -260,6 +261,38 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 config.setDefaultSize(panel.width, panel.height);
             }
         }
+    }
+
+    /**
+     * Puts each open dialog back between the floating widgets and settings panels, as it was stacked.
+     * Call it after the dialogs, the layout and the settings panels are open. A workspace that does
+     * not say how many widgets were below its dialogs keeps the order that the restore opened them in.
+     */
+    private restoreStackingOrder(): void {
+        const saved = this.workspace.openDialogs;
+        const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
+        const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+        const belowOf = (id: string) => (Object.hasOwn(places, id) ? places[id]?.widgetsBelow : undefined);
+        if (!Array.isArray(saved) || !saved.some(id => isCount(belowOf(id)))) {
+            return;
+        }
+        const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        const dialogs = saved.filter(id => WORKSPACE_DIALOGS.includes(id) && dialogStore.dialogVisible.get(id));
+        const widgets = this.appStore.widgetsStore.floatingWidgets.map(config => config.id).sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        const order: string[] = [];
+        let next = 0;
+        for (const id of dialogs) {
+            const below = belowOf(id);
+            const count = isCount(below) ? Math.min(below, widgets.length) : widgets.length;
+            while (next < count) {
+                order.push(widgets[next++]);
+            }
+            order.push(id);
+        }
+        order.push(...widgets.slice(next));
+        // Bringing each one to the top, from the bottom one to the top one, stacks them in this order.
+        order.forEach(id => zIndexManager.updateIndexOnSelect(id));
     }
 
     /**
