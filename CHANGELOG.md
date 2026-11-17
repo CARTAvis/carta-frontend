@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added colormap inversion controls for image rendering, contours, and vector overlays, including preferences and workspace support ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Added beam area, number of beams, and pixels in beam to the Statistics widget ([#1509](https://github.com/CARTAvis/carta-frontend/issues/1509)).
 * Added mirror site management with speed testing for online catalog queries ([#2588](https://github.com/CARTAvis/carta-frontend/issues/2588)).
+* Added the IDIA SIMBAD mirror for online catalog queries ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Added an option to interpret catalog overlay angular-size columns as either diameters or radii ([#2679](https://github.com/CARTAvis/carta-frontend/issues/2679)).
 * Added support for loading and managing time-series datasets, sorting observations by time, and animating them with a configurable Time slider and label settings in the Animator ([#2651](https://github.com/CARTAvis/carta-frontend/issues/2651)).
 * Added optional rest-frame spectral-coordinate and flux-density corrections to the Spectral Profiler ([#2464](https://github.com/CARTAvis/carta-frontend/issues/2464)).
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for displaying beam overlays on every channel when per-channel beam data is available, with configurable placement in image settings ([#2942](https://github.com/CARTAvis/carta-frontend/issues/2942)).
 * Added support for restoring catalogs and the widget layout in workspaces ([#2950](https://github.com/CARTAvis/carta-frontend/issues/2950)).
 ### Fixed
+* Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
+* Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
 * Fixed image animation ignoring the selected playback mode in the Animator widget ([#2855](https://github.com/CARTAvis/carta-frontend/issues/2855)).
 * Fixed sliders selecting incorrect values after their widgets are resized ([#2875](https://github.com/CARTAvis/carta-frontend/issues/2875)).

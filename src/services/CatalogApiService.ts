@@ -6,11 +6,17 @@ import {CatalogDatabase, type CatalogSystemType, CatalogType, DialogId, RadiusUn
 import {type CatalogInfo, type WCSPoint2D, type WorkspaceCatalogQuerySource} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, CatalogStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing, type VizierResource} from "utilities";
+import {CATALOG_MIRROR_URLS, CATALOG_MIRRORS_BY_DATABASE} from "utilities/catalog/constants";
 
 import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
-    public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+    public static readonly ADS_ABSTRACT_URL = "https://ui.adsabs.harvard.edu/abs/";
+
+    /** Returns the SIMBAD page of an object, from a base URL given by `getSimbadObjectBaseUrl`. */
+    public static getSimbadObjectUrl(baseUrl: string, mainId: string): string {
+        return `${baseUrl}${encodeURIComponent(mainId)}`;
+    }
 
     private static staticInstance: CatalogApiService;
     private axiosInstanceSimbad: AxiosInstance;
@@ -119,6 +125,17 @@ export class CatalogApiService {
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
         const encoded = encodeURIComponent(query);
         return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
+    };
+
+    /**
+     * Returns the start of a SIMBAD object page link on the active SIMBAD mirror, or on the first
+     * SIMBAD mirror when no mirror is available. Pass it to `getSimbadObjectUrl` with the object
+     * identifier.
+     */
+    public getSimbadObjectBaseUrl = (): string => {
+        const defaultMirrorUrl = CATALOG_MIRROR_URLS[CATALOG_MIRRORS_BY_DATABASE[CatalogDatabase.SIMBAD][0]];
+        const mirrorUrl = this.normalizeMirrorUrl(CatalogDatabase.SIMBAD, MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD)) ?? defaultMirrorUrl;
+        return `${new URL("../sim-id", mirrorUrl).toString()}?Ident=`;
     };
 
     public cancelQuery(type: CatalogDatabase, reason?: string) {
