@@ -604,6 +604,17 @@ export interface WorkspaceWidgetSettingsPanel {
     height?: number;
 }
 
+/** Where an open analysis dialog was and the tab that it showed. */
+export interface WorkspaceDialog {
+    /** Where the dialog was, in pixels of the browser window. Left out when it was in the middle of the window, where it opens. */
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    /** The name of the tab that the dialog showed, such as "Styling". Left out when the user did not choose a tab. */
+    tab?: string;
+}
+
 export interface Workspace {
     id?: string;
     name?: string;
@@ -635,6 +646,11 @@ export interface Workspace {
      * dialogs as they are.
      */
     openDialogs?: string[];
+    /**
+     * Where each open analysis dialog was and the tab that it showed, by the ID of the dialog. A
+     * dialog that the user did not move and whose tab the user did not choose is left out.
+     */
+    dialogs?: {[dialogId: string]: WorkspaceDialog};
     /**
      * The settings panels of widgets that were open as floating panels, from the bottom one to the
      * top one. Left out by a workspace saved before it kept them. A restore then leaves the panels

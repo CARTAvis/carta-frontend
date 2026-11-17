@@ -5,6 +5,14 @@ import {DialogId, FileInfoType, WorkspaceDialogMode} from "enums";
 import {type Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
 
+/** Where a dialog is and how large it is, in pixels of the browser window. */
+export interface DialogGeometry {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 interface ShowDialogOptions {
     mode?: WorkspaceDialogMode;
     url?: string;
@@ -14,6 +22,12 @@ interface ShowDialogOptions {
     newSnippet?: boolean;
 }
 
+/**
+ * The dialogs that show their first tab again when they open. Their tabs were not kept before a
+ * workspace could save them, so closing one of these dialogs still forgets its tab.
+ */
+const DIALOGS_WITH_TAB_RESET_ON_CLOSE: string[] = [DialogId.Contour, DialogId.Vector, DialogId.OnlineDataQuery];
+
 export class DialogStore {
     private static staticInstance: DialogStore;
 
@@ -22,6 +36,18 @@ export class DialogStore {
     @observable externalPageDialogUrl: string = "";
     @observable externalPageDialogTitle: string = "";
     @observable dialogVisible: Map<string, boolean> = new Map();
+    /**
+     * Where each open dialog is, after the user moved or resized it, or after a workspace restore
+     * placed it. A dialog that is not here opens in the middle of the window. Closing a dialog
+     * forgets its place.
+     */
+    @observable dialogGeometries: Map<string, DialogGeometry> = new Map();
+    /**
+     * The tab that each dialog shows, after the user chose one. The File Info dialog keeps its tab in
+     * `selectedFileInfoDialogTab`. Closing the Contour, Vector Overlay or Online Data Query dialog
+     * forgets its tab.
+     */
+    @observable private dialogTabs: Map<string, TabId> = new Map();
 
     constructor() {
         makeObservable(this);
@@ -94,7 +120,44 @@ export class DialogStore {
         } else {
             this.dialogVisible.set(id, false);
         }
+        this.dialogGeometries.delete(id);
+        if (DIALOGS_WITH_TAB_RESET_ON_CLOSE.includes(id)) {
+            this.dialogTabs.delete(id);
+        }
         this.zIndexManager.updateIndexOnRemove(id);
+    };
+
+    /**
+     * Puts a dialog back in the middle of the window, and shows its first tab. A workspace restore
+     * does this before it applies the place and the tab that the workspace saved.
+     */
+    @action resetPlaceAndTab = (id: string) => {
+        this.dialogGeometries.delete(id);
+        if (id === DialogId.FileInfo) {
+            this.selectedFileInfoDialogTab = FileInfoType.IMAGE_HEADER;
+        } else {
+            this.dialogTabs.delete(id);
+        }
+    };
+
+    @action setDialogGeometry = (id: string, geometry: DialogGeometry) => {
+        const current = this.dialogGeometries.get(id);
+        if (!current || current.x !== geometry.x || current.y !== geometry.y || current.width !== geometry.width || current.height !== geometry.height) {
+            this.dialogGeometries.set(id, geometry);
+        }
+    };
+
+    /** Returns the tab that a dialog shows, or undefined when the user has not chosen one. */
+    selectedTabOf = (id: string): TabId | undefined => {
+        return id === DialogId.FileInfo ? this.selectedFileInfoDialogTab : this.dialogTabs.get(id);
+    };
+
+    @action selectTab = (id: string, tab: TabId) => {
+        if (id === DialogId.FileInfo) {
+            this.selectedFileInfoDialogTab = tab;
+        } else {
+            this.dialogTabs.set(id, tab);
+        }
     };
 
     // File Info

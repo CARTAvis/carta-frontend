@@ -1,3 +1,6 @@
+import {FileInfoType} from "./fileBrowser";
+import {ContourDialogTabs, FittingResultTabs, OnlineDataQueryDialogTabs, RegionDialogTabs, VectorOverlayDialogTabs} from "./tab";
+
 export enum DialogId {
     About = "about-dialog",
     OnlineDataQuery = "online-data-query-dialog",
@@ -22,6 +25,24 @@ export enum DialogId {
  * such as the file browser or the preferences, are not part of a workspace.
  */
 export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery];
+
+/** Returns the tabs of a numeric tab enum by name. For example, "Levels" is 0 and "Configuration" is 1. */
+function tabsByName(tabs: object): {[name: string]: number} {
+    return Object.fromEntries(Object.entries(tabs).filter(([, tab]) => typeof tab === "number"));
+}
+
+/**
+ * The tabs of each dialog that a workspace keeps, by the name that the workspace saves for them.
+ * The name keeps a saved workspace readable, and it does not change when a tab is added.
+ */
+export const WORKSPACE_DIALOG_TABS: {[dialogId: string]: {[name: string]: string | number}} = {
+    [DialogId.Contour]: tabsByName(ContourDialogTabs),
+    [DialogId.Vector]: tabsByName(VectorOverlayDialogTabs),
+    [DialogId.Fitting]: tabsByName(FittingResultTabs),
+    [DialogId.Region]: tabsByName(RegionDialogTabs),
+    [DialogId.FileInfo]: {[FileInfoType.IMAGE_FILE]: FileInfoType.IMAGE_FILE, [FileInfoType.IMAGE_HEADER]: FileInfoType.IMAGE_HEADER},
+    [DialogId.OnlineDataQuery]: tabsByName(OnlineDataQueryDialogTabs)
+};
 
 export enum LayoutDialogMode {
     DynamicLayout,

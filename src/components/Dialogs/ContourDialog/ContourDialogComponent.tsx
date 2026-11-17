@@ -29,7 +29,6 @@ const HistogramSelect = Select<boolean>;
 @observer
 export class ContourDialogComponent extends React.Component {
     @observable shouldShowCubeHistogramAlert: boolean = false;
-    @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
     @observable levels: number[] = [];
     @observable smoothingMode: CARTA.SmoothingMode = CARTA.SmoothingMode.NoSmoothing;
     @observable smoothingFactor: number = 0;
@@ -518,7 +517,7 @@ export class ContourDialogComponent extends React.Component {
                                 <AnchorButton className="lock-button" icon={appStore.isFrameLockedToContour ? "lock" : "unlock"} variant="minimal" onClick={appStore.toggleFrameContourLock} />
                             </Tooltip>
                         </FormGroup>
-                        <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
+                        <Tabs selectedTabId={appStore.dialogStore.selectedTabOf(DialogId.Contour) ?? ContourDialogTabs.Levels} onChange={tab => appStore.dialogStore.selectTab(DialogId.Contour, tab)} renderActiveTabPanelOnly={false}>
                             <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
                             <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
                             <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.isDarkTheme} />} data-testid="contour-dailog-styling-tab-title" />

@@ -144,7 +144,7 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
-        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn()},
+        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
             appStore.activeImage = {type: ImageType.FRAME, store: frame};
@@ -288,6 +288,30 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"]]);
+    });
+
+    test("opens a saved dialog where it was, with the tab that it showed, and puts a dialog without a valid place or tab back to its defaults", async () => {
+        const {appStore} = createSession();
+
+        await restore(
+            createWorkspace({
+                openDialogs: ["contour-dialog", "region-dialog", "vector-dialog"],
+                dialogs: {
+                    "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
+                    "region-dialog": {x: 900, y: -20, width: 500, height: 1200, tab: "Unknown"},
+                    "vector-dialog": {x: 10, y: 10, width: 0, height: 300},
+                    "fitting-dialog": {x: 10, y: 10, width: 300, height: 300}
+                }
+            })
+        );
+
+        expect(appStore.dialogStore.setDialogGeometry.mock.calls).toEqual([
+            ["contour-dialog", {x: 100, y: 50, width: 600, height: 700}],
+            ["region-dialog", {x: 900, y: -20, width: 500, height: 1200}]
+        ]);
+        expect(appStore.dialogStore.resetPlaceAndTab.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
+        expect(appStore.dialogStore.selectTab.mock.calls).toEqual([["contour-dialog", 2]]);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
     });
 
     test("leaves the dialogs as they are for a workspace saved without them", async () => {

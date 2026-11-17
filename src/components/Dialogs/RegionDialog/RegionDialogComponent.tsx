@@ -2,7 +2,6 @@ import * as React from "react";
 import {AnchorButton, Classes, type DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -24,16 +23,9 @@ import "./RegionDialogComponent.scss";
 
 @observer
 export class RegionDialogComponent extends React.Component {
-    @observable selectedTab: RegionDialogTabs = RegionDialogTabs.Configuration;
-
-    @action private setSelectedTab = (tab: RegionDialogTabs) => {
-        this.selectedTab = tab;
+    private setSelectedTab = (tab: RegionDialogTabs) => {
+        AppStore.Instance.dialogStore.selectTab(DialogId.Region, tab);
     };
-
-    constructor(props) {
-        super(props);
-        makeObservable(this);
-    }
 
     private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
     private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
@@ -142,7 +134,7 @@ export class RegionDialogComponent extends React.Component {
             if (configurationPanel) {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.isDarkTheme} />;
                 bodyContent = (
-                    <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
+                    <Tabs id="regionDialogTabs" selectedTabId={appStore.dialogStore.selectedTabOf(DialogId.Region) ?? RegionDialogTabs.Configuration} onChange={this.setSelectedTab}>
                         <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} data-testid="region-dialog-config-tab-title" />
                         <Tab id={RegionDialogTabs.Styling} title="Styling" panel={stylingPanel} data-testid="region-dialog-styling-tab-title" />
                     </Tabs>

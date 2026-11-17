@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
-import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
+import {ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceDialog, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -389,6 +389,22 @@ export class WorkspaceSnapshotter {
         }));
     }
 
+    /** Returns where an open dialog is and the tab that it shows. */
+    private captureDialog(id: string): WorkspaceDialog {
+        const dialogStore = this.appStore.dialogStore;
+        const dialog: WorkspaceDialog = {};
+        const geometry = dialogStore.dialogGeometries?.get(id);
+        if (geometry) {
+            Object.assign(dialog, geometry);
+        }
+        const tab = dialogStore.selectedTabOf?.(id);
+        const tabName = Object.entries(WORKSPACE_DIALOG_TABS[id] ?? {}).find(([, value]) => value === tab)?.[0];
+        if (tabName !== undefined) {
+            dialog.tab = tabName;
+        }
+        return dialog;
+    }
+
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
@@ -397,6 +413,10 @@ export class WorkspaceSnapshotter {
         const zIndexManager = this.appStore.zIndexManager;
         if (dialogStore?.dialogVisible) {
             this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
+            const dialogs = Object.fromEntries(this.workspace.openDialogs.map(id => [id, this.captureDialog(id)]).filter(([, dialog]) => Object.keys(dialog).length));
+            if (Object.keys(dialogs).length) {
+                this.workspace.dialogs = dialogs;
+            }
         }
         this.captureWidgetSettings();
         const animator = this.appStore.animatorStore;

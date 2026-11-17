@@ -326,7 +326,28 @@ describe("WorkspaceSnapshotter", () => {
             zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
         });
 
-        expect(new WorkspaceSnapshotter().capture().workspace.openDialogs).toEqual(["region-dialog", "contour-dialog"]);
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        expect(workspace.openDialogs).toEqual(["region-dialog", "contour-dialog"]);
+        expect(workspace).not.toHaveProperty("dialogs");
+    });
+
+    test("saves where an open dialog is and the name of the tab that it shows, when the user moved it and chose a tab", () => {
+        createSession({
+            dialogStore: {
+                dialogVisible: new Map([
+                    ["contour-dialog", true],
+                    ["file-info-dialog", true]
+                ]),
+                dialogGeometries: new Map([["contour-dialog", {x: 100, y: 50, width: 600, height: 700}]]),
+                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header"})[id]
+            },
+            zIndexManager: {findIndex: () => 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({
+            "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
+            "file-info-dialog": {tab: "image-header"}
+        });
     });
 
     test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, and leaves out a PV preview", () => {

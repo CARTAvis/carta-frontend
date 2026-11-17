@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -10,13 +10,14 @@ import {
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
+    type WorkspaceDialog,
     type WorkspaceFile,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
     type WorkspaceIssue
 } from "models";
 import {CatalogApiService} from "services";
-import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, type DialogGeometry, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
@@ -165,8 +166,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Opens the analysis dialogs that were open, and closes the other analysis dialogs. Open them
-     * last, when the images and regions that they show are back.
+     * Opens the analysis dialogs that were open, where they were and with the tab that they showed,
+     * and closes the other analysis dialogs. Open them last, when the images and regions that they
+     * show are back.
      */
     private restoreDialogs(): void {
         const saved = this.workspace.openDialogs;
@@ -175,7 +177,35 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const dialogStore = this.appStore.dialogStore;
         WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
-        saved.filter(id => WORKSPACE_DIALOGS.includes(id)).forEach(id => dialogStore.showDialog(id));
+        const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
+        for (const id of saved.filter(id => WORKSPACE_DIALOGS.includes(id))) {
+            const dialog = Object.hasOwn(places, id) && places[id] && typeof places[id] === "object" ? places[id] : {};
+            // A dialog that the workspace did not place, or whose tab it did not keep, goes back to the
+            // middle of the window or to its first tab. It does not keep its place or tab from before.
+            dialogStore.resetPlaceAndTab(id);
+            const geometry = WorkspaceRestorer.savedDialogGeometry(dialog);
+            if (geometry) {
+                dialogStore.setDialogGeometry(id, geometry);
+            }
+            const tabs = WORKSPACE_DIALOG_TABS[id] ?? {};
+            if (typeof dialog.tab === "string" && Object.hasOwn(tabs, dialog.tab)) {
+                dialogStore.selectTab(id, tabs[dialog.tab]);
+            }
+            dialogStore.showDialog(id);
+        }
+    }
+
+    /**
+     * Returns where a saved dialog was, or undefined when the workspace did not place it or a value is
+     * not valid. The dialog keeps itself inside the layout area when it is placed.
+     */
+    private static savedDialogGeometry(dialog: WorkspaceDialog): DialogGeometry | undefined {
+        const {x, y, width, height} = dialog;
+        const isFinite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        if (!isFinite(x) || !isFinite(y) || !isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) {
+            return undefined;
+        }
+        return {x, y, width, height};
     }
 
     /**

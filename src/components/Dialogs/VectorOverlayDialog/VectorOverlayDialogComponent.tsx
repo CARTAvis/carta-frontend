@@ -27,7 +27,6 @@ interface ColormapPreviewSession {
 
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
-    @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
     @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
     @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
     /**
@@ -566,7 +565,11 @@ export class VectorOverlayDialogComponent extends React.Component {
                                 <Button text={dataSource.filename} endIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.isAnimationActive} />
                             </DataSourceSelect>
                         </FormGroup>
-                        <Tabs defaultSelectedTabId={VectorOverlayDialogTabs.Configuration} renderActiveTabPanelOnly={false}>
+                        <Tabs
+                            selectedTabId={appStore.dialogStore.selectedTabOf(DialogId.Vector) ?? VectorOverlayDialogTabs.Configuration}
+                            onChange={tab => appStore.dialogStore.selectTab(DialogId.Vector, tab)}
+                            renderActiveTabPanelOnly={false}
+                        >
                             <Tab id={VectorOverlayDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="vector-overlay-config-panel" data-testid="vector-field-configuration-tab" />
                             <Tab id={VectorOverlayDialogTabs.Styling} title="Styling" panel={stylingPanel} panelClassName="vector-overlay-styling-panel" data-testid="vector-field-styling-tab" />
                         </Tabs>

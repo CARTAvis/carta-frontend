@@ -18,15 +18,14 @@ import "./FittingDialogComponent.scss";
 @observer
 export class FittingDialogComponent extends React.Component {
     @observable private coord: CoordinateMode = CoordinateMode.Image;
-    @observable private fittingResultTabId: FittingResultTabs = FittingResultTabs.RESULT;
     @observable private isMouseEntered: boolean = false;
 
     @action private setCoord = (coord: CoordinateMode) => {
         this.coord = coord;
     };
 
-    @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
-        this.fittingResultTabId = tabId;
+    private setFittingResultTabId = (tabId: FittingResultTabs) => {
+        AppStore.Instance.dialogStore.selectTab(DialogId.Fitting, tabId);
     };
 
     @action private onMouseEnter = () => {
@@ -324,7 +323,7 @@ export class FittingDialogComponent extends React.Component {
                     </Pane>
                     <Pane>
                         <div className={classNames(Classes.DIALOG_BODY, "lower-pane", "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                            <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
+                            <Tabs id="fittingResultTabs" vertical={true} selectedTabId={AppStore.Instance.dialogStore.selectedTabOf(DialogId.Fitting) ?? FittingResultTabs.RESULT} onChange={this.setFittingResultTabId}>
                                 <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
                                 <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} data-testid="image-fitting-full-log-tab-title" />
                             </Tabs>
