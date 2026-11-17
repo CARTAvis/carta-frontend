@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for displaying beam overlays on every channel when per-channel beam data is available, with configurable placement in image settings ([#2942](https://github.com/CARTAvis/carta-frontend/issues/2942)).
 * Added support for restoring catalogs and the widget layout in workspaces ([#2950](https://github.com/CARTAvis/carta-frontend/issues/2950)).
 * Added support for restoring percentile ranges from the cube histogram in workspaces ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
-* Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query and PV generator settings, the plotted spectral lines and the animator settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
+* Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query settings and results, the PV generator settings, the plotted spectral lines, and the animator and Log widget settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
 ### Fixed
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
