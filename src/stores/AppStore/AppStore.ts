@@ -698,7 +698,8 @@ export class AppStore {
             }
         }
 
-        if (shouldUpdateStartingDirectory) {
+        // A workspace restore does not change the preferences, so it does not save the folder of its images as the last used folder.
+        if (shouldUpdateStartingDirectory && !this.isLoadingWorkspace) {
             this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
         }
 
