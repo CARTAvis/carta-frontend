@@ -224,7 +224,7 @@ function createSession() {
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined),
-            restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown): Promise<unknown[]> => Promise.resolve([]))
+            restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -1191,6 +1191,38 @@ describe("WorkspaceRestorer", () => {
         expect(didSettleBeforeTheRest).toBe(true);
         expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
         expect(restorer.fileIdOf(1)).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
+    test("waits for the results of the widgets as a step that the user can skip, and says when the wait is long", async () => {
+        jest.useFakeTimers();
+        try {
+            const {appStore} = createSession();
+            let isWanted: (() => boolean) | undefined;
+            appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce((_plotWidgets?: unknown, wanted?: () => boolean) => {
+                isWanted = wanted;
+                // A query that does not answer.
+                return new Promise<unknown[]>(() => undefined);
+            });
+            const steps: (WorkspaceLoadingStep | undefined)[] = [];
+            appStore.setWorkspaceLoadingStep.mockImplementation((step?: WorkspaceLoadingStep) => {
+                steps.push(step);
+            });
+
+            const restored = restore(createWorkspace({layout: LAYOUT}));
+            await jest.advanceTimersByTimeAsync(0);
+            expect(steps.at(-1)).toEqual({description: "Restoring the results of the widgets, such as a spectral line query", progress: 0, onSkip: expect.any(Function)});
+            expect(isWanted?.()).toBe(true);
+
+            await jest.advanceTimersByTimeAsync(WorkspaceRestorer.SLOW_WIDGET_RESULTS_MS);
+            expect(steps.at(-1)?.description).toBe("Restoring the results of the widgets, such as a spectral line query takes long. Wait, or skip it to restore the rest of the workspace");
+
+            steps.at(-1)?.onSkip?.();
+            const issues = await restored;
+            expect(isWanted?.()).toBe(false);
+            expect(issues).toContain("Skipped waiting for the results of the widgets, such as a spectral line query or a PV preview. A result that still comes shows without its saved settings");
+        } finally {
+            jest.useRealTimers();
+        }
     });
 
     test("reports what the catalog widgets could not be pointed at", async () => {

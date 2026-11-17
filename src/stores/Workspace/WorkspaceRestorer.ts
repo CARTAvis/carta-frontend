@@ -2003,11 +2003,66 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
-        const issues = yield* awaited(this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets));
+        const waiting = {isSkipped: false};
+        const results = this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets, () => this.isCurrent && !waiting.isSkipped);
+        const outcome = yield* awaited(this.waitForWidgetResults(results, waiting));
         if (!this.isCurrent) {
             return;
         }
-        this.issues.push(...issues);
+        if (outcome === "skipped") {
+            this.report(
+                WorkspaceItemKind.PlotWidget,
+                "",
+                "Skipped waiting for the results of the widgets, such as a spectral line query or a PV preview. A result that still comes shows without its saved settings",
+                WorkspaceIssueOutcome.Skipped
+            );
+        } else {
+            this.issues.push(...outcome);
+        }
+    }
+
+    /** The time after which the step of the widget results says that the wait is long, in milliseconds. */
+    public static readonly SLOW_WIDGET_RESULTS_MS = 30000;
+
+    /**
+     * Waits for the widgets to show again the results of their online queries and their previews,
+     * such as a spectral line query, and lets the user skip the wait. The wait has no time limit,
+     * because a large query can take long. After a while the step says that the wait is long.
+     *
+     * @returns the problems, or "skipped" when the user skipped the wait.
+     */
+    private waitForWidgetResults(results: Promise<WorkspaceIssue[]>, waiting: {isSkipped: boolean}): Promise<WorkspaceIssue[] | "skipped"> {
+        return new Promise(resolve => {
+            const description = "Restoring the results of the widgets, such as a spectral line query";
+            let isSettled = false;
+            const settle = (outcome: WorkspaceIssue[] | "skipped") => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                clearTimeout(slowTimer);
+                if (this.isCurrent) {
+                    this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                resolve(outcome);
+            };
+            const skip = () => {
+                waiting.isSkipped = true;
+                settle("skipped");
+            };
+            const slowTimer = setTimeout(() => {
+                if (this.isCurrent && !isSettled) {
+                    this.appStore.setWorkspaceLoadingStep({description: `${description} takes long. Wait, or skip it to restore the rest of the workspace`, progress: 0, onSkip: skip});
+                }
+            }, WorkspaceRestorer.SLOW_WIDGET_RESULTS_MS);
+            if (this.isCurrent) {
+                this.appStore.setWorkspaceLoadingStep({description, progress: 0, onSkip: skip});
+            }
+            results.then(settle, err => {
+                console.error(err);
+                settle([]);
+            });
+        });
     }
 
     public wasActiveImageRestored(): boolean {

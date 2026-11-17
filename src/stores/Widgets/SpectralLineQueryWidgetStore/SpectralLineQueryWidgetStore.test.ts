@@ -238,6 +238,16 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
             restored.dispose();
         });
 
+        test("shows a result that comes after the restore stopped waiting without its saved settings", async () => {
+            const config = await showResult();
+            const restored = new SpectralLineQueryWidgetStore();
+
+            expect(await restored.restoreWorkspaceResult(JSON.parse(JSON.stringify(config)), () => false)).toEqual([]);
+
+            expect(restored.resultTableInfo).toBe("Showing 3 line(s).");
+            restored.dispose();
+        });
+
         test("does not save a result after a query that failed", async () => {
             query.mockRejectedValue("Error: timeout");
             store.setQueryRange([230, 231]);

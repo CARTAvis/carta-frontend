@@ -752,12 +752,16 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
      *
      * @returns the problems, as sentences about the widget.
      */
-    public restoreWorkspaceResult = async (config: WorkspaceSpectralLineQueryWidgetConfig): Promise<string[]> => {
+    public restoreWorkspaceResult = async (config: WorkspaceSpectralLineQueryWidgetConfig, isWanted: () => boolean = () => true): Promise<string[]> => {
         const result = config.result;
         if (!result || !isRange(result.frequencyRange)) {
             return [];
         }
         const error = await this.fetchLines(result.frequencyRange[0], result.frequencyRange[1], isFiniteNumber(result.intensityLimit) ? result.intensityLimit : NaN);
+        // The query answered after the restore stopped waiting. It shows the lines without the saved settings.
+        if (!isWanted()) {
+            return [];
+        }
         if (error) {
             return [`could not query the spectral lines again: ${error}`];
         }

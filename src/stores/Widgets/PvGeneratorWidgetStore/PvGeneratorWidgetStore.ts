@@ -497,7 +497,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
      *
      * @returns the problems, as sentences about the widget.
      */
-    public restoreWorkspaceResult = async (config: WorkspacePvGeneratorWidgetConfig): Promise<string[]> => {
+    public restoreWorkspaceResult = async (config: WorkspacePvGeneratorWidgetConfig, isWanted: () => boolean = () => true): Promise<string[]> => {
         const preview = config.preview;
         const layoutId = this.layoutId;
         const request = this.restoredPreviewRequest;
@@ -526,6 +526,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             await this.sendRequest(frame, request, true, layoutId, 0);
         } else {
             await this.requestPV(true, layoutId);
+        }
+        // The preview came after the restore stopped waiting. It shows without the saved render settings and place.
+        if (!isWanted()) {
+            return [];
         }
         if (!this.previewFrame) {
             return ["could not make the PV preview again"];
