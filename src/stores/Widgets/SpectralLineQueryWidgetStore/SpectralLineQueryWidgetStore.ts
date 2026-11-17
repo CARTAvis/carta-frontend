@@ -1,10 +1,10 @@
 import type {NumberRange} from "@blueprintjs/core";
 import {type Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, VelocityConvention} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceSpectralLineQueryWidgetConfig} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceSpectralLineQueryResult, type WorkspaceSpectralLineQueryWidgetConfig} from "models";
 import {SplatalogueService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 import {
@@ -82,6 +82,8 @@ const MEASURED_FREQUENCY_COLUMN_INDEX = 6;
 const RESOLVED_QN_COLUMN_INDEX = 8;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
+/** The widths of the columns of the table that lists the columns of the result: name, display and description. */
+const DEFAULT_HEADER_TABLE_COLUMN_WIDTHS = [150, 70, 300];
 const LINE_QUERY_VELOCITY_CONVENTION = VelocityConvention.RADIO;
 
 /** The settings that a spectral line query widget saves in a layout. */
@@ -96,6 +98,18 @@ function isFiniteNumber(value: unknown): value is number {
 
 function isRange(value: unknown): value is [number, number] {
     return Array.isArray(value) && value.length === 2 && value.every(isFiniteNumber);
+}
+
+function isWidthList(value: unknown, length: number): value is number[] {
+    return Array.isArray(value) && value.length === length && value.every(width => isFiniteNumber(width) && width > 0);
+}
+
+/** The query that made the result that the widget shows. */
+interface ShownQuery {
+    /** The frequency range, in MHz. */
+    frequencyRange: [number, number];
+    /** The lowest intensity. NaN when the query had no intensity limit. */
+    intensityLimit: number;
 }
 
 export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralLineQueryWidgetConfig, Persisted<SpectralLineQueryWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceSpectralLineQueryWidgetConfig> {
@@ -121,6 +135,9 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
     @observable controlHeader: Map<string, ControlHeader> = new Map<string, ControlHeader>();
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
     @observable sortedIndexMap: Array<number> = [];
+    @observable headerTableColumnWidths: number[] = [...DEFAULT_HEADER_TABLE_COLUMN_WIDTHS];
+    /** The query that made the result that the widget shows. Nothing when the widget shows no result. */
+    private shownQuery: ShownQuery | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
     // raw copy of the shifted frequency column, does not apply shifting factor
@@ -258,6 +275,7 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
         this.controlHeader = new Map<string, ControlHeader>();
         this.isDataFiltered = false;
         this.filterNum = 0;
+        this.shownQuery = undefined;
     };
 
     query = flow(function* (this: SpectralLineQueryWidgetStore) {
@@ -290,9 +308,25 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
             return;
         }
 
+        const error: string | undefined = yield this.fetchLines(freqMHzFrom, freqMHzTo, this.isIntensityLimitEnabled ? this.intensityLimitValue : NaN);
+        if (error) {
+            alertStore.showAlert(error);
+        }
+    }).bind(this);
+
+    /**
+     * Queries the lines in a frequency range and shows them.
+     *
+     * @param freqMHzFrom - the start of the range, in MHz.
+     * @param freqMHzTo - the end of the range, in MHz.
+     * @param intensityLimit - the lowest intensity. NaN queries the lines of every intensity.
+     * @returns the error, or nothing when the query worked.
+     */
+    private fetchLines = flow(function* (this: SpectralLineQueryWidgetStore, freqMHzFrom: number, freqMHzTo: number, intensityLimit: number) {
         this.isQuerying = true;
+        let error: string | undefined;
         try {
-            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.isIntensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, intensityLimit);
             if (ack?.dataSize >= 0) {
                 this.numDataRows = ack.dataSize;
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
@@ -301,14 +335,16 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
                 this.updateFilterResult(this.fullRowIndexes);
                 this.isDataFiltered = false;
                 this.filterNum = 0;
+                this.shownQuery = {frequencyRange: [freqMHzFrom, freqMHzTo], intensityLimit};
             } else {
                 this.resetQueryContents();
             }
         } catch (err) {
             this.resetQueryContents();
-            alertStore.showAlert(err?.toString() ?? "Spectral line query failed.");
+            error = err?.toString() ?? "Spectral line query failed.";
         }
         this.isQuerying = false;
+        return error;
     }).bind(this);
 
     @action setColumnFilter = (filterInput: string, columnName: string) => {
@@ -377,6 +413,12 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
             controlHeader.columnWidth = width;
         }
     }
+
+    @action setHeaderTableColumnWidth = (index: number, width: number) => {
+        if (index >= 0 && index < this.headerTableColumnWidths.length) {
+            this.headerTableColumnWidths[index] = width;
+        }
+    };
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
         this.sortingInfo = {columnName, sortingType};
@@ -605,9 +647,32 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
 
     public toConfig = (): SpectralLineQueryWidgetConfig => ({widgetId: this.widgetId});
 
-    /** Returns the query settings that a workspace saves. The spectral profiler is named by its widget ID, which stays the same after a restore. */
+    /** Returns the result table that a workspace saves, or nothing when the widget shows no result. */
+    private get workspaceResult(): WorkspaceSpectralLineQueryResult | undefined {
+        if (!this.shownQuery) {
+            return undefined;
+        }
+        const columns: WorkspaceSpectralLineQueryResult["columns"] = {};
+        this.controlHeader.forEach((header, name) => {
+            columns[name] = {display: header.display !== false, filter: header.filter ?? "", width: header.columnWidth ?? DEFAULT_HEADER_WIDTH};
+        });
+        const selection = (this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data ?? []) as boolean[];
+        const {columnName, sortingType} = this.sortingInfo;
+        return {
+            frequencyRange: [...this.shownQuery.frequencyRange],
+            ...(isFinite(this.shownQuery.intensityLimit) ? {intensityLimit: this.shownQuery.intensityLimit} : {}),
+            rowCount: this.numDataRows,
+            columns,
+            filtered: this.isDataFiltered,
+            ...(columnName && sortingType !== null ? {sort: {columnName, sortingType}} : {}),
+            selectedRows: selection.flatMap((isSelected, row) => (isSelected ? [row] : []))
+        };
+    }
+
+    /** Returns the query settings and the result table that a workspace saves. The spectral profiler is named by its widget ID, which stays the same after a restore. */
     public toWorkspaceConfig = (): WorkspaceSpectralLineQueryWidgetConfig => {
         const profiler = this.selectedSpectralProfilerID ? AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID) : undefined;
+        const result = this.workspaceResult;
         return {
             rangeType: this.queryRangeType,
             range: [this.queryRange[0], this.queryRange[1]],
@@ -617,13 +682,15 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
             intensityLimit: this.intensityLimitValue,
             redshiftType: this.redshiftType,
             redshift: this.redshiftInput,
-            ...(profiler?.widgetId ? {spectralProfilerId: profiler.widgetId} : {})
+            ...(profiler?.widgetId ? {spectralProfilerId: profiler.widgetId} : {}),
+            headerTableColumnWidths: [...this.headerTableColumnWidths],
+            ...(result ? {result} : {})
         };
     };
 
     public applyWorkspaceBinding = (): string[] => [];
 
-    /** Applies the saved query settings. A value that is not valid keeps its default. The widget does not query again. */
+    /** Applies the saved query settings. A value that is not valid keeps its default. {@link restoreWorkspaceResult} queries again. */
     @action public applyWorkspaceConfig = (config: WorkspaceSpectralLineQueryWidgetConfig): string[] => {
         if (Object.values(SpectralLineQueryRangeType).includes(config.rangeType)) {
             this.setQueryRangeType(config.rangeType);
@@ -647,6 +714,9 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
         if (isFiniteNumber(config.redshift)) {
             this.setRedshiftInput(config.redshift);
         }
+        if (isWidthList(config.headerTableColumnWidths, DEFAULT_HEADER_TABLE_COLUMN_WIDTHS.length)) {
+            this.headerTableColumnWidths = [...config.headerTableColumnWidths];
+        }
         const problems: string[] = [];
         if (typeof config.spectralProfilerId === "string") {
             const widgetsStore = AppStore.Instance.widgetsStore;
@@ -661,6 +731,68 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
     };
 
     public applyWorkspaceView = (): void => {};
+
+    /**
+     * Runs the saved query again, and applies the saved column settings, filters, sorting and
+     * selected lines to the new result. The result comes from Splatalogue, so it can differ from
+     * the saved one. The selected lines are applied only when the query returns as many lines as
+     * before.
+     *
+     * @returns the problems, as sentences about the widget.
+     */
+    public restoreWorkspaceResult = async (config: WorkspaceSpectralLineQueryWidgetConfig): Promise<string[]> => {
+        const result = config.result;
+        if (!result || !isRange(result.frequencyRange)) {
+            return [];
+        }
+        const error = await this.fetchLines(result.frequencyRange[0], result.frequencyRange[1], isFiniteNumber(result.intensityLimit) ? result.intensityLimit : NaN);
+        if (error) {
+            return [`could not query the spectral lines again: ${error}`];
+        }
+        if (!this.shownQuery) {
+            return ["the spectral line query returned no result"];
+        }
+        return runInAction(() => this.applyWorkspaceResult(result));
+    };
+
+    private applyWorkspaceResult(result: WorkspaceSpectralLineQueryResult): string[] {
+        const problems: string[] = [];
+        Object.entries(result.columns ?? {}).forEach(([name, column]) => {
+            if (!this.controlHeader.has(name)) {
+                return;
+            }
+            if (typeof column?.display === "boolean") {
+                this.setHeaderDisplay(column.display, name);
+            }
+            if (typeof column?.filter === "string") {
+                this.setColumnFilter(column.filter, name);
+            }
+            if (isFiniteNumber(column?.width) && column.width > 0) {
+                this.setResultTableColumnWidth(column.width, name);
+            }
+        });
+        const selection = this.queryResult.get(LINE_SELECTION_COLUMN_INDEX)?.data as boolean[] | undefined;
+        if (Array.isArray(result.selectedRows) && result.selectedRows.length > 0) {
+            if (result.rowCount === this.numDataRows && selection) {
+                result.selectedRows.forEach(row => {
+                    if (Number.isInteger(row) && row >= 0 && row < selection.length) {
+                        selection[row] = true;
+                    }
+                });
+            } else {
+                problems.push(`the spectral line query now returns ${this.numDataRows} lines instead of ${result.rowCount}, so the selected lines were not restored`);
+            }
+        }
+        if (result.filtered === true) {
+            this.filter();
+        } else {
+            this.updateFilterResult(this.fullRowIndexes);
+        }
+        if (result.sort && this.controlHeader.has(result.sort.columnName) && Object.values(CARTA.SortingType).includes(result.sort.sortingType)) {
+            this.setSortingInfo(result.sort.columnName, result.sort.sortingType);
+        }
+        return problems;
+    }
 
     constructor() {
         makeObservable(this);

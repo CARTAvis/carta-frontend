@@ -816,7 +816,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Restore a profile, analysis or statistics widget in three steps. Point it at its image and
      * region, apply the rest of what it showed after it settles, and zoom it last. Pointing a
-     * widget at another image resets what it shows. Changing what it shows resets its zoom.
+     * widget at another image resets what it shows. Changing what it shows resets its zoom. Then
+     * fetch again the results of online queries, such as the spectral line query.
      */
     private *restoreViews(): Generator<Promise<unknown>, void, any> {
         this.issues.push(...this.appStore.catalogStore.widgetBindings.restore(this.workspace.catalogWidgets, this.workspace.catalogs, this.catalogIds));
@@ -831,6 +832,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
+        const issues = yield* awaited(this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets));
+        if (!this.isCurrent) {
+            return;
+        }
+        this.issues.push(...issues);
     }
 
     public wasActiveImageRestored(): boolean {

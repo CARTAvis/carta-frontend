@@ -10,6 +10,7 @@ const MOCK_UTILITIES = {
 };
 
 const MOCK_APP_STORE = {
+    alertStore: {showAlert: jest.fn()},
     widgetsStore: {
         spectralProfilerList: [],
         getSpectralWidgetStoreByID: jest.fn()
@@ -27,7 +28,10 @@ jest.mock("utilities", () => ({
     ...MOCK_UTILITIES
 }));
 
-import {RedshiftType, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {CARTA} from "carta-protobuf";
+
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {SplatalogueService} from "services";
 import {SPEED_OF_LIGHT_KMS} from "utilities";
 
 import {SpectralLineQueryWidgetStore} from "./SpectralLineQueryWidgetStore";
@@ -128,7 +132,8 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
             intensityLimit: -3,
             redshiftType: RedshiftType.Z,
             redshift: 0.1,
-            spectralProfilerId: "profiler-a"
+            spectralProfilerId: "profiler-a",
+            headerTableColumnWidths: [150, 70, 300]
         });
 
         const restored = new SpectralLineQueryWidgetStore();
@@ -143,5 +148,98 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
 
         expect(problems).toEqual(["the spectral profiler that it plotted lines on was not restored"]);
         expect([store.queryRangeType, store.queryUnit, store.queryRange, store.intensityLimitValue, store.redshiftType]).toEqual([SpectralLineQueryRangeType.Range, SpectralLineQueryUnit.MHz, [0, 0], -5, RedshiftType.V]);
+    });
+
+    describe("with a result table", () => {
+        const query = jest.fn();
+        // The answer of Splatalogue with three columns: the species, its name and the frequency.
+        const ackOf = (rows: number) => ({
+            dataSize: rows,
+            headers: [SpectralLineHeaders.Species, SpectralLineHeaders.ChemicalName, SpectralLineHeaders.ShiftedFrequency].map((name, columnIndex) => ({name, dataType: CARTA.ColumnType.String, columnIndex})),
+            spectralLineData: {rows}
+        });
+
+        beforeEach(() => {
+            query.mockReset();
+            query.mockResolvedValue(ackOf(3));
+            (SplatalogueService.Instance as unknown as {query: jest.Mock}).query = query;
+            (MOCK_UTILITIES.ProtobufProcessing as {processCatalogData?: jest.Mock}).processCatalogData = jest.fn((data: {rows: number}) => {
+                const columnOf = (values: string[]) => ({dataType: CARTA.ColumnType.String, data: values.slice(0, data.rows)});
+                return new Map([
+                    [0, columnOf(["CO", "CS", "HCN"])],
+                    [1, columnOf(["Carbon Monoxide", "Carbon Monosulfide", "Hydrogen cyanide"])],
+                    [2, columnOf(["230538", "244935", "265886"])]
+                ]);
+            });
+            MOCK_UTILITIES.stringFiltering.mockReturnValue([0, 2] as never);
+        });
+
+        const showResult = async () => {
+            store.setQueryRange([230, 231]);
+            store.setQueryUnit(SpectralLineQueryUnit.GHz);
+            await store.query();
+            store.selectSingleLine(2);
+            store.setHeaderDisplay(false, SpectralLineHeaders.Species);
+            store.setColumnFilter("C*", SpectralLineHeaders.Species);
+            store.filter();
+            store.setSortingInfo(SpectralLineHeaders.Species, CARTA.SortingType.Descending);
+            store.setResultTableColumnWidth(80, SpectralLineHeaders.Species);
+            store.setHeaderTableColumnWidth(2, 250);
+            return store.toWorkspaceConfig();
+        };
+
+        test("saves the query of the result and the table settings, and queries again on restore", async () => {
+            const config = await showResult();
+
+            expect(config.headerTableColumnWidths).toEqual([150, 70, 250]);
+            expect(config.result).toEqual({
+                frequencyRange: [230000, 231000],
+                intensityLimit: -5,
+                rowCount: 3,
+                columns: {
+                    [SpectralLineHeaders.LineSelection]: {display: true, filter: "", width: 50},
+                    [SpectralLineHeaders.Species]: {display: false, filter: "C*", width: 80},
+                    [SpectralLineHeaders.ChemicalName]: {display: true, filter: "", width: 150},
+                    [SpectralLineHeaders.ShiftedFrequency]: {display: true, filter: "", width: 165}
+                },
+                filtered: true,
+                sort: {columnName: SpectralLineHeaders.Species, sortingType: CARTA.SortingType.Descending},
+                selectedRows: [2]
+            });
+
+            // The form shows other settings than the query of the result. The restore queries with the saved query.
+            const saved = JSON.parse(JSON.stringify({...config, range: [1, 2]}));
+            const restored = new SpectralLineQueryWidgetStore();
+            restored.applyWorkspaceConfig(saved);
+            query.mockClear();
+            expect(await restored.restoreWorkspaceResult(saved)).toEqual([]);
+
+            expect(query).toHaveBeenCalledWith(230000, 231000, -5);
+            expect(restored.toWorkspaceConfig()).toEqual(saved);
+            expect(restored.resultTableInfo).toBe("Showing 2 filtered line(s) of total 3 line(s). Applied 1 filter(s). Selected 1 line(s).");
+            restored.dispose();
+        });
+
+        test("does not save a result after a query that failed", async () => {
+            query.mockRejectedValue("Error: timeout");
+            store.setQueryRange([230, 231]);
+            store.setQueryUnit(SpectralLineQueryUnit.GHz);
+            await store.query();
+
+            expect(store.toWorkspaceConfig()).not.toHaveProperty("result");
+        });
+
+        test("says when the query fails again, and keeps the selection out of a result of another size", async () => {
+            const config = await showResult();
+            const restored = new SpectralLineQueryWidgetStore();
+
+            query.mockRejectedValueOnce("Error: timeout");
+            expect(await restored.restoreWorkspaceResult(config)).toEqual(["could not query the spectral lines again: Error: timeout"]);
+
+            query.mockResolvedValueOnce(ackOf(2));
+            expect(await restored.restoreWorkspaceResult(config)).toEqual(["the spectral line query now returns 2 lines instead of 3, so the selected lines were not restored"]);
+            expect(restored.numSelectedLines).toBe(0);
+            restored.dispose();
+        });
     });
 });

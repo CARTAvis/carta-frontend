@@ -79,4 +79,11 @@ export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetSt
     applyWorkspaceBinding(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceConfig(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceView(config: TConfig): void;
+    /**
+     * Fetches again the data that the widget showed and that the workspace does not save, such as
+     * the result of an online query. Runs after the other steps.
+     *
+     * @returns the problems, as sentences about the widget.
+     */
+    restoreWorkspaceResult?(config: TConfig): Promise<string[]>;
 }

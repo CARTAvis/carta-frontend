@@ -503,6 +503,27 @@ export interface WorkspaceSpectralLineQueryWidgetConfig {
     redshift: number;
     /** The spectral profiler that the lines are plotted on, by its widget ID. */
     spectralProfilerId?: string;
+    /** The widths of the columns of the table that lists the columns of the result: name, display and description. */
+    headerTableColumnWidths?: number[];
+    /** The result table. Left out when the widget showed no result. A restore runs the query again. */
+    result?: WorkspaceSpectralLineQueryResult;
+}
+
+/** The result table of a spectral line query. The lines themselves are not saved. */
+export interface WorkspaceSpectralLineQueryResult {
+    /** The frequency range of the query, in MHz. */
+    frequencyRange: [number, number];
+    /** The lowest intensity of the query. Left out when the query had no intensity limit. */
+    intensityLimit?: number;
+    /** The number of lines that the query returned. */
+    rowCount: number;
+    /** Whether each column is shown, its filter text and its width, by the column name. */
+    columns: Record<string, {display: boolean; filter: string; width: number}>;
+    /** Whether the filters were applied. A filter text can be typed without being applied. */
+    filtered: boolean;
+    sort?: {columnName: string; sortingType: CARTA.SortingType};
+    /** The selected lines, by their row in the result of the query. */
+    selectedRows: number[];
 }
 
 /** The settings of a PV generator widget. The PV image itself is saved with the request that made it. */

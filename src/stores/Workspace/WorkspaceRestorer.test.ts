@@ -174,7 +174,8 @@ function createSession() {
             catalogPlotWidgets: new Map(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined)
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined),
+            restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -658,6 +659,11 @@ describe("WorkspaceRestorer", () => {
         appStore.widgetsStore.restorePlotWidgetViews.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetViews");
         });
+        const queryIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "spectral-line-query-0", message: "Could not fully restore the widget spectral-line-query-0: the spectral line query returned no result"};
+        appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetResults");
+            return Promise.resolve([queryIssue]);
+        });
 
         const restorer = new WorkspaceRestorer(createWorkspace({layout: LAYOUT, plotWidgets}), WorkspaceRestorer.claimGeneration());
         const generator = restorer.restore();
@@ -666,7 +672,9 @@ describe("WorkspaceRestorer", () => {
             step = generator.next(await step.value);
         }
 
-        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews"]);
+        // The results of online queries are fetched again last, and their problems are reported.
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews", "restorePlotWidgetResults"]);
+        expect(step.value).toContainEqual(queryIssue);
         expect(didSettleBeforeTheRest).toBe(true);
         expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
         expect(restorer.fileIdOf(1)).toBe(appStore.frames[0].frameInfo.fileId);
