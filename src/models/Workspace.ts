@@ -11,6 +11,7 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     type ContourDashMode,
+    type CoordinateMode,
     FrameScaling,
     type MultiProfileCategory,
     type NumericInputType,
@@ -216,6 +217,8 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** The width in pixels that a spatial profile along a line or polyline region samples. */
     lineRegionSampleWidth?: number;
+    /** Whether the Region dialog shows the region in image or world coordinates. */
+    coordinate?: CoordinateMode;
 }
 
 export interface WorkspaceColorBlending {

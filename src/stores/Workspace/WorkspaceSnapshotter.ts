@@ -245,7 +245,8 @@ export class WorkspaceSnapshotter {
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
-                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
+                coordinate: region.coordinate
             }));
     }
 

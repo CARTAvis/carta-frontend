@@ -149,7 +149,8 @@ describe("WorkspaceSnapshotter", () => {
             lineWidth: 2,
             isLocked: false,
             dashLength: 0,
-            lineRegionSampleWidth: 5
+            lineRegionSampleWidth: 5,
+            coordinate: "World"
         });
         const frame = createFrame(0, {regionSet: {regions: [region(1, CARTA.RegionType.LINE), region(2, CARTA.RegionType.RECTANGLE)], focusedRegion: undefined}});
         createSession({frames: [frame], activeFrame: frame});
@@ -157,6 +158,8 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.lineRegionSampleWidth)).toEqual([5, undefined]);
+        // The Region dialog shows each region in the coordinates that the user chose.
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.coordinate)).toEqual(["World", "World"]);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 

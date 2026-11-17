@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, DialogId, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, CoordinateMode, DialogId, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -549,6 +549,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 const sampleWidth = regionInfo.lineRegionSampleWidth;
                 if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
                     region.setLineRegionSampleWidth(sampleWidth);
+                }
+                // World coordinates need the WCS of the image.
+                if (regionInfo.coordinate === CoordinateMode.Image || (regionInfo.coordinate === CoordinateMode.World && frame.isValidWcs)) {
+                    region.setCoordinate(regionInfo.coordinate);
                 }
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);

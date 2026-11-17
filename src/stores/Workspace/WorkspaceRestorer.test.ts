@@ -60,7 +60,7 @@ function createFrame(fileId: number) {
         regionSet: {
             addExistingRegionAsync: jest.fn(async (points: unknown) => {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
-                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn()};
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn()};
             }),
             selectSingleRegion: jest.fn()
         }
@@ -935,6 +935,24 @@ describe("WorkspaceRestorer", () => {
 
             const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setLineRegionSampleWidth: jest.Mock}[];
             expect(restoredRegions.map(restoredRegion => restoredRegion.setLineRegionSampleWidth.mock.calls)).toEqual([[[7]], []]);
+        });
+
+        test("shows each region in the Region dialog in its saved coordinates, and world coordinates only on an image with a WCS", async () => {
+            const {appStore} = createSession();
+            const workspace = createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), coordinate: "Image" as never}, {...region(2), coordinate: "World" as never}, region(3)]}}]});
+
+            await restore(workspace);
+            const regionsOf = async () => (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setCoordinate: jest.Mock}[];
+            expect((await regionsOf()).map(restoredRegion => restoredRegion.setCoordinate.mock.calls)).toEqual([[["Image"]], [], []]);
+
+            appStore.appendFile.mockImplementationOnce(() => {
+                const frame = {...createFrame(9), isValidWcs: true};
+                appStore.frameMap.set(9, frame as never);
+                appStore.frames = [frame as never];
+                return Promise.resolve(frame as never);
+            });
+            await restore(workspace);
+            expect((await regionsOf()).map(restoredRegion => restoredRegion.setCoordinate.mock.calls)).toEqual([[["Image"]], [["World"]], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {
