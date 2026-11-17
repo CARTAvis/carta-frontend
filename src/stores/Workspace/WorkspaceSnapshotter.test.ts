@@ -74,6 +74,7 @@ function createSession(overrides: Record<string, any> = {}) {
         rasterScalingReference: undefined,
         timeSeriesStore: {isMember: jest.fn(() => false)},
         animatorStore: {frameRate: 5, step: 1, playMode: 0, animationMode: 0},
+        logStore: {logLevel: 1, hiddenTags: [] as string[]},
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
@@ -303,6 +304,15 @@ describe("WorkspaceSnapshotter", () => {
 
         Object.assign(frame, {animationChannelRange: [0, 9]});
         expect(new WorkspaceSnapshotter().capture().workspace.files?.[0]).not.toHaveProperty("animationChannelRange");
+    });
+
+    test("saves the level and the hidden tags of the Log widget", () => {
+        const {appStore} = createSession();
+        Object.assign(appStore.logStore, {logLevel: 2, hiddenTags: ["Region"]});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.log).toEqual({level: 2, hiddenTags: ["Region"]});
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {

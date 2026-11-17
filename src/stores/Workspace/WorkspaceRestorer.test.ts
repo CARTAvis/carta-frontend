@@ -108,6 +108,7 @@ function createSession() {
     };
 
     const appStore = {
+        logStore: {setLevel: jest.fn(), setHiddenTags: jest.fn()},
         animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn(), setNumericInputType: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
@@ -252,6 +253,22 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
         expect(appStore.animatorStore.setNumericInputType).toHaveBeenCalledWith("Step");
         expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
+    });
+
+    test("applies the level and the hidden tags of the Log widget, and keeps the current ones when they are not valid", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({log: {level: 2, hiddenTags: ["Region", "Catalog"]}}));
+
+        expect(appStore.logStore.setLevel).toHaveBeenCalledWith(2);
+        expect(appStore.logStore.setHiddenTags).toHaveBeenCalledWith(["Region", "Catalog"]);
+
+        appStore.logStore.setLevel.mockClear();
+        appStore.logStore.setHiddenTags.mockClear();
+        await restore(createWorkspace({log: {level: 9, hiddenTags: [1]} as never}));
+
+        expect(appStore.logStore.setLevel).not.toHaveBeenCalled();
+        expect(appStore.logStore.setHiddenTags).not.toHaveBeenCalled();
     });
 
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {

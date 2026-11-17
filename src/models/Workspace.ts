@@ -548,6 +548,12 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
     previewRegionId: number;
 }
 
+/** What the Log widget shows: the lowest level of the entries that it shows, and the tags that it hides. */
+export interface WorkspaceLog {
+    level: CARTA.ErrorSeverity;
+    hiddenTags: string[];
+}
+
 /** The settings of the animator. */
 export interface WorkspaceAnimator {
     frameRate: number;
@@ -599,6 +605,8 @@ export interface Workspace {
     selectedFile?: number;
     /** The settings of the animator. */
     animator?: WorkspaceAnimator;
+    /** What the Log widget shows. The log entries are not saved. */
+    log?: WorkspaceLog;
     /**
      * The image that the Contour dialog shows. Left out while the dialog follows the active image,
      * which is the default.

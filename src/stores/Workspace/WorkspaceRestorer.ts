@@ -1,3 +1,4 @@
+import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
 import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
@@ -138,6 +139,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.putFrontImageBack();
         this.restoreContourDataSource();
         this.restoreAnimator();
+        this.restoreLog();
         yield* this.openCatalogs();
         if (!this.isCurrent) {
             return this.issues;
@@ -193,6 +195,21 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (Object.values(NumericInputType).includes(saved.numericInputType as NumericInputType)) {
             animator.setNumericInputType(saved.numericInputType as NumericInputType);
+        }
+    }
+
+    /** Applies what the Log widget showed: the lowest level of the entries, and the hidden tags. A value that is not valid is not applied. */
+    private restoreLog(): void {
+        const saved = this.workspace.log;
+        if (!saved || typeof saved !== "object") {
+            return;
+        }
+        const logStore = this.appStore.logStore;
+        if (Object.values(CARTA.ErrorSeverity).includes(saved.level)) {
+            logStore.setLevel(saved.level);
+        }
+        if (Array.isArray(saved.hiddenTags) && saved.hiddenTags.every(tag => typeof tag === "string")) {
+            logStore.setHiddenTags(saved.hiddenTags);
         }
     }
 

@@ -62,6 +62,10 @@ export class LogStore {
         }
     }
 
+    @action setHiddenTags(tags: string[]) {
+        this.hiddenTags = [...new Set(tags)];
+    }
+
     @action setLevel(level: CARTA.ErrorSeverity) {
         this.logLevel = level;
     }

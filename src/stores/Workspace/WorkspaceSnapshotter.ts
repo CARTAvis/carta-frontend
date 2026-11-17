@@ -369,6 +369,7 @@ export class WorkspaceSnapshotter {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
+        this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};
         // The Contour dialog follows the active image by default. Save only the image it shows when it does not.
         const contourImageId = this.appStore.isFrameLockedToContour ? undefined : this.imageIdOf(this.appStore.contourDataSource);
         if (contourImageId !== undefined) {
