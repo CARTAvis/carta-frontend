@@ -40,7 +40,6 @@ export class ContourDialogComponent extends React.Component {
     private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
-    private cachedFrame: FrameStore | null;
     private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
@@ -70,6 +69,20 @@ export class ContourDialogComponent extends React.Component {
                     }
                 }
             }),
+            // Show the levels and the smoothing of the image again when they change, not only when the
+            // dialog shows another image. A workspace restore applies them after the image is open.
+            reaction(
+                () => {
+                    const config = AppStore.Instance.contourDataSource?.contourConfig;
+                    return [AppStore.Instance.contourDataSource, config?.levels, config?.smoothingMode, config?.smoothingFactor] as const;
+                },
+                ([dataSource], [previousDataSource]) => {
+                    if (dataSource !== previousDataSource) {
+                        this.widgetStore.clearXYBounds();
+                    }
+                    this.setDefaultContourParameters();
+                }
+            ),
             // A restored image can use the cube histogram for its contour levels while nothing has asked
             // the backend for it yet. Ask for it when the contour dialog is open, because the dialog
             // generates the levels from it.
@@ -111,15 +124,6 @@ export class ContourDialogComponent extends React.Component {
             this.levels = [];
             this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
             this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
-        }
-    }
-
-    componentDidUpdate() {
-        const appStore = AppStore.Instance;
-        if (appStore.contourDataSource !== this.cachedFrame) {
-            this.cachedFrame = appStore.contourDataSource;
-            this.widgetStore.clearXYBounds();
-            this.setDefaultContourParameters();
         }
     }
 

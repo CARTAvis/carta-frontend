@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -51,7 +51,7 @@ export class VectorOverlayDialogComponent extends React.Component {
      */
     public static readonly MAX_PIXEL_AVERAGING = 64;
 
-    private cachedFrame: FrameStore | null = null;
+    private readonly disposers: IReactionDisposer[] = [];
     private colormapPreviewSession: ColormapPreviewSession | null = null;
 
     componentDidUpdate() {
@@ -59,20 +59,41 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (this.colormapPreviewSession && this.colormapPreviewSession.config !== appStore.activeFrame?.vectorOverlayConfig) {
             this.revertColormapPreview();
         }
-        if (appStore.activeFrame !== this.cachedFrame) {
-            this.cachedFrame = appStore.activeFrame;
-            this.setDefaultVectorOverlayParameters();
-        }
     }
 
     componentWillUnmount() {
         this.revertColormapPreview();
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     constructor(props: {appStore: AppStore}) {
         super(props);
         this.setDefaultVectorOverlayParameters();
         makeObservable(this);
+        // Show the settings of the active image again when they change, not only when another image
+        // becomes active. A workspace restore applies them after the image is open.
+        this.disposers.push(
+            reaction(
+                () => {
+                    const config = AppStore.Instance.activeFrame?.vectorOverlayConfig;
+                    return [
+                        config,
+                        config?.angularSource,
+                        config?.intensitySource,
+                        config?.pixelAveraging,
+                        config?.isFractionalIntensity,
+                        config?.threshold,
+                        config?.isThresholdEnabled,
+                        config?.isDebiasing,
+                        config?.qError,
+                        config?.uError,
+                        config?.thresholdOption
+                    ];
+                },
+                () => this.setDefaultVectorOverlayParameters()
+            )
+        );
     }
 
     @action setDefaultVectorOverlayParameters = () => {
@@ -87,6 +108,8 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.threshold = config.threshold;
             this.isThresholdEnabled = config.isThresholdEnabled;
             this.isDebiasing = config.isDebiasing;
+            this.qError = config.qError;
+            this.uError = config.uError;
             this.thresholdOption = config.thresholdOption;
         } else {
             this.angularSource = VectorOverlaySource.Current;
@@ -96,6 +119,8 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.isThresholdEnabled = false;
             this.threshold = 0;
             this.isDebiasing = false;
+            this.qError = 0;
+            this.uError = 0;
             this.thresholdOption = CARTA.PolarizationType.Plinear;
         }
     };
