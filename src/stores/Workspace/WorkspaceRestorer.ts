@@ -200,8 +200,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Freezes the cursor again where it was frozen, on the image in front, so that the cursor
-     * profiles show that position. A cursor that was not frozen follows the mouse.
+     * Puts the cursor where it was on the image in front, so that the cursor profiles show that
+     * position, and freezes it again when it was frozen. A cursor that was not frozen follows the
+     * mouse again when the mouse moves over the image.
      */
     private restoreCursor(): void {
         const cursor = this.workspace.cursor;
@@ -210,7 +211,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const position = cursor.position;
         const frame = this.appStore.activeFrame;
-        if (cursor.frozen && frame && typeof position?.x === "number" && typeof position?.y === "number" && isFinite(position.x) && isFinite(position.y)) {
+        if (frame && typeof position?.x === "number" && typeof position?.y === "number" && isFinite(position.x) && isFinite(position.y)) {
             frame.setCursorPosition(position);
             frame.updateCursorRegion(position);
         }

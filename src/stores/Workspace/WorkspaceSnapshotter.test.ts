@@ -595,7 +595,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.colorBlendingImages?.[0]).toEqual({imageListIndex: 0, selectedFrameId: [1], alpha: [1, 0.5], contourVisible: false, vectorOverlayVisible: false});
     });
 
-    test("saves the regions that are selected together, and the position of a frozen cursor", () => {
+    test("saves the regions that are selected together, and where the cursor is, frozen or not", () => {
         const {appStore, frame} = createSession();
         const region = (regionId: number) => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name: "", color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
         Object.assign(frame.regionSet, {regions: [region(5), region(6)], selectedRegionIds: new Set([5, 6]), focusedRegion: {regionId: 6}});
@@ -608,6 +608,9 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.cursor).toEqual({frozen: true, position: {x: 3, y: 4}});
 
         Object.assign(appStore, {isCursorFrozen: false});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, position: {x: 3, y: 4}});
+
+        Object.assign(frame, {cursorInfo: {posImageSpace: {x: NaN, y: 4}}});
         expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false});
     });
 

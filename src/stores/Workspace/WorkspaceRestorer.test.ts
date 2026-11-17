@@ -678,6 +678,16 @@ describe("WorkspaceRestorer", () => {
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
     });
 
+    test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).setCursorPosition).toHaveBeenCalledWith({x: 5, y: 6});
+        expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 5, y: 6});
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(false);
+    });
+
     test("puts the color-blended image saved in front back there", async () => {
         const {appStore} = createSession();
         const colorBlendings = [{id: 0}, {id: 1}];

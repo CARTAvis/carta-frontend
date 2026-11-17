@@ -559,7 +559,10 @@ export class WorkspaceSnapshotter {
         this.captureWidgetSettings();
         const isCursorFrozen = this.appStore.isCursorFrozen === true;
         const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
-        this.workspace.cursor = {frozen: isCursorFrozen, ...(isCursorFrozen && cursorPosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
+        // Leave out a position that is not a number, such as a point that matching could not transform.
+        // The workspace schema checks the position, so such a value would stop the workspace from saving.
+        const isFinitePosition = Number.isFinite(cursorPosition?.x) && Number.isFinite(cursorPosition?.y);
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
         this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};

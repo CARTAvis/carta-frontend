@@ -762,8 +762,9 @@ export interface Workspace {
      */
     contourDataSource?: {imageId: number};
     /**
-     * Whether the cursor was frozen, and where, in the pixels of the image in front. The position is
-     * saved only when the cursor was frozen. Then the cursor profiles show that position.
+     * Whether the cursor was frozen, and where it was, in the pixels of the image in front. A restore
+     * puts the cursor there, so that the cursor profiles show that position. A cursor that was not
+     * frozen then follows the mouse again when the mouse moves over the image.
      */
     cursor?: {frozen: boolean; position?: Point2D};
     /** The fields of the online catalog query dialog. */
