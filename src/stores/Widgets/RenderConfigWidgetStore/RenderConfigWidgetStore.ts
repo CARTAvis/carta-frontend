@@ -23,6 +23,7 @@ export interface RenderConfigWidgetConfig {
 
 export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceRenderConfigWidgetConfig> {
     widgetId: string = "";
+    @observable isBiasContrastOpen: boolean = false;
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -126,10 +127,17 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    /** Returns the zoom range of the histogram of the image in front. The workspace saves nothing else for this widget. */
+    @action setBiasContrastOpen = (isOpen: boolean) => {
+        this.isBiasContrastOpen = isOpen;
+    };
+
+    /** Returns whether the Bias / Contrast section is open, and the zoom range of the histogram of the image in front. */
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceRenderConfigWidgetConfig => {
         const fileId = AppStore.Instance.activeFrame?.frameInfo.fileId;
-        return fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {};
+        return {
+            ...(fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {}),
+            ...(this.isBiasContrastOpen ? {biasContrastOpen: true} : {})
+        };
     };
 
     /** Whether a restore found the image in front that the widget showed when the workspace was saved. If not, the saved zoom range does not apply. */
@@ -140,7 +148,10 @@ export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWi
         return this.isShowingWorkspaceData ? [] : ["the image it showed was not restored, so it shows the active image"];
     };
 
-    public applyWorkspaceConfig = (): string[] => [];
+    public applyWorkspaceConfig = (config: WorkspaceRenderConfigWidgetConfig): string[] => {
+        this.setBiasContrastOpen(config.biasContrastOpen === true);
+        return [];
+    };
 
     public applyWorkspaceView = (config: WorkspaceRenderConfigWidgetConfig): void => {
         if (this.isShowingWorkspaceData) {

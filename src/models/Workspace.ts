@@ -421,7 +421,10 @@ export interface WorkspacePlotRange {
     maxY?: number;
 }
 
-export type WorkspaceRenderConfigWidgetConfig = WorkspacePlotRange;
+export interface WorkspaceRenderConfigWidgetConfig extends WorkspacePlotRange {
+    /** Whether the Bias / Contrast section is open. Left out when it is closed. */
+    biasContrastOpen?: boolean;
+}
 
 export interface WorkspaceSpatialProfileWidgetConfig extends WorkspaceWidgetBinding, WorkspacePlotRange {
     /** The Stokes of the profile, such as `"Q"`. Left out when the profile uses the current Stokes of the image. */

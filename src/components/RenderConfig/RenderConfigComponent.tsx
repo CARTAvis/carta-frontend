@@ -456,7 +456,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                                         data-testid="clip-max-input"
                                     />
                                 </FormGroup>
-                                <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                                <ColormapConfigComponent renderConfig={frame.renderConfig} isBiasContrastOpen={this.widgetStore.isBiasContrastOpen} onBiasContrastOpenChange={this.widgetStore.setBiasContrastOpen} />
                                 {this.width < histogramCutoff && percentileSelectDiv}
                             </div>
                         </ScrollShadow>

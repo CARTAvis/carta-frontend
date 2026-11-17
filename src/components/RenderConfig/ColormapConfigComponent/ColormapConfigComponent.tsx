@@ -13,6 +13,9 @@ import {getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
+    /** Whether the Bias / Contrast section is open. */
+    isBiasContrastOpen: boolean;
+    onBiasContrastOpenChange: (isOpen: boolean) => void;
 }
 
 interface ScalingPreviewSession {
@@ -27,12 +30,11 @@ interface ColormapPreviewSession {
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-    @observable isExtendBiasContrast: boolean = false;
     @observable.ref private scalingPreviewSession: ScalingPreviewSession | null = null;
     @observable.ref private colormapPreviewSession: ColormapPreviewSession | null = null;
 
-    @action switchExtendBiasContrast = () => {
-        this.isExtendBiasContrast = !this.isExtendBiasContrast;
+    private switchExtendBiasContrast = () => {
+        this.props.onBiasContrastOpenChange(!this.props.isBiasContrastOpen);
     };
 
     constructor(props) {
@@ -172,11 +174,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 {this.renderScalingParameter(renderConfig)}
                 <FormGroup inline={true}>
-                    <Button variant="minimal" className={"bias-contrast-button"} endIcon={this.isExtendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.switchExtendBiasContrast}>
+                    <Button variant="minimal" className={"bias-contrast-button"} endIcon={this.props.isBiasContrastOpen ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} size="small" onClick={this.switchExtendBiasContrast}>
                         {"Bias / Contrast"}
                     </Button>
                 </FormGroup>
-                <Collapse isOpen={this.isExtendBiasContrast}>
+                <Collapse isOpen={this.props.isBiasContrastOpen}>
                     <BiasContrastSelectComponent
                         bias={renderConfig.bias}
                         contrast={renderConfig.contrast}

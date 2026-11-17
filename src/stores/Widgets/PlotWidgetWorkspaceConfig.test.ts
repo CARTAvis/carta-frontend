@@ -240,4 +240,23 @@ describe("the range a widget was zoomed to, in a workspace", () => {
 
         expect([restored.minX, restored.maxX, restored.minY, restored.maxY]).toEqual([0, 10, 1, 100]);
     });
+
+    test("a render config widget keeps the Bias / Contrast section open, also when the image in front is not saved", () => {
+        const session = createSession();
+        runInAction(() => (session.activeFrame = session.frames[1]));
+        const store = new RenderConfigWidgetStore();
+        store.setBiasContrastOpen(true);
+
+        const config = store.toWorkspaceConfig(WRITER);
+        expect(config).toEqual({biasContrastOpen: true});
+
+        const restored = new RenderConfigWidgetStore();
+        restored.applyWorkspaceConfig(config);
+        expect(restored.isBiasContrastOpen).toBe(true);
+
+        store.setBiasContrastOpen(false);
+        expect(store.toWorkspaceConfig(WRITER)).toEqual({});
+        restored.applyWorkspaceConfig({});
+        expect(restored.isBiasContrastOpen).toBe(false);
+    });
 });
