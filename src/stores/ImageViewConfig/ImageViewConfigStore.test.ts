@@ -1,4 +1,4 @@
-import {ImagePanelMode, ImageType, PreferenceKeys} from "enums";
+import {CoordinateMode, ImagePanelMode, ImageType, ImageViewSettingsPanelTabs, PreferenceKeys} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";
@@ -390,6 +390,23 @@ describe("ImageViewConfigStore", () => {
             imageViewConfigStore.applyConfig(null);
 
             expect(imageViewConfigStore.toConfig()).toEqual({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 2});
+        });
+
+        it("saves the tab of the Image View settings panel and the coordinates of its Pan and Zoom tab, only when they are not the defaults", () => {
+            imageViewConfigStore.applyConfig(null);
+            imageViewConfigStore.setSettingsTab(ImageViewSettingsPanelTabs.BEAM);
+            imageViewConfigStore.setPanAndZoomCoordinate(CoordinateMode.Image);
+
+            const config = imageViewConfigStore.toConfig();
+            expect(config).toEqual(expect.objectContaining({settingsTab: ImageViewSettingsPanelTabs.BEAM, panAndZoomCoordinate: CoordinateMode.Image}));
+
+            imageViewConfigStore.applyConfig(null);
+            expect([imageViewConfigStore.settingsTab, imageViewConfigStore.panAndZoomCoordinate]).toEqual([ImageViewSettingsPanelTabs.PAN_AND_ZOOM, CoordinateMode.World]);
+            expect(imageViewConfigStore.toConfig()).not.toHaveProperty("settingsTab");
+
+            imageViewConfigStore.applyConfig(JSON.parse(JSON.stringify(config)));
+            expect([imageViewConfigStore.settingsTab, imageViewConfigStore.panAndZoomCoordinate]).toEqual([ImageViewSettingsPanelTabs.BEAM, CoordinateMode.Image]);
+            imageViewConfigStore.applyConfig(null);
         });
     });
 

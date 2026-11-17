@@ -68,7 +68,8 @@ describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
         const appStore = {
             get activeFrame() {
                 return activeFrame.get();
-            }
+            },
+            isLoadingWorkspace: true
         };
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
 
@@ -81,5 +82,24 @@ describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
 
         expect(component.restFrameShiftInputIntent).toBe(Intent.NONE);
         component.componentWillUnmount();
+    });
+});
+
+describe("ImageViewSettingsPanelComponent tab", () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test.each([
+        [false, [["Pan and Zoom"], ["World"]]],
+        [true, [[], []]]
+    ])("goes back to its first tab in world coordinates when it closes, except during a workspace restore (%s)", (isLoadingWorkspace, [tabs, coordinates]) => {
+        const imageViewConfigStore = {setSettingsTab: jest.fn(), setPanAndZoomCoordinate: jest.fn()};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, isLoadingWorkspace, imageViewConfigStore} as unknown as AppStore);
+
+        (new ImageViewSettingsPanelComponent({} as any) as unknown as TestableImageViewSettingsPanelComponent).componentWillUnmount();
+
+        expect(imageViewConfigStore.setSettingsTab.mock.calls).toEqual(tabs.map(tab => [tab]));
+        expect(imageViewConfigStore.setPanAndZoomCoordinate.mock.calls).toEqual(coordinates.map(coordinate => [coordinate]));
     });
 });

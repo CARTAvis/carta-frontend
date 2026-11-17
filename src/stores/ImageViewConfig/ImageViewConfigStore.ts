@@ -1,7 +1,7 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImagePanelMode, ImageType, PreferenceKeys} from "enums";
+import {CoordinateMode, ImagePanelMode, ImageType, ImageViewSettingsPanelTabs, PreferenceKeys} from "enums";
 import {type ConfigurableStore, type ImageViewItem, type Persisted} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
@@ -15,6 +15,10 @@ export interface ImageViewGridConfig {
     panelColumns: number;
     /** The number of rows. In dynamic mode, this is the maximum number. In fixed mode, this is the exact number. */
     panelRows: number;
+    /** The tab of the Image View settings panel, such as "Beam". Left out for "Pan and Zoom". */
+    settingsTab?: ImageViewSettingsPanelTabs;
+    /** Whether the Pan and Zoom tab shows image or world coordinates. Left out for world coordinates. */
+    panAndZoomCoordinate?: CoordinateMode;
 }
 
 function isPanelCount(value: unknown): value is number {
@@ -36,6 +40,10 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     private nextColorBlendingId = 0;
     /** The grid settings of this session. A setting that is not set here follows the user's preference. */
     @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
+    /** The tab that the Image View settings panel shows. */
+    @observable settingsTab: ImageViewSettingsPanelTabs = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
+    /** Whether the Pan and Zoom tab of the Image View settings panel shows image or world coordinates. */
+    @observable panAndZoomCoordinate: CoordinateMode = CoordinateMode.World;
 
     @computed get isMultiPanelEnabled(): boolean {
         return this.grid.multiPanelEnabled ?? PreferenceStore.Instance.isImageMultiPanelEnabled;
@@ -84,11 +92,21 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         }
     };
 
+    @action setSettingsTab = (tab: ImageViewSettingsPanelTabs) => {
+        this.settingsTab = tab;
+    };
+
+    @action setPanAndZoomCoordinate = (coordinate: CoordinateMode) => {
+        this.panAndZoomCoordinate = coordinate;
+    };
+
     public toConfig = (): ImageViewGridConfig => ({
         multiPanelEnabled: this.isMultiPanelEnabled,
         panelMode: this.multiPanelMode === ImagePanelMode.Fixed ? ImagePanelMode.Fixed : ImagePanelMode.Dynamic,
         panelColumns: this.panelColumns,
-        panelRows: this.panelRows
+        panelRows: this.panelRows,
+        ...(this.settingsTab !== ImageViewSettingsPanelTabs.PAN_AND_ZOOM ? {settingsTab: this.settingsTab} : {}),
+        ...(this.panAndZoomCoordinate === CoordinateMode.Image ? {panAndZoomCoordinate: this.panAndZoomCoordinate} : {})
     });
 
     /**
@@ -105,6 +123,9 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
             panelColumns: isPanelCount(config?.panelColumns) ? config.panelColumns : undefined,
             panelRows: isPanelCount(config?.panelRows) ? config.panelRows : undefined
         };
+        const tab = config?.settingsTab;
+        this.settingsTab = Object.values(ImageViewSettingsPanelTabs).includes(tab as ImageViewSettingsPanelTabs) ? (tab as ImageViewSettingsPanelTabs) : ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
+        this.panAndZoomCoordinate = config?.panAndZoomCoordinate === CoordinateMode.Image ? CoordinateMode.Image : CoordinateMode.World;
     };
 
     /**

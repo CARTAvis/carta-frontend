@@ -14,17 +14,23 @@ import "./ImageViewSettingsPanelComponent.scss";
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
-    @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    /** The tab and the coordinates of the Pan and Zoom tab are kept in the image view config store, so that a workspace keeps them. */
+    get selectedTab(): TabId {
+        return AppStore.Instance.imageViewConfigStore.settingsTab;
+    }
+
+    get panAndZoomCoord(): CoordinateMode {
+        return AppStore.Instance.imageViewConfigStore.panAndZoomCoordinate;
+    }
     @observable private restFrameShiftInputIntent: Intent = Intent.NONE;
     private readonly disposers: IReactionDisposer[] = [];
 
-    @action private setSelectedTab = (tab: TabId) => {
-        this.selectedTab = tab;
+    private setSelectedTab = (tab: TabId) => {
+        AppStore.Instance.imageViewConfigStore.setSettingsTab(tab as ImageViewSettingsPanelTabs);
     };
 
-    @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
-        this.panAndZoomCoord = coord;
+    private setPanAndZoomCoord = (coord: CoordinateMode) => {
+        AppStore.Instance.imageViewConfigStore.setPanAndZoomCoordinate(coord);
     };
 
     @action private setRestFrameShiftInputIntent = (intent: Intent) => {
@@ -43,7 +49,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         this.disposers.push(
             autorun(() => {
                 if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
-                    this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
+                    this.setSelectedTab(ImageViewSettingsPanelTabs.GLOBAL);
                 }
             })
         );
@@ -59,6 +65,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        // The panel opens on its first tab, in world coordinates, as it did when it kept them itself.
+        // A workspace restore closes and opens the panel again after it applies the saved tab, so
+        // the tab is kept then.
+        const appStore = AppStore.Instance;
+        if (!appStore.isLoadingWorkspace) {
+            appStore.imageViewConfigStore.setSettingsTab(ImageViewSettingsPanelTabs.PAN_AND_ZOOM);
+            appStore.imageViewConfigStore.setPanAndZoomCoordinate(CoordinateMode.World);
+        }
     }
 
     public static get WidgetConfig(): DefaultWidgetConfig {
