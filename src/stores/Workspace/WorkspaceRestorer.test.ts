@@ -108,7 +108,7 @@ function createSession() {
     };
 
     const appStore = {
-        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn()},
+        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn(), setNumericInputType: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -243,12 +243,13 @@ describe("WorkspaceRestorer", () => {
             return Promise.resolve(frame as never);
         });
 
-        await restore(createWorkspace({files: [{...IMAGE, animationChannelRange: [2, 5]}], animator: {frameRate: 8, step: 99, playMode: 2, mode: 1} as never}));
+        await restore(createWorkspace({files: [{...IMAGE, animationChannelRange: [2, 5]}], animator: {frameRate: 8, step: 99, playMode: 2, mode: 1, numericInputType: "Step"} as never}));
 
         expect((appStore.frames[0] as any).setAnimationRange).toHaveBeenCalledWith([2, 5]);
         expect(appStore.animatorStore.setFrameRate).toHaveBeenCalledWith(8);
         expect(appStore.animatorStore.setStep).not.toHaveBeenCalled();
         expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
+        expect(appStore.animatorStore.setNumericInputType).toHaveBeenCalledWith("Step");
         expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
     });
 

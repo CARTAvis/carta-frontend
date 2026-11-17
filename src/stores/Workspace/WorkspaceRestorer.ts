@@ -1,6 +1,6 @@
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
+import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -190,6 +190,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (Object.values(AnimationMode).includes(saved.mode) && saved.mode !== AnimationMode.NONE) {
             animator.setAnimationMode(saved.mode);
+        }
+        if (Object.values(NumericInputType).includes(saved.numericInputType as NumericInputType)) {
+            animator.setNumericInputType(saved.numericInputType as NumericInputType);
         }
     }
 

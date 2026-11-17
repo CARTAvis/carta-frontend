@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {AnimationMode, PlayMode} from "enums";
+import {AnimationMode, NumericInputType, PlayMode} from "enums";
 import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
 import {AppStore, PreferenceStore, TimeSeriesStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -33,6 +33,8 @@ export class AnimatorStore {
     @observable animationMode: AnimationMode = AnimationMode.CHANNEL;
     @observable isAnimationActive: boolean = false;
     @observable playMode: PlayMode = PlayMode.FORWARD;
+    /** The setting that the animator shows beside the playback buttons: the frame rate or the step. */
+    @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
     /** Whether the current mode is driven by the frontend, stepping through images rather than asking the backend for frames. */
     get isFrontendAnimationMode(): boolean {
@@ -90,6 +92,10 @@ export class AnimatorStore {
 
     @action setPlayMode = (playMode: PlayMode) => {
         this.playMode = playMode;
+    };
+
+    @action setNumericInputType = (type: NumericInputType) => {
+        this.numericInputType = type;
     };
 
     @flow.bound *startAnimation() {

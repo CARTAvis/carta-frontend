@@ -293,12 +293,12 @@ describe("WorkspaceSnapshotter", () => {
 
     test("saves the animator settings, and the channels it plays of an image only when they are not every channel", () => {
         const {appStore, frame} = createSession();
-        Object.assign(appStore.animatorStore, {frameRate: 8, step: 2, playMode: 2, animationMode: 1});
+        Object.assign(appStore.animatorStore, {frameRate: 8, step: 2, playMode: 2, animationMode: 1, numericInputType: "Step"});
         Object.assign(frame, {animationChannelRange: [2, 5], frameInfo: {...frame.frameInfo, fileInfoExtended: {depth: 10}}});
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(workspace.animator).toEqual({frameRate: 8, step: 2, playMode: 2, mode: 1});
+        expect(workspace.animator).toEqual({frameRate: 8, step: 2, playMode: 2, mode: 1, numericInputType: "Step"});
         expect(workspace.files?.[0].animationChannelRange).toEqual([2, 5]);
 
         Object.assign(frame, {animationChannelRange: [0, 9]});

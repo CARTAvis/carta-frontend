@@ -13,6 +13,7 @@ import {
     type ContourDashMode,
     FrameScaling,
     type MultiProfileCategory,
+    type NumericInputType,
     type PlayMode,
     type RadiusUnits,
     type RedshiftType,
@@ -527,6 +528,8 @@ export interface WorkspaceAnimator {
     playMode: PlayMode;
     /** What the animator steps through: the channels, the Stokes, the images or a time series. */
     mode: AnimationMode;
+    /** The setting that the animator shows beside the playback buttons: "Frame rate" or "Step". */
+    numericInputType?: NumericInputType;
 }
 
 /** What one profile, analysis or statistics widget shows. This is a Widget Config, so the workspace saves it. */

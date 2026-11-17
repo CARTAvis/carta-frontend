@@ -32,7 +32,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 650;
     @observable height: number = 200;
-    @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
     constructor(props: WidgetProps) {
         super(props);
@@ -52,10 +51,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     @action onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
-    };
-
-    @action onNumericInputTypeChange = (type: NumericInputType) => {
-        this.numericInputType = type;
     };
 
     private throttledChannelChange = throttle((frame: FrameStore, val: number, selectionToken: object) => {
@@ -512,14 +507,14 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             </ButtonGroup>
         );
 
-        const numericInputType = appStore.channelMapStore.isChannelMapEnabled && appStore.animatorStore.step !== 1 ? NumericInputType.Step : this.numericInputType;
+        const numericInputType = appStore.channelMapStore.isChannelMapEnabled && appStore.animatorStore.step !== 1 ? NumericInputType.Step : appStore.animatorStore.numericInputType;
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
                     disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
                     value={numericInputType}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
-                    onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
+                    onChange={ev => appStore.animatorStore.setNumericInputType(ev.currentTarget.value as NumericInputType)}
                 />
                 {numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
