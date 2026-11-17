@@ -1,5 +1,5 @@
 import {FileInfoType} from "./fileBrowser";
-import {ContourDialogTabs, FittingResultTabs, OnlineDataQueryDialogTabs, RegionDialogTabs, VectorOverlayDialogTabs} from "./tab";
+import {ContourDialogTabs, FittingResultTabs, OnlineDataQueryDialogTabs, PreferenceDialogTabs, RegionDialogTabs, VectorOverlayDialogTabs} from "./tab";
 
 export enum DialogId {
     About = "about-dialog",
@@ -20,11 +20,17 @@ export enum DialogId {
     Hotkey = "hotkey-dialog"
 }
 
+export enum LayoutDialogMode {
+    DynamicLayout,
+    Layout
+}
+
 /**
- * The dialogs that a workspace keeps open. These show the data of the session. The other dialogs,
- * such as the file browser or the preferences, are not part of a workspace.
+ * The dialogs that a workspace keeps open. The Preferences dialog is kept open, but a restore does
+ * not change the preferences. The dialogs of one step, such as the file browser, the Stokes dialog
+ * and the Workspace dialog, are not part of a workspace.
  */
-export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery];
+export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery, DialogId.Preference, DialogId.Layout, DialogId.About];
 
 /** Returns the tabs of a numeric tab enum by name. For example, "Levels" is 0 and "Configuration" is 1. */
 function tabsByName(tabs: object): {[name: string]: number} {
@@ -41,10 +47,7 @@ export const WORKSPACE_DIALOG_TABS: {[dialogId: string]: {[name: string]: string
     [DialogId.Fitting]: tabsByName(FittingResultTabs),
     [DialogId.Region]: tabsByName(RegionDialogTabs),
     [DialogId.FileInfo]: {[FileInfoType.IMAGE_FILE]: FileInfoType.IMAGE_FILE, [FileInfoType.IMAGE_HEADER]: FileInfoType.IMAGE_HEADER},
-    [DialogId.OnlineDataQuery]: tabsByName(OnlineDataQueryDialogTabs)
+    [DialogId.OnlineDataQuery]: tabsByName(OnlineDataQueryDialogTabs),
+    [DialogId.Preference]: tabsByName(PreferenceDialogTabs),
+    [DialogId.Layout]: tabsByName(LayoutDialogMode)
 };
-
-export enum LayoutDialogMode {
-    DynamicLayout,
-    Layout
-}

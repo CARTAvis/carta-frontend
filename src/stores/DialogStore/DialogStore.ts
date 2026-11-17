@@ -27,7 +27,7 @@ interface ShowDialogOptions {
  * The dialogs that show their first tab again when they open. Their tabs were not kept before a
  * workspace could save them, so closing one of these dialogs still forgets its tab.
  */
-const DIALOGS_WITH_TAB_RESET_ON_CLOSE: string[] = [DialogId.Contour, DialogId.Vector, DialogId.OnlineDataQuery];
+const DIALOGS_WITH_TAB_RESET_ON_CLOSE: string[] = [DialogId.Contour, DialogId.Vector, DialogId.OnlineDataQuery, DialogId.Layout];
 
 /** The settings that a dialog shows but that are not applied, and the image that they are for. */
 export interface DialogSettings {

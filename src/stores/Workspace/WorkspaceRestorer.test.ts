@@ -282,13 +282,13 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.logStore.setHiddenTags).not.toHaveBeenCalled();
     });
 
-    test("opens the saved analysis dialogs in their order, and closes the other analysis dialogs, but not another dialog", async () => {
+    test("opens the saved dialogs in their order, and closes the other dialogs that a workspace keeps, but not a dialog of one step", async () => {
         const {appStore} = createSession();
 
-        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog", "preference-dialog"]}));
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog", "file-browser-dialog", "preference-dialog"]}));
 
         expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
-        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"]]);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"], ["preference-dialog"]]);
     });
 
     test("puts each dialog back between the floating widgets as it was stacked", async () => {

@@ -318,11 +318,12 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.log).toEqual({level: 2, hiddenTags: ["Region"]});
     });
 
-    test("saves the open analysis dialogs from the bottom one to the top one, and leaves out the other dialogs", () => {
+    test("saves the open dialogs from the bottom one to the top one, with the Preferences dialog, and leaves out the dialogs of one step", () => {
         const zIndexes = new Map([
             ["contour-dialog", 3],
             ["region-dialog", 1],
-            ["preference-dialog", 2]
+            ["file-browser-dialog", 2],
+            ["preference-dialog", 4]
         ]);
         createSession({
             dialogStore: {dialogVisible: new Map([...zIndexes.keys()].map(id => [id, true]))},
@@ -330,7 +331,7 @@ describe("WorkspaceSnapshotter", () => {
         });
 
         const {workspace} = new WorkspaceSnapshotter().capture();
-        expect(workspace.openDialogs).toEqual(["region-dialog", "contour-dialog"]);
+        expect(workspace.openDialogs).toEqual(["region-dialog", "contour-dialog", "preference-dialog"]);
         expect(workspace).not.toHaveProperty("dialogs");
     });
 
@@ -361,17 +362,19 @@ describe("WorkspaceSnapshotter", () => {
             dialogStore: {
                 dialogVisible: new Map([
                     ["contour-dialog", true],
-                    ["file-info-dialog", true]
+                    ["file-info-dialog", true],
+                    ["preference-dialog", true]
                 ]),
                 dialogGeometries: new Map([["contour-dialog", {x: 100, y: 50, width: 600, height: 700}]]),
-                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header"})[id]
+                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header", "preference-dialog": 1})[id]
             },
             zIndexManager: {findIndex: () => 0}
         });
 
         expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({
             "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
-            "file-info-dialog": {tab: "image-header"}
+            "file-info-dialog": {tab: "image-header"},
+            "preference-dialog": {tab: "RENDER_CONFIG"}
         });
     });
 
