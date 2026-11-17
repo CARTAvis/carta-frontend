@@ -27,10 +27,10 @@ export enum LayoutDialogMode {
 
 /**
  * The dialogs that a workspace keeps open. The Preferences dialog is kept open, but a restore does
- * not change the preferences. The dialogs of one step, such as the file browser, the Stokes dialog
+ * not change the preferences. The Snippet dialog keeps only the name of its snippet. The dialogs of one step, such as the file browser, the Stokes dialog
  * and the Workspace dialog, are not part of a workspace.
  */
-export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery, DialogId.Preference, DialogId.Layout, DialogId.About];
+export const WORKSPACE_DIALOGS: string[] = [DialogId.Contour, DialogId.Vector, DialogId.Fitting, DialogId.Region, DialogId.FileInfo, DialogId.OnlineDataQuery, DialogId.Preference, DialogId.Layout, DialogId.About, DialogId.Snippet];
 
 /** Returns the tabs of a numeric tab enum by name. For example, "Levels" is 0 and "Configuration" is 1. */
 function tabsByName(tabs: object): {[name: string]: number} {

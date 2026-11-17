@@ -291,6 +291,25 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"], ["preference-dialog"]]);
     });
 
+    test("opens the Snippet dialog with the saved snippet of the saved name, and empty for a missing name or another user's workspace", async () => {
+        const {appStore} = createSession();
+        const snippet = {code: "app.openFile('a.fits')", categories: []};
+        Object.assign(appStore, {snippetStore: {snippets: new Map([["Open a file", snippet]])}});
+
+        await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
+
+        appStore.dialogStore.showDialog.mockClear();
+        const problems = await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Gone"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
+        expect(problems).toContain('The Snippet dialog is empty, because there is no saved snippet named "Gone"');
+
+        appStore.dialogStore.showDialog.mockClear();
+        const sharedProblems = await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
+        expect(sharedProblems).toEqual([]);
+    });
+
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
         const {appStore} = createSession();
         const zIndexManager = new FloatingObjzIndexManager();

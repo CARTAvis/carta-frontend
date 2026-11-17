@@ -727,7 +727,15 @@ export interface Workspace {
      * The settings that the Contour and Vector Overlay dialogs showed but that were not applied. Left
      * out when the dialogs showed the settings of their image.
      */
-    dialogSettings?: {contour?: WorkspaceContourDialogSettings; vectorOverlay?: WorkspaceVectorOverlayDialogSettings};
+    dialogSettings?: {
+        contour?: WorkspaceContourDialogSettings;
+        vectorOverlay?: WorkspaceVectorOverlayDialogSettings;
+        /**
+         * The saved snippet that the Snippet dialog shows, by its name. The code is not saved. A
+         * restore shows the snippet of that name that the opener has saved.
+         */
+        snippet?: {name: string};
+    };
     /**
      * The settings panels of widgets that were open as floating panels, from the bottom one to the
      * top one. Left out by a workspace saved before it kept them. A restore then leaves the panels

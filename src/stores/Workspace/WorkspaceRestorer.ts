@@ -194,9 +194,32 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (typeof dialog.tab === "string" && Object.hasOwn(tabs, dialog.tab)) {
                 dialogStore.selectTab(id, tabs[dialog.tab]);
             }
-            dialogStore.showDialog(id);
+            if (id === DialogId.Snippet) {
+                this.showSnippetDialog();
+            } else {
+                dialogStore.showDialog(id);
+            }
         }
         this.restoreDialogSettings();
+    }
+
+    /**
+     * Opens the Snippet dialog with the saved snippet of the saved name. The dialog is empty when the
+     * workspace belongs to another user, because the snippets of the opener are not the ones of that
+     * user. It is also empty when the opener has no snippet of that name, and the report says so.
+     */
+    private showSnippetDialog(): void {
+        const dialogStore = this.appStore.dialogStore;
+        const name = this.workspace.dialogSettings?.snippet?.name;
+        const snippet = typeof name === "string" && this.workspace.editable !== false ? this.appStore.snippetStore.snippets.get(name) : undefined;
+        if (snippet) {
+            dialogStore.showDialog(DialogId.Snippet, {snippet, name});
+            return;
+        }
+        dialogStore.showDialog(DialogId.Snippet, {newSnippet: true});
+        if (typeof name === "string" && name && this.workspace.editable !== false) {
+            this.report(WorkspaceItemKind.Layout, "Snippet", `The Snippet dialog is empty, because there is no saved snippet named "${name}"`);
+        }
     }
 
     /**

@@ -335,6 +335,16 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace).not.toHaveProperty("dialogs");
     });
 
+    test("saves the name of the snippet that the open Snippet dialog shows, and nothing for a new snippet", () => {
+        const snippetStore = {activeSnippetName: "Open a file"};
+        createSession({dialogStore: {dialogVisible: new Map([["snippet-dialog", true]])}, snippetStore});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogSettings).toEqual({snippet: {name: "Open a file"}});
+
+        snippetStore.activeSnippetName = "";
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("dialogSettings");
+    });
+
     test("saves how many floating widgets are below each open dialog, leaving out the settings panel of a PV preview", () => {
         const zIndexes = new Map([
             ["stats-0", 1],

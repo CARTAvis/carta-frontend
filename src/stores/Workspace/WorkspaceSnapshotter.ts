@@ -143,10 +143,11 @@ export class WorkspaceSnapshotter {
         };
         const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
         const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
-        if (!contour && !vectorOverlay) {
+        const snippetName = dialogStore?.dialogVisible?.get(DialogId.Snippet) ? this.appStore.snippetStore?.activeSnippetName : undefined;
+        if (!contour && !vectorOverlay && !snippetName) {
             return undefined;
         }
-        return {...(contour ? {contour} : {}), ...(vectorOverlay ? {vectorOverlay} : {})};
+        return {...(contour ? {contour} : {}), ...(vectorOverlay ? {vectorOverlay} : {}), ...(snippetName ? {snippet: {name: snippetName}} : {})};
     }
 
     /** The ID this workspace knows a catalog by: the one it was given when it was opened. */
