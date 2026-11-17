@@ -85,7 +85,7 @@ export class LayoutConfig {
     /**
      * Prepares a layout that is about to replace the live layout.
      *
-     * A regular layout is applied as it is, as CARTA v6.0 applied it. It is upgraded and validated
+     * A regular layout is applied as it is. It is upgraded and validated
      * when it is loaded from the server or the local storage. A preset layout is in the current form.
      *
      * The layout copy of a workspace is upgraded and validated without changing the caller's object.

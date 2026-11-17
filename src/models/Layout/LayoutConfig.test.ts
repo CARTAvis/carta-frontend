@@ -2,7 +2,7 @@ const MOCK_CATALOG_STORE = {widgetBindings: {layoutSettingsFor: jest.fn((_widget
 jest.mock("stores", () => ({AppStore: {}, CatalogStore: {Instance: MOCK_CATALOG_STORE}}));
 
 import {LayoutConfig} from "./LayoutConfig";
-import {REGULAR_WIDGET_SETTINGS, V6_LAYOUT} from "./V6Layout.fixture";
+import {REGULAR_WIDGET_SETTINGS} from "./RegularLayout.fixture";
 
 /** A session with two floating widgets. The first widget opened is now on top of the second. */
 const CreateSession = (toWidgetSettingsConfig: (type: string, id: string, persistence: string) => object | undefined = () => undefined) => {
@@ -63,7 +63,7 @@ describe("LayoutConfig.createConfigToSave", () => {
         MOCK_CATALOG_STORE.widgetBindings.layoutSettingsFor.mockImplementation(widgetId => (widgetId === "catalog-plot-0" ? {plotType: "Histogram"} : undefined));
     });
 
-    test("saves the floating widgets in the order of their list, and a position of 0 as an empty value, in a regular layout, as CARTA v6.0 did", () => {
+    test("saves the floating widgets in the order of their list, and a position of 0 as an empty value, in a regular layout", () => {
         const config = LayoutConfig.createConfigToSave(CreateSession() as never, MODEL_JSON, "regular");
 
         expect(config?.floating).toEqual([
@@ -137,7 +137,7 @@ describe("LayoutConfig.createConfigToApply", () => {
         expect(applied.map(stack => stack.maximized)).toEqual([undefined, true]);
     });
 
-    test("applies no maximized stack in a regular layout, as CARTA v6.0 did", () => {
+    test("applies no maximized stack in a regular layout", () => {
         const applied: any[] = [];
         LayoutConfig.createConfigToApply(applied, stacks, [], "regular");
 
@@ -154,12 +154,7 @@ describe("LayoutConfig.prepareLayout", () => {
         jest.restoreAllMocks();
     });
 
-    test("accepts a layout saved by CARTA v6.0 as a regular layout", () => {
-        expect(LayoutConfig.prepareLayout(V6_LAYOUT, "regular")).toEqual(V6_LAYOUT);
-        expect(LayoutConfig.layoutValidator(JSON.parse(JSON.stringify(V6_LAYOUT)))).toBe(true);
-    });
-
-    test("applies a regular layout without validating it, as CARTA v6.0 did", () => {
+    test("applies a regular layout without validating it", () => {
         const layout = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "pv-generator"}]}, floating: [{type: "log", defaultX: "", defaultY: ""}]};
 
         expect(LayoutConfig.prepareLayout(layout, "regular")).toBe(layout);

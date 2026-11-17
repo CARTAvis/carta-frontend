@@ -25,7 +25,7 @@ import {Model} from "flexlayout-react";
 import {runInAction} from "mobx";
 
 import {LayoutConfig, PresetLayout} from "models";
-import {V6_LAYOUT} from "models/Layout/V6Layout.fixture";
+import {REGULAR_LAYOUT} from "models/Layout/RegularLayout.fixture";
 import {findDeep} from "utilities";
 
 import {LayoutStore} from "./LayoutStore";
@@ -73,19 +73,9 @@ describe("LayoutStore layout configs", () => {
     test("applies a preset, a saved layout and a dynamic layout as regular layouts, which leave the image view grid alone", () => {
         // A dynamic layout and the layout of the preferences are applied by name, as a preset is.
         layoutStore.applyLayout(PresetLayout.CUBEVIEW);
-        layoutStore.applyLayoutConfig(V6_LAYOUT, "v6");
+        layoutStore.applyLayoutConfig(REGULAR_LAYOUT, "saved");
 
         expect(MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls.map(call => call[2])).toEqual(["regular", "regular"]);
-    });
-
-    test("applies a layout saved by CARTA v6.0 with the settings it saved", () => {
-        expect(layoutStore.applyLayoutConfig(V6_LAYOUT, "v6")).toBe(true);
-
-        const [dockedConfigs, floatingConfigs] = MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls[0];
-        const histogram = dockedConfigs.find((config: any) => config.id === "histogram");
-        expect(histogram.widgetSettings).toEqual(findDeep(V6_LAYOUT.docked, (item: any) => item.id === "histogram")[0].widgetSettings);
-        expect(dockedConfigs.find((config: any) => config.id === "catalog-plot").plotType).toBe("Histogram");
-        expect(floatingConfigs).toEqual(V6_LAYOUT.floating);
     });
 
     test("applies the layout copy of a workspace in the workspace form, keeping a maximized stack and a PV preview tab", () => {
@@ -125,7 +115,7 @@ describe("LayoutStore layout configs", () => {
         expect(layoutStore.currentLayoutName).toBe("");
     });
 
-    test("applies a regular layout that it saved, with a floating widget at the edge and a PV generator and a channel map docked, as CARTA v6.0 did", () => {
+    test("applies a regular layout that it saved, with a floating widget at the edge and a PV generator and a channel map docked", () => {
         const layout = {
             layoutVersion: 2,
             docked: {

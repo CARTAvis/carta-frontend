@@ -11,7 +11,7 @@ export interface LinePlotDataRange {
     maxYVal: number | undefined;
 }
 
-/** Applies the range of the data that a regular layout saved, as CARTA v6.0 applied it: each value that is a number. */
+/** Applies the range of the data that a regular layout saved: each value that is a number. */
 export function applyLinePlotDataRange(range: LinePlotDataRange, settings: Persisted<LinePlotDataRange>): void {
     if (typeof settings.minXVal === "number") {
         range.minXVal = settings.minXVal;

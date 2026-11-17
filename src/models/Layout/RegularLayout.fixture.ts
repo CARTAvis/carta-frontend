@@ -1,12 +1,11 @@
 /**
- * Layouts in the form that CARTA v6.0.0 saved them, for tests.
+ * A regular layout, for tests.
  *
- * Each object in {@link V6_WIDGET_SETTINGS} has the fields that the `toConfig` method of the widget
- * store returned in v6.0.0, in the same order. The values are not the defaults, so a test can see
- * whether a value was applied. {@link POST_V6_WIDGET_SETTINGS} has the other fields that a regular
- * layout keeps.
+ * Each object in {@link REGULAR_WIDGET_SETTINGS} has the fields that the `toConfig` method of the
+ * widget store returns for a regular layout. The values are not the defaults, so a test can see
+ * whether a value was applied.
  */
-export const V6_WIDGET_SETTINGS = {
+export const REGULAR_WIDGET_SETTINGS = {
     "render-config": {
         primaryLineColor: "#112233",
         lineWidth: 2,
@@ -42,7 +41,12 @@ export const V6_WIDGET_SETTINGS = {
         minXVal: -3,
         maxXVal: 30,
         minYVal: 3,
-        maxYVal: 300
+        maxYVal: 300,
+        xAxisRestFrameEnabled: true,
+        restFrameRedshift: 0.25,
+        restFrameShiftMode: "redshift",
+        restFrameVelocityConvention: "optical",
+        yAxisRestFrameEnabled: true
     },
     histogram: {
         primaryLineColor: "#112233",
@@ -53,7 +57,8 @@ export const V6_WIDGET_SETTINGS = {
         minXVal: -4,
         maxXVal: 40,
         minYVal: 4,
-        maxYVal: 400
+        maxYVal: 400,
+        meanRmsVisible: true
     },
     stokes: {
         primaryLineColor: "#112233",
@@ -74,19 +79,6 @@ export const V6_WIDGET_SETTINGS = {
         catalogShape: 2,
         tableSeparatorPosition: "40%",
         thickness: 3
-    }
-} as const;
-
-export const POST_V6_WIDGET_SETTINGS = {
-    "spectral-profiler": {
-        xAxisRestFrameEnabled: true,
-        restFrameRedshift: 0.25,
-        restFrameShiftMode: "redshift",
-        restFrameVelocityConvention: "optical",
-        yAxisRestFrameEnabled: true
-    },
-    histogram: {
-        meanRmsVisible: true
     },
     animator: {
         timeLabelFormat: "mjd",
@@ -101,19 +93,8 @@ export const POST_V6_WIDGET_SETTINGS = {
     }
 } as const;
 
-/** The widget settings that a regular layout keeps for each widget type. */
-export const REGULAR_WIDGET_SETTINGS = {
-    "render-config": V6_WIDGET_SETTINGS["render-config"],
-    "spatial-profiler": V6_WIDGET_SETTINGS["spatial-profiler"],
-    "spectral-profiler": {...V6_WIDGET_SETTINGS["spectral-profiler"], ...POST_V6_WIDGET_SETTINGS["spectral-profiler"]},
-    histogram: {...V6_WIDGET_SETTINGS.histogram, ...POST_V6_WIDGET_SETTINGS.histogram},
-    stokes: V6_WIDGET_SETTINGS.stokes,
-    "catalog-overlay": V6_WIDGET_SETTINGS["catalog-overlay"],
-    animator: POST_V6_WIDGET_SETTINGS.animator
-} as const;
-
-/** A layout saved by CARTA v6.0.0. A catalog plot keeps its type beside its settings, not in them. */
-export const V6_LAYOUT = {
+/** A regular layout. A catalog plot keeps its type beside its settings, not in them. */
+export const REGULAR_LAYOUT = {
     layoutVersion: 2,
     docked: {
         type: "row",
@@ -128,9 +109,9 @@ export const V6_LAYOUT = {
                         height: 30,
                         activeItemIndex: 1,
                         content: [
-                            {type: "component", id: "render-config", widgetSettings: V6_WIDGET_SETTINGS["render-config"]},
+                            {type: "component", id: "render-config", widgetSettings: REGULAR_WIDGET_SETTINGS["render-config"]},
                             {type: "component", id: "histogram", widgetSettings: REGULAR_WIDGET_SETTINGS.histogram},
-                            {type: "component", id: "animator", widgetSettings: POST_V6_WIDGET_SETTINGS.animator}
+                            {type: "component", id: "animator", widgetSettings: REGULAR_WIDGET_SETTINGS.animator}
                         ]
                     }
                 ]
@@ -139,13 +120,13 @@ export const V6_LAYOUT = {
                 type: "column",
                 width: 40,
                 content: [
-                    {type: "stack", content: [{type: "component", id: "spatial-profiler", widgetSettings: V6_WIDGET_SETTINGS["spatial-profiler"]}]},
+                    {type: "stack", content: [{type: "component", id: "spatial-profiler", widgetSettings: REGULAR_WIDGET_SETTINGS["spatial-profiler"]}]},
                     {type: "stack", content: [{type: "component", id: "spectral-profiler", widgetSettings: REGULAR_WIDGET_SETTINGS["spectral-profiler"]}]},
                     {
                         type: "stack",
                         content: [
-                            {type: "component", id: "stokes", widgetSettings: V6_WIDGET_SETTINGS.stokes},
-                            {type: "component", id: "catalog-overlay", widgetSettings: V6_WIDGET_SETTINGS["catalog-overlay"]},
+                            {type: "component", id: "stokes", widgetSettings: REGULAR_WIDGET_SETTINGS.stokes},
+                            {type: "component", id: "catalog-overlay", widgetSettings: REGULAR_WIDGET_SETTINGS["catalog-overlay"]},
                             {type: "component", id: "catalog-plot", plotType: "Histogram"},
                             {type: "component", id: "stats"}
                         ]

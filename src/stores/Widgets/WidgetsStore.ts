@@ -650,7 +650,7 @@ export class WidgetsStore {
     /**
      * Adds the store of a widget that a layout creates, and applies the settings that the layout saved for it.
      *
-     * @param persistence - the kind of layout. A regular layout gives a catalog plot no settings, as in CARTA v6.0.
+     * @param persistence - the kind of layout. A regular layout gives a catalog plot no settings.
      */
     private addWidgetByType = (widgetType: string, widgetSettings: object | null, preAssignedId: string | null, persistence: LayoutPersistence): string | null => {
         const isWorkspace = persistence === "workspace";
@@ -680,9 +680,9 @@ export class WidgetsStore {
         const settings = widgetSettings as (CatalogWidgetLayoutSettings & CatalogWidgetRegularLayoutSettings) | null;
         const activeCatalogFileIds = CatalogStore.Instance.activeCatalogFiles;
         const legacyCatalogFileId = settings?.catalogFileId;
-        // A regular layout shows the catalog with the saved session file ID, as CARTA v6.0 did, also
+        // A regular layout shows the catalog with the saved session file ID, also
         // when no catalog with this file ID is open yet. When the layout names no catalog, it shows
-        // the catalog with the file ID 1, as CARTA v6.0 did. A widget from the toolbar has no
+        // the catalog with the file ID 1. A widget from the toolbar has no
         // settings, and shows the first active catalog. The layout copy of a workspace names no
         // catalog. It uses a saved file ID only while that catalog is active, so that an obsolete ID
         // never selects an unrelated catalog. The workspace points the widget at its catalog later.
@@ -725,17 +725,17 @@ export class WidgetsStore {
     };
 
     /**
-     * Applies what a regular layout keeps for a catalog widget, as CARTA v6.0 applied it. Nothing is
+     * Applies what a regular layout keeps for a catalog widget. Nothing is
      * applied when the layout names no catalog. How the sources are drawn belongs to the catalog. So
      * it is written to the display store of the catalog with the saved file ID, and only the settings
      * that the layout has are written. When that catalog is not open yet, the display store is made
      * now. Then the catalog that opens with this file ID is drawn in this way.
      *
-     * CARTA v6.0 kept one store for each catalog. It applied the settings of only the first widget
-     * in a layout that names a catalog. A later widget that names the same catalog shared that
-     * store, so it also used the table split of the first widget. A widget whose layout names no
-     * catalog showed the catalog with the file ID 1. So it used the table split of the widget that
-     * names this catalog, in any place in the layout. {@link initWidgets} gives it that split.
+     * Only the first widget of a layout that names a catalog applies its settings. A later widget
+     * that names the same catalog uses the table split of the first widget. A widget whose layout
+     * names no catalog shows the catalog with the file ID 1. So it uses the table split of the
+     * widget that names this catalog, in any place in the layout. {@link initWidgets} gives it
+     * that split.
      */
     private applyRegularCatalogOverlaySettings = (widgetStore: CatalogWidgetStore, settings: CatalogWidgetRegularLayoutSettings | null) => {
         const catalogFileId = settings?.catalogFileId;
@@ -764,9 +764,8 @@ export class WidgetsStore {
 
     /**
      * Removes each display store that a regular layout made for a catalog that has not opened since.
-     * CARTA v6.0 removed the stores of its catalog widgets each time a layout was applied. A catalog
-     * that is still being opened gets its display store only when it is loaded, so its store is
-     * removed too. Then the catalog is drawn by the defaults, as in CARTA v6.0.
+     * A catalog that is still being opened gets its display store only when it is loaded, so its
+     * store is removed too. Then the catalog is drawn by the defaults.
      */
     @action public removeUnopenedLayoutDisplayStores = () => {
         const catalogStore = CatalogStore.Instance;
@@ -844,7 +843,7 @@ export class WidgetsStore {
 
     /**
      * Returns the type of the widget to create. A regular layout keeps the type of a catalog plot
-     * beside its settings, and only that type is used, as in CARTA v6.0. The layout copy of a
+     * beside its settings, and only that type is used. The layout copy of a
      * workspace keeps the type in the settings. Any other widget's plotType setting is a line style,
      * as a layout saved by an earlier build may also carry beside its settings, and names no widget
      * to create.
@@ -861,7 +860,7 @@ export class WidgetsStore {
      * Adds a floating widget that a layout saved.
      *
      * @param persistence - the kind of layout. A regular layout places a widget at a position of 0 by
-     *                      the default offset, and adds it without a stacking order, as in CARTA v6.0.
+     *                      the default offset, and adds it without a stacking order.
      */
     createFloatingWidget = (savedConfig: any, persistence: LayoutPersistence) => {
         if (savedConfig.id) {

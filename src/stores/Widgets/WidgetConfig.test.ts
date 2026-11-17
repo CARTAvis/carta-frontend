@@ -2,7 +2,7 @@ import Ajv from "ajv";
 
 import {HistogramSettingsTabs, PlotType, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs} from "enums";
 import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
-import {REGULAR_WIDGET_SETTINGS} from "models/Layout/V6Layout.fixture";
+import {REGULAR_WIDGET_SETTINGS} from "models/Layout/RegularLayout.fixture";
 import {ImageViewConfigStore} from "stores/ImageViewConfig/ImageViewConfigStore";
 import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
@@ -87,7 +87,7 @@ describe("widget config in a regular layout", () => {
         expect(Object.keys(createStore().toConfig()).sort()).toEqual(Object.keys(REGULAR_WIDGET_SETTINGS[type]).sort());
     });
 
-    test.each(REGULAR_WIDGETS)("a %s widget applies a layout saved by CARTA v6.0 and returns it", (type, createStore) => {
+    test.each(REGULAR_WIDGETS)("a %s widget applies the settings of a regular layout and returns them", (type, createStore) => {
         const store = createStore();
 
         store.applyConfig(regularSettingsOf(type));
@@ -194,7 +194,7 @@ describe("smoothing and Stokes settings in a layout", () => {
         expect(store.colorPixel).not.toBe(defaultColors);
     });
 
-    test("sets only the colormap name of a Stokes analysis widget from a regular layout, as CARTA v6.0 did", () => {
+    test("sets only the colormap name of a Stokes analysis widget from a regular layout", () => {
         const store = new StokesAnalysisWidgetStore();
         const defaultColors = store.colorPixel;
 

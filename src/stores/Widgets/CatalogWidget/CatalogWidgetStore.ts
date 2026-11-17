@@ -5,7 +5,7 @@ import {type CatalogDisplayStore, type CatalogLayoutStyle, PreferenceStore} from
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 
 /**
- * What a regular layout keeps for a catalog widget, as CARTA v6.0 kept it: the session file ID of
+ * What a regular layout keeps for a catalog widget: the session file ID of
  * the catalog that the widget shows, how its sources are drawn, and where the table is split.
  */
 export interface CatalogWidgetRegularLayoutSettings extends Partial<CatalogLayoutStyle> {
@@ -95,7 +95,7 @@ export class CatalogWidgetStore {
 
     /**
      * Returns what a regular layout keeps for this widget. When the widget shows no catalog, it
-     * returns undefined, and the layout keeps no settings for the widget, as in CARTA v6.0.
+     * returns undefined, and the layout keeps no settings for the widget.
      *
      * @param shownCatalogFileId - the catalog the widget shows.
      * @param displayStore - the display store of that catalog.

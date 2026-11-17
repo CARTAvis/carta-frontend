@@ -112,7 +112,7 @@ export class LayoutStore {
      *
      * @param config - the layout: a saved layout, or the layout copy of a workspace.
      * @param layoutName - the saved layout it came from, or "" for the layout copy of a workspace.
-     * @param persistence - the kind of layout. A regular layout is applied as in CARTA v6.0. The
+     * @param persistence - the kind of layout. A regular layout is applied as it is. The
      *                      layout copy of a workspace is validated by the workspace schema, and also
      *                      applies what only a workspace keeps, such as the image view grid.
      * @returns whether the layout could be applied.

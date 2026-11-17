@@ -120,7 +120,7 @@ describe("FlexLayoutModelFactory", () => {
         expect(StripInstanceIds(extractAbstractConfig(modelJson, "workspace"))).toStrictEqual(expectedConfig);
     });
 
-    test("neither applies nor saves a maximized stack in a regular layout, as in CARTA v6.0", () => {
+    test("neither applies nor saves a maximized stack in a regular layout", () => {
         const dockedConfig = {
             type: "row",
             content: [
@@ -137,7 +137,7 @@ describe("FlexLayoutModelFactory", () => {
         expect((StripInstanceIds(extractAbstractConfig(modelJson, "regular")) as any).content[1].maximized).toBeUndefined();
     });
 
-    test("keeps the type of a catalog plot in the config of its tab in a regular layout, as in CARTA v6.0", () => {
+    test("keeps the type of a catalog plot in the config of its tab in a regular layout", () => {
         const modelJson = createFlexLayoutModel({type: "row", content: [{type: "stack", content: [{type: "component", id: "catalog-plot", plotType: "Histogram"}]}]}, "regular");
 
         expect(CollectTabs(modelJson.layout)[0].config.plotType).toBe("Histogram");
@@ -180,7 +180,7 @@ describe("FlexLayoutModelFactory", () => {
         expect(tabs.map(tab => tab.name)).toEqual(["Log", "X Profile: Cursor", "Y Profile: Cursor", "IY Profile: Cursor", "X Profile: Cursor"]);
     });
 
-    test("leaves spatial profiler tabs without a name until their widgets mount in a regular layout, as in CARTA v6.0", () => {
+    test("leaves spatial profiler tabs without a name until their widgets mount in a regular layout", () => {
         const model = createFlexLayoutModel(SPATIAL_PROFILER_TABS, "regular");
 
         const tabs = (model.layout.children[0] as any).children;

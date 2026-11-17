@@ -73,8 +73,7 @@ export function getComponentTabJson(widgetType: string): IJsonTabNode | undefine
  *
  * @param persistence - the kind of layout. Only the layout copy of a workspace keeps a stack
  *                      maximized and names a spatial profiler tab by its coordinate. A regular
- *                      layout keeps the type of a catalog plot in the config of its tab, as in
- *                      CARTA v6.0.
+ *                      layout keeps the type of a catalog plot in the config of its tab.
  */
 export function createFlexLayoutModel(dockedConfig: any, persistence: LayoutPersistence): IJsonModel {
     // Reset ID tracking for this model creation
@@ -247,7 +246,7 @@ function convertComponent(node: any, persistence: LayoutPersistence): IJsonTabNo
     if (widgetType === "spatial-profiler") {
         // A tab not shown in its tabset is not mounted, so its widget cannot name it. The layout copy
         // of a workspace names it as the widget would. A regular layout leaves the tab without a
-        // name until the widget mounts, as in CARTA v6.0.
+        // name until the widget mounts.
         const coordinate = node.widgetSettings?.coordinate;
         if (persistence !== "workspace") {
             delete tabNode.name;

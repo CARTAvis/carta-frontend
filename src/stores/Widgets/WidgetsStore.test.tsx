@@ -279,7 +279,7 @@ describe("WidgetsStore PV preview test ids", () => {
         expect(widgetsStore.toWidgetSettingsConfig("stats", id, "workspace")).toEqual({widgetId: "stats-0-1"});
     });
 
-    test("neither saves nor applies the widget ID in a regular layout, as in CARTA v6.0", () => {
+    test("neither saves nor applies the widget ID in a regular layout", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         const statsId = widgetsStore.addWidget("stats", "stats-5", {widgetId: "stats-0"})!;
@@ -477,7 +477,7 @@ describe("WidgetsStore initWidgets", () => {
     test.each([
         ["saved a grid", {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1}],
         ["saved none", undefined]
-    ])("leaves the image view grid alone when a regular layout %s, as in CARTA v6.0, and saves no grid in it", (_, grid) => {
+    ])("leaves the image view grid alone when a regular layout %s, and saves no grid in it", (_, grid) => {
         const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => ({multiPanelEnabled: true}))};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
@@ -535,7 +535,7 @@ describe("WidgetsStore initWidgets", () => {
         widgetsStore.initWidgets([], floating, "regular");
         widgetsStore.initWidgets([], floating, "workspace");
 
-        // A regular layout places a widget at a position of 0 by the default offset, as CARTA v6.0 did.
+        // A regular layout places a widget at a position of 0 by the default offset.
         expect(widgetsStore.floatingWidgets.map(widget => [widget.defaultX, widget.defaultY])).toEqual([
             [125, 125],
             [0, 0]
@@ -544,7 +544,7 @@ describe("WidgetsStore initWidgets", () => {
         expect((AppStore.Instance.zIndexManager.assignIndex as jest.Mock).mock.calls).toEqual([[widgetsStore.floatingWidgets[1].id]]);
     });
 
-    test("gives a catalog plot of a regular layout no settings, as in CARTA v6.0, and the plot type that the layout keeps beside them", () => {
+    test("gives a catalog plot of a regular layout no settings, and the plot type that the layout keeps beside them", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, plotType: CatalogPlotType.Histogram, widgetSettings: {plotType: CatalogPlotType.Histogram, dragMode: false}}], [], "regular");
@@ -578,7 +578,7 @@ describe("WidgetsStore initWidgets", () => {
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
     });
 
-    test("ignores the plot type in the settings of a catalog plot of a regular layout, as CARTA v6.0 did", () => {
+    test("ignores the plot type in the settings of a catalog plot of a regular layout", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], [], "regular");

@@ -1971,7 +1971,7 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
         if (typeof style.highlightColor === "string") {
             this.setHighlightColor(style.highlightColor);
         }
-        // As CARTA v6.0 did, the size as it is drawn is set. The size that the settings show stays as it is.
+        // Set the size as it is drawn. The size that the settings show stays as it is.
         if (typeof style.catalogSize === "number" && style.catalogSize >= CatalogDisplayStore.MIN_OVERLAY_SIZE && style.catalogSize <= CatalogDisplayStore.MAX_OVERLAY_SIZE) {
             this.catalogSize = style.catalogSize;
         }
