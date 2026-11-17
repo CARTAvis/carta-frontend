@@ -310,6 +310,20 @@ describe("WorkspaceRestorer", () => {
         expect(sharedProblems).toEqual([]);
     });
 
+    test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
+        const {appStore} = createSession();
+        const dialogStore = appStore.dialogStore as any;
+        const calls: string[] = [];
+        dialogStore.dialogVisible = new Map([["file-info-dialog", true]]);
+        dialogStore.hideDialog = jest.fn((id: string) => calls.push(`hide ${id}`));
+        dialogStore.setFileInfoSearchString = jest.fn((text?: string) => calls.push(`search ${text}`));
+        dialogStore.showDialog = jest.fn((id: string) => calls.push(`show ${id}`));
+
+        await restore(createWorkspace({openDialogs: ["file-info-dialog"], dialogs: {"file-info-dialog": {tab: "image-header", search: "CRVAL"}}}));
+
+        expect(calls).toEqual(["hide file-info-dialog", "search CRVAL", "show file-info-dialog"]);
+    });
+
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
         const {appStore} = createSession();
         const zIndexManager = new FloatingObjzIndexManager();

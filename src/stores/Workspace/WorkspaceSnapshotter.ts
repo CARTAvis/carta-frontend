@@ -456,6 +456,9 @@ export class WorkspaceSnapshotter {
         if (tabName !== undefined) {
             dialog.tab = tabName;
         }
+        if (id === DialogId.FileInfo && typeof dialogStore.fileInfoSearchString === "string") {
+            dialog.search = dialogStore.fileInfoSearchString;
+        }
         return dialog;
     }
 

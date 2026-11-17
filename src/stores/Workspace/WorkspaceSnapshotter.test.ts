@@ -376,14 +376,15 @@ describe("WorkspaceSnapshotter", () => {
                     ["preference-dialog", true]
                 ]),
                 dialogGeometries: new Map([["contour-dialog", {x: 100, y: 50, width: 600, height: 700}]]),
-                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header", "preference-dialog": 1})[id]
+                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header", "preference-dialog": 1})[id],
+                fileInfoSearchString: "CRVAL"
             },
             zIndexManager: {findIndex: () => 0}
         });
 
         expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({
             "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
-            "file-info-dialog": {tab: "image-header"},
+            "file-info-dialog": {tab: "image-header", search: "CRVAL"},
             "preference-dialog": {tab: "RENDER_CONFIG"}
         });
     });

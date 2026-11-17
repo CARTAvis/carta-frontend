@@ -45,6 +45,8 @@ export class DialogStore {
 
     @observable workspaceDialogMode: WorkspaceDialogMode = WorkspaceDialogMode.Hidden;
     @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
+    /** The text of the header search of the File Info dialog, or undefined when the search is closed. */
+    @observable fileInfoSearchString: string | undefined = undefined;
     @observable externalPageDialogUrl: string = "";
     @observable externalPageDialogTitle: string = "";
     @observable dialogVisible: Map<string, boolean> = new Map();
@@ -134,6 +136,9 @@ export class DialogStore {
             this.dialogVisible.set(id, false);
         }
         this.dialogGeometries.delete(id);
+        if (id === DialogId.FileInfo) {
+            this.fileInfoSearchString = undefined;
+        }
         if (DIALOGS_WITH_TAB_RESET_ON_CLOSE.includes(id)) {
             this.dialogTabs.delete(id);
         }
@@ -174,6 +179,10 @@ export class DialogStore {
         } else {
             this.dialogTabs.delete(id);
         }
+    };
+
+    @action setFileInfoSearchString = (searchString: string | undefined) => {
+        this.fileInfoSearchString = searchString;
     };
 
     @action setDialogGeometry = (id: string, geometry: DialogGeometry) => {

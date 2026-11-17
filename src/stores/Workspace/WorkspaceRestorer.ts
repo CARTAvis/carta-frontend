@@ -183,6 +183,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
         for (const id of saved.filter(id => WORKSPACE_DIALOGS.includes(id))) {
             const dialog = Object.hasOwn(places, id) && places[id] && typeof places[id] === "object" ? places[id] : {};
+            // The header search of the File Info dialog opens with its text only when the dialog opens,
+            // so close the dialog first when it is open.
+            if (id === DialogId.FileInfo && dialogStore.dialogVisible.get(id)) {
+                dialogStore.hideDialog(id);
+            }
             // A dialog that the workspace did not place, or whose tab it did not keep, goes back to the
             // middle of the window or to its first tab. It does not keep its place or tab from before.
             dialogStore.resetPlaceAndTab(id);
@@ -193,6 +198,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const tabs = WORKSPACE_DIALOG_TABS[id] ?? {};
             if (typeof dialog.tab === "string" && Object.hasOwn(tabs, dialog.tab)) {
                 dialogStore.selectTab(id, tabs[dialog.tab]);
+            }
+            if (id === DialogId.FileInfo) {
+                dialogStore.setFileInfoSearchString(typeof dialog.search === "string" ? dialog.search : undefined);
             }
             if (id === DialogId.Snippet) {
                 this.showSnippetDialog();

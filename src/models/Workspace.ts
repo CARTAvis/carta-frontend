@@ -624,6 +624,8 @@ export interface WorkspaceDialog {
     height?: number;
     /** The name of the tab that the dialog showed, such as "Styling". Left out when the user did not choose a tab. */
     tab?: string;
+    /** The File Info dialog: the text of the header search. Left out when the search was closed. */
+    search?: string;
     /**
      * How many floating widgets and settings panels were below the dialog. The dialogs and the
      * floating widgets share one stacking order, so a restore puts the dialog back between them.
