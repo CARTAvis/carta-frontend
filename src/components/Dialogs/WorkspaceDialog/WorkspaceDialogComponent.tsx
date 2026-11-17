@@ -187,7 +187,7 @@ export const WorkspaceDialogComponent = observer(() => {
         openWorkspace(workspaceName);
     };
 
-    const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
         if (ev.key === "Enter" && workspaceName) {
             if (isOpenMode) {
                 handleOpenClicked();
@@ -251,7 +251,8 @@ export const WorkspaceDialogComponent = observer(() => {
         listContent = <NonIdealState icon="search" title={`No workspaces match "${search}"`} />;
     } else {
         listContent = (
-            <div className="workspace-rows" role="listbox" aria-label="Workspaces">
+            // Clicking a row moves the focus to the list. Enter then opens or saves the selected workspace, as it does in the name field.
+            <div className="workspace-rows" role="listbox" aria-label="Workspaces" tabIndex={0} onKeyDown={handleKeyDown}>
                 {sortedWorkspaces.map(entry => {
                     const isSelected = entry.name === workspaceName;
                     return (
