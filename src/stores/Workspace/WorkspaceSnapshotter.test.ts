@@ -931,6 +931,28 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.selectedColorBlending).toBeUndefined();
     });
 
+    test("saves the image of the rest frequency tab of the Image List by its place among the images that the workspace saves", () => {
+        const {appStore} = createSession();
+        // The second image is a generated image that the workspace does not save.
+        const unsaved = createFrame(5, {frameInfo: {fileId: 5, directory: "/data", hdu: "", fileInfo: {name: "unsaved.fits"}, lelExpr: undefined, generated: true}});
+        const second = createFrame(6);
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 6);
+        (appStore as any).frames = [appStore.frames[0], unsaved, second];
+        const layoutWith = (index: number) => ({
+            layoutVersion: 2,
+            docked: {type: "row", content: [{type: "stack", content: [{type: "component", id: "layer-list", widgetSettings: {settingsTabId: 1, restFrequencyImageIndex: index, columnWidths: [1, 2, 3, 4, 5]}}]}]},
+            floating: []
+        });
+        const savedIndex = (index: number) => {
+            (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue(layoutWith(index));
+            return new WorkspaceSnapshotter().capture().workspace.layout.docked.content[0].content[0].widgetSettings.restFrequencyImageIndex;
+        };
+
+        expect(savedIndex(0)).toBe(0);
+        expect(savedIndex(2)).toBe(1);
+        expect(savedIndex(1)).toBeUndefined();
+    });
+
     test("carries the arrangement the session was saved in, in its own copy of the layout", () => {
         const {appStore} = createSession();
 

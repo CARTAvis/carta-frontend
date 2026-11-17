@@ -710,6 +710,23 @@ describe("WorkspaceRestorer", () => {
         expect(issues.map(issue => issue.message)).toEqual(expect.arrayContaining(["Could not open the image image.fits: File /data/image.fits does not exist", expect.stringMatching(/^Could not load the catalog .*: Network Error$/)]));
     });
 
+    test("shows the active image on the rest frequency tab of the Image List when an image was not restored", async () => {
+        const sessionWith = () => {
+            const {appStore} = createSession();
+            const layerList = {selectedFrameIndex: 0, resetSelectedFrameIndex: jest.fn()};
+            Object.assign(appStore.widgetsStore, {layerListWidgets: new Map([["layer-list-0", layerList]])});
+            return {appStore, layerList};
+        };
+        let {appStore, layerList} = sessionWith();
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual([]);
+        expect(layerList.resetSelectedFrameIndex).not.toHaveBeenCalled();
+
+        ({appStore, layerList} = sessionWith());
+        appStore.appendFile = jest.fn(() => Promise.reject("File /data/image.fits does not exist."));
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toContain("The rest frequency tab of the Image List shows the active image, because not every image was restored");
+        expect(layerList.resetSelectedFrameIndex).toHaveBeenCalledTimes(1);
+    });
+
     test("says why an online catalog could not be loaded, without a toast", async () => {
         createSession();
         const source: WorkspaceCatalogQuerySource = {type: "simbad", center: {x: 12.5, y: -30.25}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: RadiusUnits.ARCMINUTES, maxObjects: 500};

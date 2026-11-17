@@ -737,6 +737,7 @@ export class WorkspaceSnapshotter {
         if (layout?.docked) {
             WorkspaceSnapshotter.removeDockedPvPreviews(layout.docked);
         }
+        this.saveRestFrequencyImages(layout);
         this.workspace.layout = layout;
     }
 
@@ -772,6 +773,33 @@ export class WorkspaceSnapshotter {
             }
         }
         return kept.length > 0;
+    }
+
+    /**
+     * Saves the image that the rest frequency tab of each Image List shows by its place among the
+     * images that the workspace saves. A restore opens only those images, in their order. When the
+     * workspace does not save the image itself, the tab shows the active image after a restore.
+     */
+    private saveRestFrequencyImages(layout: {docked?: unknown; floating?: unknown[]} | undefined): void {
+        const frames = this.appStore.frames ?? [];
+        const isSaved = (frame: FrameStore) => this.imageIdOf(frame) !== undefined;
+        const visit = (node: any) => {
+            if (!node || typeof node !== "object") {
+                return;
+            }
+            const settings = node.widgetSettings;
+            if (node.id === "layer-list" && typeof settings?.restFrequencyImageIndex === "number") {
+                const index = settings.restFrequencyImageIndex;
+                if (frames[index] && isSaved(frames[index])) {
+                    settings.restFrequencyImageIndex = frames.slice(0, index).filter(isSaved).length;
+                } else {
+                    delete settings.restFrequencyImageIndex;
+                }
+            }
+            (Array.isArray(node.content) ? node.content : []).forEach(visit);
+        };
+        visit(layout?.docked);
+        (layout?.floating ?? []).forEach(visit);
     }
 
     /**

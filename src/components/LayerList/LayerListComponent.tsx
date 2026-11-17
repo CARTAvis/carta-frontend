@@ -31,18 +31,18 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 650;
     @observable height: number = 180;
-    @observable columnWidths = [132, 97, 140, 75, 95];
+    /** The widths are kept in the widget store, so that a workspace keeps them. */
+    get columnWidths(): number[] {
+        return AppStore.Instance.widgetsStore.layerListWidgets.get(this.props.id)?.columnWidths ?? [132, 97, 140, 75, 95];
+    }
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
-    @action private onColumnWidthsChange = (index: number, size: number) => {
-        if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
-            return;
-        }
-        this.columnWidths[index] = size;
+    private onColumnWidthsChange = (index: number, size: number) => {
+        AppStore.Instance.widgetsStore.layerListWidgets.get(this.props.id)?.setColumnWidth(index, size);
         this.forceUpdate();
     };
 

@@ -385,6 +385,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         this.showProgress("Restoring the layout and widgets");
         this.restoreLayout();
+        this.checkRestFrequencyImages();
         yield* this.restoreViews();
         if (!this.isCurrent) {
             return this.issues;
@@ -2673,6 +2674,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         } else {
             this.issues.push(...outcome);
         }
+    }
+
+    /**
+     * Checks the image that the rest frequency tab of each Image List shows. The layout copy saves
+     * the image by its place in the list of images. When an image was not restored, the places of
+     * the images after it move. The tab then shows the active image, and the report says so.
+     */
+    private checkRestFrequencyImages(): void {
+        const frameCount = this.appStore.frames.length;
+        const savedCount = (this.workspace.files?.length ?? 0) + this.generatedImages.reduce((count, generated) => count + (generated.images?.length ?? 0), 0);
+        this.appStore.widgetsStore.layerListWidgets?.forEach(store => {
+            if (store.selectedFrameIndex >= 0 && (frameCount !== savedCount || store.selectedFrameIndex >= frameCount)) {
+                store.resetSelectedFrameIndex();
+                this.report(WorkspaceItemKind.Layout, "Image List", "The rest frequency tab of the Image List shows the active image, because not every image was restored");
+            }
+        });
     }
 
     /** The time after which the step of the widget results says that the wait is long, in milliseconds. */
