@@ -563,6 +563,11 @@ export class WorkspaceSnapshotter {
         // The workspace schema checks the position, so such a value would stop the workspace from saving.
         const isFinitePosition = Number.isFinite(cursorPosition?.x) && Number.isFinite(cursorPosition?.y);
         this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {}), ...(this.appStore.isCursorMirrored === true ? {mirrored: true} : {})};
+        const beamFileId = this.appStore.overlaySettings?.beam?.selectedFileId;
+        const beamImageId = typeof beamFileId === "number" && beamFileId !== this.appStore.activeFrame?.frameInfo.fileId ? this.imageIdOf(this.appStore.getFrame(beamFileId)) : undefined;
+        if (beamImageId !== undefined) {
+            this.workspace.beamSettingsImageId = beamImageId;
+        }
         const regionSet = this.appStore.activeFrame?.regionSet;
         this.workspace.toolbar = {
             expanded: this.appStore.isToolbarExpanded !== false,

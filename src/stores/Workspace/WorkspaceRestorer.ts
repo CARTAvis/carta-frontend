@@ -195,6 +195,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreStackingOrder();
         this.restoreCursor();
         this.restoreToolbar();
+        // The Beam tab follows the image in front. Show the saved image after the image in front is chosen.
+        const beamFrame = typeof this.workspace.beamSettingsImageId === "number" ? this.frameOf(this.workspace.beamSettingsImageId) : undefined;
+        if (beamFrame) {
+            this.appStore.overlaySettings.beam.setSelectedFrame(beamFrame.frameInfo.fileId);
+        }
         if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
             // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
             CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);

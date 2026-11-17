@@ -813,6 +813,11 @@ export interface Workspace {
     };
     /** The image toolbar. */
     toolbar?: WorkspaceToolbar;
+    /**
+     * The image whose beam the Beam tab of the image view settings shows, by its workspace ID. Left
+     * out when it is the image in front, which the tab follows.
+     */
+    beamSettingsImageId?: number;
     /** The fields of the online catalog query dialog. */
     onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
     /** The fields of the HiPS query form of the Online Data Query dialog. */

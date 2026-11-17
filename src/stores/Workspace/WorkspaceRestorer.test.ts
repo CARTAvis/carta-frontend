@@ -700,6 +700,16 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.updateActiveLayer).not.toHaveBeenCalled();
     });
 
+    test("shows the saved image on the Beam tab after the image in front is chosen", async () => {
+        const {appStore} = createSession();
+        const setSelectedFrame = jest.fn();
+        Object.assign(appStore, {overlaySettings: {...(appStore as any).overlaySettings, beam: {setSelectedFrame}}});
+
+        await restore(createWorkspace({files: [IMAGE, {id: 2, source: {type: "file", filename: "other.fits"}}], beamSettingsImageId: 2}));
+
+        expect(setSelectedFrame).toHaveBeenCalledWith(appStore.frames[1].frameInfo.fileId);
+    });
+
     test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
         const {appStore} = createSession();
 

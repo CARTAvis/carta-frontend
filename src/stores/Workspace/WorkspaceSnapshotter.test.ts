@@ -619,6 +619,20 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, mirrored: true});
     });
 
+    test("saves the image that the Beam tab shows only when it is not the image in front", () => {
+        const other = createFrame(1);
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+        const {appStore, frame} = createSession();
+        const beam = {selectedFileId: 1};
+        Object.assign(appStore, {frames: [frame, other], getFrame: (fileId: number) => [frame, other].find(f => f.frameInfo.fileId === fileId), overlaySettings: {...(appStore as any).overlaySettings, beam}});
+
+        const imageId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, 1);
+        expect(new WorkspaceSnapshotter().capture().workspace.beamSettingsImageId).toBe(imageId);
+
+        beam.selectedFileId = 0;
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("beamSettingsImageId");
+    });
+
     test("saves the image toolbar: whether it is expanded, the active layer, and the type of a new region of the image in front", () => {
         const {appStore, frame} = createSession();
         Object.assign(appStore, {isToolbarExpanded: false, activeLayer: "regionCreating"});
