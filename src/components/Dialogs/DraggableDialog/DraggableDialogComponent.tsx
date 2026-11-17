@@ -215,7 +215,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         const zIndexManager = appStore.zIndexManager;
 
         return (
-            <div className={"draggable-dialog"} ref={this.dd}>
+            <div className={"draggable-dialog"} data-dialog-id={this.props.dialogId} ref={this.dd}>
                 {this.props.dialogProps.isOpen && (
                     <Rnd
                         enableResizing={resizeSettings}

@@ -2,6 +2,8 @@ import {Classes} from "@blueprintjs/core";
 import html2canvas from "html2canvas-pro";
 import moment from "moment";
 
+import {DialogId, WORKSPACE_DIALOGS} from "enums";
+
 export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
 }
@@ -48,11 +50,35 @@ export function exportTxtFile(fileName: string, content: string) {
 const SCREENSHOT_IGNORED_CLASSES = [Classes.PORTAL, Classes.OVERLAY, Classes.TOAST_CONTAINER, Classes.POPOVER];
 
 /**
+ * The dialogs of the app that a workspace keeps open, but that a screenshot leaves out. They do not
+ * show the images or their analysis.
+ */
+const APP_DIALOGS: string[] = [DialogId.Preference, DialogId.Layout, DialogId.About, DialogId.Snippet];
+
+/**
+ * Returns whether a screenshot of the whole app leaves out an element. The screenshot keeps the
+ * analysis dialogs that a workspace keeps open, such as the Contour dialog. It leaves out the other
+ * dialogs, such as the Save dialog and the Preferences dialog, and the other overlays, such as
+ * toasts and popovers.
+ */
+function isLeftOutOfScreenshot(node: Element): boolean {
+    const dialogId = node.getAttribute?.("data-dialog-id");
+    if (dialogId) {
+        return !WORKSPACE_DIALOGS.includes(dialogId) || APP_DIALOGS.includes(dialogId);
+    }
+    if (node.classList?.contains(Classes.POPOVER) || node.classList?.contains(Classes.TOAST_CONTAINER)) {
+        return true;
+    }
+    // The overlay of a dialog that the screenshot keeps holds the dialog itself.
+    return SCREENSHOT_IGNORED_CLASSES.some(className => node.classList?.contains(className)) && !node.closest?.("[data-dialog-id]");
+}
+
+/**
  * Takes a screenshot of the image viewer, or of the whole app.
  *
- * A screenshot of the whole app shows the docked layout and the floating widgets, as the user sees
- * them. It leaves out every overlay, because the Save dialog is still open when a workspace saves
- * its thumbnail.
+ * A screenshot of the whole app shows the docked layout, the floating widgets and the open analysis
+ * dialogs, as the user sees them. It leaves out the other overlays, because the Save dialog is still
+ * open when a workspace saves its thumbnail.
  */
 export async function exportScreenshot(isImageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
     try {
@@ -65,7 +91,7 @@ export async function exportScreenshot(isImageOnly = true, maxWidth = 512, forma
         // large screen with a high pixel ratio, the full size can be larger than the largest canvas
         // that Safari can make. Then the screenshot would fail.
         const scale = maxWidth > 0 && element.clientWidth > 0 ? Math.min(window.devicePixelRatio, maxWidth / element.clientWidth) : undefined;
-        const ignoreElements = isImageOnly ? undefined : (node: Element) => SCREENSHOT_IGNORED_CLASSES.some(className => node.classList?.contains(className));
+        const ignoreElements = isImageOnly ? undefined : isLeftOutOfScreenshot;
         const canvas = await html2canvas(element, {scale, ignoreElements});
         const thumbnailCanvas: HTMLCanvasElement = document.createElement("canvas");
         let width: number;
