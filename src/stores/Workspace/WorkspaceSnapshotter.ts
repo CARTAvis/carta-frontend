@@ -562,7 +562,13 @@ export class WorkspaceSnapshotter {
         // Leave out a position that is not a number, such as a point that matching could not transform.
         // The workspace schema checks the position, so such a value would stop the workspace from saving.
         const isFinitePosition = Number.isFinite(cursorPosition?.x) && Number.isFinite(cursorPosition?.y);
-        this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {}), ...(this.appStore.isCursorMirrored === true ? {mirrored: true} : {})};
+        const regionSet = this.appStore.activeFrame?.regionSet;
+        this.workspace.toolbar = {
+            expanded: this.appStore.isToolbarExpanded !== false,
+            activeLayer: this.appStore.activeLayer,
+            ...(regionSet ? {newRegionType: regionSet.newRegionType, regionMode: regionSet.mode} : {})
+        };
         this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
         this.workspace.hipsQuery = HipsQueryStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;

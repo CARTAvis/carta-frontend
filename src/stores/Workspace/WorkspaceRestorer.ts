@@ -8,9 +8,11 @@ import {
     DialogId,
     FrequencyUnit,
     ImageType,
+    ImageViewLayer,
     NumericInputType,
     PlayMode,
     RegionId,
+    RegionMode,
     RegionOpacity,
     RestFrameShiftMode,
     SkyRefIs,
@@ -192,6 +194,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreWidgetSettings();
         this.restoreStackingOrder();
         this.restoreCursor();
+        this.restoreToolbar();
         if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
             // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
             CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
@@ -219,6 +222,33 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             frame.updateCursorRegion(position);
         }
         this.appStore.setCursorFrozen(cursor.frozen);
+        if ((cursor.mirrored === true) !== (this.appStore.isCursorMirrored === true)) {
+            this.appStore.toggleCursorMirror();
+        }
+    }
+
+    /**
+     * Applies the image toolbar: whether it is expanded, the layer that the mouse works on, and the
+     * type of a new region of the image in front. A value that is not valid is not applied.
+     */
+    private restoreToolbar(): void {
+        const toolbar = this.workspace.toolbar;
+        if (!toolbar || typeof toolbar !== "object") {
+            return;
+        }
+        if (typeof toolbar.expanded === "boolean") {
+            this.appStore.setToolbarExpanded(toolbar.expanded);
+        }
+        if (Object.values(ImageViewLayer).includes(toolbar.activeLayer)) {
+            this.appStore.updateActiveLayer(toolbar.activeLayer);
+        }
+        const regionSet = this.appStore.activeFrame?.regionSet;
+        if (regionSet && Object.values(CARTA.RegionType).includes(toolbar.newRegionType as CARTA.RegionType)) {
+            regionSet.setNewRegionType(toolbar.newRegionType as CARTA.RegionType);
+        }
+        if (regionSet && (toolbar.regionMode === RegionMode.MOVING || toolbar.regionMode === RegionMode.CREATING)) {
+            regionSet.setMode(toolbar.regionMode);
+        }
     }
 
     /**

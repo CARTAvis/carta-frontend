@@ -79,6 +79,8 @@ function createFrame(fileId: number) {
         setSkyRefIs: jest.fn(),
         toggleOffsetCoord: jest.fn(),
         regionSet: {
+            setNewRegionType: jest.fn(),
+            setMode: jest.fn(),
             addExistingRegionAsync: jest.fn(async (points: unknown) => {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
                 return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
@@ -174,6 +176,10 @@ function createSession() {
         isFrameLockedToContour: true,
         toggleFrameContourLock: jest.fn(),
         setCursorFrozen: jest.fn(),
+        isCursorMirrored: false,
+        toggleCursorMirror: jest.fn(),
+        setToolbarExpanded: jest.fn(),
+        updateActiveLayer: jest.fn(),
         dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn(), applyUnappliedSettings: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
@@ -676,6 +682,22 @@ describe("WorkspaceRestorer", () => {
         expect(frame.regionSet.setSelectionByIds).toHaveBeenCalledWith([101, 102], 102);
         expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
+    });
+
+    test("mirrors the cursor again only when it was mirrored, and applies the image toolbar, keeping the values that are not valid", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false, mirrored: true}, toolbar: {expanded: false, activeLayer: "catalog" as never, newRegionType: 4, regionMode: 1}}));
+        expect(appStore.toggleCursorMirror).toHaveBeenCalledTimes(1);
+        expect(appStore.setToolbarExpanded).toHaveBeenCalledWith(false);
+        expect(appStore.updateActiveLayer).toHaveBeenCalledWith("catalog");
+        expect([(appStore.activeFrame as any).regionSet.setNewRegionType.mock.calls, (appStore.activeFrame as any).regionSet.setMode.mock.calls]).toEqual([[[4]], [[1]]]);
+
+        appStore.toggleCursorMirror.mockClear();
+        appStore.updateActiveLayer.mockClear();
+        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false}, toolbar: {expanded: true, activeLayer: "drawing" as never, newRegionType: 99 as never, regionMode: 7 as never}}));
+        expect(appStore.toggleCursorMirror).not.toHaveBeenCalled();
+        expect(appStore.updateActiveLayer).not.toHaveBeenCalled();
     });
 
     test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {

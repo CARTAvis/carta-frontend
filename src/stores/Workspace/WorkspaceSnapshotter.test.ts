@@ -80,6 +80,8 @@ function createSession(overrides: Record<string, any> = {}) {
         timeSeriesStore: {isMember: jest.fn(() => false)},
         animatorStore: {frameRate: 5, step: 1, playMode: 0, animationMode: 0},
         logStore: {logLevel: 1, hiddenTags: [] as string[]},
+        isToolbarExpanded: true,
+        activeLayer: "regionMoving",
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
@@ -612,6 +614,17 @@ describe("WorkspaceSnapshotter", () => {
 
         Object.assign(frame, {cursorInfo: {posImageSpace: {x: NaN, y: 4}}});
         expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false});
+
+        Object.assign(appStore, {isCursorMirrored: true});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, mirrored: true});
+    });
+
+    test("saves the image toolbar: whether it is expanded, the active layer, and the type of a new region of the image in front", () => {
+        const {appStore, frame} = createSession();
+        Object.assign(appStore, {isToolbarExpanded: false, activeLayer: "regionCreating"});
+        Object.assign(frame.regionSet, {newRegionType: CARTA.RegionType.ELLIPSE, mode: 1});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.toolbar).toEqual({expanded: false, activeLayer: "regionCreating", newRegionType: CARTA.RegionType.ELLIPSE, regionMode: 1});
     });
 
     test("names no color-blended image in front when the one there could not be saved", () => {

@@ -17,12 +17,14 @@ import {
     FrameScaling,
     type HipsCoord,
     type HipsProjection,
+    type ImageViewLayer,
     type MultiProfileCategory,
     type NumberFormatType,
     type NumericInputType,
     type PlayMode,
     type RadiusUnits,
     type RedshiftType,
+    type RegionMode,
     type RegionOpacity,
     type RestFrameShiftMode,
     type SkyRefIs,
@@ -636,6 +638,15 @@ export interface WorkspaceHipsQuery {
     rotation: number;
 }
 
+/** The image toolbar: whether it is expanded, the layer that the mouse works on, and the region that a new region gets. */
+export interface WorkspaceToolbar {
+    expanded: boolean;
+    activeLayer: ImageViewLayer;
+    /** The image in front: the type of a new region, and whether the mouse creates regions. */
+    newRegionType?: CARTA.RegionType;
+    regionMode?: RegionMode;
+}
+
 /** The settings of the animator. */
 export interface WorkspaceAnimator {
     frameRate: number;
@@ -794,7 +805,14 @@ export interface Workspace {
      * puts the cursor there, so that the cursor profiles show that position. A cursor that was not
      * frozen then follows the mouse again when the mouse moves over the image.
      */
-    cursor?: {frozen: boolean; position?: Point2D};
+    cursor?: {
+        frozen: boolean;
+        position?: Point2D;
+        /** Whether the cursor is shown on every panel of a multi-panel view. Left out when it is not. */
+        mirrored?: boolean;
+    };
+    /** The image toolbar. */
+    toolbar?: WorkspaceToolbar;
     /** The fields of the online catalog query dialog. */
     onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
     /** The fields of the HiPS query form of the Online Data Query dialog. */
