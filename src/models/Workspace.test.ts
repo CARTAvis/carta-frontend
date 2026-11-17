@@ -216,6 +216,33 @@ describe("workspace schema 2", () => {
         expect(validate(workspace)).toBe(true);
     });
 
+    test("accepts the settings and results that the profile and analysis widgets save", () => {
+        const workspace = createWorkspace({
+            files: [
+                {id: 1, source: {type: "file", filename: "cube.fits"}},
+                {id: 2, source: {type: "file", filename: "other.fits"}}
+            ],
+            plotWidgets: {
+                "spectral-line-query-0": {
+                    type: "spectral-line-query",
+                    headerTableColumnWidths: [150, 70, 250],
+                    result: {frequencyRange: [230000, 231000], rowCount: 3, columns: {Species: {display: true, filter: "CO", width: 80}}, filtered: true, sort: {columnName: "Species", sortingType: 1}, selectedRows: [2]}
+                },
+                "render-config-0": {type: "render-config", biasContrastOpen: true},
+                "pv-generator-0": {
+                    type: "pv-generator",
+                    imageId: 2,
+                    channelRange: [1, 2],
+                    channelUnit: "Frequency (GHz), LSRK",
+                    channelRangeImageId: 1,
+                    preview: {panel: {x: 10, y: 20, width: 300, height: 200}, request: {imageId: 1, regionId: 3, width: 3, channels: [0, 9], reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1}}
+                }
+            }
+        });
+
+        expect(validate(workspace)).toBe(true);
+    });
+
     test("rejects an image with no source", () => {
         expect(validate(createWorkspace({files: [{id: 0, filename: "image.fits"}]}))).toBe(false);
     });
