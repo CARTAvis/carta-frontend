@@ -606,6 +606,13 @@ export interface WorkspaceOnlineCatalogQuery {
     maxObjects: number;
     objectName: string;
     vizierKeywords: string;
+    /**
+     * The VizieR tables that the last query listed, with their descriptions. Left out when no list is
+     * shown. A restore shows the list again without a query. Loading a table queries it by its name.
+     */
+    vizierTables?: {name: string; description: string}[];
+    /** The names of the VizieR tables that are selected in the list. */
+    vizierSelectedTables?: string[];
 }
 
 /** The settings of the animator. */
