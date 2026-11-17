@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed the backend sometimes crashing when all images are closed while an image is spatially matched, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed opening a workspace whose contour, vector overlay or color blending settings leave out a value stopping partway, and a refused layer of a color-blended image giving its alpha to another layer ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
+* Fixed a workspace being saved without a moment, PV or fitting image that was still being made ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
