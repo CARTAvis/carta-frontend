@@ -468,13 +468,13 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("dialogSettings");
     });
 
-    test("saves how many floating widgets are below each open dialog, leaving out the settings panel of a PV preview", () => {
+    test("saves how many floating widgets are below each open dialog, counting the viewer of a PV preview", () => {
         const zIndexes = new Map([
             ["stats-0", 1],
             ["region-dialog", 2],
-            ["pv-settings", 3],
             ["histogram-0", 4],
-            ["contour-dialog", 5]
+            ["pv-generator-0-pv-preview-0", 5],
+            ["contour-dialog", 6]
         ]);
         const {appStore} = createSession({
             dialogStore: {
@@ -485,14 +485,14 @@ describe("WorkspaceSnapshotter", () => {
             },
             zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
         });
-        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "pv-settings", type: "floating-settings", parentType: "pv-generator"}, {id: "histogram-0"}];
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "histogram-0"}, {id: "pv-generator-0-pv-preview-0", type: "pv-preview", parentId: "pv-generator-0"}];
 
-        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}});
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}});
 
         // A catalog plot is stacked by its component ID, so above the region dialog here.
         zIndexes.set("catalog-plot-component-0", 3);
         (appStore.widgetsStore as any).floatingWidgets.push({id: "catalog-plot-0", componentId: "catalog-plot-component-0"});
-        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}});
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 4}});
     });
 
     test("saves where an open dialog is and the name of the tab that it shows, when the user moved it and chose a tab", () => {
@@ -557,7 +557,7 @@ describe("WorkspaceSnapshotter", () => {
                         defaultHeight: 400
                     },
                     {type: "floating-settings", id: "image-view-settings", parentId: "image-view", parentType: "image-view", title: "Image View Settings", defaultX: 25, defaultY: 25, defaultWidth: 400, defaultHeight: 300},
-                    {type: "floating-settings", id: "pv-preview", parentId: "pv-generator-0", parentType: "pv-generator", title: "PV Preview Viewer"},
+                    {type: "pv-preview", id: "pv-generator-0-pv-preview-0", parentId: "pv-generator-0", parentType: "pv-generator", title: "PV Preview Viewer"},
                     {type: "spectral-profiler", id: "spectral-profiler-0"}
                 ],
                 workspaceIdOf: (type: string, id: string) => (id === "spectral-profiler-0" ? "spectral-profiler-3" : id),
@@ -870,6 +870,20 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalled();
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
+    });
+
+    test("leaves the floating viewer of a PV preview out of the layout, because a restore makes the preview again", () => {
+        const {appStore} = createSession();
+        (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
+            layoutVersion: 2,
+            docked: {type: "row", content: [{type: "component", id: "image-view"}]},
+            floating: [
+                {type: "component", id: "stats"},
+                {type: "component", id: "pv-preview"}
+            ]
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.layout.floating).toEqual([{type: "component", id: "stats"}]);
     });
 
     test("reports an item the session never opened instead of giving it an ID", () => {

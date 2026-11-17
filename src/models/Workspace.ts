@@ -683,6 +683,34 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
     channelRangeImageId?: number;
     /** The region that the preview shows, by the ID that the region was saved with. -1 is the whole image. */
     previewRegionId: number;
+    /** The PV preview. Left out when no preview was shown. A restore asks the backend for the preview again. */
+    preview?: WorkspacePvPreview;
+}
+
+/** A PV preview: how its image was drawn, and where its viewer panel was. */
+export interface WorkspacePvPreview {
+    renderConfig?: WorkspaceRenderConfig;
+    /** The place and the size of the PV Preview Viewer panel, in pixels. */
+    panel?: {x: number; y: number; width: number; height: number};
+    /** The request that made the preview. The widget can show other settings than the ones the preview was made with. */
+    request?: WorkspacePvPreviewRequest;
+}
+
+/** The request that made a PV preview. A restore asks for the preview with it. */
+export interface WorkspacePvPreviewRequest {
+    /** The cube, by its workspace ID. */
+    imageId: number;
+    /** The line region of the cut, by the ID that the workspace saved it with. */
+    regionId: number;
+    /** The width of the cut, in pixels. */
+    width: number;
+    /** The first and the last channel. Left out for the whole spectral axis. */
+    channels?: [number, number];
+    reverse: boolean;
+    /** The region that bounds the preview, by the ID that the workspace saved it with. -1 is the whole image. */
+    previewRegionId: number;
+    xyRebin: number;
+    zRebin: number;
 }
 
 /** What the Log widget shows: the lowest level of the entries that it shows, and the tags that it hides. */

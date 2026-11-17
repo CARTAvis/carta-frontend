@@ -697,12 +697,19 @@ export class WorkspaceSnapshotter {
      * catalog: which catalog a table or plot widget shows is kept in `catalogWidgets` instead.
      */
     private captureLayout(): void {
-        this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
+        const layout = this.appStore.layoutStore.currentLayoutConfig();
+        // Leave out the floating viewer of a PV preview. The PV generator widget saves the preview
+        // and where its viewer is, and a restore makes the preview again. A viewer in the layout
+        // would open again as a second, empty viewer.
+        if (layout && Array.isArray(layout.floating)) {
+            layout.floating = layout.floating.filter((widget: {id?: string}) => widget?.id !== "pv-preview");
+        }
+        this.workspace.layout = layout;
     }
 
     /**
-     * Saves the floating settings panels of widgets, from the bottom one to the top one. The panel
-     * of a PV preview is left out, because a restore does not make the preview again.
+     * Saves the floating settings panels of widgets, from the bottom one to the top one. The viewer
+     * of a PV preview is not a settings panel. The PV generator widget saves it with the preview.
      */
     private captureWidgetSettings(): void {
         const widgetsStore = this.appStore.widgetsStore;
@@ -710,9 +717,7 @@ export class WorkspaceSnapshotter {
         if (!widgetsStore?.floatingWidgets) {
             return;
         }
-        const panels = widgetsStore.floatingWidgets
-            .filter(config => config.type === "floating-settings" && config.parentId && config.parentType && config.parentType !== "pv-generator")
-            .sort((a, b) => (zIndexManager?.findIndex(a.id) ?? 0) - (zIndexManager?.findIndex(b.id) ?? 0));
+        const panels = widgetsStore.floatingWidgets.filter(config => config.type === "floating-settings" && config.parentId && config.parentType).sort((a, b) => (zIndexManager?.findIndex(a.id) ?? 0) - (zIndexManager?.findIndex(b.id) ?? 0));
         // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
         const panelIds = new Set(panels.map(config => config.id));
         const widgetIds = widgetsStore.floatingWidgets.filter(config => !panelIds.has(config.id)).map(config => config.componentId || config.id);
@@ -732,11 +737,11 @@ export class WorkspaceSnapshotter {
 
     /**
      * Returns the floating widgets and settings panels that a restore opens again, by the IDs that
-     * they are stacked by. A catalog plot is stacked by its component ID. The settings panel of a PV
-     * preview is left out.
+     * they are stacked by. A catalog plot is stacked by its component ID. The viewer of a PV preview
+     * is one of them, because the restore makes the preview again before it stacks the dialogs.
      */
     private get restoredFloatingWidgetIds(): string[] {
-        return (this.appStore.widgetsStore?.floatingWidgets ?? []).filter(config => !(config.type === "floating-settings" && config.parentType === "pv-generator")).map(config => config.componentId || config.id);
+        return (this.appStore.widgetsStore?.floatingWidgets ?? []).map(config => config.componentId || config.id);
     }
 
     /** Returns where an open dialog is, the tab that it shows, and how many floating widgets are below it. */

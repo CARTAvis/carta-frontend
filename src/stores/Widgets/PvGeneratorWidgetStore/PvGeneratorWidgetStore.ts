@@ -3,13 +3,26 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspacePvGeneratorWidgetConfig} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspacePvGeneratorWidgetConfig, type WorkspacePvPreview, type WorkspacePvPreviewRequest} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {length2D} from "utilities";
+import {length2D, toFixed} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+
+/** The settings of a PV request, by the IDs of this session. */
+interface PvRequestSettings {
+    fileId: number;
+    regionId: number;
+    width: number;
+    /** The first and the last channel, or null for the whole spectral axis. */
+    spectralRange: {min: number; max: number} | null;
+    reverse: boolean;
+    previewRegionId: number;
+    xyRebin: number;
+    zRebin: number;
+}
 
 /** The settings that a PV generator widget saves in a layout. */
 export interface PvGeneratorWidgetConfig {
@@ -96,17 +109,84 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
         return RegionId.IMAGE;
     }
 
-    @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string) => {
+    /** Returns the size of the cube that a preview with the settings of the widget reads, in GB, or nothing when it cannot be estimated. */
+    @computed get estimatedCubeSize(): number | undefined {
+        const frame = this.effectiveFrame;
+        if (!frame) {
+            return undefined;
+        }
+        const channelIndexMin = frame.findChannelIndexByValue(this.range.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
+            return undefined;
+        }
+        return PvGeneratorWidgetStore.estimateCubeSize(frame, channelIndexMin, channelIndexMax, this.effectivePreviewRegionId, this.xyRebin, this.zRebin);
+    }
+
+    /** Returns the size of the cube that the shown preview read, in GB, or nothing when it cannot be estimated. */
+    @computed get previewCubeSize(): number | undefined {
+        const request = this.previewRequest;
+        const frame = request ? AppStore.Instance.getFrame(request.fileId) : undefined;
+        return request && frame
+            ? PvGeneratorWidgetStore.estimateCubeSize(frame, request.spectralRange?.min ?? 0, request.spectralRange?.max ?? (frame.frameInfo.fileInfoExtended?.depth ?? 1) - 1, request.previewRegionId, request.xyRebin, request.zRebin)
+            : undefined;
+    }
+
+    /** Returns the size of the cube that a preview of these settings reads, in GB, or nothing when it cannot be estimated. */
+    private static estimateCubeSize(frame: FrameStore, channelIndexMin: number, channelIndexMax: number, previewRegionId: number, xyRebin: number, zRebin: number): number | undefined {
+        if (!frame.frameInfo.fileInfoExtended) {
+            return undefined;
+        }
+
+        // Find percentage of selected channel range
+        const imageDepth = frame.frameInfo.fileInfoExtended.depth;
+        const channelRangePercentage = Math.abs(channelIndexMax - channelIndexMin + 1) / imageDepth;
+
+        // Find byte per image pixel
+        const bitPixEntry = frame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.match("BITPIX"));
+        const bitPixValue = bitPixEntry?.numericValue;
+        if (bitPixValue == null || !Number.isFinite(bitPixValue) || bitPixValue === 0) {
+            return undefined;
+        }
+        const bytePix = Math.abs(bitPixValue) / 8;
+
+        // Get rectangular region if exists
+        const region = frame.getRegion(previewRegionId);
+        const fileInfoExtended = frame.frameInfo.fileInfoExtended;
+
+        // Get size of entire cube
+        const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
+
+        // Get size of pixels bounded by the rectangular region
+        const regionBoundSize = region?.regionId === -1 ? null : (region?.boundingBoxArea ?? 0) * bytePix * imageDepth;
+
+        // Calculate estimated size using selected range of channels and rebin values
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (xyRebin * xyRebin * zRebin);
+
+        if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
+            return undefined;
+        }
+
+        // Return estimated size in GB to be consistent with PreferenceStore.Instance.pvPreviewCubeSizeLimit
+        return parseFloat(toFixed(estimatedSize / 1e9, 2));
+    }
+
+    @computed get isCubeSizeBelowLimit(): boolean {
+        return (this.estimatedCubeSize ?? 0) <= PreferenceStore.Instance.pvPreviewCubeSizeLimit;
+    }
+
+    /** @returns the request of a preview, which ends when the preview is shown or the request fails. */
+    @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string): Promise<void> | undefined => {
         const frame = this.effectiveFrame;
         if (!frame || frame.isSpectralAxisNonlinear) {
-            return;
+            return undefined;
         }
 
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
         if (channelIndexMin === undefined || channelIndexMax === undefined) {
-            return;
+            return undefined;
         }
 
         if (channelIndexMin > channelIndexMax) {
@@ -121,37 +201,101 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             channelIndexMin = channelIndexMax - 1;
         }
         if (frame && this.effectiveRegion) {
-            const requestMessage: CARTA.PvRequest.$Properties = {
+            const settings: PvRequestSettings = {
                 fileId: frame.frameInfo.fileId,
-                regionId: this.effectiveRegionId,
+                regionId: this.effectiveRegionId ?? this.effectiveRegion.regionId,
                 width: this.width,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.isReverse,
+                previewRegionId: this.effectivePreviewRegionId,
+                xyRebin: this.xyRebin,
+                zRebin: this.zRebin
+            };
+            return this.sendRequest(frame, settings, isPreview, pvGeneratorId, channelIndexMax - channelIndexMin + 1);
+        }
+        return undefined;
+    };
+
+    /** The settings of the last preview request. A workspace saves them with the preview. */
+    @observable.ref private previewRequest: PvRequestSettings | undefined = undefined;
+    /** The saved preview request by the IDs of this session, or why it cannot be made. A restore makes the preview with it. */
+    private restoredPreviewRequest: PvRequestSettings | string | undefined = undefined;
+
+    /** Returns the saved preview request by the IDs of this session, or why it cannot be made. */
+    private static restoredRequestOf(saved: Persisted<WorkspacePvPreviewRequest> | undefined, ids: WorkspaceIdReader): PvRequestSettings | string | undefined {
+        const isInteger = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
+        if (!saved || typeof saved !== "object" || !isInteger(saved.imageId) || !isInteger(saved.regionId) || !isInteger(saved.previewRegionId)) {
+            return undefined;
+        }
+        const fileId = ids.fileIdOf(saved.imageId);
+        const regionId = fileId === undefined ? undefined : ids.regionIdOf(saved.imageId, saved.regionId);
+        if (fileId === undefined || regionId === undefined) {
+            return "the image or the line region that the PV preview was made from was not restored, so the preview was not made again";
+        }
+        const isWholeImage = saved.previewRegionId === RegionId.IMAGE || saved.previewRegionId === RegionId.NONE;
+        const previewRegionId = isWholeImage ? RegionId.IMAGE : ids.regionIdOf(saved.imageId, saved.previewRegionId);
+        if (previewRegionId === undefined) {
+            return "the region that the PV preview showed was not restored, so the preview was not made again";
+        }
+        const channels = saved.channels;
+        const hasChannels = Array.isArray(channels) && channels.length === 2 && channels.every(channel => isInteger(channel) && channel >= 0) && channels[0] <= channels[1];
+        return {
+            fileId,
+            regionId,
+            width: isPositiveInteger(saved.width, Number.MAX_SAFE_INTEGER) ? saved.width : 3,
+            spectralRange: hasChannels ? {min: channels[0], max: channels[1]} : null,
+            reverse: saved.reverse === true,
+            previewRegionId,
+            xyRebin: isPositiveInteger(saved.xyRebin, MAX_WORKSPACE_REBIN) ? saved.xyRebin : 1,
+            zRebin: isPositiveInteger(saved.zRebin, MAX_WORKSPACE_REBIN) ? saved.zRebin : 1
+        };
+    }
+
+    /**
+     * Asks the backend for a PV image or a preview with these settings.
+     *
+     * @param depth - the number of channels, for the telemetry of a PV image.
+     * @returns the request of a preview, which ends when the preview is shown or the request fails.
+     */
+    @action private sendRequest(frame: FrameStore, settings: PvRequestSettings, isPreview: boolean, pvGeneratorId: string | undefined, depth: number): Promise<void> | undefined {
+        {
+            const requestMessage: CARTA.PvRequest.$Properties = {
+                fileId: settings.fileId,
+                regionId: settings.regionId,
+                width: settings.width,
+                spectralRange: settings.spectralRange,
+                reverse: settings.reverse,
                 keep: this.shouldKeep,
                 previewSettings:
                     isPreview && pvGeneratorId
                         ? {
                               previewId: parseInt(pvGeneratorId.split("-")[2]),
-                              regionId: this.effectivePreviewRegionId,
-                              rebinXy: this.xyRebin,
-                              rebinZ: this.zRebin,
+                              regionId: settings.previewRegionId,
+                              rebinXy: settings.xyRebin,
+                              rebinZ: settings.zRebin,
                               imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality ?? 11,
                               animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality ?? 9,
                               compressionType: CARTA.CompressionType.ZFP
                           }
                         : undefined
             };
+            let previewRequest: Promise<void> | undefined;
             if (isPreview && pvGeneratorId) {
-                AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
+                this.previewRequest = settings;
+                // A flow is typed as the generator that it was written as, but it returns a promise.
+                previewRequest = AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId) as unknown as Promise<void>;
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.shouldKeep);
-                const depth = channelIndexMax - channelIndexMin + 1;
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, length: length2D(this.effectiveRegion.size), depth});
+                const region = frame.getRegion(settings.regionId);
+                if (region) {
+                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: region.regionId, regionType: region.regionType, length: length2D(region.size), depth});
+                }
             }
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
+            return previewRequest;
         }
-    };
+    }
 
     @action requestingPVCancelled = (pvGeneratorId: string) => {
         return () => {
@@ -214,6 +358,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
         AppStore.Instance.removePreviewFrame(id);
         this.previewFrame = null;
         this.pvCutRegionId = null;
+        this.previewRequest = undefined;
     };
 
     @action onResizePreviewWidget = (width: number, height: number) => {
@@ -286,8 +431,99 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             zRebin: this.zRebin,
             ...(hasRange ? {channelRange: [min, max] as [number, number], channelUnit: this.channelUnit} : {}),
             ...(hasRange && rangeImageId !== undefined ? {channelRangeImageId: rangeImageId} : {}),
-            previewRegionId: this.previewRegionId
+            previewRegionId: this.previewRegionId,
+            ...(this.previewFrame ? {preview: this.workspacePreviewOf(ids)} : {})
         };
+    };
+
+    /** Returns the key of the widget in the widgets store. The preview is made and shown by this key. */
+    private get layoutId(): string | undefined {
+        return [...AppStore.Instance.widgetsStore.pvGeneratorWidgets.entries()].find(([, widgetStore]) => widgetStore === this)?.[0];
+    }
+
+    /** Returns the floating PV Preview Viewer of the widget. The viewer is a floating widget of the type "pv-preview". */
+    private get previewPanel() {
+        const layoutId = this.layoutId;
+        return layoutId === undefined ? undefined : AppStore.Instance.widgetsStore.floatingWidgets.find(config => config.type === "pv-preview" && config.parentId === layoutId);
+    }
+
+    /** Returns the preview that a workspace saves: the request that made it, how it is drawn and where its viewer is. */
+    private workspacePreviewOf(ids: WorkspaceIdWriter): WorkspacePvPreview {
+        const panel = this.previewPanel;
+        const isPlaced = [panel?.defaultX, panel?.defaultY, panel?.defaultWidth, panel?.defaultHeight].every(value => typeof value === "number" && Number.isFinite(value));
+        const request = this.previewRequest;
+        const imageId = request ? ids.imageIdOf(request.fileId) : undefined;
+        return {
+            ...(request && imageId !== undefined
+                ? {
+                      request: {
+                          imageId,
+                          regionId: request.regionId,
+                          width: request.width,
+                          ...(request.spectralRange ? {channels: [request.spectralRange.min, request.spectralRange.max] as [number, number]} : {}),
+                          reverse: request.reverse,
+                          previewRegionId: request.previewRegionId,
+                          xyRebin: request.xyRebin,
+                          zRebin: request.zRebin
+                      }
+                  }
+                : {}),
+            ...(this.previewFrame ? {renderConfig: this.previewFrame.renderConfig.toConfig()} : {}),
+            ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number}} : {})
+        };
+    }
+
+    /**
+     * Asks the backend for the saved PV preview again, and draws it and places its viewer panel as
+     * they were. A preview larger than the PV preview cube size limit of the preferences is not
+     * made again.
+     *
+     * @returns the problems, as sentences about the widget.
+     */
+    public restoreWorkspaceResult = async (config: WorkspacePvGeneratorWidgetConfig): Promise<string[]> => {
+        const preview = config.preview;
+        const layoutId = this.layoutId;
+        const request = this.restoredPreviewRequest;
+        this.restoredPreviewRequest = undefined;
+        if (!preview || typeof preview !== "object" || layoutId === undefined) {
+            return [];
+        }
+        if (typeof request === "string") {
+            return [request];
+        }
+        // A preview saved without its request is made with the settings of the widget.
+        const frame = request ? AppStore.Instance.getFrame(request.fileId) : this.effectiveFrame;
+        const cubeSize =
+            request && frame
+                ? PvGeneratorWidgetStore.estimateCubeSize(frame, request.spectralRange?.min ?? 0, request.spectralRange?.max ?? (frame.frameInfo.fileInfoExtended?.depth ?? 1) - 1, request.previewRegionId, request.xyRebin, request.zRebin)
+                : this.estimatedCubeSize;
+        const limit = PreferenceStore.Instance.pvPreviewCubeSizeLimit;
+        if ((cubeSize ?? 0) > limit) {
+            return [`the PV preview needs about ${cubeSize} GB, more than the PV preview cube size limit of ${limit} GB, so it was not made again. Raise the limit in Preferences > Performance to make it`];
+        }
+        const cut = request ? frame?.getRegion(request.regionId) : this.effectiveRegion;
+        if (!frame || cut?.regionType !== CARTA.RegionType.LINE) {
+            return ["the line region of the PV preview was not restored, so the preview was not made again"];
+        }
+        if (request) {
+            await this.sendRequest(frame, request, true, layoutId, 0);
+        } else {
+            await this.requestPV(true, layoutId);
+        }
+        if (!this.previewFrame) {
+            return ["could not make the PV preview again"];
+        }
+        if (preview.renderConfig && typeof preview.renderConfig === "object") {
+            this.previewFrame.renderConfig.applyConfig(preview.renderConfig);
+        }
+        const panel = this.previewPanel;
+        const saved = preview.panel;
+        const isPlaced = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+        if (panel && saved && isPlaced(saved.x) && isPlaced(saved.y) && isPlaced(saved.width) && isPlaced(saved.height) && saved.width > 0 && saved.height > 0) {
+            panel.setDefaultPosition(saved.x, saved.y);
+            panel.setDefaultSize(saved.width, saved.height);
+        }
+        return [];
     };
 
     public applyWorkspaceBinding = (config: WorkspacePvGeneratorWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
@@ -308,6 +544,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
             this.setZRebin(config.zRebin);
         }
         const problems: string[] = [];
+        this.restoredPreviewRequest = PvGeneratorWidgetStore.restoredRequestOf(config.preview?.request, ids);
         this.isRangeImageMissing = false;
         if (typeof config.channelRangeImageId === "number") {
             const fileId = ids.fileIdOf(config.channelRangeImageId);

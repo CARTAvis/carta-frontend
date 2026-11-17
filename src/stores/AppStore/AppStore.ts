@@ -742,7 +742,11 @@ export class AppStore {
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
-            this.updateActiveImageByFrame(newFrame);
+            // A workspace restore makes the preview again after it puts the saved image in front.
+            // The preview must not take its place there.
+            if (!this.isLoadingWorkspace) {
+                this.updateActiveImageByFrame(newFrame);
+            }
         }
 
         return newFrame;
