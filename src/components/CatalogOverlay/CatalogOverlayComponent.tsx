@@ -24,7 +24,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private height: number = 600;
     @observable private width: number = 720;
 
-    @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
@@ -461,12 +460,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
+    /** Returns whether the header table is shown. The separator at 100% hides it. A workspace restores the separator, so the switch follows it. */
+    @computed private get isShowHeader(): boolean {
+        const position = parseFloat(this.widgetStore?.tableSeparatorPosition ?? "");
+        return !(position >= 100);
+    }
+
     @action private handleSplitChange = (sizes: number[]) => {
         const newSize = sizes[1]; // second pane (data table) size
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
         const position = clamp((newSize / (this.height - 130)) * 100, CatalogDisplayStore.MIN_TABLE_SEPARATOR_POSITION, CatalogDisplayStore.MAX_TABLE_SEPARATOR_POSITION);
         if (position) {
-            this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
             this.widgetStore?.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
@@ -482,8 +486,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleHideHeader = () => {
-        const position = this.widgetStore?.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
-        this.isShowHeader = position === 100 ? false : true;
+        const position = this.isShowHeader ? 100 : this.prevPosition;
         this.widgetStore?.setTableSeparatorPosition(`${position}%`);
     };
 
