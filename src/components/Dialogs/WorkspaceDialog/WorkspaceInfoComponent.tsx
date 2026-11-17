@@ -329,6 +329,16 @@ export const WorkspaceInfoComponent = observer((props: {preflight?: WorkspacePre
                 </div>
             </div>
             {treeNodes.length > 0 && <Tree className="summary-tree" contents={treeNodes} onNodeClick={toggleNode} onNodeExpand={toggleNode} onNodeCollapse={toggleNode} />}
+            {preflight.warnings.length > 0 && (
+                <div className="summary-warnings" data-testid="workspace-info-warnings">
+                    {preflight.warnings.map(warning => (
+                        <div key={warning} className="summary-warning">
+                            <Icon icon="warning-sign" intent={Intent.WARNING} />
+                            <span>{warning}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
             {/* The larger preview has no frame. A click anywhere or the Escape key closes it. */}
             <Overlay2 isOpen={isPreviewOpen && !!preflight.thumbnail} onClose={() => setIsPreviewOpen(false)} hasBackdrop={false} transitionDuration={300}>
                 <div className="workspace-preview-overlay" onClick={() => setIsPreviewOpen(false)} data-testid="workspace-info-preview">

@@ -294,3 +294,16 @@ $preview-duration: $pt-transition-duration * 3;
     font-size: $pt-font-size-small;
     overflow-wrap: anywhere;
 }
+
+.workspace-info .summary-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+
+    .summary-warning {
+        display: flex;
+        gap: 6px;
+        align-items: flex-start;
+    }
+}

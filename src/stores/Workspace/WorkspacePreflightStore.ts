@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, runInAction} from "mobx";
 import {CatalogDatabase} from "enums";
 import {describeCatalogSource, describeImageSource, getLelFileNames, type Workspace, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, MirrorSiteStore, showSourceWriteToast, type WorkspaceSourceWriteResult} from "stores";
+import {AppStore, MirrorSiteStore, PreferenceStore, showSourceWriteToast, type WorkspaceSourceWriteResult} from "stores";
 import {type WorkspaceLeftOutItems, WorkspaceRestorer, type WorkspaceSourceChanges} from "stores/Workspace/WorkspaceRestorer";
 
 import {describeRestoredSettings} from "./WorkspaceSummary";
@@ -230,6 +230,22 @@ export class WorkspacePreflightStore {
             }
             const name = describeCatalogSource(source).replace(/^from the /, "");
             return {id: catalog.id, name: name.charAt(0).toUpperCase() + name.slice(1), database: databaseOf(source)};
+        });
+    }
+
+    /**
+     * Returns a warning for each PV preview that is larger than the PV preview cube size limit of
+     * the preferences. The restore does not make such a preview. The user can raise the limit before
+     * opening the workspace.
+     */
+    @computed get warnings(): string[] {
+        const limit = PreferenceStore.Instance.pvPreviewCubeSizeLimit;
+        return Object.values(this.workspace.plotWidgets ?? {}).flatMap(config => {
+            const cubeSize = config?.type === "pv-generator" ? config.preview?.cubeSize : undefined;
+            if (typeof cubeSize !== "number" || !Number.isFinite(cubeSize) || cubeSize <= limit) {
+                return [];
+            }
+            return [`A PV preview needs about ${cubeSize} GB, more than the PV preview cube size limit of ${limit} GB. Raise the limit in Preferences > Performance to show the preview.`];
         });
     }
 

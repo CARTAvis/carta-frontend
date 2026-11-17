@@ -835,6 +835,8 @@ export interface WorkspacePvPreview {
     renderConfig?: WorkspaceRenderConfig;
     /** Whether the preview was the active image. Left out when it was not. */
     isActive?: boolean;
+    /** The estimated size of the cube that the preview reads, in GB. The Workspace dialog compares it with the PV preview cube size limit of the user. */
+    cubeSize?: number;
     /**
      * The place and the size of the PV Preview Viewer panel, in pixels. `widgetsBelow` is how many
      * other floating widgets were below the panel. Settings panels are not counted, because they

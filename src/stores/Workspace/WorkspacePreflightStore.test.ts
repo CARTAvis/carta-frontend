@@ -1,9 +1,10 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
+import {runInAction} from "mobx";
 
-import {CatalogDatabase, CatalogSystemType, RadiusUnits} from "enums";
+import {CatalogDatabase, CatalogSystemType, PreferenceKeys, RadiusUnits} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, MirrorSiteStore, type WorkspaceSourceWriteResult} from "stores";
+import {AppStore, MirrorSiteStore, PreferenceStore, type WorkspaceSourceWriteResult} from "stores";
 
 import {getChangedFolderPrefix, WorkspacePreflightStore} from "./WorkspacePreflightStore";
 
@@ -57,6 +58,17 @@ describe("getChangedFolderPrefix", () => {
 });
 
 describe("WorkspacePreflightStore", () => {
+    test("warns about a PV preview that is larger than the PV preview cube size limit of the user", () => {
+        mockFiles([]);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, 1));
+        const pvGenerator = (cubeSize?: number) => ({type: "pv-generator", width: 3, reverse: false, keep: false, xyRebin: 1, zRebin: 1, previewRegionId: -1, ...(cubeSize === undefined ? {} : {preview: {cubeSize}})});
+
+        const store = new WorkspacePreflightStore("copied", createWorkspace({plotWidgets: {"pv-generator-0": pvGenerator(2.5), "pv-generator-1": pvGenerator(0.5), "pv-generator-2": pvGenerator()} as never}), true);
+
+        expect(store.warnings).toEqual(["A PV preview needs about 2.5 GB, more than the PV preview cube size limit of 1 GB. Raise the limit in Preferences > Performance to show the preview."]);
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT));
+    });
+
     test("lists the images with their files, regions and references, the catalogs, and the other settings", () => {
         mockFiles([]);
         const store = new WorkspacePreflightStore("copied", createWorkspace(), true);
