@@ -209,9 +209,12 @@ export class WorkspaceSnapshotter {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
         } else if (frame.regionSet?.regions.length) {
             // Regions are only the image's own while it is not matched to another one.
-            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []);
+            // A region without an ID from the backend is not saved, so it is not saved as selected either.
+            const isSaved = (regionId: number | undefined) => regionId !== undefined && regionId > CURSOR_REGION_ID;
+            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []).filter(isSaved);
+            const focusedRegionId = frame.regionSet.focusedRegion?.regionId;
             workspaceFile.regionsSet = {
-                selectedRegion: frame.regionSet.focusedRegion?.regionId,
+                selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined,
                 ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
                 regions: this.captureRegions(frame)
             };
@@ -291,9 +294,23 @@ export class WorkspaceSnapshotter {
         return workspaceFile;
     }
 
+    /**
+     * Returns the regions of an image. Leaves out a region without an ID from the backend, and
+     * reports it. Such a region was refused by the backend, or the backend has not answered for it
+     * yet. A workspace saves each region by its ID.
+     */
     private captureRegions(frame: FrameStore): NonNullable<NonNullable<WorkspaceFile["regionsSet"]>["regions"]> {
+        const unaccepted = frame.regionSet.regions.filter(region => region.regionId < CURSOR_REGION_ID);
+        unaccepted.forEach(region => {
+            const imageName = frame.frameInfo.fileInfo?.name ?? "";
+            this.issues.push({
+                kind: WorkspaceItemKind.Image,
+                subject: imageName,
+                message: `Could not save ${region.name ? `the region "${region.name}"` : "a region"} of ${imageName}: the backend has not accepted the region`
+            });
+        });
         return frame.regionSet.regions
-            .filter(region => region.regionId !== CURSOR_REGION_ID)
+            .filter(region => region.regionId > CURSOR_REGION_ID)
             .map(region => ({
                 id: region.regionId,
                 type: region.regionType,

@@ -597,6 +597,23 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.colorBlendingImages?.[0]).toEqual({imageListIndex: 0, selectedFrameId: [1], alpha: [1, 0.5], contourVisible: false, vectorOverlayVisible: false});
     });
 
+    test("leaves out a region that the backend refused, also from the selection, and reports it", () => {
+        const {frame} = createSession();
+        const region = (regionId: number, name = "") => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name, color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
+        Object.assign(frame.regionSet, {regions: [region(0), region(5), region(-1, "box"), region(-2)], selectedRegionIds: new Set([5, -1]), focusedRegion: {regionId: -1}});
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.id)).toEqual([5]);
+        expect(workspace.files?.[0].regionsSet?.selectedRegion).toBeUndefined();
+        expect(workspace.files?.[0].regionsSet).not.toHaveProperty("selectedRegions");
+        expect(issues.map(issue => issue.message)).toEqual([
+            `Could not save the region "box" of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`,
+            `Could not save a region of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`
+        ]);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
     test("saves the regions that are selected together, and where the cursor is, frozen or not", () => {
         const {appStore, frame} = createSession();
         const region = (regionId: number) => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name: "", color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
