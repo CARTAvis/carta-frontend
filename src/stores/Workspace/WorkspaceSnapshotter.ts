@@ -1,8 +1,20 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
-import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceDialog, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
-import {AppStore} from "stores";
+import {DialogId, ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {
+    CARTA_INFO,
+    type Workspace,
+    WORKSPACE_VERSION,
+    type WorkspaceCatalog,
+    type WorkspaceCatalogSource,
+    type WorkspaceContourDialogSettings,
+    type WorkspaceDialog,
+    type WorkspaceFile,
+    type WorkspaceImageSource,
+    type WorkspaceIssue,
+    type WorkspaceVectorOverlayDialogSettings
+} from "models";
+import {AppStore, type DialogSettings} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -119,6 +131,24 @@ export class WorkspaceSnapshotter {
         return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, frame?.frameInfo.fileId);
     }
 
+    /**
+     * The settings that the Contour and Vector Overlay dialogs show but that are not applied, for
+     * images that the workspace keeps.
+     */
+    private captureDialogSettings(): Workspace["dialogSettings"] {
+        const dialogStore = this.appStore.dialogStore;
+        const withImageId = (settings: DialogSettings | undefined) => {
+            const imageId = settings ? this.imageIdOf(settings.frame) : undefined;
+            return settings && imageId !== undefined ? {imageId, ...settings.values} : undefined;
+        };
+        const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
+        const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
+        if (!contour && !vectorOverlay) {
+            return undefined;
+        }
+        return {...(contour ? {contour} : {}), ...(vectorOverlay ? {vectorOverlay} : {})};
+    }
+
     /** The ID this workspace knows a catalog by: the one it was given when it was opened. */
     private catalogIdOf(catalogFileId: number | undefined): number | undefined {
         return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
@@ -185,6 +215,16 @@ export class WorkspaceSnapshotter {
         const vectorOverlayConfig = frame.vectorOverlayConfig.toConfig();
         if (vectorOverlayConfig) {
             workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
+        }
+
+        const unappliedContourConfig = frame.contourConfig.toUnappliedConfig();
+        if (unappliedContourConfig) {
+            workspaceFile.unappliedContourConfig = unappliedContourConfig;
+        }
+
+        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig(frame);
+        if (unappliedVectorOverlayConfig) {
+            workspaceFile.unappliedVectorOverlayConfig = unappliedVectorOverlayConfig;
         }
 
         return workspaceFile;
@@ -417,6 +457,10 @@ export class WorkspaceSnapshotter {
             if (Object.keys(dialogs).length) {
                 this.workspace.dialogs = dialogs;
             }
+        }
+        const dialogSettings = this.captureDialogSettings();
+        if (dialogSettings) {
+            this.workspace.dialogSettings = dialogSettings;
         }
         this.captureWidgetSettings();
         const animator = this.appStore.animatorStore;

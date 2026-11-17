@@ -4,6 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {DialogId, FileInfoType, WorkspaceDialogMode} from "enums";
 import {type Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 
 /** Where a dialog is and how large it is, in pixels of the browser window. */
 export interface DialogGeometry {
@@ -28,6 +29,17 @@ interface ShowDialogOptions {
  */
 const DIALOGS_WITH_TAB_RESET_ON_CLOSE: string[] = [DialogId.Contour, DialogId.Vector, DialogId.OnlineDataQuery];
 
+/** The settings that a dialog shows but that are not applied, and the image that they are for. */
+export interface DialogSettings {
+    frame: FrameStore;
+    values: object;
+}
+
+export interface DialogSettingsHandler {
+    capture: () => DialogSettings | undefined;
+    apply: (settings: DialogSettings | undefined) => void;
+}
+
 export class DialogStore {
     private static staticInstance: DialogStore;
 
@@ -48,6 +60,7 @@ export class DialogStore {
      * forgets its tab.
      */
     @observable private dialogTabs: Map<string, TabId> = new Map();
+    private readonly settingsHandlers = new Map<string, DialogSettingsHandler>();
 
     constructor() {
         makeObservable(this);
@@ -131,6 +144,29 @@ export class DialogStore {
      * Puts a dialog back in the middle of the window, and shows its first tab. A workspace restore
      * does this before it applies the place and the tab that the workspace saved.
      */
+    /**
+     * Lets a dialog that is always mounted give and take the settings that it shows but that are not
+     * applied, so that a workspace keeps them. Returns a function that removes the handler.
+     */
+    registerSettingsHandler = (id: string, handler: DialogSettingsHandler): (() => void) => {
+        this.settingsHandlers.set(id, handler);
+        return () => {
+            if (this.settingsHandlers.get(id) === handler) {
+                this.settingsHandlers.delete(id);
+            }
+        };
+    };
+
+    /** Returns the settings that a dialog shows but that are not applied, or undefined when there are none. */
+    unappliedSettingsOf = (id: string): DialogSettings | undefined => {
+        return this.settingsHandlers.get(id)?.capture();
+    };
+
+    /** Shows the given settings in a dialog, or the settings of its image when `settings` is undefined. */
+    applyUnappliedSettings = (id: string, settings: DialogSettings | undefined) => {
+        this.settingsHandlers.get(id)?.apply(settings);
+    };
+
     @action resetPlaceAndTab = (id: string) => {
         this.dialogGeometries.delete(id);
         if (id === DialogId.FileInfo) {

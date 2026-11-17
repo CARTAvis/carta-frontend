@@ -97,3 +97,20 @@ describe("VectorOverlayConfigStore workspace round trip", () => {
         expect(store.toConfig()).toBeUndefined();
     });
 });
+
+describe("VectorOverlayConfigStore settings of a vector overlay that is off", () => {
+    const frame = {hasLinearStokes: false} as FrameStore;
+
+    test("gives nothing when the settings are the ones that a new image starts with", () => {
+        expect(createStore(false).toUnappliedConfig(frame)).toBeUndefined();
+    });
+
+    test("gives the settings when the overlay is off and a setting changed, and nothing when it is on", () => {
+        const store = createStore(false);
+        store.setThickness(3);
+        expect(store.toUnappliedConfig(frame)?.thickness).toBe(3);
+
+        store.setEnabled(true);
+        expect(store.toUnappliedConfig(frame)).toBeUndefined();
+    });
+});

@@ -287,6 +287,14 @@ export interface WorkspaceFile {
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
+    /**
+     * The contour settings of an image whose contours are off, such as a color that the user chose
+     * before applying contours. Left out when they are the settings that a new image starts with.
+     * It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
+     */
+    unappliedContourConfig?: WorkspaceContourConfig;
+    /** The vector overlay settings of an image whose vector overlay is off, as for `unappliedContourConfig`. */
+    unappliedVectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     regionsSet?: {
         selectedRegion?: number;
         regions?: WorkspaceRegion[];
@@ -615,6 +623,62 @@ export interface WorkspaceDialog {
     tab?: string;
 }
 
+/**
+ * The levels and the smoothing that the Contour dialog shows for its image but that are not applied
+ * to the image.
+ */
+export interface WorkspaceContourDialogSettings {
+    /** The image that the dialog shows the settings of. */
+    imageId: number;
+    levels: number[];
+    smoothingMode: number;
+    smoothingFactor: number;
+    /**
+     * The values of the level generator that differ from the values that it starts with. Kept only
+     * when the dialog was open, because the generator starts again from its first values when the
+     * dialog opens.
+     */
+    generator?: WorkspaceContourGeneratorSettings;
+}
+
+/** The values of the level generator of the Contour dialog. A value that is left out is not changed. */
+export interface WorkspaceContourGeneratorSettings {
+    generator?: string;
+    numLevels?: number;
+    /** The values that the user typed. Left out when the generator takes the value from the histogram. */
+    minValue?: number;
+    maxValue?: number;
+    startValue?: number;
+    stepValue?: number;
+    refValue?: number;
+    meanValue?: number;
+    sigmaValue?: number;
+    scaling?: number;
+    /** The alpha of each scaling, by the number of the scaling. */
+    scalingAlphas?: {[scaling: string]: number};
+    scalingGamma?: number;
+    multiplier?: number;
+    lowerPercentage?: number;
+    upperPercentage?: number;
+    sigmaLevels?: number[];
+}
+
+/** The settings that the Vector Overlay dialog shows for the active image but that are not applied to it. */
+export interface WorkspaceVectorOverlayDialogSettings {
+    /** The image that the dialog shows the settings of. */
+    imageId: number;
+    angularSource: number;
+    intensitySource: number;
+    pixelAveraging: number;
+    fractionalIntensity: boolean;
+    thresholdEnabled: boolean;
+    threshold: number;
+    debiasing: boolean;
+    qError: number;
+    uError: number;
+    thresholdOption: number;
+}
+
 export interface Workspace {
     id?: string;
     name?: string;
@@ -651,6 +715,11 @@ export interface Workspace {
      * dialog that the user did not move and whose tab the user did not choose is left out.
      */
     dialogs?: {[dialogId: string]: WorkspaceDialog};
+    /**
+     * The settings that the Contour and Vector Overlay dialogs showed but that were not applied. Left
+     * out when the dialogs showed the settings of their image.
+     */
+    dialogSettings?: {contour?: WorkspaceContourDialogSettings; vectorOverlay?: WorkspaceVectorOverlayDialogSettings};
     /**
      * The settings panels of widgets that were open as floating panels, from the bottom one to the
      * top one. Left out by a workspace saved before it kept them. A restore then leaves the panels

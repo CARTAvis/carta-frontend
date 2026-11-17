@@ -84,3 +84,25 @@ describe("ContourConfigStore workspace round trip", () => {
         expect(store.toConfig()).toBeUndefined();
     });
 });
+
+describe("ContourConfigStore settings of contours that are off", () => {
+    test("gives nothing when the settings are the ones that a new image starts with", () => {
+        expect(createStore(false).toUnappliedConfig()).toBeUndefined();
+    });
+
+    test("gives the settings when the contours are off and a setting changed", () => {
+        const store = createStore(false);
+        store.setThickness(3);
+
+        expect(store.toUnappliedConfig()?.thickness).toBe(3);
+        expect(store.toConfig()).toBeUndefined();
+    });
+
+    test("gives nothing when the contours are on, because the workspace then saves them as applied", () => {
+        const store = createStore(false);
+        store.setThickness(3);
+        store.setEnabled(true);
+
+        expect(store.toUnappliedConfig()).toBeUndefined();
+    });
+});

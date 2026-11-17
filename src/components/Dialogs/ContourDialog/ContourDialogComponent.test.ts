@@ -29,12 +29,15 @@ describe("ContourDialogComponent", () => {
     let dialog: ContourDialogComponent | undefined;
 
     beforeEach(() => {
-        appStore = observable({
-            contourDataSource: null as ReturnType<typeof createFrame> | null,
-            dialogStore: {dialogVisible: new Map()},
-            isLoadingWorkspace: false,
-            preferenceStore: {contourSmoothingMode: CARTA.SmoothingMode.GaussianBlur, contourSmoothingFactor: 4}
-        });
+        appStore = observable(
+            {
+                contourDataSource: null as ReturnType<typeof createFrame> | null,
+                dialogStore: {dialogVisible: new Map(), registerSettingsHandler: () => () => {}},
+                isLoadingWorkspace: false,
+                preferenceStore: {contourSmoothingMode: CARTA.SmoothingMode.GaussianBlur, contourSmoothingFactor: 4}
+            },
+            {dialogStore: false}
+        );
         (AppStore as any).Instance = appStore;
     });
 
@@ -68,5 +71,85 @@ describe("ContourDialogComponent", () => {
         runInAction(() => (appStore.contourDataSource = frame));
 
         expect(dialog.levels).toEqual([1, 2]);
+    });
+
+    test("keeps levels that are not applied until the dialog shows another image, as before", () => {
+        const frame = createFrame();
+        const otherFrame = createFrame();
+        runInAction(() => (appStore.contourDataSource = frame));
+        dialog = new ContourDialogComponent({appStore} as any);
+        runInAction(() => (dialog!.levels = [5, 6]));
+
+        expect(dialog.levels).toEqual([5, 6]);
+        runInAction(() => (appStore.contourDataSource = otherFrame));
+        expect(dialog.levels).toEqual([]);
+    });
+
+    describe("settings that are not applied", () => {
+        const captureOf = (component: ContourDialogComponent) => (component as any).captureUnappliedSettings();
+        const applyTo = (component: ContourDialogComponent, settings: unknown) => (component as any).applyUnappliedSettings(settings);
+
+        test("gives nothing when the dialog shows the settings of its image", () => {
+            runInAction(() => (appStore.contourDataSource = createFrame()));
+            dialog = new ContourDialogComponent({appStore} as any);
+
+            expect(captureOf(dialog)).toBeUndefined();
+        });
+
+        test("gives the levels and the smoothing that differ from the image", () => {
+            const frame = createFrame();
+            runInAction(() => (appStore.contourDataSource = frame));
+            dialog = new ContourDialogComponent({appStore} as any);
+            runInAction(() => {
+                dialog!.levels = [1, 2];
+                dialog!.smoothingFactor = 6;
+            });
+
+            expect(captureOf(dialog)).toEqual({frame, values: {levels: [1, 2], smoothingMode: CARTA.SmoothingMode.GaussianBlur, smoothingFactor: 6}});
+        });
+
+        test("gives the values of the level generator only while the dialog is open", () => {
+            const frame = createFrame();
+            runInAction(() => (appStore.contourDataSource = frame));
+            dialog = new ContourDialogComponent({appStore} as any);
+            (dialog as any).setGeneratorPanel({toSettings: () => ({numLevels: 8}), applySettings: jest.fn()});
+
+            expect(captureOf(dialog)).toBeUndefined();
+            (appStore as any).dialogStore.dialogVisible.set("contour-dialog", true);
+            expect(captureOf(dialog).values.generator).toEqual({numLevels: 8});
+            (appStore as any).dialogStore.dialogVisible.delete("contour-dialog");
+        });
+
+        test("shows the saved levels and gives the generator its values when it mounts again", () => {
+            const frame = createFrame();
+            runInAction(() => (appStore.contourDataSource = frame));
+            dialog = new ContourDialogComponent({appStore} as any);
+            (appStore as any).dialogStore.dialogVisible.set("contour-dialog", true);
+
+            applyTo(dialog, {frame, values: {levels: [3, 4], smoothingMode: CARTA.SmoothingMode.BlockAverage, smoothingFactor: 2, generator: {numLevels: 8}}});
+            const panel = {applySettings: jest.fn()};
+            (dialog as any).setGeneratorPanel(panel);
+
+            expect(dialog.levels).toEqual([3, 4]);
+            expect(dialog.smoothingMode).toBe(CARTA.SmoothingMode.BlockAverage);
+            expect(dialog.smoothingFactor).toBe(2);
+            expect(panel.applySettings).toHaveBeenCalledWith({numLevels: 8});
+            (appStore as any).dialogStore.dialogVisible.delete("contour-dialog");
+        });
+
+        test("shows the settings of the image when the saved settings are for another image or there are none", () => {
+            const frame = createFrame();
+            frame.contourConfig.levels = [7];
+            runInAction(() => (appStore.contourDataSource = frame));
+            dialog = new ContourDialogComponent({appStore} as any);
+            runInAction(() => (dialog!.levels = [1]));
+
+            applyTo(dialog, {frame: createFrame(), values: {levels: [3], smoothingMode: CARTA.SmoothingMode.BlockAverage, smoothingFactor: 2}});
+            expect(dialog.levels).toEqual([7]);
+
+            runInAction(() => (dialog!.levels = [1]));
+            applyTo(dialog, undefined);
+            expect(dialog.levels).toEqual([7]);
+        });
     });
 });

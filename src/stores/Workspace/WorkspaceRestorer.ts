@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {AnimationMode, DialogId, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -10,11 +10,13 @@ import {
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
+    type WorkspaceContourDialogSettings,
     type WorkspaceDialog,
     type WorkspaceFile,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
-    type WorkspaceIssue
+    type WorkspaceIssue,
+    type WorkspaceVectorOverlayDialogSettings
 } from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, type DialogGeometry, restoreWorkspaceZoom, StreamingRowSource} from "stores";
@@ -193,6 +195,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             dialogStore.showDialog(id);
         }
+        this.restoreDialogSettings();
+    }
+
+    /**
+     * Shows the settings that the Contour and Vector Overlay dialogs showed but that were not applied.
+     * A dialog without saved settings shows the settings of its image. Call it after the dialogs open,
+     * because the level generator of the Contour dialog takes its saved values only when it is open.
+     */
+    private restoreDialogSettings(): void {
+        const saved = this.workspace.dialogSettings && typeof this.workspace.dialogSettings === "object" ? this.workspace.dialogSettings : {};
+        const settingsOf = (values: WorkspaceContourDialogSettings | WorkspaceVectorOverlayDialogSettings | undefined) => {
+            if (!values || typeof values !== "object" || typeof values.imageId !== "number") {
+                return undefined;
+            }
+            const frame = this.frameOf(values.imageId);
+            return frame ? {frame, values} : undefined;
+        };
+        const dialogStore = this.appStore.dialogStore;
+        dialogStore.applyUnappliedSettings(DialogId.Contour, settingsOf(saved.contour));
+        dialogStore.applyUnappliedSettings(DialogId.Vector, settingsOf(saved.vectorOverlay));
     }
 
     /**
@@ -428,10 +450,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
                 frame.applyContours();
+            } else if (fileInfo.unappliedContourConfig && typeof fileInfo.unappliedContourConfig === "object") {
+                // Keep the contours off. The settings show in the Contour dialog.
+                frame.contourConfig.applyConfig(fileInfo.unappliedContourConfig);
             }
             if (fileInfo.vectorOverlayConfig) {
                 frame.vectorOverlayConfig.applyConfig(fileInfo.vectorOverlayConfig);
                 frame.applyVectorOverlay();
+            } else if (fileInfo.unappliedVectorOverlayConfig && typeof fileInfo.unappliedVectorOverlayConfig === "object") {
+                frame.vectorOverlayConfig.applyConfig(fileInfo.unappliedVectorOverlayConfig);
             }
 
             if (fileInfo.center) {

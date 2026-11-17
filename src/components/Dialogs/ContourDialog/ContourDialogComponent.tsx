@@ -11,7 +11,8 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
 import {ContourDialogTabs, DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore} from "stores";
+import {type WorkspaceContourDialogSettings, type WorkspaceContourGeneratorSettings} from "models";
+import {AppStore, type DialogSettings} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {getColorForTheme, getHistogramPlotData, type HistogramPlotData, toExponential, toFixed} from "utilities";
@@ -41,6 +42,11 @@ export class ContourDialogComponent extends React.Component {
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private readonly disposers: IReactionDisposer[] = [];
+    private readonly unregisterSettingsHandler: () => void;
+    /** Changing the key mounts the level generator again, so that it starts from its first values. */
+    @observable private generatorPanelKey = 0;
+    private generatorPanel: ContourGeneratorPanelComponent | null = null;
+    private pendingGeneratorSettings: WorkspaceContourGeneratorSettings | undefined;
 
     constructor(props: {appStore: AppStore}) {
         super(props);
@@ -50,6 +56,7 @@ export class ContourDialogComponent extends React.Component {
 
         makeObservable(this);
 
+        this.unregisterSettingsHandler = AppStore.Instance.dialogStore.registerSettingsHandler(DialogId.Contour, {capture: this.captureUnappliedSettings, apply: this.applyUnappliedSettings});
         this.disposers.push(
             autorun(() => {
                 const appStore = AppStore.Instance;
@@ -108,9 +115,65 @@ export class ContourDialogComponent extends React.Component {
     }
 
     componentWillUnmount() {
+        this.unregisterSettingsHandler();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
     }
+
+    /**
+     * Returns the levels and the smoothing when they differ from the settings of the image, and the
+     * values of the level generator that the user changed while the dialog is open.
+     */
+    private captureUnappliedSettings = (): DialogSettings | undefined => {
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.contourDataSource;
+        if (!dataSource) {
+            return undefined;
+        }
+        const config = dataSource.contourConfig;
+        const hasChangedLevels = !_.isEqual(config.levels, this.levels) || config.smoothingMode !== this.smoothingMode || config.smoothingFactor !== this.smoothingFactor;
+        const generator = appStore.dialogStore.dialogVisible.get(DialogId.Contour) ? this.generatorPanel?.toSettings() : undefined;
+        if (!hasChangedLevels && !generator) {
+            return undefined;
+        }
+        return {frame: dataSource, values: {levels: this.levels.slice(), smoothingMode: this.smoothingMode, smoothingFactor: this.smoothingFactor, ...(generator ? {generator} : {})}};
+    };
+
+    /**
+     * Shows the settings of the image, and then the settings that a workspace saved for it. The level
+     * generator starts again from its first values, and takes the saved values when the dialog is open.
+     */
+    @action private applyUnappliedSettings = (settings: DialogSettings | undefined) => {
+        this.setDefaultContourParameters();
+        this.pendingGeneratorSettings = undefined;
+        this.generatorPanelKey++;
+        const appStore = AppStore.Instance;
+        if (!settings || settings.frame !== appStore.contourDataSource) {
+            return;
+        }
+        const values = settings.values as Partial<WorkspaceContourDialogSettings>;
+        const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        if (Array.isArray(values.levels) && values.levels.every(isFiniteNumber)) {
+            this.levels = values.levels.slice();
+        }
+        if (isFiniteNumber(values.smoothingMode) && Object.values(CARTA.SmoothingMode).includes(values.smoothingMode)) {
+            this.smoothingMode = values.smoothingMode;
+        }
+        if (isFiniteNumber(values.smoothingFactor)) {
+            this.smoothingFactor = values.smoothingFactor;
+        }
+        if (values.generator && typeof values.generator === "object" && appStore.dialogStore.dialogVisible.get(DialogId.Contour)) {
+            this.pendingGeneratorSettings = values.generator;
+        }
+    };
+
+    private setGeneratorPanel = (panel: ContourGeneratorPanelComponent | null) => {
+        this.generatorPanel = panel;
+        if (panel && this.pendingGeneratorSettings) {
+            panel.applySettings(this.pendingGeneratorSettings);
+            this.pendingGeneratorSettings = undefined;
+        }
+    };
 
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
@@ -436,7 +499,7 @@ export class ContourDialogComponent extends React.Component {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
-                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
+                <ContourGeneratorPanelComponent key={this.generatorPanelKey} ref={this.setGeneratorPanel} frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
                 <div className="contour-level-panel-levels" data-testid="contour-config-level-input-form">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput

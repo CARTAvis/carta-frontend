@@ -144,7 +144,7 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
-        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn()},
+        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn(), applyUnappliedSettings: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
             appStore.activeImage = {type: ImageType.FRAME, store: frame};
@@ -312,6 +312,30 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.dialogStore.resetPlaceAndTab.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
         expect(appStore.dialogStore.selectTab.mock.calls).toEqual([["contour-dialog", 2]]);
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
+    });
+
+    test("applies the settings of contours and a vector overlay that are off without turning them on, and gives the dialogs their unapplied settings", async () => {
+        const {appStore} = createSession();
+        const unappliedContourConfig = {levels: [], thickness: 3} as never;
+        const unappliedVectorOverlayConfig = {thickness: 2} as never;
+
+        await restore(
+            createWorkspace({
+                files: [{...IMAGE, unappliedContourConfig, unappliedVectorOverlayConfig}],
+                openDialogs: ["contour-dialog"],
+                dialogSettings: {contour: {imageId: 1, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}, vectorOverlay: {imageId: 9} as never}
+            })
+        );
+
+        const frame = appStore.frames[0];
+        expect(frame.contourConfig.applyConfig).toHaveBeenCalledWith(unappliedContourConfig);
+        expect(frame.applyContours).not.toHaveBeenCalled();
+        expect(frame.vectorOverlayConfig.applyConfig).toHaveBeenCalledWith(unappliedVectorOverlayConfig);
+        expect(frame.applyVectorOverlay).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.applyUnappliedSettings.mock.calls).toEqual([
+            ["contour-dialog", {frame, values: {imageId: 1, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}}],
+            ["vector-dialog", undefined]
+        ]);
     });
 
     test("leaves the dialogs as they are for a workspace saved without them", async () => {

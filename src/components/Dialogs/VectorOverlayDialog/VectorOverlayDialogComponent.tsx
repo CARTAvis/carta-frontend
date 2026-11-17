@@ -11,7 +11,8 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, Polarizations, VectorOverlayDialogTabs, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore} from "stores";
+import {type WorkspaceVectorOverlayDialogSettings} from "models";
+import {AppStore, type DialogSettings} from "stores";
 import {type FrameStore, type VectorOverlayConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
@@ -51,6 +52,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     public static readonly MAX_PIXEL_AVERAGING = 64;
 
     private readonly disposers: IReactionDisposer[] = [];
+    private readonly unregisterSettingsHandler: () => void;
     private colormapPreviewSession: ColormapPreviewSession | null = null;
 
     componentDidUpdate() {
@@ -61,6 +63,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     }
 
     componentWillUnmount() {
+        this.unregisterSettingsHandler();
         this.revertColormapPreview();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
@@ -70,6 +73,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         super(props);
         this.setDefaultVectorOverlayParameters();
         makeObservable(this);
+        this.unregisterSettingsHandler = AppStore.Instance.dialogStore.registerSettingsHandler(DialogId.Vector, {capture: this.captureUnappliedSettings, apply: this.applyUnappliedSettings});
         // Show the settings of the active image again when they change, not only when another image
         // becomes active. A workspace restore applies them after the image is open.
         this.disposers.push(
@@ -121,6 +125,80 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.qError = 0;
             this.uError = 0;
             this.thresholdOption = CARTA.PolarizationType.Plinear;
+        }
+    };
+
+    /** Returns the settings that the dialog shows when they differ from the settings of the active image. */
+    private captureUnappliedSettings = (): DialogSettings | undefined => {
+        const frame = AppStore.Instance.activeFrame;
+        const config = frame?.vectorOverlayConfig;
+        if (!frame || !config) {
+            return undefined;
+        }
+        const values: Omit<WorkspaceVectorOverlayDialogSettings, "imageId"> = {
+            angularSource: this.angularSource,
+            intensitySource: this.intensitySource,
+            pixelAveraging: this.pixelAveraging,
+            fractionalIntensity: this.isFractionalIntensity,
+            thresholdEnabled: this.isThresholdEnabled,
+            threshold: this.threshold,
+            debiasing: this.isDebiasing,
+            qError: this.qError,
+            uError: this.uError,
+            thresholdOption: this.thresholdOption
+        };
+        const isSame =
+            config.angularSource === values.angularSource &&
+            config.intensitySource === values.intensitySource &&
+            config.pixelAveraging === values.pixelAveraging &&
+            config.isFractionalIntensity === values.fractionalIntensity &&
+            config.isThresholdEnabled === values.thresholdEnabled &&
+            config.threshold === values.threshold &&
+            config.isDebiasing === values.debiasing &&
+            config.qError === values.qError &&
+            config.uError === values.uError &&
+            config.thresholdOption === values.thresholdOption;
+        return isSame ? undefined : {frame, values};
+    };
+
+    /** Shows the settings of the active image, and then the settings that a workspace saved for it. */
+    @action private applyUnappliedSettings = (settings: DialogSettings | undefined) => {
+        this.setDefaultVectorOverlayParameters();
+        if (!settings || settings.frame !== AppStore.Instance.activeFrame) {
+            return;
+        }
+        const values = settings.values as Partial<WorkspaceVectorOverlayDialogSettings>;
+        const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        const isSource = (value: unknown): value is VectorOverlaySource => isFiniteNumber(value) && Object.values(VectorOverlaySource).includes(value);
+        if (isSource(values.angularSource)) {
+            this.angularSource = values.angularSource;
+        }
+        if (isSource(values.intensitySource)) {
+            this.intensitySource = values.intensitySource;
+        }
+        if (isFiniteNumber(values.pixelAveraging)) {
+            this.pixelAveraging = values.pixelAveraging;
+        }
+        if (typeof values.fractionalIntensity === "boolean") {
+            this.isFractionalIntensity = values.fractionalIntensity;
+        }
+        if (typeof values.thresholdEnabled === "boolean") {
+            this.isThresholdEnabled = values.thresholdEnabled;
+        }
+        if (isFiniteNumber(values.threshold)) {
+            this.threshold = values.threshold;
+        }
+        if (typeof values.debiasing === "boolean") {
+            this.isDebiasing = values.debiasing;
+        }
+        if (isFiniteNumber(values.qError)) {
+            this.qError = values.qError;
+        }
+        if (isFiniteNumber(values.uError)) {
+            this.uError = values.uError;
+        }
+        if (values.thresholdOption === CARTA.PolarizationType.I || values.thresholdOption === CARTA.PolarizationType.Plinear) {
+            this.thresholdOption = values.thresholdOption;
         }
     };
 

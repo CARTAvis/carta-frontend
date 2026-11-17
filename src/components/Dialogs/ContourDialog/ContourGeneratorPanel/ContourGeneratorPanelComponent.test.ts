@@ -1,6 +1,10 @@
-import {FrameScaling} from "enums";
+jest.mock("stores", () => ({
+    PreferenceStore: {Instance: {contourNumLevels: 5, scalingAlphaLog: 1000, scalingAlphaPower: 1, scalingAlphaSinh: 3, scalingAlphaAsinh: 0.1, scalingGamma: 1}}
+}));
 
-import {generateMinMaxLevels} from "./ContourGeneratorPanelComponent";
+import {ContourGeneratorType, FrameScaling} from "enums";
+
+import {ContourGeneratorPanelComponent, generateMinMaxLevels} from "./ContourGeneratorPanelComponent";
 
 describe("generateMinMaxLevels", () => {
     test.each([
@@ -21,5 +25,33 @@ describe("generateMinMaxLevels", () => {
 
     test("uses the selected gamma", () => {
         expect(generateMinMaxLevels(0, 1, 3, FrameScaling.GAMMA, 1, 2)).toEqual([0, 0.25, 1]);
+    });
+});
+
+describe("ContourGeneratorPanelComponent settings", () => {
+    const createPanel = () => new ContourGeneratorPanelComponent({frame: {} as any, generatorType: ContourGeneratorType.StartStepMultiplier, onLevelsGenerated: jest.fn()});
+
+    test("gives nothing when no value changed", () => {
+        expect(createPanel().toSettings()).toBeUndefined();
+    });
+
+    test("gives only the values that changed", () => {
+        const panel = createPanel();
+        panel.applySettings({generator: ContourGeneratorType.MinMaxNScaling, numLevels: 8, minValue: 0.5, scaling: FrameScaling.LOG, scalingAlphas: {[FrameScaling.LOG]: 500}});
+
+        expect(panel.toSettings()).toEqual({
+            generator: ContourGeneratorType.MinMaxNScaling,
+            numLevels: 8,
+            minValue: 0.5,
+            scaling: FrameScaling.LOG,
+            scalingAlphas: {[FrameScaling.LOG]: 500, [FrameScaling.POWER]: 1, [FrameScaling.SINH]: 3, [FrameScaling.ASINH]: 0.1}
+        });
+    });
+
+    test("leaves a value that is not valid as it is", () => {
+        const panel = createPanel();
+        panel.applySettings({generator: "unknown", numLevels: NaN, scaling: "LOG" as any, sigmaLevels: [1, "2" as any]});
+
+        expect(panel.toSettings()).toBeUndefined();
     });
 });

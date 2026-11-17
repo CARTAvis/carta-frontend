@@ -30,8 +30,8 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         rasterScalingReference: undefined,
         regionSet: {regions: [], focusedRegion: undefined},
         renderConfig: {toConfig: jest.fn(() => ({colorMap: "inferno", bias: 0, contrast: 1}))},
-        contourConfig: {toConfig: jest.fn(() => undefined)},
-        vectorOverlayConfig: {toConfig: jest.fn(() => undefined)},
+        contourConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => undefined)},
+        vectorOverlayConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => undefined)},
         ...overrides
     };
 }
@@ -348,6 +348,24 @@ describe("WorkspaceSnapshotter", () => {
             "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
             "file-info-dialog": {tab: "image-header"}
         });
+    });
+
+    test("saves the settings that the Contour and Vector Overlay dialogs show but that are not applied, by the image that they are for", () => {
+        const unappliedContourConfig = {levels: [], thickness: 3};
+        const frame = createFrame(0, {contourConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => unappliedContourConfig)}});
+        createSession({
+            frames: [frame],
+            activeFrame: frame,
+            dialogStore: {
+                dialogVisible: new Map(),
+                unappliedSettingsOf: (id: string) => (id === "contour-dialog" ? {frame, values: {levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}} : undefined)
+            }
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files[0].unappliedContourConfig).toEqual(unappliedContourConfig);
+        expect(workspace.dialogSettings).toEqual({contour: {imageId: workspace.files[0].id, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}});
     });
 
     test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, and leaves out a PV preview", () => {
