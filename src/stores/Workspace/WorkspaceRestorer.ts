@@ -390,6 +390,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.showProgress("Restoring the layout and widgets");
         this.restoreLayout();
         this.checkRestFrequencyImages();
+        if (!this.wasActiveImageRestored() && this.appStore.overlaySettings?.dropFormatsOfSavedFrontImage?.()) {
+            this.report(WorkspaceItemKind.Layout, "WCS overlay", "The WCS overlay shows the number formats of the image in front, because the image that the workspace showed in front was not restored");
+        }
         yield* this.restoreViews();
         if (!this.isCurrent) {
             return this.issues;

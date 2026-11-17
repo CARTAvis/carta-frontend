@@ -226,6 +226,35 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
         expect(overlay.numbers.formatX).toBe(NumberFormatType.Degrees);
     });
 
+    test("keeps the number formats that the workspace showed when the WCS type of the user gives other formats, without changing the preference", () => {
+        setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, "degrees");
+        const overlay = createOverlay();
+        overlay.global.setValidWcs(true);
+        overlay.numbers.setValidWcs(true);
+
+        // The user who saved the workspace saw the sexagesimal formats of FK5.
+        overlay.applyConfig({global: {system: SystemType.FK5}, numbers: {hasCustomFormat: false, formatX: NumberFormatType.HMS, formatY: NumberFormatType.DMS}});
+
+        expect([overlay.numbers.hasCustomFormat, overlay.numbers.formatTypeX, overlay.numbers.formatTypeY]).toEqual([true, NumberFormatType.HMS, NumberFormatType.DMS]);
+        expect(PreferenceStore.Instance.wcsType).toBe("degrees");
+
+        // The same formats as the ones of this user stay the default formats.
+        overlay.applyConfig({global: {system: SystemType.FK5}, numbers: {hasCustomFormat: false, formatX: NumberFormatType.Degrees, formatY: NumberFormatType.Degrees}});
+        expect(overlay.numbers.hasCustomFormat).toBe(false);
+
+        // Formats kept in an explicit system stay. Formats kept in the automatic system were made for
+        // the image in front, so they follow the system again when that image is not back.
+        overlay.applyConfig({global: {system: SystemType.FK5}, numbers: {hasCustomFormat: false, formatX: NumberFormatType.HMS, formatY: NumberFormatType.DMS}});
+        expect(overlay.dropFormatsOfSavedFrontImage()).toBe(false);
+        expect(overlay.numbers.hasCustomFormat).toBe(true);
+        overlay.applyConfig({global: {system: SystemType.Auto}, numbers: {hasCustomFormat: false, formatX: NumberFormatType.HMS, formatY: NumberFormatType.DMS}});
+        expect(overlay.numbers.hasCustomFormat).toBe(true);
+        expect(overlay.dropFormatsOfSavedFrontImage()).toBe(true);
+        expect([overlay.numbers.hasCustomFormat, overlay.numbers.formatTypeX]).toEqual([false, NumberFormatType.Degrees]);
+        expect(overlay.dropFormatsOfSavedFrontImage()).toBe(false);
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.WCS_OVERLAY_WCS_TYPE));
+    });
+
     test("leaves the custom texts and their switches alone, because a workspace saves them", () => {
         const overlay = createOverlay();
         overlay.applyTextConfig({labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}});

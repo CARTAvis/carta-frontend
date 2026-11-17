@@ -714,6 +714,18 @@ describe("WorkspaceRestorer", () => {
         expect(issues.map(issue => issue.message)).toEqual(expect.arrayContaining(["Could not open the image image.fits: File /data/image.fits does not exist", expect.stringMatching(/^Could not load the catalog .*: Network Error$/)]));
     });
 
+    test("lets the number formats of the WCS overlay follow the system when the image saved in front was not restored", async () => {
+        const {appStore} = createSession();
+        const dropFormatsOfSavedFrontImage = jest.fn(() => true);
+        Object.assign(appStore, {overlaySettings: {...(appStore as any).overlaySettings, dropFormatsOfSavedFrontImage}});
+
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual([]);
+        expect(dropFormatsOfSavedFrontImage).not.toHaveBeenCalled();
+
+        expect(await restore(createWorkspace({layout: LAYOUT, selectedFile: 9}))).toContain("The WCS overlay shows the number formats of the image in front, because the image that the workspace showed in front was not restored");
+        expect(dropFormatsOfSavedFrontImage).toHaveBeenCalledTimes(1);
+    });
+
     test("shows the active image on the rest frequency tab of the Image List when an image was not restored", async () => {
         const sessionWith = () => {
             const {appStore} = createSession();

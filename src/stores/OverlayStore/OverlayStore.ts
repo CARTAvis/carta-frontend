@@ -1282,6 +1282,7 @@ export class OverlaySettings {
         this.labels.applyConfig(sectionOf(config?.labels));
         // Set the formats from the system again. Without a custom format, the formats follow the system.
         this.setFormatsFromSystem();
+        this.keepSavedFormats(sectionOf<OverlayNumberConfig>(config?.numbers), system === SystemType.Auto);
         return problems;
     }
 
@@ -1299,6 +1300,53 @@ export class OverlaySettings {
         this.labels.customLabelX = savedOr(config?.labels?.customLabelX, isText, "");
         this.labels.customLabelY = savedOr(config?.labels?.customLabelY, isText, "");
         this.title.hasCustomText = savedOr(config?.title?.hasCustomText, isBoolean, false);
+    }
+
+    /**
+     * Keeps the number formats that a workspace showed. Without a custom format, the formats follow
+     * the WCS type in the preferences of the user. A user with another WCS type would see other
+     * formats. So when the saved formats are not the formats of this user, apply them as a custom
+     * format. The preferences do not change.
+     *
+     * @param isAutomaticSystem - whether the overlay shows the system of the image in front. The
+     *                            saved formats were then made for the image that was in front.
+     */
+    @action private keepSavedFormats(numbers: Persisted<OverlayNumberConfig> | undefined, isAutomaticSystem: boolean) {
+        this.hasFormatsOfSavedFrontImage = false;
+        const formatX = numbers?.formatX;
+        const formatY = numbers?.formatY;
+        if (this.numbers.hasCustomFormat || !this.global.isValidWcs || !isNumberFormat(formatX) || !isNumberFormat(formatY)) {
+            return;
+        }
+        if (formatX !== this.numbers.defaultFormatX || formatY !== this.numbers.defaultFormatY) {
+            this.numbers.hasCustomFormat = true;
+            this.numbers.formatX = formatX;
+            this.numbers.formatY = formatY;
+            this.hasFormatsOfSavedFrontImage = isAutomaticSystem;
+        }
+    }
+
+    /**
+     * Whether the number formats are custom only because a workspace kept the formats that it showed
+     * in the automatic system. Those formats were made for the image that was in front.
+     */
+    private hasFormatsOfSavedFrontImage = false;
+
+    /**
+     * Lets the number formats follow the system again, when a workspace kept the formats that it
+     * made for an image in front that was not restored. The image now in front can show another
+     * system, such as galactic coordinates instead of FK5.
+     *
+     * @returns whether the kept formats were dropped.
+     */
+    @action dropFormatsOfSavedFrontImage(): boolean {
+        if (!this.hasFormatsOfSavedFrontImage) {
+            return false;
+        }
+        this.hasFormatsOfSavedFrontImage = false;
+        this.numbers.hasCustomFormat = false;
+        this.setFormatsFromSystem();
+        return true;
     }
 
     @action setFormatsFromSystem() {
