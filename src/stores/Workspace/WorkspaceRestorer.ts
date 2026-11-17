@@ -37,7 +37,7 @@ import {
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, type DialogGeometry, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type CatalogRestoreOutcome, type ColorBlendingStore, type DialogGeometry, HipsQueryStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
@@ -195,6 +195,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
             // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
             CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
+        }
+        if (this.workspace.hipsQuery && typeof this.workspace.hipsQuery === "object") {
+            HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery);
         }
         return this.issues;
     }

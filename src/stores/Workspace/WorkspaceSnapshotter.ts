@@ -14,7 +14,7 @@ import {
     type WorkspaceIssue,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -564,6 +564,7 @@ export class WorkspaceSnapshotter {
         const isFinitePosition = Number.isFinite(cursorPosition?.x) && Number.isFinite(cursorPosition?.y);
         this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {})};
         this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
+        this.workspace.hipsQuery = HipsQueryStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
         this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};

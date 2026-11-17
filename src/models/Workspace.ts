@@ -15,6 +15,8 @@ import {
     type ContourDashMode,
     type CoordinateMode,
     FrameScaling,
+    type HipsCoord,
+    type HipsProjection,
     type MultiProfileCategory,
     type NumberFormatType,
     type NumericInputType,
@@ -615,6 +617,25 @@ export interface WorkspaceOnlineCatalogQuery {
     vizierSelectedTables?: string[];
 }
 
+/** The fields of the HiPS query form of the Online Data Query dialog. A value that is not set is left out. */
+export interface WorkspaceHipsQuery {
+    survey: string;
+    /** The width and the height of the image, in pixels. */
+    width?: number;
+    height?: number;
+    /** Whether the form queries by an object name or by a center. */
+    byObject: boolean;
+    object: string;
+    /** The center, in ICRS degrees. */
+    center?: {x: number; y: number};
+    /** The field of view, in degrees. */
+    fov?: number;
+    coordinateSystem: HipsCoord;
+    projection: HipsProjection;
+    /** The rotation angle, in degrees. */
+    rotation: number;
+}
+
 /** The settings of the animator. */
 export interface WorkspaceAnimator {
     frameRate: number;
@@ -776,6 +797,8 @@ export interface Workspace {
     cursor?: {frozen: boolean; position?: Point2D};
     /** The fields of the online catalog query dialog. */
     onlineCatalogQuery?: WorkspaceOnlineCatalogQuery;
+    /** The fields of the HiPS query form of the Online Data Query dialog. */
+    hipsQuery?: WorkspaceHipsQuery;
     /**
      * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
      * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the
