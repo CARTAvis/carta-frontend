@@ -2947,20 +2947,22 @@ export class AppStore {
             this.fileBrowserStore.resetLoadingStates();
         }
 
+        // Reset the PV and moment generator states of every image. A request may have been made for
+        // an image that is not the active image now. A state that is left set would refuse every
+        // workspace save until the image is closed.
+        for (const image of this.frames) {
+            if (image?.isRequestingPV) {
+                image.resetPvRequestState();
+                image.setIsRequestPVCancelling(false);
+                this.endFileLoading();
+            }
+            if (image?.isRequestingMoments) {
+                image.resetMomentRequestState();
+                this.endFileLoading();
+            }
+        }
+
         const frame = this.activeFrame;
-
-        // Reset PV generator states
-        if (frame?.isRequestingPV) {
-            frame.resetPvRequestState();
-            frame.setIsRequestPVCancelling(false);
-            this.endFileLoading();
-        }
-
-        // Reset moment generator states
-        if (frame?.isRequestingMoments) {
-            frame.resetMomentRequestState();
-            this.endFileLoading();
-        }
 
         // Reset cube histogram states
         if (frame?.renderConfig?.isUsingCubeHistogram) {
@@ -3208,11 +3210,18 @@ export class AppStore {
             return "Cannot save workspace while a workspace is still loading. Please wait for it to finish.";
         }
 
+        // A moment, PV or fitting image that is still being made is not in the session yet. Check each
+        // request from the GUI and each script job, because the shared loading flag is cleared by the
+        // first of them that ends. Check them before the loading flag, which they also set, so that
+        // the message names them.
+        if (this.frames.some(frame => frame.isRequestingMoments || frame.isRequestingPV) || this.imageFittingStore.isFitting || this.imageGenerationJobs.hasRunningJobs()) {
+            return "Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.";
+        }
+
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
-        // A script job that makes images is checked apart for the same reason.
-        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog || this.imageGenerationJobs.hasRunningJobs()) {
+        if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
             return "Cannot save workspace while a file is still loading. Please wait for it to finish.";
         }
 
