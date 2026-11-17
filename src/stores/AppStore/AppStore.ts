@@ -441,7 +441,7 @@ export class AppStore {
      * Images asked for that are not frames yet. Counted apart from isFileLoading, which every load
      * and generator shares and the first of them to finish clears for all.
      */
-    private openingImageCount = 0;
+    @observable private openingImageCount = 0;
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
@@ -3162,40 +3162,48 @@ export class AppStore {
         this.workspaceLoadingStep = step;
     };
 
-    @flow.bound
-    public *saveWorkspace(name: string) {
+    /**
+     * Returns why the session cannot be saved as a workspace now, or undefined when it can. The
+     * Workspace dialog shows the reason before the user saves.
+     */
+    @computed get workspaceSaveBlocker(): string | undefined {
         if (this.layoutStore?.hasPopoutWidget) {
-            this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
-            return false;
+            return "Cannot save workspace while an image view is popped out. Please dock it first.";
         }
 
         // A workspace still being restored is only partly in the session: saving it now would write
         // back less than was opened, without the user being told.
         if (this.isLoadingWorkspace) {
-            this.alertStore.showAlert("Cannot save workspace while a workspace is still loading. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while a workspace is still loading. Please wait for it to finish.";
         }
 
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
         if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
-            this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while a file is still loading. Please wait for it to finish.";
         }
 
         // An online catalog that is still being queried is not part of the session yet, so it would
         // be left out of the workspace without the user being told.
         if (CatalogOnlineQueryStore.Instance.isQuerying) {
-            this.alertStore.showAlert("Cannot save workspace while an online catalog query is still running. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while an online catalog query is still running. Please wait for it to finish.";
         }
 
         // A catalog that is still streaming holds part of its rows, so what it would be saved with
         // is neither the state it was asked for nor the one it is in.
         const streamingCatalogs = this.catalogStore.streamingCatalogNames;
         if (streamingCatalogs.length) {
-            this.alertStore.showAlert(`Cannot save workspace while catalog data is still loading (${streamingCatalogs.join(", ")}). Please wait for it to finish.`);
+            return `Cannot save workspace while catalog data is still loading (${streamingCatalogs.join(", ")}). Please wait for it to finish.`;
+        }
+        return undefined;
+    }
+
+    @flow.bound
+    public *saveWorkspace(name: string) {
+        const blocker = this.workspaceSaveBlocker;
+        if (blocker) {
+            this.alertStore.showAlert(blocker);
             return false;
         }
 

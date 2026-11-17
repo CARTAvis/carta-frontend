@@ -37,6 +37,9 @@ interface GeneratedImageGroup {
     frames: FrameStore[];
 }
 
+/** A reason that a request for generated images is not saved. */
+type UnsavedRequestReason = keyof typeof WorkspaceSnapshotter.UNSAVED_REQUEST_REASONS;
+
 /** The workspace while it is being filled in: the collections the stages append to are already there. */
 type WorkspaceUnderConstruction = Workspace & Required<Pick<Workspace, "files" | "colorBlendingImages" | "references">>;
 
@@ -60,8 +63,40 @@ export class WorkspaceSnapshotter {
      */
     public static readonly MAX_SAVED_SELECTED_ROWS = 100_000;
 
+    /**
+     * The reasons that a request for generated images is not saved. Each reason has a hint that says
+     * what the user can do before saving, so that the request is saved.
+     */
+    public static readonly UNSAVED_REQUEST_REASONS = {
+        momentsNotTold: {
+            reason: "it cannot tell which moment each of its images is",
+            hint: "Save the moment images as files, and open the files instead"
+        },
+        sourceClosed: {
+            reason: "the image it was made from is closed",
+            hint: "Open the image it was made from, make the image again, and close the old one"
+        },
+        sourceNotSaved: {
+            reason: "the image it was made from was not saved",
+            hint: "Fix the image it was made from first, or make the image again from an image that can be saved"
+        },
+        referenceNotSaved: {
+            reason: "the image it was made from is matched to an image that was not saved",
+            hint: "Match the image it was made from to an image that can be saved, or stop matching it"
+        },
+        regionDeleted: {
+            reason: "the region it was made over has been deleted",
+            hint: "Draw the region again, make the image again, and close the old one"
+        }
+    } as const;
+
     /** One entry per item that could not be captured as it stands. */
     private readonly issues: WorkspaceIssue[] = [];
+    /**
+     * Whether only the issues are collected. Then the stages skip the work that only a saved
+     * workspace needs, such as the hashes of the catalogs.
+     */
+    private isCheckOnly = false;
     /** The requests for generated images that are saved, in an order in which each can be made again. */
     private readonly generatedImageGroups: GeneratedImageGroup[] = [];
     /** The generated images saved with the request that made them. */
@@ -78,6 +113,21 @@ export class WorkspaceSnapshotter {
 
     private get appStore(): AppStore {
         return AppStore.Instance;
+    }
+
+    /**
+     * Returns what a capture of the session would leave out, without capturing the session. The
+     * Workspace dialog runs it before the user saves, and again when the session changes. So it does
+     * only the work that finds the issues.
+     */
+    public findIssues(): WorkspaceIssue[] {
+        this.isCheckOnly = true;
+        this.collectGeneratedImages();
+        this.captureImages();
+        this.captureGeneratedImages();
+        this.captureColorBlending();
+        this.captureCatalogs();
+        return this.issues;
     }
 
     /**
@@ -123,6 +173,10 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
+            if (this.isCheckOnly) {
+                this.reportUnacceptedRegions(frame);
+                continue;
+            }
             this.workspace.files.push(this.captureImage(frame, workspaceImageId, WorkspaceSnapshotter.imageSourceOf(frame)));
         }
 
@@ -130,7 +184,8 @@ export class WorkspaceSnapshotter {
             this.issues.push({
                 kind: WorkspaceItemKind.Image,
                 subject: "",
-                message: "The workspace contains generated files. These will not be preserved when reloading."
+                message: "The workspace contains generated files. These will not be preserved when reloading.",
+                hint: "To keep such an image, save it as a file and open the file instead"
             });
         }
     }
@@ -153,6 +208,8 @@ export class WorkspaceSnapshotter {
         }
         let pending: GeneratedImageGroup[] = Array.from(framesByRequest, ([request, frames]) => ({request, frames: frames.sort((a, b) => a.frameInfo.fileId - b.frameInfo.fileId)}));
 
+        // The reason to report for a request that waits, if the image that it waits for is not saved.
+        const reasonsIfNotSaved = new Map<GeneratedImageGroup, UnsavedRequestReason>();
         let isTakingMore = true;
         while (isTakingMore) {
             isTakingMore = false;
@@ -163,57 +220,62 @@ export class WorkspaceSnapshotter {
                     this.generatedImageGroups.push(group);
                     group.frames.forEach(frame => this.savedGeneratedImages.add(frame));
                     isTakingMore = true;
-                } else if (problem === "waiting") {
+                } else if (problem.isWaiting) {
                     waiting.push(group);
+                    reasonsIfNotSaved.set(group, problem.reason);
                 } else {
-                    this.reportUnsavedRequest(group.request, problem);
+                    this.reportUnsavedRequest(group.request, problem.reason);
                 }
             }
             pending = waiting;
         }
         // The requests that are still waiting are made from an image that is not saved.
-        pending.forEach(group => this.reportUnsavedRequest(group.request, "the image it was made from was not saved"));
+        pending.forEach(group => this.reportUnsavedRequest(group.request, reasonsIfNotSaved.get(group) ?? "sourceNotSaved"));
     }
 
     /**
-     * Returns why a request cannot be saved, or "waiting" when the data that it is made from may
-     * still be saved.
+     * Returns why a request cannot be saved. `isWaiting` is set when the request is made from a
+     * generated image that may still be saved. Then the reason applies only if that image is not saved.
      *
      * @returns nothing when the request can be saved.
      */
-    private whyNotSavable({request, frames}: GeneratedImageGroup): string | "waiting" | undefined {
+    private whyNotSavable({request, frames}: GeneratedImageGroup): {reason: UnsavedRequestReason; isWaiting?: boolean} | undefined {
         if (request.type === "hips") {
             return undefined;
         }
         // Moment images are told apart by their moments. Without the moments, the images can be
         // told apart only when all of them remain, in the order that they were made.
         if (request.type === "moment" && frames.some(frame => frame.generation?.moment === undefined) && frames.length !== request.moments.length) {
-            return "it cannot tell which moment each of its images is";
+            return {reason: "momentsNotTold"};
         }
         const source = request.source;
         if (!this.appStore.frames.includes(source)) {
-            return "the image it was made from is closed";
+            return {reason: "sourceClosed"};
         }
         // Use the region of the image that the source is shown with. When the source is matched to
         // another image, the region belongs to that image.
         const regionOwner = source.spatialReference ?? source;
         for (const image of [source, regionOwner]) {
             if (image.frameInfo.generated && !this.savedGeneratedImages.has(image)) {
-                return image.generation ? "waiting" : "the image it was made from was not saved";
+                return {reason: image === source ? "sourceNotSaved" : "referenceNotSaved", isWaiting: !!image.generation};
             }
         }
-        if (this.imageIdOf(source) === undefined || this.imageIdOf(regionOwner) === undefined) {
-            return "the image it was made from was not saved";
+        if (this.imageIdOf(source) === undefined) {
+            return {reason: "sourceNotSaved"};
+        }
+        if (this.imageIdOf(regionOwner) === undefined) {
+            return {reason: "referenceNotSaved"};
         }
         if (request.regionId > RegionId.CURSOR && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
-            return "the region it was made over has been deleted";
+            return {reason: "regionDeleted"};
         }
         return undefined;
     }
 
-    private reportUnsavedRequest(request: ImageGenerationRequest, reason: string): void {
+    private reportUnsavedRequest(request: ImageGenerationRequest, key: UnsavedRequestReason): void {
         const subject = WorkspaceSnapshotter.describeRequest(request);
-        this.issues.push({kind: WorkspaceItemKind.GeneratedImage, subject, message: `Could not save ${subject}: ${reason}`});
+        const {reason, hint} = WorkspaceSnapshotter.UNSAVED_REQUEST_REASONS[key];
+        this.issues.push({kind: WorkspaceItemKind.GeneratedImage, subject, message: `Could not save ${subject}: ${reason}`, hint});
     }
 
     /** How a request is named to the user. */
@@ -427,21 +489,28 @@ export class WorkspaceSnapshotter {
         return workspaceFile;
     }
 
+    /** Reports each region of an image that the backend has not accepted. Such a region has no ID from the backend, and a workspace saves each region by its ID. */
+    private reportUnacceptedRegions(frame: FrameStore): void {
+        frame.regionSet.regions
+            .filter(region => region.regionId < CURSOR_REGION_ID)
+            .forEach(region => {
+                const imageName = frame.frameInfo.fileInfo?.name ?? "";
+                this.issues.push({
+                    kind: WorkspaceItemKind.Image,
+                    subject: imageName,
+                    message: `Could not save ${region.name ? `the region "${region.name}"` : "a region"} of ${imageName}: the backend has not accepted the region`,
+                    hint: "Wait until the backend accepts the region, or delete the region and draw it again"
+                });
+            });
+    }
+
     /**
      * Returns the regions of an image. Leaves out a region without an ID from the backend, and
      * reports it. Such a region was refused by the backend, or the backend has not answered for it
      * yet. A workspace saves each region by its ID.
      */
     private captureRegions(frame: FrameStore): NonNullable<NonNullable<WorkspaceFile["regionsSet"]>["regions"]> {
-        const unaccepted = frame.regionSet.regions.filter(region => region.regionId < CURSOR_REGION_ID);
-        unaccepted.forEach(region => {
-            const imageName = frame.frameInfo.fileInfo?.name ?? "";
-            this.issues.push({
-                kind: WorkspaceItemKind.Image,
-                subject: imageName,
-                message: `Could not save ${region.name ? `the region "${region.name}"` : "a region"} of ${imageName}: the backend has not accepted the region`
-            });
-        });
+        this.reportUnacceptedRegions(frame);
         return frame.regionSet.regions
             .filter(region => region.regionId > CURSOR_REGION_ID)
             .map(region => ({
@@ -478,6 +547,10 @@ export class WorkspaceSnapshotter {
             const images = frames.flatMap(frame => {
                 const workspaceImageId = this.imageIdOf(frame);
                 if (workspaceImageId === undefined) {
+                    return [];
+                }
+                if (this.isCheckOnly) {
+                    this.reportUnacceptedRegions(frame);
                     return [];
                 }
                 const image = this.captureImage(frame, workspaceImageId, undefined);
@@ -665,8 +738,12 @@ export class WorkspaceSnapshotter {
                 this.issues.push({
                     kind: WorkspaceItemKind.CatalogSelection,
                     subject: catalogInfo.fileInfo.name ?? "",
-                    message: `Could not save the selected rows of the catalog ${catalogInfo.fileInfo.name}: ${selectedDataIndices.length} rows are selected, more than the ${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS} a workspace keeps`
+                    message: `Could not save the selected rows of the catalog ${catalogInfo.fileInfo.name}: ${selectedDataIndices.length} rows are selected, more than the ${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS} a workspace keeps`,
+                    hint: `Select at most ${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS.toLocaleString("en-US")} rows`
                 });
+            }
+            if (this.isCheckOnly) {
+                return;
             }
             const rowSelection = isSelectionTooLarge ? undefined : fingerprintCatalogSelection(profileStore.catalogHeader, profileStore.rows.data, selectedDataIndices);
             const selection = rowSelection ? {...rowSelection, isShowingSelectedData: displayStore?.isShowingSelectedData || undefined} : undefined;

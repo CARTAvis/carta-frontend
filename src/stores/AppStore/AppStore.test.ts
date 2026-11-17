@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {runInAction} from "mobx";
+import {reaction, runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {CatalogOverlay, CatalogSystemType, CatalogType, ImageType, WorkspaceItemKind} from "enums";
@@ -557,6 +557,27 @@ describe("AppStore.saveWorkspace", () => {
         failOpening(new Error("unreadable image"));
         await expect(opening).rejects.toThrow("unreadable image");
         appStore.alertStore.dismissAlert();
+    });
+
+    test("tells the Workspace dialog that an image is still being opened, and tells it again when the image is no longer on its way", async () => {
+        let failOpening!: (error: Error) => void;
+        jest.spyOn(appStore.backendService, "loadFile").mockReturnValue(new Promise((_resolve, reject) => (failOpening = reject)) as any);
+        const blockers: (string | undefined)[] = [];
+        const dispose = reaction(
+            () => appStore.workspaceSaveBlocker,
+            blocker => blockers.push(blocker),
+            {fireImmediately: true}
+        );
+        const opening = appStore.loadFile("", "image.fits", "", false);
+        // Another load clears the shared loading flag. The image is still on its way.
+        appStore.endFileLoading();
+
+        failOpening(new Error("unreadable image"));
+        await expect(opening).rejects.toThrow("unreadable image");
+        appStore.alertStore.dismissAlert();
+        dispose();
+
+        expect(blockers).toStrictEqual([undefined, expect.stringContaining("still loading"), undefined]);
     });
 
     test("refuses to save while an online catalog query is still running", async () => {

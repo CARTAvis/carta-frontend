@@ -2,18 +2,21 @@ import * as React from "react";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {AnchorButton, Classes, type DialogProps, Icon, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
 import classNames from "classnames";
+import {comparer, reaction} from "mobx";
 import {observer} from "mobx-react";
-import type {WorkspaceListItem} from "models";
+import type {WorkspaceIssue, WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
 import {AppStore} from "stores";
 import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
+import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
 import {WorkspaceInfoComponent, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
+import {WorkspaceSaveCheckComponent} from "./WorkspaceSaveCheckComponent";
 
 import "./WorkspaceDialogComponent.scss";
 
@@ -42,10 +45,30 @@ export const WorkspaceDialogComponent = observer(() => {
     const [readErrorMessage, setReadErrorMessage] = useState("");
     // The workspace that the summary shows. A later selection replaces a read that is still running.
     const selection = useRef<string | undefined>(undefined);
+    // What a save of the session would leave out. The Save mode shows it before the user saves. It is
+    // undefined until the session is checked, and while the session cannot be saved.
+    const [saveIssues, setSaveIssues] = useState<WorkspaceIssue[]>();
 
     const appStore = AppStore.Instance;
     const mode = appStore.dialogStore.workspaceDialogMode;
     const isOpenMode = mode === WorkspaceDialogMode.Open;
+    const isSaveMode = mode === WorkspaceDialogMode.Save;
+    const saveBlocker = isSaveMode ? appStore.workspaceSaveBlocker : undefined;
+
+    // Find what a save would leave out, and find it again when the session changes. The check only
+    // reads the session. It runs at most once in 300 ms, so that a cursor that moves over the image
+    // does not run it at every move. The list renders again only when its content changes.
+    useEffect(() => {
+        if (!isSaveMode) {
+            setSaveIssues(undefined);
+            return undefined;
+        }
+        return reaction(
+            () => (appStore.workspaceSaveBlocker ? undefined : new WorkspaceSnapshotter().findIssues()),
+            issues => setSaveIssues(issues),
+            {fireImmediately: true, delay: 300, equals: comparer.structural}
+        );
+    }, [appStore, isSaveMode]);
 
     const fetchWorkspaces = useCallback(async () => {
         setIsFetching(true);
@@ -159,7 +182,12 @@ export const WorkspaceDialogComponent = observer(() => {
         [appStore, handleCloseClicked, preflight]
     );
 
+    // The save waits until the session is checked, so that the user sees the list before saving.
+    const isSaveCheckDone = !saveBlocker && saveIssues !== undefined;
     const handleSaveClicked = () => {
+        if (!isSaveCheckDone || isFetching) {
+            return;
+        }
         saveWorkspace(workspaceName.trim());
     };
 
@@ -181,7 +209,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const checkedPreflight = preflight?.name === workspaceName ? preflight : undefined;
     const isCheckDone = !isOpenMode || (!isReadingWorkspace && !checkedPreflight?.isChecking);
     const handleOpenClicked = () => {
-        if (!workspaceList?.find(item => item.name === workspaceName) || !isCheckDone) {
+        if (!workspaceList?.find(item => item.name === workspaceName) || !isCheckDone || isFetching) {
             return;
         }
         openWorkspace(workspaceName);
@@ -220,8 +248,10 @@ export const WorkspaceDialogComponent = observer(() => {
 
     const handleDoubleClick = (entry: WorkspaceListItem) => {
         if (mode === WorkspaceDialogMode.Save) {
-            saveWorkspace(entry.name);
-        } else if (preflight?.name === entry.name && !preflight.isChecking) {
+            if (isSaveCheckDone && !isFetching) {
+                saveWorkspace(entry.name);
+            }
+        } else if (preflight?.name === entry.name && !preflight.isChecking && !isFetching) {
             openWorkspace(entry.name);
         }
     };
@@ -281,6 +311,12 @@ export const WorkspaceDialogComponent = observer(() => {
     const leftOutCount = checkedPreflight?.leftOutCount ?? 0;
     const openText = !isCheckDone ? "Checking…" : leftOutCount ? `Open without ${leftOutCount} item${leftOutCount === 1 ? "" : "s"}` : "Open";
     const hasSelection = !!workspaceList?.some(item => item.name === workspaceName);
+    let saveText = "Save";
+    if (!saveBlocker && !saveIssues) {
+        saveText = "Checking…";
+    } else if (!saveBlocker && saveIssues?.length) {
+        saveText = `Save without ${saveIssues.length} item${saveIssues.length === 1 ? "" : "s"}`;
+    }
 
     return (
         <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={820} defaultHeight={580} minWidth={750} minHeight={550} isResizingEnabled={true} dialogId={DialogId.Workspace}>
@@ -299,6 +335,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     </div>
                     <div className="workspace-info-container">
                         {workspaceList?.length ? <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} /> : null}
+                        {isSaveMode && <WorkspaceSaveCheckComponent issues={saveIssues ?? []} blocker={saveBlocker} />}
                     </div>
                 </div>
                 <InputGroup
@@ -320,7 +357,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
                     <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
                     {mode === WorkspaceDialogMode.Save ? (
-                        <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text="Save" disabled={isFetching || !workspaceName.trim()} />
+                        <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />
                     ) : (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text={openText} disabled={isFetching || !hasSelection || !isCheckDone} data-testid="workspace-open-button" />
                     )}

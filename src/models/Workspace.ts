@@ -1281,6 +1281,8 @@ export interface WorkspaceIssue {
     subject: string;
     /** What happened, as a whole sentence naming the subject. */
     message: string;
+    /** What the user can do before saving, so that the item is saved. Only a save sets it. */
+    hint?: string;
     /**
      * Set by a restore when the item is not in the session, so a save of the session leaves the
      * item out. Undefined when the item is in the session, but not as it was saved.
