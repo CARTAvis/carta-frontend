@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-import {DialogId, ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {DialogId, ImageType, RegionOpacity, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     CARTA_INFO,
     type Workspace,
@@ -14,7 +14,7 @@ import {
     type WorkspaceIssue,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {AppStore, type DialogSettings} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -87,6 +87,7 @@ export class WorkspaceSnapshotter {
         references.spatial = this.imageIdOf(this.appStore.spatialReference);
         references.spectral = this.imageIdOf(this.appStore.spectralReference);
         references.raster = this.imageIdOf(this.appStore.rasterScalingReference);
+        this.workspace.spectralMatchingType = this.appStore.spectralMatchingType;
 
         let hasTemporaryFiles = false;
         for (const frame of this.appStore.frames) {
@@ -208,8 +209,13 @@ export class WorkspaceSnapshotter {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
         } else if (frame.regionSet?.regions.length) {
             // Regions are only the image's own while it is not matched to another one.
+            // A region without an ID from the backend is not saved, so it is not saved as selected either.
+            const isSaved = (regionId: number | undefined) => regionId !== undefined && regionId > CURSOR_REGION_ID;
+            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []).filter(isSaved);
+            const focusedRegionId = frame.regionSet.focusedRegion?.regionId;
             workspaceFile.regionsSet = {
-                selectedRegion: frame.regionSet.focusedRegion?.regionId,
+                selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined,
+                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
                 regions: this.captureRegions(frame)
             };
         }
@@ -222,6 +228,29 @@ export class WorkspaceSnapshotter {
         }
         workspaceFile.spectralSystem = frame.spectralSystem ?? undefined;
         workspaceFile.intensityUnit = frame.intensityUnit;
+        const restFreqStore = frame.restFreqStore;
+        const restFreq = restFreqStore?.customRestFreq;
+        if (restFreq && !restFreqStore.isInvalidInput && (restFreq.value !== restFreqStore.headerRestFreq.value || restFreq.unit !== restFreqStore.headerRestFreq.unit)) {
+            workspaceFile.restFrequency = {value: restFreq.value, unit: restFreq.unit};
+        }
+        if (frame.isRestFrameSupported) {
+            workspaceFile.restFrame = {
+                // Save the rest frame as off when the controls rejected the shift. The axis is not corrected in that case either.
+                enabled: frame.isRestFrameEnabled && frame.isRestFrameShiftInputValid,
+                redshift: frame.restFrameRedshift,
+                shiftMode: frame.restFrameShiftMode,
+                velocityConvention: frame.restFrameVelocityConvention
+            };
+        }
+
+        if (frame.beamProperties) {
+            const beam = frame.overlayBeamSettings;
+            workspaceFile.beam = {visible: beam.isVisible, color: beam.color, type: beam.type, width: beam.width, shiftX: beam.shiftX, shiftY: beam.shiftY};
+        }
+        // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
+        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        }
 
         workspaceFile.center = frame.center;
         workspaceFile.zoomLevel = frame.zoomLevel;
@@ -230,8 +259,11 @@ export class WorkspaceSnapshotter {
             workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
             workspaceFile.zoomAxis = zoomFrame.zoomAxis;
         }
-        workspaceFile.channel = frame.channel;
-        workspaceFile.stokes = frame.stokes;
+        // Save the channel and the Stokes that the image is set to. An image that is not shown gets the
+        // tiles of a new channel only when it is shown again. Until then, `channel` and `stokes` are
+        // the values of the last tiles, for example 0 after a restore.
+        workspaceFile.channel = frame.requiredChannel;
+        workspaceFile.stokes = frame.requiredStokes;
 
         if (frame.spectralReference) {
             workspaceFile.references.spectral = this.imageIdOf(frame.spectralReference);
@@ -265,9 +297,23 @@ export class WorkspaceSnapshotter {
         return workspaceFile;
     }
 
+    /**
+     * Returns the regions of an image. Leaves out a region without an ID from the backend, and
+     * reports it. Such a region was refused by the backend, or the backend has not answered for it
+     * yet. A workspace saves each region by its ID.
+     */
     private captureRegions(frame: FrameStore): NonNullable<NonNullable<WorkspaceFile["regionsSet"]>["regions"]> {
+        const unaccepted = frame.regionSet.regions.filter(region => region.regionId < CURSOR_REGION_ID);
+        unaccepted.forEach(region => {
+            const imageName = frame.frameInfo.fileInfo?.name ?? "";
+            this.issues.push({
+                kind: WorkspaceItemKind.Image,
+                subject: imageName,
+                message: `Could not save ${region.name ? `the region "${region.name}"` : "a region"} of ${imageName}: the backend has not accepted the region`
+            });
+        });
         return frame.regionSet.regions
-            .filter(region => region.regionId !== CURSOR_REGION_ID)
+            .filter(region => region.regionId > CURSOR_REGION_ID)
             .map(region => ({
                 id: region.regionId,
                 type: region.regionType,
@@ -281,7 +327,8 @@ export class WorkspaceSnapshotter {
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
                 lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
-                coordinate: region.coordinate
+                coordinate: region.coordinate,
+                opacity: region.opacity === RegionOpacity.Visible ? undefined : region.opacity
             }));
     }
 
@@ -326,7 +373,14 @@ export class WorkspaceSnapshotter {
                 });
                 continue;
             }
-            this.workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: selectedFrameId as number[], alpha: colorBlending.alpha});
+            this.workspace.colorBlendingImages.push({
+                imageListIndex: index,
+                selectedFrameId: selectedFrameId as number[],
+                alpha: colorBlending.alpha,
+                ...(colorBlending.isRasterVisible === false ? {rasterVisible: false} : {}),
+                ...(colorBlending.isContourVisible === false ? {contourVisible: false} : {}),
+                ...(colorBlending.isVectorOverlayVisible === false ? {vectorOverlayVisible: false} : {})
+            });
         }
     }
 
@@ -523,6 +577,25 @@ export class WorkspaceSnapshotter {
             this.workspace.dialogSettings = dialogSettings;
         }
         this.captureWidgetSettings();
+        const isCursorFrozen = this.appStore.isCursorFrozen === true;
+        const cursorPosition = this.appStore.activeFrame?.cursorInfo?.posImageSpace;
+        // Leave out a position that is not a number, such as a point that matching could not transform.
+        // The workspace schema checks the position, so such a value would stop the workspace from saving.
+        const isFinitePosition = Number.isFinite(cursorPosition?.x) && Number.isFinite(cursorPosition?.y);
+        this.workspace.cursor = {frozen: isCursorFrozen, ...(cursorPosition && isFinitePosition ? {position: {x: cursorPosition.x, y: cursorPosition.y}} : {}), ...(this.appStore.isCursorMirrored === true ? {mirrored: true} : {})};
+        const beamFileId = this.appStore.overlaySettings?.beam?.selectedFileId;
+        const beamImageId = typeof beamFileId === "number" && beamFileId !== this.appStore.activeFrame?.frameInfo.fileId ? this.imageIdOf(this.appStore.getFrame(beamFileId)) : undefined;
+        if (beamImageId !== undefined) {
+            this.workspace.beamSettingsImageId = beamImageId;
+        }
+        const regionSet = this.appStore.activeFrame?.regionSet;
+        this.workspace.toolbar = {
+            expanded: this.appStore.isToolbarExpanded !== false,
+            activeLayer: this.appStore.activeLayer,
+            ...(regionSet ? {newRegionType: regionSet.newRegionType, regionMode: regionSet.mode} : {})
+        };
+        this.workspace.onlineCatalogQuery = CatalogOnlineQueryConfigStore.Instance.toWorkspaceConfig();
+        this.workspace.hipsQuery = HipsQueryStore.Instance.toWorkspaceConfig();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
         this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};

@@ -3,7 +3,7 @@ import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {HipsCoord, HipsProjection} from "enums";
-import {type Point2D} from "models";
+import {type Point2D, type WorkspaceHipsQuery} from "models";
 import {AppStore} from "stores";
 
 /** A HiPS survey. */
@@ -36,6 +36,8 @@ export class HipsQueryStore {
     @observable projection = HipsProjection.TAN;
     /** The rotation angle of the output image. */
     @observable rotationAngle = 0;
+    /** Whether the form queries by an object name. Otherwise it queries by the center. */
+    @observable isQueryByObject = true;
     /** Whether the query is in progress. */
     @observable isLoading = false;
 
@@ -113,6 +115,41 @@ export class HipsQueryStore {
         makeObservable(this);
         this.fetchSurveyList();
     }
+
+    @action setQueryByObject = (isQueryByObject: boolean) => {
+        this.isQueryByObject = isQueryByObject;
+    };
+
+    /** Returns the fields of the form that a workspace saves. A number that is not set is left out. */
+    public toWorkspaceConfig = (): WorkspaceHipsQuery => {
+        const isSet = (value: number) => Number.isFinite(value);
+        return {
+            survey: this.hipsSurvey,
+            ...(isSet(this.size.x) ? {width: this.size.x} : {}),
+            ...(isSet(this.size.y) ? {height: this.size.y} : {}),
+            byObject: this.isQueryByObject,
+            object: this.object,
+            ...(isSet(this.center.x) && isSet(this.center.y) ? {center: {x: this.center.x, y: this.center.y}} : {}),
+            ...(isSet(this.fov) ? {fov: this.fov} : {}),
+            coordinateSystem: this.coordsys,
+            projection: this.projection,
+            rotation: this.rotationAngle
+        };
+    };
+
+    /** Applies the fields that a workspace saved. A value that is not valid, or that is left out, is not set. */
+    @action public applyWorkspaceConfig = (config: WorkspaceHipsQuery): void => {
+        const numberOr = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : NaN);
+        this.hipsSurvey = typeof config.survey === "string" ? config.survey : "";
+        this.size = {x: numberOr(config.width), y: numberOr(config.height)};
+        this.isQueryByObject = config.byObject !== false;
+        this.object = typeof config.object === "string" ? config.object : "";
+        this.center = {x: numberOr(config.center?.x), y: numberOr(config.center?.y)};
+        this.fov = numberOr(config.fov);
+        this.coordsys = Object.values(HipsCoord).includes(config.coordinateSystem) ? config.coordinateSystem : HipsCoord.Icrs;
+        this.projection = Object.values(HipsProjection).includes(config.projection) ? config.projection : HipsProjection.TAN;
+        this.rotationAngle = Number.isFinite(numberOr(config.rotation)) ? config.rotation : 0;
+    };
 
     /**
      * Sets the HiPS survey to be used.

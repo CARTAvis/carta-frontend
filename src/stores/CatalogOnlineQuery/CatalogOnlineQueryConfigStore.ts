@@ -2,8 +2,8 @@ import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
-import {type Point2D} from "models";
-import {AppStore} from "stores";
+import {type Point2D, type WorkspaceOnlineCatalogQuery} from "models";
+import {AppStore, CatalogOnlineQueryStore} from "stores";
 import {ASTSettingsString, clamp, convertRadius, getPixelValueFromWCS, RADIUS_UNITS_PER_DEGREE, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
@@ -57,6 +57,102 @@ export class CatalogOnlineQueryConfigStore {
         }
         return CatalogOnlineQueryConfigStore.staticInstance;
     }
+
+    /** Returns the fields of the dialog, and the list of VizieR tables, that a workspace saves. */
+    public toWorkspaceConfig = (): WorkspaceOnlineCatalogQuery => ({
+        ...this.workspaceVizierList,
+        database: this.catalogDB,
+        center: {x: this.centerPixelCoord.x, y: this.centerPixelCoord.y},
+        coordinateSystem: this.coordsType,
+        coordinateFormat: this.coordsFormat,
+        radius: this.searchRadius,
+        radiusUnits: this.radiusUnits,
+        maxObjects: this.maxObject,
+        objectName: this.objectName,
+        vizierKeywords: this.vizierKeyWords
+    });
+
+    /** Returns the list of VizieR tables and the selected tables, or nothing when no list is shown. */
+    private get workspaceVizierList(): Pick<WorkspaceOnlineCatalogQuery, "vizierTables" | "vizierSelectedTables"> {
+        const tables = this.vizierTable.filter((table): table is {name: string; description: string | null} => typeof table.name === "string");
+        if (!tables.length) {
+            return {};
+        }
+        return {
+            vizierTables: tables.map(table => ({name: table.name, description: table.description ?? ""})),
+            vizierSelectedTables: this.vizierSelectedTableName.map(table => table.name).filter((name): name is string => typeof name === "string")
+        };
+    }
+
+    /**
+     * Shows a list of VizieR tables that a workspace saved, and selects the saved tables. A workspace
+     * without a list clears the list. The list has only the names and the descriptions. Loading a table queries VizieR for it by its name, so
+     * the list needs no other data.
+     */
+    @action private applyWorkspaceVizierList(config: WorkspaceOnlineCatalogQuery) {
+        const tables = Array.isArray(config.vizierTables) ? config.vizierTables.filter(table => typeof table?.name === "string" && table.name) : [];
+        if (!tables.length) {
+            this.resetVizier();
+            return;
+        }
+        const resources = new Map<string, VizierResource>();
+        for (const table of tables) {
+            const description = typeof table.description === "string" ? table.description : null;
+            resources.set(table.name, {
+                id: null,
+                name: null,
+                description,
+                coosys: {system: CatalogSystemType.FK5, equinox: "J2000"},
+                // The table data is fetched again when the table is loaded.
+                table: {name: table.name, description: null, tableElement: document.createElement("TABLE")}
+            });
+        }
+        this.setVizierQueryResult(resources);
+        this.resetVizierSelectedTable();
+        const selected = Array.isArray(config.vizierSelectedTables) ? config.vizierSelectedTables : [];
+        selected.filter(name => typeof name === "string" && resources.has(name)).forEach(name => this.updateVizierSelectedTable({name, description: resources.get(name)?.description ?? null}));
+    }
+
+    /**
+     * Applies the fields that a workspace saved. A value that is not valid keeps the value of the
+     * session. Apply them after the image in front is chosen and the cursor is frozen. Both of these
+     * move the center of the dialog.
+     */
+    @action applyWorkspaceConfig = (config: WorkspaceOnlineCatalogQuery): void => {
+        const isNumberString = (value: unknown): value is string => typeof value === "string" && value.trim() !== "" && isFinite(Number(value));
+        if (Object.values(CatalogDatabase).includes(config.database)) {
+            this.setCatalogDB(config.database);
+        }
+        if (Object.values(CatalogSystemType).includes(config.coordinateSystem)) {
+            this.setCoordsType(config.coordinateSystem);
+        }
+        if (Object.values(NumberFormatType).includes(config.coordinateFormat)) {
+            this.setCoordsFormat(config.coordinateFormat);
+        }
+        if (Object.values(RadiusUnits).includes(config.radiusUnits)) {
+            this.radiusUnits = config.radiusUnits;
+        }
+        if (typeof config.radius === "number" && isFinite(config.radius) && config.radius > 0) {
+            this.setSearchRadius(config.radius);
+        }
+        if (isNumberString(config.center?.x) && isNumberString(config.center?.y)) {
+            this.updateCenterPixelCoord({x: Number(config.center.x), y: Number(config.center.y)});
+        }
+        const maxObjects = config.maxObjects;
+        if (typeof maxObjects === "number" && Number.isInteger(maxObjects) && maxObjects >= CatalogOnlineQueryConfigStore.MIN_OBJECTS && maxObjects <= CatalogOnlineQueryConfigStore.MAX_OBJECTS) {
+            this.setMaxObjects(maxObjects);
+        }
+        if (typeof config.objectName === "string") {
+            this.setObjectName(config.objectName);
+        }
+        if (typeof config.vizierKeywords === "string") {
+            this.setVizierKeyWords(config.vizierKeywords);
+        }
+        this.applyWorkspaceVizierList(config);
+        // The dialog says how many objects or tables the last query of the session found. A
+        // workspace does not keep that query, so clear the count.
+        CatalogOnlineQueryStore.Instance.resetResultSize();
+    };
 
     public setFrameCenter() {
         const frame = this.activeFrame;

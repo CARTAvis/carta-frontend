@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring percentile ranges from the cube histogram in workspaces ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
 * Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query settings and results, the PV generator settings, the plotted spectral lines, and the animator and Log widget settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
 * Added support for saving the multi-panel grid and maximized panels in layouts and workspaces, and the open dialogs and widget settings panels with their places, tabs and unapplied settings, the Region dialog coordinates, the File Info header search and the snippet of the Snippet dialog in workspaces ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
+* Added support for restoring rest frequencies, rest frames, beam overlays, offset coordinates, region opacity and selection, the spectral matching type, the hidden layers of a color-blended image, the cursor, the image toolbar, and the online catalog and HiPS query forms in workspaces ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
@@ -48,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the missing WCS for images whose FITS header contains an entry without a keyword ([#3024](https://github.com/CARTAvis/carta-frontend/issues/3024)).
 * Fixed image, region, and catalog files failing to load when the initial folder is the same as the top-level folder ([#2964](https://github.com/CARTAvis/carta-frontend/issues/2964)).
 * Fixed workspaces not restoring custom colormap colors, or the image of the Contour dialog when it does not follow the active image ([#3013](https://github.com/CARTAvis/carta-frontend/issues/3013)).
+* Fixed text, compass and ruler annotations drawn at the wrong size when an image view first shows them, such as after a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed solid regions coming back dashed when a workspace is opened ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed opening a workspace changing the last used folder of the file browser ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed a region that the backend refused stopping a workspace from being saved ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed a workspace saved again after it was opened losing the channel and Stokes of an image that was not shown ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

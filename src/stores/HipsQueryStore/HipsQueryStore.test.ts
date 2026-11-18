@@ -144,4 +144,28 @@ describe("HipsQueryStore", () => {
         await store.queryByCenter();
         expect(MockLoadRemoteFile).toHaveBeenCalledWith(message);
     });
+
+    it("saves the fields of the form in a workspace, leaves out the numbers that are not set, and applies them again", () => {
+        const saved = new HipsQueryStore();
+        saved.setHipsSurvey("CDS/P/DSS2/color");
+        saved.setWidth(300);
+        saved.setQueryByObject(false);
+        saved.setCenterX(83.8);
+        saved.setCenterY(-5.4);
+        saved.setCoordsys(HipsCoord.Galactic);
+        saved.setProjection(HipsProjection.SIN);
+        saved.setRotationAngle(30);
+
+        const config = saved.toWorkspaceConfig();
+        expect(config).toEqual({survey: "CDS/P/DSS2/color", width: 300, byObject: false, object: "", center: {x: 83.8, y: -5.4}, coordinateSystem: HipsCoord.Galactic, projection: HipsProjection.SIN, rotation: 30});
+
+        const restored = new HipsQueryStore();
+        restored.setObject("M42");
+        restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)));
+        expect(restored.toWorkspaceConfig()).toEqual(config);
+        expect([restored.size.y, restored.fov, restored.isQueryByObject]).toEqual([NaN, NaN, false]);
+
+        restored.applyWorkspaceConfig({survey: 1, coordinateSystem: "fk4", projection: "XYZ", rotation: "a"} as never);
+        expect([restored.hipsSurvey, restored.coordsys, restored.projection, restored.rotationAngle, restored.isQueryByObject]).toEqual(["", HipsCoord.Icrs, HipsProjection.TAN, 0, true]);
+    });
 });

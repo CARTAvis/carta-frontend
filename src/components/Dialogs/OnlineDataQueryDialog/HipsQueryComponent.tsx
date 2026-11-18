@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect} from "react";
 import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
@@ -40,7 +40,10 @@ const RenderPixelSize = () => {
 
 export const HipsQueryComponent = observer(() => {
     const hipsQueryStore = HipsQueryStore.Instance;
-    const [isQueryByObject, setQueryByObject] = useState<boolean>(true);
+    const isQueryByObject = hipsQueryStore.isQueryByObject;
+    // The form queries by object again each time it opens, as it did when the choice was kept in the
+    // component. A workspace sets the choice before the form opens.
+    useEffect(() => () => hipsQueryStore.setQueryByObject(true), [hipsQueryStore]);
 
     return (
         <div className="hips-query-panel">
@@ -61,7 +64,7 @@ export const HipsQueryComponent = observer(() => {
                         />
                     </FormGroup>
                     <FormGroup inline={true} label=" " disabled={hipsQueryStore.isLoading}>
-                        <RadioGroup inline={true} selectedValue={isQueryByObject ? "object" : "center"} onChange={ev => setQueryByObject(ev.currentTarget.value === "object")} disabled={hipsQueryStore.isLoading}>
+                        <RadioGroup inline={true} selectedValue={isQueryByObject ? "object" : "center"} onChange={ev => hipsQueryStore.setQueryByObject(ev.currentTarget.value === "object")} disabled={hipsQueryStore.isLoading}>
                             <Radio label="Query by object" value="object" />
                             <Radio label="Query by center" value="center" />
                         </RadioGroup>

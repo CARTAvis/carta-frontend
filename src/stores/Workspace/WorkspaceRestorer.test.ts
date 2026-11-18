@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {observable, runInAction} from "mobx";
 
-import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
+import {BeamType, CatalogSystemType, ImageType, RadiusUnits, RegionId, RegionOpacity, RestFrameShiftMode, SkyRefIs, SpectralSystem, VelocityConvention, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {CatalogApiService} from "services";
@@ -31,6 +31,9 @@ function createRenderConfig() {
 /** The ID that the backend gives a restored region. It is a new ID, not related to the saved ID. */
 const RegisterRegion = jest.fn((savedRegionId: number): Promise<number | undefined> => Promise.resolve(savedRegionId + 100));
 
+/** The properties that a test sets on every image that the restorer opens, such as whether the image has a beam or supports a rest frame. */
+let frameOverrides: Record<string, unknown> = {};
+
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
     const frame = {
@@ -39,6 +42,8 @@ function createFrame(fileId: number) {
         isAxisZoomable: false,
         zoomLevel: 1,
         spatialReference: undefined,
+        setCursorPosition: jest.fn(),
+        updateCursorRegion: jest.fn(),
         setChannels: jest.fn((_channel: number, stokes: number) => {
             frame.requiredPolarizationIndex = stokes;
         }),
@@ -58,13 +63,32 @@ function createFrame(fileId: number) {
         setSpectralCoordinateSecondary: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
         setSpectralSystem: jest.fn((system: string, _shouldAlignSiblings?: boolean) => system !== "Unsupported"),
         setIntensityUnit: jest.fn(),
+        restFreqStore: {setCustomUnit: jest.fn(), setCustomVal: jest.fn()},
+        isRestFrameSupported: true,
+        setRestFrameShiftMode: jest.fn(),
+        setRestFrameVelocityConvention: jest.fn(),
+        setRestFrameRedshift: jest.fn(),
+        setRestFrameEnabled: jest.fn(),
+        beamProperties: {},
+        overlayBeamSettings: {setVisible: jest.fn(), setColor: jest.fn(), setType: jest.fn(), setWidth: jest.fn(), setShiftX: jest.fn(), setShiftY: jest.fn()},
+        isPVImage: false,
+        isSwappedZ: false,
+        isUVImage: false,
+        isOffsetCoord: false,
+        setOffsetCenter: jest.fn((x: number, y: number) => isFinite(x) && isFinite(y)),
+        setSkyRefIs: jest.fn(),
+        toggleOffsetCoord: jest.fn(),
         regionSet: {
+            setNewRegionType: jest.fn(),
+            setMode: jest.fn(),
             addExistingRegionAsync: jest.fn(async (points: unknown) => {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
-                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn()};
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
             }),
-            selectSingleRegion: jest.fn()
-        }
+            selectSingleRegion: jest.fn(),
+            setSelectionByIds: jest.fn()
+        },
+        ...frameOverrides
     };
     return frame;
 }
@@ -138,6 +162,10 @@ function createSession() {
         setSpatialReference: jest.fn(),
         setSpectralReference: jest.fn(),
         setRasterScalingReference: jest.fn(),
+        spectralMatchingType: "VRAD",
+        setSpectralMatchingType: jest.fn((type: string) => {
+            appStore.spectralMatchingType = type;
+        }),
         setSpatialMatchingEnabled: jest.fn(),
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
@@ -147,6 +175,11 @@ function createSession() {
         setContourDataSourceUnlocked: jest.fn(),
         isFrameLockedToContour: true,
         toggleFrameContourLock: jest.fn(),
+        setCursorFrozen: jest.fn(),
+        isCursorMirrored: false,
+        toggleCursorMirror: jest.fn(),
+        setToolbarExpanded: jest.fn(),
+        updateActiveLayer: jest.fn(),
         dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn(), applyUnappliedSettings: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
@@ -240,6 +273,7 @@ function createWorkspace(overrides: Partial<Workspace> = {}): Workspace {
 describe("WorkspaceRestorer", () => {
     afterEach(() => {
         jest.restoreAllMocks();
+        frameOverrides = {};
     });
 
     test("restores nothing but reports no problems for an empty workspace", async () => {
@@ -478,6 +512,20 @@ describe("WorkspaceRestorer", () => {
         expect(order).toEqual(["spectral-profiler-0-settings", "pv-generator-0", "histogram-0-settings", "catalog-plot-component-0"]);
     });
 
+    test("applies the saved fields of the online catalog query dialog", async () => {
+        createSession();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), objectName: "M17", vizierKeywords: "gaia"};
+
+        await restore(createWorkspace({onlineCatalogQuery}));
+
+        expect([configStore.objectName, configStore.vizierKeyWords]).toEqual(["M17", "gaia"]);
+        runInAction(() => {
+            configStore.resetObjectName();
+            configStore.setVizierKeyWords("");
+        });
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 
@@ -600,6 +648,109 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalled();
         expect(appStore.activeFrame?.frameInfo.fileId).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
+    test("hides the layers of a color-blended image that were hidden", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {
+            id: 0,
+            selectedFrames: [],
+            deleteSelectedFrame: jest.fn(),
+            setAlpha: jest.fn(),
+            addSelectedFrame: jest.fn(),
+            isRasterVisible: true,
+            isContourVisible: true,
+            isVectorOverlayVisible: true,
+            toggleRasterVisible: jest.fn(),
+            toggleContourVisible: jest.fn(),
+            toggleVectorOverlayVisible: jest.fn()
+        };
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        await restore(createWorkspace({colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1], contourVisible: false}]}));
+
+        expect([colorBlending.toggleRasterVisible, colorBlending.toggleContourVisible, colorBlending.toggleVectorOverlayVisible].map(toggle => toggle.mock.calls.length)).toEqual([0, 1, 0]);
+    });
+
+    test("selects again the regions that were selected together, and freezes the cursor where it was frozen", async () => {
+        const {appStore} = createSession();
+        const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {selectedRegion: 2, selectedRegions: [1, 2, 9], regions: [region(1), region(2)]}}], selectedFile: 1, cursor: {frozen: true, position: {x: 3, y: 4}}}));
+
+        const frame = appStore.frames[0] as any;
+        expect(frame.regionSet.setSelectionByIds).toHaveBeenCalledWith([101, 102], 102);
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+        expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
+    });
+
+    test("mirrors the cursor again only when it was mirrored, and applies the image toolbar, keeping the values that are not valid", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false, mirrored: true}, toolbar: {expanded: false, activeLayer: "catalog" as never, newRegionType: 4, regionMode: 1}}));
+        expect(appStore.toggleCursorMirror).toHaveBeenCalledTimes(1);
+        expect(appStore.setToolbarExpanded).toHaveBeenCalledWith(false);
+        expect(appStore.updateActiveLayer).toHaveBeenCalledWith("catalog");
+        expect([(appStore.activeFrame as any).regionSet.setNewRegionType.mock.calls, (appStore.activeFrame as any).regionSet.setMode.mock.calls]).toEqual([[[4]], [[1]]]);
+
+        appStore.toggleCursorMirror.mockClear();
+        appStore.updateActiveLayer.mockClear();
+        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false}, toolbar: {expanded: true, activeLayer: "drawing" as never, newRegionType: 99 as never, regionMode: 7 as never}}));
+        expect(appStore.toggleCursorMirror).not.toHaveBeenCalled();
+        expect(appStore.updateActiveLayer).not.toHaveBeenCalled();
+    });
+
+    test("puts the cursor back before the layout makes the widgets, and keeps the saved center of the online query dialog", async () => {
+        const {appStore} = createSession();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), center: {x: "10", y: "20"}, objectName: "M17"};
+
+        await restore(createWorkspace({files: [IMAGE], layout: LAYOUT, selectedFile: 1, cursor: {frozen: true, position: {x: 5, y: 6}}, onlineCatalogQuery}));
+
+        const cursorOrder = (appStore.activeFrame as any).updateCursorRegion.mock.invocationCallOrder[0];
+        expect(cursorOrder).toBeLessThan(appStore.layoutStore.applyLayoutConfig.mock.invocationCallOrder[0]);
+        expect([configStore.centerPixelCoord, configStore.objectName]).toEqual([{x: "10", y: "20"}, "M17"]);
+        runInAction(() => configStore.resetObjectName());
+    });
+
+    test("shows the saved image on the Beam tab after the image in front is chosen", async () => {
+        const {appStore} = createSession();
+        const setSelectedFrame = jest.fn();
+        Object.assign(appStore, {overlaySettings: {...(appStore as any).overlaySettings, beam: {setSelectedFrame}}});
+
+        await restore(createWorkspace({files: [IMAGE, {id: 2, source: {type: "file", filename: "other.fits"}}], beamSettingsImageId: 2}));
+
+        expect(setSelectedFrame).toHaveBeenCalledWith(appStore.frames[1].frameInfo.fileId);
+    });
+
+    test("leaves the cursor where it is when the image that it was on is not in front, and says so", async () => {
+        const {appStore} = createSession();
+
+        // The image that was in front, 2, was not restored. So the first image is in front.
+        const problems = await restore(createWorkspace({files: [IMAGE], selectedFile: 2, cursor: {frozen: true, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+        expect(problems).toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+    });
+
+    test("leaves the cursor where it is without a report when the image in front was not saved, such as a PV preview", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [IMAGE], cursor: {frozen: true, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
+        expect(problems).not.toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+    });
+
+    test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [IMAGE], selectedFile: 1, cursor: {frozen: false, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).setCursorPosition).toHaveBeenCalledWith({x: 5, y: 6});
+        expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 5, y: 6});
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(false);
     });
 
     test("puts the color-blended image saved in front back there", async () => {
@@ -970,6 +1121,115 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.frames[0].setIntensityUnit).not.toHaveBeenCalled();
     });
 
+    describe("the rest frequency, rest frame, beam and offset coordinates of an image", () => {
+        const savedSettings = {
+            restFrequency: {value: 230.5, unit: "GHz"},
+            restFrame: {enabled: true, redshift: 0.01, shiftMode: RestFrameShiftMode.REDSHIFT, velocityConvention: VelocityConvention.OPTICAL},
+            beam: {visible: false, color: "#00ff00", type: BeamType.Solid, width: 2, shiftX: 3, shiftY: -4},
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: SkyRefIs.Pole}
+        };
+
+        test("shows the image with the ones it was saved with", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, ...savedSettings}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual([]);
+            expect(frame.restFreqStore.setCustomUnit).toHaveBeenCalledWith("GHz");
+            expect(frame.restFreqStore.setCustomVal).toHaveBeenCalledWith(230.5);
+            expect(frame.setRestFrameShiftMode).toHaveBeenCalledWith("redshift");
+            expect(frame.setRestFrameVelocityConvention).toHaveBeenCalledWith("optical");
+            expect(frame.setRestFrameRedshift).toHaveBeenCalledWith(0.01);
+            expect(frame.setRestFrameEnabled).toHaveBeenCalledWith(true);
+            const beam = frame.overlayBeamSettings;
+            expect([beam.setVisible, beam.setColor, beam.setType, beam.setWidth, beam.setShiftX, beam.setShiftY].map(setter => setter.mock.calls)).toEqual([[[false]], [["#00ff00"]], [["solid"]], [[2]], [[3]], [[-4]]]);
+            expect(frame.setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(frame.setSkyRefIs).toHaveBeenCalledWith(1);
+            expect(frame.toggleOffsetCoord).toHaveBeenCalledTimes(1);
+        });
+
+        test("reports a rest frame, beam or offset coordinates the image no longer has or supports", async () => {
+            frameOverrides = {isRestFrameSupported: false, isPVImage: true, beamProperties: undefined};
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, ...savedSettings}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual(["Could not show image.fits with its rest frame or its beam", "Could not show image.fits with offset coordinates"]);
+            expect(frame.setRestFrameEnabled).not.toHaveBeenCalled();
+            expect(frame.toggleOffsetCoord).not.toHaveBeenCalled();
+            expect(frame.overlayBeamSettings.setVisible).not.toHaveBeenCalled();
+        });
+
+        test("sets the rest frequency in a step of its own, before the images are matched with it", async () => {
+            const {appStore} = createSession();
+            appStore.spectralReference = {} as never;
+            const generator = new WorkspaceRestorer(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "GHz"}, references: {spectral: 1}}], references: {spectral: 1}}), WorkspaceRestorer.claimGeneration()).restore();
+
+            let didMatchBeforeRestFrequency: boolean | undefined;
+            let step = generator.next();
+            while (!step.done) {
+                const restFreqStore = appStore.frames[0]?.restFreqStore;
+                if (didMatchBeforeRestFrequency === undefined && restFreqStore?.setCustomVal.mock.calls.length) {
+                    didMatchBeforeRestFrequency = appStore.setSpectralMatchingEnabled.mock.calls.length > 0;
+                }
+                step = generator.next(await step.value);
+            }
+
+            expect(didMatchBeforeRestFrequency).toBe(false);
+            expect(appStore.setSpectralMatchingEnabled).toHaveBeenCalled();
+        });
+
+        test("puts the offset coordinates back once every image is matched, since matching one moves them", async () => {
+            const {appStore} = createSession();
+            appStore.spatialReference = {} as never;
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
+
+            await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: savedSettings.offsetCoordinates, references: {spatial: 1}}, matched], references: {spatial: 1}}));
+
+            const setOffsetCenter = appStore.frames[0].setOffsetCenter;
+            expect(setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(setOffsetCenter.mock.invocationCallOrder[0]).toBeGreaterThan(Math.max(...appStore.setSpatialMatchingEnabled.mock.invocationCallOrder));
+        });
+
+        test("reports a rest frequency it cannot convert with, and keeps the header's", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, restFrequency: {value: 230.5, unit: "parsec"}}]}));
+
+            expect(problems).toEqual(["Could not convert image.fits with the rest frequency 230.5 parsec"]);
+            expect(appStore.frames[0].restFreqStore.setCustomVal).not.toHaveBeenCalled();
+        });
+
+        test("ignores the settings of a beam no control would set", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, beam: {visible: "yes", color: "", type: "dotted", width: 0, shiftX: "1", shiftY: null} as any}]}));
+
+            const beam = appStore.frames[0].overlayBeamSettings;
+            expect([beam.setVisible, beam.setColor, beam.setType, beam.setWidth, beam.setShiftX, beam.setShiftY].every(setter => setter.mock.calls.length === 0)).toBe(true);
+        });
+    });
+
+    test("sets the spectral matching type before it opens the images, so that matching takes the saved channel", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({spectralMatchingType: "FREQ" as never}));
+
+        expect(appStore.setSpectralMatchingType).toHaveBeenCalledWith("FREQ");
+        expect(appStore.setSpectralMatchingType.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
+    });
+
+    test("keeps the spectral matching type of the session when the saved one is not valid, and says so", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({spectralMatchingType: "SPEED" as never}));
+
+        expect(appStore.setSpectralMatchingType).not.toHaveBeenCalled();
+        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by VRAD"]);
+    });
+
     describe("the regions of an image", () => {
         const region = (id: number) => ({id, name: `Region ${id}`, points: [{x: id, y: 0}], rotation: 0, type: 3});
 
@@ -1069,6 +1329,28 @@ describe("WorkspaceRestorer", () => {
             });
             await restore(workspace);
             expect((await regionsOf()).map(restoredRegion => restoredRegion.setCoordinate.mock.calls)).toEqual([[["Image"]], [["World"]], []]);
+        });
+
+        test("hides or dims a region as it was saved, and leaves one no control would set as shown", async () => {
+            const {appStore} = createSession();
+
+            await restore(
+                createWorkspace({
+                    files: [{...IMAGE, regionsSet: {regions: [{...region(1), opacity: RegionOpacity.Invisible}, {...region(2), opacity: RegionOpacity.SemiTransparent}, {...region(3), opacity: 0.3 as RegionOpacity}, region(4)]}}]
+                })
+            );
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setOpacity: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setOpacity.mock.calls)).toEqual([[[0]], [[0.5]], [], []]);
+        });
+
+        test("makes a region saved with no dashes solid, whatever dash length the preferences give", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), dashes: []}, {...region(2), dashes: [4]}, region(3)]}}]}));
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setDashLength: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setDashLength.mock.calls)).toEqual([[[0]], [], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {

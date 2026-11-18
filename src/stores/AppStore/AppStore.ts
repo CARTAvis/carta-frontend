@@ -683,7 +683,9 @@ export class AppStore {
             this.animatorStore.setAnimationMode(AnimationMode.STOKES);
         }
 
-        if (this.frames.length > 1) {
+        // A workspace restore matches the images as they were saved. So the preference does not
+        // match the images that the restore opens.
+        if (this.frames.length > 1 && !this.isLoadingWorkspace) {
             // putting spectral matching before spatial matching avoids spectral matching fail when spatial matching is unable.
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
@@ -696,7 +698,8 @@ export class AppStore {
             }
         }
 
-        if (shouldUpdateStartingDirectory) {
+        // A workspace restore does not change the preferences, so it does not save the folder of its images as the last used folder.
+        if (shouldUpdateStartingDirectory && !this.isLoadingWorkspace) {
             this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
         }
 

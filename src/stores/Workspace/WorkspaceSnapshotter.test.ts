@@ -18,13 +18,21 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         isAxisZoomable: false,
         effectiveZoomLevel: {x: 2, y: 2},
         zoomAxis: "both",
-        channel: 3,
+        // An image that is not shown keeps the channel and Stokes of its last tiles until it is shown.
+        channel: 0,
         stokes: 0,
+        requiredChannel: 3,
+        requiredStokes: 1,
         spectralCoordsSupported: new Map([["Radio velocity (km/s)", {}]]),
         spectralCoordinate: "Radio velocity (km/s)",
         spectralCoordinateSecondary: "Channel",
         spectralSystem: "LSRK",
         intensityUnit: "Jy/beam",
+        restFreqStore: {headerRestFreq: {value: 1.42, unit: "GHz"}, customRestFreq: {value: 1.42, unit: "GHz"}, isInvalidInput: false},
+        isRestFrameSupported: false,
+        beamProperties: undefined,
+        isOffsetCoord: false,
+        offsetCenter: undefined,
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
@@ -75,6 +83,8 @@ function createSession(overrides: Record<string, any> = {}) {
         timeSeriesStore: {isMember: jest.fn(() => false)},
         animatorStore: {frameRate: 5, step: 1, playMode: 0, animationMode: 0},
         logStore: {logLevel: 1, hiddenTags: [] as string[]},
+        isToolbarExpanded: true,
+        activeLayer: "regionMoving",
         imageViewConfigStore: {colorBlendingImageMap: new Map(), getImageListIndex: jest.fn(() => 0)},
         catalogStore: {
             imageIdOf: (catalogFileId: number): number | undefined => (catalogFileId === 10 ? 0 : undefined),
@@ -112,7 +122,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
     });
 
-    test("captures how each image was opened and how it is displayed", () => {
+    test("captures how each image was opened and how it is displayed, with the channel and Stokes that it is set to", () => {
         createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
@@ -124,6 +134,7 @@ describe("WorkspaceSnapshotter", () => {
             center: {x: 10, y: 20},
             zoomLevel: 2,
             channel: 3,
+            stokes: 1,
             renderConfig: {colorMap: "inferno"}
         });
         expect(workspace.selectedFile).toBe(1);
@@ -136,6 +147,65 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.files?.[0]).toMatchObject({spectralCoordinate: "Radio velocity (km/s)", spectralSystem: "LSRK", intensityUnit: "Jy/beam"});
         expect(workspace.files?.[0]).not.toHaveProperty("spectralCoordinateSecondary");
+    });
+
+    test("captures the rest frequency, rest frame, beam and offset coordinates an image is shown with", () => {
+        const frame = createFrame(0, {
+            restFreqStore: {headerRestFreq: {value: 1.42, unit: "GHz"}, customRestFreq: {value: 230.5, unit: "GHz"}, isInvalidInput: false},
+            isRestFrameSupported: true,
+            isRestFrameEnabled: true,
+            isRestFrameShiftInputValid: true,
+            restFrameRedshift: 0.01,
+            restFrameShiftMode: "redshift",
+            restFrameVelocityConvention: "optical",
+            beamProperties: {},
+            overlayBeamSettings: {isVisible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
+            isOffsetCoord: true,
+            offsetCenter: {x: 5, y: 6},
+            skyRefIs: 1
+        });
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0]).toMatchObject({
+            restFrequency: {value: 230.5, unit: "GHz"},
+            restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
+            beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+        });
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("saves the rest frame as not applied while the shift entered for it is one the controls rejected", () => {
+        const frame = createFrame(0, {isRestFrameSupported: true, isRestFrameEnabled: true, isRestFrameShiftInputValid: false, restFrameRedshift: 0.01, restFrameShiftMode: "redshift", restFrameVelocityConvention: "optical"});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].restFrame).toEqual({enabled: false, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"});
+    });
+
+    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and hidden offset coordinates", () => {
+        createSession();
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        for (const field of ["restFrequency", "restFrame", "beam", "offsetCoordinates"]) {
+            expect(workspace.files?.[0]).not.toHaveProperty(field);
+        }
+    });
+
+    test("leaves the offset coordinates of an image matched to another to that image", () => {
+        const reference = createFrame(0);
+        const matched = createFrame(1, {spatialReference: reference, isOffsetCoord: true, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+        createSession({frames: [reference, matched], activeFrame: reference, getFrame: (fileId: number) => [reference, matched][fileId]});
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[1]).not.toHaveProperty("offsetCoordinates");
     });
 
     test("captures the sample width of a line region, and of no other kind", () => {
@@ -161,6 +231,27 @@ describe("WorkspaceSnapshotter", () => {
         // The Region dialog shows each region in the coordinates that the user chose.
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.coordinate)).toEqual(["World", "World"]);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("captures how opaque a region is drawn, leaving it out for a region that is shown", () => {
+        const region = (regionId: number, opacity: number) => ({
+            regionId,
+            regionType: CARTA.RegionType.RECTANGLE,
+            rotation: 0,
+            controlPoints: [{x: 0, y: 0}],
+            name: "",
+            color: "#ffffff",
+            lineWidth: 2,
+            isLocked: false,
+            dashLength: 0,
+            opacity
+        });
+        const frame = createFrame(0, {regionSet: {regions: [region(1, 1), region(2, 0.5), region(3, 0)], focusedRegion: undefined}});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.opacity)).toEqual([undefined, 0.5, 0]);
     });
 
     test("captures a catalog against the image it is overlaid on", () => {
@@ -482,6 +573,12 @@ describe("WorkspaceSnapshotter", () => {
         ]);
     });
 
+    test("saves the spectral coordinate that spectrally matched images are matched by", () => {
+        createSession({spectralMatchingType: "FREQ"});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.spectralMatchingType).toBe("FREQ");
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};
@@ -494,6 +591,75 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.colorBlendingImages).toEqual([{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 0.5]}]);
         expect(workspace.selectedColorBlending).toBe(1);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
+    });
+
+    test("saves the layers of a color-blended image that are hidden", () => {
+        const {appStore, frame} = createSession();
+        const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5], isRasterVisible: true, isContourVisible: false, isVectorOverlayVisible: false};
+        appStore.imageViewConfigStore.colorBlendingImageMap = new Map([[0, colorBlending]]) as never;
+
+        expect(new WorkspaceSnapshotter().capture().workspace.colorBlendingImages?.[0]).toEqual({imageListIndex: 0, selectedFrameId: [1], alpha: [1, 0.5], contourVisible: false, vectorOverlayVisible: false});
+    });
+
+    test("leaves out a region that the backend refused, also from the selection, and reports it", () => {
+        const {frame} = createSession();
+        const region = (regionId: number, name = "") => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name, color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
+        Object.assign(frame.regionSet, {regions: [region(0), region(5), region(-1, "box"), region(-2)], selectedRegionIds: new Set([5, -1]), focusedRegion: {regionId: -1}});
+
+        const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.id)).toEqual([5]);
+        expect(workspace.files?.[0].regionsSet?.selectedRegion).toBeUndefined();
+        expect(workspace.files?.[0].regionsSet).not.toHaveProperty("selectedRegions");
+        expect(issues.map(issue => issue.message)).toEqual([
+            `Could not save the region "box" of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`,
+            `Could not save a region of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`
+        ]);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("saves the regions that are selected together, and where the cursor is, frozen or not", () => {
+        const {appStore, frame} = createSession();
+        const region = (regionId: number) => ({regionId, regionType: CARTA.RegionType.RECTANGLE, rotation: 0, controlPoints: [{x: 0, y: 0}], name: "", color: "#ffffff", lineWidth: 2, isLocked: false, dashLength: 0});
+        Object.assign(frame.regionSet, {regions: [region(5), region(6)], selectedRegionIds: new Set([5, 6]), focusedRegion: {regionId: 6}});
+        Object.assign(appStore, {isCursorFrozen: true});
+        Object.assign(frame, {cursorInfo: {posImageSpace: {x: 3, y: 4}}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet).toMatchObject({selectedRegion: 6, selectedRegions: [5, 6]});
+        expect(workspace.cursor).toEqual({frozen: true, position: {x: 3, y: 4}});
+
+        Object.assign(appStore, {isCursorFrozen: false});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, position: {x: 3, y: 4}});
+
+        Object.assign(frame, {cursorInfo: {posImageSpace: {x: NaN, y: 4}}});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false});
+
+        Object.assign(appStore, {isCursorMirrored: true});
+        expect(new WorkspaceSnapshotter().capture().workspace.cursor).toEqual({frozen: false, mirrored: true});
+    });
+
+    test("saves the image that the Beam tab shows only when it is not the image in front", () => {
+        const other = createFrame(1);
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+        const {appStore, frame} = createSession();
+        const beam = {selectedFileId: 1};
+        Object.assign(appStore, {frames: [frame, other], getFrame: (fileId: number) => [frame, other].find(f => f.frameInfo.fileId === fileId), overlaySettings: {...(appStore as any).overlaySettings, beam}});
+
+        const imageId = WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, 1);
+        expect(new WorkspaceSnapshotter().capture().workspace.beamSettingsImageId).toBe(imageId);
+
+        beam.selectedFileId = 0;
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("beamSettingsImageId");
+    });
+
+    test("saves the image toolbar: whether it is expanded, the active layer, and the type of a new region of the image in front", () => {
+        const {appStore, frame} = createSession();
+        Object.assign(appStore, {isToolbarExpanded: false, activeLayer: "regionCreating"});
+        Object.assign(frame.regionSet, {newRegionType: CARTA.RegionType.ELLIPSE, mode: 1});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.toolbar).toEqual({expanded: false, activeLayer: "regionCreating", newRegionType: CARTA.RegionType.ELLIPSE, regionMode: 1});
     });
 
     test("names no color-blended image in front when the one there could not be saved", () => {
