@@ -46,6 +46,7 @@ import {
     type WorkspaceImageSource,
     type WorkspaceIssue,
     type WorkspaceMomentRequest,
+    type WorkspacePvGeneratorWidgetConfig,
     type WorkspacePvRequest,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
@@ -254,6 +255,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.restorePvPreviews();
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
@@ -466,6 +468,51 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
         }
         this.restorePanelStackingOrder(opened);
+    }
+
+    /**
+     * Puts each PV Preview Viewer back between the floating widgets, as it was stacked, and makes the
+     * PV preview that was the active image active again. Call it after the previews are made again.
+     * A viewer opens on top of the floating widgets when its preview arrives. A preview that arrives
+     * after the restore stops waiting for it stays where it opens, and does not become active.
+     */
+    private restorePvPreviews(): void {
+        const widgetsStore = this.appStore.widgetsStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+        const viewers: {id: string; widgetsBelow: number}[] = [];
+        let activePreview: FrameStore | undefined;
+        widgetsStore.pvGeneratorWidgets.forEach((generator, layoutId) => {
+            const config = this.workspace.plotWidgets?.[generator.widgetId] as WorkspacePvGeneratorWidgetConfig | undefined;
+            const preview = config?.preview;
+            if (!preview || typeof preview !== "object" || !generator.previewFrame) {
+                return;
+            }
+            if (preview.isActive === true) {
+                activePreview = generator.previewFrame;
+            }
+            const viewer = widgetsStore.floatingWidgets.find(widget => widget.type === "pv-preview" && widget.parentId === layoutId);
+            const widgetsBelow = preview.panel?.widgetsBelow;
+            if (viewer && isCount(widgetsBelow)) {
+                viewers.push({id: viewer.componentId || viewer.id, widgetsBelow});
+            }
+        });
+        if (viewers.length) {
+            // Settings panels save their own place in the stack, and the restore opens them later.
+            const viewerIds = new Set(viewers.map(viewer => viewer.id));
+            const order = widgetsStore.floatingWidgets
+                .filter(config => config.type !== "floating-settings")
+                .map(config => config.componentId || config.id)
+                .filter(id => !viewerIds.has(id))
+                .sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+            // Put the lowest viewer in first. Each saved count includes the viewers below it.
+            viewers.sort((a, b) => a.widgetsBelow - b.widgetsBelow).forEach(viewer => order.splice(Math.min(viewer.widgetsBelow, order.length), 0, viewer.id));
+            // Bringing each one to the top, from the bottom one to the top one, stacks them in this order.
+            order.forEach(id => zIndexManager.updateIndexOnSelect(id));
+        }
+        if (activePreview) {
+            this.appStore.updateActiveImageByFrame(activePreview);
+        }
     }
 
     /**

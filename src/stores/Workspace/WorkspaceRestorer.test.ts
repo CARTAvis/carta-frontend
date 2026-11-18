@@ -217,6 +217,8 @@ function createSession() {
         widgetsStore: {
             catalogWidgets: new Map(),
             catalogPlotWidgets: new Map(),
+            pvGeneratorWidgets: new Map<string, unknown>(),
+            floatingWidgets: [] as unknown[],
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined),
@@ -518,6 +520,61 @@ describe("WorkspaceRestorer", () => {
 
         const order = ["pv-generator-0", "catalog-plot-component-0", "spectral-profiler-0-settings", "histogram-0-settings"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
         expect(order).toEqual(["spectral-profiler-0-settings", "pv-generator-0", "histogram-0-settings", "catalog-plot-component-0"]);
+    });
+
+    test("puts each PV Preview Viewer back between the floating widgets as it was stacked, and makes the active preview active again", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        Object.assign(appStore, {zIndexManager});
+        const widgetsStore = appStore.widgetsStore as any;
+        const previews = [{name: "preview 0"}, {name: "preview 1"}];
+        widgetsStore.pvGeneratorWidgets = new Map([
+            ["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: previews[0]}],
+            ["pv-generator-1", {widgetId: "pv-generator-1", previewFrame: previews[1]}]
+        ]);
+        // The layout opened the generators, and each viewer opened on top when its preview arrived.
+        widgetsStore.floatingWidgets = [{id: "pv-generator-0"}, {id: "pv-generator-1"}, {id: "viewer-0", type: "pv-preview", parentId: "pv-generator-0"}, {id: "viewer-1", type: "pv-preview", parentId: "pv-generator-1"}];
+        ["pv-generator-0", "pv-generator-1", "viewer-0", "viewer-1"].forEach(id => zIndexManager.assignIndex(id));
+        const panel = (widgetsBelow: number) => ({x: 0, y: 0, width: 100, height: 100, widgetsBelow});
+
+        await restore(
+            createWorkspace({
+                plotWidgets: {
+                    "pv-generator-0": {preview: {panel: panel(2)}},
+                    "pv-generator-1": {preview: {isActive: true, panel: panel(0)}}
+                } as never
+            })
+        );
+
+        const order = ["pv-generator-0", "pv-generator-1", "viewer-0", "viewer-1"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["viewer-1", "pv-generator-0", "viewer-0", "pv-generator-1"]);
+        expect(appStore.updateActiveImageByFrame).toHaveBeenLastCalledWith(previews[1] as never);
+    });
+
+    test("leaves a PV preview that was not made again, and a workspace without the stack of the viewers", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        Object.assign(appStore, {zIndexManager});
+        const widgetsStore = appStore.widgetsStore as any;
+        widgetsStore.pvGeneratorWidgets = new Map([
+            ["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: null}],
+            ["pv-generator-1", {widgetId: "pv-generator-1", previewFrame: {name: "preview 1"}}]
+        ]);
+        widgetsStore.floatingWidgets = [{id: "pv-generator-1"}, {id: "viewer-1", type: "pv-preview", parentId: "pv-generator-1"}];
+        ["pv-generator-1", "viewer-1"].forEach(id => zIndexManager.assignIndex(id));
+
+        await restore(
+            createWorkspace({
+                plotWidgets: {
+                    "pv-generator-0": {preview: {isActive: true}},
+                    "pv-generator-1": {preview: {panel: {x: 0, y: 0, width: 100, height: 100}}}
+                } as never
+            })
+        );
+
+        expect(zIndexManager.findIndex("viewer-1")).toBeGreaterThan(zIndexManager.findIndex("pv-generator-1")!);
+        expect(appStore.updateActiveImageByFrame).not.toHaveBeenCalledWith(null);
+        expect(appStore.updateActiveImageByFrame.mock.calls.every(([frame]) => frame === appStore.frames[0])).toBe(true);
     });
 
     test("applies the saved fields of the online catalog query dialog", async () => {

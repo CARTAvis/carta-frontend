@@ -469,8 +469,25 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
                   }
                 : {}),
             ...(this.previewFrame ? {renderConfig: this.previewFrame.renderConfig.toConfig()} : {}),
-            ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number}} : {})
+            ...(this.previewFrame && AppStore.Instance.activeFrame === this.previewFrame ? {isActive: true} : {}),
+            ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number, ...PvGeneratorWidgetStore.widgetsBelowOf(panel)}} : {})
         };
+    }
+
+    /**
+     * Returns how many other floating widgets are below the viewer panel. Settings panels are not
+     * counted, because they save their own place in the stack. A floating widget is stacked by its
+     * component ID when it has one, such as a catalog plot.
+     */
+    private static widgetsBelowOf(panel: (typeof AppStore.Instance.widgetsStore.floatingWidgets)[number]): {widgetsBelow?: number} {
+        const {floatingWidgets} = AppStore.Instance.widgetsStore;
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        const others = floatingWidgets.filter(config => config !== panel && !(config.type === "floating-settings" && config.parentId && config.parentType)).map(config => config.componentId || config.id);
+        if (!zIndexManager || !others.length) {
+            return {};
+        }
+        const index = zIndexManager.findIndex(panel.componentId || panel.id) ?? 0;
+        return {widgetsBelow: others.filter(id => (zIndexManager.findIndex(id) ?? 0) < index).length};
     }
 
     /**

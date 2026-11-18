@@ -690,8 +690,14 @@ export interface WorkspacePvGeneratorWidgetConfig extends WorkspaceWidgetBinding
 /** A PV preview: how its image was drawn, and where its viewer panel was. */
 export interface WorkspacePvPreview {
     renderConfig?: WorkspaceRenderConfig;
-    /** The place and the size of the PV Preview Viewer panel, in pixels. */
-    panel?: {x: number; y: number; width: number; height: number};
+    /** Whether the preview was the active image. Left out when it was not. */
+    isActive?: boolean;
+    /**
+     * The place and the size of the PV Preview Viewer panel, in pixels. `widgetsBelow` is how many
+     * other floating widgets were below the panel. Settings panels are not counted, because they
+     * save their own place in the stack.
+     */
+    panel?: {x: number; y: number; width: number; height: number; widgetsBelow?: number};
     /** The request that made the preview. The widget can show other settings than the ones the preview was made with. */
     request?: WorkspacePvPreviewRequest;
 }

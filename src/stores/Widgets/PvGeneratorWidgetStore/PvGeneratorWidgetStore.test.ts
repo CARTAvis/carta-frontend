@@ -1,6 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 
+import {FloatingObjzIndexManager} from "models/zindex/zindex";
+
 import {TelemetryService} from "../../../services";
 import {AppStore, PreferenceStore} from "../..";
 import {ACTIVE_FILE_ID} from "../RegionWidgetStore/RegionWidgetStore";
@@ -185,6 +187,25 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    test("saves whether the preview is the active image, and how many other floating widgets are below its viewer", () => {
+        const {store, appStore, panel, previewFrame} = createSession(1);
+        store.setPreviewFrame(previewFrame as never);
+        const zIndexManager = new FloatingObjzIndexManager();
+        // A settings panel is not counted. A catalog plot is stacked by its component ID.
+        Object.assign(panel, {id: "viewer"});
+        appStore.widgetsStore.floatingWidgets = [
+            {id: "pv-generator-0"},
+            {id: "settings", type: "floating-settings", parentId: "pv-generator-0", parentType: "pv-generator"},
+            panel,
+            {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}
+        ] as never;
+        ["pv-generator-0", "settings", "viewer", "catalog-plot-component-0"].forEach(id => zIndexManager.assignIndex(id));
+        // The store keeps the preview as an observable, so the active frame is the one that it keeps.
+        Object.assign(appStore, {zIndexManager, activeFrame: store.previewFrame});
+
+        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview).toEqual({renderConfig: {colorMap: "viridis"}, isActive: true, panel: {x: 10, y: 20, width: 300, height: 200, widgetsBelow: 1}});
     });
 
     test("saves the preview with how it is drawn and where its panel is, and makes it again on restore", async () => {
