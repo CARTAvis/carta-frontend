@@ -3,7 +3,7 @@ const MOCK_APP_STORE = {
         removeFloatingWidgets: jest.fn(),
         clearDockedWidgets: jest.fn(),
         clearPopoutPositions: jest.fn(),
-        initWidgets: jest.fn(),
+        initWidgets: jest.fn((_docked: any[], _floating: any[], _persistence: string): string[] => []),
         attachDockedPvPreviews: jest.fn(() => []),
         updateImageWidgetTitle: jest.fn(),
         floatingWidgets: [] as any[],
@@ -147,6 +147,16 @@ describe("LayoutStore layout configs", () => {
         const [dockedConfigs, floatingConfigs] = MOCK_APP_STORE.widgetsStore.initWidgets.mock.calls[0];
         expect(dockedConfigs.map((config: any) => config.id)).toEqual(["image-view", "pv-generator", "channel-map-control"]);
         expect(floatingConfigs).toEqual(saved?.floating);
+    });
+
+    test("passes on what the WCS overlay of the layout copy of a workspace could not apply", () => {
+        MOCK_APP_STORE.widgetsStore.initWidgets.mockReturnValueOnce(["The overlay problem"]);
+        const problems: string[] = [];
+
+        expect(layoutStore.applyLayoutConfig(defaultConfig(), "", "workspace", problems)).toBe(true);
+
+        expect(problems).toEqual(["The overlay problem"]);
+        expect(MOCK_APP_STORE.alertStore.showAlert).not.toHaveBeenCalled();
     });
 
     test("reports no layout config before a layout is shown", () => {

@@ -254,6 +254,8 @@ export class FrameStore {
 
     @observable colorbarLabelCustomText: string = "arbitrary units";
     @observable titleCustomText: string = "";
+    /** The title text that the image starts with. */
+    readonly defaultTitleText: string;
     @observable overlayBeamSettings: OverlayBeamStore = new OverlayBeamStore();
     @observable spatialReference: FrameStore | null = null;
     @observable spectralReference: FrameStore | null = null;
@@ -1496,7 +1498,8 @@ export class FrameStore {
         this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
         this.vectorOverlayStore = new VectorOverlayStore(this);
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
-        this.titleCustomText = frameInfo?.fileInfo?.name;
+        this.defaultTitleText = frameInfo?.fileInfo?.name;
+        this.titleCustomText = this.defaultTitleText;
         this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
