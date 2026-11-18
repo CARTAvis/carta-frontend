@@ -704,8 +704,7 @@ describe("AppStore.removeAllFrames", () => {
 
         appStore.removeAllFrames();
 
-        // Closing the preview made the first image of the image view active. There is none here, so it
-        // set the active image to undefined.
+        // Closing the preview makes the first image of the image view active. This test has no such image.
         expect(appStore.previewFrames.size).toBe(0);
         expect(appStore.activeImage).toBeNull();
         jest.restoreAllMocks();
