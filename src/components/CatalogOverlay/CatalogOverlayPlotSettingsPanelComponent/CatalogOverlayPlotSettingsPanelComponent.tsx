@@ -46,6 +46,9 @@ interface CatalogColormapPreviewSession {
     baseColormap: string;
 }
 
+/** The file ID of the empty display store that holds the defaults the controls show while no catalog is shown. */
+const EMPTY_DISPLAY_CATALOG_FILE_ID = 0;
+
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
@@ -91,12 +94,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return catalogFileId !== undefined ? CatalogStore.Instance.getCatalogDisplayStore(catalogFileId) : undefined;
     }
 
-    @computed get catalogFileId() {
-        return this.widgetStore?.selectedCatalogId;
+    @computed get catalogFileId(): number | undefined {
+        return CatalogStore.Instance.widgetBindings.catalogOf(this.widgetId);
     }
 
+    /** A plain lookup: the settings panel edits the widget's store, it does not bring one into being. */
     @computed get widgetStore(): CatalogWidgetStore | undefined {
-        return WidgetsStore.Instance.catalogWidgets.get(this.widgetId);
+        return WidgetsStore.Instance.catalogWidgetStore(this.widgetId);
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -116,6 +120,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
+        // The panel edits one catalog widget's state, and is the one place that state is brought
+        // into being if the panel is reached before the widget itself has any.
+        WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId);
 
         makeObservable(this);
 
@@ -126,9 +133,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 if (catalogFileId !== undefined) {
                     const activeFiles = catalogStore.activeCatalogFiles;
                     WidgetsStore.Instance.getCatalogWidgetStore(this.widgetId, catalogFileId);
-                    // The sentinel names no catalog, so a store built for it would hold nothing but
-                    // defaults and never be released. The widget's own catalog brings one with it.
-                    if (catalogFileId !== CatalogStore.PENDING_CATALOG_FILE_ID) {
+                    if (!catalogStore.getCatalogDisplayStore(catalogFileId) && catalogStore.catalogProfileStores.has(catalogFileId)) {
                         catalogStore.getOrCreateCatalogDisplayStore(catalogFileId);
                     }
 
@@ -170,7 +175,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     /** The store standing in for a catalog that is not there, holding the defaults the disabled controls show. */
     private getEmptyDisplayStore(): CatalogDisplayStore {
         if (!this.emptyDisplayStore) {
-            this.emptyDisplayStore = new CatalogDisplayStore(CatalogStore.PENDING_CATALOG_FILE_ID);
+            this.emptyDisplayStore = new CatalogDisplayStore(EMPTY_DISPLAY_CATALOG_FILE_ID);
         }
         return this.emptyDisplayStore;
     }
@@ -268,7 +273,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        WidgetsStore.Instance.setCatalogWidgetSelection(this.widgetId, fileId);
+        CatalogStore.Instance.widgetBindings.show(this.widgetId, fileId);
     };
 
     private renderScalingParameter(scaling: FrameScaling, value: number, onValueChange: (value: number) => void, isDisabled: boolean): React.ReactNode {
@@ -959,7 +964,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.widgetStore?.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={this.widgetStore?.settingsTabFor(this.catalogFileId)} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                         <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={displayStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={isOverlayPanelDisabled} />
                         <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-color-tab-title" />
                         <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={isOverlayPanelDisabled} data-testid="catalog-settings-orientation-tab-title" />
@@ -1053,7 +1058,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleSelectedTabChanged(newTabId: string | number) {
-        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
+        this.widgetStore?.setSettingsTab(this.catalogFileId, Number.parseInt(newTabId.toString()) as CatalogSettingsTabs);
         this.displayStore?.setSizeAxisTab(CatalogSettingsTabs.SIZE_MAJOR);
     }
 

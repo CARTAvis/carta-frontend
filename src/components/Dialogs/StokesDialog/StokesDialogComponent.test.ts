@@ -15,11 +15,9 @@ describe("StokesDialogComponent", () => {
         const stokes = {directory: "", file: "image.fits", hdu: "0", polarizationType: CARTA.PolarizationType.I};
         const openConcatFile = jest.fn().mockResolvedValue(undefined);
         const appendConcatFile = jest.fn().mockResolvedValue(undefined);
-        const setStokesFiles = jest.fn();
         const saveStartingDirectory = jest.fn();
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
             dialogStore: {dialogVisible: observable.map<DialogId, boolean>()},
-            activeFrame: {setStokesFiles},
             frames: [{}],
             openConcatFile,
             appendConcatFile,
@@ -39,7 +37,7 @@ describe("StokesDialogComponent", () => {
 
             expect(isAppendingFrame ? appendConcatFile : openConcatFile).toHaveBeenCalledWith([stokes], "", "0");
             expect(isAppendingFrame ? openConcatFile : appendConcatFile).not.toHaveBeenCalled();
-            expect(setStokesFiles).toHaveBeenCalledWith([stokes]);
+            // The image opened from them is given its polarization files as it is added, not by the dialog.
             expect(saveStartingDirectory).toHaveBeenCalled();
         } finally {
             component.componentWillUnmount();

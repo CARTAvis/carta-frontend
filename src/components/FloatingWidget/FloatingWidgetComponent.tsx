@@ -96,7 +96,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     private getCatalogOverlaySettingsTab = (parentId: string): number | undefined => {
-        return AppStore.Instance.widgetsStore.catalogWidgets.get(parentId)?.settingsTabId;
+        return AppStore.Instance.widgetsStore.catalogWidgets.get(parentId)?.settingsTabFor(AppStore.Instance.catalogStore.widgetBindings.catalogOf(parentId));
     };
 
     private getSettingsTab = (parentId: string, parentType?: string): number | undefined => {

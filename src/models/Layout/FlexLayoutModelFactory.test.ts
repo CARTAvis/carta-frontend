@@ -69,7 +69,7 @@ describe("FlexLayoutModelFactory", () => {
                         {
                             type: "stack",
                             width: 70,
-                            content: [{type: "component", id: "catalog-plot", plotType: "histogram"}]
+                            content: [{type: "component", id: "catalog-plot", widgetSettings: {plotType: "Histogram"}}]
                         }
                     ]
                 }
@@ -109,6 +109,28 @@ describe("FlexLayoutModelFactory", () => {
         });
 
         expect(CollectTabIds(recoveredModel.layout)).toStrictEqual(["stats-0"]);
+    });
+
+    test("names spatial profiler tabs by their coordinate before their widgets mount", () => {
+        // A tab that is not the one shown in its tabset is not mounted, so it keeps this name.
+        const model = createFlexLayoutModel({
+            type: "row",
+            content: [
+                {
+                    type: "stack",
+                    content: [
+                        {type: "component", id: "log"},
+                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}},
+                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}},
+                        {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "Iy"}},
+                        {type: "component", id: "spatial-profiler"}
+                    ]
+                }
+            ]
+        });
+
+        const tabs = (model.layout.children[0] as any).children;
+        expect(tabs.map(tab => tab.name)).toEqual(["Log", "X Profile: Cursor", "Y Profile: Cursor", "IY Profile: Cursor", "X Profile: Cursor"]);
     });
 
     test("only image-view tabs enable popout", () => {
