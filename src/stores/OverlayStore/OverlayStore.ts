@@ -1174,8 +1174,8 @@ export class OverlayColorbarSettings {
 
     /**
      * Applies the saved colorbar settings. When the config leaves out a setting that has a
-     * preference, the setting follows the user's preference. Leaves the switch of the custom label text as it is, because a workspace
-     * saves it.
+     * preference, the setting follows the user's preference. The switch of the custom label text
+     * does not change, because a workspace saves it.
      */
     @action applyConfig(config: Persisted<OverlayColorbarConfig> | undefined) {
         const isWidth = numberIn(1, 100);
