@@ -143,6 +143,24 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
         restored.dispose();
     });
 
+    test("chooses the saved spectral profiler before it applies the redshift, and keeps the redshift of a profiler in the rest frame", () => {
+        // The first profiler shows its X axis in the rest frame. The query used the second one.
+        MOCK_APP_STORE.widgetsStore.spectralProfilerList = ["spectral-profiler-0", "spectral-profiler-1"] as never;
+        MOCK_APP_STORE.widgetsStore.getSpectralWidgetStoreByID.mockImplementation(((id: string) =>
+            id === "spectral-profiler-0" ? {widgetId: "rest", isXAxisRestFrameActive: true} : {widgetId: "observed", isXAxisRestFrameActive: false}) as never);
+        store.setSelectedSpectralProfiler("spectral-profiler-0");
+
+        expect(store.applyWorkspaceConfig({redshiftType: RedshiftType.Z, redshift: 0.01, spectralProfilerId: "observed"} as never)).toEqual([]);
+        expect([store.selectedSpectralProfilerID, store.redshiftInput]).toEqual(["spectral-profiler-1", 0.01]);
+
+        // The input is off for a profiler in the rest frame, and it keeps the saved value.
+        const other = new SpectralLineQueryWidgetStore();
+        expect(other.applyWorkspaceConfig({redshiftType: RedshiftType.Z, redshift: 0.01, spectralProfilerId: "rest"} as never)).toEqual([]);
+        expect([other.isRedshiftInputDisabled, other.redshiftInput]).toEqual([true, 0.01]);
+        expect(other.toWorkspaceConfig()).toMatchObject({redshift: 0.01});
+        other.dispose();
+    });
+
     test("keeps the default of each value that is not valid, and says when the spectral profiler was not restored", () => {
         const problems = store.applyWorkspaceConfig({rangeType: "Width", unit: "Hz", range: [1], intensityLimit: "x", redshiftType: "Speed", spectralProfilerId: "gone"} as never);
 

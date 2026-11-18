@@ -193,6 +193,11 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
         if (this.isRedshiftInputDisabled) {
             return false;
         }
+        return this.isValidRedshiftValue(input);
+    };
+
+    /** Returns whether the value is a valid velocity or redshift for the redshift type, whether or not the input is on. */
+    private isValidRedshiftValue = (input: number): boolean => {
         return this.redshiftType === RedshiftType.V ? isValidVelocity(input, LINE_QUERY_VELOCITY_CONVENTION) : isValidRedshift(input);
     };
 
@@ -708,12 +713,6 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
         if (isFiniteNumber(config.intensityLimit)) {
             this.setIntensityLimitValue(config.intensityLimit);
         }
-        if (Object.values(RedshiftType).includes(config.redshiftType)) {
-            this.setRedshiftType(config.redshiftType);
-        }
-        if (isFiniteNumber(config.redshift)) {
-            this.setRedshiftInput(config.redshift);
-        }
         if (isWidthList(config.headerTableColumnWidths, DEFAULT_HEADER_TABLE_COLUMN_WIDTHS.length)) {
             this.headerTableColumnWidths = [...config.headerTableColumnWidths];
         }
@@ -725,6 +724,19 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
                 this.setSelectedSpectralProfiler(profilerId);
             } else {
                 problems.push("the spectral profiler that it plotted lines on was not restored");
+            }
+        }
+        // Apply the redshift after the spectral profiler is chosen. The redshift input is off while the
+        // chosen profiler shows its X axis in the rest frame, and it keeps its value then. So put the
+        // saved value back without the check of the input.
+        if (Object.values(RedshiftType).includes(config.redshiftType)) {
+            this.setRedshiftType(config.redshiftType);
+        }
+        if (isFiniteNumber(config.redshift)) {
+            if (!this.isRedshiftInputDisabled) {
+                this.setRedshiftInput(config.redshift);
+            } else if (this.isValidRedshiftValue(config.redshift)) {
+                this.redshiftInput = config.redshift;
             }
         }
         return problems;
