@@ -391,7 +391,7 @@ describe("RegionSetStore restoring an existing region", () => {
         );
 
         expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(1);
-        // Below every special region ID, such as -1 for the whole image.
+        // The temporary ID is below every special region ID, such as -1 for the whole image.
         expect(sentRegionId).toBeLessThan(-4);
         expect(region?.regionId).toBe(105);
         expect(region?.color).toBe("#123456");

@@ -727,8 +727,8 @@ export class SpectralLineQueryWidgetStore implements ConfigurableStore<SpectralL
             }
         }
         // Apply the redshift after the spectral profiler is chosen. The redshift input is off while the
-        // chosen profiler shows its X axis in the rest frame, and it keeps its value then. So put the
-        // saved value back without the check of the input.
+        // chosen profiler shows its X axis in the rest frame. The input keeps its value then. So put
+        // the saved value back without the check of the input.
         if (Object.values(RedshiftType).includes(config.redshiftType)) {
             this.setRedshiftType(config.redshiftType);
         }
