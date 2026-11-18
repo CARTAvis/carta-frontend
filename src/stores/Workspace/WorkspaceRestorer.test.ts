@@ -676,7 +676,7 @@ describe("WorkspaceRestorer", () => {
         const {appStore} = createSession();
         const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
 
-        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {selectedRegion: 2, selectedRegions: [1, 2, 9], regions: [region(1), region(2)]}}], cursor: {frozen: true, position: {x: 3, y: 4}}}));
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {selectedRegion: 2, selectedRegions: [1, 2, 9], regions: [region(1), region(2)]}}], selectedFile: 1, cursor: {frozen: true, position: {x: 3, y: 4}}}));
 
         const frame = appStore.frames[0] as any;
         expect(frame.regionSet.setSelectionByIds).toHaveBeenCalledWith([101, 102], 102);
@@ -705,7 +705,7 @@ describe("WorkspaceRestorer", () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), center: {x: "10", y: "20"}, objectName: "M17"};
 
-        await restore(createWorkspace({files: [IMAGE], layout: LAYOUT, cursor: {frozen: true, position: {x: 5, y: 6}}, onlineCatalogQuery}));
+        await restore(createWorkspace({files: [IMAGE], layout: LAYOUT, selectedFile: 1, cursor: {frozen: true, position: {x: 5, y: 6}}, onlineCatalogQuery}));
 
         const cursorOrder = (appStore.activeFrame as any).updateCursorRegion.mock.invocationCallOrder[0];
         expect(cursorOrder).toBeLessThan(appStore.layoutStore.applyLayoutConfig.mock.invocationCallOrder[0]);
@@ -723,10 +723,21 @@ describe("WorkspaceRestorer", () => {
         expect(setSelectedFrame).toHaveBeenCalledWith(appStore.frames[1].frameInfo.fileId);
     });
 
+    test("leaves the cursor where it is when the image that it was on is not in front, and says so", async () => {
+        const {appStore} = createSession();
+
+        // The image that was in front, 2, was not restored. So the first image is in front.
+        const problems = await restore(createWorkspace({files: [IMAGE], selectedFile: 2, cursor: {frozen: true, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
+        expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+        expect(problems).toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+    });
+
     test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
         const {appStore} = createSession();
 
-        await restore(createWorkspace({files: [IMAGE], cursor: {frozen: false, position: {x: 5, y: 6}}}));
+        await restore(createWorkspace({files: [IMAGE], selectedFile: 1, cursor: {frozen: false, position: {x: 5, y: 6}}}));
 
         expect((appStore.activeFrame as any).setCursorPosition).toHaveBeenCalledWith({x: 5, y: 6});
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 5, y: 6});
