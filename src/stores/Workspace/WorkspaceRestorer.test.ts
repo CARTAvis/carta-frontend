@@ -296,7 +296,8 @@ describe("WorkspaceRestorer", () => {
     test("opens the Snippet dialog with the saved snippet of the saved name, and empty for a missing name or another user's workspace", async () => {
         const {appStore} = createSession();
         const snippet = {code: "app.openFile('a.fits')", categories: []};
-        Object.assign(appStore, {snippetStore: {snippets: new Map([["Open a file", snippet]])}});
+        const snippets = new Map<string, unknown>([["Open a file", snippet]]);
+        Object.assign(appStore, {snippetStore: {snippets}});
 
         await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
@@ -310,6 +311,13 @@ describe("WorkspaceRestorer", () => {
         const sharedProblems = await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
         expect(sharedProblems).toEqual([]);
+
+        // An example is the same for every user, so another user's workspace shows it too.
+        const example = {code: "app.openFile('b.fits')", tags: ["example"], categories: ["Examples"]};
+        snippets.set("02. Basics", example);
+        appStore.dialogStore.showDialog.mockClear();
+        await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "02. Basics"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet: example, name: "02. Basics"}]]);
 
         // The opener has turned code snippets off.
         appStore.dialogStore.showDialog.mockClear();

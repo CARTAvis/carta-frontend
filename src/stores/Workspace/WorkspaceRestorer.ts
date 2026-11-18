@@ -212,9 +212,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Opens the Snippet dialog with the saved snippet of the saved name. The dialog is empty when the
-     * workspace belongs to another user, because the snippets of the opener are not the ones of that
-     * user. It is also empty when the opener has no snippet of that name, and the report says so. The
+     * Opens the Snippet dialog with the saved snippet or the example of the saved name. A saved snippet
+     * is not shown when the workspace belongs to another user, because the snippets of the opener are
+     * not the ones of that user. An example is the same for every user. The dialog is empty when the
+     * opener has no snippet of that name, and the report says so. The
      * dialog does not open when the opener has turned code snippets off, and the report says so.
      */
     private showSnippetDialog(): void {
@@ -224,7 +225,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         const name = this.workspace.dialogSettings?.snippet?.name;
-        const snippet = typeof name === "string" && this.workspace.editable !== false ? this.appStore.snippetStore.snippets.get(name) : undefined;
+        const saved = typeof name === "string" ? this.appStore.snippetStore.snippets.get(name) : undefined;
+        const snippet = saved && (this.workspace.editable !== false || saved.tags?.includes("example")) ? saved : undefined;
         if (snippet) {
             dialogStore.showDialog(DialogId.Snippet, {snippet, name});
             return;

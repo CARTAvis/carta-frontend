@@ -135,6 +135,23 @@ export class WorkspaceSnapshotter {
      * The settings that the Contour and Vector Overlay dialogs show but that are not applied, for
      * images that the workspace keeps.
      */
+    /**
+     * Returns the name of the snippet that the Snippet dialog shows. The store keeps no name for an
+     * example, so that saving an edited example asks for a new name. Find an example by its code
+     * instead. An example whose code the user changed is not found, like a snippet that is not saved.
+     */
+    private shownSnippetName(): string | undefined {
+        const snippetStore = this.appStore.snippetStore;
+        if (snippetStore?.activeSnippetName) {
+            return snippetStore.activeSnippetName;
+        }
+        const code = snippetStore?.activeSnippet?.code;
+        if (!code) {
+            return undefined;
+        }
+        return [...(snippetStore.snippets ?? new Map()).entries()].find(([, snippet]) => snippet.tags?.includes("example") && snippet.code === code)?.[0];
+    }
+
     private captureDialogSettings(): Workspace["dialogSettings"] {
         const dialogStore = this.appStore.dialogStore;
         const withImageId = (settings: DialogSettings | undefined) => {
@@ -143,7 +160,7 @@ export class WorkspaceSnapshotter {
         };
         const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
         const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
-        const snippetName = dialogStore?.dialogVisible?.get(DialogId.Snippet) ? this.appStore.snippetStore?.activeSnippetName : undefined;
+        const snippetName = dialogStore?.dialogVisible?.get(DialogId.Snippet) ? this.shownSnippetName() : undefined;
         if (!contour && !vectorOverlay && !snippetName) {
             return undefined;
         }
