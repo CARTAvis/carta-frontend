@@ -3,7 +3,6 @@ import {CARTA} from "carta-protobuf";
 import {ContourDashMode} from "enums/contour";
 import {type WorkspaceContourConfig} from "models/Workspace";
 import {type PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
-import {undeclaredFields} from "utilities/schema/pendingSchemaFields";
 
 import {ContourConfigStore} from "./ContourConfigStore";
 
@@ -63,7 +62,9 @@ describe("ContourConfigStore workspace round trip", () => {
         store.setEnabled(true);
         store.applyConfig(createWorkspaceConfig(true));
 
-        expect(undeclaredFields("workspace/contour-config", WORKSPACE_SCHEMA.definitions["contour-config"].properties, store.toConfig()!)).toEqual([]);
+        const declared = WORKSPACE_SCHEMA.definitions["contour-config"].properties;
+
+        expect(Object.keys(store.toConfig()!).filter(key => !(key in declared))).toEqual([]);
     });
 
     test("returns the applied config", () => {
