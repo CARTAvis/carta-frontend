@@ -50,6 +50,7 @@ export type MultiPlotData = {
     fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
     colors: (string | undefined)[];
     labels: {image: string | undefined; plot: string}[];
+    exportNames: string[];
     plotName: {image: string; plot: string};
     xMin: number | undefined;
     xMax: number | undefined;
@@ -786,6 +787,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const smoothedData: Point2D[][] = [];
         const colors: (string | undefined)[] = [];
         const labels: {image: string | undefined; plot: string}[] = [];
+        const exportNames: string[] = [];
         const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
@@ -802,6 +804,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const profileColor = profileColorMap.get(profile.colorKey ?? "");
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
+                exportNames.push(profile.exportName);
 
                 const intensityValues = this.getDisplayIntensityValues(profile.data.values, profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit, profile.isFluxDensityDerivedFromSum);
                 const displayChannelValues = this.convertObservedArrayToDisplay(profile.channelValues);
@@ -880,6 +883,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             fittingData,
             colors,
             labels,
+            exportNames,
             plotName: this.profileSelectionStore.profilesPlotName,
             xMin,
             xMax,

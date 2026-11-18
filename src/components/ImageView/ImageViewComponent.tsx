@@ -91,7 +91,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     }
 
     const colorbarCanvas = panelElement.querySelector(".colorbar-stage canvas") as HTMLCanvasElement;
-    const beamProfileCanvas = panelElement.querySelector(".beam-profile-stage canvas") as HTMLCanvasElement;
+    const beamProfileStageArray = panelElement.querySelectorAll(".beam-profile-stage") as NodeListOf<HTMLDivElement>;
     const regionDivArray = panelElement.querySelectorAll(".region-stage") as NodeListOf<HTMLDivElement>;
     const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
 
@@ -136,8 +136,11 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
         ctx.drawImage(colorbarCanvas, xPos, yPos);
     }
 
-    if (beamProfileCanvas) {
-        const beamProfileDiv = panelElement.querySelector(".beam-profile-stage") as HTMLDivElement;
+    for (const beamProfileDiv of beamProfileStageArray) {
+        const beamProfileCanvas = beamProfileDiv.querySelector("canvas");
+        if (!beamProfileCanvas) {
+            continue;
+        }
         const offsetLeft = beamProfileDiv?.offsetLeft * appStore.pixelRatio || 0;
         const offsetTop = beamProfileDiv?.offsetTop * appStore.pixelRatio || 0;
         ctx.drawImage(beamProfileCanvas, offsetLeft, offsetTop);

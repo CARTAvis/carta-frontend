@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
 cd "${0%/*}"
-if ! [[ $(find zstd-1.4.4.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/dev/null) ]]; then
-    echo "Fetching Zstd 1.4.4"
+if ! [[ $(find zstd-1.5.7.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/dev/null) ]]; then
+    echo "Fetching Zstd 1.5.7"
     retry_count=0
     max_retries=2
     while (( retry_count < max_retries )); do
-        wget https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz && break
+        wget https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz && break
         ((retry_count++))
         if (( retry_count == max_retries )); then
-            echo "Failed to fetch Zstd 1.4.4."
+            echo "Failed to fetch Zstd 1.5.7."
             exit 1
         fi
         echo "Download failed. Trying again."
@@ -17,17 +17,17 @@ if ! [[ $(find zstd-1.4.4.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/de
     done
 fi
 
-mkdir -p zstd; tar -xf zstd-1.4.4.tar.gz --directory ./zstd --strip-components=1
+mkdir -p zstd; tar -xf zstd-1.5.7.tar.gz --directory ./zstd --strip-components=1
 
 echo "Creating single file decoder source"
-cd zstd/contrib/single_file_decoder
+cd zstd/build/single_file_libs
 ./create_single_file_decoder.sh
 
 echo "Compiling to LLVM bitcode"
-cd ../../
+cd ../..
 mkdir -p build
 cd build
-emcc -O3 -g0 -msimd128 ../contrib/single_file_decoder/zstddeclib.c -c -o ./standalone_zstd.a
+emcc -O3 -g0 -msimd128 ../build/single_file_libs/zstddeclib.c -c -o ./standalone_zstd.a
 echo "Checking for Zstd bitcode..."
 if [[ $(find -L ./standalone_zstd.a -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
