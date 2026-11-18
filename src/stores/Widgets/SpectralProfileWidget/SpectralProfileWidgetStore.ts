@@ -1531,9 +1531,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
             // The guesses belong to the profile that was fitted. When the first two steps could not
             // show that profile again, the guesses are 0. For example, its region was not restored. A
-            // workspace does not save the cursor position. So the guesses of a cursor profile are 0
-            // too.
-            const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR;
+            // profile at the cursor is the same profile only when the restore put the cursor back
+            // where it was on the same image.
+            const fileId = this.effectiveFrame?.frameInfo.fileId;
+            const isCursorProfile = this.effectiveRegionId === RegionId.CURSOR && !(fileId !== undefined && ids.wasCursorRestoredOn?.(fileId));
             const isSameProfile = this.isShowingWorkspaceData && !isCursorProfile;
             this.fittingStore.applyWorkspaceConfig(fitting, isSameUnits && isSameProfile);
             const hasResult = !!fitting.result && typeof fitting.result === "object";
@@ -1542,7 +1543,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
                 if (!this.isShowingWorkspaceData) {
                     problems.push(`the profile that its fitting guesses were made for was not restored, so ${zero}`);
                 } else if (isCursorProfile) {
-                    problems.push(`its fitting guesses were made for the profile at the cursor, whose position is not saved, so ${zero}`);
+                    problems.push(`its fitting guesses were made for the profile at the cursor, and the cursor was not put back where it was, so ${zero}`);
                 } else if (!isSameUnits) {
                     problems.push(`the fitting guesses were made in ${describeUnits(fitting.xUnit, fitting.yUnit)}, but the profile now shows ${describeUnits(xUnit, yUnit)}. The ${zero.slice("the ".length)}`);
                 }

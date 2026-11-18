@@ -69,6 +69,8 @@ export interface WorkspaceIdReader {
     regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined;
     /** Returns whether the image that was in front when the workspace was saved was restored. A widget that follows the active image showed this image. */
     wasActiveImageRestored(): boolean;
+    /** Returns whether the restore put the cursor back where it was saved on the image with this file ID. */
+    wasCursorRestoredOn?(fileId: number): boolean;
 }
 
 /**

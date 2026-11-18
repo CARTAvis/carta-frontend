@@ -434,6 +434,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (frame === savedFrontFrame) {
                 frame.setCursorPosition(position);
                 frame.updateCursorRegion(position);
+                // The cursor profiles follow the cursor only over the image. A cursor saved beside the
+                // image shows its position, and the profiles stay where they were.
+                const size = frame.frameInfo.fileInfoExtended;
+                const isOverImage = !!size && position.x + 0.5 >= 0 && position.x + 0.5 <= size.width && position.y + 0.5 >= 0 && position.y + 0.5 <= size.height;
+                if (isOverImage) {
+                    this.cursorFileId = frame.frameInfo.fileId;
+                }
             } else if (this.workspace.selectedFile !== undefined) {
                 // The report lists this under the image that the cursor was on, when that image was not restored.
                 this.report(WorkspaceItemKind.Layout, "Cursor", "The cursor was not put back where it was, because the image that it was on is not in front", undefined, {
@@ -2783,6 +2790,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             return issue;
         });
+    }
+
+    /** The file ID of the image that the restore put the cursor back on. */
+    private cursorFileId: number | undefined;
+
+    public wasCursorRestoredOn(fileId: number): boolean {
+        return this.cursorFileId === fileId;
     }
 
     public wasActiveImageRestored(): boolean {

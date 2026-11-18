@@ -5,6 +5,7 @@ import {observable, runInAction} from "mobx";
 
 import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SmoothingType, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
+import {type WorkspaceIdReader} from "../../../models/Widget/WidgetWorkspaceConfig";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
 import {AppStore, PreferenceStore} from "../..";
@@ -890,7 +891,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             maskUnit: "Jy/beam"
         };
 
-        const restore = (widgetStore: SpectralProfileWidgetStore, config: object, ids = WORKSPACE_IDS) => {
+        const restore = (widgetStore: SpectralProfileWidgetStore, config: object, ids: WorkspaceIdReader = WORKSPACE_IDS) => {
             runInAction(() => widgetStore.applyWorkspaceBinding(config, ids));
             runInAction(() => widgetStore.applyWorkspaceConfig(config, ids));
             return runInAction(() => widgetStore.applyWorkspaceView(config, ids));
@@ -1160,13 +1161,22 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept, widgetStore.fittingStore.components[0].center]).toEqual([1, 0, 0]);
         });
 
-        test("sets the guesses of a profile at the cursor to 0, as the cursor position is not saved", () => {
+        test("sets the guesses of a profile at the cursor to 0 when the cursor was not put back where it was", () => {
             const {widgetStore} = createFittingWidgetStore();
 
             const problems = restore(widgetStore, {fitting: savedFitting});
 
-            expect(problems).toEqual(["its fitting guesses were made for the profile at the cursor, whose position is not saved, so the guesses are 0"]);
+            expect(problems).toEqual(["its fitting guesses were made for the profile at the cursor, and the cursor was not put back where it was, so the guesses are 0"]);
             expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept]).toEqual([1, 0]);
+        });
+
+        test("keeps the guesses of a profile at the cursor when the cursor was put back where it was on the same image", () => {
+            const {widgetStore} = createFittingWidgetStore();
+
+            const problems = restore(widgetStore, {fitting: savedFitting}, {...WORKSPACE_IDS, wasCursorRestoredOn: () => true});
+
+            expect(problems).toEqual([]);
+            expect([widgetStore.fittingStore.function, widgetStore.fittingStore.yIntercept]).toEqual([1, 0.5]);
         });
 
         test("does not apply the settings of an image that was not restored", () => {

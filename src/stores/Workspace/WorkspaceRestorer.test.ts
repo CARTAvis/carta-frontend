@@ -59,7 +59,7 @@ let frameOverrides: Record<string, unknown> = {};
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
     const frame = {
-        frameInfo: {fileId},
+        frameInfo: {fileId, fileInfoExtended: {width: 100, height: 100}},
         center: {x: 0, y: 0},
         isAxisZoomable: false,
         zoomLevel: 1,
@@ -1074,6 +1074,16 @@ describe("WorkspaceRestorer", () => {
 
         expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
         expect(problems).not.toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+    });
+
+    test("counts the cursor as put back on the image in front only when it was saved over the image", async () => {
+        const {appStore} = createSession();
+
+        // The image is 100 by 100 pixels. A cursor saved beside it shows its position, and the cursor profiles stay where they were.
+        const over = await restored(createWorkspace({files: [IMAGE], selectedFile: 1, cursor: {frozen: true, position: {x: 5, y: 6}}}));
+        expect(over.wasCursorRestoredOn(appStore.activeFrame.frameInfo.fileId)).toBe(true);
+        const beside = await restored(createWorkspace({files: [IMAGE], selectedFile: 1, cursor: {frozen: true, position: {x: 250, y: 6}}}));
+        expect(beside.wasCursorRestoredOn(appStore.activeFrame.frameInfo.fileId)).toBe(false);
     });
 
     test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
