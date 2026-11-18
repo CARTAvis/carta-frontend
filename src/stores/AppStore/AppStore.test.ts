@@ -673,3 +673,20 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
     });
 });
+
+describe("AppStore.removeAllFrames", () => {
+    test("clears the active image after it closes the PV previews, which make the first image of the image view active", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(true);
+        jest.spyOn(appStore.backendService, "closePvPreview").mockReturnValue(true);
+        runInAction(() => appStore.previewFrames.set(5, {dispose: jest.fn()} as never));
+
+        appStore.removeAllFrames();
+
+        // Closing the preview made the first image of the image view active. There is none here, so it
+        // set the active image to undefined.
+        expect(appStore.previewFrames.size).toBe(0);
+        expect(appStore.activeImage).toBeNull();
+        jest.restoreAllMocks();
+    });
+});

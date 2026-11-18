@@ -1181,11 +1181,14 @@ export class AppStore {
             // that did not go through leaves everything loaded, still to be named by a later save.
             WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
             WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
-            this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
                 this.removePreviewFrame(previewFrameId);
             });
+            // Clear the active image after the previews are closed. Closing a preview makes the first
+            // image of the image view active, and that image is closed below. A closed image that
+            // stays active breaks the WCS of the next image that opens.
+            this.setActiveImage(null);
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });

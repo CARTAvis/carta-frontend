@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring moment, PV and HiPS images, and the PV preview, in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
+* Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
