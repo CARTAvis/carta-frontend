@@ -948,6 +948,16 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toContain("Could not add image.fits as a layer of the color-blended image 1 in the Image List: it is the base layer");
     });
 
+    test("lists a layer whose image was not restored under that image in the restore report", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        const issues = await restoreIssues(createWorkspace({files: [IMAGE], colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [3], alpha: [1, 1]}]}));
+
+        expect(issues).toContainEqual(expect.objectContaining({label: "The layer image 3 of the color-blended image 1", reason: "the image was not restored", causeImageId: 3}));
+    });
+
     test("reports a color-blended image that could not be made, because none of its images was restored", async () => {
         const {appStore} = createSession();
         appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => null);

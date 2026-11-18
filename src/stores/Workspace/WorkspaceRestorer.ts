@@ -2173,7 +2173,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 } else if (colorBlending) {
                     const layerName = fileInfo ? this.nameOf(fileInfo) : `image ${layerIds[i]}`;
                     const reason = !frame ? "the image was not restored" : frame === colorBlending.baseFrame ? "it is the base layer" : colorBlending.frames.includes(frame) ? "it is a layer already" : "it is not matched to the base layer";
-                    this.report(WorkspaceItemKind.Image, layerName, `Could not add ${layerName} as a layer of the color-blended image ${imageListIndex} in the Image List: ${reason}`);
+                    // A layer whose image is not in the session is listed under that image.
+                    this.report(WorkspaceItemKind.Image, layerName, `Could not add ${layerName} as a layer of the color-blended image ${imageListIndex} in the Image List: ${reason}`, undefined, {
+                        label: `The layer ${layerName} of the color-blended image ${imageListIndex}`,
+                        reason,
+                        ...(frame ? {} : {causeImageId: layerIds[i]})
+                    });
                 }
             }
 
