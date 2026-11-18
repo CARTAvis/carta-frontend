@@ -1529,8 +1529,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
             const xUnit = this.spectralUnitOf(this.isXAxisRestFrameActive);
             const yUnit = this.intensityUnitOf(this.isYAxisRestFrameActive);
             const isSameUnits = fitting.xUnit === xUnit && fitting.yUnit === yUnit;
-            // The guesses belong to the profile that was fitted. When the first two steps could not
-            // show that profile again, the guesses are 0. For example, its region was not restored. A
+            // The guesses belong to the profile that was fitted. When the earlier steps could not show
+            // that profile again, the guesses are 0. For example, its region was not restored. A
             // profile at the cursor is the same profile only when the restore put the cursor back
             // where it was on the same image.
             const fileId = this.effectiveFrame?.frameInfo.fileId;
