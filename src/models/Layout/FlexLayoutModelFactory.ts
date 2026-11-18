@@ -352,6 +352,12 @@ function extractTabNode(node: any, persistence: LayoutPersistence): any {
         return null;
     }
 
+    // The layout copy of a workspace saves a docked PV Preview Viewer under its type. The ID of its
+    // PV generator is kept, so that the settings name the PV generator.
+    if (persistence === "workspace" && node.component === "pv-preview") {
+        return {type: "component", id: "pv-preview", ...(typeof node.config?.id === "string" ? {_instanceId: node.config.id} : {})};
+    }
+
     // Strip numeric suffix from ID to get the base widget type
     const id = node.id || node.component;
     const widgetType = id?.replace(/(-component)?-\d+$/, "") || id;

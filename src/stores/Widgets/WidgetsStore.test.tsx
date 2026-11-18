@@ -636,6 +636,27 @@ describe("WidgetsStore initWidgets", () => {
 });
 
 describe("WidgetsStore layout copy of a workspace", () => {
+    test("saves a docked PV Preview Viewer with the own ID of its PV generator while it shows a preview", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("pv-generator", "pv-generator-0", {widgetId: "pv-generator-3"}, "workspace");
+
+        expect(widgetsStore.toWidgetSettingsConfig("pv-preview", "pv-generator-0", "workspace")).toBeUndefined();
+        runInAction(() => widgetsStore.pvGeneratorWidgets.get("pv-generator-0")?.setPreviewFrame({} as never));
+        expect(widgetsStore.toWidgetSettingsConfig("pv-preview", "pv-generator-0", "workspace")).toEqual({pvGeneratorId: "pv-generator-3"});
+        expect(widgetsStore.toWidgetSettingsConfig("pv-preview", "pv-generator-0", "regular")).toBeUndefined();
+    });
+
+    test("shows a docked PV Preview Viewer in its PV generator again, and returns a viewer whose PV generator was not restored", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("pv-generator", "pv-generator-1", {widgetId: "pv-generator-3"}, "workspace");
+        const viewer = (id: string, pvGeneratorId: string) => ({type: "tab", id, component: "pv-preview", config: {id, widgetSettings: {pvGeneratorId}}});
+        const modelJson = {layout: {type: "row", children: [{type: "tabset", children: [viewer("pv-preview-0", "pv-generator-3"), viewer("pv-preview-1", "pv-generator-9")]}]}};
+
+        expect(widgetsStore.attachDockedPvPreviews(modelJson)).toEqual(["pv-preview-1"]);
+        expect(modelJson.layout.children[0].children[0]).toEqual({type: "tab", id: "pv-generator-1-pv-preview-0", component: "pv-preview", name: "PV Preview Viewer", config: {id: "pv-generator-1"}});
+        expect(widgetsStore.floatingSettingsWidgets.get("pv-generator-1-pv-preview-0")).toBe("pv-generator-1");
+    });
+
     beforeEach(() => {
         CatalogStore.Instance.widgetBindings.componentIds().forEach(componentId => CatalogStore.Instance.widgetBindings.closeComponent(componentId));
     });

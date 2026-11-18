@@ -976,7 +976,19 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.layout.floating).toEqual([{type: "component", id: "stats"}]);
     });
 
-    test("leaves a docked viewer of a PV preview out of the layout too, keeps the shown tab on its widget and removes a container left empty", () => {
+    test("keeps a docked viewer of a PV preview that names its PV generator", () => {
+        const {appStore} = createSession();
+        const viewer = {type: "component", id: "pv-preview", widgetSettings: {pvGeneratorId: "pv-generator-0"}};
+        (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
+            layoutVersion: 2,
+            docked: {type: "row", content: [{type: "stack", content: [{type: "component", id: "image-view"}, viewer]}]},
+            floating: []
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.layout.docked.content[0].content).toEqual([{type: "component", id: "image-view"}, viewer]);
+    });
+
+    test("leaves a docked viewer of a PV preview that names no PV generator out of the layout, keeps the shown tab on its widget and removes a container left empty", () => {
         const {appStore} = createSession();
         (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
             layoutVersion: 2,

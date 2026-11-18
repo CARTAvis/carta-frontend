@@ -502,11 +502,21 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
     /**
      * Asks the backend for the saved PV preview again, and draws it and places its viewer panel as
      * they were. A preview larger than the PV preview cube size limit of the preferences is not
-     * made again.
+     * made again. When the preview is not made again, closes a docked viewer that the layout copy
+     * opened for it.
      *
      * @returns the problems, as sentences about the widget.
      */
     public restoreWorkspaceResult = async (config: WorkspacePvGeneratorWidgetConfig, isWanted: () => boolean = () => true): Promise<string[]> => {
+        const problems = await this.remakeWorkspacePreview(config, isWanted);
+        const layoutId = this.layoutId;
+        if (isWanted() && !this.previewFrame && layoutId !== undefined) {
+            AppStore.Instance.widgetsStore.closePvPreviewViewer(layoutId);
+        }
+        return problems;
+    };
+
+    private remakeWorkspacePreview = async (config: WorkspacePvGeneratorWidgetConfig, isWanted: () => boolean): Promise<string[]> => {
         const preview = config.preview;
         const layoutId = this.layoutId;
         const request = this.restoredPreviewRequest;

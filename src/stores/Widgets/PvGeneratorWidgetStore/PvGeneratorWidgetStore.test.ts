@@ -167,7 +167,7 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         };
         const panel = {type: "pv-preview", parentId: "pv-generator-0", defaultX: 10, defaultY: 20, defaultWidth: 300, defaultHeight: 200, setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()};
         const previewFrame = {renderConfig: {toConfig: jest.fn(() => ({colorMap: "viridis"})), applyConfig: jest.fn()}};
-        const widgetsStore = {pvGeneratorWidgets: new Map(), floatingWidgets: [panel], spectralProfilerList: []};
+        const widgetsStore = {pvGeneratorWidgets: new Map(), floatingWidgets: [panel], spectralProfilerList: [], closePvPreviewViewer: jest.fn()};
         const appStore = {
             activeFrame: frame,
             frames: [frame],
@@ -251,7 +251,7 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
     });
 
-    test("does not make again a preview larger than the cube size limit of the preferences, and says how to make it", async () => {
+    test("does not make again a preview larger than the cube size limit of the preferences, says how to make it, and closes a docked viewer of the preview", async () => {
         // The whole cube of 1000 by 1000 by 10 pixels of 4 bytes is 0.04 GB.
         const {store, appStore} = createSession(0.01);
 
@@ -259,5 +259,6 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
 
         expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
         expect(problems).toEqual(["the PV preview needs about 0.04 GB, more than the PV preview cube size limit of 0.01 GB, so it was not made again. Raise the limit in Preferences > Performance to make it"]);
+        expect(appStore.widgetsStore.closePvPreviewViewer).toHaveBeenCalledWith("pv-generator-0");
     });
 });

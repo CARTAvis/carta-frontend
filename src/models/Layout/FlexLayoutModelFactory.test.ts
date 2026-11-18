@@ -145,6 +145,13 @@ describe("FlexLayoutModelFactory", () => {
         expect((StripInstanceIds(extractAbstractConfig(modelJson, "workspace")) as any).content[0].content[0].plotType).toBeUndefined();
     });
 
+    test("keeps the layout ID of the PV generator of a docked PV Preview Viewer in the layout copy of a workspace", () => {
+        const modelJson = {layout: {type: "row", children: [{type: "tabset", children: [{type: "tab", id: "pv-generator-0-pv-preview-0", component: "pv-preview", config: {id: "pv-generator-0"}}]}]}} as any;
+
+        expect(extractAbstractConfig(modelJson, "workspace").content[0].content[0]).toEqual({type: "component", id: "pv-preview", _instanceId: "pv-generator-0"});
+        expect(extractAbstractConfig(modelJson, "regular").content[0].content[0]).toEqual({type: "component", id: "pv-generator-0-pv-preview", _instanceId: "pv-generator-0-pv-preview-0"});
+    });
+
     test("clears generated ids after a failed conversion", () => {
         const badComponent = {type: "component"};
         Object.defineProperty(badComponent, "id", {

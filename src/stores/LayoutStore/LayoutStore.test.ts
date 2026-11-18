@@ -4,6 +4,7 @@ const MOCK_APP_STORE = {
         clearDockedWidgets: jest.fn(),
         clearPopoutPositions: jest.fn(),
         initWidgets: jest.fn(),
+        attachDockedPvPreviews: jest.fn(() => []),
         updateImageWidgetTitle: jest.fn(),
         floatingWidgets: [] as any[],
         toWidgetSettingsConfig: jest.fn(),

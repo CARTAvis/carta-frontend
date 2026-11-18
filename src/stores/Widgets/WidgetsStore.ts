@@ -1389,6 +1389,10 @@ export class WidgetsStore {
             case CatalogPlotComponent.WidgetConfig.type:
                 // A regular layout keeps the type of a catalog plot beside its settings, not in them.
                 return isWorkspace ? CatalogStore.Instance.widgetBindings.layoutSettingsFor(widgetID) : undefined;
+            case PvPreviewComponent.WidgetConfig.type:
+                // `widgetID` is the layout ID of the PV generator that the viewer shows. Save the viewer
+                // only while it shows a preview.
+                return isWorkspace && this.pvGeneratorWidgets.get(widgetID)?.previewFrame ? {pvGeneratorId: this.workspaceIdOf(PvGeneratorComponent.WidgetConfig.type, widgetID)} : undefined;
             default: {
                 const widgetStore = this.widgetsMap.get(widgetType)?.get(widgetID);
                 if (isWorkspace && WidgetsStore.isWorkspaceLayoutConfigurable(widgetStore)) {
@@ -2048,6 +2052,42 @@ export class WidgetsStore {
             this.removeAssociatedFloatingSetting(componentId);
         }
     };
+
+    /**
+     * Shows each docked PV Preview Viewer of the layout copy of a workspace in its PV generator again.
+     * Call this after the widgets are made, and before the layout is made from `modelJson`. The
+     * viewer gets the ID that docking a floating viewer gives it. Then the preview is shown in it when
+     * the restore makes the preview again, and closing the viewer closes the preview.
+     *
+     * @returns the IDs of the viewers whose PV generator was not restored. Delete them from the layout.
+     */
+    @action public attachDockedPvPreviews = (modelJson: {layout?: unknown}): string[] => {
+        const orphans: string[] = [];
+        const visit = (node: any) => {
+            if (!node || typeof node !== "object") {
+                return;
+            }
+            if (node.type === "tab" && node.component === PvPreviewComponent.WidgetConfig.type) {
+                const savedId = node.config?.widgetSettings?.pvGeneratorId;
+                const generatorId = typeof savedId === "string" ? this.layoutIdOf(PvGeneratorComponent.WidgetConfig.type, savedId) : undefined;
+                const isTaken = generatorId !== undefined && [...this.floatingSettingsWidgets.values()].includes(generatorId);
+                if (generatorId === undefined || isTaken) {
+                    orphans.push(node.id);
+                } else {
+                    node.id = `${generatorId}-${PvPreviewComponent.WidgetConfig.type}-0`;
+                    node.name = PvPreviewComponent.WidgetConfig.title;
+                    node.config = {id: generatorId};
+                    this.floatingSettingsWidgets.set(node.id, generatorId);
+                }
+            }
+            (Array.isArray(node.children) ? node.children : []).forEach(visit);
+        };
+        visit(modelJson.layout);
+        return orphans;
+    };
+
+    /** Closes the PV Preview Viewer of the PV generator with this layout ID, docked or floating. */
+    public closePvPreviewViewer = (generatorId: string) => this.removeAssociatedFloatingSetting(generatorId);
 
     private removeAssociatedFloatingSetting = (widgetId: string) => {
         if (this.floatingSettingsWidgets?.size) {

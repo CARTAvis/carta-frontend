@@ -1,4 +1,4 @@
-import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
+import {Actions, DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -135,16 +135,20 @@ export class LayoutStore {
         // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
         const dockedComponentConfigs: any[] = [];
         const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs, persistence);
-        const nextLayoutModel = Model.fromJson(modelJson);
-        nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
-            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
-        });
 
         this.clearCurrentLayout();
         appStore.widgetsStore.clearPopoutPositions();
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence);
+
+        // A docked PV Preview Viewer names its PV generator, which gets its layout ID above.
+        const orphanPvPreviews = persistence === "workspace" ? appStore.widgetsStore.attachDockedPvPreviews(modelJson) : [];
+        const nextLayoutModel = Model.fromJson(modelJson);
+        nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
+        });
+        orphanPvPreviews.forEach(id => nextLayoutModel.doAction(Actions.deleteTab(id)));
 
         this.layoutModel = nextLayoutModel;
 

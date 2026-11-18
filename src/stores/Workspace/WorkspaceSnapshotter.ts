@@ -726,11 +726,10 @@ export class WorkspaceSnapshotter {
      */
     private captureLayout(): void {
         const layout = this.appStore.layoutStore.currentLayoutConfig("workspace");
-        // Leave out the viewer of a PV preview, floating or docked. The PV generator widget saves the
-        // preview and where a floating viewer is, and a restore makes the preview again. A viewer in
-        // the layout would open again as a second, empty viewer. A docked viewer is saved with an ID
-        // such as "pv-generator-0-pv-preview", which no layout accepts, so the whole layout would not
-        // be restored.
+        // Leave out a floating PV Preview Viewer. The PV generator widget saves the preview and where
+        // the floating viewer is, and a restore makes the preview and the viewer again. A viewer in the
+        // layout would open again as a second, empty viewer. Keep a docked viewer that names its PV
+        // generator. A restore shows the preview in it again. Leave out any other docked viewer.
         if (layout && Array.isArray(layout.floating)) {
             layout.floating = layout.floating.filter((widget: {id?: string}) => widget?.id !== "pv-preview");
         }
@@ -742,7 +741,7 @@ export class WorkspaceSnapshotter {
     }
 
     /**
-     * Removes the PV preview viewers from a docked layout. Removes a container that is left empty,
+     * Removes the PV Preview Viewers that name no PV generator from a docked layout. Removes a container that is left empty,
      * because a layout does not accept an empty one. Keeps the shown tab of a stack on the same
      * widget.
      *
@@ -752,7 +751,7 @@ export class WorkspaceSnapshotter {
         if (!Array.isArray(container.content)) {
             return true;
         }
-        const isPvPreview = (item: any) => item?.type === "component" && typeof item.id === "string" && /(^|-)pv-preview$/.test(item.id);
+        const isPvPreview = (item: any) => item?.type === "component" && typeof item.id === "string" && /(^|-)pv-preview$/.test(item.id) && typeof item.widgetSettings?.pvGeneratorId !== "string";
         const kept: any[] = [];
         let activeIndex = container.activeItemIndex ?? 0;
         container.content.forEach((item, index) => {
