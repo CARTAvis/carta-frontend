@@ -19,7 +19,7 @@ describe("WidgetsStore PV preview test ids", () => {
     const appStoreMock = {
         activeImage: null,
         isDarkTheme: false,
-        imageViewConfigStore: {visibleImages: []}
+        imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}
     };
     const layoutModelMock = {
         doAction: jest.fn(),
@@ -408,7 +408,7 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
     beforeEach(() => {
         // A new WidgetsStore titles the image view from the images on screen, of which there are none.
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
         catalogStore.catalogProfileStores.clear();
     });
 
@@ -436,7 +436,7 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
         catalogStore.catalogProfileStores.set(3, {} as any);
         // The active image still lists catalog 2, which has no profile store.
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
         [2, 3].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         widgetsStore.reloadFloatingCatalogWidget();
@@ -466,7 +466,7 @@ describe("WidgetConfig", () => {
 
 describe("WidgetsStore initWidgets", () => {
     beforeEach(() => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
     });
 
     afterEach(() => {
@@ -475,7 +475,7 @@ describe("WidgetsStore initWidgets", () => {
 
     test("applies the image view grid that the layout copy of a workspace saved, and saves the session's grid in it", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => grid)};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn(), toConfig: jest.fn(() => grid)};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
@@ -488,20 +488,21 @@ describe("WidgetsStore initWidgets", () => {
     test.each([
         ["saved a grid", {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1}],
         ["saved none", undefined]
-    ])("leaves the image view grid alone when a regular layout %s, and saves no grid in it", (_, grid) => {
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => ({multiPanelEnabled: true}))};
+    ])("leaves the image view grid alone when a regular layout %s, shows the display settings of the preferences, and saves no grid in it", (_, grid) => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn(), toConfig: jest.fn(() => ({multiPanelEnabled: true}))};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(grid ? {widgetSettings: grid} : {})}], [{type: "component", id: "image-view", widgetSettings: grid}], "regular");
 
+        expect(imageViewConfigStore.followDisplayPreferences).toHaveBeenCalled();
         expect(imageViewConfigStore.applyConfig).not.toHaveBeenCalled();
         expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "regular")).toBeUndefined();
     });
 
     test("keeps the image view grid that the layout copy of a workspace saved when another image view in it saved none", () => {
         const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn()};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
@@ -511,7 +512,7 @@ describe("WidgetsStore initWidgets", () => {
     });
 
     test("returns the image view grid to the user's preferences when the layout copy of a workspace saved none", () => {
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn()};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
@@ -522,7 +523,7 @@ describe("WidgetsStore initWidgets", () => {
 
     test("brings a floating histogram that the layout copy of a workspace restored to the front when selected", () => {
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([], [{id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.Histogram}, defaultX: 40, defaultY: 60}], "workspace");
@@ -670,7 +671,7 @@ describe("WidgetsStore layout copy of a workspace", () => {
         // Required here: importing the models before the stores reaches a component before its config is set.
         const layoutConfig = require("models/Layout/LayoutConfig").LayoutConfig;
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], toConfig: () => ({})}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], toConfig: () => ({}), followDisplayPreferences: jest.fn()}, zIndexManager} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
         widgetsStore.initWidgets(

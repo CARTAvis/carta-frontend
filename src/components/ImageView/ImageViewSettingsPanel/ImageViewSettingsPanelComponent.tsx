@@ -381,10 +381,24 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Pixel grid">
-                    <Switch checked={imageViewConfig.isPixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch
+                        checked={imageViewConfig.isPixelGridVisible}
+                        onChange={ev => {
+                            imageViewConfig.followPreference("pixelGridVisible");
+                            preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked);
+                        }}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel grid color">
-                    <AutoColorPickerComponent color={imageViewConfig.pixelGridColor} presetColors={SWATCH_COLORS} setColor={color => preferences.setPreference(PreferenceKeys.PIXEL_GRID_COLOR, color)} disableAlpha={true} />
+                    <AutoColorPickerComponent
+                        color={imageViewConfig.pixelGridColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={color => {
+                            imageViewConfig.followPreference("pixelGridColor");
+                            preferences.setPreference(PreferenceKeys.PIXEL_GRID_COLOR, color);
+                        }}
+                        disableAlpha={true}
+                    />
                 </FormGroup>
             </div>
         );

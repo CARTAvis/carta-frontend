@@ -466,6 +466,23 @@ describe("ImageViewConfigStore", () => {
             expect(displayOf(imageViewConfigStore)).toEqual({...saved, nanColor: "#137CBD"});
         });
 
+        it("follows a preference again when a control sets it to the value that it already has", () => {
+            imageViewConfigStore.applyConfig({...saved, pixelGridVisible: !mockPreferenceStore.isPixelGridVisible});
+            const preferredValue = mockPreferenceStore.isPixelGridVisible;
+
+            // The control writes the same value to the preference, so no reaction runs.
+            imageViewConfigStore.followPreference("pixelGridVisible");
+
+            expect(imageViewConfigStore.isPixelGridVisible).toBe(preferredValue);
+        });
+
+        it("follows every preference again when a regular layout is applied", () => {
+            imageViewConfigStore.applyConfig(saved);
+            imageViewConfigStore.followDisplayPreferences();
+
+            expect(displayOf(imageViewConfigStore)).toEqual(preferred);
+        });
+
         it("returns to the user's preferences when a layout without the settings is applied", () => {
             imageViewConfigStore.applyConfig(saved);
             imageViewConfigStore.applyConfig({multiPanelEnabled: true});

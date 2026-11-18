@@ -911,6 +911,9 @@ export class WidgetsStore {
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (persistence === "workspace" && imageViews.length) {
             AppStore.Instance.imageViewConfigStore.applyConfig(imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null);
+        } else if (persistence !== "workspace") {
+            // A regular layout shows the display settings of the preferences, as on a session without workspaces.
+            AppStore.Instance.imageViewConfigStore.followDisplayPreferences();
         }
 
         componentConfigs.forEach(componentConfig => {

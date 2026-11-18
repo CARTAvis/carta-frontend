@@ -476,8 +476,18 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         }
     }
 
-    @action private followPreference = (key: keyof ImageViewDisplayConfig) => {
+    /**
+     * Makes a display setting follow its preference again. A control that sets the preference calls
+     * this first. A preference that is set to the value that it already has does not run the reaction
+     * above, and the setting of the session would then not change.
+     */
+    @action public followPreference = (key: keyof ImageViewDisplayConfig) => {
         delete this.display[key];
+    };
+
+    /** Makes every display setting follow its preference again, as a regular layout shows them. */
+    @action public followDisplayPreferences = () => {
+        this.display = {};
     };
 
     /**
