@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed opening a workspace changing the last used folder of the file browser ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed a region that the backend refused stopping a workspace from being saved ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed images that were saved unmatched coming back matched when a workspace is opened with automatic WCS matching on ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
+* Fixed a workspace saved again after it was opened losing the channel and Stokes of an image that was not shown ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

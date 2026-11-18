@@ -18,8 +18,11 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         isAxisZoomable: false,
         effectiveZoomLevel: {x: 2, y: 2},
         zoomAxis: "both",
-        channel: 3,
+        // An image that is not shown keeps the channel and Stokes of its last tiles until it is shown.
+        channel: 0,
         stokes: 0,
+        requiredChannel: 3,
+        requiredStokes: 1,
         spectralCoordsSupported: new Map([["Radio velocity (km/s)", {}]]),
         spectralCoordinate: "Radio velocity (km/s)",
         spectralCoordinateSecondary: "Channel",
@@ -119,7 +122,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(workspace)).toBe(true);
     });
 
-    test("captures how each image was opened and how it is displayed", () => {
+    test("captures how each image was opened and how it is displayed, with the channel and Stokes that it is set to", () => {
         createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
@@ -131,6 +134,7 @@ describe("WorkspaceSnapshotter", () => {
             center: {x: 10, y: 20},
             zoomLevel: 2,
             channel: 3,
+            stokes: 1,
             renderConfig: {colorMap: "inferno"}
         });
         expect(workspace.selectedFile).toBe(1);

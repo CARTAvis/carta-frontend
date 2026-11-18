@@ -259,8 +259,11 @@ export class WorkspaceSnapshotter {
             workspaceFile.axisZoomLevel = {...zoomFrame.effectiveZoomLevel};
             workspaceFile.zoomAxis = zoomFrame.zoomAxis;
         }
-        workspaceFile.channel = frame.channel;
-        workspaceFile.stokes = frame.stokes;
+        // Save the channel and the Stokes that the image is set to. An image that is not shown gets the
+        // tiles of a new channel only when it is shown again. Until then, `channel` and `stokes` are
+        // the values of the last tiles, for example 0 after a restore.
+        workspaceFile.channel = frame.requiredChannel;
+        workspaceFile.stokes = frame.requiredStokes;
 
         if (frame.spectralReference) {
             workspaceFile.references.spectral = this.imageIdOf(frame.spectralReference);
