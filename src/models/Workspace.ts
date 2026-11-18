@@ -613,6 +613,11 @@ export interface WorkspaceWidgetSettingsPanel {
     y?: number;
     width?: number;
     height?: number;
+    /**
+     * How many floating widgets were below the panel. The panels and the floating widgets share one
+     * stacking order, so a restore puts the panel back between them.
+     */
+    widgetsBelow?: number;
 }
 
 /** Where an open analysis dialog was and the tab that it showed. */

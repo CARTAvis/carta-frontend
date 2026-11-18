@@ -412,10 +412,12 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.dialogSettings).toEqual({contour: {imageId: workspace.files[0].id, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}});
     });
 
-    test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, and leaves out a PV preview", () => {
+    test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, with the floating widgets below each, and leaves out a PV preview", () => {
         const zIndexes = new Map([
             ["spectral-profiler-0-settings", 4],
-            ["image-view-settings", 2]
+            ["spectral-profiler-0", 3],
+            ["image-view-settings", 2],
+            ["pv-preview", 1]
         ]);
         createSession({
             widgetsStore: {
@@ -443,8 +445,8 @@ describe("WorkspaceSnapshotter", () => {
         });
 
         expect(new WorkspaceSnapshotter().capture().workspace.openWidgetSettings).toEqual([
-            {widgetId: "image-view", widgetType: "image-view", title: "Image View", x: 25, y: 25, width: 400, height: 300},
-            {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400}
+            {widgetId: "image-view", widgetType: "image-view", title: "Image View", x: 25, y: 25, width: 400, height: 300, widgetsBelow: 1},
+            {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400, widgetsBelow: 2}
         ]);
     });
 

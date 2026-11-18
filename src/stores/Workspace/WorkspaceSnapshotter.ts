@@ -419,6 +419,10 @@ export class WorkspaceSnapshotter {
         const panels = widgetsStore.floatingWidgets
             .filter(config => config.type === "floating-settings" && config.parentId && config.parentType && config.parentType !== "pv-generator")
             .sort((a, b) => (zIndexManager?.findIndex(a.id) ?? 0) - (zIndexManager?.findIndex(b.id) ?? 0));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const panelIds = new Set(panels.map(config => config.id));
+        const widgetIds = widgetsStore.floatingWidgets.filter(config => !panelIds.has(config.id)).map(config => config.componentId || config.id);
+        const zIndexOf = (id: string) => zIndexManager?.findIndex(id) ?? 0;
         this.workspace.openWidgetSettings = panels.map(config => ({
             widgetId: widgetsStore.workspaceIdOf(config.parentType!, config.parentId!),
             widgetType: config.parentType!,
@@ -427,7 +431,8 @@ export class WorkspaceSnapshotter {
             x: config.defaultX,
             y: config.defaultY,
             width: config.defaultWidth,
-            height: config.defaultHeight
+            height: config.defaultHeight,
+            ...(zIndexManager && widgetIds.length ? {widgetsBelow: widgetIds.filter(id => zIndexOf(id) < zIndexOf(config.id)).length} : {})
         }));
     }
 

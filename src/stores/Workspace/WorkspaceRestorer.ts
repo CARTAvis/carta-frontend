@@ -279,6 +279,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const widgetsStore = this.appStore.widgetsStore;
         widgetsStore.floatingWidgets.filter(config => config.type === "floating-settings").forEach(config => widgetsStore.removeFloatingWidget(config.id));
         const isPlaced = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+        const opened: {id: string; widgetsBelow: unknown}[] = [];
         for (const panel of saved) {
             if (!panel || typeof panel.widgetId !== "string" || typeof panel.widgetType !== "string" || typeof panel.title !== "string") {
                 continue;
@@ -296,7 +297,44 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (config && isPlaced(panel.width) && isPlaced(panel.height) && panel.width > 0 && panel.height > 0) {
                 config.setDefaultSize(panel.width, panel.height);
             }
+            if (config) {
+                opened.push({id: config.id, widgetsBelow: panel.widgetsBelow});
+            }
         }
+        this.restorePanelStackingOrder(opened);
+    }
+
+    /**
+     * Puts each settings panel back between the floating widgets, as it was stacked. A new panel opens
+     * on top of the floating widgets. A workspace that does not say how many widgets were below its
+     * panels keeps the panels on top.
+     *
+     * @param panels - the panels that the restore opened, from the bottom one to the top one.
+     */
+    private restorePanelStackingOrder(panels: {id: string; widgetsBelow: unknown}[]): void {
+        const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+        if (!panels.some(panel => isCount(panel.widgetsBelow))) {
+            return;
+        }
+        const zIndexManager = this.appStore.zIndexManager;
+        const panelIds = new Set(panels.map(panel => panel.id));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const widgets = this.appStore.widgetsStore.floatingWidgets
+            .filter(config => !panelIds.has(config.id))
+            .map(config => config.componentId || config.id)
+            .sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        const order: string[] = [];
+        let next = 0;
+        for (const panel of panels) {
+            const count = isCount(panel.widgetsBelow) ? Math.max(next, Math.min(panel.widgetsBelow, widgets.length)) : widgets.length;
+            while (next < count) {
+                order.push(widgets[next++]);
+            }
+            order.push(panel.id);
+        }
+        order.push(...widgets.slice(next));
+        // Bringing each one to the top, from the bottom one to the top one, stacks them in this order.
+        order.forEach(id => zIndexManager.updateIndexOnSelect(id));
     }
 
     /**

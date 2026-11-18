@@ -435,6 +435,34 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toEqual(["The settings panel of this widget was not opened, because the widget was not restored"]);
     });
 
+    test("puts each settings panel back between the floating widgets as it was stacked", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        Object.assign(appStore, {zIndexManager});
+        const widgetsStore = appStore.widgetsStore as any;
+        // The layout opened the floating widgets. A catalog plot is stacked by its component ID.
+        widgetsStore.floatingWidgets = [{id: "pv-generator-0"}, {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}];
+        ["pv-generator-0", "catalog-plot-component-0"].forEach(id => zIndexManager.assignIndex(id));
+        widgetsStore.removeFloatingWidget = jest.fn();
+        widgetsStore.layoutIdOf = jest.fn((_type: string, id: string) => id);
+        widgetsStore.createFloatingSettingsWidget = jest.fn((_title: string, parentId: string) => {
+            widgetsStore.floatingWidgets.push({type: "floating-settings", id: `${parentId}-settings`, parentId, setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()});
+            zIndexManager.assignIndex(`${parentId}-settings`);
+        });
+
+        await restore(
+            createWorkspace({
+                openWidgetSettings: [
+                    {widgetId: "spectral-profiler-0", widgetType: "spectral-profiler", title: "Z Profile", widgetsBelow: 0},
+                    {widgetId: "histogram-0", widgetType: "histogram", title: "Histogram", widgetsBelow: 1}
+                ]
+            })
+        );
+
+        const order = ["pv-generator-0", "catalog-plot-component-0", "spectral-profiler-0-settings", "histogram-0-settings"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["spectral-profiler-0-settings", "pv-generator-0", "histogram-0-settings", "catalog-plot-component-0"]);
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 
