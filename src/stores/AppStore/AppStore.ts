@@ -1173,7 +1173,10 @@ export class AppStore {
         this.animatorStore.stopAnimation();
         this.timeSeriesStore.clearMembers();
         this.clearSpectralReference();
-        this.clearSpatialReference();
+        // Do not move the regions and the cursor of the reference to the matched images. Moving them
+        // sends their places to the backend right before it closes the images. The backend can then
+        // crash on the cursor of an image that it is closing.
+        this.clearSpatialReference(false);
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
@@ -3340,10 +3343,17 @@ export class AppStore {
         }
     }
 
-    @action clearSpatialReference = () => {
+    /**
+     * Stops matching every image to the spatial reference.
+     *
+     * @param shouldMoveRegions - whether each matched image takes a copy of the regions and the cursor
+     *                            of the reference. Leave them where they are when the images are
+     *                            closed next.
+     */
+    @action clearSpatialReference = (shouldMoveRegions: boolean = true) => {
         this.spatialReference = null;
         for (const f of this.frames) {
-            f.clearSpatialReference();
+            f.clearSpatialReference(shouldMoveRegions);
         }
     };
 

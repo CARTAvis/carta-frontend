@@ -3726,10 +3726,19 @@ export class FrameStore {
         return true;
     };
 
-    @action clearSpatialReference = () => {
+    /**
+     * Stops matching the image to its spatial reference.
+     *
+     * @param shouldMoveRegions - whether to copy the regions and the cursor of the reference to the
+     *                            image. Copying them sends their new places to the backend. Leave
+     *                            them where they are when the image is closed next.
+     */
+    @action clearSpatialReference = (shouldMoveRegions: boolean = true) => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
-            this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
+            if (shouldMoveRegions) {
+                this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
+            }
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
             this.axisZoomLevel = {...this.spatialReference.axisZoomLevel};
