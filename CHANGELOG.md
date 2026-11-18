@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring moment, PV and HiPS images, and the PV preview, in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Added a progress dialog with Cancel and an end-of-restore report to opening a workspace, and a thumbnail of the whole app to saved workspaces ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
+* Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings with its auto spatial matching switch, and the Image Fitting settings, results, selected component and coordinates, in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
@@ -63,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a workspace saved again after it was opened losing the channel and Stokes of an image that was not shown ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Fixed workspaces putting moment, PV, HiPS and image fitting images at the end of the image list ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Fixed online SIMBAD and VizieR queries waiting forever for a mirror that does not respond; they now stop after 60 seconds ([#3058](https://github.com/CARTAvis/carta-frontend/issues/3058)).
+* Fixed spectral profile fitting guesses being cleared while the profile streams in or when the fitting settings open ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 ### Changed
 * Replaced both axes zooming with independent X and Y axis zooming in PV images, PV preview, and rotated cubes ([#2408](https://github.com/CARTAvis/carta-frontend/issues/2408)).
 * Migrated catalog scatter and histogram plots from Plotly to Chart.js, with WebGL scatter rendering, box/lasso selection, Shift-drag panning, and updated export behavior ([#586](https://github.com/CARTAvis/carta-frontend/issues/586)).

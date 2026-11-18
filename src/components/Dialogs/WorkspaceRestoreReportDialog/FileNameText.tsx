@@ -44,6 +44,8 @@ function iconOf(kind: WorkspaceItemKind): IconName {
         case WorkspaceItemKind.CatalogPlot:
         case WorkspaceItemKind.PlotWidget:
             return "widget";
+        case WorkspaceItemKind.Dialog:
+            return "application";
         default:
             return "dot";
     }

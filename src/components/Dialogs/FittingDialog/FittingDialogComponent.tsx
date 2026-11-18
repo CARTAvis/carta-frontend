@@ -17,12 +17,7 @@ import "./FittingDialogComponent.scss";
 
 @observer
 export class FittingDialogComponent extends React.Component {
-    @observable private coord: CoordinateMode = CoordinateMode.Image;
     @observable private isMouseEntered: boolean = false;
-
-    @action private setCoord = (coord: CoordinateMode) => {
-        this.coord = coord;
-    };
 
     private setFittingResultTabId = (tabId: FittingResultTabs) => {
         AppStore.Instance.dialogStore.selectTab(DialogId.Fitting, tabId);
@@ -49,7 +44,7 @@ export class FittingDialogComponent extends React.Component {
     private renderParamCoordInput = (inputType: InputType, value: number, customPlaceholder: string, onValueChange, valueWcs: string, onValueChangeWcs) => {
         return (
             <CoordNumericInput
-                coord={this.coord}
+                coord={AppStore.Instance.imageFittingStore.coordinate}
                 inputType={inputType}
                 value={value}
                 onChange={onValueChange}
@@ -73,7 +68,7 @@ export class FittingDialogComponent extends React.Component {
         const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
         return (
             <span className="info-string">
-                {this.coord === CoordinateMode.Image
+                {AppStore.Instance.imageFittingStore.coordinate === CoordinateMode.Image
                     ? `WCS: ${!isImgCoordinates && (pointWcs?.x !== undefined || pointWcs?.y !== undefined) ? WCSPoint2D.toString(pointWcs) : "-"}`
                     : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.toString(point, "px", 3) : "-"}`}
             </span>
@@ -163,7 +158,7 @@ export class FittingDialogComponent extends React.Component {
             </Pre>
         );
 
-        const pixUnitString = this.coord === CoordinateMode.Image ? "(px)" : "";
+        const pixUnitString = AppStore.Instance.imageFittingStore.coordinate === CoordinateMode.Image ? "(px)" : "";
         const imageUnitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
@@ -233,7 +228,7 @@ export class FittingDialogComponent extends React.Component {
                                     </FormGroup>
                                     <Collapse isOpen={!fittingStore.isAutoInitVal}>
                                         <FormGroup label="Coordinate" inline={true}>
-                                            <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                                            <CoordinateComponent selectedValue={fittingStore.coordinate} onChange={fittingStore.setCoordinate} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
                                         </FormGroup>
                                         <Divider />
                                         <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>

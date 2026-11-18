@@ -36,6 +36,8 @@ export enum WorkspaceItemKind {
     CatalogWidget = "catalog-widget",
     CatalogPlot = "catalog-plot",
     PlotWidget = "plot-widget",
+    /** A dialog whose settings a workspace saves, such as the Image Fitting dialog. */
+    Dialog = "dialog",
     Layout = "layout"
 }
 

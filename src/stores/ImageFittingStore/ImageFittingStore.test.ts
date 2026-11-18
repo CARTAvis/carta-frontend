@@ -1,7 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {configure} from "mobx";
 
-import {ImageFittingStore} from "stores";
+import {CoordinateMode} from "enums";
+import {AppStore, ImageFittingStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
 configure({safeDescriptors: false});
@@ -39,5 +40,73 @@ describe("ImageFittingStore region info log", () => {
             expect(log).not.toContain("Invalid");
             expect(log).not.toContain("undefined");
         }
+    });
+});
+
+describe("ImageFittingStore in a workspace", () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("saves the dialog settings, with an empty initial value as null, and applies them again", () => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({frames: [], activeFrame: null, frameNames: []} as unknown as AppStore);
+        const saved = new ImageFittingStore();
+        saved.setComponents(2);
+        saved.components[0].setCenterX(10);
+        saved.components[0].setAmplitude(2);
+        saved.components[0].toggleAmplitudeFixed();
+        saved.components[1].setPa(30);
+        saved.setIsAutoInitVal(false);
+        saved.setBackgroundOffset(0.5);
+        saved.toggleBackgroundOffsetFixed();
+        saved.setSolverType(CARTA.FittingSolverType.Svd);
+        saved.toggleCreateResidualImage();
+        saved.setCoordinate(CoordinateMode.World);
+
+        const config = saved.toWorkspaceConfig(3, 5);
+
+        expect(config).toEqual({
+            imageId: 3,
+            regionId: 5,
+            components: [
+                {center: {x: 10, y: null}, amp: 2, fwhm: {x: null, y: null}, pa: null, fixed: [false, false, true, false, false, false]},
+                {center: {x: null, y: null}, amp: null, fwhm: {x: null, y: null}, pa: 30, fixed: [false, false, false, false, false, false]}
+            ],
+            autoInitialValues: false,
+            backgroundOffset: 0.5,
+            backgroundOffsetFixed: false,
+            solver: CARTA.FittingSolverType.Svd,
+            createModelImage: true,
+            createResidualImage: false,
+            // Adding components selects the last one.
+            selectedComponent: 1,
+            coordinate: CoordinateMode.World
+        });
+
+        const restored = new ImageFittingStore();
+        restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)), 7, 105);
+
+        expect(restored.toWorkspaceConfig(3, 5)).toEqual(config);
+        expect([restored.selectedFileId, restored.selectedRegionId, restored.selectedComponentIndex, restored.coordinate]).toEqual([7, 105, 1, CoordinateMode.World]);
+    });
+
+    test("applies saved world coordinates only to an image with square pixels", () => {
+        const frame = {hasSquarePixels: false, frameInfo: {fileId: 0}};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({frames: [frame], activeFrame: frame, frameNames: [], getFrame: () => frame} as unknown as AppStore);
+        const store = new ImageFittingStore();
+
+        store.applyWorkspaceConfig({coordinate: CoordinateMode.World} as never, -1, 0);
+
+        expect(store.coordinate).toBe(CoordinateMode.Image);
+    });
+
+    test("keeps the default of each saved value that is not valid", () => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({frames: [], activeFrame: null, frameNames: []} as unknown as AppStore);
+        const store = new ImageFittingStore();
+
+        store.applyWorkspaceConfig({components: [{center: {x: "1"}, fwhm: {x: -2}}], solver: 99, backgroundOffset: "x"} as never, -1, 0);
+
+        expect(store.components.map(component => [component.center.x, component.fwhm.x])).toEqual([[NaN, NaN]]);
+        expect([store.solverType, store.backgroundOffset, store.isAutoInitVal, store.isBackgroundOffsetFixed]).toEqual([CARTA.FittingSolverType.Cholesky, 0, true, true]);
     });
 });

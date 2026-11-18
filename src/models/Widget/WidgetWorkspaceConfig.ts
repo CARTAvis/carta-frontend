@@ -69,6 +69,8 @@ export interface WorkspaceIdReader {
     regionIdOf(workspaceImageId: number | undefined, savedRegionId: number): number | undefined;
     /** Returns whether the image that was in front when the workspace was saved was restored. A widget that follows the active image showed this image. */
     wasActiveImageRestored(): boolean;
+    /** Returns whether the restore put the cursor back where it was saved on the image with this file ID. */
+    wasCursorRestoredOn?(fileId: number): boolean;
 }
 
 /**
@@ -79,15 +81,16 @@ export interface WorkspaceIdReader {
  * 2. Apply what the widget shows of them.
  * 3. Zoom the widget to its saved range.
  *
- * Each step can reset the result of a later step, so the widget settles between the steps. The
- * first two steps return the problems as sentences about the widget. When there are problems, the
- * third step does not apply the zoom range.
+ * Each step can reset the result of a later step, so the widget settles between the steps. Each
+ * step returns the problems as sentences about the widget. The third step can return nothing when
+ * it has no problems. When the first step has problems, the third step does not apply the zoom
+ * range. A widget can also skip the zoom when the second step has problems.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;
     applyWorkspaceBinding(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceConfig(config: TConfig, ids: WorkspaceIdReader): string[];
-    applyWorkspaceView(config: TConfig): void;
+    applyWorkspaceView(config: TConfig, ids: WorkspaceIdReader): string[] | void;
     /**
      * Fetches again the data that the widget showed and that the workspace does not save, such as
      * the result of an online query. Runs after the other steps.
