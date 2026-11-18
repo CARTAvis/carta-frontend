@@ -257,13 +257,14 @@ function createSession() {
             catalogPlotWidgets: new Map(),
             pvGeneratorWidgets: new Map<string, unknown>(),
             floatingWidgets: [] as unknown[],
+            removeUnopenedLayoutDisplayStores: jest.fn(),
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
-            applyLayoutConfig: jest.fn((_layout?: unknown) => {
+            applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string) => {
                 calls.push("applyLayout");
                 return true;
             })
@@ -339,6 +340,8 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+        // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
+        expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
     });
 
     test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
@@ -705,6 +708,23 @@ describe("WorkspaceRestorer", () => {
         const issues = await restoreIssues(createWorkspace({catalogs: [{id: 1, source: catalogSource}]}));
 
         expect(issues.map(issue => issue.message)).toEqual(expect.arrayContaining(["Could not open the image image.fits: File /data/image.fits does not exist", expect.stringMatching(/^Could not load the catalog .*: Network Error$/)]));
+    });
+
+    test("shows the active image on the rest frequency tab of the Image List when an image was not restored", async () => {
+        const sessionWith = () => {
+            const {appStore} = createSession();
+            const layerList = {selectedFrameIndex: 0, resetSelectedFrameIndex: jest.fn()};
+            Object.assign(appStore.widgetsStore, {layerListWidgets: new Map([["layer-list-0", layerList]])});
+            return {appStore, layerList};
+        };
+        let {appStore, layerList} = sessionWith();
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual([]);
+        expect(layerList.resetSelectedFrameIndex).not.toHaveBeenCalled();
+
+        ({appStore, layerList} = sessionWith());
+        appStore.appendFile = jest.fn(() => Promise.reject("File /data/image.fits does not exist."));
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toContain("The rest frequency tab of the Image List shows the active image, because not every image was restored");
+        expect(layerList.resetSelectedFrameIndex).toHaveBeenCalledTimes(1);
     });
 
     test("says why an online catalog could not be loaded, without a toast", async () => {
@@ -1253,7 +1273,8 @@ describe("WorkspaceRestorer", () => {
         const problems = await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
 
         expect(problems).toEqual([]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT);
+        // The layout copy of a workspace is applied in the workspace form, and validated by the workspace schema.
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(LAYOUT, "", "workspace");
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
@@ -1391,7 +1412,7 @@ describe("WorkspaceRestorer", () => {
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
         expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
-        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout);
+        expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace");
     });
 
     test("points the catalog widgets at the catalogs just loaded", async () => {

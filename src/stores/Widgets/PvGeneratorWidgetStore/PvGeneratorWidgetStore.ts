@@ -3,7 +3,16 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
-import {type ConfigurableStore, type Persisted, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspacePvGeneratorWidgetConfig, type WorkspacePvPreview, type WorkspacePvPreviewRequest} from "models";
+import {
+    type Persisted,
+    type WorkspaceConfigurableWidget,
+    type WorkspaceIdReader,
+    type WorkspaceIdWriter,
+    type WorkspaceLayoutConfigurable,
+    type WorkspacePvGeneratorWidgetConfig,
+    type WorkspacePvPreview,
+    type WorkspacePvPreviewRequest
+} from "models";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -24,9 +33,9 @@ interface PvRequestSettings {
     zRebin: number;
 }
 
-/** The settings that a PV generator widget saves in a layout. */
+/** The settings that a PV generator widget saves in the layout copy of a workspace. A regular layout saves no settings for it. */
 export interface PvGeneratorWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
 }
 
@@ -37,7 +46,7 @@ function isPositiveInteger(value: unknown, max: number): value is number {
     return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= max;
 }
 
-export class PvGeneratorWidgetStore extends RegionWidgetStore implements ConfigurableStore<PvGeneratorWidgetConfig, Persisted<PvGeneratorWidgetConfig>>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
+export class PvGeneratorWidgetStore extends RegionWidgetStore implements WorkspaceLayoutConfigurable<PvGeneratorWidgetConfig>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
     widgetId: string = "";
     @observable width: number = 3;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
@@ -389,13 +398,13 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
         );
     }
 
-    public applyConfig = (widgetSettings: Persisted<PvGeneratorWidgetConfig>): void => {
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<PvGeneratorWidgetConfig>): void => {
         if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
     };
 
-    public toConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
+    public toWorkspaceLayoutConfig = (): PvGeneratorWidgetConfig => ({widgetId: this.widgetId});
 
     /** Returns the image that the spectral range was chosen on, or nothing when that image was closed. */
     private get spectralFrame(): FrameStore | null | undefined {
@@ -493,11 +502,21 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Configu
     /**
      * Asks the backend for the saved PV preview again, and draws it and places its viewer panel as
      * they were. A preview larger than the PV preview cube size limit of the preferences is not
-     * made again.
+     * made again. When the preview is not made again, closes a docked viewer that the layout copy
+     * opened for it.
      *
      * @returns the problems, as sentences about the widget.
      */
     public restoreWorkspaceResult = async (config: WorkspacePvGeneratorWidgetConfig, isWanted: () => boolean = () => true): Promise<string[]> => {
+        const problems = await this.remakeWorkspacePreview(config, isWanted);
+        const layoutId = this.layoutId;
+        if (isWanted() && !this.previewFrame && layoutId !== undefined) {
+            AppStore.Instance.widgetsStore.closePvPreviewViewer(layoutId);
+        }
+        return problems;
+    };
+
+    private remakeWorkspacePreview = async (config: WorkspacePvGeneratorWidgetConfig, isWanted: () => boolean): Promise<string[]> => {
         const preview = config.preview;
         const layoutId = this.layoutId;
         const request = this.restoredPreviewRequest;

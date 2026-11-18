@@ -719,29 +719,31 @@ export class WorkspaceSnapshotter {
      * Stage 5: the arrangement the session is showing.
      *
      * A workspace carries its own copy, so that reopening it brings back the widgets showing its
-     * images and catalogs without depending on a separately saved layout. The layout names no
-     * catalog: which catalog a table or plot widget shows is kept in `catalogWidgets` instead.
+     * images and catalogs without depending on a separately saved layout. The copy is written in
+     * the workspace form. So it also keeps the own ID of each widget and the settings that only a
+     * workspace needs. The layout names no catalog: which catalog a table or plot widget shows is
+     * kept in `catalogWidgets` instead.
      */
     private captureLayout(): void {
-        const layout = this.appStore.layoutStore.currentLayoutConfig();
-        // Leave out the viewer of a PV preview, floating or docked. The PV generator widget saves the
-        // preview and where a floating viewer is, and a restore makes the preview again. A viewer in
-        // the layout would open again as a second, empty viewer. A docked viewer is saved with an ID
-        // such as "pv-generator-0-pv-preview", which no layout accepts, so the whole layout would not
-        // be restored.
+        const layout = this.appStore.layoutStore.currentLayoutConfig("workspace");
+        // Leave out a floating PV Preview Viewer. The PV generator widget saves the preview and where
+        // the floating viewer is, and a restore makes the preview and the viewer again. A viewer in the
+        // layout would open again as a second, empty viewer. Keep a docked viewer that names its PV
+        // generator. A restore shows the preview in it again. Leave out any other docked viewer.
         if (layout && Array.isArray(layout.floating)) {
             layout.floating = layout.floating.filter((widget: {id?: string}) => widget?.id !== "pv-preview");
         }
         if (layout?.docked) {
             WorkspaceSnapshotter.removeDockedPvPreviews(layout.docked);
         }
+        this.saveRestFrequencyImages(layout);
         this.workspace.layout = layout;
     }
 
     /**
-     * Removes the PV preview viewers from a docked layout. Removes a container that is left empty,
-     * because a layout does not accept an empty one. Keeps the shown tab of a stack on the same
-     * widget.
+     * Removes the PV Preview Viewers that name no PV generator from a docked layout. Removes a
+     * container that is left empty, because a layout does not accept an empty one. Keeps the shown
+     * tab of a stack on the same widget.
      *
      * @returns whether the container still has content.
      */
@@ -749,7 +751,7 @@ export class WorkspaceSnapshotter {
         if (!Array.isArray(container.content)) {
             return true;
         }
-        const isPvPreview = (item: any) => item?.type === "component" && typeof item.id === "string" && /(^|-)pv-preview$/.test(item.id);
+        const isPvPreview = (item: any) => item?.type === "component" && typeof item.id === "string" && /(^|-)pv-preview$/.test(item.id) && typeof item.widgetSettings?.pvGeneratorId !== "string";
         const kept: any[] = [];
         let activeIndex = container.activeItemIndex ?? 0;
         container.content.forEach((item, index) => {
@@ -770,6 +772,33 @@ export class WorkspaceSnapshotter {
             }
         }
         return kept.length > 0;
+    }
+
+    /**
+     * Saves the image that the rest frequency tab of each Image List shows by its place among the
+     * images that the workspace saves. A restore opens only those images, in their order. When the
+     * workspace does not save the image itself, the tab shows the active image after a restore.
+     */
+    private saveRestFrequencyImages(layout: {docked?: unknown; floating?: unknown[]} | undefined): void {
+        const frames = this.appStore.frames ?? [];
+        const isSaved = (frame: FrameStore) => this.imageIdOf(frame) !== undefined;
+        const visit = (node: any) => {
+            if (!node || typeof node !== "object") {
+                return;
+            }
+            const settings = node.widgetSettings;
+            if (node.id === "layer-list" && typeof settings?.restFrequencyImageIndex === "number") {
+                const index = settings.restFrequencyImageIndex;
+                if (frames[index] && isSaved(frames[index])) {
+                    settings.restFrequencyImageIndex = frames.slice(0, index).filter(isSaved).length;
+                } else {
+                    delete settings.restFrequencyImageIndex;
+                }
+            }
+            (Array.isArray(node.content) ? node.content : []).forEach(visit);
+        };
+        visit(layout?.docked);
+        (layout?.floating ?? []).forEach(visit);
     }
 
     /**

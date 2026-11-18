@@ -102,8 +102,22 @@ function createSession(overrides: Record<string, any> = {}) {
         },
         getFrame: (fileId: number) => (fileId === 0 ? frame : undefined),
         // The Image Fitting dialog fits the active image over the field of view, as it does by default.
-        imageFittingStore: {selectedFileId: ACTIVE_FILE_ID, selectedRegionId: 0, toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({imageId, regionId}))},
-        layoutStore: {currentLayoutConfig: jest.fn(() => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
+        imageFittingStore: {
+            selectedFileId: ACTIVE_FILE_ID,
+            selectedRegionId: 0,
+            toWorkspaceConfig: jest.fn((imageId: number | undefined, regionId: number) => ({
+                imageId,
+                regionId,
+                components: [],
+                autoInitialValues: true,
+                backgroundOffset: 0,
+                backgroundOffsetFixed: true,
+                solver: 0,
+                createModelImage: false,
+                createResidualImage: false
+            }))
+        },
+        layoutStore: {currentLayoutConfig: jest.fn((_persistence?: string) => ({layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []}))},
         ...overrides
     };
 
@@ -803,11 +817,13 @@ describe("WorkspaceSnapshotter", () => {
         const {appStore} = createSession();
         Object.assign(appStore.imageFittingStore, {selectedFileId: 0, selectedRegionId: 5});
 
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: 1, regionId: 5});
+        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual(expect.objectContaining({imageId: 1, regionId: 5}));
 
         Object.assign(appStore.imageFittingStore, {selectedFileId: 7});
         appStore.getFrame = (fileId: number) => (fileId === 7 ? (createFrame(7) as never) : undefined);
-        expect(new WorkspaceSnapshotter().capture().workspace.imageFitting).toEqual({imageId: undefined, regionId: 0});
+        const imageFitting = new WorkspaceSnapshotter().capture().workspace.imageFitting;
+        expect(imageFitting?.imageId).toBeUndefined();
+        expect(imageFitting?.regionId).toBe(0);
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {
@@ -915,12 +931,34 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.selectedColorBlending).toBeUndefined();
     });
 
-    test("carries the arrangement the session was saved in", () => {
+    test("saves the image of the rest frequency tab of the Image List by its place among the images that the workspace saves", () => {
+        const {appStore} = createSession();
+        // The second image is a generated image that the workspace does not save.
+        const unsaved = createFrame(5, {frameInfo: {fileId: 5, directory: "/data", hdu: "", fileInfo: {name: "unsaved.fits"}, lelExpr: undefined, generated: true}});
+        const second = createFrame(6);
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 6);
+        (appStore as any).frames = [appStore.frames[0], unsaved, second];
+        const layoutWith = (index: number) => ({
+            layoutVersion: 2,
+            docked: {type: "row", content: [{type: "stack", content: [{type: "component", id: "layer-list", widgetSettings: {settingsTabId: 1, restFrequencyImageIndex: index, columnWidths: [1, 2, 3, 4, 5]}}]}]},
+            floating: []
+        });
+        const savedIndex = (index: number) => {
+            (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue(layoutWith(index));
+            return new WorkspaceSnapshotter().capture().workspace.layout.docked.content[0].content[0].widgetSettings.restFrequencyImageIndex;
+        };
+
+        expect(savedIndex(0)).toBe(0);
+        expect(savedIndex(2)).toBe(1);
+        expect(savedIndex(1)).toBeUndefined();
+    });
+
+    test("carries the arrangement the session was saved in, in its own copy of the layout", () => {
         const {appStore} = createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
 
-        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalled();
+        expect(appStore.layoutStore.currentLayoutConfig).toHaveBeenCalledWith("workspace");
         expect(workspace.layout).toMatchObject({layoutVersion: 2});
     });
 
@@ -938,7 +976,19 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.layout.floating).toEqual([{type: "component", id: "stats"}]);
     });
 
-    test("leaves a docked viewer of a PV preview out of the layout too, keeps the shown tab on its widget and removes a container left empty", () => {
+    test("keeps a docked viewer of a PV preview that names its PV generator", () => {
+        const {appStore} = createSession();
+        const viewer = {type: "component", id: "pv-preview", widgetSettings: {pvGeneratorId: "pv-generator-0"}};
+        (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
+            layoutVersion: 2,
+            docked: {type: "row", content: [{type: "stack", content: [{type: "component", id: "image-view"}, viewer]}]},
+            floating: []
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.layout.docked.content[0].content).toEqual([{type: "component", id: "image-view"}, viewer]);
+    });
+
+    test("leaves a docked viewer of a PV preview that names no PV generator out of the layout, keeps the shown tab on its widget and removes a container left empty", () => {
         const {appStore} = createSession();
         (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
             layoutVersion: 2,

@@ -158,7 +158,7 @@ export class RenderConfigStore implements ConfigurableStore<WorkspaceRenderConfi
             return [];
         }
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.isInverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
-        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.shouldUseSmoothedBiasContrast));
+        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.imageViewConfigStore?.shouldUseSmoothedBiasContrast));
         const rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
         // Fix: Explicitly type colorscale as (number | string)[]

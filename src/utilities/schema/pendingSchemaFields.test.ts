@@ -16,7 +16,7 @@ describe("fields the schemas do not declare yet", () => {
     });
 
     test("leaves out the fields a definition declares and the ones listed as pending", () => {
-        expect(undeclaredFields("workspace/contour-config", {levels: {}}, {levels: [], colormapInverted: true, extra: 1})).toEqual(["extra"]);
+        expect(undeclaredFields("layout/histogram", {lineWidth: {}}, {lineWidth: 1, meanRmsVisible: true, extra: 1})).toEqual(["extra"]);
     });
 
     test("counts every written field as undeclared when the schema has no such definition yet", () => {

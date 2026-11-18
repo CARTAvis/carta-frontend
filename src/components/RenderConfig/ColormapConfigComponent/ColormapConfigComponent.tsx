@@ -197,7 +197,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </Collapse>
                 <FormGroup inline={true} label="NaN color" className="nan-color-button">
                     <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).toRgb()}
+                        color={tinycolor(appStore.imageViewConfigStore.nanColor).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());

@@ -3,29 +3,42 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
-import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceHistogramWidgetConfig, type WorkspaceIdReader, type WorkspaceIdWriter} from "models";
+import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceHistogramWidgetConfig, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceLayoutConfigurable} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
+import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 import {applyWorkspacePlotRange, isWorkspaceRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
-/** What a histogram widget saves of its plot. */
+/** What a histogram widget saves of its plot in a regular layout. */
 export interface HistogramWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
-    widgetId: string;
     primaryLineColor: string;
     lineWidth: number;
     linePlotPointSize: number;
     logScaleY: boolean;
     meanRmsVisible: boolean;
     plotType: PlotType;
+    /** The range of the data that the widget last plotted. The settings panel shows it in its range inputs before the widget plots data. */
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
+}
+
+/** What a histogram widget saves in the layout copy of a workspace. */
+export interface HistogramWorkspaceLayoutConfig extends Omit<HistogramWidgetConfig, LinePlotDataRangeField> {
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
+    widgetId: string;
     settingsTabId: HistogramSettingsTabs;
     autoBins: boolean;
     /** The number of bins. Left out when the bins are chosen automatically. */
     numBins?: number;
 }
 
-export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig> {
+export class HistogramWidgetStore
+    extends RegionWidgetStore
+    implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceLayoutConfigurable<HistogramWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig>
+{
     widgetId: string = "";
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
@@ -460,13 +473,37 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         this.cachedNumBins = numBins;
     };
 
+    /** Applies the settings of a regular layout. */
     public applyConfig = (widgetSettings: Persisted<HistogramWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
+        this.applyPlotSettings(widgetSettings);
+        applyLinePlotDataRange(this.linePlotInitXYBoundaries, widgetSettings);
+    };
+
+    /**
+     * Applies the settings in the layout copy of a workspace. The range of the data is not applied.
+     * The workspace restores the range that the widget was zoomed to.
+     */
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<HistogramWorkspaceLayoutConfig>): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        this.applyPlotSettings(widgetSettings);
         if (typeof widgetSettings.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
+        if (Object.values(HistogramSettingsTabs).includes(widgetSettings.settingsTabId as HistogramSettingsTabs)) {
+            this.settingsTabId = widgetSettings.settingsTabId as HistogramSettingsTabs;
+        }
+        if (widgetSettings.autoBins === false && typeof widgetSettings.numBins === "number" && Number.isInteger(widgetSettings.numBins) && widgetSettings.numBins > 0) {
+            this.setAutoBins(false);
+            this.setNumBins(widgetSettings.numBins);
+        }
+    };
+
+    private applyPlotSettings = (widgetSettings: Persisted<HistogramWidgetConfig>): void => {
         if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
@@ -485,27 +522,37 @@ export class HistogramWidgetStore extends RegionWidgetStore implements Configura
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if (Object.values(HistogramSettingsTabs).includes(widgetSettings.settingsTabId as HistogramSettingsTabs)) {
-            this.settingsTabId = widgetSettings.settingsTabId as HistogramSettingsTabs;
-        }
-        if (widgetSettings.autoBins === false && typeof widgetSettings.numBins === "number" && Number.isInteger(widgetSettings.numBins) && widgetSettings.numBins > 0) {
-            this.setAutoBins(false);
-            this.setNumBins(widgetSettings.numBins);
-        }
     };
 
+    /** Returns the settings of a regular layout. */
     public toConfig = (): HistogramWidgetConfig => {
         return {
-            widgetId: this.widgetId,
-            settingsTabId: this.settingsTabId,
-            autoBins: this.isCurrentAutoBins,
-            ...(!this.isCurrentAutoBins && typeof this.currentNumBins === "number" ? {numBins: this.currentNumBins} : {}),
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             logScaleY: this.isLogScaleY,
             meanRmsVisible: this.isMeanRmsVisible,
-            plotType: this.plotType
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
+
+    /** Returns the settings in the layout copy of a workspace. It keeps no range of the data. */
+    public toWorkspaceLayoutConfig = (): HistogramWorkspaceLayoutConfig => {
+        return {
+            primaryLineColor: this.primaryLineColor,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.isLogScaleY,
+            meanRmsVisible: this.isMeanRmsVisible,
+            plotType: this.plotType,
+            widgetId: this.widgetId,
+            settingsTabId: this.settingsTabId,
+            autoBins: this.isCurrentAutoBins,
+            ...(!this.isCurrentAutoBins && typeof this.currentNumBins === "number" ? {numBins: this.currentNumBins} : {})
         };
     };
 }

@@ -1,9 +1,9 @@
-import {DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
+import {Actions, DockLocation, type DropInfo, type ILayoutApi, Model, type Node} from "flexlayout-react";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutDialogMode} from "enums";
-import {LayoutConfig, PresetLayout} from "models";
+import {LayoutConfig, type LayoutPersistence, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
@@ -110,13 +110,15 @@ export class LayoutStore {
     /**
      * Put a layout config in place, replacing every widget the session is showing.
      *
-     * @param config - the layout, in the form a saved layout and a workspace both hold it.
-     * @param layoutName - the saved layout it came from, or "" when it is not a layout of its own,
-     *                     as for the layout a workspace carries.
+     * @param config - the layout: a saved layout, or the layout copy of a workspace.
+     * @param layoutName - the saved layout it came from, or "" for the layout copy of a workspace.
+     * @param persistence - the kind of layout. A regular layout is applied as it is. The
+     *                      layout copy of a workspace is validated by the workspace schema, and also
+     *                      applies what only a workspace keeps, such as the image view grid.
      * @returns whether the layout could be applied.
      */
-    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = ""): boolean => {
-        const preparedConfig = LayoutConfig.prepareLayout(config);
+    @action applyLayoutConfig = (config: {docked?: any; floating?: any[]} | undefined | null, layoutName: string = "", persistence: LayoutPersistence = "regular"): boolean => {
+        const preparedConfig = LayoutConfig.prepareLayout(config, persistence);
         if (!preparedConfig) {
             return false;
         }
@@ -128,21 +130,26 @@ export class LayoutStore {
             content: []
         };
         // Build abstract config tree (don't collect component configs here — they'll be collected with unique IDs below)
-        LayoutConfig.createConfigToApply(dockedConfig.content, preparedConfig.docked.content, []);
+        LayoutConfig.createConfigToApply(dockedConfig.content, preparedConfig.docked.content, [], persistence);
 
         // Create FlexLayout model first — this assigns unique IDs via _assignedId on abstract config nodes
         const dockedComponentConfigs: any[] = [];
-        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs);
-        const nextLayoutModel = Model.fromJson(modelJson);
-        nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
-            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
-        });
+        const modelJson = LayoutConfig.createFlexLayoutModelJson(dockedConfig, dockedComponentConfigs, persistence);
 
         this.clearCurrentLayout();
         appStore.widgetsStore.clearPopoutPositions();
 
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? []);
+        appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence);
+
+        // A docked PV Preview Viewer names its PV generator. The PV generator gets its layout ID in
+        // `initWidgets` above.
+        const orphanPvPreviews = persistence === "workspace" ? appStore.widgetsStore.attachDockedPvPreviews(modelJson) : [];
+        const nextLayoutModel = Model.fromJson(modelJson);
+        nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {
+            return !(dropInfo.className === "flexlayout__outline_rect_edge" && (dropInfo.location === DockLocation.TOP || dropInfo.location === DockLocation.BOTTOM));
+        });
+        orphanPvPreviews.forEach(id => nextLayoutModel.doAction(Actions.deleteTab(id)));
 
         this.layoutModel = nextLayoutModel;
 
@@ -152,13 +159,17 @@ export class LayoutStore {
         return true;
     };
 
-    /** The layout the session is showing, in the form a saved layout and a workspace both hold it. */
-    public currentLayoutConfig = (): {layoutVersion: number; docked: any; floating: any[]} | undefined => {
+    /**
+     * The layout the session is showing.
+     *
+     * @param persistence - the kind of layout to write. A workspace writes its own copy of the layout.
+     */
+    public currentLayoutConfig = (persistence: LayoutPersistence = "regular"): {layoutVersion: number; docked: any; floating: any[]} | undefined => {
         const modelJson = this.layoutModel?.toJson();
         if (!modelJson?.layout) {
             return undefined;
         }
-        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson) ?? undefined;
+        return LayoutConfig.createConfigToSave(AppStore.Instance, modelJson, persistence) ?? undefined;
     };
 
     @flow.bound *saveLayout() {
@@ -189,7 +200,7 @@ export class LayoutStore {
             return;
         }
 
-        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson);
+        const configToSave = LayoutConfig.createConfigToSave(appStore, currentModelJson, "regular");
         if (!configToSave) {
             appStore.alertStore.showAlert("Saving layout failed! Creating layout configuration for saving failed.");
             return;

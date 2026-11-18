@@ -2,17 +2,17 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {Polarizations, RegionsType} from "enums";
-import {type ConfigurableStore, type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceStatsWidgetConfig} from "models";
+import {type Persisted, VALID_COORDINATES, type WorkspaceConfigurableWidget, type WorkspaceIdReader, type WorkspaceIdWriter, type WorkspaceLayoutConfigurable, type WorkspaceStatsWidgetConfig} from "models";
 import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
-/** The settings that a statistics widget saves in a layout. */
+/** The settings that a statistics widget saves in the layout copy of a workspace. A regular layout saves no settings for it. */
 export interface StatsWidgetConfig {
-    /** The own ID of the widget. It stays the same in every session that applies the layout. */
+    /** The own ID of the widget. It stays the same in every session that restores the workspace. */
     widgetId: string;
 }
 
-export class StatsWidgetStore extends RegionWidgetStore implements ConfigurableStore<StatsWidgetConfig, Persisted<StatsWidgetConfig>>, WorkspaceConfigurableWidget<WorkspaceStatsWidgetConfig> {
+export class StatsWidgetStore extends RegionWidgetStore implements WorkspaceLayoutConfigurable<StatsWidgetConfig>, WorkspaceConfigurableWidget<WorkspaceStatsWidgetConfig> {
     widgetId: string = "";
     @observable coordinate: string = "z";
 
@@ -53,13 +53,13 @@ export class StatsWidgetStore extends RegionWidgetStore implements ConfigurableS
         makeObservable(this);
     }
 
-    public applyConfig = (widgetSettings: Persisted<StatsWidgetConfig>): void => {
+    public applyWorkspaceLayoutConfig = (widgetSettings: Persisted<StatsWidgetConfig>): void => {
         if (typeof widgetSettings?.widgetId === "string" && widgetSettings.widgetId) {
             this.widgetId = widgetSettings.widgetId;
         }
     };
 
-    public toConfig = (): StatsWidgetConfig => ({widgetId: this.widgetId});
+    public toWorkspaceLayoutConfig = (): StatsWidgetConfig => ({widgetId: this.widgetId});
 
     public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();

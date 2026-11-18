@@ -66,11 +66,12 @@ export class CatalogPlotWidgetStore implements ConfigurableStore<CatalogPlotWidg
         makeObservable(this);
     }
 
+    /** Returns what the layout copy of a workspace keeps for the plot. A border with a value that is not finite, such as one made before the plot had data, is left out. */
     public toLayoutSettings = (): CatalogPlotLayoutSettings => ({
         plotType: this.plotType,
         dragMode: this.dragMode,
-        scatterBorder: this.scatterBorder,
-        histogramBorder: this.histogramBorder
+        scatterBorder: this.scatterBorder && Object.values(this.scatterBorder).every(Number.isFinite) ? this.scatterBorder : undefined,
+        histogramBorder: this.histogramBorder && Object.values(this.histogramBorder).every(Number.isFinite) ? this.histogramBorder : undefined
     });
 
     public toConfig = (): CatalogPlotWidgetConfig => ({
