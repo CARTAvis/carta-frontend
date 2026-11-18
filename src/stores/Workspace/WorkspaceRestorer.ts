@@ -168,6 +168,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
+        // Put the cursor back before the widgets are made, so that the cursor profiles are not made
+        // again for another position. End this step after it. Freezing the cursor moves the center of
+        // the online query dialog when the step ends, and the saved center is applied later.
+        this.restoreCursor();
+        yield* awaited(Promise.resolve());
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.restoreContourDataSource();
         this.restoreAnimator();
         this.restoreLog();
@@ -193,7 +201,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.restoreDialogs();
         this.restoreWidgetSettings();
         this.restoreStackingOrder();
-        this.restoreCursor();
         this.restoreToolbar();
         // The Beam tab follows the image in front. Show the saved image after the image in front is chosen.
         const beamFrame = typeof this.workspace.beamSettingsImageId === "number" ? this.frameOf(this.workspace.beamSettingsImageId) : undefined;

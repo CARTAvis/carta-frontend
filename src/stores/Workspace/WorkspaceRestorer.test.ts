@@ -700,6 +700,19 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.updateActiveLayer).not.toHaveBeenCalled();
     });
 
+    test("puts the cursor back before the layout makes the widgets, and keeps the saved center of the online query dialog", async () => {
+        const {appStore} = createSession();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const onlineCatalogQuery = {...configStore.toWorkspaceConfig(), center: {x: "10", y: "20"}, objectName: "M17"};
+
+        await restore(createWorkspace({files: [IMAGE], layout: LAYOUT, cursor: {frozen: true, position: {x: 5, y: 6}}, onlineCatalogQuery}));
+
+        const cursorOrder = (appStore.activeFrame as any).updateCursorRegion.mock.invocationCallOrder[0];
+        expect(cursorOrder).toBeLessThan(appStore.layoutStore.applyLayoutConfig.mock.invocationCallOrder[0]);
+        expect([configStore.centerPixelCoord, configStore.objectName]).toEqual([{x: "10", y: "20"}, "M17"]);
+        runInAction(() => configStore.resetObjectName());
+    });
+
     test("shows the saved image on the Beam tab after the image in front is chosen", async () => {
         const {appStore} = createSession();
         const setSelectedFrame = jest.fn();
