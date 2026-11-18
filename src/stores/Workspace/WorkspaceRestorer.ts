@@ -168,9 +168,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const cubeHistograms = this.restoreCubeHistograms();
         this.restoreColorBlending();
         this.putFrontImageBack();
-        // Put the cursor back before the widgets are made, so that the cursor profiles are not made
-        // again for another position. End this step after it. Freezing the cursor moves the center of
-        // the online query dialog when the step ends, and the saved center is applied later.
+        // Put the cursor back before the widgets are made. Then the cursor profiles are not made again
+        // for another position. End the step right after it. Freezing the cursor moves the center of
+        // the online query dialog when the step ends. The saved center is applied later.
         this.restoreCursor();
         yield* awaited(Promise.resolve());
         if (!this.isCurrent) {
