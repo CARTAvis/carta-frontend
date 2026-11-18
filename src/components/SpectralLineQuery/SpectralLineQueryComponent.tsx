@@ -20,7 +20,6 @@ const PLOT_LINES_LIMIT = 1000;
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable width: number = 750;
     @observable height: number = 600;
-    @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
     private widgetId: string;
     private readonly cachedWidgetStore: SpectralLineQueryWidgetStore;
     private headerTableRef: Table | undefined;
@@ -109,10 +108,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         ev.currentTarget.value = existingValue;
     };
 
-    @action setHeaderTableColumnWidths(vals: Array<number>) {
-        this.headerTableColumnWidths = vals;
-    }
-
     private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
@@ -184,7 +179,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.headerTableColumnWidths}
+                columnWidths={this.widgetStore.headerTableColumnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
                 cellRendererDependencies={[this.widgetStore.displayedColumnHeaders]} // trigger re-render on controlHeader change
@@ -195,9 +190,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     }
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
-        if (this.headerTableColumnWidths) {
-            this.headerTableColumnWidths[index] = size;
-        }
+        this.widgetStore.setHeaderTableColumnWidth(index, size);
     };
 
     private handleEnterWidgetOption = (isEntering: boolean, widgetID: string) => {

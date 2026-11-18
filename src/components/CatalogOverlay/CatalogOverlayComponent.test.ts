@@ -412,6 +412,22 @@ describe("CatalogOverlayComponent", () => {
         expect(component["hasPendingAutoScroll"](displayStore)).toBe(false);
     });
 
+    test("shows the Show header switch off when the separator hides the header, as after a workspace restore", () => {
+        const {component, componentId} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, []);
+        const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);
+
+        widgetStore?.setTableSeparatorPosition("100.0%");
+        expect(component["isShowHeader"]).toBe(false);
+
+        component["handleHideHeader"]();
+        expect(widgetStore?.tableSeparatorPosition).toBe("60%");
+        expect(component["isShowHeader"]).toBe(true);
+
+        component["handleHideHeader"]();
+        expect(widgetStore?.tableSeparatorPosition).toBe("100%");
+        expect(component["isShowHeader"]).toBe(false);
+    });
+
     test("resets the size-axis tab when a settings shortcut is opened", () => {
         const {component, componentId, displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
         const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);

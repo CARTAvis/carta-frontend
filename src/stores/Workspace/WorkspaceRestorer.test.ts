@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {observable, runInAction} from "mobx";
 
-import {CatalogSystemType, ImageType, RadiusUnits, WorkspaceItemKind} from "enums";
+import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
@@ -27,6 +27,9 @@ function createRenderConfig() {
     };
 }
 
+/** The ID that the backend gives a restored region. It is a new ID, not related to the saved ID. */
+const RegisterRegion = jest.fn((savedRegionId: number): Promise<number | undefined> => Promise.resolve(savedRegionId + 100));
+
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
     const frame = {
@@ -48,7 +51,19 @@ function createFrame(fileId: number) {
         vectorOverlayConfig: {applyConfig: jest.fn()},
         applyContours: jest.fn(),
         applyVectorOverlay: jest.fn(),
-        regionSet: {addExistingRegion: jest.fn(), selectSingleRegion: jest.fn()}
+        headerUnit: "Jy/beam",
+        intensityConfig: {nativeIntensityUnit: "Jy/beam"},
+        setSpectralCoordinate: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
+        setSpectralCoordinateSecondary: jest.fn((coordinate: string, _shouldAlignSiblings?: boolean) => coordinate !== "Unsupported"),
+        setSpectralSystem: jest.fn((system: string, _shouldAlignSiblings?: boolean) => system !== "Unsupported"),
+        setIntensityUnit: jest.fn(),
+        regionSet: {
+            addExistingRegionAsync: jest.fn(async (points: unknown) => {
+                const regionId = await RegisterRegion(savedRegionIdOf(points));
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn()};
+            }),
+            selectSingleRegion: jest.fn()
+        }
     };
     return frame;
 }
@@ -92,7 +107,8 @@ function createSession() {
     };
 
     const appStore = {
-        animatorStore: {stopAnimation: jest.fn()},
+        logStore: {setLevel: jest.fn(), setHiddenTags: jest.fn()},
+        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn(), setNumericInputType: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -155,7 +171,11 @@ function createSession() {
         },
         widgetsStore: {
             catalogWidgets: new Map(),
-            catalogPlotWidgets: new Map()
+            catalogPlotWidgets: new Map(),
+            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown): void => undefined),
+            restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
             applyLayoutConfig: jest.fn((_layout?: unknown) => {
@@ -179,6 +199,17 @@ async function restoreIssues(workspace: Workspace): Promise<WorkspaceIssue[]> {
     return step.value;
 }
 
+/** Runs the restore to the end, and returns the restorer so that the test can check the ID maps. */
+async function restored(workspace: Workspace): Promise<WorkspaceRestorer> {
+    const restorer = new WorkspaceRestorer(workspace, WorkspaceRestorer.claimGeneration());
+    const generator = restorer.restore();
+    let step = generator.next();
+    while (!step.done) {
+        step = generator.next(await step.value);
+    }
+    return restorer;
+}
+
 /** What a restore reports, as the sentences a person reads. */
 async function restore(workspace: Workspace): Promise<string[]> {
     return (await restoreIssues(workspace)).map(issue => issue.message);
@@ -188,8 +219,18 @@ const IMAGE = {id: 1, source: {type: "file" as const, filename: "image.fits"}};
 const CATALOG = {id: 1, source: {type: "file" as const, filename: "sources.vot"}, associatedImageId: 1};
 const LAYOUT = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []};
 
+/** The saved ID of each region of a workspace made by {@link createWorkspace}, by its points. A test makes the backend refuse a region by having RegisterRegion return undefined. The restore passes on the points, not the saved ID. */
+const SAVED_REGION_IDS = new WeakMap<object, number>();
+
+/** Returns the ID that a region was saved with, from the points that the restore passes on. */
+function savedRegionIdOf(points: unknown): number {
+    return (points && typeof points === "object" && SAVED_REGION_IDS.get(points)) || 0;
+}
+
 function createWorkspace(overrides: Partial<Workspace> = {}): Workspace {
-    return {workspaceVersion: 2, frontendVersion: 0, files: [IMAGE], ...overrides};
+    const workspace: Workspace = {workspaceVersion: 2, frontendVersion: 0, files: [IMAGE], ...overrides};
+    workspace.files?.forEach(file => file.regionsSet?.regions?.forEach(region => SAVED_REGION_IDS.set(region.points, region.id)));
+    return workspace;
 }
 
 describe("WorkspaceRestorer", () => {
@@ -202,6 +243,41 @@ describe("WorkspaceRestorer", () => {
 
         expect(await restore(createWorkspace({files: []}))).toEqual([]);
         expect(appStore.removeAllFrames).toHaveBeenCalled();
+    });
+
+    test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
+        const {appStore} = createSession();
+        appStore.appendFile.mockImplementationOnce(() => {
+            const frame = {...createFrame(1), frameInfo: {fileId: 1, fileInfoExtended: {depth: 10}}, setAnimationRange: jest.fn()};
+            appStore.frameMap.set(1, frame as never);
+            appStore.frames.push(frame as never);
+            return Promise.resolve(frame as never);
+        });
+
+        await restore(createWorkspace({files: [{...IMAGE, animationChannelRange: [2, 5]}], animator: {frameRate: 8, step: 99, playMode: 2, mode: 1, numericInputType: "Step"} as never}));
+
+        expect((appStore.frames[0] as any).setAnimationRange).toHaveBeenCalledWith([2, 5]);
+        expect(appStore.animatorStore.setFrameRate).toHaveBeenCalledWith(8);
+        expect(appStore.animatorStore.setStep).not.toHaveBeenCalled();
+        expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
+        expect(appStore.animatorStore.setNumericInputType).toHaveBeenCalledWith("Step");
+        expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
+    });
+
+    test("applies the level and the hidden tags of the Log widget, and keeps the current ones when they are not valid", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({log: {level: 2, hiddenTags: ["Region", "Catalog"]}}));
+
+        expect(appStore.logStore.setLevel).toHaveBeenCalledWith(2);
+        expect(appStore.logStore.setHiddenTags).toHaveBeenCalledWith(["Region", "Catalog"]);
+
+        appStore.logStore.setLevel.mockClear();
+        appStore.logStore.setHiddenTags.mockClear();
+        await restore(createWorkspace({log: {level: 9, hiddenTags: [1]} as never}));
+
+        expect(appStore.logStore.setLevel).not.toHaveBeenCalled();
+        expect(appStore.logStore.setHiddenTags).not.toHaveBeenCalled();
     });
 
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
@@ -593,6 +669,43 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.catalogStore.widgetBindings.restore).toHaveBeenCalledWith(catalogWidgets, [CATALOG], new Map([[1, 10]]));
     });
 
+    test("points the profile and analysis widgets at their images and regions, and gives them the rest once they have settled", async () => {
+        const {appStore, calls} = createSession();
+        const plotWidgets = {"stats-0": {type: "stats" as const, imageId: 1}};
+        let didSettleBeforeTheRest = false;
+        appStore.widgetsStore.restorePlotWidgetBindings.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetBindings");
+            Promise.resolve().then(() => (didSettleBeforeTheRest = !calls.includes("restorePlotWidgets")));
+            return [];
+        });
+        appStore.widgetsStore.restorePlotWidgets.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgets");
+            return [];
+        });
+        appStore.widgetsStore.restorePlotWidgetViews.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetViews");
+        });
+        const queryIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "spectral-line-query-0", message: "Could not fully restore the widget spectral-line-query-0: the spectral line query returned no result"};
+        appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce(() => {
+            calls.push("restorePlotWidgetResults");
+            return Promise.resolve([queryIssue]);
+        });
+
+        const restorer = new WorkspaceRestorer(createWorkspace({layout: LAYOUT, plotWidgets}), WorkspaceRestorer.claimGeneration());
+        const generator = restorer.restore();
+        let step = generator.next();
+        while (!step.done) {
+            step = generator.next(await step.value);
+        }
+
+        // The results of online queries are fetched again last, and their problems are reported.
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews", "restorePlotWidgetResults"]);
+        expect(step.value).toContainEqual(queryIssue);
+        expect(didSettleBeforeTheRest).toBe(true);
+        expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
+        expect(restorer.fileIdOf(1)).toBe(appStore.frames[0].frameInfo.fileId);
+    });
+
     test("reports what the catalog widgets could not be pointed at", async () => {
         const {appStore} = createSession();
         const issue = {kind: WorkspaceItemKind.CatalogWidget, subject: "catalog-overlay-0", message: "Could not restore catalog widget catalog-overlay-0"};
@@ -624,6 +737,121 @@ describe("WorkspaceRestorer", () => {
             kind: WorkspaceItemKind.Layout,
             subject: "",
             message: "Could not restore the layout the workspace was saved in"
+        });
+    });
+
+    test("shows an image in the spectral coordinates, spectral system and intensity unit it was saved in, without aligning other images", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Radio velocity (km/s)", spectralCoordinateSecondary: "Channel", spectralSystem: SpectralSystem.LSRK, intensityUnit: "Jy/beam"}]}));
+
+        const frame = appStore.frames[0];
+        expect(problems).toEqual([]);
+        expect(frame.setSpectralCoordinate).toHaveBeenCalledWith("Radio velocity (km/s)", false);
+        expect(frame.setSpectralCoordinateSecondary).toHaveBeenCalledWith("Channel", false);
+        expect(frame.setSpectralSystem).toHaveBeenCalledWith("LSRK", false);
+        expect(frame.setIntensityUnit).toHaveBeenCalledWith("Jy/beam");
+    });
+
+    test("reports the spectral settings an image can no longer be shown in", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, spectralCoordinate: "Unsupported", spectralSystem: "Unsupported" as SpectralSystem, intensityUnit: "K"}]}));
+
+        expect(problems).toEqual(["Could not show image.fits in the spectral coordinate Unsupported, the spectral system Unsupported, the intensity unit K"]);
+        expect(appStore.frames[0].setIntensityUnit).not.toHaveBeenCalled();
+    });
+
+    describe("the regions of an image", () => {
+        const region = (id: number) => ({id, name: `Region ${id}`, points: [{x: id, y: 0}], rotation: 0, type: 3});
+
+        test("maps each region's saved ID to the one the backend gave it", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), region(2)]}}]}));
+
+            expect(restorer.regionIdOf(1, 1)).toBe(101);
+            expect(restorer.regionIdOf(1, 2)).toBe(102);
+        });
+
+        test("waits for the backend to give the regions their IDs before restoring the layout", async () => {
+            const {calls} = createSession();
+            RegisterRegion.mockImplementationOnce(
+                savedRegionId =>
+                    new Promise(resolve =>
+                        setTimeout(() => {
+                            calls.push("regionRegistered");
+                            resolve(savedRegionId + 100);
+                        }, 0)
+                    )
+            );
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}], layout: LAYOUT}));
+
+            expect(calls.indexOf("regionRegistered")).toBeGreaterThanOrEqual(0);
+            expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("regionRegistered"));
+        });
+
+        test("keeps the cursor, the whole image and the other fixed region IDs as they are", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace());
+
+            expect([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE].map(regionId => restorer.regionIdOf(1, regionId))).toEqual([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE]);
+        });
+
+        test("leaves out and reports a region that the backend does not accept, so that its saved ID points at no region", async () => {
+            createSession();
+            RegisterRegion.mockImplementationOnce(() => Promise.resolve(undefined));
+
+            const workspace = createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), region(2)]}}]});
+            const restorer = await restored(workspace);
+
+            expect(restorer.regionIdOf(1, 1)).toBeUndefined();
+            expect(restorer.regionIdOf(1, 2)).toBe(102);
+            RegisterRegion.mockImplementationOnce(() => Promise.resolve(undefined));
+            expect(await restore(workspace)).toContain("Could not restore the region Region 1 of image.fits: the backend did not accept it");
+        });
+
+        test("gives no ID for a region that was not restored", async () => {
+            createSession();
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}]}));
+
+            expect(restorer.regionIdOf(1, 2)).toBeUndefined();
+            expect(restorer.regionIdOf(7, 1)).toBeUndefined();
+        });
+
+        test("puts back the sample width of a line region, and ignores one no control allows", async () => {
+            const {appStore} = createSession();
+
+            await restore(
+                createWorkspace({
+                    files: [
+                        {
+                            ...IMAGE,
+                            regionsSet: {
+                                regions: [
+                                    {...region(1), lineRegionSampleWidth: 7},
+                                    {...region(2), lineRegionSampleWidth: 50}
+                                ]
+                            }
+                        }
+                    ]
+                })
+            );
+
+            const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setLineRegionSampleWidth: jest.Mock}[];
+            expect(restoredRegions.map(restoredRegion => restoredRegion.setLineRegionSampleWidth.mock.calls)).toEqual([[[7]], []]);
+        });
+
+        test("finds a matched image's region among the regions of the image it was matched to", async () => {
+            createSession();
+            const matched = {id: 2, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
+
+            const restorer = await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1)]}}, matched]}));
+
+            expect(restorer.regionIdOf(2, 1)).toBe(101);
         });
     });
 

@@ -167,11 +167,10 @@ describe("AnimatorComponent", () => {
             imageViewConfigStore: {imageNum: 2},
             widgetsStore: {animatorWidgets: new Map()},
             timeSeriesStore: {elements: []},
-            animatorStore: {step: 2, isAnimationActive: false},
+            animatorStore: {step: 2, isAnimationActive: false, numericInputType: NumericInputType.FrameRate},
             channelMapStore: {isChannelMapEnabled}
         } as any);
         const component = new AnimatorComponent({} as any);
-        component.onNumericInputTypeChange(NumericInputType.FrameRate);
         const findSelect = (node: React.ReactNode): React.ReactElement<{value: string; disabled: boolean}> | undefined => {
             if (!React.isValidElement<{children?: React.ReactNode}>(node)) {
                 return undefined;

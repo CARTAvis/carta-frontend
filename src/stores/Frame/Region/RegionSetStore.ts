@@ -2,7 +2,7 @@ import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
 
-import {RegionMode, RegionOpacity} from "enums";
+import {RegionId, RegionMode, RegionOpacity} from "enums";
 import {type Point2D, Transform2D} from "models";
 import {type BackendService} from "services";
 import {FileBrowserStore, type PreferenceStore} from "stores";
@@ -564,6 +564,25 @@ export class RegionSetStore {
             }
         }
 
+        return region;
+    };
+
+    /**
+     * Adds a region like {@link addExistingRegion}, and resolves when the backend answers. The region
+     * has a temporary ID until the backend gives it one. Then it cannot share an ID with another
+     * region, even while the backend has not answered yet. The temporary ID is below every ID in
+     * {@link RegionId}. An ID such as -1 would be taken for the whole image. When the backend does
+     * not give the region an ID, the region is removed again, and the promise resolves to undefined.
+     */
+    addExistingRegionAsync = async (points: Point2D[], rotation: number, regionType: CARTA.RegionType, name: string, color: string, lineWidth: number, dashes: number[], annotationStyles?: any): Promise<RegionStore | undefined> => {
+        const temporaryId = Math.min(RegionId.NONE, ...this.regions.map(r => r.regionId)) - 1;
+        const region = this.addExistingRegion(points, rotation, regionType, temporaryId, name, color, lineWidth, dashes, true, annotationStyles);
+        await this.requestSetRegion(this.frame.frameInfo.fileId, region);
+        if (region.isTemporary) {
+            // The region has no ID on the backend, so only remove it here.
+            this.deleteRegion(region);
+            return undefined;
+        }
         return region;
     };
 
