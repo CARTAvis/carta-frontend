@@ -734,6 +734,15 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toContain("The cursor was not put back where it was, because the image that it was on is not in front");
     });
 
+    test("leaves the cursor where it is without a report when the image in front was not saved, such as a PV preview", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [IMAGE], cursor: {frozen: true, position: {x: 5, y: 6}}}));
+
+        expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
+        expect(problems).not.toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+    });
+
     test("puts a cursor that was not frozen where it was, so that the cursor profiles show that position", async () => {
         const {appStore} = createSession();
 

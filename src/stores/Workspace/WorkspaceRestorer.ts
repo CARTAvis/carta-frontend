@@ -221,7 +221,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Puts the cursor where it was on the image in front, so that the cursor profiles show that
      * position, and freezes it again when it was frozen. A cursor that was not frozen follows the
      * mouse again when the mouse moves over the image. The position is in the pixels of the image
-     * that was in front. When that image is not in front again, the cursor stays where it is.
+     * that was in front. When that image is not in front again, the cursor stays where it is. This
+     * is reported only for an image that the workspace saved. An image that it does not save, such
+     * as a PV preview, is made again later or not at all.
      */
     private restoreCursor(): void {
         const cursor = this.workspace.cursor;
@@ -235,7 +237,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (frame === savedFrontFrame) {
                 frame.setCursorPosition(position);
                 frame.updateCursorRegion(position);
-            } else {
+            } else if (this.workspace.selectedFile !== undefined) {
                 this.report(WorkspaceItemKind.Layout, "Cursor", "The cursor was not put back where it was, because the image that it was on is not in front");
             }
         }
