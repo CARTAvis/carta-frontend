@@ -47,6 +47,9 @@ export class CatalogOnlineQueryStore {
             try {
                 const {dataSize} = await CatalogApiService.Instance.loadSimbadCatalog(source);
                 this.setResultSize(dataSize);
+            } catch (error) {
+                CatalogApiService.showQueryError(error);
+                this.setResultSize(0);
             } finally {
                 this.setIsQuerying(false);
             }
@@ -76,6 +79,8 @@ export class CatalogOnlineQueryStore {
             this.setIsQuerying(true);
             try {
                 await CatalogApiService.Instance.loadVizierCatalogs(source, tableNames);
+            } catch (error) {
+                CatalogApiService.showQueryError(error);
             } finally {
                 this.setIsQuerying(false);
             }

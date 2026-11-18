@@ -21,6 +21,7 @@ import {
     VelocityConvention,
     WORKSPACE_DIALOG_TABS,
     WORKSPACE_DIALOGS,
+    WorkspaceIssueOutcome,
     WorkspaceItemKind
 } from "enums";
 import {
@@ -67,6 +68,25 @@ interface CatalogConfigRequest {
     /** What to report if its rows do not come back. */
     rowFailure: string;
     completion: Promise<CatalogRestoreOutcome>;
+}
+
+/**
+ * Returns why a load failed, as the backend or the request says it, without the final period. For
+ * example, "File /data/cube.fits does not exist".
+ */
+function reasonOf(err: unknown): string | undefined {
+    const text = (err instanceof Error ? err.message : String(err ?? "")).trim().replace(/\.$/, "");
+    return text || undefined;
+}
+
+/** Throws the reason for an online catalog query that answered with no sources, for the report. */
+function noSources(): never {
+    throw new Error("the query found no sources");
+}
+
+/** Adds the reason to a sentence that reports a failure, when the reason is known. */
+function withReason(sentence: string, reason: string | undefined): string {
+    return reason ? `${sentence}: ${reason}` : sentence;
 }
 
 /**
@@ -196,7 +216,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * @returns one entry per item that could not be brought back as saved.
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
-        this.clearSession();
+        WorkspaceRestorer.clearSession();
         this.restoreSpectralMatchingType();
         yield* this.openImages();
         if (!this.isCurrent) {
@@ -245,11 +265,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.showProgress("Finishing the images");
         yield* awaited(cubeHistograms);
         yield* awaited(regions);
         if (!this.isCurrent) {
             return this.issues;
         }
+        this.showProgress("Restoring the layout and widgets");
         this.restoreLayout();
         yield* this.restoreViews();
         if (!this.isCurrent) {
@@ -654,18 +676,34 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Report something that could not be brought back, naming what it was about. */
-    private report(kind: WorkspaceItemKind, subject: string, message: string): void {
-        this.issues.push({kind, subject, message});
+    /**
+     * Report something that could not be brought back, naming what it was about.
+     *
+     * @param outcome - why the item is not in the session at all. Leave it out when the item is in
+     *                  the session, but not as it was saved.
+     */
+    private report(kind: WorkspaceItemKind, subject: string, message: string, outcome?: WorkspaceIssueOutcome): void {
+        this.issues.push({kind, subject, message, outcome});
     }
 
-    /** Stage 1: put the session back to an empty state for the workspace to be restored into. */
-    private clearSession(): void {
+    /**
+     * Stage 1: put the session back to an empty state for the workspace to be restored into.
+     * Cancelling a load does the same, to close what the load has opened so far.
+     */
+    public static clearSession(): void {
+        const appStore = AppStore.Instance;
         CatalogApiService.Instance.cancelPendingQueries("The online catalog query was given up on to open a workspace");
-        this.appStore.catalogStore.interruptRequests("The previous workspace restore was interrupted");
-        this.appStore.animatorStore.stopAnimation();
-        this.appStore.tileService.clearRequestQueue();
-        this.appStore.removeAllFrames();
+        appStore.catalogStore.interruptRequests("The previous workspace restore was interrupted");
+        appStore.animatorStore.stopAnimation();
+        appStore.tileService.clearRequestQueue();
+        appStore.removeAllFrames();
+    }
+
+    /** Show the user the stage that this restore is in, and the item of the stage that it is on. */
+    private showProgress(stage: string, index?: number, count?: number, item?: string): void {
+        if (this.isCurrent) {
+            this.appStore.setWorkspaceRestoreProgress({stage, index, count, item});
+        }
     }
 
     /**
@@ -687,15 +725,19 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /** Stage 2: open every image, and map the workspace's image IDs onto this session's file IDs. */
     private *openImages(): Generator<Promise<unknown>, void, any> {
-        for (const fileInfo of this.workspace.files ?? []) {
+        const files = this.workspace.files ?? [];
+        for (const [index, fileInfo] of files.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Opening images", index + 1, files.length, describeImageSource(fileInfo.source));
             let frame: FrameStore | undefined;
+            let reason: string | undefined;
             try {
                 frame = (yield* this.openImageSource(fileInfo.source)) ?? undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             // Checked again here rather than only at the top of the loop: the image finished opening
             // while this restore was suspended, and a load started in the meantime owns the session.
@@ -704,7 +746,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), `Could not open the image ${describeImageSource(fileInfo.source)}`);
+                this.report(WorkspaceItemKind.Image, describeImageSource(fileInfo.source), withReason(`Could not open the image ${describeImageSource(fileInfo.source)}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(fileInfo, frame);
@@ -739,31 +781,32 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * depend on any other data in the session.
      */
     private *openHipsImages(): Generator<Promise<unknown>, void, any> {
-        for (const {request, images} of this.generatedImages) {
-            if (request.type !== "hips" || !images.length) {
-                continue;
-            }
+        const hipsImages = this.generatedImages.filter((generated): generated is WorkspaceGeneratedImages & {request: WorkspaceHipsRequest} => generated.request.type === "hips" && generated.images.length > 0);
+        for (const [index, {request, images}] of hipsImages.entries()) {
             if (!this.isCurrent) {
                 return;
             }
             const subject = WorkspaceRestorer.describeRequest(request, "");
+            this.showProgress("Opening HiPS images", index + 1, hipsImages.length, subject);
             const query = WorkspaceRestorer.hipsQueryOf(request);
             if (!query) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the query is not one this version can read`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
             let frame: FrameStore | undefined;
+            let reason: string | undefined;
             try {
                 frame = (yield* awaitedFlow<FrameStore | undefined | 0>(this.appStore.loadRemoteFile(query))) || undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             if (!this.isCurrent) {
                 this.closeSupersededImage(frame);
                 return;
             }
             if (!frame) {
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
+                this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
             this.adoptImage(images[0], frame);
@@ -790,6 +833,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const place = object ? {object} : {ra: center?.x, dec: center?.y};
         return {hips: survey, width, height, ...place, fov, coordsys, projection, rotationAngle};
+    }
+
+    /** Returns the name of a saved request, as shown to the user, with the image that it is made from. */
+    private subjectOf(request: WorkspaceGenerationRequest): string {
+        if (request.type === "hips") {
+            return WorkspaceRestorer.describeRequest(request, "");
+        }
+        const sourceInfo = this.images.get(request.sourceImageId);
+        return WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
     }
 
     /** Returns the name of a request, as shown to the user. */
@@ -857,7 +909,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
-                frame.applyContours();
+                // Contours with no levels draw nothing. Keep them off, and show the settings in the
+                // Contour dialog.
+                const levels = (fileInfo.contourConfig as {levels?: unknown}).levels;
+                if (Array.isArray(levels) && levels.length && levels.every(level => typeof level === "number" && Number.isFinite(level))) {
+                    frame.applyContours();
+                } else {
+                    const name = this.nameOf(fileInfo);
+                    this.report(WorkspaceItemKind.Image, name, `The contours of ${name} were not turned on, because the workspace saved no valid contour levels`);
+                }
             } else if (fileInfo.unappliedContourConfig && typeof fileInfo.unappliedContourConfig === "object") {
                 // Keep the contours off. The settings show in the Contour dialog.
                 frame.contourConfig.applyConfig(fileInfo.unappliedContourConfig);
@@ -922,10 +982,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         // Make the request over the region by the ID that the backend gave the region.
         yield* awaited(regions);
-        for (const generated of requests) {
+        for (const [index, generated] of requests.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Making generated images", index + 1, requests.length, this.subjectOf(generated.request));
             const frames = yield* this.makeImagesAgain(generated);
             if (!this.isCurrent) {
                 frames.forEach(frame => this.closeSupersededImage(frame));
@@ -953,20 +1014,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
-        const sourceInfo = this.images.get(request.sourceImageId);
-        const subject = WorkspaceRestorer.describeRequest(request, sourceInfo ? this.nameOf(sourceInfo) : "an image");
+        const subject = this.subjectOf(request);
         const source = this.frameOf(request.sourceImageId);
         if (!source) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the image it is made from was not restored`, WorkspaceIssueOutcome.Failed);
             return [];
         }
         const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
         if (regionId === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the region it is made over was not restored`, WorkspaceIssueOutcome.Failed);
             return [];
         }
 
         let outcome: FrameStore[] | "skipped" | undefined;
+        let reason: string | undefined;
         if (request.type === "moment") {
             // The first request on an image replaces no images. A later request keeps the images
             // that earlier requests made. The backend numbers the names of kept images, as it did
@@ -974,7 +1035,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
             this.momentSources.add(source);
             if (message && regionId > RegionId.CURSOR) {
-                const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `preparing ${subject}`));
+                const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
                     return [];
                 }
@@ -988,15 +1049,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `making ${subject}`,
-                        () => source.requestingMomentsProgress,
-                        () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => source.requestingMomentsProgress,
+                            () => this.appStore.cancelRequestingMoment(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         } else if (request.type === "fitting") {
             // Make only the images that the session still showed. The fit also shows its result again.
@@ -1007,15 +1073,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 fittingStore.setIsCancelling(false);
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestFitting(message, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `making ${subject}`,
-                        () => fittingStore.progress ?? 0,
-                        () => this.appStore.backendService.cancelRequestingFitting(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => fittingStore.progress ?? 0,
+                            () => this.appStore.backendService.cancelRequestingFitting(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         } else {
             const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
@@ -1023,28 +1094,33 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
                 const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
-                outcome = yield* awaited(
-                    this.waitForRequest(
-                        made,
-                        waiting,
-                        `making ${subject}`,
-                        () => source.requestingPVProgress,
-                        () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
-                    )
-                );
+                try {
+                    outcome = yield* awaited(
+                        this.waitForRequest(
+                            made,
+                            waiting,
+                            `Making ${subject}`,
+                            () => source.requestingPVProgress,
+                            () => this.appStore.cancelRequestingPV(source.frameInfo.fileId)
+                        )
+                    );
+                } catch (err) {
+                    outcome = [];
+                    reason = reasonOf(err);
+                }
             }
         }
 
         if (outcome === undefined) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: the request is not one this version can make`, WorkspaceIssueOutcome.Failed);
             return [];
         }
         if (outcome === "skipped") {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, `Skipped making ${subject}`, WorkspaceIssueOutcome.Skipped);
             return [];
         }
         if (!outcome.length) {
-            this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}`);
+            this.report(WorkspaceItemKind.GeneratedImage, subject, withReason(`Could not make ${subject}`, reason), WorkspaceIssueOutcome.Failed);
         }
         return outcome;
     }
@@ -1194,11 +1270,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Skipping asks the backend to stop, but does not wait for the backend. The restore continues
      * at once. Images that still arrive for a skipped request are closed without being shown.
+     *
+     * @throws The error of the request, when the request fails before it is skipped.
      */
     private waitForRequest(made: Promise<FrameStore[]>, waiting: {isSkipped: boolean}, description: string, progressOf: () => number, cancel: () => void): Promise<FrameStore[] | "skipped"> {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let isSettled = false;
-            const settle = (outcome: FrameStore[] | "skipped"): boolean => {
+            /** Stops the wait. Returns false when the wait has already stopped. */
+            const finish = (): boolean => {
                 if (isSettled) {
                     return false;
                 }
@@ -1206,6 +1285,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 disposeProgress();
                 if (this.isCurrent) {
                     this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                return true;
+            };
+            const settle = (outcome: FrameStore[] | "skipped"): boolean => {
+                if (!finish()) {
+                    return false;
                 }
                 resolve(outcome);
                 return true;
@@ -1231,7 +1316,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 },
                 err => {
                     console.error(err);
-                    settle([]);
+                    if (finish()) {
+                        reject(err);
+                    }
                 }
             );
         });
@@ -1257,7 +1344,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (!frame) {
                 if (frames.length) {
                     const imageName = this.nameOf(image);
-                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`);
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not make the image ${imageName}`, WorkspaceIssueOutcome.Failed);
                 }
                 continue;
             }
@@ -1554,7 +1641,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             frame.renderConfig.awaitCompleteCubeHistogram();
             frame.renderConfig.setStokesIndex(stokesIndex);
             this.appStore.requestCubeHistogram(frame.frameInfo.fileId, frame.coordinateOptionsZ?.[stokesIndex]?.value ?? "z");
-            const outcome = await this.waitForCubeHistogram(frame, `cube histogram of ${imageName}`);
+            const outcome = await this.waitForCubeHistogram(frame, `Computing the cube histogram of ${imageName}`);
             if ((outcome === "skipped" || outcome === "superseded") && isOpen()) {
                 frame.renderConfig.keepRangeWithoutCubeHistogram(stokesIndex);
                 this.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
@@ -1618,11 +1705,27 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+            } else {
+                // A color-blended image is made only when an image is open.
+                this.report(
+                    WorkspaceItemKind.Image,
+                    `the color-blended image ${imageListIndex}`,
+                    `Could not restore the color-blended image ${imageListIndex} in the Image List, because none of its images was restored`,
+                    WorkspaceIssueOutcome.Failed
+                );
+                continue;
             }
             while (colorBlending?.selectedFrames.length) {
                 colorBlending.deleteSelectedFrame(0);
             }
-            colorBlending?.setAlpha(0, alpha[0]);
+            // A hand-edited workspace can leave out the arrays. Then the color-blended image has its
+            // base layer only, with the default alpha.
+            const alphas = Array.isArray(alpha) ? alpha : [];
+            const layerIds = Array.isArray(selectedFrameId) ? selectedFrameId : [];
+            const isAlpha = (value: unknown): value is number => typeof value === "number" && value >= 0 && value <= 1;
+            if (isAlpha(alphas[0])) {
+                colorBlending?.setAlpha(0, alphas[0]);
+            }
             // Hide the layers that were hidden. A new color-blended image shows all of them.
             const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
             if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
@@ -1635,11 +1738,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending.toggleVectorOverlayVisible();
             }
 
-            for (let i = 0; i < selectedFrameId.length; i++) {
-                const frame = this.frameOf(selectedFrameId[i]);
+            for (let i = 0; i < layerIds.length; i++) {
+                const fileInfo = this.images.get(layerIds[i]);
+                const frame = this.frameOf(layerIds[i]);
+                const layerCount = colorBlending?.selectedFrames.length ?? 0;
                 if (frame) {
                     colorBlending?.addSelectedFrame(frame);
-                    colorBlending?.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
+                }
+                // Give the alpha only to the layer that was added. A layer that was refused would
+                // otherwise give its alpha to the layer before it.
+                if (colorBlending && colorBlending.selectedFrames.length > layerCount) {
+                    if (isAlpha(alphas[i + 1])) {
+                        colorBlending.setAlpha(colorBlending.selectedFrames.length, alphas[i + 1]);
+                    }
+                } else if (colorBlending) {
+                    const layerName = fileInfo ? this.nameOf(fileInfo) : `image ${layerIds[i]}`;
+                    const reason = !frame ? "the image was not restored" : frame === colorBlending.baseFrame ? "it is the base layer" : colorBlending.frames.includes(frame) ? "it is a layer already" : "it is not matched to the base layer";
+                    this.report(WorkspaceItemKind.Image, layerName, `Could not add ${layerName} as a layer of the color-blended image ${imageListIndex} in the Image List: ${reason}`);
                 }
             }
 
@@ -1664,29 +1779,33 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /** Stage 5: open every catalog against the image it belongs to. */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
-        for (const catalogInfo of this.workspace.catalogs ?? []) {
+        const catalogs = this.workspace.catalogs ?? [];
+        for (const [index, catalogInfo] of catalogs.entries()) {
             if (!this.isCurrent) {
                 return;
             }
             const description = describeCatalogSource(catalogInfo.source);
+            this.showProgress("Opening catalogs", index + 1, catalogs.length, description);
             const targetFrameId = catalogInfo.associatedImageId === undefined ? undefined : this.frameIds.get(catalogInfo.associatedImageId);
             if (catalogInfo.associatedImageId !== undefined && targetFrameId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`);
+                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}: the image it belongs to was not restored`, WorkspaceIssueOutcome.Failed);
                 continue;
             }
 
             let catalogFileId: number | undefined;
+            let reason: string | undefined;
             try {
                 catalogFileId = (yield* this.openCatalogSource(catalogInfo.source, targetFrameId)) ?? undefined;
             } catch (err) {
                 console.error(err);
+                reason = reasonOf(err);
             }
             if (!this.isCurrent) {
                 this.closeSupersededCatalog(catalogFileId);
                 return;
             }
             if (catalogFileId === undefined) {
-                this.report(WorkspaceItemKind.Catalog, description, `Could not load the catalog ${description}`);
+                this.report(WorkspaceItemKind.Catalog, description, withReason(`Could not load the catalog ${description}`, reason), WorkspaceIssueOutcome.Failed);
                 continue;
             }
 
@@ -1705,13 +1824,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         if (source.type === "simbad") {
             const {fileId} = yield* awaited(CatalogApiService.Instance.loadSimbadCatalog(source, targetFrameId));
-            return fileId;
+            return fileId ?? noSources();
         }
 
         if (!source.table) {
             return undefined;
         }
-        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0];
+        return (yield* awaited(CatalogApiService.Instance.loadVizierCatalogs(source, [source.table], targetFrameId)))[0] ?? noSources();
     }
 
     /**
@@ -1722,10 +1841,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * and a request left waiting behind the others could be given up on before its turn came.
      */
     private *configureCatalogs(): Generator<Promise<unknown>, void, any> {
-        for (const catalogInfo of this.workspace.catalogs ?? []) {
+        const catalogs = this.workspace.catalogs ?? [];
+        for (const [index, catalogInfo] of catalogs.entries()) {
             if (!this.isCurrent) {
                 return;
             }
+            this.showProgress("Applying the catalog settings", index + 1, catalogs.length, describeCatalogSource(catalogInfo.source));
             const request = this.startCatalogConfig(catalogInfo);
             if (!request) {
                 continue;
@@ -1918,11 +2039,66 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets);
-        const issues = yield* awaited(this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets));
+        const waiting = {isSkipped: false};
+        const results = this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets, () => this.isCurrent && !waiting.isSkipped);
+        const outcome = yield* awaited(this.waitForWidgetResults(results, waiting));
         if (!this.isCurrent) {
             return;
         }
-        this.issues.push(...issues);
+        if (outcome === "skipped") {
+            this.report(
+                WorkspaceItemKind.PlotWidget,
+                "",
+                "Skipped waiting for the results of the widgets, such as a spectral line query or a PV preview. A result that still comes shows without its saved settings",
+                WorkspaceIssueOutcome.Skipped
+            );
+        } else {
+            this.issues.push(...outcome);
+        }
+    }
+
+    /** The time after which the step of the widget results says that the wait is long, in milliseconds. */
+    public static readonly SLOW_WIDGET_RESULTS_MS = 30000;
+
+    /**
+     * Waits for the widgets to show again the results of their online queries and their previews,
+     * such as a spectral line query, and lets the user skip the wait. The wait has no time limit,
+     * because a large query can take long. After a while the step says that the wait is long.
+     *
+     * @returns the problems, or "skipped" when the user skipped the wait.
+     */
+    private waitForWidgetResults(results: Promise<WorkspaceIssue[]>, waiting: {isSkipped: boolean}): Promise<WorkspaceIssue[] | "skipped"> {
+        return new Promise(resolve => {
+            const description = "Restoring the results of the widgets, such as a spectral line query";
+            let isSettled = false;
+            const settle = (outcome: WorkspaceIssue[] | "skipped") => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                clearTimeout(slowTimer);
+                if (this.isCurrent) {
+                    this.appStore.setWorkspaceLoadingStep(undefined);
+                }
+                resolve(outcome);
+            };
+            const skip = () => {
+                waiting.isSkipped = true;
+                settle("skipped");
+            };
+            const slowTimer = setTimeout(() => {
+                if (this.isCurrent && !isSettled) {
+                    this.appStore.setWorkspaceLoadingStep({description: `${description} takes long. Wait, or skip it to restore the rest of the workspace`, progress: 0, onSkip: skip});
+                }
+            }, WorkspaceRestorer.SLOW_WIDGET_RESULTS_MS);
+            if (this.isCurrent) {
+                this.appStore.setWorkspaceLoadingStep({description, progress: 0, onSkip: skip});
+            }
+            results.then(settle, err => {
+                console.error(err);
+                settle([]);
+            });
+        });
     }
 
     public wasActiveImageRestored(): boolean {

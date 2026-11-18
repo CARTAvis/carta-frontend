@@ -4,6 +4,12 @@ export enum WorkspaceDialogMode {
     Open
 }
 
+/** Why a restore left an item out of the session. */
+export enum WorkspaceIssueOutcome {
+    Failed = "failed",
+    Skipped = "skipped"
+}
+
 /** The kind of thing a workspace issue is about, for grouping and filtering. */
 export enum WorkspaceItemKind {
     Image = "image",

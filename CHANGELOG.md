@@ -23,10 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for saving the multi-panel grid and maximized panels in layouts and workspaces, and the open dialogs and widget settings panels with their places, tabs and unapplied settings, the Region dialog coordinates, the File Info header search and the snippet of the Snippet dialog in workspaces ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Added support for restoring rest frequencies, rest frames, beam overlays, offset coordinates, region opacity and selection, the spectral matching type, the hidden layers of a color-blended image, the cursor, the image toolbar, and the online catalog and HiPS query forms in workspaces ([#3041](https://github.com/CARTAvis/carta-frontend/issues/3041)).
 * Added support for restoring moment, PV and HiPS images, and the PV preview, in workspaces ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
+* Added a progress dialog with Cancel and an end-of-restore report to opening a workspace, and a thumbnail of the whole app to saved workspaces ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed the backend sometimes crashing when all images are closed while an image is spatially matched, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
+* Fixed opening a workspace whose contour, vector overlay or color blending settings leave out a value stopping partway, and a refused layer of a color-blended image giving its alpha to another layer ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).

@@ -513,13 +513,15 @@ export class WidgetsStore {
     }
 
     /** Fetches again the data that each profile, analysis and statistics widget showed and that the workspace does not save, such as the result of an online query. */
-    public async restorePlotWidgetResults(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): Promise<WorkspaceIssue[]> {
+    public async restorePlotWidgetResults(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, isWanted: () => boolean = () => true): Promise<WorkspaceIssue[]> {
         const pending: Promise<WorkspaceIssue[]>[] = [];
         Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
             this.widgetsMap.get(config.type)?.forEach(widgetStore => {
                 if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId && widgetStore.restoreWorkspaceResult) {
                     pending.push(
-                        widgetStore.restoreWorkspaceResult(config).then(problems => problems.map(problem => ({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`})))
+                        widgetStore
+                            .restoreWorkspaceResult(config, isWanted)
+                            .then(problems => problems.map(problem => ({kind: WorkspaceItemKind.PlotWidget, subject: widgetId, message: `Could not fully restore the widget ${widgetId}: ${problem}`})))
                     );
                 }
             });

@@ -83,7 +83,10 @@ export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetSt
      * Fetches again the data that the widget showed and that the workspace does not save, such as
      * the result of an online query. Runs after the other steps.
      *
+     * @param isWanted - returns false when the restore no longer waits for the result, because the
+     *                   user skipped the wait or another workspace started to load. The widget then
+     *                   does not apply the saved settings of the result.
      * @returns the problems, as sentences about the widget.
      */
-    restoreWorkspaceResult?(config: TConfig): Promise<string[]>;
+    restoreWorkspaceResult?(config: TConfig, isWanted?: () => boolean): Promise<string[]>;
 }

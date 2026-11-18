@@ -48,7 +48,7 @@
         "flexlayout-react": "^0.9.2",
         "fuzzy-search": "^3.3.0",
         "glob-to-regexp": "^0.4.1",
-        "html2canvas": "^1.4.1",
+        "html2canvas-pro": "2.5.2",
         "husky": "^9.1.7",
         "idb": "^8.0.4",
         "identity-obj-proxy": "^3.0.0",
