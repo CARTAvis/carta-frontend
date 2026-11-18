@@ -2,9 +2,25 @@ import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType} from "enums";
+import {type ConfigurableStore, type Persisted} from "models";
 import {isAutoColor} from "utilities";
 
-export class RenderConfigWidgetStore {
+/** What a render config widget saves of its histogram plot. */
+export interface RenderConfigWidgetConfig {
+    primaryLineColor: string;
+    lineWidth: number;
+    linePlotPointSize: number;
+    logScaleY: boolean;
+    markerTextVisible: boolean;
+    meanRmsVisible: boolean;
+    plotType: PlotType;
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
+}
+
+export class RenderConfigWidgetStore implements ConfigurableStore<RenderConfigWidgetConfig, Persisted<RenderConfigWidgetConfig>> {
     @observable minX: number | undefined = undefined;
     @observable maxX: number | undefined = undefined;
     @observable minY: number | undefined = undefined;
@@ -108,12 +124,11 @@ export class RenderConfigWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    public applyConfig = (widgetSettings): void => {
+    public applyConfig = (widgetSettings: Persisted<RenderConfigWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
-        const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
@@ -148,7 +163,7 @@ export class RenderConfigWidgetStore {
         }
     };
 
-    public toConfig = () => {
+    public toConfig = (): RenderConfigWidgetConfig => {
         return {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,

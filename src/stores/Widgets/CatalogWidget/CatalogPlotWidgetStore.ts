@@ -1,5 +1,5 @@
 import {action, computed, makeObservable, observable} from "mobx";
-import type {Point2D} from "models";
+import type {ConfigurableStore, Point2D} from "models";
 
 import {CatalogOverlay, type CatalogPlotType, DragMode} from "enums";
 import {toExponential} from "utilities";
@@ -37,7 +37,7 @@ export interface CatalogPlotWidgetConfig {
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
 
-export class CatalogPlotWidgetStore {
+export class CatalogPlotWidgetStore implements ConfigurableStore<CatalogPlotWidgetConfig, Partial<CatalogPlotWidgetConfig>> {
     private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D | undefined = undefined;
     @observable scatterBorder: Border | undefined = undefined;

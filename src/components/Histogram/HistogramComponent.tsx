@@ -105,7 +105,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === HistogramComponent.WidgetConfig.type) {
             // Assign the next unique ID
-            const id = appStore.widgetsStore.addHistogramWidget();
+            const id = appStore.widgetsStore.addWidget(HistogramComponent.WidgetConfig.type);
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id as string, id);
                 this.widgetId = id;

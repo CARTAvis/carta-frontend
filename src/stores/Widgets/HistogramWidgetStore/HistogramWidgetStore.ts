@@ -3,12 +3,26 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, Polarizations, RegionsType} from "enums";
-import {VALID_COORDINATES} from "models";
+import {type ConfigurableStore, type Persisted, VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-export class HistogramWidgetStore extends RegionWidgetStore {
+/** What a histogram widget saves of its plot. */
+export interface HistogramWidgetConfig {
+    primaryLineColor: string;
+    lineWidth: number;
+    linePlotPointSize: number;
+    logScaleY: boolean;
+    meanRmsVisible: boolean;
+    plotType: PlotType;
+    minXVal: number;
+    maxXVal: number;
+    minYVal: number;
+    maxYVal: number;
+}
+
+export class HistogramWidgetStore extends RegionWidgetStore implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>> {
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
@@ -410,12 +424,11 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.cachedNumBins = numBins;
     };
 
-    public applyConfig = (widgetSettings): void => {
+    public applyConfig = (widgetSettings: Persisted<HistogramWidgetConfig>): void => {
         if (!widgetSettings) {
             return;
         }
-        const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && (tinycolor(widgetSettings.primaryLineColor).isValid() || isAutoColor(widgetSettings.primaryLineColor))) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
@@ -447,7 +460,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    public toConfig = () => {
+    public toConfig = (): HistogramWidgetConfig => {
         return {
             primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,

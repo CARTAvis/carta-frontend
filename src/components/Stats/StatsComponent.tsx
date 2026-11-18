@@ -112,7 +112,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === StatsComponent.WidgetConfig.type) {
             // Assign the next unique ID
-            const id = appStore.widgetsStore.addStatsWidget();
+            const id = appStore.widgetsStore.addWidget(StatsComponent.WidgetConfig.type);
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
                 this.widgetId = id;

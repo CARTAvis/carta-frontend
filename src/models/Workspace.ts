@@ -18,6 +18,7 @@ import {
 import {sanitizeScalingParameter, type ScalingParameters} from "utilities/scaling/scaling";
 
 import {type Point2D} from "./Point2D/Point2D";
+import {type WidgetWorkspaceConfig} from "./Widget/WidgetWorkspaceConfig";
 
 /** The version written by this frontend, matching `workspace_schema_2.json`. */
 export const WORKSPACE_VERSION = 2;
@@ -362,18 +363,18 @@ export interface WorkspaceCatalog {
     selection?: WorkspaceCatalogSelection;
 }
 
-/**
- * What one catalog table or plot widget shows. This is a Widget Config. It has no meaning for other
- * data, so the workspace saves it and the layout does not.
- */
-export interface WorkspaceCatalogWidgetConfig {
-    /** The kind of widget, which a restore needs to recreate one the layout does not have. */
-    type: "catalog-overlay" | "catalog-plot";
-    /** The Workspace ID of the catalog that the widget shows. */
+/** What one catalog table widget shows. */
+export interface WorkspaceCatalogOverlayConfig {
+    /** Workspace ID of the catalog the widget shows. */
     catalogId?: number;
-    /** Table widgets: the settings section each catalog was left on, by Workspace catalog ID. */
+    /** The settings tab that was open for each catalog, by Workspace catalog ID. */
     settingsTabs?: {[workspaceCatalogId: string]: number};
-    /** Plot widgets: what the plot is drawn from. */
+}
+
+/** What one catalog plot widget shows, and the columns that it plots. */
+export interface WorkspaceCatalogPlotConfig {
+    /** Workspace ID of the catalog the widget shows. */
+    catalogId?: number;
     xColumnName?: string;
     yColumnName?: string;
     statisticColumnName?: string;
@@ -384,6 +385,12 @@ export interface WorkspaceCatalogWidgetConfig {
     /** The values the cursor last read off the plot: a scatter point, or a histogram bin's center and count. */
     cursor?: Point2D;
 }
+
+/**
+ * What one catalog table or plot widget shows. This is a Widget Config. It has no meaning for other
+ * data, so the workspace saves it and the layout does not.
+ */
+export type WorkspaceCatalogWidgetConfig = WidgetWorkspaceConfig<"catalog-overlay" | "catalog-plot">;
 
 /**
  * The arrangement a workspace was saved in, in the same form a saved layout takes.

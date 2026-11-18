@@ -1,13 +1,13 @@
 import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
-import type {WorkspaceRenderConfig} from "models";
+import type {ConfigurableStore, WorkspaceRenderConfig} from "models";
 
 import {FrameScaling, PreferenceKeys} from "enums";
 import {AppStore, type PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, isSupportedFrameScaling, sanitizeScalingParameter, scaleValueInverse, SUPPORTED_SCALING_TYPES} from "utilities";
 
-export class RenderConfigStore {
+export class RenderConfigStore implements ConfigurableStore<WorkspaceRenderConfig> {
     public static readonly SCALING_TYPES = SUPPORTED_SCALING_TYPES;
 
     public static readonly CUSTOM_COLOR_MAP_INDEX = -1;
