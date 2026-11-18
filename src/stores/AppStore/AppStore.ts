@@ -1786,8 +1786,16 @@ export class AppStore {
                         const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
                         pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
                         pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
+                        // A viewer that is open already, such as a docked viewer that a workspace restored,
+                        // has its size. Only a new floating viewer starts at the default size.
+                        const hasViewer = [...WidgetsStore.Instance.floatingSettingsWidgets.values()].includes(id);
                         WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WidgetConfig.type);
-                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
+                        if (hasViewer) {
+                            // Fit the new preview to the size that the viewer reported.
+                            pvGeneratorWidgetStore.onResizePreviewWidget(pvGeneratorWidgetStore.previewFullViewWidth, pvGeneratorWidgetStore.previewFullViewHeight);
+                        } else {
+                            pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
+                        }
                     }
                 }
             } else {
