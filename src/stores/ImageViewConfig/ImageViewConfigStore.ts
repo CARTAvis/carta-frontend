@@ -1,13 +1,50 @@
 import {Utils} from "@blueprintjs/table";
-import {action, computed, makeAutoObservable, observable} from "mobx";
+import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
+import tinycolor from "tinycolor2";
 
-import {CoordinateMode, ImagePanelMode, ImageType, ImageViewSettingsPanelTabs, PreferenceKeys} from "enums";
+import {CoordinateMode, CursorInfoVisibility, ImagePanelMode, ImageType, ImageViewSettingsPanelTabs, PreferenceKeys} from "enums";
 import {type ConfigurableStore, type ImageViewItem, type Persisted} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
-import {clamp} from "utilities";
+import {clamp, isAutoColor} from "utilities";
 
-/** The multi-panel grid of the image view. The layout copy of a workspace saves it. A saved layout does not. */
-export interface ImageViewGridConfig {
+/**
+ * How the image view draws images. Each value follows the user's preference until a workspace
+ * restore sets it for the session.
+ */
+export interface ImageViewDisplayConfig {
+    pixelGridVisible: boolean;
+    /** The color of the pixel grid, such as "#ffffff" or "auto-white". */
+    pixelGridColor: string;
+    /** The color of NaN pixels, such as "#137CBD" or "rgba(19, 124, 189, 0.5)". */
+    nanColor: string;
+    /** Whether bias and contrast are drawn with the smoothed curve. */
+    smoothedBiasContrast: boolean;
+    cursorInfoVisible: CursorInfoVisibility;
+}
+
+/** The preference that each display setting follows. */
+const DISPLAY_PREFERENCES: {[K in keyof ImageViewDisplayConfig]: () => ImageViewDisplayConfig[K]} = {
+    pixelGridVisible: () => PreferenceStore.Instance.isPixelGridVisible,
+    pixelGridColor: () => PreferenceStore.Instance.pixelGridColor,
+    nanColor: () => PreferenceStore.Instance.nanColorHex,
+    smoothedBiasContrast: () => PreferenceStore.Instance.shouldUseSmoothedBiasContrast,
+    cursorInfoVisible: () => PreferenceStore.Instance.cursorInfoVisible as CursorInfoVisibility
+};
+
+/** Returns whether a saved display setting is a value that the controls can set. */
+const DISPLAY_CHECKS: {[K in keyof ImageViewDisplayConfig]: (value: unknown) => boolean} = {
+    pixelGridVisible: value => typeof value === "boolean",
+    pixelGridColor: value => typeof value === "string" && (isAutoColor(value) || tinycolor(value).isValid()),
+    nanColor: value => typeof value === "string" && tinycolor(value).isValid(),
+    smoothedBiasContrast: value => typeof value === "boolean",
+    cursorInfoVisible: value => Object.values(CursorInfoVisibility).includes(value as CursorInfoVisibility)
+};
+
+/**
+ * The multi-panel grid and the display settings of the image view. The layout copy of a workspace
+ * saves them. A saved layout does not.
+ */
+export interface ImageViewGridConfig extends ImageViewDisplayConfig {
     multiPanelEnabled: boolean;
     /** How the grid is sized when multi-panel is enabled. */
     panelMode: ImagePanelMode.Dynamic | ImagePanelMode.Fixed;
@@ -40,6 +77,12 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     private nextColorBlendingId = 0;
     /** The grid settings of this session. A setting that is not set here follows the user's preference. */
     @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
+    /**
+     * The display settings that a workspace restore set for this session. A setting that is not set
+     * here follows the user's preference. When the user changes that preference, the setting follows
+     * it again.
+     */
+    @observable private display: Partial<ImageViewDisplayConfig> = {};
     /** The tab that the Image View settings panel shows. */
     @observable settingsTab: ImageViewSettingsPanelTabs = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     /** Whether the Pan and Zoom tab of the Image View settings panel shows image or world coordinates. */
@@ -62,6 +105,30 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     /** The number of rows of the grid in this session. See {@link ImageViewGridConfig.panelRows}. */
     @computed get panelRows(): number {
         return this.grid.panelRows ?? PreferenceStore.Instance.imagePanelRows;
+    }
+
+    @computed get isPixelGridVisible(): boolean {
+        return this.display.pixelGridVisible ?? DISPLAY_PREFERENCES.pixelGridVisible();
+    }
+
+    /** The color of the pixel grid. See {@link ImageViewDisplayConfig.pixelGridColor}. */
+    @computed get pixelGridColor(): string {
+        return this.display.pixelGridColor ?? DISPLAY_PREFERENCES.pixelGridColor();
+    }
+
+    /** The color of NaN pixels. See {@link ImageViewDisplayConfig.nanColor}. */
+    @computed get nanColor(): string {
+        return this.display.nanColor ?? DISPLAY_PREFERENCES.nanColor();
+    }
+
+    /** Whether bias and contrast are drawn with the smoothed curve. */
+    @computed get shouldUseSmoothedBiasContrast(): boolean {
+        return this.display.smoothedBiasContrast ?? DISPLAY_PREFERENCES.smoothedBiasContrast();
+    }
+
+    /** Where the image view shows the cursor info. */
+    @computed get cursorInfoVisible(): CursorInfoVisibility {
+        return this.display.cursorInfoVisible ?? DISPLAY_PREFERENCES.cursorInfoVisible();
     }
 
     /** Enables or disables multi-panel, and keeps the choice as the user's default. */
@@ -105,12 +172,18 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         panelMode: this.multiPanelMode === ImagePanelMode.Fixed ? ImagePanelMode.Fixed : ImagePanelMode.Dynamic,
         panelColumns: this.panelColumns,
         panelRows: this.panelRows,
+        pixelGridVisible: this.isPixelGridVisible,
+        pixelGridColor: this.pixelGridColor,
+        nanColor: this.nanColor,
+        smoothedBiasContrast: this.shouldUseSmoothedBiasContrast,
+        cursorInfoVisible: this.cursorInfoVisible,
         ...(this.settingsTab !== ImageViewSettingsPanelTabs.PAN_AND_ZOOM ? {settingsTab: this.settingsTab} : {}),
         ...(this.panAndZoomCoordinate === CoordinateMode.Image ? {panAndZoomCoordinate: this.panAndZoomCoordinate} : {})
     });
 
     /**
-     * Applies the grid that the layout copy of a workspace saved, to this session only. A restore is
+     * Applies the grid and the display settings that the layout copy of a workspace saved, to this
+     * session only. A restore is
      * not a user action, so the user's defaults do not change. When the layout copy leaves out a
      * setting, or saves a value that the controls do not accept, that setting follows the user's
      * preference.
@@ -123,6 +196,13 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
             panelColumns: isPanelCount(config?.panelColumns) ? config.panelColumns : undefined,
             panelRows: isPanelCount(config?.panelRows) ? config.panelRows : undefined
         };
+        const display: Partial<Record<keyof ImageViewDisplayConfig, unknown>> = {};
+        for (const key of Object.keys(DISPLAY_CHECKS) as (keyof ImageViewDisplayConfig)[]) {
+            if (DISPLAY_CHECKS[key](config?.[key])) {
+                display[key] = config?.[key];
+            }
+        }
+        this.display = display as Partial<ImageViewDisplayConfig>;
         const tab = config?.settingsTab;
         this.settingsTab = Object.values(ImageViewSettingsPanelTabs).includes(tab as ImageViewSettingsPanelTabs) ? (tab as ImageViewSettingsPanelTabs) : ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
         this.panAndZoomCoordinate = config?.panAndZoomCoordinate === CoordinateMode.Image ? CoordinateMode.Image : CoordinateMode.World;
@@ -387,7 +467,18 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
 
     private constructor() {
         makeAutoObservable(this);
+        // A change of a preference is a user action, so the setting of the session follows it again.
+        for (const key of Object.keys(DISPLAY_PREFERENCES) as (keyof ImageViewDisplayConfig)[]) {
+            reaction(
+                (): unknown => DISPLAY_PREFERENCES[key](),
+                () => this.followPreference(key)
+            );
+        }
     }
+
+    @action private followPreference = (key: keyof ImageViewDisplayConfig) => {
+        delete this.display[key];
+    };
 
     /**
      * Returns the index of an image in the image list.
