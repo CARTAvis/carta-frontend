@@ -867,9 +867,15 @@ describe("WorkspaceRestorer", () => {
         const {appStore} = createSession();
         appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => null);
 
-        const problems = await restore(createWorkspace({files: [IMAGE], colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [2], alpha: [1, 1]}]}));
+        const issues = await restoreIssues(createWorkspace({files: [IMAGE], colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [2], alpha: [1, 1]}]}));
 
-        expect(problems).toContain("Could not restore the color-blended image 1 in the Image List, because none of its images was restored");
+        expect(issues).toContainEqual(
+            expect.objectContaining({
+                subject: "the color-blended image 1",
+                message: "Could not restore the color-blended image 1 in the Image List, because none of its images was restored",
+                outcome: WorkspaceIssueOutcome.Failed
+            })
+        );
         expect(appStore.reorderFrame).not.toHaveBeenCalled();
     });
 

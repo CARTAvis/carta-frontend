@@ -1707,7 +1707,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 this.colorBlendings.set(imageListIndex, colorBlending);
             } else {
                 // A color-blended image is made only when an image is open.
-                this.report(WorkspaceItemKind.Image, "", `Could not restore the color-blended image ${imageListIndex} in the Image List, because none of its images was restored`);
+                this.report(
+                    WorkspaceItemKind.Image,
+                    `the color-blended image ${imageListIndex}`,
+                    `Could not restore the color-blended image ${imageListIndex} in the Image List, because none of its images was restored`,
+                    WorkspaceIssueOutcome.Failed
+                );
                 continue;
             }
             while (colorBlending?.selectedFrames.length) {
