@@ -254,6 +254,8 @@ export class FrameStore {
 
     @observable colorbarLabelCustomText: string = "arbitrary units";
     @observable titleCustomText: string = "";
+    /** The colorbar label text that the image starts with. */
+    readonly defaultColorbarLabelText: string;
     /** The title text that the image starts with. */
     readonly defaultTitleText: string;
     @observable overlayBeamSettings: OverlayBeamStore = new OverlayBeamStore();
@@ -1497,8 +1499,9 @@ export class FrameStore {
         this.contourStores = new Map<number, ContourStore>();
         this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
         this.vectorOverlayStore = new VectorOverlayStore(this);
-        this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
+        this.defaultColorbarLabelText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.defaultTitleText = frameInfo?.fileInfo?.name;
+        this.colorbarLabelCustomText = this.defaultColorbarLabelText;
         this.titleCustomText = this.defaultTitleText;
         this.intensityUnit = this.headerUnit;
 
