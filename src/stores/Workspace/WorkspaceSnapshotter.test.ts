@@ -504,6 +504,10 @@ describe("WorkspaceSnapshotter", () => {
         expect(messages()).toContain(unsaved);
         snippetStore.activeSnippet.code = " ";
         expect(messages()).not.toContain(unsaved);
+
+        // The Save mode of the Workspace dialog lists it before the save, with what to do.
+        snippetStore.activeSnippet.code = "app.openFile('c.fits')";
+        expect(new WorkspaceSnapshotter().findIssues()).toContainEqual({kind: "layout", subject: "Snippet", message: unsaved, hint: "Save the snippet first, then save the workspace"});
     });
 
     test("saves the name of an example that the Snippet dialog shows, and nothing for an example whose code changed", () => {

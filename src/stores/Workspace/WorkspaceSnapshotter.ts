@@ -127,6 +127,7 @@ export class WorkspaceSnapshotter {
         this.captureGeneratedImages();
         this.captureColorBlending();
         this.captureCatalogs();
+        this.checkSnippetCode();
         return this.issues;
     }
 
@@ -342,6 +343,27 @@ export class WorkspaceSnapshotter {
         return this.appStore.snippetStore?.snippets?.get(name)?.code !== code;
     }
 
+    /**
+     * Reports the code in the open Snippet dialog that the workspace does not save.
+     *
+     * @returns the name that the workspace saves for the snippet that the dialog shows.
+     */
+    private checkSnippetCode(): string | undefined {
+        if (!this.appStore.dialogStore?.dialogVisible?.get(DialogId.Snippet)) {
+            return undefined;
+        }
+        const name = this.shownSnippetName();
+        if (this.hasUnsavedSnippetCode(name)) {
+            this.issues.push({
+                kind: WorkspaceItemKind.Layout,
+                subject: "Snippet",
+                message: "Could not save the code in the Snippet dialog: it is not saved as a snippet",
+                hint: "Save the snippet first, then save the workspace"
+            });
+        }
+        return name;
+    }
+
     private captureDialogSettings(): Workspace["dialogSettings"] {
         const dialogStore = this.appStore.dialogStore;
         const withImageId = (settings: DialogSettings | undefined) => {
@@ -350,11 +372,7 @@ export class WorkspaceSnapshotter {
         };
         const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
         const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
-        const isSnippetShown = !!dialogStore?.dialogVisible?.get(DialogId.Snippet);
-        const snippetName = isSnippetShown ? this.shownSnippetName() : undefined;
-        if (isSnippetShown && this.hasUnsavedSnippetCode(snippetName)) {
-            this.issues.push({kind: WorkspaceItemKind.Layout, subject: "Snippet", message: "Could not save the code in the Snippet dialog: it is not saved as a snippet"});
-        }
+        const snippetName = this.checkSnippetCode();
         if (!contour && !vectorOverlay && !snippetName) {
             return undefined;
         }
