@@ -57,9 +57,10 @@ jest.mock("stores", () => {
             nanColorHex: "#137CBD",
             shouldUseSmoothedBiasContrast: true,
             cursorInfoVisible: "activeImage",
+            lastWrittenKeys: [] as PreferenceKeys[],
             setPreference: jest.fn()
         },
-        {setPreference: false}
+        {setPreference: false, lastWrittenKeys: observable.ref}
     );
 
     return {
@@ -466,14 +467,15 @@ describe("ImageViewConfigStore", () => {
             expect(displayOf(imageViewConfigStore)).toEqual({...saved, nanColor: "#137CBD"});
         });
 
-        it("follows a preference again when a control sets it to the value that it already has", () => {
-            imageViewConfigStore.applyConfig({...saved, pixelGridVisible: !mockPreferenceStore.isPixelGridVisible});
-            const preferredValue = mockPreferenceStore.isPixelGridVisible;
+        it("follows a preference again when it is set or reset to the value that it already has", () => {
+            imageViewConfigStore.applyConfig(saved);
 
-            // The control writes the same value to the preference, so no reaction runs.
-            imageViewConfigStore.followPreference("pixelGridVisible");
+            // The values of the preferences do not change. Only the keys of the write are given.
+            runInAction(() => (mockPreferenceStore.lastWrittenKeys = [PreferenceKeys.PIXEL_GRID_VISIBLE]));
+            expect(displayOf(imageViewConfigStore)).toEqual({...saved, pixelGridVisible: preferred.pixelGridVisible});
 
-            expect(imageViewConfigStore.isPixelGridVisible).toBe(preferredValue);
+            runInAction(() => (mockPreferenceStore.lastWrittenKeys = [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, PreferenceKeys.GLOBAL_THEME]));
+            expect(displayOf(imageViewConfigStore)).toEqual({...saved, pixelGridVisible: preferred.pixelGridVisible, nanColor: preferred.nanColor, cursorInfoVisible: preferred.cursorInfoVisible});
         });
 
         it("follows every preference again when a regular layout is applied", () => {

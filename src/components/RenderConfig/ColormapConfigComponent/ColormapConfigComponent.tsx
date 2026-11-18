@@ -200,7 +200,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         color={tinycolor(appStore.imageViewConfigStore.nanColor).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            appStore.imageViewConfigStore.followPreference("nanColor");
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, tinycolor(color.rgba).toRgbString());
                         }}
                         disableAlpha={false}

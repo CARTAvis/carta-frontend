@@ -31,6 +31,15 @@ const DISPLAY_PREFERENCES: {[K in keyof ImageViewDisplayConfig]: () => ImageView
     cursorInfoVisible: () => PreferenceStore.Instance.cursorInfoVisible as CursorInfoVisibility
 };
 
+/** The key of the preference that each display setting follows. */
+const DISPLAY_PREFERENCE_KEYS: {[K in keyof ImageViewDisplayConfig]: PreferenceKeys} = {
+    pixelGridVisible: PreferenceKeys.PIXEL_GRID_VISIBLE,
+    pixelGridColor: PreferenceKeys.PIXEL_GRID_COLOR,
+    nanColor: PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+    smoothedBiasContrast: PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST,
+    cursorInfoVisible: PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
+};
+
 /** Returns whether a saved display setting is a value that the controls can set. */
 const DISPLAY_CHECKS: {[K in keyof ImageViewDisplayConfig]: (value: unknown) => boolean} = {
     pixelGridVisible: value => typeof value === "boolean",
@@ -467,8 +476,16 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
 
     private constructor() {
         makeAutoObservable(this);
-        // A change of a preference is a user action, so the setting of the session follows it again.
-        for (const key of Object.keys(DISPLAY_PREFERENCES) as (keyof ImageViewDisplayConfig)[]) {
+        // Setting or resetting a preference is a user action, so the setting of the session follows
+        // the preference again. This also happens when the preference keeps its value, such as a reset
+        // of a preference that has the default value.
+        const keys = Object.keys(DISPLAY_PREFERENCES) as (keyof ImageViewDisplayConfig)[];
+        reaction(
+            () => PreferenceStore.Instance.lastWrittenKeys,
+            written => keys.filter(key => written.includes(DISPLAY_PREFERENCE_KEYS[key])).forEach(this.followPreference)
+        );
+        // A preference can also change without a write, such as when the preferences are read at startup.
+        for (const key of keys) {
             reaction(
                 (): unknown => DISPLAY_PREFERENCES[key](),
                 () => this.followPreference(key)
@@ -476,11 +493,7 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
         }
     }
 
-    /**
-     * Makes a display setting follow its preference again. A control that sets the preference calls
-     * this first. A preference that is set to the value that it already has does not run the reaction
-     * above, and the setting of the session would then not change.
-     */
+    /** Makes a display setting follow its preference again. */
     @action public followPreference = (key: keyof ImageViewDisplayConfig) => {
         delete this.display[key];
     };

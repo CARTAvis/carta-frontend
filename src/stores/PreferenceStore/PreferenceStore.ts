@@ -200,6 +200,12 @@ export class PreferenceStore {
      */
     @observable isPreferenceReady: boolean = false;
 
+    /**
+     * The keys of the last call that set or cleared preferences. Each call gives a new array, so a
+     * reaction to it runs even when the call keeps the value of the preference.
+     */
+    @observable.ref lastWrittenKeys: readonly PreferenceKeys[] = [];
+
     // getters for global settings
     @computed get theme(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
@@ -777,6 +783,7 @@ export class PreferenceStore {
             }
             const eventList = getEventList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
+            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
             if (!WCSMatching.isTypeValid(value)) {
@@ -785,9 +792,11 @@ export class PreferenceStore {
             let binaryNumber = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
             const binaryNumberNew = (binaryNumber ^= value);
             this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
+            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
         } else {
             this.preferences.set(key, value);
+            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(key, value);
         }
     }
@@ -804,6 +813,7 @@ export class PreferenceStore {
         if (keys.includes(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED)) {
             this.isCodeSnippetsEnabledForSession = false;
         }
+        this.lastWrittenKeys = [...keys];
         yield ApiService.Instance.clearPreferences(keys);
     }
 
