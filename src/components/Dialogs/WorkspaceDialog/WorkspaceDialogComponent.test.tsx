@@ -23,7 +23,7 @@ jest.mock("stores/Workspace/WorkspacePreflightStore", () => ({WorkspacePreflight
 jest.mock("stores/Workspace/WorkspaceSnapshotter", () => ({WorkspaceSnapshotter: jest.fn(() => ({findIssues: MockFindIssues}))}));
 // Render the dialog as a plain element, so that the test needs no layout of draggable dialogs.
 jest.mock("components/Dialogs", () => ({DraggableDialogComponent: (props: {children: unknown}) => <div>{props.children as never}</div>}));
-jest.mock("../../Shared", () => ({AppToaster: {show: jest.fn()}, ErrorToast: jest.fn(), SuccessToast: jest.fn()}));
+jest.mock("../../Shared", () => ({AppToaster: {show: jest.fn()}, ErrorToast: jest.fn(), ScrollShadow: (props: {children: unknown}) => <div>{props.children as never}</div>, SuccessToast: jest.fn()}));
 
 import {WorkspaceDialogComponent} from "./WorkspaceDialogComponent";
 

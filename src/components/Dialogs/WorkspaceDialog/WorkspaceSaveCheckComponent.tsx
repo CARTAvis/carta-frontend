@@ -3,6 +3,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {WorkspaceIssue} from "models";
 
+import {ScrollShadow} from "../../Shared";
+
 import "./WorkspaceSaveCheckComponent.scss";
 
 /**
@@ -22,19 +24,21 @@ export const WorkspaceSaveCheckComponent = observer((props: {issues: WorkspaceIs
         return null;
     }
     return (
-        <div className="workspace-save-check" data-testid="workspace-save-check">
+        <div className="workspace-save-check save-check-issues" data-testid="workspace-save-check">
             <div className="save-check-title">
                 <Icon icon="warning-sign" intent={Intent.WARNING} />
                 <span>Will not be saved ({issues.length})</span>
             </div>
-            <div className="save-check-list">
-                {issues.map((issue, index) => (
-                    <div key={index} className="save-check-item" data-testid="workspace-save-issue">
-                        <span>{issue.message}</span>
-                        {issue.hint && <span className={classNames("save-check-hint", Classes.TEXT_MUTED)}>{issue.hint}</span>}
-                    </div>
-                ))}
-            </div>
+            <ScrollShadow>
+                <div className="save-check-list">
+                    {issues.map((issue, index) => (
+                        <div key={index} className="save-check-item" data-testid="workspace-save-issue">
+                            <span>{issue.message}</span>
+                            {issue.hint && <span className={classNames("save-check-hint", Classes.TEXT_MUTED)}>{issue.hint}</span>}
+                        </div>
+                    ))}
+                </div>
+            </ScrollShadow>
         </div>
     );
 });

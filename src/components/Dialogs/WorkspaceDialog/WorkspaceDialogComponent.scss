@@ -105,6 +105,12 @@
             display: flex;
             flex-direction: column;
         }
+
+        // The summary takes the height that the check below it leaves.
+        .workspace-info-scroll {
+            flex: 1;
+            min-height: 0;
+        }
     }
 
     &.#{$ns}-dark .workspace-container {

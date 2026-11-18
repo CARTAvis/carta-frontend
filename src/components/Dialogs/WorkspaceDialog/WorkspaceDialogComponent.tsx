@@ -13,7 +13,7 @@ import {AppStore} from "stores";
 import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 
-import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
+import {AppToaster, ErrorToast, ScrollShadow, SuccessToast} from "../../Shared";
 
 import {WorkspaceInfoComponent, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
 import {WorkspaceSaveCheckComponent} from "./WorkspaceSaveCheckComponent";
@@ -334,7 +334,13 @@ export const WorkspaceDialogComponent = observer(() => {
                         <div className="workspace-list">{listContent}</div>
                     </div>
                     <div className="workspace-info-container">
-                        {workspaceList?.length ? <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} /> : null}
+                        {workspaceList?.length ? (
+                            <div className="workspace-info-scroll">
+                                <ScrollShadow>
+                                    <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} />
+                                </ScrollShadow>
+                            </div>
+                        ) : null}
                         {isSaveMode && <WorkspaceSaveCheckComponent issues={saveIssues ?? []} blocker={saveBlocker} />}
                     </div>
                 </div>
