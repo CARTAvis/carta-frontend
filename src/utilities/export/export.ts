@@ -2,7 +2,7 @@ import {Classes} from "@blueprintjs/core";
 import html2canvas from "html2canvas-pro";
 import moment from "moment";
 
-import {DialogId, WORKSPACE_DIALOGS} from "enums";
+import {WORKSPACE_DIALOGS} from "enums";
 
 export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
@@ -50,21 +50,15 @@ export function exportTxtFile(fileName: string, content: string) {
 const SCREENSHOT_IGNORED_CLASSES = [Classes.PORTAL, Classes.OVERLAY, Classes.TOAST_CONTAINER, Classes.POPOVER];
 
 /**
- * The dialogs of the app that a workspace keeps open, but that a screenshot leaves out. They do not
- * show the images or their analysis.
- */
-const APP_DIALOGS: string[] = [DialogId.Preference, DialogId.Layout, DialogId.About, DialogId.Snippet];
-
-/**
  * Returns whether a screenshot of the whole app leaves out an element. The screenshot keeps the
- * analysis dialogs that a workspace keeps open, such as the Contour dialog. It leaves out the other
- * dialogs, such as the Save dialog and the Preferences dialog, and the other overlays, such as
- * toasts and popovers.
+ * dialogs that a workspace keeps open, such as the Contour dialog and the Preferences dialog. Then
+ * the thumbnail of a workspace shows what a restore opens. It leaves out the other dialogs, such as
+ * the Save dialog, and the other overlays, such as toasts and popovers.
  */
 function isLeftOutOfScreenshot(node: Element): boolean {
     const dialogId = node.getAttribute?.("data-dialog-id");
     if (dialogId) {
-        return !WORKSPACE_DIALOGS.includes(dialogId) || APP_DIALOGS.includes(dialogId);
+        return !WORKSPACE_DIALOGS.includes(dialogId);
     }
     if (node.classList?.contains(Classes.POPOVER) || node.classList?.contains(Classes.TOAST_CONTAINER)) {
         return true;

@@ -77,7 +77,7 @@ describe("exportScreenshot", () => {
         expect(ignores("floating-widget")).toBe(false);
     });
 
-    test("keeps in a screenshot of the whole app the analysis dialogs that a workspace keeps open, and leaves out the other dialogs", async () => {
+    test("keeps in a screenshot of the whole app the dialogs that a workspace keeps open, and leaves out the other dialogs", async () => {
         document.body.innerHTML = `<div class="App">
             <div class="draggable-dialog" data-dialog-id="contour-dialog"><div id="contour-overlay" class="${Classes.OVERLAY}"><div id="contour-popover" class="${Classes.POPOVER}"></div></div></div>
             <div class="draggable-dialog" data-dialog-id="workspace-dialog"></div>
@@ -91,8 +91,7 @@ describe("exportScreenshot", () => {
         expect(ignores("#contour-overlay")).toBe(false);
         expect(ignores("#contour-popover")).toBe(true);
         expect(ignores('[data-dialog-id="workspace-dialog"]')).toBe(true);
-        // A workspace keeps the Preferences dialog open, but it shows no image.
-        expect(ignores('[data-dialog-id="preference-dialog"]')).toBe(true);
+        expect(ignores('[data-dialog-id="preference-dialog"]')).toBe(false);
     });
 
     test("draws the page at the width of the screenshot, and not larger than the pixel ratio of the screen", async () => {
