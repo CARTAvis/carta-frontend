@@ -1,7 +1,7 @@
 import {action, makeObservable, observable} from "mobx";
 
 import {IsoTimePrecision, RelativeTimeReference, RelativeTimeUnit, TimeLabelFormat, TimeScale, TimeZoneMode} from "enums";
-import {type ConfigurableStore, type Persisted} from "models";
+import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
 
 export interface AnimatorWidgetConfig {
     timeLabelFormat: TimeLabelFormat;
@@ -13,6 +13,11 @@ export interface AnimatorWidgetConfig {
     relativeTimeReference: RelativeTimeReference;
     relativeReferenceMjdUtc: number | null;
     relativeTimeUnit: RelativeTimeUnit;
+}
+
+/** What the layout copy of a workspace keeps of an Animator widget: the settings of a regular layout, and the own ID of the widget. */
+export interface AnimatorWorkspaceLayoutConfig extends AnimatorWidgetConfig {
+    widgetId?: string;
 }
 
 export const DEFAULT_ANIMATOR_WIDGET_CONFIG: Readonly<AnimatorWidgetConfig> = {
@@ -39,7 +44,9 @@ function isFiniteNumber(value: unknown): value is number {
     return typeof value === "number" && isFinite(value);
 }
 
-export class AnimatorWidgetStore implements AnimatorWidgetConfig, ConfigurableStore<AnimatorWidgetConfig, Persisted<AnimatorWidgetConfig>> {
+export class AnimatorWidgetStore implements AnimatorWidgetConfig, ConfigurableStore<AnimatorWidgetConfig, Persisted<AnimatorWidgetConfig>>, WorkspaceLayoutConfigurable<AnimatorWorkspaceLayoutConfig> {
+    /** The own ID of the widget. A workspace finds the widget of a settings panel by this ID. */
+    widgetId: string = "";
     @observable timeLabelFormat: TimeLabelFormat = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeLabelFormat;
     @observable timeZoneMode: TimeZoneMode = DEFAULT_ANIMATOR_WIDGET_CONFIG.timeZoneMode;
     @observable ianaTimeZone: string | null = DEFAULT_ANIMATOR_WIDGET_CONFIG.ianaTimeZone;
@@ -141,6 +148,15 @@ export class AnimatorWidgetStore implements AnimatorWidgetConfig, ConfigurableSt
         relativeReferenceMjdUtc: this.relativeReferenceMjdUtc,
         relativeTimeUnit: this.relativeTimeUnit
     });
+
+    public toWorkspaceLayoutConfig = (): AnimatorWorkspaceLayoutConfig => ({...this.toConfig(), ...(this.widgetId ? {widgetId: this.widgetId} : {})});
+
+    public applyWorkspaceLayoutConfig = (config: Persisted<AnimatorWorkspaceLayoutConfig>) => {
+        this.applyConfig(config ?? {});
+        if (typeof config?.widgetId === "string" && config.widgetId) {
+            this.widgetId = config.widgetId;
+        }
+    };
 
     constructor() {
         makeObservable(this);

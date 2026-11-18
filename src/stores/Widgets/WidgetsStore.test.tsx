@@ -203,6 +203,17 @@ describe("WidgetsStore PV preview test ids", () => {
         });
     });
 
+    test.each(["animator", "layer-list"])("finds the %s widget of a settings panel by the own ID that the layout copy of a workspace saved, though its layout ID changed", widgetType => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget(widgetType, `${widgetType}-0`, {widgetId: `${widgetType}-1`}, "workspace");
+        widgetsStore.addWidget(widgetType, `${widgetType}-1`, {widgetId: `${widgetType}-0`}, "workspace");
+
+        expect(widgetsStore.workspaceIdOf(widgetType, `${widgetType}-0`)).toBe(`${widgetType}-1`);
+        expect(widgetsStore.layoutIdOf(widgetType, `${widgetType}-1`)).toBe(`${widgetType}-0`);
+        expect(widgetsStore.toWidgetSettingsConfig(widgetType, `${widgetType}-1`, "workspace")).toEqual(expect.objectContaining({widgetId: `${widgetType}-0`}));
+        expect((widgetsStore.toWidgetSettingsConfig(widgetType, `${widgetType}-1`, "regular") as {widgetId?: string} | undefined)?.widgetId).toBeUndefined();
+    });
+
     test.each(Array.from(getWidgetMap()).filter(([, registration]) => registration.createStore))("creates a store for a %s widget from its registration", widgetType => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({...appStoreMock, widgetsStore} as any);

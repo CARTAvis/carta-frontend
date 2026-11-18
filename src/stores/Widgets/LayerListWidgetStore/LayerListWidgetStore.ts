@@ -16,9 +16,12 @@ export interface LayerListWidgetConfig {
     restFrequencyImageIndex?: number;
     /** The widths of the columns of the image list, in pixels. */
     columnWidths: number[];
+    /** The own ID of the widget. A workspace finds the widget of a settings panel by this ID. */
+    widgetId?: string;
 }
 
 export class LayerListWidgetStore implements WorkspaceLayoutConfigurable<LayerListWidgetConfig> {
+    widgetId: string = "";
     @observable settingsTabId: TabId = LayerListSettingsTabs.MATCHING;
     @observable selectedFrameIndex: number = -1;
     @observable columnWidths: number[] = [...DEFAULT_COLUMN_WIDTHS];
@@ -32,7 +35,8 @@ export class LayerListWidgetStore implements WorkspaceLayoutConfigurable<LayerLi
     public toWorkspaceLayoutConfig = (): LayerListWidgetConfig => ({
         settingsTabId: this.settingsTabId === LayerListSettingsTabs.REST_FREQ ? LayerListSettingsTabs.REST_FREQ : LayerListSettingsTabs.MATCHING,
         ...(this.selectedFrameIndex >= 0 ? {restFrequencyImageIndex: this.selectedFrameIndex} : {}),
-        columnWidths: [...this.columnWidths]
+        columnWidths: [...this.columnWidths],
+        ...(this.widgetId ? {widgetId: this.widgetId} : {})
     });
 
     /**
@@ -46,6 +50,9 @@ export class LayerListWidgetStore implements WorkspaceLayoutConfigurable<LayerLi
         const widths = config?.columnWidths;
         if (Array.isArray(widths) && widths.length === DEFAULT_COLUMN_WIDTHS.length && widths.every(width => typeof width === "number" && Number.isFinite(width) && width > 0)) {
             this.columnWidths = [...widths];
+        }
+        if (typeof config?.widgetId === "string" && config.widgetId) {
+            this.widgetId = config.widgetId;
         }
     };
 

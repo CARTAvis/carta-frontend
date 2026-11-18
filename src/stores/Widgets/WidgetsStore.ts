@@ -1974,7 +1974,7 @@ export class WidgetsStore {
         if (widgets) {
             return [...widgets.keys()].find(id => this.workspaceIdOf(widgetType, id) === workspaceId);
         }
-        // A widget without a store, such as the animator. The image view uses its type as its ID.
+        // A widget without a store, such as the image view. The image view uses its type as its ID.
         const isOpen = workspaceId === widgetType || this.floatingWidgets.some(w => w.id === workspaceId) || !!LayoutStore.Instance.layoutModel?.getNodeById(workspaceId);
         return isOpen ? workspaceId : undefined;
     };
