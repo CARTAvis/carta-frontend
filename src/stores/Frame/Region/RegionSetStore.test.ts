@@ -370,7 +370,11 @@ describe("RegionSetStore restoring an existing region", () => {
     });
 
     test("resolves once the backend has given the region the ID it keeps", async () => {
-        BACKEND_SERVICE.setRegion.mockResolvedValueOnce({regionId: 105});
+        let sentRegionId: number | undefined;
+        BACKEND_SERVICE.setRegion.mockImplementationOnce(((_fileId: number, _previousId: number, region: {regionId: number}) => {
+            sentRegionId = region.regionId;
+            return Promise.resolve({regionId: 105});
+        }) as any);
         const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
 
         const region = await regionSet.addExistingRegionAsync(
@@ -380,7 +384,6 @@ describe("RegionSetStore restoring an existing region", () => {
             ],
             0,
             CARTA.RegionType.RECTANGLE,
-            3,
             "saved",
             "#123456",
             2,
@@ -388,7 +391,22 @@ describe("RegionSetStore restoring an existing region", () => {
         );
 
         expect(BACKEND_SERVICE.setRegion).toHaveBeenCalledTimes(1);
-        expect(region.regionId).toBe(105);
-        expect(region.color).toBe("#123456");
+        // Below every special region ID, such as -1 for the whole image.
+        expect(sentRegionId).toBeLessThan(-4);
+        expect(region?.regionId).toBe(105);
+        expect(region?.color).toBe("#123456");
+    });
+
+    test("removes a region that the backend does not accept, without asking the backend to remove another region", async () => {
+        BACKEND_SERVICE.setRegion.mockImplementationOnce(() => Promise.reject(new Error("refused")));
+        BACKEND_SERVICE.removeRegion.mockClear();
+        const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+        const before = regionSet.regions.length;
+
+        const region = await regionSet.addExistingRegionAsync([{x: 1, y: 1}], 0, CARTA.RegionType.POINT, "saved", "#123456", 2, [0]);
+
+        expect(region).toBeUndefined();
+        expect(regionSet.regions.length).toBe(before);
+        expect(BACKEND_SERVICE.removeRegion).not.toHaveBeenCalled();
     });
 });

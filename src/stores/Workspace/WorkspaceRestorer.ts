@@ -409,7 +409,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * of its own.
      *
      * The backend gives each restored region a new ID. Map the saved ID of each region to the new
-     * ID after the backend answers.
+     * ID after the backend answers. A region that the backend does not accept is left out and
+     * reported, so that no saved ID points at it.
      */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
@@ -426,13 +427,18 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     regionInfo.points,
                     regionInfo.rotation,
                     regionInfo.type,
-                    regionInfo.id,
                     regionInfo.name ?? "",
                     regionInfo.color ?? preferenceStore.regionColor,
                     regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
                     regionInfo.dashes ?? [preferenceStore.regionDashLength],
                     regionInfo.annotationStyles
                 );
+                if (!region) {
+                    const imageName = describeImageSource(fileInfo.source);
+                    const regionName = regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`;
+                    this.report(WorkspaceItemKind.Image, imageName, `Could not restore ${regionName} of ${imageName}: the backend did not accept it`);
+                    return;
+                }
                 regionIds.set(regionInfo.id, region.regionId);
                 region.setLocked(regionInfo.locked ?? false);
                 const sampleWidth = regionInfo.lineRegionSampleWidth;

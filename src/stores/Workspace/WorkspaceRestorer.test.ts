@@ -28,7 +28,7 @@ function createRenderConfig() {
 }
 
 /** The ID that the backend gives a restored region. It is a new ID, not related to the saved ID. */
-const RegisterRegion = jest.fn((savedRegionId: number): Promise<number> => Promise.resolve(savedRegionId + 100));
+const RegisterRegion = jest.fn((savedRegionId: number): Promise<number | undefined> => Promise.resolve(savedRegionId + 100));
 
 /** What the restorer needs of an image it has opened. */
 function createFrame(fileId: number) {
@@ -58,11 +58,10 @@ function createFrame(fileId: number) {
         setSpectralSystem: jest.fn((system: string, _shouldAlignSiblings?: boolean) => system !== "Unsupported"),
         setIntensityUnit: jest.fn(),
         regionSet: {
-            addExistingRegionAsync: jest.fn(async (_points: unknown, _rotation: number, _type: unknown, savedRegionId: number) => ({
-                regionId: await RegisterRegion(savedRegionId),
-                setLocked: jest.fn(),
-                setLineRegionSampleWidth: jest.fn()
-            })),
+            addExistingRegionAsync: jest.fn(async (points: unknown) => {
+                const regionId = await RegisterRegion(savedRegionIdOf(points));
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn()};
+            }),
             selectSingleRegion: jest.fn()
         }
     };
@@ -220,8 +219,18 @@ const IMAGE = {id: 1, source: {type: "file" as const, filename: "image.fits"}};
 const CATALOG = {id: 1, source: {type: "file" as const, filename: "sources.vot"}, associatedImageId: 1};
 const LAYOUT = {layoutVersion: 2, docked: {type: "row", content: [{type: "component", id: "image-view"}]}, floating: []};
 
+/** The saved ID of each region of a workspace made by {@link createWorkspace}, by its points. A test makes the backend refuse a region by having RegisterRegion return undefined. The restore passes on the points, not the saved ID. */
+const SAVED_REGION_IDS = new WeakMap<object, number>();
+
+/** Returns the ID that a region was saved with, from the points that the restore passes on. */
+function savedRegionIdOf(points: unknown): number {
+    return (points && typeof points === "object" && SAVED_REGION_IDS.get(points)) || 0;
+}
+
 function createWorkspace(overrides: Partial<Workspace> = {}): Workspace {
-    return {workspaceVersion: 2, frontendVersion: 0, files: [IMAGE], ...overrides};
+    const workspace: Workspace = {workspaceVersion: 2, frontendVersion: 0, files: [IMAGE], ...overrides};
+    workspace.files?.forEach(file => file.regionsSet?.regions?.forEach(region => SAVED_REGION_IDS.set(region.points, region.id)));
+    return workspace;
 }
 
 describe("WorkspaceRestorer", () => {
@@ -754,7 +763,7 @@ describe("WorkspaceRestorer", () => {
     });
 
     describe("the regions of an image", () => {
-        const region = (id: number) => ({id, points: [{x: 0, y: 0}], rotation: 0, type: 3});
+        const region = (id: number) => ({id, name: `Region ${id}`, points: [{x: id, y: 0}], rotation: 0, type: 3});
 
         test("maps each region's saved ID to the one the backend gave it", async () => {
             createSession();
@@ -789,6 +798,19 @@ describe("WorkspaceRestorer", () => {
             const restorer = await restored(createWorkspace());
 
             expect([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE].map(regionId => restorer.regionIdOf(1, regionId))).toEqual([RegionId.CURSOR, RegionId.IMAGE, RegionId.ACTIVE]);
+        });
+
+        test("leaves out and reports a region that the backend does not accept, so that its saved ID points at no region", async () => {
+            createSession();
+            RegisterRegion.mockImplementationOnce(() => Promise.resolve(undefined));
+
+            const workspace = createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), region(2)]}}]});
+            const restorer = await restored(workspace);
+
+            expect(restorer.regionIdOf(1, 1)).toBeUndefined();
+            expect(restorer.regionIdOf(1, 2)).toBe(102);
+            RegisterRegion.mockImplementationOnce(() => Promise.resolve(undefined));
+            expect(await restore(workspace)).toContain("Could not restore the region Region 1 of image.fits: the backend did not accept it");
         });
 
         test("gives no ID for a region that was not restored", async () => {
