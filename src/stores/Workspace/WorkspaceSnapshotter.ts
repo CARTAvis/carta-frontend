@@ -698,13 +698,52 @@ export class WorkspaceSnapshotter {
      */
     private captureLayout(): void {
         const layout = this.appStore.layoutStore.currentLayoutConfig();
-        // Leave out the floating viewer of a PV preview. The PV generator widget saves the preview
-        // and where its viewer is, and a restore makes the preview again. A viewer in the layout
-        // would open again as a second, empty viewer.
+        // Leave out the viewer of a PV preview, floating or docked. The PV generator widget saves the
+        // preview and where a floating viewer is, and a restore makes the preview again. A viewer in
+        // the layout would open again as a second, empty viewer. A docked viewer is saved with an ID
+        // such as "pv-generator-0-pv-preview", which no layout accepts, so the whole layout would not
+        // be restored.
         if (layout && Array.isArray(layout.floating)) {
             layout.floating = layout.floating.filter((widget: {id?: string}) => widget?.id !== "pv-preview");
         }
+        if (layout?.docked) {
+            WorkspaceSnapshotter.removeDockedPvPreviews(layout.docked);
+        }
         this.workspace.layout = layout;
+    }
+
+    /**
+     * Removes the PV preview viewers from a docked layout. Removes a container that is left empty,
+     * because a layout does not accept an empty one. Keeps the shown tab of a stack on the same
+     * widget.
+     *
+     * @returns whether the container still has content.
+     */
+    private static removeDockedPvPreviews(container: {content?: any[]; activeItemIndex?: number}): boolean {
+        if (!Array.isArray(container.content)) {
+            return true;
+        }
+        const isPvPreview = (item: any) => item?.type === "component" && typeof item.id === "string" && /(^|-)pv-preview$/.test(item.id);
+        const kept: any[] = [];
+        let activeIndex = container.activeItemIndex ?? 0;
+        container.content.forEach((item, index) => {
+            const isKept = !isPvPreview(item) && (item?.type === "component" || WorkspaceSnapshotter.removeDockedPvPreviews(item));
+            if (isKept) {
+                kept.push(item);
+            } else if (index < (container.activeItemIndex ?? 0)) {
+                activeIndex--;
+            }
+        });
+        container.content = kept;
+        if (container.activeItemIndex !== undefined) {
+            activeIndex = Math.min(Math.max(activeIndex, 0), kept.length - 1);
+            if (activeIndex > 0) {
+                container.activeItemIndex = activeIndex;
+            } else {
+                delete container.activeItemIndex;
+            }
+        }
+        return kept.length > 0;
     }
 
     /**

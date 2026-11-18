@@ -886,6 +886,52 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.layout.floating).toEqual([{type: "component", id: "stats"}]);
     });
 
+    test("leaves a docked viewer of a PV preview out of the layout too, keeps the shown tab on its widget and removes a container left empty", () => {
+        const {appStore} = createSession();
+        (appStore.layoutStore.currentLayoutConfig as jest.Mock).mockReturnValue({
+            layoutVersion: 2,
+            docked: {
+                type: "row",
+                content: [
+                    {
+                        type: "stack",
+                        activeItemIndex: 2,
+                        content: [
+                            {type: "component", id: "pv-generator-0-pv-preview"},
+                            {type: "component", id: "image-view"},
+                            {type: "component", id: "stats"}
+                        ]
+                    },
+                    {type: "column", content: [{type: "stack", content: [{type: "component", id: "pv-generator-1-pv-preview"}]}]},
+                    {
+                        type: "stack",
+                        activeItemIndex: 1,
+                        content: [
+                            {type: "component", id: "histogram"},
+                            {type: "component", id: "pv-generator-0-pv-preview"}
+                        ]
+                    }
+                ]
+            },
+            floating: []
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.layout.docked).toEqual({
+            type: "row",
+            content: [
+                {
+                    type: "stack",
+                    activeItemIndex: 1,
+                    content: [
+                        {type: "component", id: "image-view"},
+                        {type: "component", id: "stats"}
+                    ]
+                },
+                {type: "stack", content: [{type: "component", id: "histogram"}]}
+            ]
+        });
+    });
+
     test("reports an item the session never opened instead of giving it an ID", () => {
         createSession();
         WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, 10);
