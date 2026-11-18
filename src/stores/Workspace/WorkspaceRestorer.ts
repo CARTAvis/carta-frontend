@@ -215,14 +215,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Opens the Snippet dialog with the saved snippet or the example of the saved name. A saved snippet
      * is not shown when the workspace belongs to another user, because the snippets of the opener are
      * not the ones of that user. An example is the same for every user. The dialog is empty when the
-     * opener has no snippet of that name, and the report says so. The
-     * dialog does not open when the opener has turned code snippets off, and the report says so.
+     * opener has no snippet of that name, and the report says so. When the opener has turned code
+     * snippets off, the restore turns them on for this session only, and the report says so. The
+     * preference stays off.
      */
     private showSnippetDialog(): void {
         const dialogStore = this.appStore.dialogStore;
-        if (this.appStore.preferenceStore?.isCodeSnippetsEnabled === false) {
-            this.report(WorkspaceItemKind.Layout, "Snippet", "The Snippet dialog was not opened, because code snippets are turned off in the preferences");
-            return;
+        const preferenceStore = this.appStore.preferenceStore;
+        if (preferenceStore?.areCodeSnippetsShown === false) {
+            preferenceStore.setCodeSnippetsEnabledForSession(true);
+            this.report(WorkspaceItemKind.Layout, "Snippet", "Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
         }
         const name = this.workspace.dialogSettings?.snippet?.name;
         const saved = typeof name === "string" ? this.appStore.snippetStore.snippets.get(name) : undefined;

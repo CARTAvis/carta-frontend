@@ -153,7 +153,7 @@ export class RootMenuComponent extends React.Component {
 
     @computed get snippetsMenu() {
         const appStore = AppStore.Instance;
-        if (!appStore.preferenceStore.isCodeSnippetsEnabled) {
+        if (!appStore.preferenceStore.areCodeSnippetsShown) {
             return null;
         }
 
@@ -356,7 +356,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
                 <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
-                {appStore.preferenceStore.isCodeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
+                {appStore.preferenceStore.areCodeSnippetsShown && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
@@ -501,7 +501,7 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Widgets" />
                     </Menu>
                 </PopoverNext>
-                {appStore.preferenceStore.isCodeSnippetsEnabled && this.snippetsMenu && (
+                {appStore.preferenceStore.areCodeSnippetsShown && this.snippetsMenu && (
                     <PopoverNext autoFocus={false} animation="minimal" arrow={false} shouldReturnFocusOnClose={false} content={this.snippetsMenu} placement="bottom-start">
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />

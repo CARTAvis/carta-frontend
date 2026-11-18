@@ -319,12 +319,19 @@ describe("WorkspaceRestorer", () => {
         await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "02. Basics"}}}));
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet: example, name: "02. Basics"}]]);
 
-        // The opener has turned code snippets off.
+        // The opener has turned code snippets off. The restore turns them on for this session only.
         appStore.dialogStore.showDialog.mockClear();
-        Object.assign(appStore, {preferenceStore: {...appStore.preferenceStore, isCodeSnippetsEnabled: false}});
+        const setCodeSnippetsEnabledForSession = jest.fn();
+        Object.assign(appStore, {preferenceStore: {...appStore.preferenceStore, areCodeSnippetsShown: false, setCodeSnippetsEnabledForSession}});
         const offProblems = await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
-        expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
-        expect(offProblems).toContain("The Snippet dialog was not opened, because code snippets are turned off in the preferences");
+        expect(setCodeSnippetsEnabledForSession).toHaveBeenCalledWith(true);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
+        expect(offProblems).toContain("Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
+
+        // A workspace without the Snippet dialog leaves code snippets as they are.
+        setCodeSnippetsEnabledForSession.mockClear();
+        await restore(createWorkspace({}));
+        expect(setCodeSnippetsEnabledForSession).not.toHaveBeenCalled();
     });
 
     test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
