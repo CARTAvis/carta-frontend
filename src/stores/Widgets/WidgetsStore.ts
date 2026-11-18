@@ -2089,6 +2089,21 @@ export class WidgetsStore {
         return orphans;
     };
 
+    /**
+     * Opens the PV Preview Viewer of the PV generator with this layout ID, and fits a new preview to
+     * the viewer. A viewer that is open already, such as a docked viewer that a workspace restored,
+     * keeps its size. A new floating viewer starts at the default size.
+     */
+    public openPvPreviewViewer = (generatorId: string, generator: PvGeneratorWidgetStore) => {
+        const hasViewer = [...this.floatingSettingsWidgets.values()].includes(generatorId);
+        this.createFloatingSettingsWidget("PV Preview Viewer", generatorId, PvGeneratorComponent.WidgetConfig.type);
+        if (hasViewer) {
+            generator.onResizePreviewWidget(generator.previewFullViewWidth, generator.previewFullViewHeight);
+        } else {
+            generator.onResizePreviewWidget(PvGeneratorComponent.WidgetConfig.defaultWidth, PvGeneratorComponent.WidgetConfig.defaultHeight);
+        }
+    };
+
     /** Closes the PV Preview Viewer of the PV generator with this layout ID, docked or floating. */
     public closePvPreviewViewer = (generatorId: string) => this.removeAssociatedFloatingSetting(generatorId);
 

@@ -647,6 +647,21 @@ describe("WidgetsStore layout copy of a workspace", () => {
         expect(widgetsStore.toWidgetSettingsConfig("pv-preview", "pv-generator-0", "regular")).toBeUndefined();
     });
 
+    test("opens a new PV Preview Viewer at the default size, and fits a preview to the size of a viewer that is open already", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        const createViewer = jest.spyOn(widgetsStore, "createFloatingSettingsWidget").mockReturnValue(undefined as never);
+        const generator = {previewFullViewWidth: 300, previewFullViewHeight: 200, onResizePreviewWidget: jest.fn()};
+
+        widgetsStore.openPvPreviewViewer("pv-generator-0", generator as never);
+        expect(createViewer).toHaveBeenCalledWith("PV Preview Viewer", "pv-generator-0", "pv-generator");
+        expect(generator.onResizePreviewWidget).toHaveBeenLastCalledWith(550, 620);
+
+        // A docked viewer that a workspace restored is open before its first preview.
+        runInAction(() => widgetsStore.floatingSettingsWidgets.set("pv-generator-0-pv-preview-0", "pv-generator-0"));
+        widgetsStore.openPvPreviewViewer("pv-generator-0", generator as never);
+        expect(generator.onResizePreviewWidget).toHaveBeenLastCalledWith(300, 200);
+    });
+
     test("shows a docked PV Preview Viewer in its PV generator again, and returns a viewer whose PV generator was not restored", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.addWidget("pv-generator", "pv-generator-1", {widgetId: "pv-generator-3"}, "workspace");
