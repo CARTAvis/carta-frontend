@@ -1173,31 +1173,20 @@ export class OverlayColorbarSettings {
     }
 
     /**
-     * Applies the saved colorbar settings. A setting that has a preference does not change when the
-     * config leaves it out. Leaves the switch of the custom label text as it is, because a workspace
+     * Applies the saved colorbar settings. When the config leaves out a setting that has a
+     * preference, the setting follows the user's preference. Leaves the switch of the custom label text as it is, because a workspace
      * saves it.
      */
     @action applyConfig(config: Persisted<OverlayColorbarConfig> | undefined) {
         const isWidth = numberIn(1, 100);
         const isTickDensity = numberIn(0.2, 20);
-        if (isBoolean(config?.isVisible)) {
-            this.isVisible = config.isVisible;
-        }
-        if (isBoolean(config?.isInteractive)) {
-            this.isInteractive = config.isInteractive;
-        }
-        if (isWidth(config?.width)) {
-            this.width = config.width;
-        }
-        if (isColorbarPosition(config?.position)) {
-            this.position = config.position;
-        }
-        if (isTickDensity(config?.tickDensity)) {
-            this.tickDensity = config.tickDensity;
-        }
-        if (isBoolean(config?.isLabelVisible)) {
-            this.isLabelVisible = config.isLabelVisible;
-        }
+        const preferences = PreferenceStore.Instance;
+        this.isVisible = savedOr(config?.isVisible, isBoolean, preferences.isColorbarVisible);
+        this.isInteractive = savedOr(config?.isInteractive, isBoolean, preferences.isColorbarInteractive);
+        this.width = savedOr(config?.width, isWidth, preferences.colorbarWidth);
+        this.position = savedOr(config?.position, isColorbarPosition, preferences.colorbarPosition);
+        this.tickDensity = savedOr(config?.tickDensity, isTickDensity, preferences.colorbarTicksDensity);
+        this.isLabelVisible = savedOr(config?.isLabelVisible, isBoolean, preferences.isColorbarLabelVisible);
         this.offset = savedOr(config?.offset, numberIn(0, 100), 5);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.color = savedOr(config?.color, isColor, AST_DEFAULT_COLOR);
