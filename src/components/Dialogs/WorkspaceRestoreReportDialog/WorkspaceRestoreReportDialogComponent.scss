@@ -20,7 +20,62 @@
     }
 
     section + section {
-        margin-top: 16px;
+        margin-top: 20px;
+    }
+
+    // Count the items of each section in one line at the top.
+    .report-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .report-section-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 4px;
+
+        .#{$ns}-icon {
+            color: $pt-icon-color;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-icon-color;
+            }
+        }
+    }
+
+    // Put the button that saves the new locations at the right of the section title.
+    .report-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 4px;
+
+        .report-section-title {
+            margin: 0;
+        }
+    }
+
+    li.repointed-item {
+        display: block;
+
+        .repointed-arrow {
+            margin: 0 6px;
+            vertical-align: middle;
+        }
+
+        .repointed-folder {
+            margin-top: 2px;
+            font-size: 12px;
+            color: $pt-text-color-muted;
+
+            .#{$ns}-dark & {
+                color: $pt-dark-text-color-muted;
+            }
+        }
     }
 
     ul {
@@ -34,12 +89,112 @@
         align-items: baseline;
         gap: 8px;
         padding: 4px 0;
-        overflow-wrap: anywhere;
     }
 
-    .#{$ns}-tag {
-        flex-shrink: 0;
-        min-width: 56px;
-        justify-content: center;
+    // Say what a section holds in a smaller, lighter line under its title.
+    section > p {
+        margin: 0 0 8px;
+        font-size: 12px;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
+    // Show each item of a section in a box, as the Recovery items are.
+    section > ul {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        > li {
+            display: block;
+            padding: 8px 12px;
+            border: 1px solid $pt-divider-black;
+            border-radius: $pt-border-radius;
+
+            .#{$ns}-dark & {
+                border-color: $pt-dark-divider-white;
+            }
+        }
+    }
+
+    // Stack the lines of a left-out item. The item shows what it caused below its own line. The left
+    // edge of the box has the color of the outcome.
+    section > ul > li.left-out-item {
+        display: block;
+        border-left-width: 3px;
+
+        &.is-skipped {
+            border-left-color: $orange3;
+        }
+
+        &.is-failed {
+            border-left-color: $red3;
+        }
+    }
+
+    // Show the name of an item on its first line, with the outcome at the right.
+    .item-name {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+
+        .outcome-tag {
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+    }
+
+    // Indent the lines under the name of an item, so that they start under its text, after the icon.
+    .item-reason,
+    .consequences {
+        margin-left: 20px;
+    }
+
+    .item-reason {
+        margin-top: 2px;
+        font-size: 12px;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
+    // List what an item caused under a dashed line, each group under a short caption.
+    .consequences {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed $pt-divider-black;
+
+        .#{$ns}-dark & {
+            border-top-color: $pt-dark-divider-white;
+        }
+
+        li {
+            display: block;
+            padding: 2px 0;
+        }
+    }
+
+    .consequence-caption {
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
+    .widget-titles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
     }
 }

@@ -10,6 +10,21 @@ export enum WorkspaceIssueOutcome {
     Skipped = "skipped"
 }
 
+/** How a widget differs from the workspace, when the restore could not show what the widget showed. */
+export enum WorkspaceIssueEffect {
+    /** The widget shows the active image, because the image that it showed was not restored. */
+    ActiveImage = "active-image",
+    /**
+     * The widget follows the active image, and the image that was active when the workspace was
+     * saved was not restored. So the widget shows another image.
+     */
+    ActiveImageFollowed = "active-image-followed",
+    /** The widget shows the active region, because the region that it showed was not restored. */
+    ActiveRegion = "active-region",
+    /** The catalog widget or plot shows another catalog or none, because the catalog that it showed was not restored. */
+    CatalogNotRestored = "catalog-not-restored"
+}
+
 /** The kind of thing a workspace issue is about, for grouping and filtering. */
 export enum WorkspaceItemKind {
     Image = "image",

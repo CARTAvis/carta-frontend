@@ -33,6 +33,7 @@ import {
     NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Persisted,
     type Point2D,
+    SOME_IMAGES_NOT_RESTORED,
     type WorkspaceConfigurableWidget,
     type WorkspaceIdReader,
     type WorkspaceIdWriter,
@@ -1356,7 +1357,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore implements Con
         const problems: string[] = [];
         const fileIds = (config.imageIds ?? []).flatMap(imageId => fileIdOf(imageId) ?? []);
         if (fileIds.length < (config.imageIds?.length ?? 0)) {
-            problems.push("some of the images whose profiles it showed were not restored");
+            problems.push(SOME_IMAGES_NOT_RESTORED);
         }
         const regionIds = (config.regionIds ?? []).flatMap(regionId => regionIdOf(regionId) ?? []);
         if (regionIds.length < (config.regionIds?.length ?? 0)) {

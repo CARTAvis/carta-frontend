@@ -122,6 +122,13 @@ export class FileBrowserDialogComponent extends React.Component {
         const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
         const loadedFrames: FrameStore[] = [];
 
+        // A double click during a pick chooses the file. Opening it here would close the images that
+        // the workspace restore has opened.
+        if (fileBrowserStore.filePick) {
+            fileBrowserStore.choosePickedFile();
+            return loadedFrames;
+        }
+
         if (PreferenceStore.Instance.isDynamicLayoutEnabled && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
             await layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
         }
@@ -153,6 +160,9 @@ export class FileBrowserDialogComponent extends React.Component {
         const frames = appStore.frames;
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
+        if (fileBrowserStore.filePick) {
+            return undefined;
+        }
 
         const directory = fileBrowserStore.fileList?.directory;
         if (directory == null) {
@@ -176,6 +186,9 @@ export class FileBrowserDialogComponent extends React.Component {
         const frames = appStore.frames;
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
+        if (fileBrowserStore.filePick) {
+            return undefined;
+        }
 
         const directory = fileBrowserStore.fileList?.directory;
         if (directory == null) {
@@ -425,6 +438,23 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderActionButton(browserMode: BrowserMode, isAppending: boolean) {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
+
+        // Show Choose during a pick. The workspace restore that asked for the file opens the file
+        // itself.
+        if (fileBrowserStore.filePick) {
+            const isFolderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
+            const isPickDisabled = !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || isFolderSelected || fileBrowserStore.selectedFiles?.length > 1;
+            return (
+                <>
+                    <Tooltip content="Stop opening the workspace, and close what it has opened so far">
+                        <AnchorButton onClick={appStore.cancelLoadingWorkspace} text="Cancel restore" data-testid="file-browser-cancel-restore-button" />
+                    </Tooltip>
+                    <Tooltip content="Open this file in place of the one that the workspace could not open">
+                        <AnchorButton intent={Intent.PRIMARY} disabled={isPickDisabled} onClick={fileBrowserStore.choosePickedFile} text="Choose" data-testid="file-browser-choose-button" />
+                    </Tooltip>
+                </>
+            );
+        }
 
         switch (browserMode) {
             case BrowserMode.File:
@@ -806,7 +836,8 @@ export class FileBrowserDialogComponent extends React.Component {
             </PopoverNext>
         );
 
-        if (browserMode === BrowserMode.File) {
+        // Offer no image arithmetic during a pick. A pick returns one file, not an expression.
+        if (browserMode === BrowserMode.File && !AppStore.Instance.fileBrowserStore.filePick) {
             const inputTypeMenu = (
                 <PopoverNext
                     animation="minimal"

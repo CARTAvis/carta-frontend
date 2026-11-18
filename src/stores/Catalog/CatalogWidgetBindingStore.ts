@@ -1,6 +1,6 @@
 import {action, makeObservable, observable, observe} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, WorkspaceItemKind} from "enums";
+import {CatalogOverlay, CatalogPlotType, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
 import {describeCatalogSource, isWidgetWorkspaceConfigOf, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
 import type {CatalogPlotLayoutSettings, CatalogPlotWidgetStoreProps} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
@@ -409,6 +409,19 @@ export class CatalogWidgetBindingStore {
     }
 
     /**
+     * Returns the ID of the plot widget that a catalog plot tab shows, by the stable ID of the tab.
+     * The layout names the tab by this ID.
+     */
+    shownPlotOf(widgetId: string): string | undefined {
+        for (const state of this.plots.values()) {
+            if (state.widgetId === widgetId) {
+                return state.plotFor(state.activeCatalogFileId) ?? state.plotWidgetIds.values().next().value;
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * Point the table and plot widgets at the catalogs they were saved against, once the Workspace's
      * catalogs and Layout have been restored, and put back what each of them showed. A widget whose
      * catalog is unavailable takes the catalog it falls back to as its own, with nothing it was
@@ -423,16 +436,21 @@ export class CatalogWidgetBindingStore {
             const catalog = catalogs?.find(candidate => candidate.id === id);
             return catalog ? `the catalog ${describeCatalogSource(catalog.source)}` : `workspace catalog ${id}`;
         };
-        const describeFallback = (fileId: number | undefined) => {
+        // Returns the name of the catalog that a widget shows instead, such as "the catalog sources.vot".
+        const describeShown = (fileId: number | undefined): string | undefined => {
             if (fileId === undefined || !this.catalogs.catalogProfileStores.has(fileId)) {
-                return "";
+                return undefined;
             }
             for (const [workspaceId, restoredFileId] of catalogIds) {
                 if (restoredFileId === fileId) {
-                    return `; it is showing ${describe(workspaceId)} instead`;
+                    return describe(workspaceId);
                 }
             }
-            return `; it is showing catalog file ${fileId} instead`;
+            return `catalog file ${fileId}`;
+        };
+        const describeFallback = (fileId: number | undefined) => {
+            const shown = describeShown(fileId);
+            return shown ? `; it is showing ${shown} instead` : "";
         };
         const entries = Object.entries(catalogWidgets ?? {});
 
@@ -453,10 +471,20 @@ export class CatalogWidgetBindingStore {
                 if (componentId !== undefined && (shown === undefined || !this.catalogs.catalogProfileStores.has(shown))) {
                     this.initTable(componentId, this.fallbackCatalog(undefined, undefined));
                 }
-                const fallback = componentId === undefined ? "" : describeFallback(this.tableCatalogs.get(componentId));
-                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId}: ${describe(config.catalogId)} is unavailable${fallback}`});
+                const shownInstead = componentId === undefined ? undefined : describeShown(this.tableCatalogs.get(componentId));
+                const reason = `${describe(config.catalogId)} is unavailable${shownInstead ? `; it is showing ${shownInstead} instead` : ""}`;
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogWidget,
+                    subject: widgetId,
+                    message: `Could not restore catalog widget ${widgetId}: ${reason}`,
+                    reason,
+                    causeCatalogId: config.catalogId,
+                    effect: WorkspaceIssueEffect.CatalogNotRestored,
+                    effectDetail: shownInstead
+                });
             } else if (matching.length !== 1 || !this.show(matching[0][0], catalogFileId)) {
-                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId} to ${describe(config.catalogId)}: the widget selection could not be applied`});
+                const reason = `could not be pointed at ${describe(config.catalogId)}`;
+                issues.push({kind: WorkspaceItemKind.CatalogWidget, subject: widgetId, message: `Could not restore catalog widget ${widgetId} to ${describe(config.catalogId)}: the widget selection could not be applied`, reason});
             }
         }
 
@@ -467,12 +495,27 @@ export class CatalogWidgetBindingStore {
             }
             const catalogFileId = catalogIds.get(config.catalogId);
             if (catalogFileId === undefined) {
-                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId}: ${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`});
+                const shown = describeShown(state.activeCatalogFileId);
+                const reason = `${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`;
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogPlot,
+                    subject: widgetId,
+                    message: `Could not restore catalog plot ${widgetId}: ${reason}`,
+                    reason,
+                    causeCatalogId: config.catalogId,
+                    effect: WorkspaceIssueEffect.CatalogNotRestored,
+                    effectDetail: shown
+                });
                 continue;
             }
             const plotWidgetId = state.plotFor(state.activeCatalogFileId);
             if (plotWidgetId === undefined || (state.activeCatalogFileId !== catalogFileId && !this.rebind(plotWidgetId, catalogFileId))) {
-                issues.push({kind: WorkspaceItemKind.CatalogPlot, subject: widgetId, message: `Could not restore catalog plot ${widgetId} to ${describe(config.catalogId)}: the plot association could not be applied`});
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogPlot,
+                    subject: widgetId,
+                    message: `Could not restore catalog plot ${widgetId} to ${describe(config.catalogId)}: the plot association could not be applied`,
+                    reason: `could not be pointed at ${describe(config.catalogId)}`
+                });
                 continue;
             }
             const plotStore = this.widgets().catalogPlotWidgets.get(plotWidgetId);
@@ -487,7 +530,8 @@ export class CatalogWidgetBindingStore {
                 issues.push({
                     kind: WorkspaceItemKind.CatalogPlot,
                     subject: widgetId,
-                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(config.catalogId)}: ${unavailable.map(column => `column ${column}`).join(", ")} is unavailable`
+                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(config.catalogId)}: ${unavailable.map(column => `column ${column}`).join(", ")} is unavailable`,
+                    reason: `${unavailable.map(column => `column ${column}`).join(", ")} of ${describe(config.catalogId)} ${unavailable.length === 1 ? "is" : "are"} unavailable`
                 });
             }
         }
