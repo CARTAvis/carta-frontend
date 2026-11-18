@@ -1042,11 +1042,11 @@ describe("WorkspaceRestorer", () => {
         const {appStore} = createSession();
 
         // The image that was in front, 2, was not restored. So the first image is in front.
-        const problems = await restore(createWorkspace({files: [IMAGE], selectedFile: 2, cursor: {frozen: true, position: {x: 5, y: 6}}}));
+        const issues = await restoreIssues(createWorkspace({files: [IMAGE], selectedFile: 2, cursor: {frozen: true, position: {x: 5, y: 6}}}));
 
         expect((appStore.activeFrame as any).updateCursorRegion).not.toHaveBeenCalled();
         expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
-        expect(problems).toContain("The cursor was not put back where it was, because the image that it was on is not in front");
+        expect(issues).toContainEqual(expect.objectContaining({message: "The cursor was not put back where it was, because the image that it was on is not in front", causeImageId: 2}));
     });
 
     test("leaves the cursor where it is without a report when the image in front was not saved, such as a PV preview", async () => {

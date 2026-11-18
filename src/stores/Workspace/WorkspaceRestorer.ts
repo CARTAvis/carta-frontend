@@ -430,7 +430,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 frame.setCursorPosition(position);
                 frame.updateCursorRegion(position);
             } else if (this.workspace.selectedFile !== undefined) {
-                this.report(WorkspaceItemKind.Layout, "Cursor", "The cursor was not put back where it was, because the image that it was on is not in front");
+                // The report lists this under the image that the cursor was on, when that image was not restored.
+                this.report(WorkspaceItemKind.Layout, "Cursor", "The cursor was not put back where it was, because the image that it was on is not in front", undefined, {
+                    causeImageId: this.workspace.selectedFile
+                });
             }
         }
         this.appStore.setCursorFrozen(cursor.frozen);
