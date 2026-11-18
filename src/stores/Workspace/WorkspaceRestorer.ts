@@ -2130,7 +2130,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     WorkspaceItemKind.Image,
                     `the color-blended image ${imageListIndex}`,
                     `Could not restore the color-blended image ${imageListIndex} in the Image List, because none of its images was restored`,
-                    WorkspaceIssueOutcome.Failed
+                    WorkspaceIssueOutcome.Failed,
+                    {label: `The color-blended image ${imageListIndex} in the Image List`, reason: "none of its images was restored"}
                 );
                 continue;
             }

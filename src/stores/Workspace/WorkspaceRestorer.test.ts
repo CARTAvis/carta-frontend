@@ -968,7 +968,9 @@ describe("WorkspaceRestorer", () => {
             expect.objectContaining({
                 subject: "the color-blended image 1",
                 message: "Could not restore the color-blended image 1 in the Image List, because none of its images was restored",
-                outcome: WorkspaceIssueOutcome.Failed
+                outcome: WorkspaceIssueOutcome.Failed,
+                label: "The color-blended image 1 in the Image List",
+                reason: "none of its images was restored"
             })
         );
         expect(appStore.reorderFrame).not.toHaveBeenCalled();
