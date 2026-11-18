@@ -158,7 +158,9 @@ export class FileBrowserStore {
         if (!pick || !filename || directory == null) {
             return;
         }
-        this.saveStartingDirectory();
+        // A pick is part of a workspace restore, which does not change the user's preferences. So
+        // start the file browser in this folder for this session only.
+        this.setStartingDirectory();
         this.finishFilePick({directory, filename, hdu: pick.mode === BrowserMode.File ? this.selectedHDU || undefined : undefined});
         this.hideFileBrowser();
     };

@@ -59,6 +59,19 @@ describe("FileBrowserStore.pickFile", () => {
         expect(fileBrowserStore.filePick).toBeUndefined();
     });
 
+    test("starts the file browser in the folder of the chosen file for this session, without changing the user's last used folder", async () => {
+        const picking = fileBrowserStore.pickFile("image");
+        runInAction(() => {
+            fileBrowserStore.fileList = {directory: "/data/moved", files: [], subdirectories: []} as any;
+            fileBrowserStore.selectedFile = {name: "cube.fits"} as any;
+        });
+        fileBrowserStore.choosePickedFile();
+        await picking;
+
+        expect(fileBrowserStore.startingDirectory).toBe("/data/moved");
+        expect(fileBrowserStore.saveStartingDirectory).not.toHaveBeenCalled();
+    });
+
     test("returns a catalog file from the catalog directory, without an HDU", async () => {
         const picking = fileBrowserStore.pickFile("catalog");
         runInAction(() => {
