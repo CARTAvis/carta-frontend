@@ -2,8 +2,8 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
-import {AppStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
+import {CatalogDatabase, CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
+import {AppStore, MirrorSiteStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -291,6 +291,20 @@ describe("WorkspaceSnapshotter", () => {
         });
         // Only an online catalog is fingerprinted, since it is queried again rather than stored.
         expect(workspace.catalogs?.[0].contentHash).toBeUndefined();
+        // A catalog file is not queried, so no mirror is saved.
+        expect(workspace.catalogMirrors).toBeUndefined();
+    });
+
+    test("saves the mirror that an online catalog was queried from", () => {
+        const {profileStore} = createSession();
+        profileStore.isFileBasedCatalog = false;
+        (profileStore.catalogInfo as {query: unknown}).query = {type: "simbad", center: {x: 1, y: 2}, system: CatalogSystemType.ICRS, radius: 2, radiusUnits: "arcmin", maxObjects: 10};
+        const mirror = MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(mirror).toBeDefined();
+        expect(workspace.catalogMirrors).toEqual({[CatalogDatabase.SIMBAD]: mirror});
     });
 
     test("saves the rows selected in a catalog, and whether only they are shown", () => {
@@ -305,6 +319,17 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.catalogs?.[0].selection?.rowHashes).toHaveLength(1);
     });
 
+    test("captures the same workspace twice in a row, so that the check of the Workspace dialog leaves the session as it was", () => {
+        createSession();
+
+        const first = new WorkspaceSnapshotter().capture();
+        new WorkspaceSnapshotter().findIssues();
+        const second = new WorkspaceSnapshotter().capture();
+
+        expect({...second.workspace, date: 0}).toEqual({...first.workspace, date: 0});
+        expect(second.issues).toEqual(first.issues);
+    });
+
     test("leaves out a selection of more rows than a workspace keeps, and says so", () => {
         const {profileStore, displayStore} = createSession();
         profileStore.selectedPointIndices = Array.from({length: WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS + 1}, (_, index) => index);
@@ -314,6 +339,8 @@ describe("WorkspaceSnapshotter", () => {
 
         expect(workspace.catalogs?.[0].selection).toBeUndefined();
         expect(issues).toEqual([expect.objectContaining({kind: WorkspaceItemKind.CatalogSelection, message: expect.stringContaining(`${WorkspaceSnapshotter.MAX_SAVED_SELECTED_ROWS + 1} rows are selected`)})]);
+        // The check of the Workspace dialog finds the same issue, without the fingerprints of the rows.
+        expect(new WorkspaceSnapshotter().findIssues()).toEqual(issues);
     });
 
     test("saves what each catalog widget shows", () => {
@@ -349,7 +376,9 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace, issues} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.files?.map(file => file.id)).toEqual([1]);
-        expect(issues).toEqual([{kind: WorkspaceItemKind.Image, subject: "", message: "The workspace contains generated files. These will not be preserved when reloading."}]);
+        expect(issues).toEqual([
+            {kind: WorkspaceItemKind.Image, subject: "", message: "The workspace contains generated files. These will not be preserved when reloading.", hint: "To keep such an image, save it as a file and open the file instead"}
+        ]);
     });
 
     test("reports a catalog overlaid on a generated image instead of saving it against an image the workspace does not carry", () => {
@@ -475,6 +504,10 @@ describe("WorkspaceSnapshotter", () => {
         expect(messages()).toContain(unsaved);
         snippetStore.activeSnippet.code = " ";
         expect(messages()).not.toContain(unsaved);
+
+        // The Save mode of the Workspace dialog lists it before the save, with what to do.
+        snippetStore.activeSnippet.code = "app.openFile('c.fits')";
+        expect(new WorkspaceSnapshotter().findIssues()).toContainEqual({kind: "layout", subject: "Snippet", message: unsaved, hint: "Save the snippet first, then save the workspace"});
     });
 
     test("saves the name of an example that the Snippet dialog shows, and nothing for an example whose code changed", () => {
@@ -671,7 +704,15 @@ describe("WorkspaceSnapshotter", () => {
 
             const {workspace, issues} = new WorkspaceSnapshotter().capture();
 
-            expect(issues).toEqual([{kind: WorkspaceItemKind.GeneratedImage, subject: "the moment images of image0.fits", message: "Could not save the moment images of image0.fits: the region it was made over has been deleted"}]);
+            expect(issues).toEqual([
+                {
+                    kind: WorkspaceItemKind.GeneratedImage,
+                    subject: "the moment images of image0.fits",
+                    message: "Could not save the moment images of image0.fits: the region it was made over has been deleted",
+                    // The Workspace dialog shows the hint before the user saves.
+                    hint: "Draw the region again, make the image again, and close the old one"
+                }
+            ]);
             expect(workspace.generatedImages).toBeUndefined();
             expect(workspace.selectedFile).toBeUndefined();
         });
@@ -706,6 +747,25 @@ describe("WorkspaceSnapshotter", () => {
                 "The workspace contains generated files. These will not be preserved when reloading."
             ]);
             expect(workspace.generatedImages).toBeUndefined();
+        });
+
+        test("reports a request whose image is matched to an image that is not saved, apart from a request whose own image is not saved", () => {
+            const {appStore, frame} = createSession();
+            const fittedModel = createFrame(6, {frameInfo: {fileId: 6, directory: "", hdu: "", fileInfo: {name: "model.fits"}, generated: true}});
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 6);
+            (frame as any).spatialReference = fittedModel;
+            appStore.frames.push(fittedModel as never, createMomentImage(7, momentRequestOf(frame, RegionId.IMAGE), CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM) as never);
+
+            const {issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues[0]).toEqual({
+                kind: WorkspaceItemKind.GeneratedImage,
+                subject: "the moment images of image0.fits",
+                message: "Could not save the moment images of image0.fits: the image it was made from is matched to an image that was not saved",
+                hint: "Match the image it was made from to an image that can be saved, or stop matching it"
+            });
+            // The check of the Workspace dialog finds the same issues.
+            expect(new WorkspaceSnapshotter().findIssues()).toEqual(issues);
         });
 
         test("reports moment images it cannot tell apart once some of them are closed", () => {
@@ -865,6 +925,7 @@ describe("WorkspaceSnapshotter", () => {
             `Could not save the region "box" of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`,
             `Could not save a region of ${frame.frameInfo.fileInfo.name}: the backend has not accepted the region`
         ]);
+        expect(new WorkspaceSnapshotter().findIssues()).toEqual(issues);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 

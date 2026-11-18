@@ -205,7 +205,7 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         // The store keeps the preview as an observable, so the active frame is the one that it keeps.
         Object.assign(appStore, {zIndexManager, activeFrame: store.previewFrame});
 
-        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview).toEqual({renderConfig: {colorMap: "viridis"}, isActive: true, panel: {x: 10, y: 20, width: 300, height: 200, widgetsBelow: 1}});
+        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview).toEqual({renderConfig: {colorMap: "viridis"}, cubeSize: 0.04, isActive: true, panel: {x: 10, y: 20, width: 300, height: 200, widgetsBelow: 1}});
     });
 
     test("saves the preview with how it is drawn and where its panel is, and makes it again on restore", async () => {
@@ -213,7 +213,8 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         store.setPreviewFrame(previewFrame as never);
 
         const config = store.toWorkspaceConfig({imageIdOf: () => 1});
-        expect(config.preview).toEqual({renderConfig: {colorMap: "viridis"}, panel: {x: 10, y: 20, width: 300, height: 200}});
+        // The whole cube of 1000 by 1000 by 10 pixels of 4 bytes is 0.04 GB.
+        expect(config.preview).toEqual({renderConfig: {colorMap: "viridis"}, cubeSize: 0.04, panel: {x: 10, y: 20, width: 300, height: 200}});
 
         store.setPreviewFrame(null);
         expect(await store.restoreWorkspaceResult(config)).toEqual([]);
@@ -235,6 +236,8 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
 
         const config = JSON.parse(JSON.stringify(store.toWorkspaceConfig({imageIdOf: (fileId: number) => (fileId === 3 ? 1 : undefined)})));
         expect(config.preview.request).toEqual({imageId: 1, regionId: 1, width: 3, channels: [0, 9], reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1});
+        // The size of the shown preview, though the rebinning of the widget now reads less.
+        expect([config.preview.cubeSize, store.estimatedCubeSize]).toEqual([0.04, 0.01]);
 
         appStore.requestPreviewPV.mockClear();
         const restored = new PvGeneratorWidgetStore();

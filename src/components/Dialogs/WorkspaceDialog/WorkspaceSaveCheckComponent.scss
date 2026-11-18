@@ -1,0 +1,52 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+// The check sits below the summary of the selected workspace, and scrolls by itself when it is long.
+.workspace-save-check {
+    flex-shrink: 0;
+    max-height: 40%;
+    overflow-y: auto;
+    margin: 8px 10px 0 12px;
+
+    // The title stays in place, and only the list scrolls. The list is in the inner box of the
+    // scroll shadow, so that the shadow shows when more items are above or below.
+    &.save-check-issues {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        .scroll-shadow,
+        .scroll-shadow-cover {
+            height: auto;
+            min-height: 0;
+        }
+
+        .scroll-shadow {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .save-check-title {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .save-check-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-left: 22px;
+    }
+
+    .save-check-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .save-check-hint {
+        font-size: $pt-font-size-small;
+    }
+}

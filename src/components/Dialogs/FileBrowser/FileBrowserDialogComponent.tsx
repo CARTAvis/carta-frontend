@@ -439,17 +439,23 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
-        // Show Choose during a pick. The workspace restore that asked for the file opens the file
-        // itself.
+        // Show Choose during a pick. The workspace restore or the Workspace dialog that asked for the
+        // file uses the file itself.
         if (fileBrowserStore.filePick) {
             const isFolderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
             const isPickDisabled = !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || isFolderSelected || fileBrowserStore.selectedFiles?.length > 1;
+            // Before a workspace opens, the Workspace dialog asks for the file. Then Cancel only closes the browser.
+            const isRestoring = appStore.isLoadingWorkspace;
             return (
                 <>
-                    <Tooltip content="Stop opening the workspace, and close what it has opened so far">
-                        <AnchorButton onClick={appStore.cancelLoadingWorkspace} text="Cancel restore" data-testid="file-browser-cancel-restore-button" />
-                    </Tooltip>
-                    <Tooltip content="Open this file in place of the one that the workspace could not open">
+                    {isRestoring ? (
+                        <Tooltip content="Stop opening the workspace, and close what it has opened so far">
+                            <AnchorButton onClick={appStore.cancelLoadingWorkspace} text="Cancel restore" data-testid="file-browser-cancel-restore-button" />
+                        </Tooltip>
+                    ) : (
+                        <AnchorButton onClick={fileBrowserStore.cancelFilePick} text="Cancel" data-testid="file-browser-cancel-pick-button" />
+                    )}
+                    <Tooltip content={isRestoring ? "Open this file in place of the one that the workspace could not open" : "Use this file in place of the one that is missing"}>
                         <AnchorButton intent={Intent.PRIMARY} disabled={isPickDisabled} onClick={fileBrowserStore.choosePickedFile} text="Choose" data-testid="file-browser-choose-button" />
                     </Tooltip>
                 </>

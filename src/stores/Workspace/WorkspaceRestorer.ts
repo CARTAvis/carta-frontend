@@ -20,6 +20,7 @@ import {
     RegionOpacity,
     RestFrameShiftMode,
     SkyRefIs,
+    SystemType,
     VelocityConvention,
     WORKSPACE_DIALOG_TABS,
     WORKSPACE_DIALOGS,
@@ -108,6 +109,11 @@ interface RestoreTask {
     attempt(): Generator<Promise<unknown>, TaskOutcome, any>;
     /** Uses the file that the user chose for the next attempt. */
     repoint?(location: WorkspaceFileLocation): void;
+    /**
+     * Whether the user chose to open the workspace without the item, before the restore started.
+     * Then the item is skipped without an attempt, and the restore does not ask about it.
+     */
+    isLeftOut?: boolean;
 }
 
 /** The files that the user chose during a restore, for the images and catalogs that opened from them. */
@@ -116,6 +122,25 @@ export interface WorkspaceRepointedSources {
     images: Map<number, {from: WorkspaceImageSource | undefined; to: WorkspaceFileImageSource}>;
     /** The saved source and the new source of each catalog, by its workspace ID. */
     catalogs: Map<number, {from: WorkspaceCatalogSource; to: WorkspaceCatalogFileSource}>;
+}
+
+/**
+ * The new sources of images and catalogs, and the new mirrors of online databases, to write to a
+ * stored workspace. The user chooses them during a restore, or before the workspace opens.
+ */
+export interface WorkspaceSourceChanges {
+    /** The saved source and the new source of each image, by its workspace ID. */
+    images: Map<number, {from: WorkspaceImageSource | undefined; to: WorkspaceImageSource}>;
+    /** The saved source and the new source of each catalog, by its workspace ID. */
+    catalogs: Map<number, {from: WorkspaceCatalogSource; to: WorkspaceCatalogSource}>;
+    /** The saved mirror and the new mirror of each online database. */
+    mirrors?: Map<CatalogDatabase, {from: string | undefined; to: string}>;
+}
+
+/** The images and catalogs that the user chose to open a workspace without, by their workspace IDs. */
+export interface WorkspaceLeftOutItems {
+    imageIds: number[];
+    catalogIds: number[];
 }
 
 /** Returns "1 region" or "3 regions". */
@@ -190,13 +215,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Returns a copy of a stored workspace, with the sources of the images and catalogs that the
-     * user chose new files for. Everything else is kept as stored.
+     * user chose new files for, and the mirrors that the user chose. Everything else is kept as
+     * stored.
      *
-     * Change a source only while the stored workspace still has the source that the restore started
-     * from. The workspace may have been saved again since then, and an ID may then name another
-     * file. Returns undefined when no source can be changed.
+     * Change a source or a mirror only while the stored workspace still has the value that the user
+     * started from. The workspace may have been saved again since then, and an ID may then name
+     * another file. Returns undefined when nothing can be changed.
      */
-    public static withRepointedSources(workspace: Workspace, repointed: WorkspaceRepointedSources): Workspace | undefined {
+    public static withRepointedSources(workspace: Workspace, repointed: WorkspaceSourceChanges): Workspace | undefined {
         let changes = 0;
         const files = workspace.files?.map(fileInfo => {
             const repoint = repointed.images.get(fileInfo.id);
@@ -221,7 +247,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             changes++;
             return {...catalogInfo, source: repoint.to};
         });
-        return changes ? {...workspace, ...(files && {files}), ...(catalogs && {catalogs})} : undefined;
+        let catalogMirrors = workspace.catalogMirrors;
+        for (const [database, {from, to}] of repointed.mirrors ?? []) {
+            if (catalogMirrors?.[database] === from && from !== to) {
+                changes++;
+                catalogMirrors = {...catalogMirrors, [database]: to};
+            }
+        }
+        return changes ? {...workspace, ...(files && {files}), ...(catalogs && {catalogs}), ...(catalogMirrors && {catalogMirrors})} : undefined;
     }
 
     /** One entry per item that could not be brought back as saved. */
@@ -264,10 +297,18 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
     private readonly pendingMatches: {frame: FrameStore; fileInfo: WorkspaceFile; kind: ReferenceKind}[] = [];
 
+    /** The workspace IDs of the images that the user chose to open the workspace without. */
+    private readonly leftOutImageIds: Set<number>;
+    /** The workspace IDs of the catalogs that the user chose to open the workspace without. */
+    private readonly leftOutCatalogIds: Set<number>;
+
     constructor(
         private readonly workspace: Workspace,
-        private readonly generation: number
+        private readonly generation: number,
+        leftOut?: WorkspaceLeftOutItems
     ) {
+        this.leftOutImageIds = new Set(leftOut?.imageIds);
+        this.leftOutCatalogIds = new Set(leftOut?.catalogIds);
         this.generatedImages = (Array.isArray(workspace.generatedImages) ? workspace.generatedImages : []).filter(
             generated => typeof generated?.request?.type === "string" && Array.isArray(generated.images) && generated.images.every(image => typeof image?.id === "number")
         );
@@ -329,6 +370,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         WorkspaceRestorer.clearSession();
         this.restoreSpectralMatchingType();
+        this.restoreImageCoordinates();
         yield* this.openImages();
         if (!this.isCurrent) {
             return this.issues;
@@ -420,6 +462,40 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery);
         }
         return this.issues;
+    }
+
+    /**
+     * Shows the images in the coordinate system that the layout copy saved, before they open. Images
+     * are matched in the coordinates that the session shows: image coordinates match pixel to pixel,
+     * and world coordinates match by sky position. So the images are matched as they were saved. When
+     * the workspace saved no valid system, as a workspace of CARTA 6, the session leaves image
+     * coordinates for automatic coordinates, so that the images are matched by sky position. The
+     * layout copy applies the other settings of the WCS overlay later.
+     */
+    private restoreImageCoordinates(): void {
+        const findImageViewSettings = (item: any): any => {
+            if (!item || typeof item !== "object") {
+                return undefined;
+            }
+            if (item.type === "component" && item.id === "image-view" && item.widgetSettings) {
+                return item.widgetSettings;
+            }
+            for (const child of Array.isArray(item.content) ? item.content : []) {
+                const found = findImageViewSettings(child);
+                if (found) {
+                    return found;
+                }
+            }
+            return undefined;
+        };
+        const layout = this.workspace.layout as {docked?: unknown; floating?: unknown[]} | undefined;
+        const settings = findImageViewSettings(layout?.docked) ?? (Array.isArray(layout?.floating) ? layout.floating.map(findImageViewSettings).find(Boolean) : undefined);
+        const savedSystem = settings?.wcsOverlay?.global?.system;
+        const global = this.appStore.overlaySettings.global;
+        const system = Object.values(SystemType).includes(savedSystem) ? (savedSystem as SystemType) : global.system === SystemType.Image ? SystemType.Auto : undefined;
+        if (system !== undefined) {
+            runInAction(() => (global.system = system));
+        }
     }
 
     /**
@@ -941,7 +1017,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             repoint: ({directory, filename, hdu}) => {
                 state.source = {type: "file", directory, filename, hdu};
                 state.isRepointed = true;
-            }
+            },
+            isLeftOut: this.leftOutImageIds.has(fileInfo.id)
         };
     }
 
@@ -950,6 +1027,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         // The workspace names the image by its saved file, also after the user chose another file.
         const subject = describeImageSource(fileInfo.source);
         const tried = state.isRepointed ? ` from ${describeImageSource(source)}` : "";
+        if (this.leftOutImageIds.has(fileInfo.id)) {
+            return this.leftOutItem(WorkspaceItemKind.Image, subject, `The image ${subject}`, "a file was missing when the workspace was opened", this.dependentsOfImages([fileInfo.id]));
+        }
         if (!source || !["file", "lel", "hypercube"].includes(source.type)) {
             const reason = "the source is not one this version can open";
             this.report(WorkspaceItemKind.Image, subject, `Could not open the image ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: `The image ${subject}`, reason, imageIds: [fileInfo.id]});
@@ -1026,7 +1106,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             } finally {
                 endRound?.();
             }
-            if (!failed.length) {
+            // Skip the items that the user chose to open the workspace without. Do not ask about them.
+            const asked = failed.filter(({task, item}) => {
+                if (task.isLeftOut) {
+                    this.skipTask(task, item);
+                }
+                return !task.isLeftOut;
+            });
+            if (!asked.length) {
                 // An item is deferred only while it waits for an image of an item that failed in this
                 // round. With no failure, no item waits any more. Run the deferred items again, so
                 // that the stage ends.
@@ -1036,26 +1123,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             const choices = yield* this.askUser(
                 stage,
-                failed.map(({item}) => item)
+                asked.map(({item}) => item)
             );
             if (!this.isCurrent) {
                 return;
             }
             pending = [];
             choices.forEach((choice, index) => {
-                const {task, item} = failed[index];
+                const {task, item} = asked[index];
                 if (choice.action === WorkspaceRecoveryAction.Skip) {
-                    task.imageIds.forEach(id => {
-                        this.awaitedImageIds.delete(id);
-                        this.skippedImageIds.add(id);
-                    });
-                    this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {
-                        label: item.label,
-                        reason: item.reason,
-                        imageIds: task.imageIds,
-                        catalogIds: task.catalogIds,
-                        causeCatalogId: item.causeCatalogId
-                    });
+                    this.skipTask(task, item);
                     return;
                 }
                 if (choice.action === WorkspaceRecoveryAction.Repoint) {
@@ -1066,6 +1143,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             // Run the deferred items after the items that they wait for.
             pending.push(...deferred);
         }
+    }
+
+    /** Skips an item that failed, and the images that it opens or makes. Reports it as skipped. */
+    private skipTask(task: RestoreTask, item: WorkspaceRecoveryItem): void {
+        task.imageIds.forEach(id => {
+            this.awaitedImageIds.delete(id);
+            this.skippedImageIds.add(id);
+        });
+        this.report(item.kind, item.subject, item.message, WorkspaceIssueOutcome.Skipped, {
+            label: item.label,
+            reason: item.reason,
+            imageIds: task.imageIds,
+            catalogIds: task.catalogIds,
+            causeCatalogId: item.causeCatalogId
+        });
+    }
+
+    /** Returns the item that a restore skips because the user chose to open the workspace without it. */
+    private leftOutItem(kind: WorkspaceItemKind, subject: string, label: string, reason: string, dependents: string[]): WorkspaceRecoveryItem {
+        return {kind, subject, message: `Left out ${label.charAt(0).toLowerCase()}${label.slice(1)}: ${reason}`, label, reason, canRetry: false, dependents};
     }
 
     /**
@@ -2276,6 +2373,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * at once. Their reason says that the mirror timed out on an earlier query.
      */
     private *openCatalogs(): Generator<Promise<unknown>, void, any> {
+        this.useSavedMirrors();
         yield* this.runStage(
             "Opening catalogs",
             (this.workspace.catalogs ?? []).map(catalogInfo => this.catalogTask(catalogInfo)),
@@ -2289,6 +2387,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 };
             }
         );
+    }
+
+    /**
+     * Make the mirror that the workspace saved the active mirror of its database, when the mirror is
+     * available. Otherwise the session keeps its mirror.
+     */
+    private useSavedMirrors(): void {
+        const saved = this.workspace.catalogMirrors;
+        if (!saved || typeof saved !== "object") {
+            return;
+        }
+        for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {
+            const mirror = saved[database];
+            if (typeof mirror === "string" && MirrorSiteStore.Instance.getMirrorSites(database).includes(mirror)) {
+                MirrorSiteStore.Instance.setActiveMirror(database, mirror);
+            }
+        }
     }
 
     /**
@@ -2340,7 +2455,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             repoint: ({directory, filename}) => {
                 state.source = {type: "file", directory, filename};
                 state.isRepointed = true;
-            }
+            },
+            isLeftOut: this.leftOutCatalogIds.has(catalogInfo.id)
         };
     }
 
@@ -2372,6 +2488,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return "done";
         }
 
+        if (this.leftOutCatalogIds.has(catalogInfo.id)) {
+            const reason = source.type === "file" ? "the file was missing when the workspace was opened" : "its mirror did not answer when the workspace was opened";
+            return this.leftOutItem(WorkspaceItemKind.Catalog, description, this.labelOfCatalog(catalogInfo), reason, []);
+        }
         const query: {isSkipped: boolean; mirrorUrl?: string} = {isSkipped: false};
         let catalogFileId: number | undefined;
         let reason: string | undefined;

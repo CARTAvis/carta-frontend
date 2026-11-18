@@ -5,7 +5,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, runInAction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
@@ -67,7 +67,7 @@ import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStor
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
-import {type WorkspaceRepointedSources, WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
+import {type WorkspaceLeftOutItems, type WorkspaceRepointedSources, WorkspaceRestorer, type WorkspaceSourceChanges} from "stores/Workspace/WorkspaceRestorer";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 import {
     Distinct,
@@ -178,6 +178,38 @@ export interface WorkspaceLoadingStep {
     onSkip?: () => void;
     /** When the step stops waiting, in milliseconds since 1970, as `Date.now()` gives. The dialog counts down to it. */
     deadline?: number;
+}
+
+/** The result of writing new locations and mirrors to a stored workspace. */
+export type WorkspaceSourceWriteResult =
+    /** The workspace is written. `workspace` is the stored workspace after the write. */
+    | {state: "written"; workspace: Workspace}
+    /** The workspace was saved by an earlier version, and is not changed. */
+    | {state: "earlier-version"}
+    /** The stored workspace no longer has the sources that the changes start from. */
+    | {state: "outdated"}
+    /** The workspace could not be read or written. */
+    | {state: "failed"};
+
+/**
+ * Tells the user how writing new locations to a workspace ended.
+ *
+ * @param since - what happened to the workspace before the write, as in "saved again after it was opened".
+ */
+export function showSourceWriteToast(result: WorkspaceSourceWriteResult, name: string, since: "opened" | "read"): void {
+    switch (result.state) {
+        case "written":
+            AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${name}"`, intent: "success", timeout: 3000});
+            break;
+        case "earlier-version":
+            AppToaster.show({icon: "warning-sign", message: `Workspace "${name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
+            break;
+        case "outdated":
+            AppToaster.show({icon: "warning-sign", message: `Workspace "${name}" was saved again after it was ${since}, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
+            break;
+        default:
+            AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${name}"`, intent: "danger", timeout: 3000});
+    }
 }
 
 export class AppStore {
@@ -409,7 +441,7 @@ export class AppStore {
      * Images asked for that are not frames yet. Counted apart from isFileLoading, which every load
      * and generator shares and the first of them to finish clears for all.
      */
-    private openingImageCount = 0;
+    @observable private openingImageCount = 0;
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
@@ -2925,7 +2957,14 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string, isKey = false) {
+    /**
+     * Opens a workspace and restores it into the session.
+     *
+     * @param prepared - the workspace that the Workspace dialog already read and checked, with the
+     * new locations that the user chose, and the items to open it without. Without it, the workspace
+     * is read by its name.
+     */
+    public *loadWorkspace(name: string, isKey = false, prepared?: {workspace: Workspace; leftOut?: WorkspaceLeftOutItems}) {
         this.isLoadingWorkspace = true;
         this.loadingWorkspaceName = isKey ? "" : name;
         this.closeWorkspaceRestoreReport();
@@ -2942,7 +2981,7 @@ export class AppStore {
         this.fileBrowserStore.cancelFilePick();
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
+            const workspace: Workspace = prepared?.workspace ?? (yield this.apiService.getWorkspace(name, isKey));
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
@@ -2954,7 +2993,7 @@ export class AppStore {
             this.setLoadingWorkspaceName(workspace.name || name);
 
             this.hasRestoreChangedSession = true;
-            const restorer = new WorkspaceRestorer(workspace, generation);
+            const restorer = new WorkspaceRestorer(workspace, generation, prepared?.leftOut);
             const restoreIssues: WorkspaceIssue[] = yield* restorer.restore();
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
@@ -3031,43 +3070,51 @@ export class AppStore {
             }
         };
         setState("writing");
+        const result: WorkspaceSourceWriteResult = yield this.writeWorkspaceSourceChanges(storedName, report.repointed);
+        setState(result.state === "written" ? "written" : result.state === "failed" ? "none" : "outdated");
+        showSourceWriteToast(result, report.name, "opened");
+        return result.state === "written";
+    }
+
+    /**
+     * Write new locations and mirrors to a stored workspace. Change only those sources and mirrors,
+     * and keep everything else that is stored. A workspace written by an earlier version is not
+     * changed, because writing it back would change more than the sources.
+     *
+     * @returns the result, and the stored workspace after the write, upgraded to the form that a
+     * restore reads.
+     */
+    public writeWorkspaceSourceChanges = async (storedName: string, changes: WorkspaceSourceChanges): Promise<WorkspaceSourceWriteResult> => {
         try {
             // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
             // form were written back, the write would change more than the sources.
-            const stored: Workspace | undefined = yield this.apiService.getStoredWorkspace(storedName);
+            const stored = await this.apiService.getStoredWorkspace(storedName);
             if (!stored) {
                 throw new Error(`Could not read workspace "${storedName}"`);
             }
             // Compare the two as JSON. JSON drops the fields that the upgrade sets to undefined.
             const asJson = (workspace: Workspace) => JSON.parse(JSON.stringify(workspace));
             if (!_.isEqual(asJson(WorkspaceConfig.upgradeForRuntime(stored)), asJson(stored))) {
-                setState("outdated");
-                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved by an earlier version. Save the workspace to keep the new locations in it`, intent: "warning", timeout: 5000});
-                return false;
+                return {state: "earlier-version"};
             }
-            const patched = WorkspaceRestorer.withRepointedSources(stored, report.repointed);
+            const patched = WorkspaceRestorer.withRepointedSources(stored, changes);
             if (!patched) {
-                setState("outdated");
-                AppToaster.show({icon: "warning-sign", message: `Workspace "${report.name}" was saved again after it was opened, so the new locations were not saved in it`, intent: "warning", timeout: 5000});
-                return false;
+                return {state: "outdated"};
             }
-            const saved: Workspace | undefined = yield this.apiService.setWorkspace(storedName, patched);
+            const saved = await this.apiService.setWorkspace(storedName, patched);
             if (!saved) {
                 throw new Error(`Could not write workspace "${storedName}"`);
             }
+            const workspace = WorkspaceConfig.upgradeForRuntime(saved);
             if (this.activeWorkspace?.name === storedName) {
-                this.activeWorkspace = WorkspaceConfig.upgradeForRuntime(saved);
+                runInAction(() => (this.activeWorkspace = workspace));
             }
-            setState("written");
-            AppToaster.show({icon: "saved", message: `Saved the new locations in workspace "${report.name}"`, intent: "success", timeout: 3000});
-            return true;
+            return {state: "written", workspace};
         } catch (err) {
             console.error(err);
-            setState("none");
-            AppToaster.show({icon: "warning-sign", message: `Could not save the new locations in workspace "${report.name}"`, intent: "danger", timeout: 3000});
-            return false;
+            return {state: "failed"};
         }
-    }
+    };
 
     @action closeWorkspaceRestoreReport = () => {
         this.workspaceRestoreReport = undefined;
@@ -3115,40 +3162,48 @@ export class AppStore {
         this.workspaceLoadingStep = step;
     };
 
-    @flow.bound
-    public *saveWorkspace(name: string) {
+    /**
+     * Returns why the session cannot be saved as a workspace now, or undefined when it can. The
+     * Workspace dialog shows the reason before the user saves.
+     */
+    @computed get workspaceSaveBlocker(): string | undefined {
         if (this.layoutStore?.hasPopoutWidget) {
-            this.alertStore.showAlert("Cannot save workspace while an image view is popped out. Please dock it first.");
-            return false;
+            return "Cannot save workspace while an image view is popped out. Please dock it first.";
         }
 
         // A workspace still being restored is only partly in the session: saving it now would write
         // back less than was opened, without the user being told.
         if (this.isLoadingWorkspace) {
-            this.alertStore.showAlert("Cannot save workspace while a workspace is still loading. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while a workspace is still loading. Please wait for it to finish.";
         }
 
         // An image or catalog on its way from the backend is not in the session yet, and so would be
         // left out of the workspace without the user being told. isFileLoading alone cannot say so:
         // every load and generator shares it, and the first to finish clears it for the others.
         if (this.isFileLoading || this.openingImageCount > 0 || this.catalogStore.isOpeningCatalog) {
-            this.alertStore.showAlert("Cannot save workspace while a file is still loading. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while a file is still loading. Please wait for it to finish.";
         }
 
         // An online catalog that is still being queried is not part of the session yet, so it would
         // be left out of the workspace without the user being told.
         if (CatalogOnlineQueryStore.Instance.isQuerying) {
-            this.alertStore.showAlert("Cannot save workspace while an online catalog query is still running. Please wait for it to finish.");
-            return false;
+            return "Cannot save workspace while an online catalog query is still running. Please wait for it to finish.";
         }
 
         // A catalog that is still streaming holds part of its rows, so what it would be saved with
         // is neither the state it was asked for nor the one it is in.
         const streamingCatalogs = this.catalogStore.streamingCatalogNames;
         if (streamingCatalogs.length) {
-            this.alertStore.showAlert(`Cannot save workspace while catalog data is still loading (${streamingCatalogs.join(", ")}). Please wait for it to finish.`);
+            return `Cannot save workspace while catalog data is still loading (${streamingCatalogs.join(", ")}). Please wait for it to finish.`;
+        }
+        return undefined;
+    }
+
+    @flow.bound
+    public *saveWorkspace(name: string) {
+        const blocker = this.workspaceSaveBlocker;
+        if (blocker) {
+            this.alertStore.showAlert(blocker);
             return false;
         }
 
@@ -3176,17 +3231,30 @@ export class AppStore {
         return false;
     }
 
-    async deleteWorkspace(name: string) {
-        try {
-            const success = await this.apiService.clearWorkspace(name);
-            if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
-                return;
+    /**
+     * Deletes the workspaces one at a time. Shows one toast for the workspaces that are deleted, and
+     * one alert for the workspaces that could not be deleted.
+     */
+    async deleteWorkspaces(names: string[]) {
+        const failed: string[] = [];
+        for (const name of names) {
+            try {
+                if (!(await this.apiService.clearWorkspace(name))) {
+                    failed.push(name);
+                }
+            } catch (err) {
+                console.error(err);
+                failed.push(name);
             }
-        } catch (err) {
-            console.error(err);
         }
-        AlertStore.Instance.showAlert(`Deleting workspace ${name} failed!`);
+        const deletedCount = names.length - failed.length;
+        if (deletedCount) {
+            const text = names.length === 1 ? `Workspace ${names[0]} deleted successfully.` : `${deletedCount} workspace${deletedCount === 1 ? "" : "s"} deleted successfully.`;
+            AppToaster.show(SuccessToast("console", text, SnippetStore.TOASTER_TIMEOUT));
+        }
+        if (failed.length) {
+            AlertStore.Instance.showAlert(`Deleting workspace${failed.length === 1 ? "" : "s"} ${failed.join(", ")} failed!`);
+        }
     }
 
     @action closeWorkspace = () => {

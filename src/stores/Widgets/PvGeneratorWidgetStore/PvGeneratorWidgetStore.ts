@@ -479,6 +479,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
                 : {}),
             ...(this.previewFrame ? {renderConfig: this.previewFrame.renderConfig.toConfig()} : {}),
             ...(this.previewFrame && AppStore.Instance.activeFrame === this.previewFrame ? {isActive: true} : {}),
+            // The size of the preview that is shown, which the widget settings can differ from.
+            ...(typeof (this.previewCubeSize ?? this.estimatedCubeSize) === "number" ? {cubeSize: this.previewCubeSize ?? this.estimatedCubeSize} : {}),
             ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number, ...PvGeneratorWidgetStore.widgetsBelowOf(panel)}} : {})
         };
     }
