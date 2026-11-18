@@ -385,19 +385,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Shows in the Contour dialog the image that it showed, when it did not follow the active image.
-     * Do this after the image in front is chosen. A change of the image in front changes the image of
-     * the dialog while the dialog follows it.
+     * Otherwise locks the dialog to the active image again. A workspace saves no image when the dialog
+     * followed the active image, and an earlier workspace can have left the dialog unlocked. Do this
+     * after the image in front is chosen. A change of the image in front changes the image of the
+     * dialog while the dialog follows it.
      */
     private restoreContourDataSource(): void {
         const imageId = this.workspace.contourDataSource?.imageId;
-        if (typeof imageId !== "number") {
-            return;
-        }
-        const frame = this.frameOf(imageId);
+        const frame = typeof imageId === "number" ? this.frameOf(imageId) : undefined;
         if (frame) {
             this.appStore.setContourDataSourceUnlocked(frame);
-        } else {
+            return;
+        }
+        if (typeof imageId === "number") {
             this.report(WorkspaceItemKind.Image, "", "The Contour dialog follows the active image, because the image that it showed was not restored");
+        }
+        if (!this.appStore.isFrameLockedToContour) {
+            this.appStore.toggleFrameContourLock();
         }
     }
 

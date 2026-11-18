@@ -145,6 +145,8 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
+        isFrameLockedToContour: true,
+        toggleFrameContourLock: jest.fn(),
         dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn(), applyUnappliedSettings: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
@@ -448,6 +450,16 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.setContourDataSourceUnlocked).not.toHaveBeenCalled();
         expect(problems).toEqual(["The Contour dialog follows the active image, because the image that it showed was not restored"]);
+    });
+
+    test("locks the Contour dialog to the active image again when the workspace saved it following the active image", async () => {
+        const {appStore} = createSession();
+        // An earlier workspace left the dialog unlocked.
+        Object.assign(appStore, {isFrameLockedToContour: false});
+
+        await restore(createWorkspace({files: [IMAGE]}));
+
+        expect(appStore.toggleFrameContourLock).toHaveBeenCalledTimes(1);
     });
 
     test("re-queries a saved SIMBAD source without changing the online query dialog", async () => {

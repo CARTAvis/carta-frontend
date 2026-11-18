@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for restoring the data and zoom of profile, histogram, statistics and Stokes analysis widgets, the spectral line query settings and results, the PV generator settings, the plotted spectral lines, and the animator and Log widget settings in workspaces ([#3015](https://github.com/CARTAvis/carta-frontend/issues/3015)).
 * Added support for saving the multi-panel grid and maximized panels in layouts and workspaces, and the open dialogs and widget settings panels with their places, tabs and unapplied settings, the Region dialog coordinates, the File Info header search and the snippet of the Snippet dialog in workspaces ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 ### Fixed
+* Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
