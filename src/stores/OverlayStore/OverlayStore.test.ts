@@ -22,15 +22,6 @@ const CUSTOM_OVERLAY: WcsOverlayConfig = {
     labels: {isVisible: false, isHidden: true, hasCustomColor: true, color: "auto-cerulean", font: 3, fontSize: 20, hasRaDecReference: false}
 };
 
-/** Returns a copy of an overlay config without the settings that have a preference: the color, the grid visibility and the label visibility. */
-function withoutPreferenceSettings(config: WcsOverlayConfig): object {
-    const copy = JSON.parse(JSON.stringify(config));
-    delete copy.global.color;
-    delete copy.grid.isVisible;
-    delete copy.labels.isVisible;
-    return copy;
-}
-
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
 let mockAppStore: {frames: any[]; activeFrame: null; imageRatio: number; imageViewConfigStore: {visibleFrames: any[]}};
@@ -75,27 +66,29 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
         expect(validateWidget(widget)).toBe(true);
     });
 
-    test("changes nothing when the workspace saved no overlay", () => {
-        const overlay = createOverlay();
-        overlay.applyConfig(CUSTOM_OVERLAY);
+    test("sets every setting back to its default or to the user's preference when the workspace saved no overlay", () => {
+        const defaults = createOverlay().toConfig();
+        for (const config of [null, undefined]) {
+            const overlay = createOverlay();
+            overlay.applyConfig(CUSTOM_OVERLAY);
 
-        overlay.applyConfig(null);
-        overlay.applyConfig(undefined);
+            overlay.applyConfig(config);
 
-        expect(overlay.toConfig()).toEqual(CUSTOM_OVERLAY);
+            expect(overlay.toConfig()).toEqual(defaults);
+        }
     });
 
-    test("sets every setting without a preference back to its default when the workspace saved an empty overlay", () => {
+    test("sets every setting back to its default or to the user's preference when the workspace saved an empty overlay", () => {
         const defaults = createOverlay().toConfig();
         const overlay = createOverlay();
         overlay.applyConfig(CUSTOM_OVERLAY);
 
         overlay.applyConfig({});
 
-        expect(withoutPreferenceSettings(overlay.toConfig())).toEqual(withoutPreferenceSettings(defaults));
+        expect(overlay.toConfig()).toEqual(defaults);
     });
 
-    test("uses the default for each value that the controls do not accept, and keeps a setting that has a preference", () => {
+    test("uses the default or the user's preference for each value that the controls do not accept", () => {
         const defaults = createOverlay().toConfig();
         const overlay = createOverlay();
         overlay.applyConfig(CUSTOM_OVERLAY);
@@ -111,19 +104,21 @@ describe("the WCS overlay in the layout copy of a workspace", () => {
             labels: {isVisible: 1, fontSize: 6, font: 1.5}
         });
 
-        expect(withoutPreferenceSettings(overlay.toConfig())).toEqual(withoutPreferenceSettings(defaults));
-        expect(overlay.toConfig()).toMatchObject({global: {color: CUSTOM_OVERLAY.global.color}, grid: {isVisible: CUSTOM_OVERLAY.grid.isVisible}, labels: {isVisible: CUSTOM_OVERLAY.labels.isVisible}});
+        expect(overlay.toConfig()).toEqual(defaults);
     });
 
-    test("keeps the settings that have a preference when the workspace leaves them out", () => {
+    test("uses the user's preference for each setting that has one when the workspace leaves it out, not what the session showed", () => {
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, "auto-red");
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, false);
         const overlay = createOverlay();
         overlay.global.setColor("auto-green");
-        overlay.grid.setVisible(true);
-        overlay.labels.setVisible(false);
+        overlay.grid.setVisible(false);
+        overlay.labels.setVisible(true);
 
         overlay.applyConfig({});
 
-        expect(overlay.global.color).toBe("auto-green");
+        expect(overlay.global.color).toBe("auto-red");
         expect(overlay.grid.isVisible).toBe(true);
         expect(overlay.labels.isVisible).toBe(false);
     });

@@ -248,13 +248,11 @@ export class OverlayGlobalSettings {
 
     /**
      * Applies everything but the coordinate system. {@link OverlaySettings.applyConfig} applies the system.
-     * The color does not change when the config leaves it out.
+     * When the config leaves out the color, the color follows the user's preference.
      */
     @action applyConfig(config: Persisted<OverlayGlobalConfig> | undefined) {
         this.labelType = savedOr(config?.labelType, isLabelType, LabelType.Exterior);
-        if (isColor(config?.color)) {
-            this.setColor(config.color);
-        }
+        this.setColor(savedOr(config?.color, isColor, PreferenceStore.Instance.astColor));
         this.tolerance = savedOr(config?.tolerance, numberIn(0.1), 2);
     }
 
@@ -405,11 +403,9 @@ export class OverlayGridSettings {
         return {isVisible: this.isVisible, hasCustomColor: this.hasCustomColor, color: this.color, width: this.width, hasCustomGap: this.hasCustomGap, gapX: this.gapX, gapY: this.gapY};
     }
 
-    /** Applies the saved grid settings. The visibility does not change when the config leaves it out. */
+    /** Applies the saved grid settings. When the config leaves out the visibility, it follows the user's preference. */
     @action applyConfig(config: Persisted<OverlayGridConfig> | undefined) {
-        if (isBoolean(config?.isVisible)) {
-            this.isVisible = config.isVisible;
-        }
+        this.isVisible = savedOr(config?.isVisible, isBoolean, PreferenceStore.Instance.isAstGridVisible);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
         this.width = savedOr(config?.width, numberIn(0.001), 1);
@@ -899,12 +895,10 @@ export class OverlayLabelSettings {
 
     /**
      * Applies the saved label settings. The custom text is left as it is, because a workspace saves it.
-     * The visibility does not change when the config leaves it out.
+     * When the config leaves out the visibility, it follows the user's preference.
      */
     @action applyConfig(config: Persisted<OverlayLabelConfig> | undefined) {
-        if (isBoolean(config?.isVisible)) {
-            this.isVisible = config.isVisible;
-        }
+        this.isVisible = savedOr(config?.isVisible, isBoolean, PreferenceStore.Instance.isAstLabelsVisible);
         this.isHidden = savedOr(config?.isHidden, isBoolean, false);
         this.hasCustomColor = savedOr(config?.hasCustomColor, isBoolean, false);
         this.setColor(savedOr(config?.color, isColor, AST_DEFAULT_COLOR));
@@ -1241,18 +1235,19 @@ export class OverlaySettings {
     /**
      * Applies how the overlay looks, as the layout copy of a workspace saved it. When the config
      * leaves out a setting, or saves a value that is not valid, the setting goes back to its default.
-     * A setting that has a preference does not change when the config leaves it out. The user's
-     * preferences do not change. The custom texts and their switches do not change either, because
-     * the workspace applies them on its own.
+     * A setting that has a preference goes back to the user's preference. So the overlay does not
+     * keep what an earlier workspace showed. The user's preferences do not change. The custom texts
+     * and their switches do not change either, because the workspace applies them on its own.
      *
-     * Without a config, as for a workspace saved without the overlay, nothing changes.
+     * Without a config, as for a workspace saved without the overlay, every setting goes back in the
+     * same way.
      *
      * @returns what could not be applied as it was saved.
      */
     @action applyConfig(config: Persisted<WcsOverlayConfig> | null | undefined): string[] {
         const problems: string[] = [];
         if (!config || typeof config !== "object") {
-            return problems;
+            config = {};
         }
         const sectionOf = <T>(value: unknown): Persisted<T> | undefined => (value && typeof value === "object" ? (value as Persisted<T>) : undefined);
 
