@@ -345,6 +345,27 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("dialogSettings");
     });
 
+    test("reports the code in the Snippet dialog that is not saved as a snippet", () => {
+        const saved = {code: "app.openFile('a.fits')", categories: []};
+        const snippetStore = {activeSnippetName: "Open a file", activeSnippet: {...saved}, snippets: new Map([["Open a file", saved]])};
+        createSession({dialogStore: {dialogVisible: new Map([["snippet-dialog", true]])}, snippetStore});
+        const messages = () => new WorkspaceSnapshotter().capture().issues.map(issue => issue.message);
+        const unsaved = "Could not save the code in the Snippet dialog: it is not saved as a snippet";
+
+        expect(messages()).not.toContain(unsaved);
+
+        // The code of the saved snippet changed. The workspace still names the snippet.
+        snippetStore.activeSnippet.code = "app.openFile('b.fits')";
+        expect(messages()).toContain(unsaved);
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogSettings).toEqual({snippet: {name: "Open a file"}});
+
+        // A new snippet with code, and an empty new snippet.
+        snippetStore.activeSnippetName = "";
+        expect(messages()).toContain(unsaved);
+        snippetStore.activeSnippet.code = " ";
+        expect(messages()).not.toContain(unsaved);
+    });
+
     test("saves the name of an example that the Snippet dialog shows, and nothing for an example whose code changed", () => {
         const example = {code: "app.openFile('a.fits')", tags: ["example"], categories: ["Examples"]};
         const snippetStore = {activeSnippetName: "", activeSnippet: {...example}, snippets: new Map([["02. Basics", example]])};

@@ -152,6 +152,19 @@ export class WorkspaceSnapshotter {
         return [...(snippetStore.snippets ?? new Map()).entries()].find(([, snippet]) => snippet.tags?.includes("example") && snippet.code === code)?.[0];
     }
 
+    /**
+     * Returns whether the Snippet dialog shows code that a restore does not show. That is code
+     * without a snippet name, or code that differs from the saved snippet or the example of the
+     * name. The workspace saves the name only, not the code.
+     */
+    private hasUnsavedSnippetCode(name: string | undefined): boolean {
+        const code = this.appStore.snippetStore?.activeSnippet?.code ?? "";
+        if (name === undefined) {
+            return code.trim() !== "";
+        }
+        return this.appStore.snippetStore?.snippets?.get(name)?.code !== code;
+    }
+
     private captureDialogSettings(): Workspace["dialogSettings"] {
         const dialogStore = this.appStore.dialogStore;
         const withImageId = (settings: DialogSettings | undefined) => {
@@ -160,7 +173,11 @@ export class WorkspaceSnapshotter {
         };
         const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
         const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
-        const snippetName = dialogStore?.dialogVisible?.get(DialogId.Snippet) ? this.shownSnippetName() : undefined;
+        const isSnippetShown = !!dialogStore?.dialogVisible?.get(DialogId.Snippet);
+        const snippetName = isSnippetShown ? this.shownSnippetName() : undefined;
+        if (isSnippetShown && this.hasUnsavedSnippetCode(snippetName)) {
+            this.issues.push({kind: WorkspaceItemKind.Layout, subject: "Snippet", message: "Could not save the code in the Snippet dialog: it is not saved as a snippet"});
+        }
         if (!contour && !vectorOverlay && !snippetName) {
             return undefined;
         }
