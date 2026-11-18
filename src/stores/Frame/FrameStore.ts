@@ -1500,42 +1500,46 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preferenceStore.astColor;
+        // A workspace restore makes a PV preview again after it has applied the overlay that the
+        // workspace saved. Leave the overlay as it is then.
         const overlaySettings = AppStore.Instance.overlaySettings;
-        if (astColor !== overlaySettings.global.color) {
-            overlaySettings.global.setColor(astColor);
-        }
-        const isAstGridVisible = preferenceStore.isAstGridVisible;
-        if (isAstGridVisible !== overlaySettings.grid.isVisible) {
-            overlaySettings.grid.setVisible(isAstGridVisible);
-        }
-        const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
-        if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
-            overlaySettings.labels.setVisible(isAstLabelsVisible);
-        }
-        const isColorbarVisible = preferenceStore.isColorbarVisible;
-        if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
-            overlaySettings.colorbar.setVisible(isColorbarVisible);
-        }
-        const isColorbarInteractive = preferenceStore.isColorbarInteractive;
-        if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
-            overlaySettings.colorbar.setInteractive(isColorbarInteractive);
-        }
-        const colorbarPosition = preferenceStore.colorbarPosition;
-        if (colorbarPosition !== overlaySettings.colorbar.position) {
-            overlaySettings.colorbar.setPosition(colorbarPosition);
-        }
-        const colorbarWidth = preferenceStore.colorbarWidth;
-        if (colorbarWidth !== overlaySettings.colorbar.width) {
-            overlaySettings.colorbar.setWidth(colorbarWidth);
-        }
-        const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
-        if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
-            overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
-        }
-        const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
-        if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
-            overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
+        if (!(frameInfo.preview && AppStore.Instance.isLoadingWorkspace)) {
+            const astColor = preferenceStore.astColor;
+            if (astColor !== overlaySettings.global.color) {
+                overlaySettings.global.setColor(astColor);
+            }
+            const isAstGridVisible = preferenceStore.isAstGridVisible;
+            if (isAstGridVisible !== overlaySettings.grid.isVisible) {
+                overlaySettings.grid.setVisible(isAstGridVisible);
+            }
+            const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
+            if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
+                overlaySettings.labels.setVisible(isAstLabelsVisible);
+            }
+            const isColorbarVisible = preferenceStore.isColorbarVisible;
+            if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
+                overlaySettings.colorbar.setVisible(isColorbarVisible);
+            }
+            const isColorbarInteractive = preferenceStore.isColorbarInteractive;
+            if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
+                overlaySettings.colorbar.setInteractive(isColorbarInteractive);
+            }
+            const colorbarPosition = preferenceStore.colorbarPosition;
+            if (colorbarPosition !== overlaySettings.colorbar.position) {
+                overlaySettings.colorbar.setPosition(colorbarPosition);
+            }
+            const colorbarWidth = preferenceStore.colorbarWidth;
+            if (colorbarWidth !== overlaySettings.colorbar.width) {
+                overlaySettings.colorbar.setWidth(colorbarWidth);
+            }
+            const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
+            if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
+                overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
+            }
+            const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
+            if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
+                overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
+            }
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
