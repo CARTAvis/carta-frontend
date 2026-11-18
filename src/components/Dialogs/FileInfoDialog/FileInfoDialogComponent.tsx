@@ -51,6 +51,8 @@ export class FileInfoDialogComponent extends React.Component {
                         catalogFileInfo={null}
                         selectedTab={appStore.dialogStore.selectedFileInfoDialogTab as FileInfoType}
                         handleTabChange={appStore.dialogStore.setSelectedFileInfoDialogTab}
+                        searchString={appStore.dialogStore.fileInfoSearchString}
+                        onSearchChange={appStore.dialogStore.setFileInfoSearchString}
                         isLoading={false}
                         errorMessage={""}
                     />

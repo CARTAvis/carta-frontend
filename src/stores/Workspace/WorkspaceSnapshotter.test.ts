@@ -30,8 +30,8 @@ function createFrame(fileId: number, overrides: Record<string, any> = {}) {
         rasterScalingReference: undefined,
         regionSet: {regions: [], focusedRegion: undefined},
         renderConfig: {toConfig: jest.fn(() => ({colorMap: "inferno", bias: 0, contrast: 1}))},
-        contourConfig: {toConfig: jest.fn(() => undefined)},
-        vectorOverlayConfig: {toConfig: jest.fn(() => undefined)},
+        contourConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => undefined)},
+        vectorOverlayConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => undefined)},
         ...overrides
     };
 }
@@ -149,7 +149,8 @@ describe("WorkspaceSnapshotter", () => {
             lineWidth: 2,
             isLocked: false,
             dashLength: 0,
-            lineRegionSampleWidth: 5
+            lineRegionSampleWidth: 5,
+            coordinate: "World"
         });
         const frame = createFrame(0, {regionSet: {regions: [region(1, CARTA.RegionType.LINE), region(2, CARTA.RegionType.RECTANGLE)], focusedRegion: undefined}});
         createSession({frames: [frame], activeFrame: frame});
@@ -157,6 +158,8 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.lineRegionSampleWidth)).toEqual([5, undefined]);
+        // The Region dialog shows each region in the coordinates that the user chose.
+        expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.coordinate)).toEqual(["World", "World"]);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
@@ -313,6 +316,170 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.log).toEqual({level: 2, hiddenTags: ["Region"]});
+    });
+
+    test("saves the open dialogs from the bottom one to the top one, with the Preferences dialog, and leaves out the dialogs of one step", () => {
+        const zIndexes = new Map([
+            ["contour-dialog", 3],
+            ["region-dialog", 1],
+            ["file-browser-dialog", 2],
+            ["preference-dialog", 4]
+        ]);
+        createSession({
+            dialogStore: {dialogVisible: new Map([...zIndexes.keys()].map(id => [id, true]))},
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        expect(workspace.openDialogs).toEqual(["region-dialog", "contour-dialog", "preference-dialog"]);
+        expect(workspace).not.toHaveProperty("dialogs");
+    });
+
+    test("saves the name of the snippet that the open Snippet dialog shows, and nothing for a new snippet", () => {
+        const snippetStore = {activeSnippetName: "Open a file"};
+        createSession({dialogStore: {dialogVisible: new Map([["snippet-dialog", true]])}, snippetStore});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogSettings).toEqual({snippet: {name: "Open a file"}});
+
+        snippetStore.activeSnippetName = "";
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("dialogSettings");
+    });
+
+    test("reports the code in the Snippet dialog that is not saved as a snippet", () => {
+        const saved = {code: "app.openFile('a.fits')", categories: []};
+        const snippetStore = {activeSnippetName: "Open a file", activeSnippet: {...saved}, snippets: new Map([["Open a file", saved]])};
+        createSession({dialogStore: {dialogVisible: new Map([["snippet-dialog", true]])}, snippetStore});
+        const messages = () => new WorkspaceSnapshotter().capture().issues.map(issue => issue.message);
+        const unsaved = "Could not save the code in the Snippet dialog: it is not saved as a snippet";
+
+        expect(messages()).not.toContain(unsaved);
+
+        // The code of the saved snippet changed. The workspace still names the snippet.
+        snippetStore.activeSnippet.code = "app.openFile('b.fits')";
+        expect(messages()).toContain(unsaved);
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogSettings).toEqual({snippet: {name: "Open a file"}});
+
+        // A new snippet with code, and an empty new snippet.
+        snippetStore.activeSnippetName = "";
+        expect(messages()).toContain(unsaved);
+        snippetStore.activeSnippet.code = " ";
+        expect(messages()).not.toContain(unsaved);
+    });
+
+    test("saves the name of an example that the Snippet dialog shows, and nothing for an example whose code changed", () => {
+        const example = {code: "app.openFile('a.fits')", tags: ["example"], categories: ["Examples"]};
+        const snippetStore = {activeSnippetName: "", activeSnippet: {...example}, snippets: new Map([["02. Basics", example]])};
+        createSession({dialogStore: {dialogVisible: new Map([["snippet-dialog", true]])}, snippetStore});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogSettings).toEqual({snippet: {name: "02. Basics"}});
+
+        snippetStore.activeSnippet.code = "app.openFile('b.fits')";
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("dialogSettings");
+    });
+
+    test("saves how many floating widgets are below each open dialog, leaving out the settings panel of a PV preview", () => {
+        const zIndexes = new Map([
+            ["stats-0", 1],
+            ["region-dialog", 2],
+            ["pv-settings", 3],
+            ["histogram-0", 4],
+            ["contour-dialog", 5]
+        ]);
+        const {appStore} = createSession({
+            dialogStore: {
+                dialogVisible: new Map([
+                    ["region-dialog", true],
+                    ["contour-dialog", true]
+                ])
+            },
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "pv-settings", type: "floating-settings", parentType: "pv-generator"}, {id: "histogram-0"}];
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 2}});
+
+        // A catalog plot is stacked by its component ID, so above the region dialog here.
+        zIndexes.set("catalog-plot-component-0", 3);
+        (appStore.widgetsStore as any).floatingWidgets.push({id: "catalog-plot-0", componentId: "catalog-plot-component-0"});
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}});
+    });
+
+    test("saves where an open dialog is and the name of the tab that it shows, when the user moved it and chose a tab", () => {
+        createSession({
+            dialogStore: {
+                dialogVisible: new Map([
+                    ["contour-dialog", true],
+                    ["file-info-dialog", true],
+                    ["preference-dialog", true]
+                ]),
+                dialogGeometries: new Map([["contour-dialog", {x: 100, y: 50, width: 600, height: 700}]]),
+                selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header", "preference-dialog": 1})[id],
+                fileInfoSearchString: "CRVAL"
+            },
+            zIndexManager: {findIndex: () => 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({
+            "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
+            "file-info-dialog": {tab: "image-header", search: "CRVAL"},
+            "preference-dialog": {tab: "RENDER_CONFIG"}
+        });
+    });
+
+    test("saves the settings that the Contour and Vector Overlay dialogs show but that are not applied, by the image that they are for", () => {
+        const unappliedContourConfig = {levels: [], thickness: 3};
+        const frame = createFrame(0, {contourConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => unappliedContourConfig)}});
+        createSession({
+            frames: [frame],
+            activeFrame: frame,
+            dialogStore: {
+                dialogVisible: new Map(),
+                unappliedSettingsOf: (id: string) => (id === "contour-dialog" ? {frame, values: {levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}} : undefined)
+            }
+        });
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files[0].unappliedContourConfig).toEqual(unappliedContourConfig);
+        expect(workspace.dialogSettings).toEqual({contour: {imageId: workspace.files[0].id, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}});
+    });
+
+    test("saves the floating settings panels of widgets from the bottom one to the top one, by the stable IDs of the widgets, with the floating widgets below each, and leaves out a PV preview", () => {
+        const zIndexes = new Map([
+            ["spectral-profiler-0-settings", 4],
+            ["spectral-profiler-0", 3],
+            ["image-view-settings", 2],
+            ["pv-preview", 1]
+        ]);
+        createSession({
+            widgetsStore: {
+                floatingWidgets: [
+                    {
+                        type: "floating-settings",
+                        id: "spectral-profiler-0-settings",
+                        parentId: "spectral-profiler-0",
+                        parentType: "spectral-profiler",
+                        title: "Z Profile Settings: Region #1 ",
+                        defaultX: 0,
+                        defaultY: 30,
+                        defaultWidth: 650,
+                        defaultHeight: 400
+                    },
+                    {type: "floating-settings", id: "image-view-settings", parentId: "image-view", parentType: "image-view", title: "Image View Settings", defaultX: 25, defaultY: 25, defaultWidth: 400, defaultHeight: 300},
+                    {type: "floating-settings", id: "pv-preview", parentId: "pv-generator-0", parentType: "pv-generator", title: "PV Preview Viewer"},
+                    {type: "spectral-profiler", id: "spectral-profiler-0"}
+                ],
+                workspaceIdOf: (type: string, id: string) => (id === "spectral-profiler-0" ? "spectral-profiler-3" : id),
+                catalogWidgets: new Map(),
+                savedPlotWidgets: () => ({})
+            },
+            zIndexManager: {findIndex: (id: string) => zIndexes.get(id) ?? 0}
+        });
+
+        expect(new WorkspaceSnapshotter().capture().workspace.openWidgetSettings).toEqual([
+            {widgetId: "image-view", widgetType: "image-view", title: "Image View", x: 25, y: 25, width: 400, height: 300, widgetsBelow: 1},
+            {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400, widgetsBelow: 2}
+        ]);
     });
 
     test("captures the color-blended image in front by the image list index it is saved at", () => {

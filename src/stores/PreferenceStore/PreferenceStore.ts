@@ -31,7 +31,7 @@ const DEFAULTS = {
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
         pixelGridColor: "#ffffff",
-        imageMultiPanelEnabled: false,
+        imageMultiPanelEnabled: true,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
@@ -278,6 +278,22 @@ export class PreferenceStore {
 
     @computed get isCodeSnippetsEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
+    }
+
+    /**
+     * Whether code snippets are on for this session only, while the preference is off. A workspace
+     * restore turns this on when the workspace has the Snippet dialog open. A change of the
+     * preference turns it off again.
+     */
+    @observable isCodeSnippetsEnabledForSession = false;
+
+    @action setCodeSnippetsEnabledForSession = (isEnabled: boolean) => {
+        this.isCodeSnippetsEnabledForSession = isEnabled;
+    };
+
+    /** Whether the menus offer code snippets: when the preference is on, or when they are on for this session. */
+    @computed get areCodeSnippetsShown(): boolean {
+        return this.isCodeSnippetsEnabled || this.isCodeSnippetsEnabledForSession;
     }
 
     @computed get shouldKeepLastUsedFolder(): boolean {
@@ -652,7 +668,7 @@ export class PreferenceStore {
     }
 
     @computed get isImageMultiPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
+        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imageMultiPanelEnabled;
     }
 
     @computed get imagePanelMode(): ImagePanelMode {
@@ -742,6 +758,10 @@ export class PreferenceStore {
             return false;
         }
 
+        if (key === PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) {
+            this.isCodeSnippetsEnabledForSession = false;
+        }
+
         const scaling = getScalingForParameterPreference(key);
         if (scaling !== undefined) {
             if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -780,6 +800,9 @@ export class PreferenceStore {
     @flow.bound *clearPreferences(keys: PreferenceKeys[]) {
         for (const key of keys) {
             this.preferences.delete(key);
+        }
+        if (keys.includes(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED)) {
+            this.isCodeSnippetsEnabledForSession = false;
         }
         yield ApiService.Instance.clearPreferences(keys);
     }

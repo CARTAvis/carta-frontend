@@ -36,9 +36,12 @@ const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
-    @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
+    /** The tab is kept in the dialog store, so that a workspace keeps it. */
+    @computed get selectedTab(): PreferenceDialogTabs {
+        return (AppStore.Instance.dialogStore.selectedTabOf(DialogId.Preference) as PreferenceDialogTabs | undefined) ?? PreferenceDialogTabs.GLOBAL;
+    }
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
-        this.selectedTab = tab;
+        AppStore.Instance.dialogStore.selectTab(DialogId.Preference, tab);
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {

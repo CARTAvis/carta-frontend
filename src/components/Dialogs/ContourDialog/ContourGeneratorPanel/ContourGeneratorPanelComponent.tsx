@@ -1,11 +1,13 @@
 import * as React from "react";
 import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import * as _ from "lodash";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingParameterControlComponent, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
+import {type WorkspaceContourGeneratorSettings} from "models";
 import {type FrameStore, PreferenceStore} from "stores";
 import {getDefaultScalingParameter, getPercentiles, getScalingParameterConfig, scaleValue} from "utilities";
 
@@ -74,9 +76,81 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         }
     }
 
+    private readonly initialValues: WorkspaceContourGeneratorSettings;
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        this.initialValues = this.values();
+    }
+
+    private values(): WorkspaceContourGeneratorSettings {
+        return {
+            generator: this.generator,
+            numLevels: this.numLevels,
+            minValue: this.enteredMinValue,
+            maxValue: this.enteredMaxValue,
+            startValue: this.enteredStartValue,
+            stepValue: this.enteredStepValue,
+            refValue: this.enteredRefValue,
+            meanValue: this.enteredMeanValue,
+            sigmaValue: this.enteredSigmaValue,
+            scaling: this.scalingType,
+            scalingAlphas: Object.fromEntries(this.scalingAlphas),
+            scalingGamma: this.scalingGamma,
+            multiplier: this.multiplierValue,
+            lowerPercentage: this.lowerPercentage,
+            upperPercentage: this.upperPercentage,
+            sigmaLevels: this.sigmaLevels.slice()
+        };
+    }
+
+    /** Returns the values that differ from the values that the panel started with, or undefined when none differ. */
+    public toSettings(): WorkspaceContourGeneratorSettings | undefined {
+        const values = this.values();
+        const changed = _.pickBy(values, (value, key) => !_.isEqual(value, this.initialValues[key]));
+        return _.isEmpty(changed) ? undefined : changed;
+    }
+
+    /** Applies the values that a workspace saved. Leaves a value that is not valid as it is. */
+    @action public applySettings(settings: WorkspaceContourGeneratorSettings) {
+        const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        if (Object.values(ContourGeneratorType).includes(settings.generator as ContourGeneratorType)) {
+            this.generator = settings.generator as ContourGeneratorType;
+        }
+        if (isFiniteNumber(settings.numLevels)) {
+            this.numLevels = settings.numLevels;
+        }
+        if (isFiniteNumber(settings.scaling) && Object.values(FrameScaling).includes(settings.scaling)) {
+            this.scalingType = settings.scaling as FrameScaling;
+        }
+        for (const [scaling, alpha] of Object.entries(settings.scalingAlphas ?? {})) {
+            if (Object.values(FrameScaling).includes(Number(scaling)) && isFiniteNumber(alpha)) {
+                this.scalingAlphas.set(Number(scaling) as FrameScaling, alpha);
+            }
+        }
+        if (isFiniteNumber(settings.scalingGamma)) {
+            this.scalingGamma = settings.scalingGamma;
+        }
+        if (isFiniteNumber(settings.multiplier)) {
+            this.multiplierValue = settings.multiplier;
+        }
+        if (isFiniteNumber(settings.lowerPercentage)) {
+            this.lowerPercentage = settings.lowerPercentage;
+        }
+        if (isFiniteNumber(settings.upperPercentage)) {
+            this.upperPercentage = settings.upperPercentage;
+        }
+        if (Array.isArray(settings.sigmaLevels) && settings.sigmaLevels.every(isFiniteNumber)) {
+            this.sigmaLevels = settings.sigmaLevels.slice();
+        }
+        this.enteredMinValue = isFiniteNumber(settings.minValue) ? settings.minValue : this.enteredMinValue;
+        this.enteredMaxValue = isFiniteNumber(settings.maxValue) ? settings.maxValue : this.enteredMaxValue;
+        this.enteredStartValue = isFiniteNumber(settings.startValue) ? settings.startValue : this.enteredStartValue;
+        this.enteredStepValue = isFiniteNumber(settings.stepValue) ? settings.stepValue : this.enteredStepValue;
+        this.enteredRefValue = isFiniteNumber(settings.refValue) ? settings.refValue : this.enteredRefValue;
+        this.enteredMeanValue = isFiniteNumber(settings.meanValue) ? settings.meanValue : this.enteredMeanValue;
+        this.enteredSigmaValue = isFiniteNumber(settings.sigmaValue) ? settings.sigmaValue : this.enteredSigmaValue;
     }
 
     @action private setScalingAlpha = (alpha: number) => {

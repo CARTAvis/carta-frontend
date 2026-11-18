@@ -1,8 +1,20 @@
 import {CARTA} from "carta-protobuf";
 
-import {ImageType, WorkspaceItemKind} from "enums";
-import {CARTA_INFO, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalog, type WorkspaceCatalogSource, type WorkspaceFile, type WorkspaceImageSource, type WorkspaceIssue} from "models";
-import {AppStore} from "stores";
+import {DialogId, ImageType, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
+import {
+    CARTA_INFO,
+    type Workspace,
+    WORKSPACE_VERSION,
+    type WorkspaceCatalog,
+    type WorkspaceCatalogSource,
+    type WorkspaceContourDialogSettings,
+    type WorkspaceDialog,
+    type WorkspaceFile,
+    type WorkspaceImageSource,
+    type WorkspaceIssue,
+    type WorkspaceVectorOverlayDialogSettings
+} from "models";
+import {AppStore, type DialogSettings} from "stores";
 import {CURSOR_REGION_ID, type FrameStore} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {fingerprintCatalogSelection, hashCatalogContent} from "utilities";
@@ -119,6 +131,59 @@ export class WorkspaceSnapshotter {
         return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Image, frame?.frameInfo.fileId);
     }
 
+    /**
+     * The settings that the Contour and Vector Overlay dialogs show but that are not applied, for
+     * images that the workspace keeps.
+     */
+    /**
+     * Returns the name of the snippet that the Snippet dialog shows. The store keeps no name for an
+     * example, so that saving an edited example asks for a new name. Find an example by its code
+     * instead. An example whose code the user changed is not found, like a snippet that is not saved.
+     */
+    private shownSnippetName(): string | undefined {
+        const snippetStore = this.appStore.snippetStore;
+        if (snippetStore?.activeSnippetName) {
+            return snippetStore.activeSnippetName;
+        }
+        const code = snippetStore?.activeSnippet?.code;
+        if (!code) {
+            return undefined;
+        }
+        return [...(snippetStore.snippets ?? new Map()).entries()].find(([, snippet]) => snippet.tags?.includes("example") && snippet.code === code)?.[0];
+    }
+
+    /**
+     * Returns whether the Snippet dialog shows code that a restore does not show. That is code
+     * without a snippet name, or code that differs from the saved snippet or the example of the
+     * name. The workspace saves the name only, not the code.
+     */
+    private hasUnsavedSnippetCode(name: string | undefined): boolean {
+        const code = this.appStore.snippetStore?.activeSnippet?.code ?? "";
+        if (name === undefined) {
+            return code.trim() !== "";
+        }
+        return this.appStore.snippetStore?.snippets?.get(name)?.code !== code;
+    }
+
+    private captureDialogSettings(): Workspace["dialogSettings"] {
+        const dialogStore = this.appStore.dialogStore;
+        const withImageId = (settings: DialogSettings | undefined) => {
+            const imageId = settings ? this.imageIdOf(settings.frame) : undefined;
+            return settings && imageId !== undefined ? {imageId, ...settings.values} : undefined;
+        };
+        const contour = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Contour)) as WorkspaceContourDialogSettings | undefined;
+        const vectorOverlay = withImageId(dialogStore?.unappliedSettingsOf?.(DialogId.Vector)) as WorkspaceVectorOverlayDialogSettings | undefined;
+        const isSnippetShown = !!dialogStore?.dialogVisible?.get(DialogId.Snippet);
+        const snippetName = isSnippetShown ? this.shownSnippetName() : undefined;
+        if (isSnippetShown && this.hasUnsavedSnippetCode(snippetName)) {
+            this.issues.push({kind: WorkspaceItemKind.Layout, subject: "Snippet", message: "Could not save the code in the Snippet dialog: it is not saved as a snippet"});
+        }
+        if (!contour && !vectorOverlay && !snippetName) {
+            return undefined;
+        }
+        return {...(contour ? {contour} : {}), ...(vectorOverlay ? {vectorOverlay} : {}), ...(snippetName ? {snippet: {name: snippetName}} : {})};
+    }
+
     /** The ID this workspace knows a catalog by: the one it was given when it was opened. */
     private catalogIdOf(catalogFileId: number | undefined): number | undefined {
         return WorkspaceIdRegistry.Instance.workspaceIdOf(WorkspaceItemKind.Catalog, catalogFileId);
@@ -187,6 +252,16 @@ export class WorkspaceSnapshotter {
             workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
         }
 
+        const unappliedContourConfig = frame.contourConfig.toUnappliedConfig();
+        if (unappliedContourConfig) {
+            workspaceFile.unappliedContourConfig = unappliedContourConfig;
+        }
+
+        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig(frame);
+        if (unappliedVectorOverlayConfig) {
+            workspaceFile.unappliedVectorOverlayConfig = unappliedVectorOverlayConfig;
+        }
+
         return workspaceFile;
     }
 
@@ -205,7 +280,8 @@ export class WorkspaceSnapshotter {
                 dashes: region.dashLength ? [region.dashLength] : [],
                 // Check if styles are available. If so, add them to the region
                 annotationStyles: (region as any).getAnnotationStyles?.(),
-                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined
+                lineRegionSampleWidth: region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.POLYLINE ? region.lineRegionSampleWidth : undefined,
+                coordinate: region.coordinate
             }));
     }
 
@@ -364,9 +440,89 @@ export class WorkspaceSnapshotter {
         this.workspace.layout = this.appStore.layoutStore.currentLayoutConfig();
     }
 
+    /**
+     * Saves the floating settings panels of widgets, from the bottom one to the top one. The panel
+     * of a PV preview is left out, because a restore does not make the preview again.
+     */
+    private captureWidgetSettings(): void {
+        const widgetsStore = this.appStore.widgetsStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        if (!widgetsStore?.floatingWidgets) {
+            return;
+        }
+        const panels = widgetsStore.floatingWidgets
+            .filter(config => config.type === "floating-settings" && config.parentId && config.parentType && config.parentType !== "pv-generator")
+            .sort((a, b) => (zIndexManager?.findIndex(a.id) ?? 0) - (zIndexManager?.findIndex(b.id) ?? 0));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const panelIds = new Set(panels.map(config => config.id));
+        const widgetIds = widgetsStore.floatingWidgets.filter(config => !panelIds.has(config.id)).map(config => config.componentId || config.id);
+        const zIndexOf = (id: string) => zIndexManager?.findIndex(id) ?? 0;
+        this.workspace.openWidgetSettings = panels.map(config => ({
+            widgetId: widgetsStore.workspaceIdOf(config.parentType!, config.parentId!),
+            widgetType: config.parentType!,
+            // The panel is titled "<title of the widget> Settings", and some panels add what they show, such as ": Region #1".
+            title: (config.title ?? "").replace(/ Settings.*$/, ""),
+            x: config.defaultX,
+            y: config.defaultY,
+            width: config.defaultWidth,
+            height: config.defaultHeight,
+            ...(zIndexManager && widgetIds.length ? {widgetsBelow: widgetIds.filter(id => zIndexOf(id) < zIndexOf(config.id)).length} : {})
+        }));
+    }
+
+    /**
+     * Returns the floating widgets and settings panels that a restore opens again, by the IDs that
+     * they are stacked by. A catalog plot is stacked by its component ID. The settings panel of a PV
+     * preview is left out.
+     */
+    private get restoredFloatingWidgetIds(): string[] {
+        return (this.appStore.widgetsStore?.floatingWidgets ?? []).filter(config => !(config.type === "floating-settings" && config.parentType === "pv-generator")).map(config => config.componentId || config.id);
+    }
+
+    /** Returns where an open dialog is, the tab that it shows, and how many floating widgets are below it. */
+    private captureDialog(id: string): WorkspaceDialog {
+        const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        const dialog: WorkspaceDialog = {};
+        // Without floating widgets, the order of the dialogs alone is enough.
+        const widgetIds = this.restoredFloatingWidgetIds;
+        if (zIndexManager && widgetIds.length) {
+            const index = zIndexManager.findIndex(id) ?? 0;
+            dialog.widgetsBelow = widgetIds.filter(widgetId => (zIndexManager.findIndex(widgetId) ?? 0) < index).length;
+        }
+        const geometry = dialogStore.dialogGeometries?.get(id);
+        if (geometry) {
+            Object.assign(dialog, geometry);
+        }
+        const tab = dialogStore.selectedTabOf?.(id);
+        const tabName = Object.entries(WORKSPACE_DIALOG_TABS[id] ?? {}).find(([, value]) => value === tab)?.[0];
+        if (tabName !== undefined) {
+            dialog.tab = tabName;
+        }
+        if (id === DialogId.FileInfo && typeof dialogStore.fileInfoSearchString === "string") {
+            dialog.search = dialogStore.fileInfoSearchString;
+        }
+        return dialog;
+    }
+
     /** Stage 6: the state that only makes sense once everything it names has been captured. */
     private captureSelection(): void {
         this.workspace.selectedFile = this.imageIdOf(this.appStore.activeFrame);
+        // Save the open dialogs from the bottom one to the top one, so that a restore stacks them in this order.
+        const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        if (dialogStore?.dialogVisible) {
+            this.workspace.openDialogs = WORKSPACE_DIALOGS.filter(id => dialogStore.dialogVisible.get(id)).sort((a, b) => (zIndexManager?.findIndex(a) ?? 0) - (zIndexManager?.findIndex(b) ?? 0));
+            const dialogs = Object.fromEntries(this.workspace.openDialogs.map(id => [id, this.captureDialog(id)]).filter(([, dialog]) => Object.keys(dialog).length));
+            if (Object.keys(dialogs).length) {
+                this.workspace.dialogs = dialogs;
+            }
+        }
+        const dialogSettings = this.captureDialogSettings();
+        if (dialogSettings) {
+            this.workspace.dialogSettings = dialogSettings;
+        }
+        this.captureWidgetSettings();
         const animator = this.appStore.animatorStore;
         this.workspace.animator = {frameRate: animator.frameRate, step: animator.step, playMode: animator.playMode, mode: animator.animationMode, numericInputType: animator.numericInputType};
         this.workspace.log = {level: this.appStore.logStore.logLevel, hiddenTags: [...this.appStore.logStore.hiddenTags]};

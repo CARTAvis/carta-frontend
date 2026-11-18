@@ -7,7 +7,7 @@ jest.mock("components/Shared", () => ({
     ScrollShadow: jest.fn()
 }));
 jest.mock("icons/CustomIcons", () => ({CustomIcon: {}}));
-jest.mock("stores", () => ({AppStore: {Instance: {activeFrame: null}}}));
+jest.mock("stores", () => ({AppStore: {Instance: {activeFrame: null, dialogStore: {registerSettingsHandler: jest.fn(() => () => {})}}}}));
 jest.mock("utilities", () => ({SWATCH_COLORS: []}));
 
 import {CARTA} from "carta-protobuf";
@@ -39,6 +39,7 @@ function createComponent(): TestableVectorOverlayDialogComponent {
     const component = Object.create(VectorOverlayDialogComponent.prototype) as TestableVectorOverlayDialogComponent;
     component.colormapPreviewSession = null;
     (component as unknown as {disposers: unknown[]}).disposers = [];
+    (component as unknown as {unregisterSettingsHandler: () => void}).unregisterSettingsHandler = () => {};
     return component;
 }
 
@@ -122,5 +123,53 @@ describe("VectorOverlayDialogComponent settings", () => {
         expect(dialog.uError).toBe(0.25);
         dialog.componentWillUnmount();
         (AppStore.Instance as any).activeFrame = null;
+    });
+});
+
+describe("VectorOverlayDialogComponent settings that are not applied", () => {
+    const createFrame = () => ({
+        vectorOverlayConfig: observable({
+            angularSource: VectorOverlaySource.Current,
+            intensitySource: VectorOverlaySource.Current,
+            pixelAveraging: 4,
+            isFractionalIntensity: false,
+            threshold: 0,
+            isThresholdEnabled: false,
+            isDebiasing: false,
+            qError: 0,
+            uError: 0,
+            thresholdOption: CARTA.PolarizationType.Plinear
+        })
+    });
+
+    afterEach(() => {
+        (AppStore.Instance as any).activeFrame = null;
+    });
+
+    test("gives nothing when the dialog shows the settings of the active image, and the changed settings otherwise", () => {
+        const frame = createFrame();
+        (AppStore.Instance as any).activeFrame = frame;
+        const dialog = new VectorOverlayDialogComponent({appStore: AppStore.Instance} as any) as any;
+        expect(dialog.captureUnappliedSettings()).toBeUndefined();
+
+        runInAction(() => (dialog.pixelAveraging = 8));
+
+        expect(dialog.captureUnappliedSettings()).toEqual({frame, values: expect.objectContaining({pixelAveraging: 8, thresholdOption: CARTA.PolarizationType.Plinear})});
+        dialog.componentWillUnmount();
+    });
+
+    test("shows the saved settings for the active image, and the settings of the image for another image", () => {
+        const frame = createFrame();
+        (AppStore.Instance as any).activeFrame = frame;
+        const dialog = new VectorOverlayDialogComponent({appStore: AppStore.Instance} as any) as any;
+
+        dialog.applyUnappliedSettings({frame, values: {pixelAveraging: 8, debiasing: true, thresholdOption: 99}});
+        expect(dialog.pixelAveraging).toBe(8);
+        expect(dialog.isDebiasing).toBe(true);
+        expect(dialog.thresholdOption).toBe(CARTA.PolarizationType.Plinear);
+
+        dialog.applyUnappliedSettings({frame: createFrame(), values: {pixelAveraging: 16}});
+        expect(dialog.pixelAveraging).toBe(4);
+        dialog.componentWillUnmount();
     });
 });

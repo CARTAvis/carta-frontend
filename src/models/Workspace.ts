@@ -11,6 +11,7 @@ import {
     type CatalogSourceRadiusMode,
     type CatalogSystemType,
     type ContourDashMode,
+    type CoordinateMode,
     FrameScaling,
     type MultiProfileCategory,
     type NumericInputType,
@@ -216,6 +217,8 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
     /** The width in pixels that a spatial profile along a line or polyline region samples. */
     lineRegionSampleWidth?: number;
+    /** Whether the Region dialog shows the region in image or world coordinates. */
+    coordinate?: CoordinateMode;
 }
 
 export interface WorkspaceColorBlending {
@@ -287,6 +290,14 @@ export interface WorkspaceFile {
     renderConfig?: WorkspaceRenderConfig;
     contourConfig?: WorkspaceContourConfig;
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
+    /**
+     * The contour settings of an image whose contours are off, such as a color that the user chose
+     * before applying contours. Left out when they are the settings that a new image starts with.
+     * It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
+     */
+    unappliedContourConfig?: WorkspaceContourConfig;
+    /** The vector overlay settings of an image whose vector overlay is off, as for `unappliedContourConfig`. */
+    unappliedVectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     regionsSet?: {
         selectedRegion?: number;
         regions?: WorkspaceRegion[];
@@ -590,6 +601,99 @@ export interface WorkspaceLayout {
     floating: any[];
 }
 
+/** An open settings panel of a widget, and where it was. */
+export interface WorkspaceWidgetSettingsPanel {
+    /** The stable ID of the widget that the panel sets, such as "spectral-profiler-0". */
+    widgetId: string;
+    /** The type of that widget, such as "spectral-profiler". */
+    widgetType: string;
+    /** The title of that widget. The panel is titled after it. */
+    title: string;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    /**
+     * How many floating widgets were below the panel. The panels and the floating widgets share one
+     * stacking order. A restore puts the panel back between them.
+     */
+    widgetsBelow?: number;
+}
+
+/** Where an open analysis dialog was and the tab that it showed. */
+export interface WorkspaceDialog {
+    /** Where the dialog was, in pixels of the browser window. Left out when it was in the middle of the window, where it opens. */
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    /** The name of the tab that the dialog showed, such as "Styling". Left out when the user did not choose a tab. */
+    tab?: string;
+    /** The File Info dialog: the text of the header search. Left out when the search was closed. */
+    search?: string;
+    /**
+     * How many floating widgets and settings panels were below the dialog. The dialogs and the
+     * floating widgets share one stacking order, so a restore puts the dialog back between them.
+     */
+    widgetsBelow?: number;
+}
+
+/**
+ * The levels and the smoothing that the Contour dialog shows for its image but that are not applied
+ * to the image.
+ */
+export interface WorkspaceContourDialogSettings {
+    /** The image that the dialog shows the settings of. */
+    imageId: number;
+    levels: number[];
+    smoothingMode: number;
+    smoothingFactor: number;
+    /**
+     * The values of the level generator that differ from the values that it starts with. Kept only
+     * when the dialog was open, because the generator starts again from its first values when the
+     * dialog opens.
+     */
+    generator?: WorkspaceContourGeneratorSettings;
+}
+
+/** The values of the level generator of the Contour dialog. A value that is left out is not changed. */
+export interface WorkspaceContourGeneratorSettings {
+    generator?: string;
+    numLevels?: number;
+    /** The values that the user typed. Left out when the generator takes the value from the histogram. */
+    minValue?: number;
+    maxValue?: number;
+    startValue?: number;
+    stepValue?: number;
+    refValue?: number;
+    meanValue?: number;
+    sigmaValue?: number;
+    scaling?: number;
+    /** The alpha of each scaling, by the number of the scaling. */
+    scalingAlphas?: {[scaling: string]: number};
+    scalingGamma?: number;
+    multiplier?: number;
+    lowerPercentage?: number;
+    upperPercentage?: number;
+    sigmaLevels?: number[];
+}
+
+/** The settings that the Vector Overlay dialog shows for the active image but that are not applied to it. */
+export interface WorkspaceVectorOverlayDialogSettings {
+    /** The image that the dialog shows the settings of. */
+    imageId: number;
+    angularSource: number;
+    intensitySource: number;
+    pixelAveraging: number;
+    fractionalIntensity: boolean;
+    thresholdEnabled: boolean;
+    threshold: number;
+    debiasing: boolean;
+    qError: number;
+    uError: number;
+    thresholdOption: number;
+}
+
 export interface Workspace {
     id?: string;
     name?: string;
@@ -615,6 +719,36 @@ export interface Workspace {
      * which is the default.
      */
     contourDataSource?: {imageId: number};
+    /**
+     * The analysis dialogs that were open, such as "contour-dialog", from the bottom one to the top
+     * one. Left out by a workspace saved before it kept the dialogs. A restore then leaves the
+     * dialogs as they are.
+     */
+    openDialogs?: string[];
+    /**
+     * Where each open analysis dialog was and the tab that it showed, by the ID of the dialog. A
+     * dialog that the user did not move and whose tab the user did not choose is left out.
+     */
+    dialogs?: {[dialogId: string]: WorkspaceDialog};
+    /**
+     * The settings that the Contour and Vector Overlay dialogs showed but that were not applied. Left
+     * out when the dialogs showed the settings of their image.
+     */
+    dialogSettings?: {
+        contour?: WorkspaceContourDialogSettings;
+        vectorOverlay?: WorkspaceVectorOverlayDialogSettings;
+        /**
+         * The saved snippet that the Snippet dialog shows, by its name. The code is not saved. A
+         * restore shows the snippet of that name that the opener has saved.
+         */
+        snippet?: {name: string};
+    };
+    /**
+     * The settings panels of widgets that were open as floating panels, from the bottom one to the
+     * top one. Left out by a workspace saved before it kept them. A restore then leaves the panels
+     * as they are.
+     */
+    openWidgetSettings?: WorkspaceWidgetSettingsPanel[];
     /**
      * The color-blended image in front, when it is one, by the `imageListIndex` its entry in
      * `colorBlendingImages` carries. `selectedFile` then names the image it is blended onto.

@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {AnimationMode, ImageType, NumericInputType, PlayMode, RegionId, WorkspaceItemKind} from "enums";
+import {AnimationMode, CoordinateMode, DialogId, ImageType, NumericInputType, PlayMode, RegionId, WORKSPACE_DIALOG_TABS, WORKSPACE_DIALOGS, WorkspaceItemKind} from "enums";
 import {
     describeCatalogSource,
     describeImageSource,
@@ -10,13 +10,16 @@ import {
     type Workspace,
     type WorkspaceCatalog,
     type WorkspaceCatalogSource,
+    type WorkspaceContourDialogSettings,
+    type WorkspaceDialog,
     type WorkspaceFile,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
-    type WorkspaceIssue
+    type WorkspaceIssue,
+    type WorkspaceVectorOverlayDialogSettings
 } from "models";
 import {CatalogApiService} from "services";
-import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, restoreWorkspaceZoom, StreamingRowSource} from "stores";
+import {AppStore, type CatalogRestoreOutcome, type ColorBlendingStore, type DialogGeometry, restoreWorkspaceZoom, StreamingRowSource} from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {awaited, awaitedFlow, hashCatalogContent, resolveCatalogSelection} from "utilities";
@@ -159,7 +162,216 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         this.settle();
+        this.restoreDialogs();
+        this.restoreWidgetSettings();
+        this.restoreStackingOrder();
         return this.issues;
+    }
+
+    /**
+     * Opens the analysis dialogs that were open, where they were and with the tab that they showed,
+     * and closes the other analysis dialogs. Open them last, when the images and regions that they
+     * show are back.
+     */
+    private restoreDialogs(): void {
+        const saved = this.workspace.openDialogs;
+        if (!Array.isArray(saved)) {
+            return;
+        }
+        const dialogStore = this.appStore.dialogStore;
+        WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
+        const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
+        for (const id of saved.filter(id => WORKSPACE_DIALOGS.includes(id))) {
+            const dialog = Object.hasOwn(places, id) && places[id] && typeof places[id] === "object" ? places[id] : {};
+            // The header search of the File Info dialog opens with its text only when the dialog opens,
+            // so close the dialog first when it is open.
+            if (id === DialogId.FileInfo && dialogStore.dialogVisible.get(id)) {
+                dialogStore.hideDialog(id);
+            }
+            // A dialog that the workspace did not place, or whose tab it did not keep, goes back to the
+            // middle of the window or to its first tab. It does not keep its place or tab from before.
+            dialogStore.resetPlaceAndTab(id);
+            const geometry = WorkspaceRestorer.savedDialogGeometry(dialog);
+            if (geometry) {
+                dialogStore.setDialogGeometry(id, geometry);
+            }
+            const tabs = WORKSPACE_DIALOG_TABS[id] ?? {};
+            if (typeof dialog.tab === "string" && Object.hasOwn(tabs, dialog.tab)) {
+                dialogStore.selectTab(id, tabs[dialog.tab]);
+            }
+            if (id === DialogId.FileInfo) {
+                dialogStore.setFileInfoSearchString(typeof dialog.search === "string" ? dialog.search : undefined);
+            }
+            if (id === DialogId.Snippet) {
+                this.showSnippetDialog();
+            } else {
+                dialogStore.showDialog(id);
+            }
+        }
+        this.restoreDialogSettings();
+    }
+
+    /**
+     * Opens the Snippet dialog with the saved snippet or the example of the saved name. A saved snippet
+     * is not shown when the workspace belongs to another user, because the snippets of the opener are
+     * not the ones of that user. An example is the same for every user. The dialog is empty when the
+     * opener has no snippet of that name, and the report says so. When the opener has turned code
+     * snippets off, the restore turns them on for this session only, and the report says so. The
+     * preference stays off.
+     */
+    private showSnippetDialog(): void {
+        const dialogStore = this.appStore.dialogStore;
+        const preferenceStore = this.appStore.preferenceStore;
+        if (preferenceStore?.areCodeSnippetsShown === false) {
+            preferenceStore.setCodeSnippetsEnabledForSession(true);
+            this.report(WorkspaceItemKind.Layout, "Snippet", "Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
+        }
+        const name = this.workspace.dialogSettings?.snippet?.name;
+        const saved = typeof name === "string" ? this.appStore.snippetStore.snippets.get(name) : undefined;
+        const snippet = saved && (this.workspace.editable !== false || saved.tags?.includes("example")) ? saved : undefined;
+        if (snippet) {
+            dialogStore.showDialog(DialogId.Snippet, {snippet, name});
+            return;
+        }
+        dialogStore.showDialog(DialogId.Snippet, {newSnippet: true});
+        if (typeof name === "string" && name && this.workspace.editable !== false) {
+            this.report(WorkspaceItemKind.Layout, "Snippet", `The Snippet dialog is empty, because there is no saved snippet named "${name}"`);
+        }
+    }
+
+    /**
+     * Shows the settings that the Contour and Vector Overlay dialogs showed but that were not applied.
+     * A dialog without saved settings shows the settings of its image. Call it after the dialogs open,
+     * because the level generator of the Contour dialog takes its saved values only when it is open.
+     */
+    private restoreDialogSettings(): void {
+        const saved = this.workspace.dialogSettings && typeof this.workspace.dialogSettings === "object" ? this.workspace.dialogSettings : {};
+        const settingsOf = (values: WorkspaceContourDialogSettings | WorkspaceVectorOverlayDialogSettings | undefined) => {
+            if (!values || typeof values !== "object" || typeof values.imageId !== "number") {
+                return undefined;
+            }
+            const frame = this.frameOf(values.imageId);
+            return frame ? {frame, values} : undefined;
+        };
+        const dialogStore = this.appStore.dialogStore;
+        dialogStore.applyUnappliedSettings(DialogId.Contour, settingsOf(saved.contour));
+        dialogStore.applyUnappliedSettings(DialogId.Vector, settingsOf(saved.vectorOverlay));
+    }
+
+    /**
+     * Returns where a saved dialog was, or undefined when the workspace did not place it or a value is
+     * not valid. The dialog keeps itself inside the layout area when it is placed.
+     */
+    private static savedDialogGeometry(dialog: WorkspaceDialog): DialogGeometry | undefined {
+        const {x, y, width, height} = dialog;
+        const isFinite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        if (!isFinite(x) || !isFinite(y) || !isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) {
+            return undefined;
+        }
+        return {x, y, width, height};
+    }
+
+    /**
+     * Opens the settings panels of widgets that were open, where they were, and closes the other
+     * floating settings panels. Open them after the layout, when the widgets are back.
+     */
+    private restoreWidgetSettings(): void {
+        const saved = this.workspace.openWidgetSettings;
+        if (!Array.isArray(saved)) {
+            return;
+        }
+        const widgetsStore = this.appStore.widgetsStore;
+        widgetsStore.floatingWidgets.filter(config => config.type === "floating-settings").forEach(config => widgetsStore.removeFloatingWidget(config.id));
+        const isPlaced = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+        const opened: {id: string; widgetsBelow: unknown}[] = [];
+        for (const panel of saved) {
+            if (!panel || typeof panel.widgetId !== "string" || typeof panel.widgetType !== "string" || typeof panel.title !== "string") {
+                continue;
+            }
+            const parentId = widgetsStore.layoutIdOf(panel.widgetType, panel.widgetId);
+            if (parentId === undefined) {
+                this.report(WorkspaceItemKind.Layout, panel.title, "The settings panel of this widget was not opened, because the widget was not restored");
+                continue;
+            }
+            widgetsStore.createFloatingSettingsWidget(panel.title, parentId, panel.widgetType);
+            const config = widgetsStore.floatingWidgets.find(w => w.type === "floating-settings" && w.parentId === parentId);
+            if (config && isPlaced(panel.x) && isPlaced(panel.y)) {
+                config.setDefaultPosition(panel.x, panel.y);
+            }
+            if (config && isPlaced(panel.width) && isPlaced(panel.height) && panel.width > 0 && panel.height > 0) {
+                config.setDefaultSize(panel.width, panel.height);
+            }
+            if (config) {
+                opened.push({id: config.id, widgetsBelow: panel.widgetsBelow});
+            }
+        }
+        this.restorePanelStackingOrder(opened);
+    }
+
+    /**
+     * Puts each settings panel back between the floating widgets, as it was stacked. A new panel opens
+     * on top of the floating widgets. A workspace that does not say how many widgets were below its
+     * panels keeps the panels on top.
+     *
+     * @param panels - the panels that the restore opened, from the bottom one to the top one.
+     */
+    private restorePanelStackingOrder(panels: {id: string; widgetsBelow: unknown}[]): void {
+        const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+        if (!panels.some(panel => isCount(panel.widgetsBelow))) {
+            return;
+        }
+        const zIndexManager = this.appStore.zIndexManager;
+        const panelIds = new Set(panels.map(panel => panel.id));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const widgets = this.appStore.widgetsStore.floatingWidgets
+            .filter(config => !panelIds.has(config.id))
+            .map(config => config.componentId || config.id)
+            .sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        const order: string[] = [];
+        let next = 0;
+        for (const panel of panels) {
+            const count = isCount(panel.widgetsBelow) ? Math.max(next, Math.min(panel.widgetsBelow, widgets.length)) : widgets.length;
+            while (next < count) {
+                order.push(widgets[next++]);
+            }
+            order.push(panel.id);
+        }
+        order.push(...widgets.slice(next));
+        // Bringing each one to the top, from the bottom one to the top one, stacks them in this order.
+        order.forEach(id => zIndexManager.updateIndexOnSelect(id));
+    }
+
+    /**
+     * Puts each open dialog back between the floating widgets and settings panels, as it was stacked.
+     * Call it after the dialogs, the layout and the settings panels are open. A workspace that does
+     * not say how many widgets were below its dialogs keeps the order that the restore opened them in.
+     */
+    private restoreStackingOrder(): void {
+        const saved = this.workspace.openDialogs;
+        const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
+        const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+        const belowOf = (id: string) => (Object.hasOwn(places, id) ? places[id]?.widgetsBelow : undefined);
+        if (!Array.isArray(saved) || !saved.some(id => isCount(belowOf(id)))) {
+            return;
+        }
+        const dialogStore = this.appStore.dialogStore;
+        const zIndexManager = this.appStore.zIndexManager;
+        const dialogs = saved.filter(id => WORKSPACE_DIALOGS.includes(id) && dialogStore.dialogVisible.get(id));
+        // A floating widget is stacked by its component ID when it has one, such as a catalog plot.
+        const widgets = this.appStore.widgetsStore.floatingWidgets.map(config => config.componentId || config.id).sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        const order: string[] = [];
+        let next = 0;
+        for (const id of dialogs) {
+            const below = belowOf(id);
+            const count = isCount(below) ? Math.min(below, widgets.length) : widgets.length;
+            while (next < count) {
+                order.push(widgets[next++]);
+            }
+            order.push(id);
+        }
+        order.push(...widgets.slice(next));
+        // Bringing each one to the top, from the bottom one to the top one, stacks them in this order.
+        order.forEach(id => zIndexManager.updateIndexOnSelect(id));
     }
 
     /**
@@ -215,19 +427,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Shows in the Contour dialog the image that it showed, when it did not follow the active image.
-     * Do this after the image in front is chosen. A change of the image in front changes the image of
-     * the dialog while the dialog follows it.
+     * Otherwise locks the dialog to the active image again. A workspace saves no image when the dialog
+     * followed the active image, and an earlier workspace can have left the dialog unlocked. Do this
+     * after the image in front is chosen. A change of the image in front changes the image of the
+     * dialog while the dialog follows it.
      */
     private restoreContourDataSource(): void {
         const imageId = this.workspace.contourDataSource?.imageId;
-        if (typeof imageId !== "number") {
-            return;
-        }
-        const frame = this.frameOf(imageId);
+        const frame = typeof imageId === "number" ? this.frameOf(imageId) : undefined;
         if (frame) {
             this.appStore.setContourDataSourceUnlocked(frame);
-        } else {
+            return;
+        }
+        if (typeof imageId === "number") {
             this.report(WorkspaceItemKind.Image, "", "The Contour dialog follows the active image, because the image that it showed was not restored");
+        }
+        if (!this.appStore.isFrameLockedToContour) {
+            this.appStore.toggleFrameContourLock();
         }
     }
 
@@ -350,10 +566,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
                 frame.applyContours();
+            } else if (fileInfo.unappliedContourConfig && typeof fileInfo.unappliedContourConfig === "object") {
+                // Keep the contours off. The settings show in the Contour dialog.
+                frame.contourConfig.applyConfig(fileInfo.unappliedContourConfig);
             }
             if (fileInfo.vectorOverlayConfig) {
                 frame.vectorOverlayConfig.applyConfig(fileInfo.vectorOverlayConfig);
                 frame.applyVectorOverlay();
+            } else if (fileInfo.unappliedVectorOverlayConfig && typeof fileInfo.unappliedVectorOverlayConfig === "object") {
+                frame.vectorOverlayConfig.applyConfig(fileInfo.unappliedVectorOverlayConfig);
             }
 
             if (fileInfo.center) {
@@ -444,6 +665,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 const sampleWidth = regionInfo.lineRegionSampleWidth;
                 if (typeof sampleWidth === "number" && Number.isInteger(sampleWidth) && sampleWidth >= LINE_REGION_SAMPLE_WIDTH_MIN && sampleWidth <= LINE_REGION_SAMPLE_WIDTH_MAX) {
                     region.setLineRegionSampleWidth(sampleWidth);
+                }
+                // World coordinates need the WCS of the image.
+                if (regionInfo.coordinate === CoordinateMode.Image || (regionInfo.coordinate === CoordinateMode.World && frame.isValidWcs)) {
+                    region.setCoordinate(regionInfo.coordinate);
                 }
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);

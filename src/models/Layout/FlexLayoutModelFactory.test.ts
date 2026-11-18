@@ -87,6 +87,23 @@ describe("FlexLayoutModelFactory", () => {
         expect(StripInstanceIds(extractedConfig)).toStrictEqual(expectedConfig);
     });
 
+    test("keeps a maximized stack maximized", () => {
+        const dockedConfig = {
+            type: "row",
+            content: [
+                {type: "stack", width: 60, content: [{type: "component", id: "image-view"}]},
+                {type: "stack", width: 40, maximized: true, content: [{type: "component", id: "log"}]}
+            ]
+        };
+
+        const expectedConfig = JSON.parse(JSON.stringify(dockedConfig));
+
+        const modelJson = createFlexLayoutModel(dockedConfig);
+
+        expect(modelJson.layout.children?.map((child: any) => child.maximized)).toEqual([undefined, true]);
+        expect(StripInstanceIds(extractAbstractConfig(modelJson))).toStrictEqual(expectedConfig);
+    });
+
     test("clears generated ids after a failed conversion", () => {
         const badComponent = {type: "component"};
         Object.defineProperty(badComponent, "id", {

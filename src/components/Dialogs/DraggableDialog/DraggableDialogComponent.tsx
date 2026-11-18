@@ -1,12 +1,13 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {type ResizeEnable, Rnd} from "react-rnd";
+import {type DraggableData, type ResizeEnable, Rnd} from "react-rnd";
 import {Button, Classes, Dialog, type DialogProps} from "@blueprintjs/core";
+import {type IReactionDisposer, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {type HelpType} from "enums";
-import {AppStore, HelpStore} from "stores";
+import {AppStore, type DialogGeometry, HelpStore} from "stores";
 
 import "./DraggableDialogComponent.scss";
 
@@ -37,6 +38,102 @@ function getViewportDimensions() {
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd = React.createRef<HTMLDivElement>();
     private rnd: Rnd | null = null;
+    private geometryDisposer: IReactionDisposer | undefined;
+
+    componentDidMount() {
+        // Move an open dialog when a workspace restore places it, or puts it back in the middle.
+        this.geometryDisposer = reaction(() => AppStore.Instance.dialogStore.dialogGeometries.get(this.props.dialogId), this.onGeometryChanged);
+    }
+
+    /**
+     * Applies a place that the dialog store got from somewhere else than this dialog. A drag or a
+     * resize keeps the place where the dialog already is. Applying it again would move a dialog that
+     * the user left partly outside the layout area.
+     */
+    private onGeometryChanged = (geometry: DialogGeometry | undefined) => {
+        const position = this.rnd?.getDraggablePosition();
+        const element = this.rnd?.getSelfElement();
+        const isWhereItIs = geometry && position && element && geometry.x === position.x && geometry.y === position.y && geometry.width === element.offsetWidth && geometry.height === element.offsetHeight;
+        if (!isWhereItIs) {
+            this.applyGeometry();
+        }
+    };
+
+    componentWillUnmount() {
+        this.geometryDisposer?.();
+    }
+
+    /**
+     * Puts an open dialog where the dialog store says. A dialog that has no place in the store goes
+     * to the middle of the window, where it opens. The dialog stays inside the layout area, below the
+     * menu bar. A dialog that can be resized is made at least as large as its minimum size, and at
+     * most as large as the layout area. A dialog that cannot be resized keeps its size.
+     *
+     * The positions are those of `getDraggablePosition` and `updatePosition` of `Rnd`, counted from
+     * the top left corner of the app. The default position of `Rnd`, and the position that its drag
+     * and resize callbacks give, are counted from the element around the dialog, which is below the
+     * menu bar. So they are not used.
+     */
+    private applyGeometry = () => {
+        const rnd = this.rnd;
+        const element = rnd?.getSelfElement();
+        if (!rnd || !element) {
+            return;
+        }
+        const origin = (element.offsetParent as HTMLElement | null)?.getBoundingClientRect() ?? {left: 0, top: 0};
+        const isResizable = this.props.isResizingEnabled;
+        let {x, y, width, height} = AppStore.Instance.dialogStore.dialogGeometries.get(this.props.dialogId) ?? this.centeredGeometry(origin);
+        if (!isResizable) {
+            width = element.offsetWidth;
+            height = element.offsetHeight;
+        }
+        const area = document.querySelector(".layout-container")?.getBoundingClientRect();
+        if (area) {
+            if (isResizable) {
+                width = Math.max(this.props.minWidth ?? 0, Math.min(width, area.width));
+                height = Math.max(this.props.minHeight ?? 0, Math.min(height, area.height));
+            }
+            x = Math.max(area.left - origin.left, Math.min(x, area.right - origin.left - width));
+            y = Math.max(area.top - origin.top, Math.min(y, area.bottom - origin.top - height));
+        }
+        rnd.updatePosition({x, y});
+        if (isResizable) {
+            rnd.updateSize({width, height});
+        }
+    };
+
+    /** Returns where the dialog opens, in the middle of the window, counted from `origin`. */
+    private centeredGeometry = (origin: {left: number; top: number}) => {
+        const {width: windowWidth, height: windowHeight} = getViewportDimensions();
+        const wrapper = this.dd.current?.getBoundingClientRect() ?? {left: 0, top: 0};
+        return {
+            x: Math.floor(Math.max((windowWidth - this.props.defaultWidth) / 2, 0)) + wrapper.left - origin.left,
+            y: Math.floor(Math.max((windowHeight - this.props.defaultHeight) / 2, 0)) + wrapper.top - origin.top,
+            width: Math.min(this.props.defaultWidth, windowWidth),
+            height: Math.min(this.props.defaultHeight, windowHeight)
+        };
+    };
+
+    /** Keeps the `Rnd` of the open dialog, and places a dialog that opens where the dialog store says. */
+    private setRnd = (rnd: Rnd | null) => {
+        const isOpening = rnd !== null && this.rnd === null;
+        this.rnd = rnd;
+        if (isOpening && AppStore.Instance.dialogStore.dialogGeometries.has(this.props.dialogId)) {
+            this.applyGeometry();
+        }
+    };
+
+    /** Keeps in the dialog store where the dialog is and how large it is. */
+    private saveGeometry = (element: HTMLElement) => {
+        const position = this.rnd?.getDraggablePosition();
+        if (position) {
+            AppStore.Instance.dialogStore.setDialogGeometry(this.props.dialogId, {x: position.x, y: position.y, width: element.offsetWidth, height: element.offsetHeight});
+        }
+    };
+
+    private onDragStop = (_e: unknown, data: DraggableData) => {
+        this.saveGeometry(data.node);
+    };
 
     private onOpening = () => {
         if (!this.dd.current) {
@@ -93,6 +190,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {
+        this.saveGeometry(elementRef);
         if (this.props.onResizeStop) {
             this.props.onResizeStop(elementRef.offsetWidth, elementRef.offsetHeight);
         }
@@ -133,10 +231,9 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                         minWidth={this.props.minWidth}
                         minHeight={this.props.minHeight}
                         dragHandleClassName={Classes.DIALOG_HEADER}
-                        ref={c => {
-                            this.rnd = c;
-                        }}
+                        ref={this.setRnd}
                         onResizeStop={this.onResizeStop}
+                        onDragStop={this.onDragStop}
                         style={{zIndex: zIndexManager.findIndex(this.props.dialogId)}}
                         onMouseDown={() => zIndexManager.updateIndexOnSelect(this.props.dialogId)}
                     >

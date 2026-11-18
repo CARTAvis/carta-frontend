@@ -224,7 +224,7 @@ export class LayoutDialogComponent extends React.Component {
         if (preferenceStore.isDynamicLayoutEnabled && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
                 <ScrollShadow>
-                    <Tabs>
+                    <Tabs selectedTabId={appStore.dialogStore.selectedTabOf(DialogId.Layout) ?? LayoutDialogMode.Layout} onChange={tab => appStore.dialogStore.selectTab(DialogId.Layout, tab)}>
                         <Tab id={LayoutDialogMode.Layout} title="Layout" panel={this.layoutComponent()} />
                         <Tab
                             id={LayoutDialogMode.DynamicLayout}

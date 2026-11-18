@@ -29,12 +29,24 @@ export class FileInfoComponent extends React.Component<{
     errorMessage: string;
     catalogHeaderTable?: SimpleTableComponentProps;
     selectedFile?: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties;
+    /** The text of the header search to open the search with, as a workspace restore gives it. Undefined opens no search. */
+    searchString?: string;
+    /** Called with the text of the header search, or with undefined when the search closes. */
+    onSearchChange?: (searchString: string | undefined) => void;
 }> {
     @observable searchString: string = "";
     @observable matchedIter: number = 0;
     @observable isMouseEntered: boolean = false;
 
     private isSearchOpened: boolean = false;
+    /** The search text that the component opens with. It is applied when the search opens, and then forgotten. */
+    private pendingSearchString: string | undefined;
+    /**
+     * Whether the search is open when the component mounts. It does not change later. The popover
+     * of the search sets its open state again each time this value changes, so a value that changes
+     * would close the search.
+     */
+    private readonly isSearchOpenedOnMount: boolean;
     private matchedTotal: number = 0;
     private matchedIterLocation: {line: number; num: number} = {line: -1, num: -1};
     private selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | undefined;
@@ -113,10 +125,21 @@ export class FileInfoComponent extends React.Component<{
         this.resetMatchedIter();
         this.matchedTotal = 0;
         this.matchedIterLocation = {line: -1, num: -1};
+        if (isOpened && this.pendingSearchString) {
+            this.search(this.pendingSearchString);
+        }
+        this.pendingSearchString = undefined;
+        this.props.onSearchChange?.(isOpened ? this.searchString : undefined);
     };
 
     private handleSearchStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.setSearchString(ev.target.value);
+        this.search(ev.target.value);
+    };
+
+    /** Finds the text in the header, and scrolls to the first match. */
+    private search = (searchString: string) => {
+        this.setSearchString(searchString);
+        this.props.onSearchChange?.(this.searchString);
         this.resetMatchedIter();
         this.matchedTotal = 0;
 
@@ -182,6 +205,15 @@ export class FileInfoComponent extends React.Component<{
     constructor(props) {
         super(props);
         makeObservable(this);
+        this.pendingSearchString = props.searchString;
+        this.isSearchOpenedOnMount = props.searchString !== undefined;
+    }
+
+    componentDidMount() {
+        if (this.pendingSearchString !== undefined) {
+            this.isSearchOpened = true;
+            this.search(this.pendingSearchString);
+        }
     }
 
     componentWillUnmount() {
@@ -416,6 +448,7 @@ export class FileInfoComponent extends React.Component<{
                 <PopoverNext
                     placement="left"
                     shouldReturnFocusOnClose={false}
+                    defaultIsOpen={this.isSearchOpenedOnMount}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     usePortal={false}
                     arrow={false}
@@ -429,6 +462,7 @@ export class FileInfoComponent extends React.Component<{
                             className="header-search-input"
                             autoFocus={true}
                             placeholder={"Search text"}
+                            value={this.searchString}
                             leftIcon="search-text"
                             rightElement={searchIter}
                             onChange={this.handleSearchStringChanged}

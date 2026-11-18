@@ -211,7 +211,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Online data query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)} active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)} data-testid={DialogId.OnlineDataQuery + "-button"} />
                     </Tooltip>
-                    {appStore.preferenceStore.isCodeSnippetsEnabled && (
+                    {appStore.preferenceStore.areCodeSnippetsShown && (
                         <Tooltip
                             content={
                                 <span>

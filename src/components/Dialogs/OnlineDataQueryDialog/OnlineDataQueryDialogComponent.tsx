@@ -41,7 +41,11 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             dialogId={DialogId.OnlineDataQuery}
         >
             <div className={Classes.DIALOG_BODY}>
-                <Tabs id="onlineQueryDialogTabs">
+                <Tabs
+                    id="onlineQueryDialogTabs"
+                    selectedTabId={appStore.dialogStore.selectedTabOf(DialogId.OnlineDataQuery) ?? OnlineDataQueryDialogTabs.Catalog}
+                    onChange={tab => appStore.dialogStore.selectTab(DialogId.OnlineDataQuery, tab)}
+                >
                     <Tab id={OnlineDataQueryDialogTabs.Catalog} title="Catalog" panel={<CatalogQueryComponent />} />
                     <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS Survey" panel={<HipsQueryComponent />} />
                 </Tabs>

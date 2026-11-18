@@ -3,6 +3,7 @@ import {observable, runInAction} from "mobx";
 
 import {CatalogSystemType, ImageType, RadiusUnits, RegionId, SpectralSystem, WorkspaceItemKind} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource, type WorkspaceIssue} from "models";
+import {FloatingObjzIndexManager} from "models/zindex/zindex";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, WorkspaceIdRegistry, WorkspaceRestorer} from "stores";
 import {fingerprintCatalogSelection} from "utilities";
@@ -60,7 +61,7 @@ function createFrame(fileId: number) {
         regionSet: {
             addExistingRegionAsync: jest.fn(async (points: unknown) => {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
-                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn()};
+                return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn()};
             }),
             selectSingleRegion: jest.fn()
         }
@@ -144,6 +145,9 @@ function createSession() {
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
+        isFrameLockedToContour: true,
+        toggleFrameContourLock: jest.fn(),
+        dialogStore: {dialogVisible: new Map([["vector-dialog", true]]), showDialog: jest.fn(), hideDialog: jest.fn(), setDialogGeometry: jest.fn(), selectTab: jest.fn(), resetPlaceAndTab: jest.fn(), applyUnappliedSettings: jest.fn()},
         updateActiveImageByFrame: jest.fn((frame: ReturnType<typeof createFrame>) => {
             appStore.activeFrame = frame;
             appStore.activeImage = {type: ImageType.FRAME, store: frame};
@@ -280,6 +284,200 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.logStore.setHiddenTags).not.toHaveBeenCalled();
     });
 
+    test("opens the saved dialogs in their order, and closes the other dialogs that a workspace keeps, but not a dialog of one step", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog", "file-browser-dialog", "preference-dialog"]}));
+
+        expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["region-dialog"], ["contour-dialog"], ["preference-dialog"]]);
+    });
+
+    test("opens the Snippet dialog with the saved snippet of the saved name, and empty for a missing name or another user's workspace", async () => {
+        const {appStore} = createSession();
+        const snippet = {code: "app.openFile('a.fits')", categories: []};
+        const snippets = new Map<string, unknown>([["Open a file", snippet]]);
+        Object.assign(appStore, {snippetStore: {snippets}});
+
+        await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
+
+        appStore.dialogStore.showDialog.mockClear();
+        const problems = await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Gone"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
+        expect(problems).toContain('The Snippet dialog is empty, because there is no saved snippet named "Gone"');
+
+        appStore.dialogStore.showDialog.mockClear();
+        const sharedProblems = await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {newSnippet: true}]]);
+        expect(sharedProblems).toEqual([]);
+
+        // An example is the same for every user, so another user's workspace shows it too.
+        const example = {code: "app.openFile('b.fits')", tags: ["example"], categories: ["Examples"]};
+        snippets.set("02. Basics", example);
+        appStore.dialogStore.showDialog.mockClear();
+        await restore(createWorkspace({editable: false, openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "02. Basics"}}}));
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet: example, name: "02. Basics"}]]);
+
+        // The opener has turned code snippets off. The restore turns them on for this session only.
+        appStore.dialogStore.showDialog.mockClear();
+        const setCodeSnippetsEnabledForSession = jest.fn();
+        Object.assign(appStore, {preferenceStore: {...appStore.preferenceStore, areCodeSnippetsShown: false, setCodeSnippetsEnabledForSession}});
+        const offProblems = await restore(createWorkspace({openDialogs: ["snippet-dialog"], dialogSettings: {snippet: {name: "Open a file"}}}));
+        expect(setCodeSnippetsEnabledForSession).toHaveBeenCalledWith(true);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
+        expect(offProblems).toContain("Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
+
+        // A workspace without the Snippet dialog leaves code snippets as they are.
+        setCodeSnippetsEnabledForSession.mockClear();
+        await restore(createWorkspace({}));
+        expect(setCodeSnippetsEnabledForSession).not.toHaveBeenCalled();
+    });
+
+    test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
+        const {appStore} = createSession();
+        const dialogStore = appStore.dialogStore as any;
+        const calls: string[] = [];
+        dialogStore.dialogVisible = new Map([["file-info-dialog", true]]);
+        dialogStore.hideDialog = jest.fn((id: string) => calls.push(`hide ${id}`));
+        dialogStore.setFileInfoSearchString = jest.fn((text?: string) => calls.push(`search ${text}`));
+        dialogStore.showDialog = jest.fn((id: string) => calls.push(`show ${id}`));
+
+        await restore(createWorkspace({openDialogs: ["file-info-dialog"], dialogs: {"file-info-dialog": {tab: "image-header", search: "CRVAL"}}}));
+
+        expect(calls).toEqual(["hide file-info-dialog", "search CRVAL", "show file-info-dialog"]);
+    });
+
+    test("puts each dialog back between the floating widgets as it was stacked", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        ["stats-0", "catalog-plot-component-0", "histogram-0"].forEach(id => zIndexManager.assignIndex(id));
+        const dialogStore = appStore.dialogStore as any;
+        dialogStore.dialogVisible = new Map();
+        dialogStore.showDialog = jest.fn((id: string) => {
+            dialogStore.dialogVisible.set(id, true);
+            zIndexManager.assignIndex(id);
+        });
+        Object.assign(appStore, {zIndexManager});
+        // A catalog plot is stacked by its component ID.
+        (appStore.widgetsStore as any).floatingWidgets = [{id: "stats-0"}, {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}, {id: "histogram-0"}];
+
+        await restore(createWorkspace({openDialogs: ["region-dialog", "contour-dialog"], dialogs: {"region-dialog": {widgetsBelow: 1}, "contour-dialog": {widgetsBelow: 3}}}));
+
+        const order = ["stats-0", "catalog-plot-component-0", "histogram-0", "region-dialog", "contour-dialog"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["stats-0", "region-dialog", "catalog-plot-component-0", "histogram-0", "contour-dialog"]);
+    });
+
+    test("opens a saved dialog where it was, with the tab that it showed, and puts a dialog without a valid place or tab back to its defaults", async () => {
+        const {appStore} = createSession();
+
+        await restore(
+            createWorkspace({
+                openDialogs: ["contour-dialog", "region-dialog", "vector-dialog"],
+                dialogs: {
+                    "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
+                    "region-dialog": {x: 900, y: -20, width: 500, height: 1200, tab: "Unknown"},
+                    "vector-dialog": {x: 10, y: 10, width: 0, height: 300},
+                    "fitting-dialog": {x: 10, y: 10, width: 300, height: 300}
+                }
+            })
+        );
+
+        expect(appStore.dialogStore.setDialogGeometry.mock.calls).toEqual([
+            ["contour-dialog", {x: 100, y: 50, width: 600, height: 700}],
+            ["region-dialog", {x: 900, y: -20, width: 500, height: 1200}]
+        ]);
+        expect(appStore.dialogStore.resetPlaceAndTab.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
+        expect(appStore.dialogStore.selectTab.mock.calls).toEqual([["contour-dialog", 2]]);
+        expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["contour-dialog"], ["region-dialog"], ["vector-dialog"]]);
+    });
+
+    test("applies the settings of contours and a vector overlay that are off without turning them on, and gives the dialogs their unapplied settings", async () => {
+        const {appStore} = createSession();
+        const unappliedContourConfig = {levels: [], thickness: 3} as never;
+        const unappliedVectorOverlayConfig = {thickness: 2} as never;
+
+        await restore(
+            createWorkspace({
+                files: [{...IMAGE, unappliedContourConfig, unappliedVectorOverlayConfig}],
+                openDialogs: ["contour-dialog"],
+                dialogSettings: {contour: {imageId: 1, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}, vectorOverlay: {imageId: 9} as never}
+            })
+        );
+
+        const frame = appStore.frames[0];
+        expect(frame.contourConfig.applyConfig).toHaveBeenCalledWith(unappliedContourConfig);
+        expect(frame.applyContours).not.toHaveBeenCalled();
+        expect(frame.vectorOverlayConfig.applyConfig).toHaveBeenCalledWith(unappliedVectorOverlayConfig);
+        expect(frame.applyVectorOverlay).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.applyUnappliedSettings.mock.calls).toEqual([
+            ["contour-dialog", {frame, values: {imageId: 1, levels: [1, 2], smoothingMode: 0, smoothingFactor: 1}}],
+            ["vector-dialog", undefined]
+        ]);
+    });
+
+    test("leaves the dialogs as they are for a workspace saved without them", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({}));
+
+        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
+    });
+
+    test("opens the saved settings panels where they were, closes the other floating settings panels, and reports a panel whose widget was not restored", async () => {
+        const {appStore} = createSession();
+        const config = {type: "floating-settings", id: "new", parentId: "spectral-profiler-1", setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()};
+        const widgetsStore = appStore.widgetsStore as any;
+        widgetsStore.floatingWidgets = [{type: "floating-settings", id: "old", parentId: "histogram-0"}];
+        widgetsStore.removeFloatingWidget = jest.fn((id: string) => (widgetsStore.floatingWidgets = widgetsStore.floatingWidgets.filter((w: {id: string}) => w.id !== id)));
+        widgetsStore.layoutIdOf = jest.fn((_type: string, id: string) => (id === "spectral-profiler-3" ? "spectral-profiler-1" : undefined));
+        widgetsStore.createFloatingSettingsWidget = jest.fn(() => widgetsStore.floatingWidgets.push(config));
+
+        const problems = await restore(
+            createWorkspace({
+                openWidgetSettings: [
+                    {widgetId: "spectral-profiler-3", widgetType: "spectral-profiler", title: "Z Profile", x: 0, y: 30, width: 650, height: 400},
+                    {widgetId: "stokes-0", widgetType: "stokes", title: "Stokes Analysis"}
+                ]
+            })
+        );
+
+        expect(widgetsStore.removeFloatingWidget).toHaveBeenCalledWith("old");
+        expect(widgetsStore.createFloatingSettingsWidget.mock.calls).toEqual([["Z Profile", "spectral-profiler-1", "spectral-profiler"]]);
+        expect(config.setDefaultPosition).toHaveBeenCalledWith(0, 30);
+        expect(config.setDefaultSize).toHaveBeenCalledWith(650, 400);
+        expect(problems).toEqual(["The settings panel of this widget was not opened, because the widget was not restored"]);
+    });
+
+    test("puts each settings panel back between the floating widgets as it was stacked", async () => {
+        const {appStore} = createSession();
+        const zIndexManager = new FloatingObjzIndexManager();
+        Object.assign(appStore, {zIndexManager});
+        const widgetsStore = appStore.widgetsStore as any;
+        // The layout opened the floating widgets. A catalog plot is stacked by its component ID.
+        widgetsStore.floatingWidgets = [{id: "pv-generator-0"}, {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}];
+        ["pv-generator-0", "catalog-plot-component-0"].forEach(id => zIndexManager.assignIndex(id));
+        widgetsStore.removeFloatingWidget = jest.fn();
+        widgetsStore.layoutIdOf = jest.fn((_type: string, id: string) => id);
+        widgetsStore.createFloatingSettingsWidget = jest.fn((_title: string, parentId: string) => {
+            widgetsStore.floatingWidgets.push({type: "floating-settings", id: `${parentId}-settings`, parentId, setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()});
+            zIndexManager.assignIndex(`${parentId}-settings`);
+        });
+
+        await restore(
+            createWorkspace({
+                openWidgetSettings: [
+                    {widgetId: "spectral-profiler-0", widgetType: "spectral-profiler", title: "Z Profile", widgetsBelow: 0},
+                    {widgetId: "histogram-0", widgetType: "histogram", title: "Histogram", widgetsBelow: 1}
+                ]
+            })
+        );
+
+        const order = ["pv-generator-0", "catalog-plot-component-0", "spectral-profiler-0-settings", "histogram-0-settings"].sort((a, b) => (zIndexManager.findIndex(a) ?? 0) - (zIndexManager.findIndex(b) ?? 0));
+        expect(order).toEqual(["spectral-profiler-0-settings", "pv-generator-0", "histogram-0-settings", "catalog-plot-component-0"]);
+    });
+
     test("shows the saved image in the Contour dialog when the dialog did not follow the active image", async () => {
         const {appStore} = createSession();
 
@@ -295,6 +493,16 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.setContourDataSourceUnlocked).not.toHaveBeenCalled();
         expect(problems).toEqual(["The Contour dialog follows the active image, because the image that it showed was not restored"]);
+    });
+
+    test("locks the Contour dialog to the active image again when the workspace saved it following the active image", async () => {
+        const {appStore} = createSession();
+        // An earlier workspace left the dialog unlocked.
+        Object.assign(appStore, {isFrameLockedToContour: false});
+
+        await restore(createWorkspace({files: [IMAGE]}));
+
+        expect(appStore.toggleFrameContourLock).toHaveBeenCalledTimes(1);
     });
 
     test("re-queries a saved SIMBAD source without changing the online query dialog", async () => {
@@ -843,6 +1051,24 @@ describe("WorkspaceRestorer", () => {
 
             const restoredRegions = (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setLineRegionSampleWidth: jest.Mock}[];
             expect(restoredRegions.map(restoredRegion => restoredRegion.setLineRegionSampleWidth.mock.calls)).toEqual([[[7]], []]);
+        });
+
+        test("shows each region in the Region dialog in its saved coordinates, and world coordinates only on an image with a WCS", async () => {
+            const {appStore} = createSession();
+            const workspace = createWorkspace({files: [{...IMAGE, regionsSet: {regions: [{...region(1), coordinate: "Image" as never}, {...region(2), coordinate: "World" as never}, region(3)]}}]});
+
+            await restore(workspace);
+            const regionsOf = async () => (await Promise.all(appStore.frames[0].regionSet.addExistingRegionAsync.mock.results.map(result => result.value))) as {setCoordinate: jest.Mock}[];
+            expect((await regionsOf()).map(restoredRegion => restoredRegion.setCoordinate.mock.calls)).toEqual([[["Image"]], [], []]);
+
+            appStore.appendFile.mockImplementationOnce(() => {
+                const frame = {...createFrame(9), isValidWcs: true};
+                appStore.frameMap.set(9, frame as never);
+                appStore.frames = [frame as never];
+                return Promise.resolve(frame as never);
+            });
+            await restore(workspace);
+            expect((await regionsOf()).map(restoredRegion => restoredRegion.setCoordinate.mock.calls)).toEqual([[["Image"]], [["World"]], []]);
         });
 
         test("finds a matched image's region among the regions of the image it was matched to", async () => {
