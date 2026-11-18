@@ -615,7 +615,7 @@ export interface WorkspaceWidgetSettingsPanel {
     height?: number;
     /**
      * How many floating widgets were below the panel. The panels and the floating widgets share one
-     * stacking order, so a restore puts the panel back between them.
+     * stacking order. A restore puts the panel back between them.
      */
     widgetsBelow?: number;
 }
