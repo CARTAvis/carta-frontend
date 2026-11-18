@@ -783,6 +783,7 @@ describe("WorkspaceRestorer", () => {
         const colorBlending = {
             id: 0,
             selectedFrames: [],
+            frames: [],
             deleteSelectedFrame: jest.fn(),
             setAlpha: jest.fn(),
             addSelectedFrame: jest.fn(),
@@ -798,6 +799,89 @@ describe("WorkspaceRestorer", () => {
         await restore(createWorkspace({colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1], contourVisible: false}]}));
 
         expect([colorBlending.toggleRasterVisible, colorBlending.toggleContourVisible, colorBlending.toggleVectorOverlayVisible].map(toggle => toggle.mock.calls.length)).toEqual([0, 1, 0]);
+    });
+
+    test("gives each alpha to its own layer, and reports a layer that could not be added, or a blend saved without alphas", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {
+            id: 0,
+            selectedFrames: [] as unknown[],
+            frames: [] as unknown[],
+            deleteSelectedFrame: jest.fn(),
+            setAlpha: jest.fn(),
+            // The second layer is not matched to the base layer, so it is refused.
+            addSelectedFrame: jest.fn((frame: unknown) => {
+                if (frame === appStore.frames[1]) {
+                    colorBlending.selectedFrames.push(frame);
+                }
+            }),
+            isRasterVisible: true,
+            isContourVisible: true,
+            isVectorOverlayVisible: true,
+            toggleRasterVisible: jest.fn(),
+            toggleContourVisible: jest.fn(),
+            toggleVectorOverlayVisible: jest.fn()
+        };
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+        const files = [IMAGE, {...IMAGE, id: 2, source: {type: "file" as const, filename: "second.fits"}}, {...IMAGE, id: 3, source: {type: "file" as const, filename: "third.fits"}}];
+
+        const problems = await restore(createWorkspace({files, colorBlendingImages: [{imageListIndex: 3, selectedFrameId: [2, 3], alpha: [0.5, 0.3, 0.8]}]}));
+
+        expect(colorBlending.setAlpha.mock.calls).toEqual([
+            [0, 0.5],
+            [1, 0.3]
+        ]);
+        expect(problems).toContain("Could not add third.fits as a layer of the color-blended image 3 in the Image List: it is not matched to the base layer");
+
+        colorBlending.selectedFrames = [];
+        colorBlending.setAlpha.mockClear();
+        await expect(restore(createWorkspace({files, colorBlendingImages: [{imageListIndex: 3} as never]}))).resolves.toBeDefined();
+        expect(colorBlending.setAlpha).not.toHaveBeenCalled();
+    });
+
+    test("says that a layer could not be added because it is the base layer", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {
+            id: 0,
+            selectedFrames: [] as unknown[],
+            frames: [] as unknown[],
+            // The first image is the base layer, the spatial reference of the color-blended image.
+            get baseFrame() {
+                return appStore.frames[0];
+            },
+            deleteSelectedFrame: jest.fn(),
+            setAlpha: jest.fn(),
+            addSelectedFrame: jest.fn(),
+            toggleRasterVisible: jest.fn(),
+            toggleContourVisible: jest.fn(),
+            toggleVectorOverlayVisible: jest.fn()
+        };
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        const problems = await restore(createWorkspace({files: [IMAGE], colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1]}]}));
+
+        expect(problems).toContain("Could not add image.fits as a layer of the color-blended image 1 in the Image List: it is the base layer");
+    });
+
+    test("reports a color-blended image that could not be made, because none of its images was restored", async () => {
+        const {appStore} = createSession();
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => null);
+
+        const problems = await restore(createWorkspace({files: [IMAGE], colorBlendingImages: [{imageListIndex: 1, selectedFrameId: [2], alpha: [1, 1]}]}));
+
+        expect(problems).toContain("Could not restore the color-blended image 1 in the Image List, because none of its images was restored");
+        expect(appStore.reorderFrame).not.toHaveBeenCalled();
+    });
+
+    test("keeps contours saved without valid levels off, and says so", async () => {
+        const {appStore} = createSession();
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, contourConfig: {color: {r: 255, g: 0, b: 0, a: 1}} as never}]}));
+
+        const frame = appStore.frames[0] as any;
+        expect(frame.contourConfig.applyConfig).toHaveBeenCalled();
+        expect(frame.applyContours).not.toHaveBeenCalled();
+        expect(problems).toContain("The contours of image.fits were not turned on, because the workspace saved no valid contour levels");
     });
 
     test("selects again the regions that were selected together, and freezes the cursor where it was frozen", async () => {
@@ -887,7 +971,7 @@ describe("WorkspaceRestorer", () => {
         appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => {
             const colorBlending = colorBlendings.shift();
             appStore.activeImage = {type: ImageType.COLOR_BLENDING, store: colorBlending};
-            return {...colorBlending, selectedFrames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+            return {...colorBlending, selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
         });
 
         await restore(

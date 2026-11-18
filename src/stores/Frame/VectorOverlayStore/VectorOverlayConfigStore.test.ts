@@ -114,3 +114,15 @@ describe("VectorOverlayConfigStore settings of a vector overlay that is off", ()
         expect(store.toUnappliedConfig(frame)).toBeUndefined();
     });
 });
+
+describe("VectorOverlayConfigStore settings that a workspace leaves out", () => {
+    test("keeps the value that an image starts with for each setting that is left out or not valid", () => {
+        const store = createStore(false);
+        const before = {pixelAveraging: store.pixelAveraging, thickness: store.thickness, isVisible: store.isVisible, lengthMax: store.lengthMax, angularSource: store.angularSource};
+
+        store.applyConfig({thickness: "2", pixelAveraging: 1.5} as never);
+
+        expect({pixelAveraging: store.pixelAveraging, thickness: store.thickness, isVisible: store.isVisible, lengthMax: store.lengthMax, angularSource: store.angularSource}).toEqual(before);
+        expect([store.intensityMin, store.intensityMax]).toEqual([undefined, undefined]);
+    });
+});

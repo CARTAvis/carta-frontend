@@ -1,5 +1,5 @@
 import type {RgbaColor} from "@uiw/react-color";
-import {type CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import type {ConfigurableStore, WorkspaceContourConfig} from "models";
@@ -93,18 +93,42 @@ export class ContourConfigStore implements ConfigurableStore<WorkspaceContourCon
         this.isVisible = !this.isVisible;
     };
 
+    /**
+     * Applies the settings that a workspace saved. A setting that is left out or not valid keeps its
+     * value. The contours of an image that opens start from the preferences. The colormap inversion
+     * is the exception: a workspace that leaves it out was saved before CARTA could invert the
+     * colormap, so the colormap is not inverted.
+     */
     @action applyConfig = (config: WorkspaceContourConfig) => {
-        this.levels = config.levels;
-        this.smoothingMode = config.smoothingMode;
-        this.smoothingFactor = config.smoothingFactor;
-        this.colormapContrast = config.colormapContrast;
-        this.colormapBias = config.colormapBias;
-        this.dashMode = config.dashMode;
-        this.thickness = config.thickness;
-        this.isVisible = config.visible;
-
-        this.isColormapEnabled = config.colormapEnabled;
-        this.isColormapInverted = config.colormapInverted ?? false;
+        const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        if (Array.isArray(config.levels) && config.levels.every(isNumber)) {
+            this.levels = [...config.levels];
+        }
+        if (Number.isInteger(config.smoothingMode) && CARTA.SmoothingMode[config.smoothingMode] !== undefined) {
+            this.smoothingMode = config.smoothingMode;
+        }
+        if (Number.isInteger(config.smoothingFactor) && config.smoothingFactor >= 1) {
+            this.smoothingFactor = config.smoothingFactor;
+        }
+        if (isNumber(config.colormapContrast)) {
+            this.colormapContrast = config.colormapContrast;
+        }
+        if (isNumber(config.colormapBias)) {
+            this.colormapBias = config.colormapBias;
+        }
+        if (Object.values(ContourDashMode).includes(config.dashMode)) {
+            this.dashMode = config.dashMode;
+        }
+        if (isNumber(config.thickness) && config.thickness > 0) {
+            this.thickness = config.thickness;
+        }
+        if (typeof config.visible === "boolean") {
+            this.isVisible = config.visible;
+        }
+        if (typeof config.colormapEnabled === "boolean") {
+            this.isColormapEnabled = config.colormapEnabled;
+        }
+        this.isColormapInverted = config.colormapInverted === true;
         if (config.color) {
             this.color = config.color;
         }

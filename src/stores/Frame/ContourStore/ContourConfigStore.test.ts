@@ -106,3 +106,15 @@ describe("ContourConfigStore settings of contours that are off", () => {
         expect(store.toUnappliedConfig()).toBeUndefined();
     });
 });
+
+describe("ContourConfigStore settings that a workspace leaves out", () => {
+    test("keeps the value that an image starts with for each setting that is left out or not valid", () => {
+        const store = createStore(false);
+        const before = {levels: store.levels, smoothingFactor: store.smoothingFactor, thickness: store.thickness, isVisible: store.isVisible, dashMode: store.dashMode};
+
+        store.applyConfig({color: {r: 255, g: 0, b: 0, a: 1}, levels: [1, "2"], thickness: -1} as never);
+
+        expect({levels: store.levels, smoothingFactor: store.smoothingFactor, thickness: store.thickness, isVisible: store.isVisible, dashMode: store.dashMode}).toEqual(before);
+        expect(store.color).toEqual({r: 255, g: 0, b: 0, a: 1});
+    });
+});

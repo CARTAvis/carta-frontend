@@ -148,30 +148,75 @@ export class VectorOverlayConfigStore implements ConfigurableStore<WorkspaceVect
         this.isVisible = !this.isVisible;
     };
 
+    /**
+     * Applies the settings that a workspace saved. A setting that is left out or not valid keeps its
+     * value. The vector overlay of an image that opens starts from the preferences. The colormap
+     * inversion is the exception: a workspace that leaves it out was saved before CARTA could invert
+     * the colormap, so the colormap is not inverted.
+     */
     @action applyConfig = (config: WorkspaceVectorOverlayConfig) => {
-        this.angularSource = config.angularSource;
-        this.intensitySource = config.intensitySource;
-        this.pixelAveraging = config.pixelAveraging;
-        this.isFractionalIntensity = config.fractionalIntensity;
-        this.isThresholdEnabled = config.thresholdEnabled;
-        this.threshold = config.threshold;
-        this.isDebiasing = config.debiasing;
-        this.qError = config.qError;
-        this.uError = config.uError;
-        this.thresholdOption = config.thresholdOption;
+        const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+        const isSource = (value: unknown): value is VectorOverlaySource => Object.values(VectorOverlaySource).includes(value as VectorOverlaySource);
+        if (isSource(config.angularSource)) {
+            this.angularSource = config.angularSource;
+        }
+        if (isSource(config.intensitySource)) {
+            this.intensitySource = config.intensitySource;
+        }
+        if (Number.isInteger(config.pixelAveraging) && config.pixelAveraging >= 0) {
+            this.pixelAveraging = config.pixelAveraging;
+        }
+        if (typeof config.fractionalIntensity === "boolean") {
+            this.isFractionalIntensity = config.fractionalIntensity;
+        }
+        if (typeof config.thresholdEnabled === "boolean") {
+            this.isThresholdEnabled = config.thresholdEnabled;
+        }
+        if (isNumber(config.threshold)) {
+            this.threshold = config.threshold;
+        }
+        if (typeof config.debiasing === "boolean") {
+            this.isDebiasing = config.debiasing;
+        }
+        if (isNumber(config.qError)) {
+            this.qError = config.qError;
+        }
+        if (isNumber(config.uError)) {
+            this.uError = config.uError;
+        }
+        if (config.thresholdOption === CARTA.PolarizationType.I || config.thresholdOption === CARTA.PolarizationType.Plinear) {
+            this.thresholdOption = config.thresholdOption;
+        }
 
-        this.isVisible = config.visible;
-        this.thickness = config.thickness;
-        this.colormapBias = config.colormapBias;
-        this.colormapContrast = config.colormapContrast;
-        this.lengthMin = config.lengthMin;
-        this.lengthMax = config.lengthMax;
-        this.intensityMin = config.intensityMin;
-        this.intensityMax = config.intensityMax;
-        this.rotationOffset = config.rotationOffset;
+        if (typeof config.visible === "boolean") {
+            this.isVisible = config.visible;
+        }
+        if (isNumber(config.thickness) && config.thickness > 0) {
+            this.thickness = config.thickness;
+        }
+        if (isNumber(config.colormapBias)) {
+            this.colormapBias = config.colormapBias;
+        }
+        if (isNumber(config.colormapContrast)) {
+            this.colormapContrast = config.colormapContrast;
+        }
+        if (isNumber(config.lengthMin)) {
+            this.lengthMin = config.lengthMin;
+        }
+        if (isNumber(config.lengthMax)) {
+            this.lengthMax = config.lengthMax;
+        }
+        // An intensity range that is left out follows the data.
+        this.intensityMin = isNumber(config.intensityMin) ? config.intensityMin : undefined;
+        this.intensityMax = isNumber(config.intensityMax) ? config.intensityMax : undefined;
+        if (isNumber(config.rotationOffset)) {
+            this.rotationOffset = config.rotationOffset;
+        }
 
-        this.isColormapEnabled = config.colormapEnabled;
-        this.isColormapInverted = config.colormapInverted ?? false;
+        if (typeof config.colormapEnabled === "boolean") {
+            this.isColormapEnabled = config.colormapEnabled;
+        }
+        this.isColormapInverted = config.colormapInverted === true;
         if (config.color) {
             this.color = config.color;
         }

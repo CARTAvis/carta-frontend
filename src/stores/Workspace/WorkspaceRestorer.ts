@@ -909,7 +909,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
             if (fileInfo.contourConfig) {
                 frame.contourConfig.applyConfig(fileInfo.contourConfig);
-                frame.applyContours();
+                // Contours with no levels draw nothing. Keep them off, and show the settings in the
+                // Contour dialog.
+                const levels = (fileInfo.contourConfig as {levels?: unknown}).levels;
+                if (Array.isArray(levels) && levels.length && levels.every(level => typeof level === "number" && Number.isFinite(level))) {
+                    frame.applyContours();
+                } else {
+                    const name = this.nameOf(fileInfo);
+                    this.report(WorkspaceItemKind.Image, name, `The contours of ${name} were not turned on, because the workspace saved no valid contour levels`);
+                }
             } else if (fileInfo.unappliedContourConfig && typeof fileInfo.unappliedContourConfig === "object") {
                 // Keep the contours off. The settings show in the Contour dialog.
                 frame.contourConfig.applyConfig(fileInfo.unappliedContourConfig);
@@ -1697,11 +1705,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+            } else {
+                // A color-blended image is made only when an image is open.
+                this.report(WorkspaceItemKind.Image, "", `Could not restore the color-blended image ${imageListIndex} in the Image List, because none of its images was restored`);
+                continue;
             }
             while (colorBlending?.selectedFrames.length) {
                 colorBlending.deleteSelectedFrame(0);
             }
-            colorBlending?.setAlpha(0, alpha[0]);
+            // A hand-edited workspace can leave out the arrays. Then the color-blended image has its
+            // base layer only, with the default alpha.
+            const alphas = Array.isArray(alpha) ? alpha : [];
+            const layerIds = Array.isArray(selectedFrameId) ? selectedFrameId : [];
+            const isAlpha = (value: unknown): value is number => typeof value === "number" && value >= 0 && value <= 1;
+            if (isAlpha(alphas[0])) {
+                colorBlending?.setAlpha(0, alphas[0]);
+            }
             // Hide the layers that were hidden. A new color-blended image shows all of them.
             const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
             if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
@@ -1714,11 +1733,23 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending.toggleVectorOverlayVisible();
             }
 
-            for (let i = 0; i < selectedFrameId.length; i++) {
-                const frame = this.frameOf(selectedFrameId[i]);
+            for (let i = 0; i < layerIds.length; i++) {
+                const fileInfo = this.images.get(layerIds[i]);
+                const frame = this.frameOf(layerIds[i]);
+                const layerCount = colorBlending?.selectedFrames.length ?? 0;
                 if (frame) {
                     colorBlending?.addSelectedFrame(frame);
-                    colorBlending?.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
+                }
+                // Give the alpha only to the layer that was added. A layer that was refused would
+                // otherwise give its alpha to the layer before it.
+                if (colorBlending && colorBlending.selectedFrames.length > layerCount) {
+                    if (isAlpha(alphas[i + 1])) {
+                        colorBlending.setAlpha(colorBlending.selectedFrames.length, alphas[i + 1]);
+                    }
+                } else if (colorBlending) {
+                    const layerName = fileInfo ? this.nameOf(fileInfo) : `image ${layerIds[i]}`;
+                    const reason = !frame ? "the image was not restored" : frame === colorBlending.baseFrame ? "it is the base layer" : colorBlending.frames.includes(frame) ? "it is a layer already" : "it is not matched to the base layer";
+                    this.report(WorkspaceItemKind.Image, layerName, `Could not add ${layerName} as a layer of the color-blended image ${imageListIndex} in the Image List: ${reason}`);
                 }
             }
 
