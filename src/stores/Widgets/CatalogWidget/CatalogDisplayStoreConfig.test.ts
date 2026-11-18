@@ -122,9 +122,30 @@ function profileStoreOf(store: CatalogDisplayStore): CatalogProfileStore {
 /** Replace the rows loaded for the first column, the way a streamed catalog batch does. */
 function loadRows(profileStore: CatalogProfileStore, values: number[]) {
     runInAction(() => {
-        profileStore.catalogOriginalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(values)});
-        profileStore.setNumVisibleRows(values.length);
+        profileStore.rows.originalData.set(0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from(values)});
+        profileStore.rows.visibleRowCount = values.length;
     });
+}
+
+/** Ask for the catalog's rows again with its table's filters, which clears the rows it holds. */
+function reloadRows(profileStore: CatalogProfileStore) {
+    profileStore.rows.applyFilters(profileStore.getTableFilters(), {xColumnName: "", yColumnName: ""}, profileStore.columnIndices);
+}
+
+/** Hand the catalog a backend response holding these values of its first column, from row `start`. */
+function acceptRows(profileStore: CatalogProfileStore, values: number[], start: number, filterDataSize: number) {
+    const data = Float64Array.from(values);
+    const end = start + values.length;
+    profileStore.rows.accept(
+        new CARTA.CatalogFilterResponse({
+            subsetDataSize: values.length,
+            subsetEndIndex: end,
+            requestEndIndex: end,
+            filterDataSize,
+            progress: 1,
+            columns: {0: {dataType: CARTA.ColumnType.Double, binaryData: new Uint8Array(data.buffer)}}
+        })
+    );
 }
 
 afterEach(() => {
@@ -613,7 +634,8 @@ describe("CatalogDisplayStore display config", () => {
 
         // A filter change clears the rows and puts the catalog back into loading; the headers stay,
         // so the columns a config names still look resolvable.
-        CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId)?.resetFilterRequest();
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId);
+        profileStore?.rows.applyFilters(profileStore.getTableFilters(), {xColumnName: "", yColumnName: ""}, profileStore.columnIndices);
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag", columnMinClip: 2, columnMaxClip: 8}});
 
@@ -626,10 +648,10 @@ describe("CatalogDisplayStore display config", () => {
         const store = createStore();
         const before = store.toConfig();
 
-        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId);
+        const profileStore = CatalogStore.Instance.catalogProfileStores.get(store.catalogFileId) as CatalogProfileStore;
         runInAction(() => {
-            profileStore?.clearData();
-            profileStore?.setLoadingDataStatus(false);
+            profileStore.rows.data.clear();
+            profileStore.rows.isLoading = false;
         });
 
         const result = store.applyConfig({color: "#123456", sizeAxis: {mapColumn: "Fmag"}});
@@ -650,14 +672,8 @@ describe("CatalogDisplayStore display config", () => {
         // Restore first derives ranges from the unfiltered preview, then reloads the saved query.
         // Its first response can exceed the preview, with new extrema inside the replaced prefix.
         runInAction(() => {
-            profileStore.resetFilterRequest();
-            profileStore.setUpdatingDataStream(true);
-            profileStore.updateCatalogData(
-                new CARTA.CatalogFilterResponse({subsetDataSize: 4, subsetEndIndex: 4, requestEndIndex: 4, filterDataSize: 4, progress: 1}),
-                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([50.47, 99.88, 73.4, 96.03])}]])
-            );
-            profileStore.setLoadingDataStatus(false);
-            profileStore.setUpdatingDataStream(false);
+            reloadRows(profileStore);
+            acceptRows(profileStore, [50.47, 99.88, 73.4, 96.03], 0, 4);
         });
 
         const bounds = [
@@ -681,23 +697,15 @@ describe("CatalogDisplayStore display config", () => {
         store.applyConfig({sizeAxis: {mapColumn: "Fmag"}});
 
         runInAction(() => {
-            profileStore.resetFilterRequest();
-            profileStore.updateCatalogData(
-                new CARTA.CatalogFilterResponse({subsetDataSize: 3, subsetEndIndex: 3, requestEndIndex: 3, filterDataSize: 4, progress: 1}),
-                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([50.47, 99.88, 73.4])}]])
-            );
-            profileStore.setLoadingDataStatus(false);
+            reloadRows(profileStore);
+            acceptRows(profileStore, [50.47, 99.88, 73.4], 0, 4);
         });
         expect(store.sizeColumnMin.clipd).toBe(Math.fround(50.47));
         expect(store.sizeColumnMax.clipd).toBe(Math.fround(99.88));
 
         runInAction(() => {
-            profileStore.setLoadingDataStatus(true);
-            profileStore.updateCatalogData(
-                new CARTA.CatalogFilterResponse({subsetDataSize: 1, subsetEndIndex: 4, requestEndIndex: 4, filterDataSize: 4, progress: 1}),
-                new Map([[0, {dataType: CARTA.ColumnType.Double, data: Float64Array.from([96.03])}]])
-            );
-            profileStore.setLoadingDataStatus(false);
+            profileStore.rows.isLoading = true;
+            acceptRows(profileStore, [96.03], 3, 4);
         });
 
         expect(store.sizeColumnMin.clipd).toBe(Math.fround(50.47));
