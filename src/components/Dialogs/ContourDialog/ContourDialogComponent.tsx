@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -40,7 +40,6 @@ export class ContourDialogComponent extends React.Component {
     private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
-    private cachedFrame: FrameStore | null;
     private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private readonly disposers: IReactionDisposer[] = [];
 
@@ -69,7 +68,43 @@ export class ContourDialogComponent extends React.Component {
                         widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                     }
                 }
-            })
+            }),
+            // Show the levels and the smoothing of the image again when they change, not only when the
+            // dialog shows another image. A workspace restore applies them after the image is open.
+            reaction(
+                () => {
+                    const config = AppStore.Instance.contourDataSource?.contourConfig;
+                    return [AppStore.Instance.contourDataSource, config?.levels, config?.smoothingMode, config?.smoothingFactor] as const;
+                },
+                ([dataSource], [previousDataSource]) => {
+                    if (dataSource !== previousDataSource) {
+                        this.widgetStore.clearXYBounds();
+                    }
+                    this.setDefaultContourParameters();
+                }
+            ),
+            // A restored image can use the cube histogram for its contour levels while nothing has asked
+            // the backend for it yet. Ask for it when the contour dialog is open, because the dialog
+            // generates the levels from it.
+            reaction(
+                () => {
+                    const appStore = AppStore.Instance;
+                    const renderConfig = appStore.contourDataSource?.renderConfig;
+                    const isWaiting =
+                        appStore.dialogStore.dialogVisible.get(DialogId.Contour) &&
+                        !appStore.isLoadingWorkspace &&
+                        renderConfig?.isUsingCubeHistogramContours &&
+                        !renderConfig.isCubeHistogramRequested &&
+                        renderConfig.cubeHistogramProgress < 1.0;
+                    return isWaiting ? appStore.contourDataSource?.frameInfo.fileId : undefined;
+                },
+                fileId => {
+                    if (fileId !== undefined) {
+                        AppStore.Instance.requestCubeHistogram(fileId);
+                    }
+                },
+                {fireImmediately: true}
+            )
         );
     }
 
@@ -89,15 +124,6 @@ export class ContourDialogComponent extends React.Component {
             this.levels = [];
             this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
             this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
-        }
-    }
-
-    componentDidUpdate() {
-        const appStore = AppStore.Instance;
-        if (appStore.contourDataSource !== this.cachedFrame) {
-            this.cachedFrame = appStore.contourDataSource;
-            this.widgetStore.clearXYBounds();
-            this.setDefaultContourParameters();
         }
     }
 
@@ -522,7 +548,7 @@ export class ContourDialogComponent extends React.Component {
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    isOpen={dataSource.renderConfig.isUsingCubeHistogramContours && dataSource.renderConfig.isCubeHistogramRequested && dataSource.renderConfig.cubeHistogramProgress < 1.0 && !appStore.isLoadingWorkspace}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}

@@ -227,6 +227,16 @@ describe("WorkspaceSnapshotter", () => {
         });
     });
 
+    test("saves the image of the Contour dialog only when the dialog does not follow the active image", () => {
+        const {appStore, frame} = createSession();
+        Object.assign(appStore, {isFrameLockedToContour: false, contourDataSource: frame});
+
+        expect(new WorkspaceSnapshotter().capture().workspace.contourDataSource).toEqual({imageId: 1});
+
+        Object.assign(appStore, {isFrameLockedToContour: true});
+        expect(new WorkspaceSnapshotter().capture().workspace).not.toHaveProperty("contourDataSource");
+    });
+
     test("captures the color-blended image in front by the image list index it is saved at", () => {
         const {appStore, frame} = createSession();
         const colorBlending = {id: 0, selectedFrames: [frame], alpha: [1, 0.5]};

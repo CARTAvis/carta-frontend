@@ -8,7 +8,7 @@ import type {WidgetsStore} from "stores/Widgets/WidgetsStore";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {isCatalogNumericDataType} from "utilities";
 
-/** Where a plot made before its tab had a catalog is kept, until Restore or a choice gives it one. */
+/** The key of the plot that a tab keeps while it shows no catalog. */
 const UNBOUND_PLOT_KEY = 0;
 
 /** A plot tab's current catalog and the plot it keeps for each catalog it has shown. */
@@ -208,8 +208,9 @@ export class CatalogWidgetBindingStore {
     }
 
     /**
-     * What each table and plot widget shows, by the stable ID of the widget. A widget that shows a
-     * catalog which the workspace does not save gets no catalog ID. A workspace describes only the
+     * What each table and plot widget shows, by the stable ID of the widget. A table widget whose
+     * catalog is not saved is kept without a catalog ID. A plot widget whose catalog is not saved is
+     * left out. A workspace describes only the
      * catalogs that were loaded. A loaded catalog can still be left out of the workspace, such as a
      * catalog on a generated image.
      *

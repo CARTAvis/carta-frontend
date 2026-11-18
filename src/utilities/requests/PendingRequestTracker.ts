@@ -60,8 +60,8 @@ export class PendingRequestTracker<TKey> {
      * @returns how it ends, once it does.
      */
     public start(key: TKey): Promise<RequestOutcome> {
-        // Only the wait that was there before ends. The subject is about to be answered by the
-        // request this wait is being started for, so whoever was waiting has nothing to put back.
+        // End the earlier wait, and stop accepting responses to the earlier request. Do not call
+        // `onFailure`, because the new request will answer the same subject.
         this.latestRequestIds.delete(key);
         this.endPending(key, false, this.options.supersededMessage);
 
@@ -78,7 +78,7 @@ export class PendingRequestTracker<TKey> {
         return this.pending.has(key);
     }
 
-    /** How the request about one subject ends, or nothing to wait for if none is in flight. */
+    /** How the wait for one subject ends. Resolves as success at once when nothing is waiting, even if a request is still in flight. */
     public wait(key: TKey): Promise<RequestOutcome> {
         return this.pending.get(key)?.promise ?? Promise.resolve({success: true});
     }
@@ -108,8 +108,8 @@ export class PendingRequestTracker<TKey> {
     /**
      * Whether a response should be acted on.
      *
-     * A response is unwanted once its request has ended, and belongs to something else if it
-     * answers a request other than the one being waited on.
+     * A response is acted on only if it answers the latest request for the subject. A response with
+     * no request ID, or with ID 0, is always acted on.
      */
     public accepts(key: TKey, requestId?: number): boolean {
         if (requestId === undefined || requestId === UNSOLICITED_REQUEST_ID) {
@@ -149,12 +149,13 @@ export class PendingRequestTracker<TKey> {
     }
 
     /**
-     * Give up on the request answering a subject, ending the wait for it if there is one.
+     * End the request answering a subject, with success or failure, and end the wait for it if
+     * there is one.
      *
-     * Whatever the caller is holding for that request is put back whether or not anyone was
-     * waiting: most requests are sent without one, and the store they were sent for is left marked
-     * as loading until something says the request is over. Nothing else will, because the subject
-     * stops being answered here — the responses that would have said so are no longer read.
+     * On failure, call `onFailure` whether or not anyone was waiting. Most requests are sent without
+     * a wait, and the store they were sent for stays marked as loading until something says the
+     * request is over. Nothing else will, because the subject stops being answered here. The
+     * responses that would have said so are no longer read.
      */
     public finish(key: TKey, isSuccess: boolean, message?: string): void {
         // The subject is no longer being answered by anything, whether or not anyone was waiting:
@@ -206,7 +207,7 @@ export class PendingRequestTracker<TKey> {
         this.latestRequestIds.clear();
     }
 
-    /** Forget a subject entirely, for one that no longer exists. */
+    /** Forget the latest request for a subject. This does not end a wait for the subject. Call `finish` for that. */
     public forget(key: TKey): void {
         this.latestRequestIds.delete(key);
     }

@@ -215,8 +215,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @action handleCatalogFileChange = (fileId: number) => {
         const widgetStore = WidgetsStore.Instance;
         const catalogStore = CatalogStore.Instance;
-        // An explicit choice, so the plot is saved against the catalog it now shows even if it was
-        // restored holding the ID of a catalog that was unavailable.
+        // Point this plot tab at the catalog that the user chose.
         catalogStore.widgetBindings.show(this.componentId, fileId);
         const plotWidgetStoreId = catalogStore.widgetBindings.displayedForComponent(this.componentId)?.widgetId;
         if (plotWidgetStoreId) {
@@ -289,7 +288,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName || !widgetStore.yColumnName) {
             return {xData: [] as number[], yData: [] as number[], border: undefined};
         }
-        // dummy values to trigger update, since profileStore.rows.data is not observable
 
         const numVisibleRows = profileStore.rows.visibleRowCount;
 
@@ -309,7 +307,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
             return {bins: [] as Point2D[], binSize: 0, start: 0, binIndices: [] as number[][]};
         }
-        // dummy values to trigger update, since profileStore.rows.data is not observable
 
         const numVisibleRows = profileStore.rows.visibleRowCount;
 

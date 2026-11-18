@@ -371,6 +371,8 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
+    /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
+    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1473,10 +1475,19 @@ export class AppStore {
         });
     };
 
-    @action requestCubeHistogram = (fileId: number = -1) => {
+    /**
+     * Ask the backend for the cube histogram of an image.
+     *
+     * @param fileId - The image. When it is left out, the active image is used.
+     * @param coordinate - The polarization to compute the histogram for, such as "Qz". When it is left out, the backend uses the Stokes that the frontend last sent for the image.
+     *
+     * Send nothing when the histogram is complete, or while an earlier request is still being computed. Otherwise the backend would compute the histogram twice.
+     */
+    @action requestCubeHistogram = (fileId: number = -1, coordinate?: string) => {
         const frame = this.getFrame(fileId);
-        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0 && !frame.renderConfig.isCubeHistogramRequested) {
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{coordinate, channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            frame.renderConfig.markCubeHistogramRequested();
             this.restartTaskProgress();
         }
     };
@@ -2334,6 +2345,10 @@ export class AppStore {
         if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config?.fixedNumBins && !regionHistogramData.config?.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
+            const frame = this.getFrame(regionHistogramData.fileId);
+            if (frame) {
+                this.applyHiddenFrameHistogram(frame);
+            }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
@@ -2505,7 +2520,8 @@ export class AppStore {
             const isCatalogError = errorData.tags?.some(tag => tag.toLowerCase().includes("catalog"));
             if (isFatal && isCatalogError) {
                 // By convention with the backend, an error tagged as a catalog's carries that
-                // catalog's file ID in its data field, which is how the failing restore is found.
+                // catalog's file ID in its data field. This is how the catalog whose request failed is
+                // found, whether or not a restore waits for it.
                 const errorDataId = errorData.data?.trim();
                 const catalogFileId = errorDataId ? Number(errorDataId) : NaN;
                 if (Number.isInteger(catalogFileId) && catalogFileId >= 0) {
@@ -2749,6 +2765,12 @@ export class AppStore {
     /** Close a workspace load out, whether or not everything in it came back. */
     @action private finishLoadingWorkspace = () => {
         this.isLoadingWorkspace = false;
+        this.workspaceLoadingStep = undefined;
+    };
+
+    /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
+    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+        this.workspaceLoadingStep = step;
     };
 
     @flow.bound
@@ -2974,11 +2996,36 @@ export class AppStore {
         if (this.shouldSyncFrameToContour) {
             this.updateActiveImageByFrame(frame);
         }
+        this.applyHiddenFrameHistogram(frame);
+    };
+
+    /**
+     * Applies the waiting channel histogram of an image that no view shows, for the channel and the
+     * Stokes that the image is set to. A channel histogram waits until a tile of its channel arrives,
+     * and no tile arrives for an image that no view shows. For example, a workspace restore can open
+     * images that are never shown. The Contour dialog and the Histogram widget can still show such an
+     * image, and without its channel histogram they would show no histogram.
+     */
+    private applyHiddenFrameHistogram = (frame: FrameStore) => {
+        if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
+            this.updateHistogram(frame.frameInfo.fileId, frame.requiredStokes, frame.requiredChannel);
+        }
     };
 
     @computed get isFrameLockedToContour() {
         return this.shouldSyncFrameToContour && this.shouldSyncContourToFrame;
     }
+
+    /**
+     * Sets whether the Contour dialog follows the active image, and the image it shows when it does
+     * not. Setting the image does not change the active image.
+     */
+    @action setContourDataSourceUnlocked = (frame: FrameStore) => {
+        this.shouldSyncFrameToContour = false;
+        this.shouldSyncContourToFrame = false;
+        this.contourDataSource = frame;
+        this.applyHiddenFrameHistogram(frame);
+    };
 
     @action toggleFrameContourLock = () => {
         if (this.isFrameLockedToContour) {

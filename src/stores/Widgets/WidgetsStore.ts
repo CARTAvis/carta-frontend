@@ -560,8 +560,8 @@ export class WidgetsStore {
         widgetStore.applyLayoutSettings(settings, selectedCatalogId);
         this.ensureCatalogWidgetIdUnique(componentId, widgetStore);
 
-        // Catalog display state is catalog-scoped and may not exist yet when a layout is restored.
-        // It will be created by updateCatalogProfile once the catalog is loaded.
+        // The display state of a catalog may not exist yet when a layout is restored. CatalogStore
+        // creates it when the catalog finishes loading.
         if (selectedCatalogId !== undefined && CatalogStore.Instance.catalogProfileStores.has(selectedCatalogId)) {
             CatalogStore.Instance.getOrCreateCatalogDisplayStore(selectedCatalogId);
         }

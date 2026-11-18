@@ -10,6 +10,11 @@ jest.mock("icons/CustomIcons", () => ({CustomIcon: {}}));
 jest.mock("stores", () => ({AppStore: {Instance: {activeFrame: null}}}));
 jest.mock("utilities", () => ({SWATCH_COLORS: []}));
 
+import {CARTA} from "carta-protobuf";
+import {observable, runInAction} from "mobx";
+
+import {VectorOverlaySource} from "enums";
+import {AppStore} from "stores";
 import {type VectorOverlayConfigStore} from "stores/Frame";
 
 import {VectorOverlayDialogComponent} from "./VectorOverlayDialogComponent";
@@ -33,6 +38,7 @@ function createConfig(colormap: string = "inferno"): VectorOverlayConfigStore {
 function createComponent(): TestableVectorOverlayDialogComponent {
     const component = Object.create(VectorOverlayDialogComponent.prototype) as TestableVectorOverlayDialogComponent;
     component.colormapPreviewSession = null;
+    (component as unknown as {disposers: unknown[]}).disposers = [];
     return component;
 }
 
@@ -79,5 +85,42 @@ describe("VectorOverlayDialogComponent colormap preview", () => {
         component.componentWillUnmount();
 
         expect(config.colormap).toBe("inferno");
+    });
+});
+
+describe("VectorOverlayDialogComponent settings", () => {
+    test("shows the settings that a restore applies to the active image after it opens", () => {
+        const config = observable({
+            angularSource: VectorOverlaySource.Current,
+            intensitySource: VectorOverlaySource.Current,
+            pixelAveraging: 4,
+            isFractionalIntensity: false,
+            threshold: 0,
+            isThresholdEnabled: false,
+            isDebiasing: false,
+            qError: 0,
+            uError: 0,
+            thresholdOption: CARTA.PolarizationType.Plinear
+        });
+        (AppStore.Instance as any).activeFrame = {vectorOverlayConfig: config};
+        const dialog = new VectorOverlayDialogComponent({appStore: AppStore.Instance} as any) as any;
+
+        runInAction(() => {
+            config.pixelAveraging = 8;
+            config.threshold = 0.5;
+            config.isThresholdEnabled = true;
+            config.isDebiasing = true;
+            config.qError = 0.5;
+            config.uError = 0.25;
+        });
+
+        expect(dialog.pixelAveraging).toBe(8);
+        expect(dialog.threshold).toBe(0.5);
+        expect(dialog.isThresholdEnabled).toBe(true);
+        expect(dialog.isDebiasing).toBe(true);
+        expect(dialog.qError).toBe(0.5);
+        expect(dialog.uError).toBe(0.25);
+        dialog.componentWillUnmount();
+        (AppStore.Instance as any).activeFrame = null;
     });
 });

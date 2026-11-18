@@ -28,7 +28,7 @@ export interface CatalogRestoreOutcome extends RequestOutcome {
     didStart: boolean;
 }
 
-/** The two columns the drawn overlay uses, which may differ from the widget controls. */
+/** The two columns of the drawn overlay. Without a drawn overlay, the columns that the widget has chosen. Undefined when either column is None. */
 function getPlottedOverlayColumns(displayStore: CatalogDisplayStore | undefined): [string, string] | undefined {
     const plottedStore = displayStore?.hasPlottedImageOverlay ? displayStore : undefined;
     const xColumn = plottedStore?.plottedImageOverlayXAxis ?? displayStore?.xAxis;
@@ -55,7 +55,7 @@ export class CatalogStore {
     private readonly pendingFileIds = observable.set<number>();
     /** Catalog file ID : the file ID of the image it is overlaid on, in the order catalogs were opened. */
     readonly catalogImageIds = observable.map<number, number>();
-    /** Catalog plot binding and Workspace ID lifecycle. */
+    /** Which catalog each table and plot widget shows. */
     public readonly widgetBindings = new CatalogWidgetBindingStore(
         this,
         () => WidgetsStore.Instance,
@@ -158,7 +158,7 @@ export class CatalogStore {
         }
     }
 
-    /** Ask again for the rows the table shows, with the columns it now shows, keeping the rows and the overlay. */
+    /** Ask again for the rows the table shows, with the columns it now shows. Keep the rows. Keep the overlay when the rows held can still place it. */
     @action requestColumns(catalogFileId: number): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         const displayStore = this.getCatalogDisplayStore(catalogFileId);
@@ -178,7 +178,7 @@ export class CatalogStore {
         this.sendFilterRequest(catalogFileId, request);
     }
 
-    /** Re-read a catalog after the user changes the table's sort order. */
+    /** Sort the table again after the user changes the sort order. A file catalog asks the backend for its rows again. An online catalog sorts the rows it holds. */
     @action requestSortedRows(catalogFileId: number, columnName: string, sortingType: CARTA.SortingType | null): void {
         const profileStore = this.catalogProfileStores.get(catalogFileId);
         if (!profileStore) {
@@ -307,7 +307,7 @@ export class CatalogStore {
         this.catalogRequests.finish(catalogFileId, false, message);
     }
 
-    /** Stop waits from the previous Workspace while a new one takes over. */
+    /** Give up on every catalog request in flight, waited for or not, when a new workspace takes over. */
     interruptRequests(message: string): void {
         this.catalogRequests.failAll(message);
     }
@@ -469,8 +469,9 @@ export class CatalogStore {
     }
 
     /**
-     * Close a catalog, and move every plot and table widget showing it onto a catalog its image still
-     * has. Nothing is closed when the backend cannot be told.
+     * Close a catalog. Each widget that shows it moves to another catalog of the same image. If there
+     * is none, the widget moves to a catalog of the image in front, or shows none. Nothing is closed
+     * when the backend cannot be told.
      *
      * @returns whether the catalog was closed.
      */
@@ -480,10 +481,8 @@ export class CatalogStore {
         }
         // Widgets move while the catalog still names its image.
         this.widgetBindings.catalogClosed(fileId);
-        // Drop the catalog's earlier requests before ending the one still in flight, so that the
-        // request being ended is left marked stale: a response arriving after this file ID has been
-        // handed to the next catalog opened must not be taken for an answer about that one.
-        this.catalogRequests.forget(fileId);
+        // End the request of the catalog. This also forgets its ID. A response that arrives after this
+        // file ID goes to the next catalog is then ignored.
         this.catalogRequests.finish(fileId, false, "The catalog was closed before restoration completed");
         this.removeCatalogDisplayStore(fileId);
         WorkspaceIdRegistry.Instance.release(WorkspaceItemKind.Catalog, fileId);
@@ -591,7 +590,8 @@ export class CatalogStore {
 
     /**
      * Draw a catalog over the image it is associated with, from the columns its display config
-     * names as the position axes.
+     * names as the position axes. When a saved overlay is given, use its columns and coordinate
+     * system instead.
      *
      * @returns whether the overlay could be drawn.
      */
