@@ -142,7 +142,8 @@ export class LayoutStore {
         // Init widget stores using pre-assigned unique IDs so they match the FlexLayout model's tab node IDs
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, preparedConfig.floating ?? [], persistence);
 
-        // A docked PV Preview Viewer names its PV generator, which gets its layout ID above.
+        // A docked PV Preview Viewer names its PV generator. The PV generator gets its layout ID in
+        // `initWidgets` above.
         const orphanPvPreviews = persistence === "workspace" ? appStore.widgetsStore.attachDockedPvPreviews(modelJson) : [];
         const nextLayoutModel = Model.fromJson(modelJson);
         nextLayoutModel.setOnAllowDrop((_dragNode: Node, dropInfo: DropInfo) => {

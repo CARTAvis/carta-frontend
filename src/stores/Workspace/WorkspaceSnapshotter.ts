@@ -741,9 +741,9 @@ export class WorkspaceSnapshotter {
     }
 
     /**
-     * Removes the PV Preview Viewers that name no PV generator from a docked layout. Removes a container that is left empty,
-     * because a layout does not accept an empty one. Keeps the shown tab of a stack on the same
-     * widget.
+     * Removes the PV Preview Viewers that name no PV generator from a docked layout. Removes a
+     * container that is left empty, because a layout does not accept an empty one. Keeps the shown
+     * tab of a stack on the same widget.
      *
      * @returns whether the container still has content.
      */

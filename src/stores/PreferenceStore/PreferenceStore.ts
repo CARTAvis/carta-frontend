@@ -201,7 +201,7 @@ export class PreferenceStore {
     @observable isPreferenceReady: boolean = false;
 
     /**
-     * The keys of the last call that set or cleared preferences. Each call gives a new array, so a
+     * The keys of the last call that set or cleared preferences. Each call gives a new array. Then a
      * reaction to it runs even when the call keeps the value of the preference.
      */
     @observable.ref lastWrittenKeys: readonly PreferenceKeys[] = [];

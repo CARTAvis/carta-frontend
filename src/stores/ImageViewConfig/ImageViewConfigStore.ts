@@ -88,8 +88,8 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
     @observable private grid: Partial<ImageViewGridConfig> = {multiPanelEnabled: undefined, panelMode: undefined, panelColumns: undefined, panelRows: undefined};
     /**
      * The display settings that a workspace restore set for this session. A setting that is not set
-     * here follows the user's preference. When the user changes that preference, the setting follows
-     * it again.
+     * here follows the user's preference. When the user sets or resets that preference, the setting
+     * follows it again.
      */
     @observable private display: Partial<ImageViewDisplayConfig> = {};
     /** The tab that the Image View settings panel shows. */
@@ -192,10 +192,9 @@ export class ImageViewConfigStore implements ConfigurableStore<ImageViewGridConf
 
     /**
      * Applies the grid and the display settings that the layout copy of a workspace saved, to this
-     * session only. A restore is
-     * not a user action, so the user's defaults do not change. When the layout copy leaves out a
-     * setting, or saves a value that the controls do not accept, that setting follows the user's
-     * preference.
+     * session only. A restore is not a user action, so the user's preferences do not change. When the
+     * layout copy leaves out a setting, or saves a value that the controls do not accept, that setting
+     * follows the user's preference.
      */
     @action applyConfig = (config: Persisted<ImageViewGridConfig> | null | undefined) => {
         const panelMode = config?.panelMode;
