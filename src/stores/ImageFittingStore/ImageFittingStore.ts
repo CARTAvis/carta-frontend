@@ -304,6 +304,7 @@ export class ImageFittingStore {
 
     /**
      * Processes the fitting results and stores the formatted result string and log messages.
+     * @param frame - The image that was fitted. The results are stored on it.
      * @param regionId - The region ID used for fitting.
      * @param fovInfo - Field of view parameters when fitting was performed on the current FOV.
      * @param fixedParams - Fixed flags for each fitting parameters.
@@ -316,6 +317,7 @@ export class ImageFittingStore {
      * @param fittingLog - The log message.
      */
     setResultString = (
+        frame: FrameStore | undefined,
         regionId: number,
         fovInfo: CARTA.RegionInfo.$Properties,
         fixedParams: boolean[],
@@ -327,7 +329,6 @@ export class ImageFittingStore {
         integratedFluxErrors: number[],
         fittingLog: string
     ) => {
-        const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
         }
@@ -338,7 +339,7 @@ export class ImageFittingStore {
         let log = "";
 
         log += `Image: ${frame.filename}\n`;
-        log += this.getRegionInfoLog(regionId, fovInfo) + "\n";
+        log += this.getRegionInfoLog(frame, regionId, fovInfo) + "\n";
         log += fittingLog + "\n";
 
         const toFixFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, isFixed: boolean): string => {
@@ -535,7 +536,7 @@ export class ImageFittingStore {
         return regionInfo;
     };
 
-    private getRegionInfoLog = (regionId: number, fovInfo: CARTA.RegionInfo.$Properties): string => {
+    private getRegionInfoLog = (frame: FrameStore | null, regionId: number, fovInfo: CARTA.RegionInfo.$Properties): string => {
         let log = "";
         switch (regionId) {
             case IMAGE_REGION_ID:
@@ -545,17 +546,17 @@ export class ImageFittingStore {
                 log += "Region: field of view\n";
                 if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
                     log += getRegionPixelProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
-                    const wcsProperties = this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation);
+                    const wcsProperties = frame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation);
                     if (wcsProperties) {
                         log += wcsProperties + "\n";
                     }
                 }
                 break;
             default:
-                const region = this.effectiveFrame?.getRegion(regionId);
+                const region = frame?.getRegion(regionId);
                 if (region) {
                     log += `Region: ${region.nameString}\n`;
-                    this.effectiveFrame?.getRegionProperties(regionId).forEach(property => (log += `${property}\n`));
+                    frame?.getRegionProperties(regionId).forEach(property => (log += `${property}\n`));
                 }
                 break;
         }

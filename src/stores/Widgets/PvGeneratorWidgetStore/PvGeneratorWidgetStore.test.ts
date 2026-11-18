@@ -1,8 +1,10 @@
 import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 
+import {FloatingObjzIndexManager} from "models/zindex/zindex";
+
 import {TelemetryService} from "../../../services";
-import {AppStore} from "../..";
+import {AppStore, PreferenceStore} from "../..";
 import {ACTIVE_FILE_ID} from "../RegionWidgetStore/RegionWidgetStore";
 
 import {PvGeneratorWidgetStore} from "./PvGeneratorWidgetStore";
@@ -146,5 +148,116 @@ describe("PvGeneratorWidgetStore in a workspace", () => {
         const {store} = createStore();
 
         expect(store.applyWorkspaceConfig({width: 3, reverse: false, keep: false, xyRebin: 1, zRebin: 1, previewRegionId: 9}, reader)).toEqual(["the region that its preview showed was not restored, so the preview shows the whole image"]);
+    });
+});
+
+describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
+    const createSession = (limit: number) => {
+        const region = {regionId: 1, regionType: CARTA.RegionType.LINE, size: {x: 3, y: 4}, isTemporary: false, nameString: "line"};
+        const frame = {
+            channelValueBounds: {min: 0, max: 9},
+            spectralCoordinate: "Frequency (GHz)",
+            spectralSystem: "LSRK",
+            findChannelIndexByValue: jest.fn((value: number) => value),
+            frameInfo: {fileId: 3, fileInfoExtended: {width: 1000, height: 1000, depth: 10, headerEntries: [{name: "BITPIX", numericValue: -32}]}},
+            getRegion: jest.fn((regionId: number) => (regionId === 1 ? region : undefined)),
+            regionSet: {focusedRegion: undefined, regions: [region]},
+            resetPvRequestState: jest.fn(),
+            setIsRequestingPV: jest.fn()
+        };
+        const panel = {type: "pv-preview", parentId: "pv-generator-0", defaultX: 10, defaultY: 20, defaultWidth: 300, defaultHeight: 200, setDefaultPosition: jest.fn(), setDefaultSize: jest.fn()};
+        const previewFrame = {renderConfig: {toConfig: jest.fn(() => ({colorMap: "viridis"})), applyConfig: jest.fn()}};
+        const widgetsStore = {pvGeneratorWidgets: new Map(), floatingWidgets: [panel], spectralProfilerList: []};
+        const appStore = {
+            activeFrame: frame,
+            frames: [frame],
+            getFrame: jest.fn(() => frame),
+            widgetsStore,
+            requestPreviewPV: jest.fn(async (_message: unknown, _frame: unknown, id: string) => {
+                widgetsStore.pvGeneratorWidgets.get(id)?.setPreviewFrame(previewFrame as never);
+            })
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
+        jest.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({pvPreviewCubeSizeLimit: limit, isPVAxesOrderReverse: false} as unknown as PreferenceStore);
+        const store = new PvGeneratorWidgetStore();
+        store.setRegionId(ACTIVE_FILE_ID, region.regionId);
+        widgetsStore.pvGeneratorWidgets.set("pv-generator-0", store);
+        return {store, appStore, panel, previewFrame};
+    };
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("saves whether the preview is the active image, and how many other floating widgets are below its viewer", () => {
+        const {store, appStore, panel, previewFrame} = createSession(1);
+        store.setPreviewFrame(previewFrame as never);
+        const zIndexManager = new FloatingObjzIndexManager();
+        // A settings panel is not counted. A catalog plot is stacked by its component ID.
+        Object.assign(panel, {id: "viewer"});
+        appStore.widgetsStore.floatingWidgets = [
+            {id: "pv-generator-0"},
+            {id: "settings", type: "floating-settings", parentId: "pv-generator-0", parentType: "pv-generator"},
+            panel,
+            {id: "catalog-plot-0", componentId: "catalog-plot-component-0"}
+        ] as never;
+        ["pv-generator-0", "settings", "viewer", "catalog-plot-component-0"].forEach(id => zIndexManager.assignIndex(id));
+        // The store keeps the preview as an observable, so the active frame is the one that it keeps.
+        Object.assign(appStore, {zIndexManager, activeFrame: store.previewFrame});
+
+        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview).toEqual({renderConfig: {colorMap: "viridis"}, isActive: true, panel: {x: 10, y: 20, width: 300, height: 200, widgetsBelow: 1}});
+    });
+
+    test("saves the preview with how it is drawn and where its panel is, and makes it again on restore", async () => {
+        const {store, appStore, panel, previewFrame} = createSession(1);
+        store.setPreviewFrame(previewFrame as never);
+
+        const config = store.toWorkspaceConfig({imageIdOf: () => 1});
+        expect(config.preview).toEqual({renderConfig: {colorMap: "viridis"}, panel: {x: 10, y: 20, width: 300, height: 200}});
+
+        store.setPreviewFrame(null);
+        expect(await store.restoreWorkspaceResult(config)).toEqual([]);
+
+        expect(appStore.requestPreviewPV).toHaveBeenCalledTimes(1);
+        expect(previewFrame.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
+        expect(panel.setDefaultPosition).toHaveBeenCalledWith(10, 20);
+        expect(panel.setDefaultSize).toHaveBeenCalledWith(300, 200);
+    });
+
+    test("saves the request that made the preview, and makes the preview again with it, though the widget shows other settings", async () => {
+        const {store, appStore} = createSession(1);
+        await store.requestPV(true, "pv-generator-0");
+        const made = (appStore.requestPreviewPV.mock.calls[0] as unknown[])[0];
+        expect(made).toMatchObject({fileId: 3, regionId: 1, width: 3, spectralRange: {min: 0, max: 9}});
+        // The user changes the settings without making the preview again.
+        store.setWidth(5);
+        store.setXYRebin(2);
+
+        const config = JSON.parse(JSON.stringify(store.toWorkspaceConfig({imageIdOf: (fileId: number) => (fileId === 3 ? 1 : undefined)})));
+        expect(config.preview.request).toEqual({imageId: 1, regionId: 1, width: 3, channels: [0, 9], reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1});
+
+        appStore.requestPreviewPV.mockClear();
+        const restored = new PvGeneratorWidgetStore();
+        appStore.widgetsStore.pvGeneratorWidgets.set("pv-generator-0", restored);
+        const reader = {fileIdOf: (imageId: number) => (imageId === 1 ? 3 : undefined), regionIdOf: (_imageId: number | undefined, regionId: number) => regionId, wasActiveImageRestored: () => true};
+        restored.applyWorkspaceConfig(config, reader as never);
+        expect(await restored.restoreWorkspaceResult(config)).toEqual([]);
+        expect((appStore.requestPreviewPV.mock.calls[0] as unknown[])[0]).toMatchObject({fileId: 3, regionId: 1, width: 3, spectralRange: {min: 0, max: 9}, previewSettings: expect.objectContaining({rebinXy: 1, rebinZ: 1})});
+
+        // The cube was not restored.
+        appStore.requestPreviewPV.mockClear();
+        restored.applyWorkspaceConfig(config, {...reader, fileIdOf: () => undefined} as never);
+        expect(await restored.restoreWorkspaceResult(config)).toEqual(["the image or the line region that the PV preview was made from was not restored, so the preview was not made again"]);
+        expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
+    });
+
+    test("does not make again a preview larger than the cube size limit of the preferences, and says how to make it", async () => {
+        // The whole cube of 1000 by 1000 by 10 pixels of 4 bytes is 0.04 GB.
+        const {store, appStore} = createSession(0.01);
+
+        const problems = await store.restoreWorkspaceResult({width: 3, reverse: false, keep: false, xyRebin: 1, zRebin: 1, previewRegionId: -1, preview: {}});
+
+        expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
+        expect(problems).toEqual(["the PV preview needs about 0.04 GB, more than the PV preview cube size limit of 0.01 GB, so it was not made again. Raise the limit in Preferences > Performance to make it"]);
     });
 });

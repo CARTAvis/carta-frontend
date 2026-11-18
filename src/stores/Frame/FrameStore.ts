@@ -109,6 +109,48 @@ export interface FrameInfo {
     previewSourceFileId?: number;
 }
 
+/**
+ * How a generated image was made, in terms of this session. All images from one request share one
+ * record. This lets a workspace save the request once.
+ */
+export type ImageGenerationRequest =
+    | {
+          type: "moment";
+          source: FrameStore;
+          regionId: number;
+          moments: CARTA.Moment[];
+          channelRange: {min: number; max: number};
+          mask: CARTA.MomentMask;
+          pixelRange: {min: number; max: number};
+      }
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
+    | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties}
+    | {
+          type: "fitting";
+          source: FrameStore;
+          /** The region of the fit. 0 is the field of view in `fovInfo`, and -1 is the whole image. */
+          regionId: number;
+          fovInfo?: CARTA.RegionInfo.$Properties;
+          /** The initial values of each component. A value that the backend generates is NaN. */
+          initialValues: CARTA.GaussianComponent.$Properties[];
+          fixedParams: boolean[];
+          offset: number;
+          solver: CARTA.FittingSolverType;
+      };
+
+/**
+ * The request that a generated image came from. For a moment image, also the moment that the image
+ * shows. For an image of an image fitting, also whether it is the model or the residual.
+ */
+export interface ImageGeneration {
+    request: ImageGenerationRequest;
+    moment?: CARTA.Moment;
+    fittingImage?: FittingImageKind;
+}
+
+/** The two images that an image fitting can make. */
+export type FittingImageKind = "model" | "residual";
+
 export const WCS_PRECISION = 10;
 const SPECTRAL_CTYPE_PATTERN = /freq|vrad|vopt|wave|awav|velo/i;
 
@@ -221,6 +263,8 @@ export class FrameStore {
     @observable secondaryRasterScalingImages: FrameStore[] = [];
     @observable momentImages: FrameStore[] = [];
     @observable pvImages: FrameStore[] = [];
+    /** How a moment, PV, HiPS or image fitting image was made, so that a workspace can make it again. */
+    generation: ImageGeneration | undefined = undefined;
     @observable generatedPVRegionId: number = 0;
     @observable fittingResult: string = "";
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];
@@ -1456,42 +1500,46 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preferenceStore.astColor;
+        // A workspace restore makes a PV preview again after it has applied the overlay that the
+        // workspace saved. Leave the overlay as it is then.
         const overlaySettings = AppStore.Instance.overlaySettings;
-        if (astColor !== overlaySettings.global.color) {
-            overlaySettings.global.setColor(astColor);
-        }
-        const isAstGridVisible = preferenceStore.isAstGridVisible;
-        if (isAstGridVisible !== overlaySettings.grid.isVisible) {
-            overlaySettings.grid.setVisible(isAstGridVisible);
-        }
-        const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
-        if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
-            overlaySettings.labels.setVisible(isAstLabelsVisible);
-        }
-        const isColorbarVisible = preferenceStore.isColorbarVisible;
-        if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
-            overlaySettings.colorbar.setVisible(isColorbarVisible);
-        }
-        const isColorbarInteractive = preferenceStore.isColorbarInteractive;
-        if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
-            overlaySettings.colorbar.setInteractive(isColorbarInteractive);
-        }
-        const colorbarPosition = preferenceStore.colorbarPosition;
-        if (colorbarPosition !== overlaySettings.colorbar.position) {
-            overlaySettings.colorbar.setPosition(colorbarPosition);
-        }
-        const colorbarWidth = preferenceStore.colorbarWidth;
-        if (colorbarWidth !== overlaySettings.colorbar.width) {
-            overlaySettings.colorbar.setWidth(colorbarWidth);
-        }
-        const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
-        if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
-            overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
-        }
-        const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
-        if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
-            overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
+        if (!(frameInfo.preview && AppStore.Instance.isLoadingWorkspace)) {
+            const astColor = preferenceStore.astColor;
+            if (astColor !== overlaySettings.global.color) {
+                overlaySettings.global.setColor(astColor);
+            }
+            const isAstGridVisible = preferenceStore.isAstGridVisible;
+            if (isAstGridVisible !== overlaySettings.grid.isVisible) {
+                overlaySettings.grid.setVisible(isAstGridVisible);
+            }
+            const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
+            if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
+                overlaySettings.labels.setVisible(isAstLabelsVisible);
+            }
+            const isColorbarVisible = preferenceStore.isColorbarVisible;
+            if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
+                overlaySettings.colorbar.setVisible(isColorbarVisible);
+            }
+            const isColorbarInteractive = preferenceStore.isColorbarInteractive;
+            if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
+                overlaySettings.colorbar.setInteractive(isColorbarInteractive);
+            }
+            const colorbarPosition = preferenceStore.colorbarPosition;
+            if (colorbarPosition !== overlaySettings.colorbar.position) {
+                overlaySettings.colorbar.setPosition(colorbarPosition);
+            }
+            const colorbarWidth = preferenceStore.colorbarWidth;
+            if (colorbarWidth !== overlaySettings.colorbar.width) {
+                overlaySettings.colorbar.setWidth(colorbarWidth);
+            }
+            const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
+            if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
+                overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
+            }
+            const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
+            if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
+                overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
+            }
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
@@ -3678,10 +3726,19 @@ export class FrameStore {
         return true;
     };
 
-    @action clearSpatialReference = () => {
+    /**
+     * Stops matching the image to its spatial reference.
+     *
+     * @param shouldMoveRegions - whether to copy the regions and the cursor of the reference to the
+     *                            image. Copying them sends their new places to the backend. Leave
+     *                            them where they are when the image is closed next.
+     */
+    @action clearSpatialReference = (shouldMoveRegions: boolean = true) => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
-            this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
+            if (shouldMoveRegions) {
+                this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
+            }
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
             this.axisZoomLevel = {...this.spatialReference.axisZoomLevel};

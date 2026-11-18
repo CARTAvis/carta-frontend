@@ -22,6 +22,7 @@ import {
     type FrameView,
     type ImageItem,
     type ImageViewItem,
+    momentsMade,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
     NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
@@ -61,7 +62,7 @@ import {
     TimeSeriesStore,
     WidgetsStore
 } from "stores";
-import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {WorkspaceRestorer} from "stores/Workspace/WorkspaceRestorer";
@@ -136,6 +137,14 @@ function scaleFrameZoom(frame: FrameStore, imageRatioScale: number) {
     } else {
         frame.setZoom(zoom.x, true);
     }
+}
+
+/** What a workspace load is waiting for. */
+export interface WorkspaceLoadingStep {
+    description: string;
+    progress: number;
+    /** Skips this step and continues with the rest of the load, when that is possible. */
+    onSkip?: () => void;
 }
 
 export class AppStore {
@@ -371,8 +380,8 @@ export class AppStore {
     @observable isFileSaving: boolean = false;
     @observable isResumingSession: boolean = false;
     @observable isLoadingWorkspace: boolean = false;
-    /** The step that a workspace load is waiting for. It is set only for a long task that reports its own progress. */
-    @observable.ref workspaceLoadingStep: {description: string; progress: number} | undefined = undefined;
+    /** The step that a workspace load is waiting for, with its progress and its Skip. It is undefined when the load waits for nothing. */
+    @observable.ref workspaceLoadingStep: WorkspaceLoadingStep | undefined = undefined;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -733,7 +742,11 @@ export class AppStore {
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
-            this.updateActiveImageByFrame(newFrame);
+            // A workspace restore makes the preview again after it puts the saved image in front.
+            // The preview must not take its place there.
+            if (!this.isLoadingWorkspace) {
+                this.updateActiveImageByFrame(newFrame);
+            }
         }
 
         return newFrame;
@@ -818,6 +831,12 @@ export class AppStore {
             }
             if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+            }
+            const hipsImage = ack.openFileAck?.fileId ? this.getFrame(ack.openFileAck.fileId) : undefined;
+            if (hipsImage) {
+                const query = {...remoteRequest};
+                delete query.fileId;
+                hipsImage.generation = {request: {type: "hips", query}};
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.resetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -1154,7 +1173,10 @@ export class AppStore {
         this.animatorStore.stopAnimation();
         this.timeSeriesStore.clearMembers();
         this.clearSpectralReference();
-        this.clearSpatialReference();
+        // Do not move the regions and the cursor of the reference to the matched images. Moving them
+        // sends their places to the backend right before it closes the images. The backend can then
+        // crash on the cursor of an image that it is closing.
+        this.clearSpatialReference(false);
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
@@ -1162,11 +1184,14 @@ export class AppStore {
             // that did not go through leaves everything loaded, still to be named by a later save.
             WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
             WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Catalog);
-            this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
                 this.removePreviewFrame(previewFrameId);
             });
+            // Clear the active image after the previews are closed. Closing a preview makes the first
+            // image of the image view active, and that image is closed below. A closed image that
+            // stays active breaks the WCS of the next image that opens.
+            this.setActiveImage(null);
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
@@ -1503,10 +1528,17 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request moment images of an image.
+     *
+     * @param isStillWanted - called when the images are made. When it returns false, the images are
+     *                        closed on the backend and not added to the session.
+     * @returns the moment images added to the session.
+     */
     @flow.bound
-    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
         if (!message || !frame) {
-            return;
+            return [];
         }
         if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
@@ -1524,16 +1556,31 @@ export class AppStore {
 
         this.restartTaskProgress();
 
+        const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
-            if (!ack.cancel && ack.openFileAcks) {
-                for (const openFileAck of ack.openFileAcks) {
+            if (!ack.cancel && ack.openFileAcks && !isStillWanted()) {
+                this.discardGeneratedImages(ack.openFileAcks);
+            } else if (!ack.cancel && ack.openFileAcks) {
+                const request: ImageGenerationRequest = {
+                    type: "moment",
+                    source: frame,
+                    regionId: message.regionId ?? RegionIdType.CURSOR,
+                    moments: message.moments ?? [],
+                    channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
+                    mask: message.mask ?? CARTA.MomentMask.None,
+                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0}
+                };
+                const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
+                for (const [index, openFileAck] of ack.openFileAcks.entries()) {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                         this.fileCounter++;
                         const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
                         if (!newMomentImage) {
                             continue;
                         }
+                        newMomentImage.generation = {request, moment: moments?.[index]};
+                        momentImages.push(newMomentImage);
                         frame.addMomentImage(newMomentImage);
                         if (frame === this.spatialReference && this.shouldMatchMoment) {
                             newMomentImage.setSpatialReference(this.spatialReference);
@@ -1550,6 +1597,16 @@ export class AppStore {
             this.endFileLoading();
             console.error(err);
         }
+        return momentImages;
+    }
+
+    /** Close images the backend made that are no longer wanted, without showing them first. */
+    private discardGeneratedImages(openFileAcks: CARTA.OpenFileAck.$Properties[]) {
+        for (const openFileAck of openFileAcks) {
+            if (typeof openFileAck.fileId === "number") {
+                this.backendService.closeFile(openFileAck.fileId);
+            }
+        }
     }
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
@@ -1559,10 +1616,17 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request a PV image of an image.
+     *
+     * @param isStillWanted - called when the image is made. When it returns false, the image is
+     *                        closed on the backend and not added to the session.
+     * @returns the PV image added to the session.
+     */
     @flow.bound
-    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
         if (!message || !frame) {
-            return;
+            return undefined;
         }
         if (frame.isSpectralAxisNonlinear) {
             throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
@@ -1579,13 +1643,28 @@ export class AppStore {
 
         this.restartTaskProgress();
 
+        let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
-            if (!ack.cancel && ack.openFileAck) {
+            if (!ack.cancel && ack.openFileAck && !isStillWanted()) {
+                this.discardGeneratedImages([ack.openFileAck]);
+            } else if (!ack.cancel && ack.openFileAck) {
                 if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                     this.fileCounter++;
                     const newPVImage = this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId);
                     if (newPVImage) {
+                        const spectralRange = message.spectralRange;
+                        newPVImage.generation = {
+                            request: {
+                                type: "pv",
+                                source: frame,
+                                regionId: message.regionId ?? RegionIdType.NONE,
+                                width: message.width ?? 1,
+                                channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
+                                reverse: !!message.reverse
+                            }
+                        };
+                        pvImage = newPVImage;
                         frame.addPvImage(newPVImage);
                     }
                 } else {
@@ -1602,6 +1681,7 @@ export class AppStore {
             console.error(err);
             AppToaster.show(ErrorToast(err));
         }
+        return pvImage;
     }
 
     @flow.bound *requestPreviewPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, id: string) {
@@ -1656,10 +1736,17 @@ export class AppStore {
         }
     };
 
+    /**
+     * Request an image fitting.
+     *
+     * @param isStillWanted - called when the fit is done. When it returns false, the model and
+     *                        residual images are closed on the backend, and the result is not shown.
+     * @returns the model and residual images added to the session.
+     */
     @flow.bound
-    *requestFitting(message: CARTA.FittingRequest.$Properties) {
+    *requestFitting(message: CARTA.FittingRequest.$Properties, isStillWanted: () => boolean = () => true) {
         if (!message) {
-            return;
+            return [];
         }
 
         if (message.createModelImage || message.createResidualImage) {
@@ -1675,10 +1762,26 @@ export class AppStore {
         frame?.resetFitting();
         this.restartTaskProgress();
 
+        const fittingImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestFitting(message);
-            if (ack.success) {
+            if (ack.success && !isStillWanted()) {
+                this.discardGeneratedImages([ack.modelImage, ack.residualImage].filter(image => !!image));
+            } else if (ack.success) {
+                const request: ImageGenerationRequest | undefined = frame
+                    ? {
+                          type: "fitting",
+                          source: frame,
+                          regionId: message.regionId ?? 0,
+                          fovInfo: message.fovInfo ?? undefined,
+                          initialValues: message.initialValues ?? [],
+                          fixedParams: message.fixedParams ?? [],
+                          offset: message.offset ?? 0,
+                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky
+                      }
+                    : undefined;
                 this.imageFittingStore.setResultString(
+                    frame ?? undefined,
                     message.regionId ?? 0,
                     message.fovInfo ?? {},
                     message.fixedParams ?? [],
@@ -1695,6 +1798,8 @@ export class AppStore {
                         this.fileCounter++;
                         const newModelFrame = this.getFrame(ack.modelImage.fileId);
                         if (newModelFrame) {
+                            newModelFrame.generation = request && {request, fittingImage: "model"};
+                            fittingImages.push(newModelFrame);
                             frame?.addFittingModelImage(newModelFrame);
                             if (this.spatialReference && frame === this.spatialReference) {
                                 newModelFrame.setSpatialReference(this.spatialReference);
@@ -1709,6 +1814,8 @@ export class AppStore {
                         this.fileCounter++;
                         const newResidualFrame = this.getFrame(ack.residualImage.fileId);
                         if (newResidualFrame) {
+                            newResidualFrame.generation = request && {request, fittingImage: "residual"};
+                            fittingImages.push(newResidualFrame);
                             frame?.addFittingResidualImage(newResidualFrame);
                             if (this.spatialReference && frame === this.spatialReference) {
                                 newResidualFrame.setSpatialReference(this.spatialReference);
@@ -1734,6 +1841,7 @@ export class AppStore {
             this.endFileLoading();
         }
         this.imageFittingStore.resetFittingState();
+        return fittingImages;
     }
 
     @action setAstReady = (isReady: boolean) => {
@@ -2772,7 +2880,7 @@ export class AppStore {
     };
 
     /** Set the step that a workspace load is waiting for. Pass undefined when the load no longer waits for anything. */
-    @action setWorkspaceLoadingStep = (step: {description: string; progress: number} | undefined) => {
+    @action setWorkspaceLoadingStep = (step: WorkspaceLoadingStep | undefined) => {
         this.workspaceLoadingStep = step;
     };
 
@@ -3235,10 +3343,17 @@ export class AppStore {
         }
     }
 
-    @action clearSpatialReference = () => {
+    /**
+     * Stops matching every image to the spatial reference.
+     *
+     * @param shouldMoveRegions - whether each matched image takes a copy of the regions and the cursor
+     *                            of the reference. Leave them where they are when the images are
+     *                            closed next.
+     */
+    @action clearSpatialReference = (shouldMoveRegions: boolean = true) => {
         this.spatialReference = null;
         for (const f of this.frames) {
-            f.clearSpatialReference();
+            f.clearSpatialReference(shouldMoveRegions);
         }
     };
 

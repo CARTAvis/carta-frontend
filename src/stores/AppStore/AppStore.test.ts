@@ -3,7 +3,7 @@ import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {CatalogOverlay, CatalogSystemType, CatalogType, ImageType, WorkspaceItemKind} from "enums";
-import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, scaleZoomForImageRatio, WorkspaceSnapshotter} from "stores";
+import {AppStore, CatalogOnlineQueryStore, CatalogProfileStore, FrameStore, scaleZoomForImageRatio, WorkspaceSnapshotter} from "stores";
 import {CatalogAxisEligibility} from "utilities";
 
 describe("AppStore.handleCatalogFilterStream", () => {
@@ -671,5 +671,42 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         appStore.setContourDataSourceUnlocked(frame);
 
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+    });
+});
+
+describe("AppStore.removeAllFrames", () => {
+    test("does not move the regions and the cursor to the matched images, because it closes them next", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(true);
+        jest.spyOn(appStore.tileService, "handleFileClosed").mockImplementation(jest.fn());
+        // An image of the image list, with only what closing all images uses.
+        const frame = Object.assign(Object.create(FrameStore.prototype), {
+            frameInfo: {fileId: 7},
+            clearSpatialReference: jest.fn(),
+            clearSpectralReference: jest.fn(),
+            clearRasterScalingReference: jest.fn(),
+            dispose: jest.fn(),
+            clearContours: jest.fn()
+        });
+        runInAction(() => (appStore.imageViewConfigStore as any).imageList.push({type: ImageType.FRAME, store: frame}));
+
+        appStore.removeAllFrames();
+
+        expect(frame.clearSpatialReference).toHaveBeenCalledWith(false);
+        jest.restoreAllMocks();
+    });
+
+    test("clears the active image after it closes the PV previews, which make the first image of the image view active", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(true);
+        jest.spyOn(appStore.backendService, "closePvPreview").mockReturnValue(true);
+        runInAction(() => appStore.previewFrames.set(5, {dispose: jest.fn()} as never));
+
+        appStore.removeAllFrames();
+
+        // Closing the preview makes the first image of the image view active. This test has no such image.
+        expect(appStore.previewFrames.size).toBe(0);
+        expect(appStore.activeImage).toBeNull();
+        jest.restoreAllMocks();
     });
 });

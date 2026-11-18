@@ -17,8 +17,7 @@ describe("ImageFittingStore region info log", () => {
     };
     const getFovLog = (frame: Partial<FrameStore> | null): string => {
         const store = new ImageFittingStore();
-        jest.spyOn(store, "effectiveFrame", "get").mockReturnValue(frame as FrameStore | null);
-        return (store as unknown as {getRegionInfoLog: (regionId: number, fovInfo: CARTA.RegionInfo.$Properties) => string}).getRegionInfoLog(0, fovInfo);
+        return (store as unknown as {getRegionInfoLog: (frame: FrameStore | null, regionId: number, fovInfo: CARTA.RegionInfo.$Properties) => string}).getRegionInfoLog(frame as FrameStore | null, 0, fovInfo);
     };
 
     afterEach(() => {

@@ -10,7 +10,6 @@ import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
 import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
-import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
@@ -82,55 +81,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get estimatedCubeSize(): number | undefined {
-        const frame = this.widgetStore?.effectiveFrame;
-
-        if (!frame?.frameInfo.fileInfoExtended) {
-            return undefined;
-        }
-
-        // Find percentage of selected channel range
-        const imageDepth = frame.frameInfo.fileInfoExtended.depth;
-        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range.min);
-        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range.max);
-
-        if (channelIndexMin === undefined || channelIndexMax === undefined) {
-            return undefined;
-        }
-
-        const channelRangePercentage = Math.abs(channelIndexMax - channelIndexMin + 1) / imageDepth;
-
-        // Find byte per image pixel
-        const bitPixEntry = frame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.match("BITPIX"));
-        const bitPixValue = bitPixEntry?.numericValue;
-        if (bitPixValue == null || !Number.isFinite(bitPixValue) || bitPixValue === 0) {
-            return undefined;
-        }
-        const bytePix = Math.abs(bitPixValue) / 8;
-
-        // Get rectangular region if exists
-        const region = frame.getRegion(this.widgetStore.effectivePreviewRegionId);
-
-        const fileInfoExtended = frame.frameInfo.fileInfoExtended;
-
-        // Get size of entire cube
-        const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
-
-        // Get size of pixels bounded by the rectangular region
-        const regionBoundSize = region?.regionId === -1 ? null : (region?.boundingBoxArea ?? 0) * bytePix * imageDepth;
-
-        // Calculate estimated size using selected range of channels and rebin values
-        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.xyRebin * this.widgetStore.zRebin);
-
-        if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
-            return undefined;
-        }
-
-        // Return estimated size in GB to be consistent with PreferenceStore.Instance.pvPreviewCubeSizeLimit
-        return parseFloat(toFixed(estimatedSize / 1e9, 2));
+        return this.widgetStore?.estimatedCubeSize;
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        return (this.estimatedCubeSize ?? 0) <= PreferenceStore.Instance.pvPreviewCubeSizeLimit;
+        return this.widgetStore.isCubeSizeBelowLimit;
     }
 
     constructor(props: WidgetProps) {

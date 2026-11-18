@@ -14,6 +14,9 @@ interface TaskProgressDialogComponentProps {
     isOpen: boolean;
     cancellable: boolean;
     onCancel?: () => void;
+    /** What the cancel button says, and its tooltip. */
+    cancelText?: string;
+    cancelTooltip?: string;
     text: string;
     contentText?: string;
     isCancelling?: boolean;
@@ -58,9 +61,9 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="footer-text">{cancellingText}</div>
                         <div className="footer-button">
-                            <Tooltip content="Cancel the current task">
-                                <AnchorButton onClick={this.props.onCancel} disabled={this.props.isCancelling}>
-                                    Cancel
+                            <Tooltip content={this.props.cancelTooltip ?? "Cancel the current task"}>
+                                <AnchorButton onClick={this.props.onCancel} disabled={this.props.isCancelling} data-testid="task-progress-cancel-button">
+                                    {this.props.cancelText ?? "Cancel"}
                                 </AnchorButton>
                             </Tooltip>
                         </div>
