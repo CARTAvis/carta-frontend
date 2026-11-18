@@ -96,7 +96,7 @@ export class ContourConfigStore implements ConfigurableStore<WorkspaceContourCon
     /**
      * Applies the settings that a workspace saved. A setting that is left out or not valid keeps its
      * value. The contours of an image that opens start from the preferences. The colormap inversion
-     * is the exception: a workspace that leaves it out was saved before CARTA could invert the
+     * is the exception. A workspace that leaves it out was saved before CARTA could invert the
      * colormap, so the colormap is not inverted.
      */
     @action applyConfig = (config: WorkspaceContourConfig) => {
