@@ -72,6 +72,8 @@
 
         .workspace-row {
             font-size: $pt-font-size-small;
+            // A Shift-click selects rows, not the text in them.
+            user-select: none;
             line-height: 22px;
             cursor: pointer;
             user-select: none;

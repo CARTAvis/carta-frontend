@@ -20,6 +20,9 @@ import {WorkspaceSaveCheckComponent} from "./WorkspaceSaveCheckComponent";
 
 import "./WorkspaceDialogComponent.scss";
 
+/** The most workspace names that the confirmation of a delete lists. Then the confirmation fits on the screen. */
+const MAX_LISTED_DELETES = 10;
+
 /** The column that the list of workspaces is sorted by. */
 type SortKey = "name" | "date";
 
@@ -45,6 +48,11 @@ export const WorkspaceDialogComponent = observer(() => {
     const [readErrorMessage, setReadErrorMessage] = useState("");
     // The workspace that the summary shows. A later selection replaces a read that is still running.
     const selection = useRef<string | undefined>(undefined);
+    // The workspaces that are selected with Cmd/Ctrl or Shift. The selection holds more than one
+    // workspace only here. A plain click, or typing a name, selects one workspace again.
+    const [selectedNames, setSelectedNames] = useState<string[]>([]);
+    // The row that a Shift-click selects from: the row that was clicked last without Shift.
+    const pivotName = useRef<string | undefined>(undefined);
     // What a save of the session would leave out. The Save mode shows it before the user saves. It is
     // undefined until the session is checked, and while the session cannot be saved.
     const [saveIssues, setSaveIssues] = useState<WorkspaceIssue[]>();
@@ -94,6 +102,7 @@ export const WorkspaceDialogComponent = observer(() => {
         setWorkspaceName("");
         setWorkspaceList(undefined);
         setSearch("");
+        setSelectedNames([]);
         clearSelection();
     }, [appStore, clearSelection]);
 
@@ -191,15 +200,32 @@ export const WorkspaceDialogComponent = observer(() => {
         saveWorkspace(workspaceName.trim());
     };
 
+    const isMultiSelected = selectedNames.length > 1;
+
     const handleDeleteClicked = async () => {
-        const name = workspaceName;
-        if (!workspaceList?.some(item => item.name === name)) {
+        const names = isMultiSelected ? selectedNames : [workspaceName];
+        if (!names.every(name => workspaceList?.some(item => item.name === name))) {
             return;
         }
-        const isConfirmed = await appStore.alertStore.showInteractiveAlert(`Delete the workspace "${name}"? This cannot be undone.`);
+        const text =
+            names.length === 1 ? (
+                `Delete the workspace "${names[0]}"? This cannot be undone.`
+            ) : (
+                <div data-testid="workspace-delete-names">
+                    <p>Delete these {names.length} workspaces? This cannot be undone.</p>
+                    <ul>
+                        {names.slice(0, MAX_LISTED_DELETES).map(name => (
+                            <li key={name}>{name}</li>
+                        ))}
+                        {names.length > MAX_LISTED_DELETES && <li>and {names.length - MAX_LISTED_DELETES} more</li>}
+                    </ul>
+                </div>
+            );
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert(text);
         if (isConfirmed) {
-            await appStore.deleteWorkspace(name);
+            await appStore.deleteWorkspaces(names);
             clearSelection();
+            setSelectedNames([]);
             setWorkspaceName("");
             await fetchWorkspaces();
         }
@@ -216,7 +242,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
-        if (ev.key === "Enter" && workspaceName) {
+        if (ev.key === "Enter" && workspaceName && !isMultiSelected) {
             if (isOpenMode) {
                 handleOpenClicked();
             } else {
@@ -246,7 +272,46 @@ export const WorkspaceDialogComponent = observer(() => {
         setSort(current => (current.key === key ? {key, isAscending: !current.isAscending} : {key, isAscending: key === "name"}));
     };
 
+    /**
+     * Selects the workspace of a row. Cmd/Ctrl adds the row to the selection or takes it out. Shift
+     * selects the rows from the row clicked last without Shift. The summary shows a workspace only
+     * when one workspace is selected.
+     */
+    const handleRowClicked = (ev: React.MouseEvent, entry: WorkspaceListItem) => {
+        const current = isMultiSelected ? selectedNames : workspaceList?.some(item => item.name === workspaceName) ? [workspaceName] : [];
+        let names: string[];
+        if (ev.metaKey || ev.ctrlKey) {
+            names = current.includes(entry.name) ? current.filter(name => name !== entry.name) : [...current, entry.name];
+            pivotName.current = entry.name;
+        } else if (ev.shiftKey && pivotName.current !== undefined) {
+            const rows = sortedWorkspaces.map(item => item.name);
+            const from = rows.indexOf(pivotName.current);
+            const to = rows.indexOf(entry.name);
+            names = from === -1 ? [entry.name] : rows.slice(Math.min(from, to), Math.max(from, to) + 1);
+        } else {
+            names = [entry.name];
+            pivotName.current = entry.name;
+        }
+        setSelectedNames(names);
+        if (names.length === 1) {
+            const item = workspaceList?.find(workspace => workspace.name === names[0]);
+            if (item) {
+                selectWorkspace(item);
+            }
+        } else {
+            clearSelection();
+            // The Open mode clears the name, which would name only one of the workspaces. The Save
+            // mode keeps it, because the save still uses it.
+            if (!names.length || isOpenMode) {
+                setWorkspaceName("");
+            }
+        }
+    };
+
     const handleDoubleClick = (entry: WorkspaceListItem) => {
+        if (isMultiSelected) {
+            return;
+        }
         if (mode === WorkspaceDialogMode.Save) {
             if (isSaveCheckDone && !isFetching) {
                 saveWorkspace(entry.name);
@@ -284,14 +349,14 @@ export const WorkspaceDialogComponent = observer(() => {
             // Clicking a row moves the focus to the list. Enter then opens or saves the selected workspace, as it does in the name field.
             <div className="workspace-rows" role="listbox" aria-label="Workspaces" tabIndex={0} onKeyDown={handleKeyDown}>
                 {sortedWorkspaces.map(entry => {
-                    const isSelected = entry.name === workspaceName;
+                    const isSelected = isMultiSelected ? selectedNames.includes(entry.name) : entry.name === workspaceName;
                     return (
                         <div
                             key={entry.name}
                             role="option"
                             aria-selected={isSelected}
                             className={classNames("workspace-row", {"is-selected": isSelected})}
-                            onClick={() => selectWorkspace(entry)}
+                            onClick={ev => handleRowClicked(ev, entry)}
                             onDoubleClick={() => handleDoubleClick(entry)}
                             data-testid="workspace-list-row"
                         >
@@ -310,7 +375,7 @@ export const WorkspaceDialogComponent = observer(() => {
 
     const leftOutCount = checkedPreflight?.leftOutCount ?? 0;
     const openText = !isCheckDone ? "Checking…" : leftOutCount ? `Open without ${leftOutCount} item${leftOutCount === 1 ? "" : "s"}` : "Open";
-    const hasSelection = !!workspaceList?.some(item => item.name === workspaceName);
+    const hasSelection = isMultiSelected || !!workspaceList?.some(item => item.name === workspaceName);
     let saveText = "Save";
     if (!saveBlocker && !saveIssues) {
         saveText = "Checking…";
@@ -334,7 +399,11 @@ export const WorkspaceDialogComponent = observer(() => {
                         <div className="workspace-list">{listContent}</div>
                     </div>
                     <div className="workspace-info-container">
-                        {workspaceList?.length ? (
+                        {isMultiSelected ? (
+                            <div className="workspace-info-scroll" data-testid="workspace-multi-selected">
+                                <NonIdealState icon="multi-select" title={`${selectedNames.length} workspaces selected`} />
+                            </div>
+                        ) : workspaceList?.length ? (
                             <div className="workspace-info-scroll">
                                 <ScrollShadow>
                                     <WorkspaceInfoComponent preflight={preflight} isFetching={isReadingWorkspace} errorMessage={readErrorMessage} shouldShowChecks={isOpenMode} />
@@ -350,6 +419,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     value={workspaceName}
                     autoFocus={true}
                     onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
+                        setSelectedNames([]);
                         setWorkspaceName(ev.currentTarget.value);
                         if (isOpenMode) {
                             setSearch(ev.currentTarget.value);
@@ -365,7 +435,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />
                     ) : (
-                        <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text={openText} disabled={isFetching || !hasSelection || !isCheckDone} data-testid="workspace-open-button" />
+                        <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text={openText} disabled={isFetching || !hasSelection || isMultiSelected || !isCheckDone} data-testid="workspace-open-button" />
                     )}
                 </div>
             </div>

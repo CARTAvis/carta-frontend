@@ -3231,17 +3231,30 @@ export class AppStore {
         return false;
     }
 
-    async deleteWorkspace(name: string) {
-        try {
-            const success = await this.apiService.clearWorkspace(name);
-            if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.TOASTER_TIMEOUT));
-                return;
+    /**
+     * Deletes the workspaces one at a time. Shows one toast for the workspaces that are deleted, and
+     * one alert for the workspaces that could not be deleted.
+     */
+    async deleteWorkspaces(names: string[]) {
+        const failed: string[] = [];
+        for (const name of names) {
+            try {
+                if (!(await this.apiService.clearWorkspace(name))) {
+                    failed.push(name);
+                }
+            } catch (err) {
+                console.error(err);
+                failed.push(name);
             }
-        } catch (err) {
-            console.error(err);
         }
-        AlertStore.Instance.showAlert(`Deleting workspace ${name} failed!`);
+        const deletedCount = names.length - failed.length;
+        if (deletedCount) {
+            const text = names.length === 1 ? `Workspace ${names[0]} deleted successfully.` : `${deletedCount} workspace${deletedCount === 1 ? "" : "s"} deleted successfully.`;
+            AppToaster.show(SuccessToast("console", text, SnippetStore.TOASTER_TIMEOUT));
+        }
+        if (failed.length) {
+            AlertStore.Instance.showAlert(`Deleting workspace${failed.length === 1 ? "" : "s"} ${failed.join(", ")} failed!`);
+        }
     }
 
     @action closeWorkspace = () => {

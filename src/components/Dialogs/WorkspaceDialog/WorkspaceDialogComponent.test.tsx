@@ -6,12 +6,15 @@ import {WorkspaceDialogMode, WorkspaceItemKind} from "enums";
 const MOCK_APP_STORE = observable(
     {
         dialogStore: {workspaceDialogMode: WorkspaceDialogMode.Save, hideDialog: jest.fn()},
-        apiService: {getWorkspaceList: jest.fn(() => Promise.resolve([]))},
+        apiService: {getWorkspaceList: jest.fn(() => Promise.resolve([] as {name: string; date: number}[])), getWorkspace: jest.fn(() => Promise.resolve(undefined))},
+        alertStore: {showInteractiveAlert: jest.fn((_text: unknown) => Promise.resolve(true))},
+        deleteWorkspaces: jest.fn((_names: string[]) => Promise.resolve()),
+        loadWorkspace: jest.fn(() => Promise.resolve(true)),
         workspaceSaveBlocker: undefined as string | undefined,
         saveWorkspace: jest.fn(() => Promise.resolve(true)),
         isDarkTheme: false
     },
-    {saveWorkspace: false, apiService: false}
+    {saveWorkspace: false, apiService: false, alertStore: false, deleteWorkspaces: false, loadWorkspace: false}
 );
 const MockFindIssues = jest.fn();
 
@@ -92,5 +95,116 @@ describe("WorkspaceDialogComponent in the Save mode", () => {
         act(() => jest.advanceTimersByTime(1000));
 
         expect(MockFindIssues).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("WorkspaceDialogComponent with several workspaces selected", () => {
+    // The list is sorted by date, from the newest: a, b, c.
+    const workspaces = [
+        {name: "c", date: 1},
+        {name: "a", date: 3},
+        {name: "b", date: 2}
+    ];
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        MockFindIssues.mockReturnValue([]);
+        MOCK_APP_STORE.apiService.getWorkspaceList.mockImplementation(() => Promise.resolve(workspaces));
+        runInAction(() => {
+            MOCK_APP_STORE.dialogStore.workspaceDialogMode = WorkspaceDialogMode.Open;
+            MOCK_APP_STORE.workspaceSaveBlocker = undefined;
+        });
+    });
+
+    afterEach(() => {
+        MOCK_APP_STORE.apiService.getWorkspaceList.mockImplementation(() => Promise.resolve([]));
+    });
+
+    const row = (name: string) => screen.getByText(name).closest("[role=option]")!;
+    const selectedRows = () =>
+        screen
+            .getAllByRole("option")
+            .filter(option => option.getAttribute("aria-selected") === "true")
+            .map(option => option.textContent?.[0]);
+
+    async function renderDialog() {
+        render(<WorkspaceDialogComponent />);
+        await act(async () => {});
+    }
+
+    test("adds a workspace with Cmd or Ctrl, and deletes the selected workspaces after one confirmation", async () => {
+        await renderDialog();
+        await act(async () => fireEvent.click(row("a")));
+        await act(async () => fireEvent.click(row("c"), {metaKey: true}));
+
+        expect(selectedRows()).toEqual(["a", "c"]);
+        expect(screen.getByTestId("workspace-multi-selected")).toHaveTextContent("2 workspaces selected");
+        expect(screen.getByPlaceholderText("Enter workspace name")).toHaveValue("");
+        expect(screen.getByTestId("workspace-open-button")).toHaveAttribute("aria-disabled", "true");
+
+        await act(async () => fireEvent.click(screen.getByText("Delete")));
+        expect(MOCK_APP_STORE.alertStore.showInteractiveAlert).toHaveBeenCalledTimes(1);
+        render(<>{MOCK_APP_STORE.alertStore.showInteractiveAlert.mock.calls[0][0] as React.ReactNode}</>);
+        expect(screen.getByTestId("workspace-delete-names")).toHaveTextContent("Delete these 2 workspaces? This cannot be undone.ac");
+        expect(MOCK_APP_STORE.deleteWorkspaces).toHaveBeenCalledWith(["a", "c"]);
+    });
+
+    test("takes a workspace out with Cmd or Ctrl, and selects one workspace again with a plain click", async () => {
+        await renderDialog();
+        await act(async () => fireEvent.click(row("a")));
+        await act(async () => fireEvent.click(row("b"), {ctrlKey: true}));
+        await act(async () => fireEvent.click(row("c"), {ctrlKey: true}));
+        await act(async () => fireEvent.click(row("b"), {ctrlKey: true}));
+        expect(selectedRows()).toEqual(["a", "c"]);
+
+        await act(async () => fireEvent.click(row("b")));
+        expect(selectedRows()).toEqual(["b"]);
+        expect(screen.queryByTestId("workspace-multi-selected")).toBeNull();
+    });
+
+    test("selects the rows from the row clicked last with Shift, and opens none of them with Enter", async () => {
+        await renderDialog();
+        await act(async () => fireEvent.click(row("c")));
+        await act(async () => fireEvent.click(row("a"), {shiftKey: true}));
+        expect(selectedRows()).toEqual(["a", "b", "c"]);
+
+        fireEvent.keyDown(screen.getByRole("listbox"), {key: "Enter"});
+        fireEvent.doubleClick(row("a"));
+        expect(MOCK_APP_STORE.loadWorkspace).not.toHaveBeenCalled();
+        expect(screen.getByTestId("workspace-multi-selected")).toHaveTextContent("3 workspaces selected");
+    });
+
+    test("selects one workspace again when the user types a name", async () => {
+        await renderDialog();
+        await act(async () => fireEvent.click(row("a")));
+        await act(async () => fireEvent.click(row("b"), {metaKey: true}));
+        fireEvent.change(screen.getByPlaceholderText("Enter workspace name"), {target: {value: "b"}});
+
+        expect(selectedRows()).toEqual(["b"]);
+    });
+
+    test("lists at most 10 names in the confirmation of a delete", async () => {
+        const many = Array.from({length: 12}, (_, index) => ({name: `w${String(index).padStart(2, "0")}`, date: 100 - index}));
+        MOCK_APP_STORE.apiService.getWorkspaceList.mockImplementation(() => Promise.resolve(many));
+        await renderDialog();
+        await act(async () => fireEvent.click(row("w00")));
+        await act(async () => fireEvent.click(row("w11"), {shiftKey: true}));
+        await act(async () => fireEvent.click(screen.getByText("Delete")));
+
+        render(<>{MOCK_APP_STORE.alertStore.showInteractiveAlert.mock.calls[0][0] as React.ReactNode}</>);
+        const items = screen.getByTestId("workspace-delete-names").querySelectorAll("li");
+        expect(items).toHaveLength(11);
+        expect(items[10]).toHaveTextContent("and 2 more");
+        expect(MOCK_APP_STORE.deleteWorkspaces).toHaveBeenCalledWith(many.map(item => item.name));
+    });
+
+    test("keeps the name in the Save mode, because the save uses it", async () => {
+        runInAction(() => (MOCK_APP_STORE.dialogStore.workspaceDialogMode = WorkspaceDialogMode.Save));
+        await renderDialog();
+        await act(async () => fireEvent.click(row("a")));
+        await act(async () => fireEvent.click(row("b"), {metaKey: true}));
+
+        expect(selectedRows()).toEqual(["a", "b"]);
+        expect(screen.getByPlaceholderText("Enter workspace name")).toHaveValue("a");
     });
 });
