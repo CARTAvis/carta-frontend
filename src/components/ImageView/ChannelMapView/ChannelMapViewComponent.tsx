@@ -3,7 +3,7 @@ import {NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageType} from "enums";
+import {BeamOverlayMode, ImageType} from "enums";
 import {type CursorInfo, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 import {getChannelMapCell} from "utilities";
@@ -56,6 +56,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         gapY
     };
     const lastRow = getChannelMapCell(channelMapStore.channelArray.length - 1, channelMapLayout).row;
+    const shouldShowBeamForAllChannels = frame.shouldShowBeamForAllChannels;
 
     const onMouseEnter = () => {
         setImageToolbarVisible(true);
@@ -94,7 +95,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const {column, row, left, top} = getChannelMapCell(index, channelMapLayout);
-        const isCornerOverlay = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
+        const isBottomLeftChannel = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
 
         return (
             channel < frame?.frameInfo.fileInfoExtended.depth && (
@@ -133,7 +134,9 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={props.isDocked}
                     />
-                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.isDocked} padding={10} />}
+                    {(shouldShowBeamForAllChannels || frame.overlayBeamSettings.channelMapMode === BeamOverlayMode.AllPanels || isBottomLeftChannel) && (
+                        <BeamProfileOverlayComponent frame={frame} channel={channel} top={top} left={left} docked={props.isDocked} padding={10} />
+                    )}
                 </div>
             )
         );

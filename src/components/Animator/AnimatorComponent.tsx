@@ -1,18 +1,21 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, PopoverNext, Position, Pre, Radio, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
+import {throttle} from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RangeSlider, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {AnimationMode, HelpType, NumericInputType, PlayMode, TimeLabelFormat} from "enums";
-import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type FrameStore, type WidgetProps} from "stores";
 import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, getTimeLabelFormatName, toFixed} from "utilities";
 
 import "./AnimatorComponent.scss";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
+    private static readonly ChannelChangeThrottleTime = 50;
+
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "animator",
@@ -55,13 +58,32 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         this.numericInputType = type;
     };
 
+    private throttledChannelChange = throttle((frame: FrameStore, val: number, selectionToken: object) => {
+        if (frame === AppStore.Instance.activeFrame && frame.channelSelectionToken === selectionToken) {
+            frame.setChannel(this.wrapIndex(val, frame.frameInfo.fileInfoExtended.depth));
+        }
+    }, AnimatorComponent.ChannelChangeThrottleTime);
+
     onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame) {
-            const depth = frame.frameInfo.fileInfoExtended.depth;
-            frame.setChannel(this.wrapIndex(val, depth));
+            if (appStore.channelMapStore.isChannelMapEnabled) {
+                this.throttledChannelChange(frame, val, frame.channelSelectionToken);
+            } else {
+                this.cancelPendingChannelChange();
+                frame.setChannel(this.wrapIndex(val, frame.frameInfo.fileInfoExtended.depth));
+            }
         }
     };
+
+    private cancelPendingChannelChange = () => {
+        this.throttledChannelChange.cancel();
+    };
+
+    componentWillUnmount() {
+        this.cancelPendingChannelChange();
+    }
 
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;
@@ -98,6 +120,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onFirstClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -124,6 +147,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onLastClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -152,6 +176,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onNextClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -178,6 +203,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onPrevClicked = () => {
+        this.cancelPendingChannelChange();
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
@@ -486,14 +512,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             </ButtonGroup>
         );
 
+        const numericInputType = appStore.channelMapStore.isChannelMapEnabled && appStore.animatorStore.step !== 1 ? NumericInputType.Step : this.numericInputType;
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
                     disabled={!hasAnimationControls || appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
+                    value={numericInputType}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
                     onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
-                {this.numericInputType === NumericInputType.FrameRate ? (
+                {numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
                         value={appStore.animatorStore.frameRate}
                         min={appStore.animatorStore.minFrameRate}

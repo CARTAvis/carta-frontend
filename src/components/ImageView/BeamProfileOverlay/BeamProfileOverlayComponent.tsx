@@ -18,6 +18,7 @@ interface BeamProfileOverlayComponentProps {
     frame: FrameStore;
     top: number;
     left: number;
+    channel?: number;
     padding?: number;
 }
 
@@ -43,17 +44,18 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
     }
 
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null => {
-        if (!frame.hasVisibleBeam) {
-            return null;
-        }
-
         const id = frame.frameInfo.fileId;
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
-        const geometry = getBeamGeometry(frame, {imageRatio: AppStore.Instance.imageRatio, devicePixelRatio, padding: this.props.padding, basePosition});
+        const beamProperties = frame.getBeamProperties({channel: frame === this.props.frame ? this.props.channel : undefined});
+        if (!beamProperties?.overlayBeamSettings.isVisible) {
+            return null;
+        }
+
+        const geometry = getBeamGeometry(frame, {imageRatio: AppStore.Instance.imageRatio, devicePixelRatio, padding: this.props.padding, basePosition}, beamProperties);
         return geometry ? {id, ...geometry, type, color, axisColor, strokeWidth} : null;
     };
 
@@ -89,17 +91,13 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
+        const baseBeamPlotProps = this.getPlotProps(baseFrame);
 
-        if (!baseFrame.hasVisibleBeam && !contourFrames?.length) {
+        if (!baseBeamPlotProps && !contourFrames?.length) {
             return null;
         }
 
         appStore.updateLayerPixelRatio(this.layerRef);
-
-        let baseBeamPlotProps: BeamPlotProps | null = null;
-        if (baseFrame.hasVisibleBeam) {
-            baseBeamPlotProps = this.getPlotProps(baseFrame);
-        }
 
         const contourBeams: React.JSX.Element[] = [];
         contourFrames?.forEach(contourFrame => {
