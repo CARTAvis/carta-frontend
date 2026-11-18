@@ -15,7 +15,7 @@ import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
 
 import {AppToaster, ErrorToast, ScrollShadow, SuccessToast} from "../../Shared";
 
-import {WorkspaceInfoComponent, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
+import {WorkspaceInfoComponent, WorkspaceOpenInWindow, WorkspaceSaveChanges} from "./WorkspaceInfoComponent";
 import {WorkspaceSaveCheckComponent} from "./WorkspaceSaveCheckComponent";
 
 import "./WorkspaceDialogComponent.scss";
@@ -432,6 +432,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
                     <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
+                    {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} isDisabled={isFetching} onOpened={handleCloseClicked} />}
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />
                     ) : (

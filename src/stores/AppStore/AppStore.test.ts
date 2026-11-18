@@ -732,3 +732,20 @@ describe("AppStore.removeAllFrames", () => {
         jest.restoreAllMocks();
     });
 });
+
+describe("AppStore.startingWorkspace", () => {
+    afterEach(() => {
+        window.history.replaceState(null, "", "/");
+    });
+
+    test("asks to check the size of the window when the address says so, for a workspace name or a key", () => {
+        window.history.replaceState(null, "", "/?workspace=view&checkWindowSize=true");
+        expect(AppStore.startingWorkspace()).toEqual({name: "view", isKey: false, checkWindowSize: true});
+
+        window.history.replaceState(null, "", "/?key=abc&checkWindowSize=true");
+        expect(AppStore.startingWorkspace()).toEqual({name: "abc", isKey: true, checkWindowSize: true});
+
+        window.history.replaceState(null, "", "/?workspace=view");
+        expect(AppStore.startingWorkspace()).toEqual({name: "view", isKey: false, checkWindowSize: false});
+    });
+});
