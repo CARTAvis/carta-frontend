@@ -879,7 +879,10 @@ export class WidgetsStore {
             }
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
-                config.componentId = config.id;
+                // A catalog plot of a workspace keeps the component ID that its binding was registered with,
+                // so that closing the plot removes that binding.
+                const boundComponentId = isWorkspace && catalogPlotWidgetStore ? CatalogStore.Instance.widgetBindings.displayedForWidget(id).componentId : undefined;
+                config.componentId = boundComponentId ?? config.id;
             }
             const hasPosition = isWorkspace
                 ? typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0
