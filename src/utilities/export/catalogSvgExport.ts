@@ -141,11 +141,7 @@ function createSelectedCircle(x: number, y: number, style: CatalogPointStyle, si
     }
     if (splitRadius > innerRadius) {
         const fill = style.color ?? color;
-        elements.push(
-            innerRadius === 0
-                ? createCircleMarker({x, y}, splitRadius, fill, "none", 0)
-                : createCircleMarker({x, y}, (splitRadius + innerRadius) / 2, "none", fill, splitRadius - innerRadius)
-        );
+        elements.push(innerRadius === 0 ? createCircleMarker({x, y}, splitRadius, fill, "none", 0) : createCircleMarker({x, y}, (splitRadius + innerRadius) / 2, "none", fill, splitRadius - innerRadius));
     }
     return elements;
 }
