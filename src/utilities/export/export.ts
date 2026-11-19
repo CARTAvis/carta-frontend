@@ -1,5 +1,22 @@
+import {Colors} from "@blueprintjs/core";
 import html2canvas from "html2canvas";
 import moment from "moment";
+
+import {ExportBackgroundColor} from "enums";
+
+export const GetExportBackgroundColor = (backgroundColor: ExportBackgroundColor, isDarkTheme: boolean): string => {
+    switch (backgroundColor) {
+        case ExportBackgroundColor.AUTO:
+            return isDarkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+        case ExportBackgroundColor.WHITE:
+            return Colors.WHITE;
+        case ExportBackgroundColor.TRANSPARENT:
+            return "rgba(255, 255, 255, 0)";
+        case ExportBackgroundColor.BLACK:
+        default:
+            return "rgba(0, 0, 0, 1)";
+    }
+};
 
 export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);

@@ -1,0 +1,79 @@
+import {createSvgElement, svgGroupFromLayer} from "./svgExport";
+
+/**
+ * Converts vector overlay data to SVG line elements.
+ * Each vector has position (x, y), intensity, and angle.
+ */
+export function renderVectorOverlayToSvg(
+    positions: ArrayLike<number> | null,
+    numVectors: number,
+    lengthScale: number,
+    lineWidth: number,
+    color: string | string[],
+    offsetX: number,
+    offsetY: number,
+    isIntensityPlot = false,
+    featherWidth = 0
+): SVGGElement {
+    const group = svgGroupFromLayer("vector-overlay");
+    if (offsetX !== 0 || offsetY !== 0) {
+        group.setAttribute("transform", `translate(${offsetX},${offsetY})`);
+    }
+
+    if (!positions || numVectors === 0) {
+        return group;
+    }
+
+    // Each vector has 4 floats: [x, y, intensity, angle]
+    for (let i = 0; i < numVectors; i++) {
+        const x = positions[i * 4];
+        const y = positions[i * 4 + 1];
+        const intensity = positions[i * 4 + 2];
+        const angle = positions[i * 4 + 3];
+
+        if (!isFinite(x) || !isFinite(y) || !isFinite(angle)) {
+            continue;
+        }
+
+        const length = intensity * lengthScale;
+        if (length <= 0) {
+            continue;
+        }
+
+        const halfLength = length / 2;
+        const stroke = Array.isArray(color) ? (color[i] ?? color[color.length - 1] ?? "#ffffff") : color;
+
+        if (isIntensityPlot) {
+            // WebGL includes the feather width in the outer square geometry.
+            const pointSize = length + featherWidth;
+            const halfPointSize = pointSize / 2;
+            group.appendChild(
+                createSvgElement("rect", {
+                    x: (x - halfPointSize).toFixed(2),
+                    y: (y - halfPointSize).toFixed(2),
+                    width: pointSize.toFixed(2),
+                    height: pointSize.toFixed(2),
+                    fill: stroke
+                })
+            );
+            continue;
+        }
+
+        const dx = halfLength * Math.cos(angle);
+        const dy = halfLength * Math.sin(angle);
+
+        const line = createSvgElement("line", {
+            x1: (x - dx).toFixed(2),
+            y1: (y - dy).toFixed(2),
+            x2: (x + dx).toFixed(2),
+            y2: (y + dy).toFixed(2),
+            stroke,
+            // Match the WebGL quad's outer geometry, which includes feathering.
+            "stroke-width": lineWidth + featherWidth,
+            fill: "none"
+        });
+        group.appendChild(line);
+    }
+
+    return group;
+}

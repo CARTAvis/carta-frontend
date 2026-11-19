@@ -10,7 +10,7 @@ import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "mode
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getChannelMapCell, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -122,15 +122,21 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
         const gapX = frame.channelMapInnerOverlayStore.gapX;
         const gapY = frame.channelMapInnerOverlayStore.gapY;
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        const channelMapLayout = {
+            numColumns: channelMapStore.numColumns,
+            outerPadding: {left: 0, top: 0},
+            tileWidth: innerRenderWidth,
+            tileHeight: innerRenderHeight,
+            gapX,
+            gapY
+        };
 
         channels.forEach((channel, index) => {
-            const appStore = AppStore.Instance;
-            const channelMapStore = appStore.channelMapStore;
-            const column = index % channelMapStore.numColumns;
-            const row = Math.floor(index / channelMapStore.numColumns);
+            const {left, top} = getChannelMapCell(index, channelMapLayout);
 
-            const xOffset = Math.round((innerRenderWidth + gapX) * column * pixelRatio);
-            const yOffset = Math.round(this.gl.canvas.height - ((innerRenderHeight + gapY) * (row + 1) - gapY) * pixelRatio);
+            const xOffset = Math.round(left * pixelRatio);
+            const yOffset = Math.round(this.gl.canvas.height - (top + innerRenderHeight) * pixelRatio);
 
             this.renderCanvas(frame, xOffset, yOffset, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), channel);
         });

@@ -9,6 +9,7 @@ import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {getColorForTheme} from "utilities";
+import {getBeamGeometry} from "utilities/region/beam";
 
 import "./BeamProfileOverlayComponent.scss";
 
@@ -44,52 +45,18 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null => {
         const id = frame.frameInfo.fileId;
-        const zoomFrame = frame.spatialReference ?? frame;
-        const transformScale = frame.spatialTransform?.scale ?? 1;
-        const zoom = {x: (zoomFrame.effectiveZoomLevel.x * transformScale) / AppStore.Instance.imageRatio, y: (zoomFrame.effectiveZoomLevel.y * transformScale) / AppStore.Instance.imageRatio};
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
-        const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
-        const shiftX = beamSettings.shiftX;
-        const shiftY = beamSettings.shiftY;
-
         const beamProperties = frame.getBeamProperties({channel: frame === this.props.frame ? this.props.channel : undefined});
-        if (!beamProperties || !beamProperties.overlayBeamSettings.isVisible) {
+        if (!beamProperties?.overlayBeamSettings.isVisible) {
             return null;
         }
 
-        const a = beamProperties.x / 2.0;
-        const b = beamProperties.y / 2.0;
-        const scale = {x: zoom.x / devicePixelRatio, y: zoom.y / devicePixelRatio};
-        let theta = ((90.0 - beamProperties.angle) * Math.PI) / 180.0;
-        if (frame.spatialTransform) {
-            theta -= frame.spatialTransform.rotation;
-        }
-
-        // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
-        const boundingBox = {
-            x: 2 * scale.x * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
-            y: 2 * scale.y * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
-        };
-
-        // limit the beam inside the beam overlay
-        const rightMost = frame.renderWidth - boundingBox.x / 2.0;
-        let positionX = basePosition ? basePosition.x : boundingBox.x / 2.0 + paddingOffset + shiftX;
-        if (positionX > rightMost) {
-            positionX = rightMost;
-        }
-        const upMost = boundingBox.y / 2.0;
-        let positionY = basePosition ? basePosition.y : frame.renderHeight - boundingBox.y / 2.0 - paddingOffset - shiftY;
-        if (positionY < upMost) {
-            positionY = upMost;
-        }
-
-        return {id, position: {x: positionX, y: positionY}, a, b, scale, theta, type, color, axisColor, strokeWidth};
+        const geometry = getBeamGeometry(frame, {imageRatio: AppStore.Instance.imageRatio, devicePixelRatio, padding: this.props.padding, basePosition}, beamProperties);
+        return geometry ? {id, ...geometry, type, color, axisColor, strokeWidth} : null;
     };
 
     private plotBeam(plotProps: BeamPlotProps | null): React.JSX.Element | null {

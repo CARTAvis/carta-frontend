@@ -26,6 +26,7 @@ import {
     transformPoint,
     usesSimpleShapeBoxSize
 } from "utilities";
+import {getTextAnnotationProps} from "utilities/region/textAnnotation";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, transformedImageToCanvasPos} from "./shared";
@@ -469,47 +470,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         const rotation = frame.spatialReference && frame.spatialTransform ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation;
         const zoomInvariantTransform = getZoomInvariantTransform(this.props.stageRef.current, rotation);
-        let align: string;
-        let verticalAlign: string;
-
-        switch (region.position) {
-            case CARTA.TextAnnotationPosition.UPPER_LEFT:
-                align = "left";
-                verticalAlign = "top";
-                break;
-            case CARTA.TextAnnotationPosition.UPPER_RIGHT:
-                align = "right";
-                verticalAlign = "top";
-                break;
-            case CARTA.TextAnnotationPosition.LOWER_LEFT:
-                align = "left";
-                verticalAlign = "bottom";
-                break;
-            case CARTA.TextAnnotationPosition.LOWER_RIGHT:
-                align = "right";
-                verticalAlign = "bottom";
-                break;
-            case CARTA.TextAnnotationPosition.TOP:
-                align = "center";
-                verticalAlign = "top";
-                break;
-            case CARTA.TextAnnotationPosition.BOTTOM:
-                align = "center";
-                verticalAlign = "bottom";
-                break;
-            case CARTA.TextAnnotationPosition.LEFT:
-                align = "left";
-                verticalAlign = "middle";
-                break;
-            case CARTA.TextAnnotationPosition.RIGHT:
-                align = "right";
-                verticalAlign = "middle";
-                break;
-            case CARTA.TextAnnotationPosition.CENTER:
-                align = "center";
-                verticalAlign = "middle";
-                break;
-        }
 
         return {
             rotation,
@@ -529,21 +489,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             perfectDrawEnabled: false,
             strokeScaleEnabled: false,
             strokeWidth: region.lineWidth,
-            width: (region.size.x / devicePixelRatio) * frame.aspectRatio || undefined,
-            height: region.size.y / devicePixelRatio || undefined,
+            ...getTextAnnotationProps(region, {x: (region.size.x / devicePixelRatio) * frame.aspectRatio, y: region.size.y / devicePixelRatio}),
             offsetX: ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
             offsetY: region.size.y / devicePixelRatio / 2.0,
             scaleX: zoomInvariantTransform.scaleX,
             scaleY: zoomInvariantTransform.scaleY,
             skewX: zoomInvariantTransform.skewX,
             skewY: zoomInvariantTransform.skewY,
-            align,
-            verticalAlign,
-            text: region.text,
-            fill: region.color,
-            fontSize: region.fontSize,
-            fontFamily: region.font,
-            fontStyle: region.fontStyle,
             hitStrokeWidth: 5
         };
     };

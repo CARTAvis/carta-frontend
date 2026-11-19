@@ -7,6 +7,7 @@ import {AstFonts, ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {clamp, getColorForTheme} from "utilities";
+import {getColorbarStagePosition} from "utilities/colorbarLayout";
 
 import "./ColorbarComponent.scss";
 
@@ -124,8 +125,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         let stageWidth = colorbarSettings.stageWidth;
         let stageHeight = viewHeight;
-        let stageTop = 0;
-        let stageLeft = 0;
+        const stagePosition = getColorbarStagePosition({
+            position: colorbarSettings.position,
+            viewHeight,
+            renderWidth: frame.overlayStore.renderWidth,
+            padding: frame.overlayStore.padding,
+            stageWidth: colorbarSettings.stageWidth,
+            hoverInfoHeight: overlaySettings.colorbarHoverInfoHeight,
+            isTitleVisible: overlaySettings.title.isShown
+        });
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
         let rectY = yOffset - (isOnePixBorder ? (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0) : 0);
         let rectWidth = colorbarSettings.width;
@@ -135,16 +143,6 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
         let labelYPos = yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
-
-        // adjust stage position
-        if (colorbarSettings.position === "right") {
-            stageLeft = frame.overlayStore.padding.left + frame.overlayStore.renderWidth;
-            stageTop = 0;
-        } else if (colorbarSettings.position === "bottom") {
-            stageTop = viewHeight - overlaySettings.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && overlaySettings.title.isShown) {
-            stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
-        }
 
         // rotate to horizontal by swapping
         if (colorbarSettings.position !== "right") {
@@ -288,7 +286,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         return (
             <React.Fragment>
-                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}} onMouseEnter={this.onMouseEnter} onMouseMove={this.handleMouseMove} onMouseLeave={this.onMouseLeave}>
+                <Stage
+                    className={"colorbar-stage"}
+                    width={stageWidth}
+                    height={stageHeight}
+                    style={{left: stagePosition.left, top: stagePosition.top}}
+                    onMouseEnter={this.onMouseEnter}
+                    onMouseMove={this.handleMouseMove}
+                    onMouseLeave={this.onMouseLeave}
+                >
                     <Layer ref={this.layerRef}>
                         {colorbar}
                         {ticks}

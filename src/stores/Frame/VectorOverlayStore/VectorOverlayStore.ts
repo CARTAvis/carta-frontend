@@ -1,13 +1,28 @@
 import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {VectorOverlayWebGLService} from "services";
+import {TILE_SIZE, VectorOverlayWebGLService} from "services";
 import {type FrameStore} from "stores/Frame";
 import {createTextureFromArray, equalIfBothFinite} from "utilities";
 
 export interface VectorOverlayTile {
     texture: WebGLTexture | null;
     numVertices: number;
+    vertexData?: Float32Array;
+    sourceIntensityData?: Float32Array;
+    sourceAngleData?: Float32Array;
+    sourceWidth?: number;
+    sourceHeight?: number;
+    sourceMip?: number;
+    sourceX?: number;
+    sourceY?: number;
+}
+
+function getVectorTileOffset(mip: number, tileX: number, tileY: number) {
+    return {
+        x: mip * (tileX * TILE_SIZE + 0.5) - 0.5,
+        y: mip * (tileY * TILE_SIZE + 0.5) - 0.5
+    };
 }
 
 export class VectorOverlayStore {
@@ -28,6 +43,30 @@ export class VectorOverlayStore {
     @computed get isComplete() {
         return this.progress >= 1.0;
     }
+
+    getExportVertexData = (tile: VectorOverlayTile): Float32Array => {
+        if (tile.vertexData) return tile.vertexData;
+        const {sourceIntensityData, sourceAngleData, sourceWidth, sourceHeight, sourceMip = 1, sourceX = 0, sourceY = 0} = tile;
+        if (!sourceIntensityData || !sourceAngleData || sourceWidth === undefined || sourceHeight === undefined) return new Float32Array();
+
+        const vertexData = new Float32Array(tile.numVertices * 4);
+        const {x: offsetX, y: offsetY} = getVectorTileOffset(sourceMip, sourceX, sourceY);
+        let numVertices = 0;
+        for (let y = 0; y < sourceHeight; y++) {
+            for (let x = 0; x < sourceWidth; x++) {
+                const index = x + sourceWidth * y;
+                const intensity = sourceIntensityData[index];
+                const angle = sourceAngleData[index];
+                if (!isFinite(intensity) || !isFinite(angle)) continue;
+                const offset = numVertices++ * 4;
+                vertexData[offset] = x * sourceMip + offsetX;
+                vertexData[offset + 1] = y * sourceMip + offsetY;
+                vertexData[offset + 2] = intensity;
+                vertexData[offset + 3] = angle;
+            }
+        }
+        return vertexData;
+    };
 
     @action clearData = () => {
         if (this.gl && this.tiles) {
@@ -106,8 +145,7 @@ export class VectorOverlayStore {
             let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            const offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
-            const offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
+            const {x: offsetX, y: offsetY} = getVectorTileOffset(tileMip ?? 1, tileX ?? 0, tileY ?? 0);
             for (let j = 0; j < tileHeight; j++) {
                 for (let i = 0; i < tileWidth; i++) {
                     const index = i + tileWidth * j;
@@ -125,14 +163,24 @@ export class VectorOverlayStore {
                 }
             }
             // Resize vertex data before creating a texture
-            vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 4);
+            if (numVertices * 4 < vertexData.length) vertexData = vertexData.slice(0, numVertices * 4);
             const texture = this.gl ? createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4) : null;
+            // Dense tiles cost half as much to retain as the interleaved export vertices.
+            const isRetainingSource = numVertices * 4 > intensityData.length + angleData.length;
             if (!this.tiles) {
                 this.tiles = [];
             }
             this.tiles.push({
                 texture,
-                numVertices
+                numVertices,
+                vertexData: isRetainingSource ? undefined : vertexData,
+                sourceIntensityData: isRetainingSource ? intensityData : undefined,
+                sourceAngleData: isRetainingSource ? angleData : undefined,
+                sourceWidth: isRetainingSource ? tileWidth : undefined,
+                sourceHeight: isRetainingSource ? tileHeight : undefined,
+                sourceMip: isRetainingSource ? (tileMip ?? 1) : undefined,
+                sourceX: isRetainingSource ? (tileX ?? 0) : undefined,
+                sourceY: isRetainingSource ? (tileY ?? 0) : undefined
             });
         }
 

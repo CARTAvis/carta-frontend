@@ -8,6 +8,7 @@ export * from "./catalog/constants";
 export * from "./catalog/coordinateFormat";
 export * from "./catalog/types";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
+export * from "./channelMap/channelMap";
 export * from "./color/color";
 export * from "./color/constants";
 export * from "./cosmology/cosmology";

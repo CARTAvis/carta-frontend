@@ -1,6 +1,9 @@
 import {type FrameView, type Point2D, type Transform2D} from "models";
 import {type FrameStore, type ZoomAxis} from "stores/Frame";
 import {getInterpolatedPathAtDistance, rotate2D, scale2D} from "utilities";
+import {imageToCanvasPos} from "utilities/region/geometry";
+
+export {imageToCanvasPos} from "utilities/region/geometry";
 
 export function getEffectiveZoomLevel(frame: FrameStore): Point2D {
     return (frame.spatialReference ?? frame).effectiveZoomLevel;
@@ -86,15 +89,6 @@ export function canvasToImagePos(canvasX: number, canvasY: number, frameView: Fr
         x: (canvasX / layerWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - offset.x,
         // y coordinate is flipped in image space
         y: (canvasY / layerHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - offset.y
-    };
-}
-
-export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D | undefined = undefined): Point2D {
-    const viewWidth = frameView.xMax - frameView.xMin;
-    const viewHeight = frameView.yMax - frameView.yMin;
-    return {
-        x: ((imageX - frameView.xMin) / viewWidth) * layerWidth,
-        y: layerHeight - ((imageY - frameView.yMin) / viewHeight) * layerHeight
     };
 }
 

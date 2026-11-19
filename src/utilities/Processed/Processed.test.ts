@@ -179,6 +179,24 @@ describe("ProtobufProcessing", () => {
             await CARTACompute.onReady;
         });
 
+        test("copies uncompressed coordinates and indices out of protobuf views", () => {
+            const coordinateBacking = new Float32Array([99, 1, 2, 3, 4, 99]);
+            const rawCoordinates = new Uint8Array(coordinateBacking.buffer, Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
+            const indexBacking = new Int32Array([99, 0, 2, 99]);
+            const rawStartIndices = new Uint8Array(indexBacking.buffer, Int32Array.BYTES_PER_ELEMENT, 2 * Int32Array.BYTES_PER_ELEMENT);
+
+            const result = ProtobufProcessing.processContourSet({rawCoordinates, rawStartIndices});
+
+            expect(result.coordinates).toEqual(new Float32Array([1, 2, 3, 4]));
+            expect(result.indexOffsets).toEqual(new Int32Array([0, 2]));
+            expect(result.coordinates!.buffer).not.toBe(coordinateBacking.buffer);
+            expect(result.indexOffsets.buffer).not.toBe(indexBacking.buffer);
+            coordinateBacking[1] = 42;
+            indexBacking[1] = 1;
+            expect(result.coordinates![0]).toBe(1);
+            expect(result.indexOffsets[0]).toBe(0);
+        });
+
         test("should correctly decode Case 1 rawCoordinates using WebAssembly", () => {
             const rawCoordinates = new Uint8Array([
                 40, 181, 47, 253, 32, 104, 245, 1, 0, 196, 2, 39, 38, 255, 1, 0, 0, 255, 0, 255, 3, 1, 3, 0, 0, 1, 1, 3, 1, 0, 3, 255, 1, 255, 0, 1, 253, 255, 253, 0, 255, 255, 255, 255, 255, 253, 255, 253, 255, 255, 255, 1, 0, 0, 0, 6, 32,
