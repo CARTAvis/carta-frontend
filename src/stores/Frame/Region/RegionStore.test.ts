@@ -35,10 +35,11 @@ import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
 test("all default region options can be persisted by the preference schema", () => {
     const validate = new Ajv({strictTypes: false}).compile(require("carta-schemas/preferences_schema_2.json"));
-    for (const regionType of RegionStore.AVAILABLE_DEFAULT_REGION_TYPES.keys()) {
+    for (const regionType of RegionStore.AVAILABLE_REGION_TYPES.keys()) {
         expect(validate({version: 2, regionType})).toBe(true);
     }
     expect(RegionStore.AVAILABLE_REGION_TYPES.has(CARTA.RegionType.ANNULUS)).toBe(true);
+    expect(validate({version: 2, regionType: CARTA.RegionType.ANNANNULUS})).toBe(false);
 });
 
 const BACKEND_SERVICE = {
