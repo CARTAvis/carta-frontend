@@ -2203,8 +2203,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
 
-        this.workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of this.workspace.colorBlendingImages) {
+        // A hand-edited workspace can leave out where a color-blended image is in the Image List.
+        // Such an image cannot be put back in its place, so it is not made.
+        const colorBlendingImages = this.workspace.colorBlendingImages.filter(blend => {
+            const isPlaced = Number.isInteger(blend.imageListIndex) && blend.imageListIndex >= 0;
+            if (!isPlaced) {
+                this.report(WorkspaceItemKind.Image, "a color-blended image", "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", WorkspaceIssueOutcome.Failed);
+            }
+            return isPlaced;
+        });
+        colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
+        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
@@ -2234,7 +2243,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending?.setAlpha(0, alphas[0]);
             }
             // Hide the layers that were hidden. A new color-blended image shows all of them.
-            const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
+            const saved = colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
             if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
                 colorBlending.toggleRasterVisible();
             }

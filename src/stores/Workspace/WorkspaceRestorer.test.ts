@@ -1030,6 +1030,27 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.reorderFrame).not.toHaveBeenCalled();
     });
 
+    test("reports a color-blended image that does not say where it is in the Image List, and makes the others", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {selectedFrames: [] as unknown[], frames: [] as unknown[], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                files: [IMAGE],
+                colorBlendingImages: [{selectedFrameId: [1], alpha: [1, 1]} as never, {imageListIndex: 1.5, selectedFrameId: [1], alpha: [1, 1]}, {imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1]}]
+            })
+        );
+
+        expect(issues.filter(issue => issue.subject === "a color-blended image")).toEqual([
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed}),
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed})
+        ]);
+        expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledWith(expect.any(Number), 1, 1);
+    });
+
     test("keeps contours saved without valid levels off, and says so", async () => {
         const {appStore} = createSession();
 
