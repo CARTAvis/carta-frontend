@@ -204,13 +204,13 @@ describe("ImageGenerationJobStore", () => {
             await settle();
 
             store.cancelJob(jobId);
-            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "cancelled", isImageBusy: true}));
             expect(appStore.cancelRequestingMoment).toHaveBeenCalledWith(1);
             expect(appStore.requestMoment.mock.calls[0][2].isStillWanted?.()).toBe(false);
 
             moments.reject(new ImageRequestCancelledError());
             await settle();
-            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "cancelled", isImageBusy: false}));
         });
 
         test("are cancelled when the user cancels the request in the GUI", async () => {
@@ -252,7 +252,7 @@ describe("ImageGenerationJobStore", () => {
 
             store.cancelJob(jobId);
             await settle();
-            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "cancelled", isImageBusy: false}));
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message.statsConfigs.length)).toEqual([1, 0]);
             expect(appStore.requestMoment).not.toHaveBeenCalled();
             expect(appStore.cancelRequestingMoment).not.toHaveBeenCalled();
@@ -279,8 +279,9 @@ describe("ImageGenerationJobStore", () => {
             store.cancelJob(jobId);
             expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(1);
 
+            expect(store.getJob(jobId).isImageBusy).toBe(true);
             runInAction(() => (state.connectionStatus = ConnectionStatus.CLOSED));
-            expect(store.getJob(jobId).status).toBe("cancelled");
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({status: "cancelled", isImageBusy: false}));
             expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(2);
             expect(appStore.endFileLoading).toHaveBeenCalledTimes(1);
         });
@@ -449,7 +450,7 @@ describe("ImageGenerationJobStore", () => {
 
             pv.resolve(madeImage(21));
             await settle();
-            expect(store.getJob(jobId)).toEqual(expect.objectContaining({kind: "pv", status: "done", images: [{fileId: 21}]}));
+            expect(store.getJob(jobId)).toEqual(expect.objectContaining({kind: "pv", status: "done", images: [{fileId: 21}], isImageBusy: false}));
         });
 
         test("fail when the cut is deleted", async () => {

@@ -119,6 +119,11 @@ export interface ImageGenerationJobState {
     /** Why the job failed. */
     error?: string;
     /**
+     * Whether the image is still busy with the job. After a cancel it stays true until the backend
+     * has stopped. Another job of the same kind can start on the image only when it is false.
+     */
+    isImageBusy: boolean;
+    /**
      * The settings that the job used, after the defaults are filled in. They are the same while
      * the job runs and after it ends.
      */
@@ -153,6 +158,8 @@ class ImageGenerationJob {
      * true, cancelling the job also cancels the backend request.
      */
     isRequesting = false;
+    /** Whether the image is still busy with the job. It becomes false when the request state is cleared. */
+    isImageBusy = true;
     /** Resolves when the job ends. */
     readonly ended: Promise<void>;
     private resolveEnded: () => void = () => {};
@@ -211,6 +218,7 @@ class ImageGenerationJob {
             progress: this.progress,
             images: this.images.map(image => (this.kind === "moment" ? {fileId: image.frameInfo.fileId, moment: image.generation?.moment} : {fileId: image.frameInfo.fileId})),
             error: this.error,
+            isImageBusy: this.isImageBusy,
             request: copyOf(this.request)
         };
     }
@@ -446,6 +454,7 @@ export class ImageGenerationJobStore {
                     this.stop(job, "failed", "the connection to the backend was lost");
                     if (isRequestPending) {
                         job.isRequesting = false;
+                        job.isImageBusy = false;
                         job.resetFrameRequestState();
                         this.appStore.endFileLoading();
                         disposeWatch();
@@ -486,6 +495,7 @@ export class ImageGenerationJobStore {
             // of a request that ends after the job is stopped. Such a request has nothing to report.
             const onRequestEnd = () => {
                 job.isRequesting = false;
+                job.isImageBusy = false;
                 disposeWatch();
             };
             requested.then(onRequestEnd, onRequestEnd);
@@ -500,6 +510,7 @@ export class ImageGenerationJobStore {
         } finally {
             if (!hasSentRequest) {
                 job.resetFrameRequestState();
+                job.isImageBusy = false;
                 disposeWatch();
             }
         }
