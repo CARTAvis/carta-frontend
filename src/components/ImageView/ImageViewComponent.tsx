@@ -89,6 +89,12 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
         ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
+    // Keep the WCS grid beneath contours and vectors, as in the viewer and SVG export.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    for (const overlayCanvas of overlayCanvasArray) {
+        ctx.drawImage(overlayCanvas, overlayCanvas.offsetLeft * appStore.pixelRatio, overlayCanvas.offsetTop * appStore.pixelRatio);
+    }
+
     if (contourCanvas) {
         ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
@@ -118,11 +124,6 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
         const offsetLeft = beamProfileDiv?.offsetLeft * appStore.pixelRatio || 0;
         const offsetTop = beamProfileDiv?.offsetTop * appStore.pixelRatio || 0;
         ctx.drawImage(beamProfileCanvas, offsetLeft, offsetTop);
-    }
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    for (const overlayCanvas of overlayCanvasArray) {
-        ctx.drawImage(overlayCanvas, overlayCanvas.offsetLeft * appStore.pixelRatio, overlayCanvas.offsetTop * appStore.pixelRatio);
     }
 
     if (catalogCanvas) {
