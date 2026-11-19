@@ -7,7 +7,8 @@ import {ConnectionStatus, RegionId, SpectralSystem, SpectralType, SpectralUnit} 
 import {BackendService} from "services";
 import {type AppStore} from "stores";
 import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
-import {ImageRequestCancelledError} from "stores/ImageGeneration/ImageGenerationRequests";
+import {ImageRequestCancelledError, PV_DEFAULT_WIDTH} from "stores/ImageGeneration/ImageGenerationRequests";
+import {PreferenceStore} from "stores/PreferenceStore/PreferenceStore";
 
 /** A promise that the test settles by hand. */
 function deferred<T>() {
@@ -342,6 +343,32 @@ describe("ImageGenerationJobStore", () => {
             expect(store.hasRunningJobs()).toBe(false);
         });
 
+        test("report the settings that they used, while they run, after a cancel and after they are done", async () => {
+            const {store, moments, madeImage} = createSession();
+            const given = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
+            const jobId = store.startMoments(1, {moments: given});
+            given.push(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+            const expected = {regionId: RegionId.IMAGE, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], channelRange: {min: 0, max: 9}, mask: CARTA.MomentMask.None, pixelRange: {min: 0, max: 0}, keep: true};
+            expect(store.getJob(jobId).request).toEqual(expected);
+            moments.resolve([madeImage(11, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM)]);
+            await settle();
+            expect(store.getJob(jobId).status).toBe("done");
+            expect(store.getJob(jobId).request).toEqual(expected);
+
+            const settings = {moments: [CARTA.Moment.MEAN_OF_THE_SPECTRUM], regionId: CLOSED_REGION, channels: {min: 7, max: 3}, mask: CARTA.MomentMask.Include, pixelRange: {min: 0.5, max: 2}, keep: false};
+            const cancelledJob = store.startMoments(1, settings);
+            const expectedCancelled = {regionId: CLOSED_REGION, moments: [CARTA.Moment.MEAN_OF_THE_SPECTRUM], channelRange: {min: 3, max: 7}, mask: CARTA.MomentMask.Include, pixelRange: {min: 0.5, max: 2}, keep: false};
+            expect(store.getJob(cancelledJob).request).toEqual(expectedCancelled);
+            store.cancelJob(cancelledJob);
+            const state = store.getJob(cancelledJob);
+            expect(state.status).toBe("cancelled");
+            expect(state.request).toEqual(expectedCancelled);
+            expect(JSON.parse(JSON.stringify(state)).request).toEqual(expectedCancelled);
+
+            (state.request as {moments: CARTA.Moment[]}).moments.push(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+            expect(store.getJob(cancelledJob).request).toEqual(expectedCancelled);
+        });
+
         test("run one at a time for each image", () => {
             const {store} = createSession();
             store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]});
@@ -449,6 +476,41 @@ describe("ImageGenerationJobStore", () => {
             expect(() => store.getJob(1)).toThrow("There is no image generation job with the ID 1");
             expect(frame.setIsRequestingPV).not.toHaveBeenCalled();
             expect(appStore.requestPV).not.toHaveBeenCalled();
+        });
+
+        test("use the width of the GUI when no width is given", () => {
+            const {store, appStore} = createSession();
+            store.startPv(1, {regionId: LINE_REGION});
+            expect(appStore.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({width: PV_DEFAULT_WIDTH}));
+        });
+
+        test.each([true, false])("draw the position axis as the user preference says when no order is given (preference %s)", isReverse => {
+            jest.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({isPVAxesOrderReverse: isReverse} as unknown as PreferenceStore);
+            const {store, appStore} = createSession();
+            const jobId = store.startPv(1, {regionId: LINE_REGION});
+            expect(appStore.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({reverse: isReverse}));
+            expect(store.getJob(jobId).request).toEqual(expect.objectContaining({reverse: isReverse}));
+            store.cancelJob(jobId);
+
+            store.startPv(1, {regionId: LINE_REGION, reverse: !isReverse});
+            expect(appStore.requestPV.mock.calls[1][0]).toEqual(expect.objectContaining({reverse: !isReverse}));
+        });
+
+        test("report the settings that they used, while they run and after they fail", async () => {
+            jest.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({isPVAxesOrderReverse: true} as unknown as PreferenceStore);
+            const {store, pv} = createSession();
+            const wholeAxisJob = store.startPv(1, {regionId: LINE_REGION});
+            const expected = {regionId: LINE_REGION, width: PV_DEFAULT_WIDTH, channelRange: null, reverse: true, keep: true};
+            expect(store.getJob(wholeAxisJob).request).toEqual(expected);
+            pv.reject("PV generation failed.");
+            await settle();
+            const state = store.getJob(wholeAxisJob);
+            expect(state.status).toBe("failed");
+            expect(state.request).toEqual(expected);
+            expect(JSON.parse(JSON.stringify(state)).request).toEqual(expected);
+
+            const rangeJob = store.startPv(1, {regionId: LINE_REGION, width: 5, spectralRange: {min: 6.4, max: 1.8}, reverse: false, keep: false});
+            expect(store.getJob(rangeJob).request).toEqual({regionId: LINE_REGION, width: 5, channelRange: {min: 2, max: 6}, reverse: false, keep: false});
         });
 
         test("refuse a channel range of one channel, and make no job", () => {

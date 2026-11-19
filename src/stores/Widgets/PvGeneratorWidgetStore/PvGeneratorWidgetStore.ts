@@ -16,6 +16,7 @@ import {
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
+import {PV_DEFAULT_WIDTH} from "stores/ImageGeneration/ImageGenerationRequests";
 import {length2D, toFixed} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -48,7 +49,7 @@ function isPositiveInteger(value: unknown, max: number): value is number {
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore implements WorkspaceLayoutConfigurable<PvGeneratorWidgetConfig>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
     widgetId: string = "";
-    @observable width: number = 3;
+    @observable width: number = PV_DEFAULT_WIDTH;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
     @observable shouldKeep: boolean = false;
     @observable range: CARTA.IntBounds.$Properties = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
@@ -252,7 +253,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
         return {
             fileId,
             regionId,
-            width: isPositiveInteger(saved.width, Number.MAX_SAFE_INTEGER) ? saved.width : 3,
+            width: isPositiveInteger(saved.width, Number.MAX_SAFE_INTEGER) ? saved.width : PV_DEFAULT_WIDTH,
             spectralRange: hasChannels ? {min: channels[0], max: channels[1]} : null,
             reverse: saved.reverse === true,
             previewRegionId,

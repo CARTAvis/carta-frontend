@@ -4,7 +4,7 @@ import {observable, runInAction} from "mobx";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 
 import {TelemetryService} from "../../../services";
-import {AppStore, PreferenceStore} from "../..";
+import {AppStore, PreferenceStore, PV_DEFAULT_WIDTH} from "../..";
 import {ACTIVE_FILE_ID} from "../RegionWidgetStore/RegionWidgetStore";
 
 import {PvGeneratorWidgetStore} from "./PvGeneratorWidgetStore";
@@ -51,6 +51,11 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         store.requestPV(true, "pv-generator-0-1");
         expect(appStore.requestPV).not.toHaveBeenCalled();
         expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
+    });
+
+    test("starts with the width that the scripting API also uses", () => {
+        const {store} = createStore(false);
+        expect(store.width).toBe(PV_DEFAULT_WIDTH);
     });
 
     test("still requests a PV image for a linear spectral axis", () => {

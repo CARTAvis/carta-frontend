@@ -2,9 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {action, comparer, computed, makeObservable, observable, reaction} from "mobx";
 
 import {ConnectionStatus, RegionId, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
-import {type AppStore} from "stores";
+import {type AppStore, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ImageRequestCancelledError, momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
+import {ImageRequestCancelledError, momentMessageOf, momentProblemOf, PV_DEFAULT_WIDTH, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 
 /** The kind of images that a job makes. */
 export type ImageGenerationJobKind = "moment" | "pv";
@@ -55,12 +55,51 @@ export interface MomentJobSettings extends ChannelSettings {
 export interface PvJobSettings extends ChannelSettings {
     /** The line or polyline region that the cut follows. */
     regionId: number;
-    /** How many pixels wide the cut is averaged over. The default is 1. */
+    /** How many pixels wide the cut is averaged over. The default is 3, as in the GUI. */
     width?: number;
-    /** Whether the position axis is drawn vertically. The default is false. */
+    /**
+     * Whether the position axis is drawn vertically. The default follows the user preference that
+     * the PV generator of the GUI also starts with.
+     */
     reverse?: boolean;
     /** Whether to keep the PV images made before. The default is true. */
     keep?: boolean;
+}
+
+/** A channel range as channel indices, with the smaller index first. */
+interface ChannelRange {
+    min: number;
+    max: number;
+}
+
+/** The settings that a moment job used, after the defaults are filled in. */
+export interface MomentJobRequest {
+    /** The region that the moments are made over. It is -1 for the whole image. */
+    regionId: number;
+    /** The moments that the job makes. */
+    moments: CARTA.Moment[];
+    /** The first and last channel that the job uses. */
+    channelRange: ChannelRange;
+    /** How the pixel range masks the cube. */
+    mask: CARTA.MomentMask;
+    /** The pixel range of the mask. */
+    pixelRange: {min: number; max: number};
+    /** Whether the job keeps the moment images made before. */
+    keep: boolean;
+}
+
+/** The settings that a PV job used, after the defaults are filled in. */
+export interface PvJobRequest {
+    /** The line or polyline region that the cut follows. */
+    regionId: number;
+    /** How many pixels wide the cut is averaged over. */
+    width: number;
+    /** The first and last channel that the job uses. It is null when the job uses all channels. */
+    channelRange: ChannelRange | null;
+    /** Whether the position axis is drawn vertically. */
+    reverse: boolean;
+    /** Whether the job keeps the PV images made before. */
+    keep: boolean;
 }
 
 /** What a script reads about a job. */
@@ -79,6 +118,19 @@ export interface ImageGenerationJobState {
     images: {fileId: number; moment?: CARTA.Moment}[];
     /** Why the job failed. */
     error?: string;
+    /**
+     * The settings that the job used, after the defaults are filled in. They are the same while
+     * the job runs and after it ends.
+     */
+    request: MomentJobRequest | PvJobRequest;
+}
+
+/** Returns a copy of the settings of a job, so that a script cannot change the settings that the job keeps. */
+function copyOf(request: MomentJobRequest | PvJobRequest): MomentJobRequest | PvJobRequest {
+    if ("moments" in request) {
+        return {...request, moments: [...request.moments], channelRange: {...request.channelRange}, pixelRange: {...request.pixelRange}};
+    }
+    return {...request, channelRange: request.channelRange ? {...request.channelRange} : null};
 }
 
 /**
@@ -108,7 +160,8 @@ class ImageGenerationJob {
     constructor(
         readonly id: number,
         readonly kind: ImageGenerationJobKind,
-        readonly frame: FrameStore
+        readonly frame: FrameStore,
+        readonly request: MomentJobRequest | PvJobRequest
     ) {
         makeObservable(this);
         this.ended = new Promise(resolve => (this.resolveEnded = resolve));
@@ -157,7 +210,8 @@ class ImageGenerationJob {
             status: this.status,
             progress: this.progress,
             images: this.images.map(image => (this.kind === "moment" ? {fileId: image.frameInfo.fileId, moment: image.generation?.moment} : {fileId: image.frameInfo.fileId})),
-            error: this.error
+            error: this.error,
+            request: copyOf(this.request)
         };
     }
 }
@@ -195,11 +249,21 @@ export class ImageGenerationJobStore {
             throw new Error(problem);
         }
         const channelRange = ImageGenerationJobStore.channelRangeOf(frame, settings) ?? {min: 0, max: Math.max(frame.numChannels - 1, 0)};
-        const message = momentMessageOf({moments, channelRange, mask: settings.mask ?? CARTA.MomentMask.None, pixelRange: settings.pixelRange ?? {min: 0, max: 0}}, frame, regionId, settings.keep ?? true);
+        const mask = settings.mask ?? CARTA.MomentMask.None;
+        const pixelRange = settings.pixelRange ?? {min: 0, max: 0};
+        const shouldKeep = settings.keep ?? true;
+        const message = momentMessageOf({moments, channelRange, mask, pixelRange}, frame, regionId, shouldKeep);
         if (!message) {
             throw new Error("The moment settings are not valid");
         }
-        const job = this.addJob("moment", frame);
+        const job = this.addJob("moment", frame, {
+            regionId,
+            moments: [...moments],
+            channelRange: {min: channelRange.min, max: channelRange.max},
+            mask,
+            pixelRange: {min: pixelRange.min, max: pixelRange.max},
+            keep: shouldKeep
+        });
         // Mark the image as busy at once. Then the GUI cannot start another request while the job
         // waits for the region data.
         frame.resetMomentRequestState();
@@ -236,11 +300,19 @@ export class ImageGenerationJobStore {
         if (rangeProblem) {
             throw new Error(rangeProblem);
         }
-        const message = pvMessageOf({width: settings.width ?? 1, channelRange, reverse: settings.reverse ?? false}, frame, settings.regionId, shouldKeep);
+        const width = settings.width ?? PV_DEFAULT_WIDTH;
+        const isReverse = settings.reverse ?? PreferenceStore.Instance.isPVAxesOrderReverse;
+        const message = pvMessageOf({width, channelRange, reverse: isReverse}, frame, settings.regionId, shouldKeep);
         if (!message) {
             throw new Error("The PV settings are not valid");
         }
-        const job = this.addJob("pv", frame);
+        const job = this.addJob("pv", frame, {
+            regionId: settings.regionId,
+            width,
+            channelRange: channelRange ? {min: channelRange.min, max: channelRange.max} : null,
+            reverse: isReverse === true,
+            keep: shouldKeep
+        });
         frame.resetPvRequestState();
         frame.setIsRequestingPV(true);
         void this.run(job, settings.regionId, false, async () => {
@@ -320,8 +392,8 @@ export class ImageGenerationJobStore {
         return frame;
     }
 
-    private addJob(kind: ImageGenerationJobKind, frame: FrameStore): ImageGenerationJob {
-        const job = new ImageGenerationJob(this.nextId++, kind, frame);
+    private addJob(kind: ImageGenerationJobKind, frame: FrameStore, request: MomentJobRequest | PvJobRequest): ImageGenerationJob {
+        const job = new ImageGenerationJob(this.nextId++, kind, frame, request);
         this.jobs.set(job.id, job);
         return job;
     }

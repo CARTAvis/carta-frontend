@@ -17,6 +17,9 @@ export type MomentSettings = Omit<WorkspaceMomentRequest, "type" | "sourceImageI
  */
 export type PvSettings = Omit<WorkspacePvRequest, "type" | "sourceImageId" | "regionId">;
 
+/** How many pixels wide a PV cut is averaged over, when no width is given. */
+export const PV_DEFAULT_WIDTH = 3;
+
 function isNumber(value: unknown): value is number {
     return typeof value === "number" && isFinite(value);
 }
