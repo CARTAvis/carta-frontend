@@ -37,6 +37,28 @@ test.each([
     expect(svg).toHaveAttribute("height", String(height));
 });
 
+test("compresses the embedded raster and its alpha mask", async () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "10");
+    svg.setAttribute("height", "10");
+    // A 2×2 PNG with partially transparent red pixels.
+    const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVR4nGP8z8DQwMDAwMAEIkAYABglAYOd/VRoAAAAAElFTkSuQmCC";
+    const save = jest.fn();
+    jest.mocked(svg2pdf).mockImplementation(async (_element, pdf) => {
+        pdf.addImage(png, "PNG", 0, 0, 2, 2);
+        const images = Array.from(pdf.output().matchAll(/\/Subtype \/Image\b([\s\S]*?)\nstream\r?\n/g), ([, dictionary]) => dictionary);
+        expect(images).toHaveLength(2);
+        const raster = images.find(dictionary => dictionary.includes("/DeviceRGB"));
+        expect(raster).toMatch(/\/SMask \d+ 0 R/);
+        expect(raster).toContain("/Filter /FlateDecode");
+        expect(images.find(dictionary => dictionary.includes("/DeviceGray"))).toContain("/Filter /FlateDecode");
+        pdf.save = save;
+        return pdf;
+    });
+    await downloadPdf(svg, "image.pdf");
+    expect(save).toHaveBeenCalledWith("image.pdf");
+});
+
 describe("prepareSvgForPdf", () => {
     test("inlines channel-map references while preserving viewport clips, transforms, text, and resource references", () => {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");

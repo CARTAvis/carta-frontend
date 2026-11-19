@@ -103,6 +103,7 @@ export async function downloadPdf(svgElement: SVGSVGElement, filename: string): 
     const pdf = new jsPDF({
         orientation: width > height ? "landscape" : "portrait",
         unit: "pt",
+        compress: true,
         format: [width, height]
     });
 
