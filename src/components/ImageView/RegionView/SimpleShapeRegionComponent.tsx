@@ -40,6 +40,8 @@ interface SimpleShapeRegionComponentProps {
     isFocused: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
+    /** Not read. A change draws the region again with the new stage scale. */
+    stageScale?: Point2D;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
