@@ -243,6 +243,16 @@ describe("workspace schema 2", () => {
         expect(validate(workspace)).toBe(true);
     });
 
+    test("accepts the zoom of each axis, the zoom axis and the time series membership of an image, and rejects other values", () => {
+        const image = {id: 1, source: {type: "file", filename: "pv.fits"}, axisZoomLevel: {x: 2, y: 0.5}, zoomAxis: "x", timeSeriesMember: true};
+        const generated = {request: {type: "pv", sourceImageId: 1, regionId: 3, width: 1, reverse: false}, images: [{id: 2, axisZoomLevel: {x: 1, y: 3}, zoomAxis: "both"}]};
+
+        expect(validate(createWorkspace({files: [image], generatedImages: [generated]}))).toBe(true);
+        expect(validate(createWorkspace({files: [{...image, zoomAxis: "z"}]}))).toBe(false);
+        expect(validate(createWorkspace({files: [{...image, axisZoomLevel: {x: 2}}]}))).toBe(false);
+        expect(validate(createWorkspace({files: [{...image, timeSeriesMember: "yes"}]}))).toBe(false);
+    });
+
     test("rejects an image with no source", () => {
         expect(validate(createWorkspace({files: [{id: 0, filename: "image.fits"}]}))).toBe(false);
     });
