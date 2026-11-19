@@ -241,9 +241,9 @@ export class ImageGenerationJobStore {
      * Starts a job that makes moment images of the image with the file ID `fileId`.
      *
      * @returns the ID of the job.
-     * @throws When a workspace is loading, when the image is not open, when it already makes
-     *         moment images, when `momentProblemOf` finds a problem, or when the settings are not
-     *         valid.
+     * @throws When a workspace is loading, when the image is not open, when an animation plays,
+     *         when the image already makes moment images, when `momentProblemOf` finds a problem,
+     *         or when the settings are not valid.
      */
     startMoments = (fileId: number, settings: MomentJobSettings): number => {
         const frame = this.idleFrame(fileId, "moment");
@@ -261,7 +261,8 @@ export class ImageGenerationJobStore {
         if (mask !== CARTA.MomentMask.None && !settings.pixelRange) {
             throw new Error("Give the pixel range of the mask");
         }
-        const pixelRange = settings.pixelRange ?? {min: 0, max: 0};
+        const givenPixelRange = settings.pixelRange ?? {min: 0, max: 0};
+        const pixelRange = {min: Math.min(givenPixelRange.min, givenPixelRange.max), max: Math.max(givenPixelRange.min, givenPixelRange.max)};
         const shouldKeep = settings.keep ?? false;
         const message = momentMessageOf({moments, channelRange, mask, pixelRange}, frame, regionId, shouldKeep);
         if (!message) {
@@ -290,8 +291,9 @@ export class ImageGenerationJobStore {
      * Starts a job that makes a PV image of the image with the file ID `fileId`.
      *
      * @returns the ID of the job.
-     * @throws When a workspace is loading, when the image is not open, when it already makes a PV
-     *         image, when `pvProblemOf` finds a problem, or when the settings are not valid.
+     * @throws When a workspace is loading, when the image is not open, when an animation plays,
+     *         when the image already makes a PV image, when `pvProblemOf` finds a problem, or when
+     *         the settings are not valid.
      */
     startPv = (fileId: number, settings: PvJobSettings): number => {
         const frame = this.idleFrame(fileId, "pv");
@@ -385,8 +387,8 @@ export class ImageGenerationJobStore {
     /**
      * Returns the open image with the file ID `fileId`.
      *
-     * @throws When a workspace is loading, when the image is not open, or when the image already
-     *         makes images of the kind `kind`.
+     * @throws When a workspace is loading, when the image is not open, when an animation plays, or
+     *         when the image already makes images of the kind `kind`.
      */
     private idleFrame(fileId: number, kind: ImageGenerationJobKind): FrameStore {
         if (this.appStore.isLoadingWorkspace) {
@@ -395,6 +397,9 @@ export class ImageGenerationJobStore {
         const frame = this.appStore.frames.find(f => f.frameInfo.fileId === fileId);
         if (!frame) {
             throw new Error(`No image with the file ID ${fileId} is open`);
+        }
+        if (this.appStore.animatorStore.isAnimationActive) {
+            throw new Error("Stop the animation first");
         }
         const isBusy = Array.from(this.jobs.values()).some(job => job.isRunning && job.kind === kind && job.frame === frame);
         if (isBusy || (kind === "moment" ? frame.isRequestingMoments : frame.isRequestingPV)) {
@@ -432,9 +437,10 @@ export class ImageGenerationJobStore {
      * The job fails when its image is closed, when its region is deleted, when a workspace starts to
      * load, or when the connection to the backend is lost. The job ends at once when it is stopped,
      * also when the backend never answers its request.
-     * The connection is watched until the request ends, also after the job ends. The backend drops
-     * its requests when the connection is lost, and no answer comes. Then this function clears the
-     * request state of the image and ends the file loading of the session.
+     * The connection is watched until the request ends, also after the job ends. No answer comes
+     * when the connection is lost, or when the image closes before the backend starts the request.
+     * Then this function clears the request state of the image and ends the file loading of the
+     * session.
      *
      * @param regionId - the region of the job, or a negative ID when the job uses the whole image.
      * @param shouldWaitForRegionData - whether the backend must keep the data of the region first.
@@ -449,9 +455,9 @@ export class ImageGenerationJobStore {
                 isConnected: this.appStore.backendService.connectionStatus === ConnectionStatus.ACTIVE
             }),
             ({isOpen, hasRegion, isLoadingWorkspace, isConnected}) => {
-                if (!isConnected) {
+                const abandonRequest = (reason: string) => {
                     const isRequestPending = job.isRequesting;
-                    this.stop(job, "failed", "the connection to the backend was lost");
+                    this.stop(job, "failed", reason);
                     if (isRequestPending) {
                         job.isRequesting = false;
                         job.isImageBusy = false;
@@ -459,10 +465,13 @@ export class ImageGenerationJobStore {
                         this.appStore.endFileLoading();
                         disposeWatch();
                     }
+                };
+                if (!isConnected) {
+                    abandonRequest("the connection to the backend was lost");
                 } else if (isLoadingWorkspace) {
                     this.stop(job, "failed", "a workspace was loaded");
                 } else if (!isOpen) {
-                    this.stop(job, "failed", "the image was closed");
+                    abandonRequest("the image was closed");
                 } else if (!hasRegion) {
                     this.stop(job, "failed", "the region was deleted");
                 }
@@ -552,11 +561,18 @@ export class ImageGenerationJobStore {
         if (spectralRange.system && !systems.includes(spectralRange.system)) {
             throw new Error(`The image does not support the spectral system ${spectralRange.system}`);
         }
-        const min = frame.findChannelIndexInCoordinate(spectralRange.min, type, unit, system, true);
-        const max = frame.findChannelIndexInCoordinate(spectralRange.max, type, unit, system, true);
-        if (min === undefined || max === undefined || !isFinite(min) || !isFinite(max)) {
+        const start = frame.findChannelPositionInCoordinate(spectralRange.min, type, unit, system);
+        const end = frame.findChannelPositionInCoordinate(spectralRange.max, type, unit, system);
+        if (start === undefined || end === undefined) {
             throw new Error("The spectral range cannot be converted to channels");
         }
-        return {min: Math.min(min, max), max: Math.max(min, max)};
+        // A range that only partly covers the channels uses the channels it covers.
+        const last = frame.numChannels - 1;
+        const [low, high] = [Math.min(start, end), Math.max(start, end)];
+        if (high < -0.5 || low > last + 0.5) {
+            throw new Error(`The spectral range is outside the channels of the image, which are from 0 to ${last}`);
+        }
+        const channelOf = (position: number) => Math.min(Math.max(Math.round(position), 0), last);
+        return {min: channelOf(low), max: channelOf(high)};
     }
 }

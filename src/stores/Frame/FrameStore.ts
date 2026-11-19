@@ -2682,14 +2682,9 @@ export class FrameStore {
      * Returns the index of the channel nearest to a spectral value in the given spectral type, unit
      * and system. A value outside the channels gives the first or last channel. Returns nothing
      * when the value is not a number or the image has no channel information. The spectral
-     * coordinate that the image shows does not change. For example, a script can give a velocity
-     * range for an image that shows frequencies.
-     *
-     * @param shouldRejectUnconvertible - whether to return nothing when the value cannot be
-     *        converted to a channel, for example when the image has no spectral coordinate. Otherwise
-     *        such a value gives the first channel, as the GUI has always done.
+     * coordinate that the image shows does not change.
      */
-    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null, shouldRejectUnconvertible = false): number | undefined => {
+    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }
@@ -2698,23 +2693,45 @@ export class FrameStore {
             if (this.isSpectralChannel && type === SpectralType.CHANNEL) {
                 return this.channelInfo.getChannelIndexSimple(x);
             }
-            const axis = this.spectralAxis;
-            const isNative = !!axis?.type && !!axis?.specsys && axis.type.code === (type as string) && axis.type.unit === (unit as string) && axis.specsys === (system as string);
-            if (shouldRejectUnconvertible && !this.channelInfo.fromWCS) {
-                return undefined;
-            }
-            if ((axis && !axis.valid) || isNative) {
+            if (this.isNativeSpectralValue(type, unit, system)) {
                 return this.channelInfo.getChannelIndexWCS(x);
             }
             // Convert the value to the native spectral coordinate of the image.
             const tx = AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
-            if (shouldRejectUnconvertible && !isFinite(tx)) {
-                return undefined;
-            }
             return this.channelInfo.getChannelIndexWCS(tx);
         }
         return undefined;
     };
+
+    /**
+     * Returns the channel position of a spectral value in the given spectral type, unit and system,
+     * such as 2.5 between channels 2 and 3. A value outside the channels gives a position below 0
+     * or above the last channel. Returns nothing when the value cannot be converted to a channel.
+     * For example, a script can give a velocity range for an image that shows frequencies.
+     */
+    public findChannelPositionInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
+        if (x === null || x === undefined || !isFinite(x) || !this.channelInfo) {
+            return undefined;
+        }
+        if (this.isSpectralChannel && type === SpectralType.CHANNEL) {
+            return x;
+        }
+        if (!this.channelInfo.fromWCS) {
+            return undefined;
+        }
+        const native = this.isNativeSpectralValue(type, unit, system) ? x : AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
+        const position = isFinite(native) ? this.getSpectralIndexFromNativeWcs(native) : NaN;
+        return isFinite(position) ? position : undefined;
+    };
+
+    /** Returns whether a spectral value in the given type, unit and system needs no conversion to the native coordinate of the image. */
+    private isNativeSpectralValue(type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): boolean {
+        const axis = this.spectralAxis;
+        if (axis && !axis.valid) {
+            return true;
+        }
+        return !!axis?.type && !!axis?.specsys && axis.type.code === (type as string) && axis.type.unit === (unit as string) && axis.specsys === (system as string);
+    }
 
     public getRegionProperties(regionId: number): string[] {
         const propertyString: string[] = [];
