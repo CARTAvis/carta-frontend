@@ -29,7 +29,7 @@ interface LineSegmentRegionComponentProps {
     isFocused: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
-    /** The scale of the stage. The component does not read it. A new value only makes the region draw again, so that the parts with a fixed size on screen use the new scale. */
+    /** Not read. A change draws the region again with the new stage scale. */
     stageScale?: Point2D;
     onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;

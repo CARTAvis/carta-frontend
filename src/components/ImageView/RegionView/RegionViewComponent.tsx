@@ -61,11 +61,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable private regionSelectionBox: RegionSelectionBox | null = null;
     @observable private frame: FrameStore;
     /**
-     * The scale of the stage. The regions read the scale from the stage when they are drawn. The stage
-     * gets its scale only after the regions are drawn for the first time. So a change of this value
-     * draws the regions again. If the regions were not drawn again, an annotation that the view shows
-     * when it opens would have the wrong size until the zoom changes. An example is an annotation that
-     * a workspace restores, or one on an image that the user switches back to.
+     * The scale of the stage. A change draws the regions again, because the stage gets its scale only
+     * after the first draw. Otherwise an annotation that the view opens with, such as a restored one,
+     * keeps the wrong size until the zoom changes.
      */
     @observable private stageScale: Point2D = {x: 1, y: 1};
 
