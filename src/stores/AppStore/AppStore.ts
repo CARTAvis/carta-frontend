@@ -1435,6 +1435,9 @@ export class AppStore {
                 this.fileBrowserStore.setImportingRegions(false);
                 this.fileBrowserStore.resetLoadingStates();
                 this.fileBrowserStore.hideFileBrowser();
+                if (ack.message) {
+                    AppToaster.show(WarningToast(ack.message));
+                }
             }
         } catch (err) {
             console.error(err);
@@ -1519,8 +1522,11 @@ export class AppStore {
         }
 
         try {
-            yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, shouldOverwrite);
+            const ack: CARTA.ExportRegionAck.$Properties = yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, shouldOverwrite);
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
+            if (ack.message) {
+                AppToaster.show(WarningToast(ack.message));
+            }
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
             throw err;

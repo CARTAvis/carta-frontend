@@ -350,6 +350,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const centerWCSPoint = this.centerWCS;
         const centerInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-center-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
@@ -361,6 +362,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const centerInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-center-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
@@ -378,6 +380,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const bottomLeftWCSPoint = this.bottomLeftWCS;
         const bottomLeftInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-bottom-left-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={bottomLeftPoint?.x}
@@ -390,6 +393,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const bottomLeftInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-bottom-left-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={bottomLeftPoint?.y}
@@ -408,6 +412,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const topRightWCSPoint = this.topRightWCS;
         const topRightInputX = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-top-right-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={topRightPoint?.x}
@@ -420,6 +425,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const topRightInputY = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-top-right-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={topRightPoint?.y}
@@ -437,6 +443,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const sizeWCS = this.sizeWCS;
         const sizeWidthInput = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-width-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.x}
@@ -449,6 +456,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const sizeHeightInput = (
             <CoordNumericInput
+                data-testid="region-dialog-rectangular-height-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.y}
@@ -459,21 +467,26 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 customPlaceholder="Height"
             />
         );
-        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : this.sizeWCS ? WCSPoint2D.toString(this.sizeWCS) : ""}` : `Image: ${Point2D.toString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : this.sizeWCS ? WCSPoint2D.toString(this.sizeWCS, 3) : ""}` : `Image: ${Point2D.toString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
 
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-rectangular-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="region-dialog-rectangular-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNTEXT && (
                     <FormGroup className="ann-text-input" label="Text" inline={true}>
-                        <TextArea placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                        <TextArea
+                            data-testid="region-dialog-rectangular-text-input"
+                            placeholder="Enter text annotation"
+                            value={(region as TextAnnotationStore).text}
+                            onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)}
+                        />
                     </FormGroup>
                 )}
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-rectangular-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
                     {centerInputX}
@@ -496,7 +509,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <span className="info-string">{topRightInfoString}</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
-                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
+                    <ImageCoordNumericInput data-testid="region-dialog-rectangular-rotation-input" value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
                 </FormGroup>
             </div>
         );
