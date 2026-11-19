@@ -12,6 +12,7 @@ export interface CatalogPointStyle {
     rotation?: number;
     lineWidth?: number;
     highlightColor?: string;
+    featherWidth?: number;
 }
 
 /** Matches the catalog vertex shader's area-to-dimension conversion. */
@@ -87,6 +88,10 @@ export function renderCatalogToSvg(
         const size = sizes.get(fileId) ?? 5;
         const color = colors.get(fileId) ?? "#21a5af";
 
+        const shapeName = typeof shape === "number" ? CatalogOverlayShape[shape] : shape;
+        const isLinedCircle = shapeName === "CIRCLE_LINED" || shapeName === "CircleLined";
+        const isFilledCircle = shapeName === "CIRCLE_FILLED" || shapeName === "CircleFilled";
+
         const numPoints = Math.floor(positions.length / 2);
         for (let i = 0; i < numPoints; i++) {
             const x = positions[i * 2];
@@ -97,6 +102,10 @@ export function renderCatalogToSvg(
             }
 
             const style = styles?.get(fileId)?.[i];
+            if (style?.highlightColor && (isLinedCircle || isFilledCircle)) {
+                selectedElements.push(...createSelectedCircle(x, y, style, size, color, isLinedCircle));
+                continue;
+            }
             const element = renderCatalogShape(x, y, style?.size ?? size, style?.color ?? color, shape, style?.minorSize, style?.rotation, style?.lineWidth);
             if (element && !style?.highlightColor) {
                 group.appendChild(element);
@@ -113,6 +122,32 @@ export function renderCatalogToSvg(
     // Keep each selected outline and its source glyph together in foreground order.
     selectedElements.forEach(element => group.appendChild(element));
     return group;
+}
+
+function createSelectedCircle(x: number, y: number, style: CatalogPointStyle, size: number, color: string, isLined: boolean): SVGElement[] {
+    const radius = (style.size ?? size) / 2;
+    const thickness = style.lineWidth ?? 1;
+    const feather = style.featherWidth ?? 0;
+    // The shader chooses the highlight outside rMin + half a line thickness.
+    // The feathered inner and outer edges reach half opacity two feather widths inward.
+    const outerRadius = Math.max(0, radius - 2 * feather);
+    const splitRadius = Math.min(outerRadius, Math.max(0, radius - 1.5 * thickness));
+    const innerRadius = isLined ? Math.min(splitRadius, Math.max(0, radius - 2 * thickness - 2 * feather)) : 0;
+    const elements: SVGElement[] = [];
+    if (outerRadius > splitRadius) {
+        const highlight = createCircleMarker({x, y}, (outerRadius + splitRadius) / 2, "none", style.highlightColor!, outerRadius - splitRadius);
+        highlight.setAttribute("data-selection-highlight", "true");
+        elements.push(highlight);
+    }
+    if (splitRadius > innerRadius) {
+        const fill = style.color ?? color;
+        elements.push(
+            innerRadius === 0
+                ? createCircleMarker({x, y}, splitRadius, fill, "none", 0)
+                : createCircleMarker({x, y}, (splitRadius + innerRadius) / 2, "none", fill, splitRadius - innerRadius)
+        );
+    }
+    return elements;
 }
 
 function createCatalogSelectionOutline(x: number, y: number, style: CatalogPointStyle, shape: string | CatalogOverlayShape, fallbackSize: number): SVGElement | null {

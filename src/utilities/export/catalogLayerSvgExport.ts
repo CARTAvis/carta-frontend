@@ -69,6 +69,7 @@ function createCatalogStyleResolver(store: CatalogDisplayStore, frame: FrameStor
             color: isFinite(mappedColor) ? sampleSvgColormapColor(store.colorMap, mappedColor, 0, 1, store.catalogColor) : store.catalogColor,
             rotation: isFinite(mappedOrientations[index]) ? mappedOrientations[index] : 0,
             lineWidth,
+            featherWidth: (store.shapeSettings?.featherWidth ?? 0) * pixelRatio,
             highlightColor: isSelected ? store.highlightColor : undefined
         };
     };

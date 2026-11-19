@@ -329,7 +329,7 @@ describe("renderCatalogToSvg", () => {
         const group = renderCatalogToSvg(
             new Map([[11, new Float32Array([10, 20, 30, 40])]]),
             new Map([[11, CatalogOverlayShape.CIRCLE_LINED]]),
-            new Map([[11, 8]]),
+            new Map([[11, 12]]),
             new Map([[11, "#123456"]]),
             0,
             0,
@@ -345,6 +345,7 @@ describe("renderCatalogToSvg", () => {
         );
 
         expect(Array.from(group.children, element => element.getAttribute("data-selection-highlight"))).toEqual(["true", null, "true", null]);
+        expect(Array.from(group.children, element => element.getAttribute("r"))).toEqual(["5.25", "4.25", "4.5", "2.5"]);
         expect(Array.from(group.children, element => element.getAttribute("stroke"))).toEqual(["#ff00ff", "#123456", "#00ffff", "#123456"]);
     });
 

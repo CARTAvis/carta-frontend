@@ -419,7 +419,7 @@ describe("getPanelSvg", () => {
         expect(catalog?.querySelector("circle")).toHaveAttribute("cx", "50");
         expect(catalog?.querySelector("[data-selection-highlight]")).toHaveAttribute("stroke", "#ff00ff");
         expect(catalog?.querySelector("circle:not([data-selection-highlight])")).toHaveAttribute("stroke", "#00ff00");
-        expect(catalog?.querySelector("[data-selection-highlight]")).toHaveAttribute("stroke-width", "2");
+        expect(catalog?.querySelector("[data-selection-highlight]")).toHaveAttribute("stroke-width", "1.5");
     });
 
     test("omits offscreen catalog sources while preserving edge-crossing sources", () => {
