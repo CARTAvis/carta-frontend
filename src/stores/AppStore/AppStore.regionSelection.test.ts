@@ -108,7 +108,9 @@ jest.mock("stores", () => ({
 
 import {CARTA} from "carta-protobuf";
 
+import {AppToaster, WarningToast} from "components/Shared";
 import {ImageType} from "enums";
+import {BackendService} from "services";
 import {CURSOR_REGION_ID} from "stores/Frame";
 
 import {AppStore} from "./AppStore";
@@ -416,5 +418,60 @@ describe("AppStore region copy-paste", () => {
         ]);
         expect(pastedRegions[1].controlPoints).toEqual([{x: 70, y: 30}]);
         expect(regionSet.setSelectionByIds).toHaveBeenCalledWith([-1, -2], -1);
+    });
+});
+
+describe("AppStore.importRegion", () => {
+    const appStore = AppStore.Instance;
+
+    test("shows a warning toast when import succeeds with ack.message", async () => {
+        const regionSet = {addExistingRegion: jest.fn()};
+        const frame = {
+            frameInfo: {fileId: 1},
+            regionSet,
+            secondarySpatialImages: []
+        };
+        Object.defineProperty(appStore, "imageViewConfigStore", {
+            configurable: true,
+            value: {frames: [frame], visibleFrames: []}
+        });
+        Object.defineProperty(appStore, "widgetsStore", {
+            configurable: true,
+            value: {updateRenderConfigSettingsVisibility: jest.fn()}
+        });
+        Object.defineProperty(appStore, "fileBrowserStore", {
+            configurable: true,
+            value: {
+                setHasReceivedImportRegionAck: jest.fn(),
+                setImportingRegions: jest.fn(),
+                resetLoadingStates: jest.fn(),
+                hideFileBrowser: jest.fn(),
+                updateLoadingState: jest.fn()
+            }
+        });
+        (BackendService.Instance as any).importRegion = jest.fn().mockResolvedValue({
+            success: true,
+            message: "Skipped unsupported region.",
+            regions: {
+                "1": {
+                    controlPoints: [
+                        {x: 5, y: 5},
+                        {x: 3, y: 3},
+                        {x: 1, y: 1}
+                    ],
+                    regionType: CARTA.RegionType.ANNULUS,
+                    rotation: 0
+                }
+            },
+            regionStyles: {}
+        });
+        (AppToaster.show as jest.Mock).mockClear();
+        (WarningToast as jest.Mock).mockClear();
+
+        await appStore.importRegion("", "test.reg", CARTA.FileType.DS9_REG, frame as any);
+
+        expect(regionSet.addExistingRegion).toHaveBeenCalledTimes(1);
+        expect(WarningToast).toHaveBeenCalledWith("Skipped unsupported region.");
+        expect(AppToaster.show).toHaveBeenCalledTimes(1);
     });
 });

@@ -1435,6 +1435,9 @@ export class AppStore {
                 this.fileBrowserStore.setImportingRegions(false);
                 this.fileBrowserStore.resetLoadingStates();
                 this.fileBrowserStore.hideFileBrowser();
+                if (ack.message) {
+                    AppToaster.show(WarningToast(ack.message));
+                }
             }
         } catch (err) {
             console.error(err);
