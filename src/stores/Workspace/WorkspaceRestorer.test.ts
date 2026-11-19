@@ -2385,6 +2385,42 @@ describe("WorkspaceRestorer", () => {
             });
         });
 
+        describe("a PV image", () => {
+            const savedLine = {id: 6, type: CARTA.RegionType.LINE, rotation: 0, points: []};
+            const pvRequest = {type: "pv" as const, sourceImageId: 1, regionId: 6, width: 3, channelRange: {min: 2, max: 8}, reverse: false};
+
+            /** Restores a PV image along a line that the session has at these points, on an image of 100 x 100 pixels. */
+            async function restorePvAlong(controlPoints: {x: number; y: number}[]) {
+                const session = createGeneratingSession();
+                frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? {regionType: CARTA.RegionType.LINE, controlPoints} : undefined)};
+                session.appStore.onRecovery = jest.fn((recovery: WorkspaceRecoveryStore) => recovery.skipAll());
+                const issues = await restoreIssues(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedLine]}}], generatedImages: [{request: pvRequest, images: [{id: 2, name: "image_pv.fits"}]}]}));
+                return {...session, issues};
+            }
+
+            test("is made again along a line that crosses the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 10, y: 10},
+                    {x: 90, y: 90}
+                ]);
+
+                expect(issues).toEqual([]);
+                expect(requestPV).toHaveBeenCalledTimes(1);
+                expect(requestPV.mock.calls[0].slice(0, 3)).toEqual([expect.objectContaining({fileId: 1, regionId: 106, width: 3, spectralRange: {min: 2, max: 8}}), appStore.frames[0], true]);
+            });
+
+            test("is reported as failed, and not offered in Recovery, when its line does not cross the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 110, y: 10},
+                    {x: 150, y: 90}
+                ]);
+
+                expect(requestPV).not.toHaveBeenCalled();
+                expect(appStore.onRecovery).not.toHaveBeenCalled();
+                expect(issues).toEqual([expect.objectContaining({kind: WorkspaceItemKind.GeneratedImage, message: "Could not make the PV image of image.fits: The line does not cross the image", outcome: WorkspaceIssueOutcome.Failed})]);
+            });
+        });
+
         test("says why a moment request failed", async () => {
             createGeneratingSession(Promise.reject(new Error("Moment generation failed: no spectral axis.")));
             const wholeImage = {...momentRequest, regionId: RegionId.IMAGE};

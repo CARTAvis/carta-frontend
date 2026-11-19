@@ -12,7 +12,18 @@ describe("AppStore requests that make moment and PV images", () => {
     const appStore = AppStore.Instance;
     const frame = {
         isSpectralAxisNonlinear: false,
-        frameInfo: {fileId: 5},
+        numChannels: 10,
+        frameInfo: {fileId: 5, fileInfoExtended: {width: 10, height: 10}},
+        getRegion: (regionId: number) =>
+            regionId === 1
+                ? {
+                      regionType: CARTA.RegionType.LINE,
+                      controlPoints: [
+                          {x: 1, y: 1},
+                          {x: 8, y: 8}
+                      ]
+                  }
+                : undefined,
         momentImages: [],
         pvImages: [],
         removeMomentImage: jest.fn(),

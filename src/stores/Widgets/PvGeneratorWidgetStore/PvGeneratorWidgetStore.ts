@@ -187,7 +187,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
     /** @returns the request of a preview, which ends when the preview is shown or the request fails. */
     @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string): Promise<void> | undefined => {
         const frame = this.effectiveFrame;
-        if (!frame || frame.isSpectralAxisNonlinear) {
+        // An image with one channel has no spectral range to cut, as an image without a spectral axis.
+        if (!frame || frame.isSpectralAxisNonlinear || frame.numChannels <= 1) {
             return undefined;
         }
 

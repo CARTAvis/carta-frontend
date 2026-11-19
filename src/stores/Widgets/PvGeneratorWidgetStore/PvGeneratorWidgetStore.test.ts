@@ -11,12 +11,23 @@ import {PvGeneratorWidgetStore} from "./PvGeneratorWidgetStore";
 
 describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
     const createStore = (isSpectralAxisNonlinear: boolean) => {
-        const region = {regionId: 1, regionType: CARTA.RegionType.LINE, size: {x: 3, y: 4}, isTemporary: false, nameString: "line"};
+        const region = {
+            regionId: 1,
+            regionType: CARTA.RegionType.LINE,
+            size: {x: 3, y: 4},
+            controlPoints: [
+                {x: 1, y: 1},
+                {x: 4, y: 5}
+            ],
+            isTemporary: false,
+            nameString: "line"
+        };
         const frame = {
             isSpectralAxisNonlinear,
+            numChannels: 11,
             channelValueBounds: {min: 0, max: 10},
             findChannelIndexByValue: jest.fn((value: number) => value),
-            frameInfo: {fileId: 3},
+            frameInfo: {fileId: 3, fileInfoExtended: {width: 10, height: 10}},
             getRegion: jest.fn(() => region),
             regionSet: {focusedRegion: undefined, regions: [region]},
             resetPvRequestState: jest.fn(),
@@ -27,7 +38,7 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         jest.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
         const store = new PvGeneratorWidgetStore();
         store.setRegionId(ACTIVE_FILE_ID, region.regionId);
-        return {store, appStore};
+        return {store, appStore, frame};
     };
 
     afterEach(() => {
@@ -46,6 +57,16 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         const {store, appStore} = createStore(false);
         store.requestPV();
         expect(appStore.requestPV).toHaveBeenCalledTimes(1);
+    });
+
+    test("requests neither a PV image nor a preview of an image with one channel", () => {
+        const {store, appStore, frame} = createStore(false);
+        frame.numChannels = 1;
+        store.requestPV();
+        store.requestPV(true, "pv-generator-0");
+        expect(appStore.requestPV).not.toHaveBeenCalled();
+        expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
+        expect(frame.setIsRequestingPV).not.toHaveBeenCalled();
     });
 });
 

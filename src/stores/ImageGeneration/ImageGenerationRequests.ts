@@ -1,9 +1,9 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {MOMENT_TEXT, type WorkspaceMomentRequest, type WorkspacePvRequest} from "models";
+import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D, type WorkspaceMomentRequest, type WorkspacePvRequest} from "models";
 import {BackendService} from "services";
-import {type FrameStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 
 /**
  * The settings of a moment request, as a workspace saves them. The image and the region are not
@@ -19,6 +19,103 @@ export type PvSettings = Omit<WorkspacePvRequest, "type" | "sourceImageId" | "re
 
 function isNumber(value: unknown): value is number {
     return typeof value === "number" && isFinite(value);
+}
+
+/**
+ * Returns whether a line region crosses the image. Only the first two control points are used, so
+ * a polyline is checked by its first segment.
+ *
+ * The line crosses the image when the four image corners are not all on one side of the line, and
+ * when both ends are not beyond the same edge of the image.
+ */
+export function isLineOnImage(region: Pick<RegionStore, "controlPoints"> | null | undefined, frame: Pick<FrameStore, "frameInfo"> | null | undefined): boolean {
+    if (region && frame?.frameInfo?.fileInfoExtended) {
+        const startPoint = region.controlPoints[0];
+        const endPoint = region.controlPoints[1];
+        const width = frame.frameInfo.fileInfoExtended.width;
+        const height = frame.frameInfo.fileInfoExtended.height;
+        const imageCorners: Point2D[] = [
+            {x: -0.5, y: -0.5},
+            {x: width - 0.5, y: -0.5},
+            {x: -0.5, y: height - 0.5},
+            {x: width - 0.5, y: height - 0.5}
+        ];
+
+        // Count on which side of the line each image corner is. See https://stackoverflow.com/a/1560510.
+        let sideValue = 0;
+        for (const corner of imageCorners) {
+            sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
+        }
+
+        if (sideValue <= 2 && sideValue >= -2) {
+            // Both ends can still be beyond the same edge of the image.
+            if ((startPoint.x < -0.5 && endPoint.x < -0.5) || (startPoint.y < -0.5 && endPoint.y < -0.5) || (startPoint.x > width - 0.5 && endPoint.x > width - 0.5) || (startPoint.y > height - 0.5 && endPoint.y > height - 0.5)) {
+                return false;
+            }
+
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Returns whether the first two control points of a line region round to the same pixel. */
+export function isLineInOnePixel(region: Pick<RegionStore, "controlPoints"> | null | undefined): boolean {
+    if (region) {
+        const startPoint = region.controlPoints[0];
+        const endPoint = region.controlPoints[1];
+        if (Math.round(startPoint.x) === Math.round(endPoint.x) && Math.round(startPoint.y) === Math.round(endPoint.y)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Returns why moment images of `source` cannot be made, or nothing when they can. The GUI, the
+ * scripting API and the workspace restore use the same rules.
+ */
+export function momentProblemOf(source: FrameStore, moments: CARTA.Moment[] | null | undefined): string | undefined {
+    if (source.isSpectralAxisNonlinear && moments?.some(moment => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(moment))) {
+        return NONLINEAR_SPECTRAL_AXIS_MESSAGE;
+    }
+    if (source.numChannels <= 1) {
+        return "The image has only one channel";
+    }
+    return undefined;
+}
+
+/**
+ * Returns why a PV image of `source` along the region `regionId` cannot be made, or nothing when it
+ * can. The GUI, the scripting API and the workspace restore use the same rules.
+ *
+ * @param channelRange - the first and last channel, as channel indices. Leave it out to use all
+ *                       channels.
+ */
+export function pvProblemOf(source: FrameStore, regionId: number, channelRange?: {min: number; max: number}): string | undefined {
+    if (source.isSpectralAxisNonlinear) {
+        return NONLINEAR_SPECTRAL_AXIS_MESSAGE;
+    }
+    if (source.numChannels <= 1) {
+        return "The image has only one channel";
+    }
+    const region = source.getRegion(regionId);
+    if (!region) {
+        return `The image has no region ${regionId}`;
+    }
+    if (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.POLYLINE) {
+        return `Region ${regionId} is not a line or polyline`;
+    }
+    if (!isLineOnImage(region, source)) {
+        return "The line does not cross the image";
+    }
+    if (isLineInOnePixel(region)) {
+        return "The line starts and ends in the same pixel";
+    }
+    if (channelRange && channelRange.min >= channelRange.max) {
+        return "The channel range has fewer than two channels";
+    }
+    return undefined;
 }
 
 /**

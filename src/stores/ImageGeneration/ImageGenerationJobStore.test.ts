@@ -29,16 +29,36 @@ const CLOSED_REGION = 5;
 const LINE_REGION = 6;
 
 function createSession() {
-    const regions = observable.map<number, {regionType: CARTA.RegionType; isClosedRegion: boolean}>(
+    const regions = observable.map<number, {regionType: CARTA.RegionType; isClosedRegion: boolean; controlPoints: {x: number; y: number}[]}>(
         [
-            [CLOSED_REGION, {regionType: CARTA.RegionType.RECTANGLE, isClosedRegion: true}],
-            [LINE_REGION, {regionType: CARTA.RegionType.LINE, isClosedRegion: false}]
+            [
+                CLOSED_REGION,
+                {
+                    regionType: CARTA.RegionType.RECTANGLE,
+                    isClosedRegion: true,
+                    controlPoints: [
+                        {x: 50, y: 50},
+                        {x: 10, y: 10}
+                    ]
+                }
+            ],
+            [
+                LINE_REGION,
+                {
+                    regionType: CARTA.RegionType.LINE,
+                    isClosedRegion: false,
+                    controlPoints: [
+                        {x: 10, y: 10},
+                        {x: 90, y: 90}
+                    ]
+                }
+            ]
         ],
         {deep: false}
     );
     const frame = observable(
         {
-            frameInfo: {fileId: 1},
+            frameInfo: {fileId: 1, fileInfoExtended: {width: 100, height: 100}},
             numChannels: 10,
             isRequestingMoments: false,
             isRequestingPV: false,
@@ -339,6 +359,16 @@ describe("ImageGenerationJobStore", () => {
             expect(() => store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], channels: {min: 0, max: 2}, spectralRange: {min: 0, max: 2}})).toThrow("Give either channels or a spectral range, not both");
             expect(() => store.getJob(9)).toThrow("There is no image generation job with the ID 9");
         });
+
+        test("refuse an image with one channel, and make no job", () => {
+            const {store, appStore, frame} = createSession();
+            runInAction(() => (frame.numChannels = 1));
+            expect(() => store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM]})).toThrow("The image has only one channel");
+            expect(() => store.getJob(1)).toThrow("There is no image generation job with the ID 1");
+            expect(store.hasRunningJobs()).toBe(false);
+            expect(frame.setIsRequestingMoments).not.toHaveBeenCalled();
+            expect(appStore.requestMoment).not.toHaveBeenCalled();
+        });
     });
 
     describe("the channel range", () => {
@@ -401,6 +431,33 @@ describe("ImageGenerationJobStore", () => {
             const {store} = createSession();
             expect(() => store.startPv(1, {regionId: CLOSED_REGION})).toThrow("Image 1 has no line or polyline region with the ID 5");
             expect(() => store.startPv(1, {regionId: LINE_REGION, width: 0})).toThrow("The PV settings are not valid");
+        });
+
+        test("refuse a line that the PV image cannot be made along, and make no job", () => {
+            const {store, appStore, frame, regions} = createSession();
+            const line = regions.get(LINE_REGION)!;
+            line.controlPoints = [
+                {x: 110, y: 10},
+                {x: 150, y: 90}
+            ];
+            expect(() => store.startPv(1, {regionId: LINE_REGION})).toThrow("The line does not cross the image");
+            line.controlPoints = [
+                {x: 10.2, y: 10.1},
+                {x: 9.8, y: 10.3}
+            ];
+            expect(() => store.startPv(1, {regionId: LINE_REGION})).toThrow("The line starts and ends in the same pixel");
+            expect(() => store.getJob(1)).toThrow("There is no image generation job with the ID 1");
+            expect(frame.setIsRequestingPV).not.toHaveBeenCalled();
+            expect(appStore.requestPV).not.toHaveBeenCalled();
+        });
+
+        test("refuse a channel range of one channel, and make no job", () => {
+            const {store, appStore, frame} = createSession();
+            expect(() => store.startPv(1, {regionId: LINE_REGION, channels: {min: 3, max: 3}})).toThrow("The channel range has fewer than two channels");
+            expect(() => store.startPv(1, {regionId: LINE_REGION, spectralRange: {min: 4.2, max: 3.9}})).toThrow("The channel range has fewer than two channels");
+            expect(() => store.getJob(1)).toThrow("There is no image generation job with the ID 1");
+            expect(frame.setIsRequestingPV).not.toHaveBeenCalled();
+            expect(appStore.requestPV).not.toHaveBeenCalled();
         });
     });
 });

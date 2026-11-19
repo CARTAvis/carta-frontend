@@ -10,6 +10,7 @@ import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsCompon
 import {FrequencyUnit, MomentSelectingMode} from "enums";
 import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, type FrameStore} from "stores";
+import {momentProblemOf} from "stores/ImageGeneration/ImageGenerationRequests";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
@@ -256,7 +257,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const isSpectralAxisNonlinear = !!frame?.isSpectralAxisNonlinear;
         const isAbleToGenerate =
             frame &&
-            frame.numChannels > 1 &&
+            !momentProblemOf(frame, widgetStore.supportedSelectedMoments) &&
             !appStore.animatorStore.isAnimationActive &&
             !appStore.widgetsStore.isSpectralWidgetStreamingData &&
             widgetStore.isMomentRegionValid &&

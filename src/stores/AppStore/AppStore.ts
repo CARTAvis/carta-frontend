@@ -24,7 +24,6 @@ import {
     type ImageViewItem,
     momentsMade,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
-    NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
     PresetLayout,
     type RegionId,
@@ -65,7 +64,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
-import {ImageRequestCancelledError, type ImageRequestOptions} from "stores/ImageGeneration/ImageGenerationRequests";
+import {ImageRequestCancelledError, type ImageRequestOptions, momentProblemOf, pvProblemOf} from "stores/ImageGeneration/ImageGenerationRequests";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -1641,8 +1640,8 @@ export class AppStore {
      * Request moment images of an image.
      *
      * @returns the moment images added to the session.
-     * @throws When the spectral axis is not linear and a moment needs a linear axis. Also the
-     *         error of the backend when `options.shouldThrow` is true, or during a workspace
+     * @throws When `momentProblemOf` finds a problem with the request. Also the error of the
+     *         backend when `options.shouldThrow` is true, or during a workspace
      *         restore when `options.shouldThrow` is left out. Also an `ImageRequestCancelledError`
      *         when the request is cancelled and `options.shouldThrow` is true.
      */
@@ -1651,8 +1650,9 @@ export class AppStore {
         if (!message || !frame) {
             return [];
         }
-        if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        const problem = momentProblemOf(frame, message.moments);
+        if (problem) {
+            throw new Error(problem);
         }
 
         const isStillWanted = options.isStillWanted ?? (() => true);
@@ -1743,8 +1743,8 @@ export class AppStore {
      * Request a PV image of an image.
      *
      * @returns the PV image added to the session.
-     * @throws When the spectral axis is not linear. Also the error of the backend when
-     *         `options.shouldThrow` is true, or during a workspace restore when
+     * @throws When `pvProblemOf` finds a problem with the request. Also the error of the backend
+     *         when `options.shouldThrow` is true, or during a workspace restore when
      *         `options.shouldThrow` is left out. Also an `ImageRequestCancelledError` when the
      *         request is cancelled and `options.shouldThrow` is true. A toast shows the error of
      *         the backend only when the error is not thrown.
@@ -1754,8 +1754,10 @@ export class AppStore {
         if (!message || !frame) {
             return undefined;
         }
-        if (frame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        const spectralRange = message.spectralRange ? {min: message.spectralRange.min ?? 0, max: message.spectralRange.max ?? 0} : undefined;
+        const problem = pvProblemOf(frame, message.regionId ?? RegionIdType.NONE, spectralRange);
+        if (problem) {
+            throw new Error(problem);
         }
 
         const isStillWanted = options.isStillWanted ?? (() => true);

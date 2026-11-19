@@ -70,7 +70,7 @@ import {
     type WorkspaceLoadingStep
 } from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
-import {momentMessageOf, pvMessageOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
+import {momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -1603,6 +1603,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             // user retries after a later request made its images. The backend numbers the names of
             // kept images, as it did when the images were first made.
             const message = momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const problem = message && momentProblemOf(source, message.moments);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message && regionId > RegionId.CURSOR) {
                 const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
@@ -1659,6 +1664,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
         } else {
             const message = pvMessageOf(request, source, regionId, true);
+            const spectralRange = message?.spectralRange;
+            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
@@ -1698,6 +1709,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             this.momentSources.add(source);
         }
         return outcome;
+    }
+
+    /**
+     * Reports a saved moment or PV request that the rules of `momentProblemOf` and `pvProblemOf`
+     * do not allow. A retry would fail the same way, so the request is not offered in Recovery.
+     */
+    private reportProblem(subject: string, problem: string, details: {label: string; imageIds: number[]}) {
+        this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${problem}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason: problem, imageIds: details.imageIds});
     }
 
     /**

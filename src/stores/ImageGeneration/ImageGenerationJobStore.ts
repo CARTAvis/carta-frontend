@@ -2,10 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {action, comparer, computed, makeObservable, observable, reaction} from "mobx";
 
 import {ConnectionStatus, RegionId, type SpectralSystem, SpectralType, type SpectralUnit} from "enums";
-import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "models";
 import {type AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {ImageRequestCancelledError, momentMessageOf, pvMessageOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
+import {ImageRequestCancelledError, momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 
 /** The kind of images that a job makes. */
 export type ImageGenerationJobKind = "moment" | "pv";
@@ -181,8 +180,8 @@ export class ImageGenerationJobStore {
      *
      * @returns the ID of the job.
      * @throws When a workspace is loading, when the image is not open, when it already makes
-     *         moment images, when a moment needs a linear spectral axis that the image does not
-     *         have, or when the settings are not valid.
+     *         moment images, when `momentProblemOf` finds a problem, or when the settings are not
+     *         valid.
      */
     startMoments = (fileId: number, settings: MomentJobSettings): number => {
         const frame = this.idleFrame(fileId, "moment");
@@ -191,8 +190,9 @@ export class ImageGenerationJobStore {
             throw new Error(`Image ${fileId} has no closed region with the ID ${regionId}`);
         }
         const moments = settings.moments;
-        if (frame.isSpectralAxisNonlinear && moments?.some(moment => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(moment))) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        const problem = momentProblemOf(frame, moments);
+        if (problem) {
+            throw new Error(problem);
         }
         const channelRange = ImageGenerationJobStore.channelRangeOf(frame, settings) ?? {min: 0, max: Math.max(frame.numChannels - 1, 0)};
         const message = momentMessageOf({moments, channelRange, mask: settings.mask ?? CARTA.MomentMask.None, pixelRange: settings.pixelRange ?? {min: 0, max: 0}}, frame, regionId, settings.keep ?? true);
@@ -216,7 +216,7 @@ export class ImageGenerationJobStore {
      *
      * @returns the ID of the job.
      * @throws When a workspace is loading, when the image is not open, when it already makes a PV
-     *         image, when its spectral axis is not linear, or when the settings are not valid.
+     *         image, when `pvProblemOf` finds a problem, or when the settings are not valid.
      */
     startPv = (fileId: number, settings: PvJobSettings): number => {
         const frame = this.idleFrame(fileId, "pv");
@@ -224,11 +224,18 @@ export class ImageGenerationJobStore {
         if (regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.POLYLINE) {
             throw new Error(`Image ${fileId} has no line or polyline region with the ID ${settings?.regionId}`);
         }
-        if (frame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        // Check the image and the line first. A nonlinear spectral axis then gives its own message,
+        // and not an error about the channels.
+        const imageProblem = pvProblemOf(frame, settings.regionId);
+        if (imageProblem) {
+            throw new Error(imageProblem);
         }
         const shouldKeep = settings.keep ?? true;
         const channelRange = ImageGenerationJobStore.channelRangeOf(frame, settings);
+        const rangeProblem = channelRange && pvProblemOf(frame, settings.regionId, channelRange);
+        if (rangeProblem) {
+            throw new Error(rangeProblem);
+        }
         const message = pvMessageOf({width: settings.width ?? 1, channelRange, reverse: settings.reverse ?? false}, frame, settings.regionId, shouldKeep);
         if (!message) {
             throw new Error("The PV settings are not valid");
