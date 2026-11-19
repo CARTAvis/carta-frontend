@@ -1640,7 +1640,9 @@ export class WidgetsStore {
     @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
-        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && activeImage && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
+        // The Image List keeps its own copy of each item, so the active image is found by its type and store.
+        const isActiveVisible = activeImage?.type !== ImageType.PV_PREVIEW && visibleImages.some(image => AppStore.Instance.isActiveImage(image));
+        const titleImage = isActiveVisible ? activeImage : visibleImages[0];
         return titleImage ? (titleImage?.store?.filename ?? "") : "No image loaded";
     }
 
