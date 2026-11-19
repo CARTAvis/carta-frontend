@@ -1633,12 +1633,12 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("applies the custom texts of the WCS overlay, and the custom title and colorbar label of each image and color-blended image", async () => {
+    test("applies the custom texts of the WCS overlay, the custom title and colorbar label of each image, and the name and custom title of each color-blended image", async () => {
         const setTitleCustomText = jest.fn();
         const setColorbarLabelCustomText = jest.fn();
         frameOverrides = {setTitleCustomText, setColorbarLabelCustomText};
         const {appStore} = createSession();
-        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn()};
+        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn(), setName: jest.fn()};
         appStore.imageViewConfigStore.createColorBlending.mockReturnValue(colorBlending);
         const wcsOverlay = {labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}};
 
@@ -1648,7 +1648,7 @@ describe("WorkspaceRestorer", () => {
                     {...IMAGE, titleCustomText: "M51", colorbarLabelCustomText: "flux"},
                     {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}
                 ],
-                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
+                colorBlendingImages: [{name: "Color Blending 1", imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
                 wcsOverlay
             })
         );
@@ -1657,6 +1657,7 @@ describe("WorkspaceRestorer", () => {
         // Both images share the mocks, so only the first image sets a text.
         expect(setTitleCustomText.mock.calls).toEqual([["M51"]]);
         expect(setColorbarLabelCustomText.mock.calls).toEqual([["flux"]]);
+        expect(colorBlending.setName).toHaveBeenCalledWith("Color Blending 1");
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 

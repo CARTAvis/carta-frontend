@@ -2213,10 +2213,14 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return isPlaced;
         });
         colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of colorBlendingImages) {
+        for (const {name, imageListIndex, selectedFrameId, alpha, titleCustomText} of colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+                // A new color-blended image takes the next number of this session, so it gets the saved name instead.
+                if (typeof name === "string" && name) {
+                    colorBlending.setName(name);
+                }
                 if (typeof titleCustomText === "string") {
                     colorBlending.setTitleCustomText(titleCustomText);
                 }

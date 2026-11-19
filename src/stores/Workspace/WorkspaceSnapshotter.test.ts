@@ -1145,7 +1145,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(saved?.colorbarLabelCustomText).toBe("flux");
     });
 
-    test("saves the custom title of a color-blended image, but not the default one", () => {
+    test("saves the name of each color-blended image, and its custom title but not the default one", () => {
         const custom = {selectedFrames: [], alpha: [1], filename: "Color Blending 1", titleCustomText: "RGB of M51"};
         const plain = {selectedFrames: [], alpha: [1], filename: "Color Blending 2", titleCustomText: "Color Blending 2"};
         createSession({
@@ -1161,8 +1161,8 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.colorBlendingImages).toEqual([
-            {imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
-            {imageListIndex: 2, selectedFrameId: [], alpha: [1]}
+            {name: "Color Blending 1", imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
+            {name: "Color Blending 2", imageListIndex: 2, selectedFrameId: [], alpha: [1]}
         ]);
     });
 

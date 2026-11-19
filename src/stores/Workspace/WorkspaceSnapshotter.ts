@@ -688,6 +688,7 @@ export class WorkspaceSnapshotter {
                 continue;
             }
             const workspaceColorBlending: WorkspaceColorBlending = {
+                name: colorBlending.filename,
                 imageListIndex: index,
                 selectedFrameId: selectedFrameId as number[],
                 alpha: colorBlending.alpha,

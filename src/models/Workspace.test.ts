@@ -253,6 +253,13 @@ describe("workspace schema 2", () => {
         expect(validate(createWorkspace({files: [{...image, timeSeriesMember: "yes"}]}))).toBe(false);
     });
 
+    test("accepts the name of a color-blended image, and rejects a name that is not text", () => {
+        const blend = {name: "Color Blending 2", imageListIndex: 1, selectedFrameId: [0], alpha: [1, 1]};
+
+        expect(validate(createWorkspace({colorBlendingImages: [blend]}))).toBe(true);
+        expect(validate(createWorkspace({colorBlendingImages: [{...blend, name: 2}]}))).toBe(false);
+    });
+
     test("rejects an image with no source", () => {
         expect(validate(createWorkspace({files: [{id: 0, filename: "image.fits"}]}))).toBe(false);
     });

@@ -242,6 +242,8 @@ export interface WorkspaceRegion {
 }
 
 export interface WorkspaceColorBlending {
+    /** The name of the color-blended image in the Image List. */
+    name?: string;
     imageListIndex: number;
     selectedFrameId: number[];
     alpha: number[];

@@ -21,8 +21,8 @@ type ColormapSetConfig =
 export class ColorBlendingStore {
     /** The unique identifier of the color blended image. */
     readonly id: number;
-    /** The filename of the color blended image. */
-    readonly filename: string;
+    /** The name of the color blended image in the Image List. */
+    filename: string;
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
     public static readonly COLORMAP_SETS: ReadonlyMap<ColormapSet, ColormapSetConfig> = new Map([
         [ColormapSet.RGB, {type: "collection", colormaps: [ColorMap.Red, ColorMap.Green, ColorMap.Blue]}],
@@ -51,6 +51,18 @@ export class ColorBlendingStore {
      */
     @action setTitleCustomText = (text: string) => {
         this.titleCustomText = text;
+    };
+
+    /**
+     * Sets the name of the color blended image in the Image List. A title that is still the name
+     * follows the new name.
+     * @param name - The new name.
+     */
+    @action setName = (name: string) => {
+        if (this.titleCustomText === this.filename) {
+            this.titleCustomText = name;
+        }
+        this.filename = name;
     };
 
     /**
