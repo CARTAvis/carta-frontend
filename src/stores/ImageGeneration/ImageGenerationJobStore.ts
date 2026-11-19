@@ -45,9 +45,9 @@ export interface MomentJobSettings extends ChannelSettings {
     regionId?: number;
     /** How the pixel range masks the cube. The default is no mask. */
     mask?: CARTA.MomentMask;
-    /** The pixel range of the mask. Give it when `mask` is set. The default is from 0 to 0. */
+    /** The pixel range of the mask. It is needed when `mask` is not `None`. */
     pixelRange?: {min: number; max: number};
-    /** Whether to keep the moment images made before. The default is true. */
+    /** Whether to keep the moment images made before. The default is false, as in the GUI. */
     keep?: boolean;
 }
 
@@ -62,7 +62,7 @@ export interface PvJobSettings extends ChannelSettings {
      * the PV generator of the GUI also starts with.
      */
     reverse?: boolean;
-    /** Whether to keep the PV images made before. The default is true. */
+    /** Whether to keep the PV images made before. The default is false, as in the GUI. */
     keep?: boolean;
 }
 
@@ -250,8 +250,11 @@ export class ImageGenerationJobStore {
         }
         const channelRange = ImageGenerationJobStore.channelRangeOf(frame, settings) ?? {min: 0, max: Math.max(frame.numChannels - 1, 0)};
         const mask = settings.mask ?? CARTA.MomentMask.None;
+        if (mask !== CARTA.MomentMask.None && !settings.pixelRange) {
+            throw new Error("Give the pixel range of the mask");
+        }
         const pixelRange = settings.pixelRange ?? {min: 0, max: 0};
-        const shouldKeep = settings.keep ?? true;
+        const shouldKeep = settings.keep ?? false;
         const message = momentMessageOf({moments, channelRange, mask, pixelRange}, frame, regionId, shouldKeep);
         if (!message) {
             throw new Error("The moment settings are not valid");
@@ -294,7 +297,7 @@ export class ImageGenerationJobStore {
         if (imageProblem) {
             throw new Error(imageProblem);
         }
-        const shouldKeep = settings.keep ?? true;
+        const shouldKeep = settings.keep ?? false;
         const channelRange = ImageGenerationJobStore.channelRangeOf(frame, settings);
         const rangeProblem = channelRange && pvProblemOf(frame, settings.regionId, channelRange);
         if (rangeProblem) {

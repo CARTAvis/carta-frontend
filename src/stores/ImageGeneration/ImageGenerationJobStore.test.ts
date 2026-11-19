@@ -149,7 +149,7 @@ describe("ImageGenerationJobStore", () => {
             expect(frame.setIsRequestingMoments).toHaveBeenCalledWith(true);
             const [message, source, options] = appStore.requestMoment.mock.calls[0];
             expect(message).toEqual(
-                expect.objectContaining({fileId: 1, regionId: RegionId.IMAGE, spectralRange: {min: 0, max: 9}, mask: CARTA.MomentMask.None, keep: true, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]})
+                expect.objectContaining({fileId: 1, regionId: RegionId.IMAGE, spectralRange: {min: 0, max: 9}, mask: CARTA.MomentMask.None, keep: false, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM]})
             );
             expect(source).toBe(frame);
             expect(options.shouldThrow).toBe(true);
@@ -169,6 +169,13 @@ describe("ImageGenerationJobStore", () => {
                     ]
                 })
             );
+        });
+
+        test("need the pixel range of a mask, and make no job without it", () => {
+            const {store, appStore} = createSession();
+            expect(() => store.startMoments(1, {moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], mask: CARTA.MomentMask.Include})).toThrow("Give the pixel range of the mask");
+            expect(() => store.getJob(1)).toThrow("There is no image generation job with the ID 1");
+            expect(appStore.requestMoment).not.toHaveBeenCalled();
         });
 
         test("wait for the backend to keep the region data before the moments are asked for", async () => {
@@ -348,7 +355,7 @@ describe("ImageGenerationJobStore", () => {
             const given = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
             const jobId = store.startMoments(1, {moments: given});
             given.push(CARTA.Moment.MAX_OF_THE_SPECTRUM);
-            const expected = {regionId: RegionId.IMAGE, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], channelRange: {min: 0, max: 9}, mask: CARTA.MomentMask.None, pixelRange: {min: 0, max: 0}, keep: true};
+            const expected = {regionId: RegionId.IMAGE, moments: [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM], channelRange: {min: 0, max: 9}, mask: CARTA.MomentMask.None, pixelRange: {min: 0, max: 0}, keep: false};
             expect(store.getJob(jobId).request).toEqual(expected);
             moments.resolve([madeImage(11, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM)]);
             await settle();
@@ -436,8 +443,8 @@ describe("ImageGenerationJobStore", () => {
 
             expect(frame.setIsRequestingPV).toHaveBeenCalledWith(true);
             const [message, , shouldKeep, options] = appStore.requestPV.mock.calls[0];
-            expect(message).toEqual(expect.objectContaining({fileId: 1, regionId: LINE_REGION, width: 3, spectralRange: {min: 2, max: 6}, reverse: true, keep: true}));
-            expect(shouldKeep).toBe(true);
+            expect(message).toEqual(expect.objectContaining({fileId: 1, regionId: LINE_REGION, width: 3, spectralRange: {min: 2, max: 6}, reverse: true, keep: false}));
+            expect(shouldKeep).toBe(false);
             expect(options.shouldThrow).toBe(true);
 
             pv.resolve(madeImage(21));
@@ -500,7 +507,7 @@ describe("ImageGenerationJobStore", () => {
             jest.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({isPVAxesOrderReverse: true} as unknown as PreferenceStore);
             const {store, pv} = createSession();
             const wholeAxisJob = store.startPv(1, {regionId: LINE_REGION});
-            const expected = {regionId: LINE_REGION, width: PV_DEFAULT_WIDTH, channelRange: null, reverse: true, keep: true};
+            const expected = {regionId: LINE_REGION, width: PV_DEFAULT_WIDTH, channelRange: null, reverse: true, keep: false};
             expect(store.getJob(wholeAxisJob).request).toEqual(expected);
             pv.reject("PV generation failed.");
             await settle();
