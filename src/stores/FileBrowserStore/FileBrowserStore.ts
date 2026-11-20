@@ -187,7 +187,12 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, shouldAppend = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
-                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
+                if (AppStore.Instance.isAppendFileDisabled || AppStore.Instance.isReadOnly || AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
+                    return;
+                }
+                break;
+            case BrowserMode.RegionExport:
+                if (AppStore.Instance.isReadOnly) {
                     return;
                 }
                 break;
@@ -782,6 +787,9 @@ export class FileBrowserStore {
     };
 
     @action showExportRegions = (regionId?: number) => {
+        if (AppStore.Instance.isReadOnly) {
+            return;
+        }
         this.showFileBrowser(BrowserMode.RegionExport, false);
         if (regionId) {
             this.clearExportRegionIndexes(SelectionMode.All);
@@ -796,6 +804,9 @@ export class FileBrowserStore {
     };
 
     @action showExportSelectedRegions = () => {
+        if (AppStore.Instance.isReadOnly) {
+            return;
+        }
         this.showFileBrowser(BrowserMode.RegionExport, false);
         this.clearExportRegionIndexes(SelectionMode.All);
 

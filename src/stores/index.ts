@@ -18,6 +18,8 @@ export * from "./Frame";
 export * from "./HelpStore/HelpStore";
 export * from "./HipsQueryStore/HipsQueryStore";
 export * from "./ImageFittingStore/ImageFittingStore";
+export * from "./ImageGeneration/ImageGenerationJobStore";
+export * from "./ImageGeneration/ImageGenerationRequests";
 export * from "./ImageViewConfig/ImageViewConfigStore";
 export * from "./LayoutStore/LayoutStore";
 export * from "./LogStore/LogStore";

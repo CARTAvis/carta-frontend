@@ -879,7 +879,10 @@ export class WidgetsStore {
             }
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
-                config.componentId = config.id;
+                // A catalog plot of a workspace keeps the component ID that its binding was registered with,
+                // so that closing the plot removes that binding.
+                const boundComponentId = isWorkspace && catalogPlotWidgetStore ? CatalogStore.Instance.widgetBindings.displayedForWidget(id).componentId : undefined;
+                config.componentId = boundComponentId ?? config.id;
             }
             const hasPosition = isWorkspace
                 ? typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0
@@ -1640,7 +1643,9 @@ export class WidgetsStore {
     @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
-        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && activeImage && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
+        // The Image List keeps its own copy of each item, so the active image is found by its type and store.
+        const isActiveVisible = activeImage?.type !== ImageType.PV_PREVIEW && visibleImages.some(image => AppStore.Instance.isActiveImage(image));
+        const titleImage = isActiveVisible ? activeImage : visibleImages[0];
         return titleImage ? (titleImage?.store?.filename ?? "") : "No image loaded";
     }
 

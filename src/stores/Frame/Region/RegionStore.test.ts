@@ -55,6 +55,21 @@ const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: numbe
     return region;
 };
 
+describe("RegionStore rotation of a line-like region", () => {
+    test("is 0 for a ruler whose ends are at one point, as after a click", () => {
+        const ruler = MakeRegion(CARTA.RegionType.ANNRULER, [
+            {x: 5, y: 5},
+            {x: 5, y: 5}
+        ]);
+        expect(ruler.rotation).toBe(0);
+        ruler.setControlPoints([
+            {x: 5, y: 5},
+            {x: 5, y: 9}
+        ]);
+        expect(ruler.rotation).toBe(180);
+    });
+});
+
 describe("RegionStore selection and keyboard-edit helpers", () => {
     beforeEach(() => {
         jest.clearAllMocks();

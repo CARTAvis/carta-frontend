@@ -1,7 +1,6 @@
 import * as React from "react";
 import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, PopoverNext, Position, Switch, Tooltip} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
-import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -262,7 +261,7 @@ export class RootMenuComponent extends React.Component {
 
         let saveImageTooltip: string | React.JSX.Element = "";
         let shouldHideImageTooltip = true;
-        if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
+        if (appStore.isReadOnly) {
             saveImageTooltip = "Not allowed in read-only mode";
             shouldHideImageTooltip = false;
         } else if (appStore.activeImage?.type !== ImageType.FRAME) {
@@ -292,7 +291,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.isAppendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
+                        disabled={appStore.isAppendFileDisabled || appStore.isReadOnly || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
@@ -308,12 +307,12 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame || appStore.activeFrame.isPreview} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
                     content={"Not allowed in read-only mode"}
-                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || !appStore.isReadOnly}
                     position={Position.LEFT}
                 >
                     <MenuItem
                         text="Export Regions"
-                        disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.isReadOnly}
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip>
@@ -323,7 +322,9 @@ export class RootMenuComponent extends React.Component {
                 </MenuItem>
                 <MenuDivider />
                 <MenuItem text="Open Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
-                <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                <Tooltip content={"Not allowed in read-only mode"} disabled={!appStore.isReadOnly} position={Position.LEFT}>
+                    <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled || appStore.isReadOnly} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                </Tooltip>
                 <MenuDivider />
                 <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />
                 {serverSubMenu}

@@ -200,7 +200,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                     <section data-testid="workspace-restore-report-repointed">
                         <div className="report-section-header">
                             <SectionTitle icon="folder-shared-open">Opened from new locations</SectionTitle>
-                            {report?.storedName !== undefined && (
+                            {report?.storedName !== undefined && !appStore.isReadOnly && (
                                 <Tooltip content={writeBack === "outdated" ? "The stored workspace changed after this restore, so it was not changed" : "Change only the locations of these files in the stored workspace"}>
                                     <AnchorButton
                                         size="small"
@@ -216,7 +216,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                             )}
                         </div>
                         <p>
-                            {report?.storedName === undefined
+                            {report?.storedName === undefined || appStore.isReadOnly
                                 ? "This workspace cannot be changed, so it keeps the old locations."
                                 : writeBack === "written"
                                   ? "The stored workspace now names the new files."

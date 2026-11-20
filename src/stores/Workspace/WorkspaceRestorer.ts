@@ -33,7 +33,6 @@ import {
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
-    MOMENT_TEXT,
     type Point2D,
     SOME_IMAGES_NOT_RESTORED,
     SPECTRAL_MATCHING_TYPES,
@@ -53,12 +52,10 @@ import {
     type WorkspaceIdReader,
     type WorkspaceImageSource,
     type WorkspaceIssue,
-    type WorkspaceMomentRequest,
     type WorkspacePvGeneratorWidgetConfig,
-    type WorkspacePvRequest,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
+import {CatalogApiService, MirrorTimeoutError} from "services";
 import {
     AppStore,
     CatalogOnlineQueryConfigStore,
@@ -73,6 +70,7 @@ import {
     type WorkspaceLoadingStep
 } from "stores";
 import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
+import {momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -155,6 +153,9 @@ export interface WorkspaceLeftOutItems {
     imageIds: number[];
     catalogIds: number[];
 }
+
+/** The largest saved region ID that a restored region keeps. A larger one gets a new ID. */
+const MAX_SAVED_REGION_ID = 2 ** 30;
 
 /** Returns "1 region" or "3 regions". */
 function countOf(count: number, noun: string): string {
@@ -287,6 +288,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
+    /** The region IDs that this restore has asked the backend for, or that the session has. */
+    private readonly takenRegionIds = new Set<number>();
+    /** The region ID to ask for when a region cannot keep its saved ID. Set at the first use, above every saved ID. */
+    private nextRegionId: number | undefined;
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
@@ -1604,7 +1609,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             // request keeps the images that earlier requests made. This includes a request that the
             // user retries after a later request made its images. The backend numbers the names of
             // kept images, as it did when the images were first made.
-            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const message = momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const problem = message && momentProblemOf(source, message.moments);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message && regionId > RegionId.CURSOR) {
                 const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
@@ -1619,7 +1629,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const made = (this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1660,11 +1670,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             }
         } else {
-            const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
+            const message = pvMessageOf(request, source, regionId, true);
+            const spectralRange = message?.spectralRange;
+            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const made = (this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1703,87 +1719,42 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Gets the backend ready to make moments over a region of an image.
-     *
-     * The backend makes moments over a region only when it already keeps the region data of the
-     * image. It starts to keep this data the first time that a widget asks for statistics, a
-     * histogram or a profile of the region. In a normal session, a widget has always asked by then.
-     * During a restore, no widget has asked yet, so the moment request fails. So ask for one
-     * statistic of the region, wait for the answer, and then cancel that request. Sending the
-     * request alone is not enough, because the backend handles requests out of order, and the
-     * moment request could arrive first.
+     * Reports a saved moment or PV request that the rules of `momentProblemOf` and `pvProblemOf`
+     * do not allow. A retry would fail the same way, so the request is not offered in Recovery.
+     */
+    private reportProblem(subject: string, problem: string, details: {label: string; imageIds: number[]}) {
+        this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${problem}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason: problem, imageIds: details.imageIds});
+    }
+
+    /**
+     * Gets the backend ready to make moments over a region of an image, and shows the wait as a
+     * step of the restore. See `waitForRegionData` for why the wait is needed.
      *
      * The wait has no time limit. It ends when the backend answers, when the image is closed or a
      * later workspace load starts, or when the user skips it. Skipping it also skips the moment
      * request.
      */
     private introduceRegionToBackend(frame: FrameStore, regionId: number, description: string): Promise<"ready" | "closed" | "superseded" | "skipped"> {
-        const backendService = BackendService.Instance;
-        const fileId = frame.frameInfo.fileId;
-        return new Promise(resolve => {
-            let isSettled = false;
-            const step = this.startStep();
-            const finish = (outcome: "ready" | "closed" | "superseded" | "skipped") => {
-                if (isSettled) {
-                    return;
-                }
-                isSettled = true;
-                subscription.unsubscribe();
-                disposeReaction();
-                if (outcome !== "closed") {
-                    backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
-                }
-                step.end();
-                resolve(outcome);
-            };
-            const subscription = backendService.statsStream.subscribe(stats => {
-                if (stats?.fileId === fileId && stats.regionId === regionId) {
-                    finish("ready");
-                }
-            });
-            const disposeReaction = reaction(
-                () => ({isOpen: this.appStore.frames.includes(frame), isCurrent: this.isCurrent}),
-                ({isOpen, isCurrent}) => {
-                    if (!isOpen) {
-                        finish("closed");
-                    } else if (!isCurrent) {
-                        finish("superseded");
-                    }
-                },
-                {equals: comparer.structural}
-            );
-            step.show({description, progress: 0, onSkip: () => finish("skipped")});
-            backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
-        });
-    }
-
-    /** Returns the request that a saved moment request makes, or nothing when this version cannot make it. */
-    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number, shouldKeep: boolean): CARTA.MomentRequest.$Properties | undefined {
-        const {moments, channelRange, mask, pixelRange} = request;
-        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
-        if (
-            !Array.isArray(moments) ||
-            !moments.length ||
-            !moments.every(moment => MOMENT_TEXT.has(moment)) ||
-            !Number.isInteger(channelRange?.min) ||
-            !Number.isInteger(channelRange?.max) ||
-            !Object.values(CARTA.MomentMask).includes(mask) ||
-            !isNumber(pixelRange?.min) ||
-            !isNumber(pixelRange?.max)
-        ) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            moments,
-            axis: CARTA.MomentAxis.SPECTRAL,
+        const step = this.startStep();
+        const wait = waitForRegionData<"superseded" | "skipped">(
+            frame,
             regionId,
-            spectralRange: {min: channelRange.min, max: channelRange.max},
-            mask,
-            pixelRange: new CARTA.FloatBounds({min: pixelRange.min, max: pixelRange.max}),
-            keep: shouldKeep,
-            restFreq: source.restFreqStore?.restFreqInHz
-        };
+            () => this.appStore.frames.includes(frame),
+            () => this.appStore.statsRequirementsOf(frame.frameInfo.fileId, regionId)
+        );
+        const disposeReaction = reaction(
+            () => this.isCurrent,
+            isCurrent => {
+                if (!isCurrent) {
+                    wait.stop("superseded");
+                }
+            }
+        );
+        step.show({description, progress: 0, onSkip: () => wait.stop("skipped")});
+        return wait.ready.finally(() => {
+            disposeReaction();
+            step.end();
+        });
     }
 
     /**
@@ -1822,22 +1793,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             createResidualImage: images.some(image => image.fittingImage === "residual"),
             offset: isNumber(request.offset) ? request.offset : 0,
             solver: request.solver
-        };
-    }
-
-    /** Returns the request that a saved PV request makes, or nothing when this version cannot make it. */
-    private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
-        const {width, channelRange} = request;
-        if (!Number.isInteger(width) || width < 1 || (channelRange !== undefined && (!Number.isInteger(channelRange?.min) || !Number.isInteger(channelRange?.max)))) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            regionId,
-            width,
-            spectralRange: channelRange ? {min: channelRange.min, max: channelRange.max} : null,
-            reverse: request.reverse === true,
-            keep: true
         };
     }
 
@@ -2096,9 +2051,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Restores the regions of the image. An image that is matched to another image has no regions
      * of its own.
      *
-     * The backend gives each restored region a new ID. Map the saved ID of each region to the new
-     * ID after the backend answers. A region that the backend does not accept is left out and
-     * reported, so that no saved ID points at it.
+     * Each restored region asks the backend for the ID it was saved with, so that a name such as
+     * "Region 3" stays the same. Map the saved ID of each region to the ID that the backend gives.
+     * A region that the backend does not accept is left out and reported, so that no saved ID
+     * points at it.
      */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
@@ -2109,18 +2065,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const regionIds = new Map<number, number>();
         this.regionIds.set(fileInfo.id, regionIds);
         const selectedRegion = fileInfo.regionsSet.selectedRegion;
-        await Promise.all(
-            fileInfo.regionsSet.regions.map(async regionInfo => {
-                const region = await frame.regionSet.addExistingRegionAsync(
-                    regionInfo.points,
-                    regionInfo.rotation,
-                    regionInfo.type,
-                    regionInfo.name ?? "",
-                    regionInfo.color ?? preferenceStore.regionColor,
-                    regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                    regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                    regionInfo.annotationStyles
-                );
+        const regionInfos = fileInfo.regionsSet.regions;
+        this.takeSessionRegionIds();
+        // Add the regions at once. Added one at a time, a few thousand regions take minutes, because
+        // the views draw every region again for each one.
+        const regions = await frame.regionSet.addExistingRegionsAsync(
+            regionInfos.map(regionInfo => ({
+                points: regionInfo.points,
+                rotation: regionInfo.rotation,
+                regionType: regionInfo.type,
+                name: regionInfo.name ?? "",
+                color: regionInfo.color ?? preferenceStore.regionColor,
+                lineWidth: regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
+                dashes: regionInfo.dashes ?? [preferenceStore.regionDashLength],
+                annotationStyles: regionInfo.annotationStyles,
+                requestedId: this.regionIdToRequest(regionInfo.id)
+            }))
+        );
+        runInAction(() => {
+            regionInfos.forEach((regionInfo, index) => {
+                const region = regions[index];
                 if (!region) {
                     const imageName = describeImageSource(fileInfo.source);
                     const regionName = regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`;
@@ -2148,14 +2112,52 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }
-            })
-        );
+            });
+        });
         // Select again the regions that were selected together, with the focused region in focus.
         const selectedRegions = fileInfo.regionsSet.selectedRegions;
         if (Array.isArray(selectedRegions) && selectedRegions.length > 1) {
             const ids = selectedRegions.flatMap(savedId => (typeof savedId === "number" && regionIds.has(savedId) ? [regionIds.get(savedId) as number] : []));
             frame.regionSet.setSelectionByIds(ids, selectedRegion === undefined ? undefined : regionIds.get(selectedRegion));
         }
+    }
+
+    /**
+     * Marks the IDs of the regions in the session as taken. A region that a script adds during the
+     * restore is not seen until the backend has given it an ID.
+     */
+    private takeSessionRegionIds() {
+        for (const frame of this.appStore.frames) {
+            for (const region of frame.regionSet?.regions ?? []) {
+                if (region.regionId > RegionId.CURSOR) {
+                    this.takenRegionIds.add(region.regionId);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the region ID to ask the backend for. It is the saved ID when no region has it yet.
+     * Otherwise it is a new ID above every saved ID, so that it cannot take the saved ID of a region
+     * restored later. Each ID is given once, because the backend updates the region that already
+     * has an ID instead of adding one. Call {@link takeSessionRegionIds} first.
+     */
+    private regionIdToRequest(savedId: unknown): number {
+        // A larger ID would leave the backend no room for the 32-bit IDs of new regions.
+        const isRegionId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > RegionId.CURSOR && (id as number) <= MAX_SAVED_REGION_ID;
+        if (this.nextRegionId === undefined) {
+            const savedIds = this.allImages.flatMap(image => (image.regionsSet?.regions ?? []).map(regionInfo => regionInfo.id)).filter(isRegionId);
+            this.nextRegionId = Math.max(0, ...savedIds, ...this.takenRegionIds) + 1;
+        }
+        let id = isRegionId(savedId) && !this.takenRegionIds.has(savedId) ? savedId : this.nextRegionId;
+        while (this.takenRegionIds.has(id)) {
+            id++;
+        }
+        if (id >= this.nextRegionId) {
+            this.nextRegionId = id + 1;
+        }
+        this.takenRegionIds.add(id);
+        return id;
     }
 
     /**
@@ -2274,11 +2276,24 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
 
-        this.workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of this.workspace.colorBlendingImages) {
+        // A hand-edited workspace can leave out where a color-blended image is in the Image List.
+        // Such an image cannot be put back in its place, so it is not made.
+        const colorBlendingImages = this.workspace.colorBlendingImages.filter(blend => {
+            const isPlaced = Number.isInteger(blend.imageListIndex) && blend.imageListIndex >= 0;
+            if (!isPlaced) {
+                this.report(WorkspaceItemKind.Image, "a color-blended image", "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", WorkspaceIssueOutcome.Failed);
+            }
+            return isPlaced;
+        });
+        colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
+        for (const {name, imageListIndex, selectedFrameId, alpha, titleCustomText} of colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+                // A new color-blended image takes the next number of this session, so it gets the saved name instead.
+                if (typeof name === "string" && name) {
+                    colorBlending.setName(name);
+                }
                 if (typeof titleCustomText === "string") {
                     colorBlending.setTitleCustomText(titleCustomText);
                 }
@@ -2305,7 +2320,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending?.setAlpha(0, alphas[0]);
             }
             // Hide the layers that were hidden. A new color-blended image shows all of them.
-            const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
+            const saved = colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
             if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
                 colorBlending.toggleRasterVisible();
             }

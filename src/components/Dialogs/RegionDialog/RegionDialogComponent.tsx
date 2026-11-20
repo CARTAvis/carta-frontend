@@ -173,8 +173,8 @@ export class RegionDialogComponent extends React.Component {
                         <AnchorButton intent={Intent.WARNING} variant="minimal" icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} data-testid="region-dialog-focus-button" />
                     </Tooltip>
                 )}
-                <Tooltip content={isMultiRegion ? "Export selected regions" : "Export region"}>
-                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon="cloud-upload" onClick={this.handleExportClicked} data-testid="region-dialog-export-button" />
+                <Tooltip content={appStore.isReadOnly ? "Not allowed in read-only mode" : isMultiRegion ? "Export selected regions" : "Export region"}>
+                    <AnchorButton intent={Intent.WARNING} variant="minimal" icon="cloud-upload" onClick={this.handleExportClicked} disabled={appStore.isReadOnly} data-testid="region-dialog-export-button" />
                 </Tooltip>
             </React.Fragment>
         );

@@ -122,6 +122,11 @@ function createFrame(fileId: number) {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
                 return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
             }),
+            // Adds each region through addExistingRegionAsync, so that the tests can check each one.
+            addExistingRegionsAsync: jest.fn((regions: {points: unknown; rotation: unknown; regionType: unknown; name: unknown; color: unknown; lineWidth: unknown; dashes: unknown; annotationStyles?: unknown; requestedId?: number}[]) => {
+                const addOne = frame.regionSet.addExistingRegionAsync as (...args: unknown[]) => Promise<unknown>;
+                return Promise.all(regions.map(r => addOne(r.points, r.rotation, r.regionType, r.name, r.color, r.lineWidth, r.dashes, r.annotationStyles, r.requestedId)));
+            }),
             selectSingleRegion: jest.fn(),
             setSelectionByIds: jest.fn()
         },
@@ -1030,6 +1035,27 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.reorderFrame).not.toHaveBeenCalled();
     });
 
+    test("reports a color-blended image that does not say where it is in the Image List, and makes the others", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {selectedFrames: [] as unknown[], frames: [] as unknown[], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                files: [IMAGE],
+                colorBlendingImages: [{selectedFrameId: [1], alpha: [1, 1]} as never, {imageListIndex: 1.5, selectedFrameId: [1], alpha: [1, 1]}, {imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1]}]
+            })
+        );
+
+        expect(issues.filter(issue => issue.subject === "a color-blended image")).toEqual([
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed}),
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed})
+        ]);
+        expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledWith(expect.any(Number), 1, 1);
+    });
+
     test("keeps contours saved without valid levels off, and says so", async () => {
         const {appStore} = createSession();
 
@@ -1612,12 +1638,12 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("applies the custom texts of the WCS overlay, and the custom title and colorbar label of each image and color-blended image", async () => {
+    test("applies the custom texts of the WCS overlay, the custom title and colorbar label of each image, and the name and custom title of each color-blended image", async () => {
         const setTitleCustomText = jest.fn();
         const setColorbarLabelCustomText = jest.fn();
         frameOverrides = {setTitleCustomText, setColorbarLabelCustomText};
         const {appStore} = createSession();
-        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn()};
+        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn(), setName: jest.fn()};
         appStore.imageViewConfigStore.createColorBlending.mockReturnValue(colorBlending);
         const wcsOverlay = {labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}};
 
@@ -1627,7 +1653,7 @@ describe("WorkspaceRestorer", () => {
                     {...IMAGE, titleCustomText: "M51", colorbarLabelCustomText: "flux"},
                     {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}
                 ],
-                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
+                colorBlendingImages: [{name: "Color Blending 1", imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
                 wcsOverlay
             })
         );
@@ -1636,6 +1662,7 @@ describe("WorkspaceRestorer", () => {
         // Both images share the mocks, so only the first image sets a text.
         expect(setTitleCustomText.mock.calls).toEqual([["M51"]]);
         expect(setColorbarLabelCustomText.mock.calls).toEqual([["flux"]]);
+        expect(colorBlending.setName).toHaveBeenCalledWith("Color Blending 1");
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 
@@ -1915,6 +1942,26 @@ describe("WorkspaceRestorer", () => {
 
             expect(restorer.regionIdOf(1, 1)).toBe(101);
             expect(restorer.regionIdOf(1, 2)).toBe(102);
+        });
+
+        test("asks the backend for each region's saved ID, so that its name stays the same", async () => {
+            const {appStore} = createSession();
+            const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}};
+            const generated = {request: {type: "other"} as never, images: [{id: 3, regionsSet: {regions: [region(9)]}}]};
+
+            await restore(
+                createWorkspace({
+                    files: [
+                        {...IMAGE, regionsSet: {regions: [region(2), region(2), region(0), region(2 ** 31)]}},
+                        {...second, regionsSet: {regions: [region(3)]}}
+                    ],
+                    generatedImages: [generated]
+                })
+            );
+
+            const requestedIds = appStore.frames.map(frame => frame.regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[])[8]));
+            // A repeated or invalid ID gets a new ID above every saved ID, also those of generated images.
+            expect(requestedIds.slice(0, 2)).toEqual([[2, 10, 11, 12], [3]]);
         });
 
         test("waits for the backend to give the regions their IDs before restoring the layout", async () => {
@@ -2228,8 +2275,9 @@ describe("WorkspaceRestorer", () => {
                 return frame;
             };
             const generating = {
-                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _isStillWanted?: () => boolean) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _options?: {isStillWanted?: () => boolean}) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
                 cancelRequestingMoment: jest.fn(),
+                statsRequirementsOf: jest.fn((_fileId: number, _regionId: number) => undefined),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
                 loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({}))),
@@ -2272,7 +2320,9 @@ describe("WorkspaceRestorer", () => {
 
             const restorer = await restored(workspace);
 
-            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], {
+                isStillWanted: expect.any(Function)
+            });
             // The backend is asked for a statistic of the region, and answers it, before the
             // moments are asked for.
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
@@ -2357,6 +2407,42 @@ describe("WorkspaceRestorer", () => {
 
                 expect(requestFitting).not.toHaveBeenCalled();
                 expect(problems).toEqual(["Could not make the image fitting images of image.fits: the request is not one this version can make"]);
+            });
+        });
+
+        describe("a PV image", () => {
+            const savedLine = {id: 6, type: CARTA.RegionType.LINE, rotation: 0, points: []};
+            const pvRequest = {type: "pv" as const, sourceImageId: 1, regionId: 6, width: 3, channelRange: {min: 2, max: 8}, reverse: false};
+
+            /** Restores a PV image along a line that the session has at these points, on an image of 100 x 100 pixels. */
+            async function restorePvAlong(controlPoints: {x: number; y: number}[]) {
+                const session = createGeneratingSession();
+                frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? {regionType: CARTA.RegionType.LINE, controlPoints} : undefined)};
+                session.appStore.onRecovery = jest.fn((recovery: WorkspaceRecoveryStore) => recovery.skipAll());
+                const issues = await restoreIssues(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedLine]}}], generatedImages: [{request: pvRequest, images: [{id: 2, name: "image_pv.fits"}]}]}));
+                return {...session, issues};
+            }
+
+            test("is made again along a line that crosses the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 10, y: 10},
+                    {x: 90, y: 90}
+                ]);
+
+                expect(issues).toEqual([]);
+                expect(requestPV).toHaveBeenCalledTimes(1);
+                expect(requestPV.mock.calls[0].slice(0, 3)).toEqual([expect.objectContaining({fileId: 1, regionId: 106, width: 3, spectralRange: {min: 2, max: 8}}), appStore.frames[0], true]);
+            });
+
+            test("is reported as failed, and not offered in Recovery, when its line does not cross the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 110, y: 10},
+                    {x: 150, y: 90}
+                ]);
+
+                expect(requestPV).not.toHaveBeenCalled();
+                expect(appStore.onRecovery).not.toHaveBeenCalled();
+                expect(issues).toEqual([expect.objectContaining({kind: WorkspaceItemKind.GeneratedImage, message: "Could not make the PV image of image.fits: The line does not cross the image", outcome: WorkspaceIssueOutcome.Failed})]);
             });
         });
 
@@ -2535,7 +2621,7 @@ describe("WorkspaceRestorer", () => {
             expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
-            const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
+            const {isStillWanted} = requestMoment.mock.calls[0][2] as {isStillWanted: () => boolean};
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);

@@ -603,6 +603,16 @@ describe("WidgetsStore initWidgets", () => {
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
     });
 
+    test("gives a floating catalog plot of a workspace the component ID that its binding was registered with", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([], [{type: "component", id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.D2Scatter}}], "workspace");
+
+        const [plot] = widgetsStore.floatingWidgets;
+        expect(plot.componentId).toMatch(/^catalog-plot-component-\d+$/);
+        expect(CatalogStore.Instance.widgetBindings.componentIds()).toContain(plot.componentId);
+    });
+
     test("ignores the plot type in the settings of a catalog plot of a regular layout", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 

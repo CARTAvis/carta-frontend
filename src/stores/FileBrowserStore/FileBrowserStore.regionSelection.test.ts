@@ -3,6 +3,7 @@ import {BrowserMode} from "enums";
 const APP_STORE_MOCK = {
     activeFrame: null as any,
     appendFileDisabled: false,
+    isReadOnly: false,
     backendService: {
         getFileList: jest.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []})),
         getRegionList: jest.fn(() => Promise.resolve({directory: "$BASE", files: [], subdirectories: []}))
@@ -45,6 +46,7 @@ describe("FileBrowserStore.showExportSelectedRegions", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         APP_STORE_MOCK.activeFrame = null;
+        APP_STORE_MOCK.isReadOnly = false;
         fileBrowserStore = new FileBrowserStore();
         fileBrowserStore.updateExportRegionIndexes([]);
         fileBrowserStore.browserMode = BrowserMode.File;
@@ -78,6 +80,18 @@ describe("FileBrowserStore.showExportSelectedRegions", () => {
         fileBrowserStore.showExportSelectedRegions();
 
         expect(fileBrowserStore.browserMode).toBe(BrowserMode.RegionExport);
+        expect(fileBrowserStore.exportRegionIndexes).toEqual([]);
+    });
+
+    test("does not open region export in read-only mode", () => {
+        setActiveRegionFrame([{regionId: 0}, {regionId: 1}], [{regionId: 1}]);
+        APP_STORE_MOCK.isReadOnly = true;
+
+        fileBrowserStore.showExportSelectedRegions();
+        fileBrowserStore.showExportRegions(1);
+        fileBrowserStore.showFileBrowser(BrowserMode.RegionExport);
+
+        expect(fileBrowserStore.browserMode).toBe(BrowserMode.File);
         expect(fileBrowserStore.exportRegionIndexes).toEqual([]);
     });
 });

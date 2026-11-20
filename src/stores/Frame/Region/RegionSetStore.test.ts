@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {reaction} from "mobx";
 
 import {RegionOpacity} from "enums";
 
@@ -395,6 +396,40 @@ describe("RegionSetStore restoring an existing region", () => {
         expect(sentRegionId).toBeLessThan(-4);
         expect(region?.regionId).toBe(105);
         expect(region?.color).toBe("#123456");
+    });
+
+    test("asks the backend for the given ID, or for a new ID", async () => {
+        BACKEND_SERVICE.setRegion.mockClear();
+        BACKEND_SERVICE.setRegion.mockImplementationOnce((() => Promise.resolve({regionId: 7})) as any).mockImplementationOnce((() => Promise.resolve({regionId: 8})) as any);
+        const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+
+        await regionSet.addExistingRegionAsync([{x: 1, y: 1}], 0, CARTA.RegionType.POINT, "", "#123456", 2, [0], undefined, 7);
+        await regionSet.addExistingRegionAsync([{x: 1, y: 1}], 0, CARTA.RegionType.POINT, "", "#123456", 2, [0]);
+
+        expect(BACKEND_SERVICE.setRegion.mock.calls.map(call => (call as unknown[])[1])).toEqual([7, -1]);
+    });
+
+    test("adds several regions at once, and removes each region that the backend refuses", async () => {
+        BACKEND_SERVICE.setRegion
+            .mockImplementationOnce((() => Promise.resolve({regionId: 11})) as any)
+            .mockImplementationOnce((() => Promise.reject(new Error("refused"))) as any)
+            .mockImplementationOnce((() => Promise.resolve({regionId: 13})) as any);
+        const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+        const before = regionSet.regions.length;
+        const settings = {points: [{x: 1, y: 1}], rotation: 0, regionType: CARTA.RegionType.POINT, name: "", color: "#123456", lineWidth: 2, dashes: [0]};
+        let changes = 0;
+        const dispose = reaction(
+            () => regionSet.regions.map(region => region.regionId),
+            () => changes++
+        );
+
+        const regions = await regionSet.addExistingRegionsAsync([settings, settings, settings]);
+        dispose();
+
+        expect(regions.map(region => region?.regionId)).toEqual([11, undefined, 13]);
+        expect(regionSet.regions.length).toBe(before + 2);
+        // The regions are added at once, and get their IDs at once.
+        expect(changes).toBe(2);
     });
 
     test("removes a region that the backend does not accept, without asking the backend to remove another region", async () => {

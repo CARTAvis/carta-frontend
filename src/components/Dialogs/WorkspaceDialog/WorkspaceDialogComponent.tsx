@@ -127,7 +127,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 setReadErrorMessage("Could not read the workspace");
                 return;
             }
-            const store = new WorkspacePreflightStore(entry.name, workspace, workspace.editable !== false);
+            const store = new WorkspacePreflightStore(entry.name, workspace, workspace.editable !== false && !appStore.isReadOnly);
             setPreflight(store);
             if (appStore.dialogStore.workspaceDialogMode === WorkspaceDialogMode.Open) {
                 store.check();
@@ -431,7 +431,7 @@ export const WorkspaceDialogComponent = observer(() => {
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
-                    <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
+                    <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection || appStore.isReadOnly} />
                     {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} isDisabled={isFetching} onOpened={handleCloseClicked} />}
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />

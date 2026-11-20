@@ -7,8 +7,9 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, PVAxis, RegionId, type SpectralSystem} from "enums";
-import {NONLINEAR_SPECTRAL_AXIS_MESSAGE, type Point2D} from "models";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps} from "stores";
+import {isLineInOnePixel, isLineOnImage} from "stores/ImageGeneration/ImageGenerationRequests";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 
 import "./PvGeneratorComponent.scss";
@@ -39,45 +40,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isLineIntersectedWithImage(): boolean {
-        if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended) {
-            const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
-            const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
-            const width = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.width;
-            const height = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.height;
-            const imageCorners: Point2D[] = [
-                {x: -0.5, y: -0.5},
-                {x: width - 0.5, y: -0.5},
-                {x: -0.5, y: height - 0.5},
-                {x: width - 0.5, y: height - 0.5}
-            ];
-
-            // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
-            let sideValue = 0;
-            for (const corner of imageCorners) {
-                sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
-            }
-
-            if (sideValue <= 2 && sideValue >= -2) {
-                // check if start/end points are outside image
-                if ((startPoint.x < -0.5 && endPoint.x < -0.5) || (startPoint.y < -0.5 && endPoint.y < -0.5) || (startPoint.x > width - 0.5 && endPoint.x > width - 0.5) || (startPoint.y > height - 0.5 && endPoint.y > height - 0.5)) {
-                    return false;
-                }
-
-                return true;
-            }
-        }
-        return false;
+        return isLineOnImage(this.widgetStore.effectiveRegion, this.widgetStore.effectiveFrame);
     }
 
     @computed get isLineInOnePixel(): boolean {
-        if (this.widgetStore.effectiveRegion) {
-            const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
-            const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
-            if (Math.round(startPoint.x) === Math.round(endPoint.x) && Math.round(startPoint.y) === Math.round(endPoint.y)) {
-                return true;
-            }
-        }
-        return false;
+        return isLineInOnePixel(this.widgetStore.effectiveRegion);
     }
 
     @computed get estimatedCubeSize(): number | undefined {

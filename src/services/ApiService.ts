@@ -680,6 +680,12 @@ export class ApiService {
             console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
             return undefined;
         }
+        // The frontend may keep workspaces where the backend cannot refuse a write, such as in the
+        // browser storage. So the frontend refuses it in read-only mode.
+        if (AppStore.Instance.isReadOnly) {
+            console.error("Saving workspace is not allowed in read-only mode");
+            return undefined;
+        }
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;
@@ -721,6 +727,10 @@ export class ApiService {
     };
 
     public clearWorkspace = async (workspaceName: string) => {
+        if (AppStore.Instance.isReadOnly) {
+            console.error("Deleting workspace is not allowed in read-only mode");
+            return false;
+        }
         if (ApiService.runtimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace`;

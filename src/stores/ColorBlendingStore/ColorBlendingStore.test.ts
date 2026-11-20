@@ -66,6 +66,21 @@ describe("ColorBlendingStore", () => {
         });
     });
 
+    describe("setName", () => {
+        test("sets the name, and the title that is still the name", () => {
+            colorBlendingStore.setName("Color Blending 5");
+            expect(colorBlendingStore.filename).toBe("Color Blending 5");
+            expect(colorBlendingStore.titleCustomText).toBe("Color Blending 5");
+        });
+
+        test("keeps a custom title", () => {
+            colorBlendingStore.setTitleCustomText("RGB of M51");
+            colorBlendingStore.setName("Color Blending 5");
+            expect(colorBlendingStore.filename).toBe("Color Blending 5");
+            expect(colorBlendingStore.titleCustomText).toBe("RGB of M51");
+        });
+    });
+
     describe("addSelectedFrame", () => {
         it("adds a layer correctly", () => {
             setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);

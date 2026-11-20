@@ -497,6 +497,45 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("refuses to save, delete or change a workspace in read-only mode", async () => {
+        const flags = appStore.backendService.serverFeatureFlags;
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY | CARTA.ServerFeatureFlags.SCRIPTING));
+        try {
+            const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+            const clearSpy = jest.spyOn(appStore.apiService, "clearWorkspace").mockResolvedValue(true);
+            const readSpy = jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue(undefined);
+
+            await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+            expect(appStore.alertStore.alertText).toContain("read-only mode");
+            await appStore.deleteWorkspaces(["test-workspace"]);
+            await expect(appStore.writeWorkspaceSourceChanges("test-workspace", {} as any)).resolves.toEqual({state: "failed"});
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(clearSpy).not.toHaveBeenCalled();
+            expect(readSpy).not.toHaveBeenCalled();
+        } finally {
+            appStore.alertStore.dismissAlert();
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
+    });
+
+    test("keeps the stored workspaces unchanged in read-only mode", async () => {
+        // Without a backend address, the workspaces are kept in the browser storage. Then the
+        // backend cannot refuse a write.
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        const flags = appStore.backendService.serverFeatureFlags;
+        localStorage.setItem("savedWorkspaces", JSON.stringify({stored: workspace}));
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY));
+        try {
+            await expect(appStore.apiService.setWorkspace("new", workspace)).resolves.toBeUndefined();
+            await expect(appStore.apiService.clearWorkspace("stored")).resolves.toBe(false);
+            expect(Object.keys(JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}"))).toEqual(["stored"]);
+        } finally {
+            localStorage.removeItem("savedWorkspaces");
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
+    });
+
     test("refuses to save while a workspace is still being restored", async () => {
         // A restore opens its images and catalogs one after another, so part of it may already be
         // in the session while the rest is still on its way.
@@ -578,6 +617,70 @@ describe("AppStore.saveWorkspace", () => {
         dispose();
 
         expect(blockers).toStrictEqual([undefined, expect.stringContaining("still loading"), undefined]);
+    });
+
+    test.each([
+        ["a moment image", {isRequestingMoments: true, isRequestingPV: false}, false],
+        ["a PV image", {isRequestingMoments: false, isRequestingPV: true}, false],
+        ["a fitting", {isRequestingMoments: false, isRequestingPV: false}, true]
+    ])("refuses to save while %s is still being made from the GUI, after another load has cleared the shared loading flag", async (_, frame, isFitting) => {
+        // An object with the prototype of a frame counts as an image of the image list.
+        const job = Object.assign(Object.create(FrameStore.prototype), frame);
+        appStore.imageViewConfigStore.addFrame(job);
+        runInAction(() => (appStore.imageFittingStore.isFitting = isFitting));
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.alertStore.dismissAlert();
+        runInAction(() => (appStore.imageFittingStore.isFitting = false));
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("names the image that is still being made, while the shared loading flag is also set", () => {
+        const job = Object.assign(Object.create(FrameStore.prototype), {isRequestingMoments: false, isRequestingPV: true});
+        appStore.imageViewConfigStore.addFrame(job);
+        appStore.startFileLoading();
+
+        expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.endFileLoading();
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("resets the PV and moment requests of every image when the session resumes, so that a request of an image that is not active does not refuse saves", () => {
+        const image = (isActive: boolean) =>
+            Object.assign(Object.create(FrameStore.prototype), {
+                isRequestingMoments: true,
+                isRequestingPV: true,
+                isActive,
+                resetPvRequestState: jest.fn(),
+                setIsRequestPVCancelling: jest.fn(),
+                resetMomentRequestState: jest.fn()
+            });
+        const images = [image(true), image(false)];
+        images.forEach(frame => appStore.imageViewConfigStore.addFrame(frame));
+
+        (appStore as any).onSessionResumed();
+
+        images.forEach(frame => {
+            expect(frame.resetPvRequestState).toHaveBeenCalledTimes(1);
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(1);
+        });
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("refuses to save while a script job still makes images, after another load has cleared the shared loading flag", async () => {
+        // A job that waits for the region data has not started to load a file yet.
+        jest.spyOn(appStore.imageGenerationJobs, "hasRunningJobs").mockReturnValue(true);
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.alertStore.dismissAlert();
     });
 
     test("refuses to save while an online catalog query is still running", async () => {
