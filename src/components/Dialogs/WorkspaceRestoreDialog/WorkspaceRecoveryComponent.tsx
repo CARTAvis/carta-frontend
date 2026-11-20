@@ -39,7 +39,7 @@ const MirrorChoice = observer(({database}: {database: CatalogDatabase}) => {
             popoverProps={{minimal: true, portalClassName: "dialog-portal"}}
             onItemSelect={url => mirrorSiteStore.setActiveMirror(database, url)}
             itemRenderer={(url, {handleClick, handleFocus, modifiers}) => (
-                <MenuItem key={url} text={mirrorLabel(url)} roleStructure="listoption" selected={url === activeMirror} active={modifiers.active} onClick={handleClick} onFocus={handleFocus} />
+                <MenuItem key={url} text={mirrorLabel(url)} roleStructure="listoption" selected={url === activeMirror} active={modifiers.active} onClick={handleClick} onFocus={handleFocus} data-testid="workspace-recovery-mirror-option" />
             )}
         >
             <Button size="small" className="recovery-mirror-button" text={activeMirror ? mirrorLabel(activeMirror) : "Choose a mirror"} endIcon="double-caret-vertical" data-testid="workspace-recovery-mirror-select" />

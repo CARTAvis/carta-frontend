@@ -239,6 +239,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                         <Tab
                             id={SpatialProfilerSettingsTabs.COMPUTATION}
                             title="Computation"
+                            data-testid="spatial-profiler-computation-tab"
                             panel={
                                 <FormGroup label={"Width"} inline={true}>
                                     <SafeNumericInput
@@ -248,6 +249,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                                         disabled={!widgetStore.effectiveRegion}
                                         value={lineRegionSampleWidth}
                                         onValueChange={value => widgetStore.setLineRegionSampleWidth(value)}
+                                        data-testid="spatial-profiler-line-width-input"
                                     />
                                 </FormGroup>
                             }
