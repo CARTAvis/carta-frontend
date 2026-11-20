@@ -19,7 +19,25 @@ import {
     VelocityConvention,
     WCSMatchingType
 } from "enums";
-import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {
+    CARTA_INFO,
+    CompressionQuality,
+    CursorPosition,
+    DEFAULT_STATS_DISPLAY_TYPES,
+    Event,
+    EXTRA_STATISTICS_TYPES,
+    getEventList,
+    PresetLayout,
+    RegionCreationMode,
+    STATISTICS_NAME_MAP,
+    type StatsDisplayType,
+    Theme,
+    TileCache,
+    WCSMatching,
+    WCSType,
+    Zoom,
+    ZoomPoint
+} from "models";
 import {ApiService} from "services";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
@@ -155,6 +173,9 @@ const DEFAULTS = {
     STATS_PANEL: {
         statsPanelEnabled: false,
         statsPanelMode: 0
+    },
+    STATISTICS: {
+        statistics: DEFAULT_STATS_DISPLAY_TYPES
     },
     TELEMETRY: {
         telemetryConsentShown: false,
@@ -675,6 +696,23 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
     }
 
+    @computed get statistics(): StatsDisplayType[] {
+        const statistics = this.preferences.get(PreferenceKeys.STATISTICS);
+        return Array.isArray(statistics) && statistics.every(type => STATISTICS_NAME_MAP.has(type)) ? Array.from(new Set([...DEFAULT_STATS_DISPLAY_TYPES, ...statistics])) : DEFAULTS.STATISTICS.statistics;
+    }
+
+    @action toggleStatistic = (type: StatsDisplayType) => {
+        const isSelected = this.statistics.includes(type);
+        const statistics = Array.from(STATISTICS_NAME_MAP.keys()).filter(item => (item === type ? !isSelected : this.statistics.includes(item)));
+        this.setPreference(PreferenceKeys.STATISTICS, statistics);
+    };
+
+    @action toggleAllExtraStatistics = () => {
+        const shouldSelectAll = !EXTRA_STATISTICS_TYPES.every(type => this.statistics.includes(type));
+        const statistics = this.statistics.filter(type => !EXTRA_STATISTICS_TYPES.includes(type as CARTA.StatsType));
+        this.setPreference(PreferenceKeys.STATISTICS, shouldSelectAll ? [...statistics, ...EXTRA_STATISTICS_TYPES] : statistics);
+    };
+
     // getters for telemetry
     @computed get hasTelemetryConsentShown(): boolean {
         return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
@@ -990,6 +1028,10 @@ export class PreferenceStore {
      */
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS]);
+    };
+
+    @action resetStatisticsSettings = () => {
+        this.clearPreferences([PreferenceKeys.STATISTICS]);
     };
 
     /**

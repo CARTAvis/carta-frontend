@@ -3,6 +3,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
 import {
+    EXTRA_STATISTICS_TYPES,
     GetFluxDensityFromSum,
     GetIntensityOptions,
     type IntensityConfig,
@@ -10,7 +11,8 @@ import {
     type LineOption,
     POLARIZATION_LABELS,
     ShouldUseSumForFluxDensity,
-    STATISTICS_TEXT,
+    STATISTICS_NAME_MAP,
+    type StatsDisplayType,
     StatsTypeString,
     SUPPORTED_STATISTICS_TYPES,
     VALID_COORDINATES
@@ -390,11 +392,10 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {
-            return a - b;
-        });
-        return sortedKeys?.map(key => {
-            return {value: key, label: STATISTICS_TEXT.get(key)};
+        const enabledExtras = EXTRA_STATISTICS_TYPES.filter(type => AppStore.Instance.preferenceStore.statistics.includes(type));
+        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES, ...enabledExtras].sort((a, b) => a - b);
+        return sortedKeys.map(key => {
+            return {value: key, label: STATISTICS_NAME_MAP.get(key)};
         });
     }
 
@@ -667,7 +668,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType)) {
             this.selectedStatsTypes = [statsType];
         }
     };
@@ -699,7 +700,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
@@ -825,7 +826,29 @@ export class SpectralProfileSelectionStore {
                 }
             )
         );
+
+        this.disposers.push(
+            autorun(() => {
+                this.reconcileStatisticSelections(AppStore.Instance.preferenceStore.statistics);
+            })
+        );
     }
+
+    @action private reconcileStatisticSelections = (enabledStatistics: StatsDisplayType[]) => {
+        const disabledSelections = this.selectedStatsTypes.filter(type => EXTRA_STATISTICS_TYPES.includes(type) && !enabledStatistics.includes(type));
+        if (!disabledSelections.length) {
+            return;
+        }
+
+        const remainingSelections = this.selectedStatsTypes.filter(type => !disabledSelections.includes(type));
+        this.selectedStatsTypes = remainingSelections.length ? remainingSelections : [CARTA.StatsType.Mean];
+        if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
+            disabledSelections.forEach(type => this.widgetStore.removeProfileColor(type));
+        }
+        if (this.activeProfileCategory === MultiProfileCategory.STATISTIC && !remainingSelections.length) {
+            this.assignColor(CARTA.StatsType.Mean);
+        }
+    };
 
     public dispose = () => {
         this.disposers.forEach(disposer => disposer());

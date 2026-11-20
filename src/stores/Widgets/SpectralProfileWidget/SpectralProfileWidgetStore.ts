@@ -22,6 +22,7 @@ import {
     VelocityConvention
 } from "enums";
 import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D} from "models";
+import {ExpandQuantileStatistics} from "models/StatisticsDefinition/StatisticsDefinition";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -1060,11 +1061,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
                 const existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
+                const statsTypes = ExpandQuantileStatistics(spectralConfig.statsTypes ?? []);
                 if (!existingSpectralConfig) {
                     // create new spectral config
-                    regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: spectralConfig.statsTypes});
+                    regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes});
                 } else {
-                    spectralConfig.statsTypes?.forEach(statsType => {
+                    statsTypes.forEach(statsType => {
                         if (!existingSpectralConfig?.statsTypes?.includes(statsType)) {
                             // add to the stats type array
                             existingSpectralConfig?.statsTypes?.push(statsType);
@@ -1127,8 +1129,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
-                        const sortedConfigs = regionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
+                        const sortedUpdatedConfigs = [...updatedRegionRequirements.spectralProfiles].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
+                        const sortedConfigs = [...regionRequirements.spectralProfiles].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
@@ -1150,8 +1152,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                                 return;
                             }
 
-                            const sortedUpdatedStats = updatedConfig.statsTypes?.sort();
-                            const sortedStats = config.statsTypes?.sort();
+                            const sortedUpdatedStats = [...(updatedConfig.statsTypes ?? [])].sort((a, b) => a - b);
+                            const sortedStats = [...(config.statsTypes ?? [])].sort((a, b) => a - b);
                             for (let j = 0; j < updatedStatsCount; j++) {
                                 if (sortedUpdatedStats?.[j] !== sortedStats?.[j]) {
                                     diffList.push(updatedRegionRequirements);
