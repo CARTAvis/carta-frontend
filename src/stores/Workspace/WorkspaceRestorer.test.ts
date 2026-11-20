@@ -1939,6 +1939,26 @@ describe("WorkspaceRestorer", () => {
             expect(restorer.regionIdOf(1, 2)).toBe(102);
         });
 
+        test("asks the backend for each region's saved ID, so that its name stays the same", async () => {
+            const {appStore} = createSession();
+            const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}};
+            const generated = {request: {type: "other"} as never, images: [{id: 3, regionsSet: {regions: [region(9)]}}]};
+
+            await restore(
+                createWorkspace({
+                    files: [
+                        {...IMAGE, regionsSet: {regions: [region(2), region(2), region(0), region(2 ** 31)]}},
+                        {...second, regionsSet: {regions: [region(3)]}}
+                    ],
+                    generatedImages: [generated]
+                })
+            );
+
+            const requestedIds = appStore.frames.map(frame => frame.regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[])[8]));
+            // A repeated or invalid ID gets a new ID above every saved ID, also those of generated images.
+            expect(requestedIds.slice(0, 2)).toEqual([[2, 10, 11, 12], [3]]);
+        });
+
         test("waits for the backend to give the regions their IDs before restoring the layout", async () => {
             const {calls} = createSession();
             RegisterRegion.mockImplementationOnce(

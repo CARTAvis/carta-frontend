@@ -397,6 +397,17 @@ describe("RegionSetStore restoring an existing region", () => {
         expect(region?.color).toBe("#123456");
     });
 
+    test("asks the backend for the given ID, or for a new ID", async () => {
+        BACKEND_SERVICE.setRegion.mockClear();
+        BACKEND_SERVICE.setRegion.mockImplementationOnce((() => Promise.resolve({regionId: 7})) as any).mockImplementationOnce((() => Promise.resolve({regionId: 8})) as any);
+        const regionSet = new RegionSetStore(MakeFrame(), PREFERENCE as any, BACKEND_SERVICE as any);
+
+        await regionSet.addExistingRegionAsync([{x: 1, y: 1}], 0, CARTA.RegionType.POINT, "", "#123456", 2, [0], undefined, 7);
+        await regionSet.addExistingRegionAsync([{x: 1, y: 1}], 0, CARTA.RegionType.POINT, "", "#123456", 2, [0]);
+
+        expect(BACKEND_SERVICE.setRegion.mock.calls.map(call => (call as unknown[])[1])).toEqual([7, -1]);
+    });
+
     test("removes a region that the backend does not accept, without asking the backend to remove another region", async () => {
         BACKEND_SERVICE.setRegion.mockImplementationOnce(() => Promise.reject(new Error("refused")));
         BACKEND_SERVICE.removeRegion.mockClear();

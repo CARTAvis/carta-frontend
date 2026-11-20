@@ -573,11 +573,25 @@ export class RegionSetStore {
      * region, even while the backend has not answered yet. The temporary ID is below every ID in
      * {@link RegionId}. An ID such as -1 would be taken for the whole image. When the backend does
      * not give the region an ID, the region is removed again, and the promise resolves to undefined.
+     *
+     * @param requestedId - a positive ID to ask the backend for, or -1 (the default) for a new ID.
+     *        When no region has the positive ID, the backend uses it for the new region. Otherwise
+     *        the backend updates that region instead, so the caller must make sure that the ID is free.
      */
-    addExistingRegionAsync = async (points: Point2D[], rotation: number, regionType: CARTA.RegionType, name: string, color: string, lineWidth: number, dashes: number[], annotationStyles?: any): Promise<RegionStore | undefined> => {
+    addExistingRegionAsync = async (
+        points: Point2D[],
+        rotation: number,
+        regionType: CARTA.RegionType,
+        name: string,
+        color: string,
+        lineWidth: number,
+        dashes: number[],
+        annotationStyles?: any,
+        requestedId: number = -1
+    ): Promise<RegionStore | undefined> => {
         const temporaryId = Math.min(RegionId.NONE, ...this.regions.map(r => r.regionId)) - 1;
         const region = this.addExistingRegion(points, rotation, regionType, temporaryId, name, color, lineWidth, dashes, true, annotationStyles);
-        await this.requestSetRegion(this.frame.frameInfo.fileId, region);
+        await this.requestSetRegion(this.frame.frameInfo.fileId, region, requestedId);
         if (region.isTemporary) {
             // The region has no ID on the backend, so only remove it here.
             this.deleteRegion(region);
@@ -652,9 +666,9 @@ export class RegionSetStore {
         }
     };
 
-    private requestSetRegion = async (fileId: number, region: RegionStore) => {
+    private requestSetRegion = async (fileId: number, region: RegionStore, requestedId: number = -1) => {
         try {
-            const ack = await this.backendService.setRegion(fileId, -1, region);
+            const ack = await this.backendService.setRegion(fileId, requestedId, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
             if (ack.regionId != null) {
                 const regionId = ack.regionId;

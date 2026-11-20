@@ -154,6 +154,9 @@ export interface WorkspaceLeftOutItems {
     catalogIds: number[];
 }
 
+/** The largest saved region ID that a restored region keeps. A larger one gets a new ID. */
+const MAX_SAVED_REGION_ID = 2 ** 30;
+
 /** Returns "1 region" or "3 regions". */
 function countOf(count: number, noun: string): string {
     return `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -285,6 +288,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
+    /** The region IDs that this restore has asked the backend for, or that the session has. */
+    private readonly takenRegionIds = new Set<number>();
+    /** The region ID to ask for when a region cannot keep its saved ID. Set at the first use, above every saved ID. */
+    private nextRegionId: number | undefined;
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
@@ -2044,9 +2051,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Restores the regions of the image. An image that is matched to another image has no regions
      * of its own.
      *
-     * The backend gives each restored region a new ID. Map the saved ID of each region to the new
-     * ID after the backend answers. A region that the backend does not accept is left out and
-     * reported, so that no saved ID points at it.
+     * Each restored region asks the backend for the ID it was saved with, so that a name such as
+     * "Region 3" stays the same. Map the saved ID of each region to the ID that the backend gives.
+     * A region that the backend does not accept is left out and reported, so that no saved ID
+     * points at it.
      */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
@@ -2067,7 +2075,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     regionInfo.color ?? preferenceStore.regionColor,
                     regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
                     regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                    regionInfo.annotationStyles
+                    regionInfo.annotationStyles,
+                    this.regionIdToRequest(regionInfo.id)
                 );
                 if (!region) {
                     const imageName = describeImageSource(fileInfo.source);
@@ -2104,6 +2113,38 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             const ids = selectedRegions.flatMap(savedId => (typeof savedId === "number" && regionIds.has(savedId) ? [regionIds.get(savedId) as number] : []));
             frame.regionSet.setSelectionByIds(ids, selectedRegion === undefined ? undefined : regionIds.get(selectedRegion));
         }
+    }
+
+    /**
+     * Returns the region ID to ask the backend for. It is the saved ID when no region has it yet.
+     * Otherwise it is a new ID above every saved ID, so that it cannot take the saved ID of a region
+     * restored later. Each ID is given once, because the backend updates the region that already
+     * has an ID instead of adding one. A region that a script adds during the restore is not seen
+     * until the backend has given it an ID.
+     */
+    private regionIdToRequest(savedId: unknown): number {
+        // A larger ID would leave the backend no room for the 32-bit IDs of new regions.
+        const isRegionId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > RegionId.CURSOR && (id as number) <= MAX_SAVED_REGION_ID;
+        for (const frame of this.appStore.frames) {
+            for (const region of frame.regionSet?.regions ?? []) {
+                if (region.regionId > RegionId.CURSOR) {
+                    this.takenRegionIds.add(region.regionId);
+                }
+            }
+        }
+        if (this.nextRegionId === undefined) {
+            const savedIds = this.allImages.flatMap(image => (image.regionsSet?.regions ?? []).map(regionInfo => regionInfo.id)).filter(isRegionId);
+            this.nextRegionId = Math.max(0, ...savedIds, ...this.takenRegionIds) + 1;
+        }
+        let id = isRegionId(savedId) && !this.takenRegionIds.has(savedId) ? savedId : this.nextRegionId;
+        while (this.takenRegionIds.has(id)) {
+            id++;
+        }
+        if (id >= this.nextRegionId) {
+            this.nextRegionId = id + 1;
+        }
+        this.takenRegionIds.add(id);
+        return id;
     }
 
     /**
