@@ -270,6 +270,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <MenuItem
                         icon="cloud-upload"
                         text="Export regions"
+                        disabled={AppStore.Instance.isReadOnly}
                         onClick={() => {
                             FileBrowserStore.Instance.showExportSelectedRegions();
                         }}
@@ -470,7 +471,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
-            const exportTooltip = regionSet.selectedRegionCount > 1 ? "Export selected regions" : "Export all regions";
+            const isReadOnly = AppStore.Instance.isReadOnly;
+            const exportTooltip = isReadOnly ? "Not allowed in read-only mode" : regionSet.selectedRegionCount > 1 ? "Export selected regions" : "Export all regions";
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ActionsColumnDefaultWidth}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
@@ -480,7 +482,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} disabled={frame.isPreview} />
                     </Tooltip>
                     <Tooltip content={exportTooltip} position={Position.BOTTOM}>
-                        <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
+                        <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1 || isReadOnly} />
                     </Tooltip>
                 </ButtonGroup>
             );
@@ -669,7 +671,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             let exportEntry: React.ReactNode;
-            if (region.regionId) {
+            if (region.regionId && !AppStore.Instance.isReadOnly) {
                 exportEntry = (
                     <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionExportClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
                         <Tooltip content="Export region" position={Position.BOTTOM}>

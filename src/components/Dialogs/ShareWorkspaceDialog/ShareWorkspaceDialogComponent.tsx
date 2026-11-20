@@ -46,7 +46,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         setIsGeneratingLink(true);
 
         try {
-            if (activeWorkspace.name && shouldSaveBeforeShare) {
+            if (activeWorkspace.name && shouldSaveBeforeShare && !appStore.isReadOnly) {
                 await appStore.saveWorkspace(activeWorkspace.name);
             }
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
@@ -74,9 +74,11 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         );
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
-        const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
-        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={shouldSaveBeforeShare} onChange={() => setSaveBeforeShare(!shouldSaveBeforeShare)} />;
-        const readOnlyTooltip = (
+        const isReadOnly = appStore.isReadOnly || !activeWorkspace?.editable || !activeWorkspace.name;
+        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={shouldSaveBeforeShare && !isReadOnly} onChange={() => setSaveBeforeShare(!shouldSaveBeforeShare)} />;
+        const readOnlyTooltip = appStore.isReadOnly ? (
+            "Not allowed in read-only mode"
+        ) : (
             <span>
                 Workspace is not editable
                 <br />

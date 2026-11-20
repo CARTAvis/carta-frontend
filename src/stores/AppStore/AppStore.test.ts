@@ -497,6 +497,23 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("refuses to save, delete or change a workspace in read-only mode", async () => {
+        const flags = appStore.backendService.serverFeatureFlags;
+        appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY | CARTA.ServerFeatureFlags.SCRIPTING;
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+        const clearSpy = jest.spyOn(appStore.apiService, "clearWorkspace").mockResolvedValue(true);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+        expect(appStore.alertStore.alertText).toContain("read-only mode");
+        appStore.alertStore.dismissAlert();
+        await appStore.deleteWorkspaces(["test-workspace"]);
+        await expect(appStore.writeWorkspaceSourceChanges("test-workspace", {} as any)).resolves.toEqual({state: "failed"});
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(clearSpy).not.toHaveBeenCalled();
+        appStore.backendService.serverFeatureFlags = flags;
+    });
+
     test("refuses to save while a workspace is still being restored", async () => {
         // A restore opens its images and catalogs one after another, so part of it may already be
         // in the session while the rest is still on its way.

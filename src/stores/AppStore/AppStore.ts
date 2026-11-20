@@ -557,6 +557,11 @@ export class AppStore {
         return this.isOpenFileDisabled || !this.activeFrame;
     }
 
+    /** Whether the backend refuses to write files, such as images, region files and workspaces. */
+    get isReadOnly(): boolean {
+        return this.backendService?.serverHasFeature(CARTA.ServerFeatureFlags.READ_ONLY) ?? false;
+    }
+
     // Frame actions
     @computed get activeFrameFileId(): number | undefined {
         return this.activeFrame?.frameInfo.fileId;
@@ -3120,6 +3125,9 @@ export class AppStore {
      * restore reads.
      */
     public writeWorkspaceSourceChanges = async (storedName: string, changes: WorkspaceSourceChanges): Promise<WorkspaceSourceWriteResult> => {
+        if (this.isReadOnly) {
+            return {state: "failed"};
+        }
         try {
             // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
             // form were written back, the write would change more than the sources.
@@ -3202,6 +3210,10 @@ export class AppStore {
      * Workspace dialog shows the reason before the user saves.
      */
     @computed get workspaceSaveBlocker(): string | undefined {
+        if (this.isReadOnly) {
+            return "Cannot save workspace in read-only mode.";
+        }
+
         if (this.layoutStore?.hasPopoutWidget) {
             return "Cannot save workspace while an image view is popped out. Please dock it first.";
         }
@@ -3279,6 +3291,9 @@ export class AppStore {
      * one alert for the workspaces that could not be deleted.
      */
     async deleteWorkspaces(names: string[]) {
+        if (this.isReadOnly) {
+            return;
+        }
         const failed: string[] = [];
         for (const name of names) {
             try {
