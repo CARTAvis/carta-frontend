@@ -2065,19 +2065,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const regionIds = new Map<number, number>();
         this.regionIds.set(fileInfo.id, regionIds);
         const selectedRegion = fileInfo.regionsSet.selectedRegion;
-        await Promise.all(
-            fileInfo.regionsSet.regions.map(async regionInfo => {
-                const region = await frame.regionSet.addExistingRegionAsync(
-                    regionInfo.points,
-                    regionInfo.rotation,
-                    regionInfo.type,
-                    regionInfo.name ?? "",
-                    regionInfo.color ?? preferenceStore.regionColor,
-                    regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                    regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                    regionInfo.annotationStyles,
-                    this.regionIdToRequest(regionInfo.id)
-                );
+        const regionInfos = fileInfo.regionsSet.regions;
+        this.takeSessionRegionIds();
+        // Add the regions at once. Added one at a time, a few thousand regions take minutes, because
+        // the views draw every region again for each one.
+        const regions = await frame.regionSet.addExistingRegionsAsync(
+            regionInfos.map(regionInfo => ({
+                points: regionInfo.points,
+                rotation: regionInfo.rotation,
+                regionType: regionInfo.type,
+                name: regionInfo.name ?? "",
+                color: regionInfo.color ?? preferenceStore.regionColor,
+                lineWidth: regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
+                dashes: regionInfo.dashes ?? [preferenceStore.regionDashLength],
+                annotationStyles: regionInfo.annotationStyles,
+                requestedId: this.regionIdToRequest(regionInfo.id)
+            }))
+        );
+        runInAction(() => {
+            regionInfos.forEach((regionInfo, index) => {
+                const region = regions[index];
                 if (!region) {
                     const imageName = describeImageSource(fileInfo.source);
                     const regionName = regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`;
@@ -2105,8 +2112,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }
-            })
-        );
+            });
+        });
         // Select again the regions that were selected together, with the focused region in focus.
         const selectedRegions = fileInfo.regionsSet.selectedRegions;
         if (Array.isArray(selectedRegions) && selectedRegions.length > 1) {
@@ -2116,15 +2123,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Returns the region ID to ask the backend for. It is the saved ID when no region has it yet.
-     * Otherwise it is a new ID above every saved ID, so that it cannot take the saved ID of a region
-     * restored later. Each ID is given once, because the backend updates the region that already
-     * has an ID instead of adding one. A region that a script adds during the restore is not seen
-     * until the backend has given it an ID.
+     * Marks the IDs of the regions in the session as taken. A region that a script adds during the
+     * restore is not seen until the backend has given it an ID.
      */
-    private regionIdToRequest(savedId: unknown): number {
-        // A larger ID would leave the backend no room for the 32-bit IDs of new regions.
-        const isRegionId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > RegionId.CURSOR && (id as number) <= MAX_SAVED_REGION_ID;
+    private takeSessionRegionIds() {
         for (const frame of this.appStore.frames) {
             for (const region of frame.regionSet?.regions ?? []) {
                 if (region.regionId > RegionId.CURSOR) {
@@ -2132,6 +2134,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the region ID to ask the backend for. It is the saved ID when no region has it yet.
+     * Otherwise it is a new ID above every saved ID, so that it cannot take the saved ID of a region
+     * restored later. Each ID is given once, because the backend updates the region that already
+     * has an ID instead of adding one. Call {@link takeSessionRegionIds} first.
+     */
+    private regionIdToRequest(savedId: unknown): number {
+        // A larger ID would leave the backend no room for the 32-bit IDs of new regions.
+        const isRegionId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > RegionId.CURSOR && (id as number) <= MAX_SAVED_REGION_ID;
         if (this.nextRegionId === undefined) {
             const savedIds = this.allImages.flatMap(image => (image.regionsSet?.regions ?? []).map(regionInfo => regionInfo.id)).filter(isRegionId);
             this.nextRegionId = Math.max(0, ...savedIds, ...this.takenRegionIds) + 1;

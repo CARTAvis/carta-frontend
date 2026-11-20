@@ -122,6 +122,11 @@ function createFrame(fileId: number) {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
                 return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
             }),
+            // Adds each region through addExistingRegionAsync, so that the tests can check each one.
+            addExistingRegionsAsync: jest.fn((regions: {points: unknown; rotation: unknown; regionType: unknown; name: unknown; color: unknown; lineWidth: unknown; dashes: unknown; annotationStyles?: unknown; requestedId?: number}[]) => {
+                const addOne = frame.regionSet.addExistingRegionAsync as (...args: unknown[]) => Promise<unknown>;
+                return Promise.all(regions.map(r => addOne(r.points, r.rotation, r.regionType, r.name, r.color, r.lineWidth, r.dashes, r.annotationStyles, r.requestedId)));
+            }),
             selectSingleRegion: jest.fn(),
             setSelectionByIds: jest.fn()
         },
