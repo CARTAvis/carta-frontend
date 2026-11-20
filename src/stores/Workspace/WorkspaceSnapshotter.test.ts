@@ -256,6 +256,30 @@ describe("WorkspaceSnapshotter", () => {
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
+    test("saves a rotation that is not a number as 0, so that the workspace is valid", () => {
+        const ruler = {
+            regionId: 1,
+            regionType: CARTA.RegionType.ANNRULER,
+            rotation: NaN,
+            controlPoints: [
+                {x: 5, y: 5},
+                {x: 5, y: 5}
+            ],
+            name: "",
+            color: "#ffffff",
+            lineWidth: 2,
+            isLocked: false,
+            dashLength: 0
+        };
+        const frame = createFrame(0, {regionSet: {regions: [ruler], focusedRegion: undefined}});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.[0].rotation).toBe(0);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
     test("captures how opaque a region is drawn, leaving it out for a region that is shown", () => {
         const region = (regionId: number, opacity: number) => ({
             regionId,

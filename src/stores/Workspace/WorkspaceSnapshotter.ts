@@ -534,7 +534,8 @@ export class WorkspaceSnapshotter {
             .map(region => ({
                 id: region.regionId,
                 type: region.regionType,
-                rotation: region.rotation,
+                // JSON cannot write NaN, and the schema needs a number.
+                rotation: isFinite(region.rotation) ? region.rotation : 0,
                 points: region.controlPoints,
                 name: region.name,
                 color: region.color,
