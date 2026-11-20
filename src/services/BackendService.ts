@@ -76,7 +76,7 @@ export class BackendService {
 
     public animationId: number;
     public sessionId: number;
-    public serverFeatureFlags: number;
+    @observable serverFeatureFlags: number = CARTA.ServerFeatureFlags.SERVER_FEATURE_NONE;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -998,7 +998,7 @@ export class BackendService {
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
-        this.serverFeatureFlags = ack.serverFeatureFlags;
+        runInAction(() => (this.serverFeatureFlags = ack.serverFeatureFlags));
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);

@@ -499,19 +499,41 @@ describe("AppStore.saveWorkspace", () => {
 
     test("refuses to save, delete or change a workspace in read-only mode", async () => {
         const flags = appStore.backendService.serverFeatureFlags;
-        appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY | CARTA.ServerFeatureFlags.SCRIPTING;
-        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
-        const clearSpy = jest.spyOn(appStore.apiService, "clearWorkspace").mockResolvedValue(true);
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY | CARTA.ServerFeatureFlags.SCRIPTING));
+        try {
+            const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+            const clearSpy = jest.spyOn(appStore.apiService, "clearWorkspace").mockResolvedValue(true);
+            const readSpy = jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue(undefined);
 
-        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
-        expect(appStore.alertStore.alertText).toContain("read-only mode");
-        appStore.alertStore.dismissAlert();
-        await appStore.deleteWorkspaces(["test-workspace"]);
-        await expect(appStore.writeWorkspaceSourceChanges("test-workspace", {} as any)).resolves.toEqual({state: "failed"});
+            await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+            expect(appStore.alertStore.alertText).toContain("read-only mode");
+            await appStore.deleteWorkspaces(["test-workspace"]);
+            await expect(appStore.writeWorkspaceSourceChanges("test-workspace", {} as any)).resolves.toEqual({state: "failed"});
 
-        expect(saveSpy).not.toHaveBeenCalled();
-        expect(clearSpy).not.toHaveBeenCalled();
-        appStore.backendService.serverFeatureFlags = flags;
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(clearSpy).not.toHaveBeenCalled();
+            expect(readSpy).not.toHaveBeenCalled();
+        } finally {
+            appStore.alertStore.dismissAlert();
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
+    });
+
+    test("keeps the stored workspaces unchanged in read-only mode", async () => {
+        // Without a backend address, the workspaces are kept in the browser storage. Then the
+        // backend cannot refuse a write.
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        const flags = appStore.backendService.serverFeatureFlags;
+        localStorage.setItem("savedWorkspaces", JSON.stringify({stored: workspace}));
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY));
+        try {
+            await expect(appStore.apiService.setWorkspace("new", workspace)).resolves.toBeUndefined();
+            await expect(appStore.apiService.clearWorkspace("stored")).resolves.toBe(false);
+            expect(Object.keys(JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}"))).toEqual(["stored"]);
+        } finally {
+            localStorage.removeItem("savedWorkspaces");
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
     });
 
     test("refuses to save while a workspace is still being restored", async () => {

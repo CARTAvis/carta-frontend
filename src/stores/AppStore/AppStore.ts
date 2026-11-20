@@ -558,7 +558,7 @@ export class AppStore {
     }
 
     /** Whether the backend refuses to write files, such as images, region files and workspaces. */
-    get isReadOnly(): boolean {
+    @computed get isReadOnly(): boolean {
         return this.backendService?.serverHasFeature(CARTA.ServerFeatureFlags.READ_ONLY) ?? false;
     }
 
@@ -3099,7 +3099,7 @@ export class AppStore {
     public *writeBackRepointedLocations() {
         const report = this.workspaceRestoreReport;
         const storedName = report?.storedName;
-        if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none") {
+        if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none" || this.isReadOnly) {
             return false;
         }
         // Change the state only while the report that started the write is still shown. A later

@@ -671,11 +671,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             let exportEntry: React.ReactNode;
-            if (region.regionId && !AppStore.Instance.isReadOnly) {
+            if (region.regionId) {
+                const isExportDisabled = AppStore.Instance.isReadOnly;
                 exportEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ActionColumnDefaultWidth}} onClick={ev => this.handleRegionExportClicked(ev, region)} onDoubleClick={this.stopDoubleClickPropagation}>
-                        <Tooltip content="Export region" position={Position.BOTTOM}>
-                            <Icon icon="cloud-upload" />
+                    <div
+                        className="cell"
+                        style={{width: RegionListComponent.ActionColumnDefaultWidth}}
+                        onClick={isExportDisabled ? () => {} : ev => this.handleRegionExportClicked(ev, region)}
+                        onDoubleClick={this.stopDoubleClickPropagation}
+                    >
+                        <Tooltip content={isExportDisabled ? "Not allowed in read-only mode" : "Export region"} position={Position.BOTTOM}>
+                            <Icon icon="cloud-upload" style={{opacity: isExportDisabled ? 0.3 : 1}} />
                         </Tooltip>
                     </div>
                 );
