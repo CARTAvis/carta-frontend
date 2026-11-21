@@ -10,7 +10,7 @@ import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "mode
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -22,7 +22,7 @@ export class RasterViewComponentProps {
     column: number;
     renderWidth?: number;
     renderHeight?: number;
-    channel?: number[];
+    channel?: Array<number | null>;
 }
 
 @observer
@@ -33,7 +33,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvasFrame: number | undefined;
     private static readonly Float32Max = 3.402823466e38;
 
-    @observable private channels: number[] | undefined;
+    @observable private channels: Array<number | null> | undefined;
     @observable private image: ImageItem | undefined;
     @observable private imageStore: FrameStore | undefined;
 
@@ -60,8 +60,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
         }
 
-        this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
+        this.sub = TileService.Instance.tileStream.subscribe(({fileId, channel, stokes}) => {
+            const channelMap = AppStore.Instance.channelMapStore;
+            if (this.channels !== undefined ? channelMap.hasDisplayedTileChannel(fileId, channel, stokes) : !channelMap.isChannelMapEnabled || this.imageStore?.isPreview) {
                 this.scheduleCanvasUpdate();
             }
         });
@@ -100,17 +101,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         });
     };
 
-    private renderMultipleCanvas = (frame: FrameStore) => {
-        const canvas = this.canvas;
-        const channels = this.props.channel;
-        const ctx = canvas.getContext("2d");
-        if (!ctx || !channels) {
-            return;
-        }
-
-        const w = canvas.width;
-        const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+    private renderMultipleCanvas = (frame: FrameStore, channels: Array<number | null>) => {
         this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
 
         if (!channels.length) {
@@ -124,6 +115,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const gapY = frame.channelMapInnerOverlayStore.gapY;
 
         channels.forEach((channel, index) => {
+            if (channel === null) {
+                return;
+            }
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
             const column = index % channelMapStore.numColumns;
@@ -181,13 +175,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
 
-        if (image?.type === ImageType.COLOR_BLENDING) {
-            ctx.globalCompositeOperation = "lighter";
-        }
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = image?.type === ImageType.COLOR_BLENDING ? "lighter" : "source-over";
 
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
         frames.forEach((frame, index) => {
-            if (frame) {
+            if (frame && (image?.type !== ImageType.COLOR_BLENDING || frame.renderConfig.isVisible)) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (
@@ -195,20 +188,19 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
-                    if (channel && isFinite((channel as number[]).length)) {
-                        this.renderMultipleCanvas(frame);
+                    if (channel) {
+                        this.renderMultipleCanvas(frame, AppStore.Instance.channelMapStore.getChannelsForFrame(frame));
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
+                    if (image?.type === ImageType.COLOR_BLENDING) {
+                        ctx.globalAlpha = image.store.alpha[index];
+                    }
+                    ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
                 }
-
-                if (image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = image?.store?.alpha[index];
-                }
-
-                ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
             }
         });
+        ctx.globalAlpha = 1;
     };
 
     private updateCanvasSize(frame: FrameStore, renderWidth: number, renderHeight: number, numImageColumns: number, numImageRows: number) {
@@ -323,23 +315,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderTiledCanvas(frame: FrameStore, channel: number) {
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-        const boundedView: FrameView = {
-            xMin: Math.max(-0.5, frame.requiredFrameView.xMin),
-            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x - 0.5),
-            yMin: Math.max(-0.5, frame.requiredFrameView.yMin),
-            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y - 0.5),
-            mip: frame.requiredFrameView.mip
-        };
 
         this.gl.activeTexture(GL2.TEXTURE0);
 
-        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const [requiredTiles] = frame.requiredTiles;
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
             const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
             this.renderTiles(frame, requiredTiles, channel, mip, false, 3, true);
         } else {
-            this.renderTiles(frame, requiredTiles, channel, boundedView.mip, false, 3, true);
+            this.renderTiles(frame, requiredTiles, channel, frame.requiredFrameView.mip, false, 3, true);
         }
     }
 
@@ -521,6 +506,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
         for (const frame of frames) {
             if (frame) {
+                void frame.requiredTiles;
+                void frame.renderConfig.stokesIndex;
                 const spatialReference = frame.spatialReference || frame;
                 const frameView = spatialReference.requiredFrameView;
                 const currentView = spatialReference.currentFrameView;
@@ -545,6 +532,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     axisZoomY: spatialReference.axisZoomLevel.y
                 };
                 const ratio = appStore.imageRatio;
+                if (this.props.channel) {
+                    void frame.stokes;
+                    const channelMapChannels = appStore.channelMapStore.getChannelsForFrame(frame);
+                }
             }
         }
         if (this.props.image?.type === ImageType.COLOR_BLENDING) {

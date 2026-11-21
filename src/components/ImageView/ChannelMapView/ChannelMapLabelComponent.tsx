@@ -2,15 +2,12 @@ import * as React from "react";
 import {fonts} from "ast_wrapper";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import type {ImageItem} from "models";
 
 import {Font} from "components/Shared";
-import {AppStore, ChannelMapStore, type OverlaySettings} from "stores";
+import {AppStore, ChannelMapStore} from "stores";
 import {getColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {
-    overlaySettings: OverlaySettings;
-    image: ImageItem;
     isDocked: boolean;
     top: number;
     left: number;

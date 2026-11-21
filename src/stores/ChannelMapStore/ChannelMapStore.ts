@@ -1,10 +1,11 @@
 import {debounce, throttle} from "lodash";
-import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction, untracked} from "mobx";
 
-import {ImageType} from "enums";
+import {ImageType, SpectralType} from "enums";
 import {type ImageViewItem} from "models";
 import {TileService} from "services";
 import {AppStore, type FrameStore} from "stores";
+import {getTransformedChannelList} from "utilities";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
@@ -24,20 +25,25 @@ export class ChannelMapStore {
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
-                /* eslint-disable @typescript-eslint/no-unused-vars */
-                const startChannel = this.startChannel;
-                const numColumns = this.numColumns;
-                const numRows = this.numRows;
-                const endChannel = this.endChannel;
-                const center = this.displayedFrame.center;
-                const requiredFrameView = this.displayedFrame.requiredFrameView;
-                const requiredTiles = this.displayedFrame.requiredTiles;
-                const zoomLevel = this.displayedFrame.zoomLevel;
-                const spatialReference = this.displayedFrame.spatialReference;
-                const channel = this.displayedFrame.channel;
+            if (!this.isChannelMapEnabled) {
+                return;
+            }
+            if (!this.displayedFrame) {
+                this.throttledRequestChannels.cancel();
+                this.debouncedSetActiveChannel.cancel();
+                this.requestDisplayedChannels();
+            } else if (this.displayedFrame.requiredFrameView) {
+                // Track every value that can change the tiles required by any displayed layer.
+                void this.channelsByFile;
+                this.displayedFrames.forEach(frame => {
+                    void frame.center;
+                    void frame.requiredFrameView;
+                    void frame.requiredTiles;
+                    void frame.zoomLevel;
+                    void frame.spatialReference;
+                });
 
-                this.throttledRequestChannels(this.displayedFrame);
+                untracked(this.throttledRequestChannels);
             }
         });
 
@@ -92,21 +98,51 @@ export class ChannelMapStore {
     /** The custom color used for rendering the channel map label. */
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
-    private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+    private requestedFileIds = new Set<number>();
+    private throttledRequestChannels = throttle(() => this.requestDisplayedChannels(), 100);
     private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
      * @param frame - the frame to request tiles for.
      */
-    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
+    handlePolarizationChanged = (frame: FrameStore) => {
+        if (this.displayedFrames.includes(frame)) {
+            this.requestChannels(frame, true);
+        }
+    };
 
     private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
+        if (!this.isChannelMapEnabled) {
+            return;
+        }
+        const requestedChannels = Array.from(this.channelsByFile.get(frame.frameInfo.fileId)?.requested ?? []).sort((a, b) => a - b);
+        if (!requestedChannels.length) {
+            TileService.Instance.cancelChannelMapRequests(frame.frameInfo.fileId);
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
-        const preferenceStore = AppStore.Instance.preferenceStore;
-        const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-        const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
+        const compressionQuality = AppStore.Instance.getImageCompressionQuality(frame.headerUnit);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, requestedChannels, isPolarizationChanged);
+    };
+
+    private requestDisplayedChannels = () => {
+        if (!this.isChannelMapEnabled) {
+            return;
+        }
+
+        const displayedFileIds = new Set(this.displayedFrames.map(frame => frame.frameInfo.fileId));
+        this.requestedFileIds.forEach(fileId => {
+            if (!displayedFileIds.has(fileId)) {
+                TileService.Instance.cancelChannelMapRequests(fileId);
+            }
+        });
+        this.requestedFileIds = displayedFileIds;
+        this.displayedFrames.forEach(frame => this.requestChannels(frame));
+    };
+
+    requestTilesAfterSessionResume = () => {
+        this.requestDisplayedChannels();
     };
 
     /**
@@ -114,7 +150,18 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
+        if (!isEnabled) {
+            this.throttledRequestChannels.cancel();
+            this.debouncedSetActiveChannel.cancel();
+            TileService.Instance.cancelChannelMapRequests();
+            this.requestedFileIds.clear();
+            if (isDisablingChannelMap) {
+                const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
+                AppStore.Instance.updateChannels(updates);
+            }
+        }
     };
 
     /**
@@ -267,18 +314,70 @@ export class ChannelMapStore {
 
     /** The frame of the displayed image in the image view. */
     @computed get displayedFrame(): FrameStore | null {
-        if (!this.displayedImage) {
-            return null;
+        return this.displayedFrames[0] ?? null;
+    }
+
+    /** The frames contributing raster layers to the displayed image. */
+    @computed get displayedFrames(): FrameStore[] {
+        if (this.displayedImage?.type === ImageType.FRAME) {
+            return [this.displayedImage.store];
+        }
+        if (this.displayedImage?.type === ImageType.COLOR_BLENDING) {
+            return this.displayedImage.store.frames;
+        }
+        return [];
+    }
+
+    /**
+     * The channel rendered by a frame in each channel-map cell.
+     * Spectrally matched frames follow the base frame; unmatched frames keep their selected channel.
+     * A null entry means that the matched channel falls outside the frame.
+     */
+    getChannelsForFrame(frame: FrameStore): Array<number | null> {
+        return this.channelsByFile.get(frame.frameInfo.fileId)?.cells ?? [];
+    }
+
+    hasDisplayedTileChannel(fileId: number | null | undefined, channel: number | null | undefined, stokes: number | null | undefined): boolean {
+        const layer = fileId == null ? undefined : this.channelsByFile.get(fileId);
+        return this.isChannelMapEnabled && channel != null && !!layer && layer.frame.stokes === stokes && layer.requested.has(channel);
+    }
+
+    @computed private get channelsByFile(): Map<number, {frame: FrameStore; cells: Array<number | null>; requested: Set<number>}> {
+        return new Map(
+            this.displayedFrames.map(frame => {
+                const cells = this.mapChannelsForFrame(frame);
+                return [frame.frameInfo.fileId, {frame, cells, requested: new Set(cells.filter((channel): channel is number => channel !== null))}];
+            })
+        );
+    }
+
+    private mapChannelsForFrame(frame: FrameStore): Array<number | null> {
+        if (!this.channelArray.length) {
+            return [];
+        }
+        const baseFrame = this.displayedFrame;
+        if (!baseFrame || frame === baseFrame) {
+            return this.channelArray;
+        }
+        if (!baseFrame.spectralSiblings.includes(frame)) {
+            return this.channelArray.map(() => frame.channel);
         }
 
-        const type = this.displayedImage.type;
-        if (type === ImageType.FRAME) {
-            return this.displayedImage.store;
-        } else if (type === ImageType.COLOR_BLENDING) {
-            return this.displayedImage.store.baseFrame;
+        if (AppStore.Instance.spectralMatchingType === SpectralType.CHANNEL) {
+            return this.channelArray.map(channel => (channel < frame.frameInfo.fileInfoExtended.depth ? channel : null));
         }
 
-        return null;
+        const depth = frame.frameInfo.fileInfoExtended.depth;
+        const firstChannel = this.channelArray[0];
+        const lastChannel = this.channelArray[this.channelArray.length - 1];
+        const transformedChannels = getTransformedChannelList(baseFrame.wcsInfo3D, frame.wcsInfo3D, AppStore.Instance.spectralMatchingType, firstChannel, lastChannel);
+        return this.channelArray.map(channel => {
+            const transformedChannel = transformedChannels[channel - firstChannel];
+            if (!isFinite(transformedChannel) || transformedChannel < -0.5 || transformedChannel >= depth - 0.5) {
+                return null;
+            }
+            return Math.round(transformedChannel);
+        });
     }
 
     /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */

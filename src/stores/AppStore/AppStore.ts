@@ -35,7 +35,6 @@ import {
     COMPUTED_POLARIZATIONS,
     type FileId,
     FloatingObjzIndexManager,
-    type FrameView,
     type ImageItem,
     type ImageViewItem,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
@@ -85,7 +84,6 @@ import {
     getColorForTheme,
     getExportFileName,
     getPasteRegionOffset,
-    GetRequiredTiles,
     mapToObject,
     markAsScriptingMap,
     offsetPointsToAvoidCollision,
@@ -1914,12 +1912,19 @@ export class AppStore {
     private static readonly ImageThrottleTime = 50;
     private static readonly ImageChannelThrottleTime = 500;
     private static readonly RequirementsCheckInterval = 200;
+    private static readonly VelocityBunitVariants: ReadonlySet<string> = new Set(["km/s", "km s-1", "km s^-1", "km.s-1"]);
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>;
     private histogramRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>;
     private pendingChannelHistograms: Map<string, CARTA.RegionHistogramData.$Properties>;
+
+    /** Returns the tile compression quality for a frame, enforcing at least 32 when BUNIT is a velocity unit. */
+    getImageCompressionQuality = (headerUnit?: string): number => {
+        const compressionQuality = this.preferenceStore.imageCompressionQuality;
+        return headerUnit && AppStore.VelocityBunitVariants.has(headerUnit) ? Math.max(compressionQuality, 32) : compressionQuality;
+    };
 
     @action updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
@@ -1939,10 +1944,7 @@ export class AppStore {
                 this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
-                // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-                const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-                const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.getImageCompressionQuality(frame.headerUnit), true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1990,10 +1992,7 @@ export class AppStore {
                 this.preferenceStore.animationCompressionQuality
             );
         } else if (!this.channelMapStore.isChannelMapEnabled) {
-            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.getImageCompressionQuality(headerUnit));
         }
     };
 
@@ -2181,20 +2180,7 @@ export class AppStore {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
-                    const reqView = frame.requiredFrameView;
-                    const croppedReq: FrameView = {
-                        xMin: Math.max(-0.5, reqView.xMin),
-                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
-                        yMin: Math.max(-0.5, reqView.yMin),
-                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
-                        mip: reqView.mip
-                    };
-
-                    const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                    const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                    const tileSizeFullRes = reqView.mip * 256;
-                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                    const [tiles, midPointTileCoords] = frame.requiredTiles;
                     if (tiles.length) {
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit ?? ""});
                     }
@@ -2435,7 +2421,7 @@ export class AppStore {
         }
 
         // update the render config widget histogram for channel map view mode
-        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };
@@ -2482,17 +2468,22 @@ export class AppStore {
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
+            const isChannelMapEnabled = this.channelMapStore.isChannelMapEnabled;
+            this.pendingChannelHistograms.delete(key);
+            if (isChannelMapEnabled && (updatedFrame?.requiredChannel !== channel || updatedFrame?.requiredStokes !== stokes)) {
+                return;
+            }
             if (updatedFrame && channelHist) {
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = channel;
-                updatedFrame.stokes = stokes;
+                if (!isChannelMapEnabled) {
+                    updatedFrame.channel = channel;
+                    updatedFrame.stokes = stokes;
+                }
             }
-
-            this.pendingChannelHistograms.delete(key);
         }
     };
 
@@ -2678,7 +2669,7 @@ export class AppStore {
     private *resumeSession() {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
-        this.tileService.clearRequestQueue();
+        this.tileService.cancelChannelMapRequests();
 
         // Ignore & remove generated in-memory images
         const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);
@@ -2788,6 +2779,7 @@ export class AppStore {
         this.initRequirements();
         this.isResumingSession = false;
         this.backendService.hasConnectionDropped = false;
+        this.channelMapStore.requestTilesAfterSessionResume();
 
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {
