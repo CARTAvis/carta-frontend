@@ -1,8 +1,37 @@
-import type {CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
 import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
+
+test("channel-map histograms follow the secondary layer's requested selection", () => {
+    const app = AppStore.Instance;
+    const frame = {
+        channel: 7,
+        stokes: 1,
+        requiredChannel: 7,
+        requiredStokes: 1,
+        renderConfig: {setStokesIndex: jest.fn(), setHistChannel: jest.fn(), updateChannelHistogram: jest.fn()}
+    };
+    const getFrame = jest.spyOn(app, "getFrame").mockReturnValue(frame as any);
+    const isPreviouslyEnabled = app.channelMapStore.isChannelMapEnabled;
+    runInAction(() => (app.channelMapStore.isChannelMapEnabled = true));
+    try {
+        const message = {fileId: 9244, regionId: -1, channel: 7, histograms: {}};
+        app.handleRegionHistogramStream(CARTA.RegionHistogramData.create({...message, stokes: 0}));
+        app.handleRegionHistogramStream(CARTA.RegionHistogramData.create({...message, stokes: 1, channel: 6}));
+        expect(frame.renderConfig.setStokesIndex).not.toHaveBeenCalled();
+        expect([frame.channel, frame.stokes]).toEqual([7, 1]);
+
+        app.handleRegionHistogramStream(CARTA.RegionHistogramData.create({...message, stokes: 1}));
+        expect(frame.renderConfig.setStokesIndex).toHaveBeenCalledWith(1);
+    } finally {
+        runInAction(() => (app.channelMapStore.isChannelMapEnabled = isPreviouslyEnabled));
+        runInAction(() => app.regionHistograms.delete(9244));
+        getFrame.mockRestore();
+    }
+});
 
 describe("AppStore.handleCatalogFilterStream", () => {
     const appStore = AppStore.Instance;

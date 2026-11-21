@@ -10,7 +10,7 @@ import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "mode
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -315,23 +315,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderTiledCanvas(frame: FrameStore, channel: number) {
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-        const boundedView: FrameView = {
-            xMin: Math.max(-0.5, frame.requiredFrameView.xMin),
-            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x - 0.5),
-            yMin: Math.max(-0.5, frame.requiredFrameView.yMin),
-            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y - 0.5),
-            mip: frame.requiredFrameView.mip
-        };
 
         this.gl.activeTexture(GL2.TEXTURE0);
 
-        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const [requiredTiles] = frame.requiredTiles;
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
             const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
             this.renderTiles(frame, requiredTiles, channel, mip, false, 3, true);
         } else {
-            this.renderTiles(frame, requiredTiles, channel, boundedView.mip, false, 3, true);
+            this.renderTiles(frame, requiredTiles, channel, frame.requiredFrameView.mip, false, 3, true);
         }
     }
 
@@ -513,6 +506,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
         for (const frame of frames) {
             if (frame) {
+                void frame.requiredTiles;
+                void frame.renderConfig.stokesIndex;
                 const spatialReference = frame.spatialReference || frame;
                 const frameView = spatialReference.requiredFrameView;
                 const currentView = spatialReference.currentFrameView;
@@ -538,6 +533,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 };
                 const ratio = appStore.imageRatio;
                 if (this.props.channel) {
+                    void frame.stokes;
                     const channelMapChannels = appStore.channelMapStore.getChannelsForFrame(frame);
                 }
             }

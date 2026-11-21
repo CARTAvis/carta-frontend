@@ -200,6 +200,36 @@ describe("ChannelMapStore", () => {
             expect(store.totalChannelNum).toBe(12);
         });
     });
+    test("a leading tile refresh does not subscribe to active channel changes within the page", () => {
+        jest.useFakeTimers();
+        const frame = jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages[0].store;
+        const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+        const originalChannel = frame.channel;
+        store.setChannelMapEnabled(false);
+        store.setStartChannel(0);
+        requestTiles.mockClear().mockImplementation((_tiles, requestedFrame) => {
+            void requestedFrame.channel;
+            void requestedFrame.stokes;
+        });
+        try {
+            runInAction(() => {
+                frame.channel = 0;
+                frame.requiredFrameView = true;
+            });
+            store.setChannelMapEnabled(true);
+            runInAction(() => (frame.channel = 1));
+            jest.advanceTimersByTime(100);
+            expect(requestTiles).toHaveBeenCalledTimes(1);
+        } finally {
+            store.setChannelMapEnabled(false);
+            runInAction(() => {
+                frame.channel = originalChannel;
+                frame.requiredFrameView = false;
+            });
+            requestTiles.mockReset();
+        }
+    });
+
     describe("color blending", () => {
         const setDisplayedImage = image => {
             runInAction(() => {

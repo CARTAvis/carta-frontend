@@ -2436,7 +2436,7 @@ export class AppStore {
         }
 
         // update the render config widget histogram for channel map view mode
-        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+        if (this.channelMapStore.isChannelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };
@@ -2483,17 +2483,22 @@ export class AppStore {
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
+            const isChannelMapEnabled = this.channelMapStore.isChannelMapEnabled;
+            this.pendingChannelHistograms.delete(key);
+            if (isChannelMapEnabled && (updatedFrame?.requiredChannel !== channel || updatedFrame?.requiredStokes !== stokes)) {
+                return;
+            }
             if (updatedFrame && channelHist) {
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = channel;
-                updatedFrame.stokes = stokes;
+                if (!isChannelMapEnabled) {
+                    updatedFrame.channel = channel;
+                    updatedFrame.stokes = stokes;
+                }
             }
-
-            this.pendingChannelHistograms.delete(key);
         }
     };
 

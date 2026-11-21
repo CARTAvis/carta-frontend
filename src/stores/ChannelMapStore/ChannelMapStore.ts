@@ -1,5 +1,5 @@
 import {debounce, throttle} from "lodash";
-import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction, untracked} from "mobx";
 
 import {ImageType, SpectralType} from "enums";
 import {type ImageViewItem} from "models";
@@ -43,7 +43,7 @@ export class ChannelMapStore {
                     void frame.spatialReference;
                 });
 
-                this.throttledRequestChannels();
+                untracked(this.throttledRequestChannels);
             }
         });
 
