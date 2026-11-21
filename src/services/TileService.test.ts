@@ -84,6 +84,24 @@ describe("channel-map color blending", () => {
         expect(service.backendService.setChannels.mock.calls[0][5]).toEqual({min: 3, max: 3});
     });
 
+    test("retries a failed channel-map send for the same viewport", () => {
+        const service = makeService();
+        service.getRequiredRequestTiles = TileService.prototype["getRequiredRequestTiles"];
+        service.pendingDecompressions = new Map();
+        service.getCompressedCache = () => ({get: () => undefined});
+        service.cachedTiles = {has: () => false};
+        service.backendService.setChannels.mockReturnValueOnce(false);
+        const tile = {encode: () => 42, layer: 0};
+        const frame = {frameInfo: {fileId: 1}, channel: 0, stokes: 0};
+
+        service.requestChannelMapTiles([tile], frame, {x: 0, y: 0}, 11, [0]);
+        expect(service.pendingRequests.get("1_0_0").has(42)).toBe(false);
+
+        service.requestChannelMapTiles([tile], frame, {x: 0, y: 0}, 11, [0]);
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        expect(service.pendingRequests.get("1_0_0").has(42)).toBe(true);
+    });
+
     test("cancelling a layer preserves other file requests", () => {
         const service = makeService();
         service.pendingRequests.set("1_0_0", new Map([[10, true]]));

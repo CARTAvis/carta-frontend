@@ -354,7 +354,7 @@ export class TileService {
         if (isPolarizationChanged) {
             for (const i of requestedChannels) {
                 const key = `${fileId}_${stokes}_${i}`;
-                this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
+                this.pendingSynchronisedTiles.set(key, new Set(currentTiles));
                 this.receivedSynchronisedTiles.delete(key);
             }
             this.clearRequestQueue(fileId);
@@ -406,6 +406,12 @@ export class TileService {
                 );
                 if (isRequestSentSuccessfully) {
                     this.streamingTileRanges.set(fileId, currentTiles);
+                } else {
+                    for (let channel = range.min; channel <= range.max; channel++) {
+                        const pending = this.pendingRequests.get(`${fileId}_${stokes}_${channel}`);
+                        tiles.forEach(tile => pending?.delete(tile));
+                    }
+                    this.updateRemainingTileCount();
                 }
             }
         }
