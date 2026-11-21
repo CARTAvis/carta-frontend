@@ -25,17 +25,22 @@ export class ChannelMapStore {
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
+            if (!this.isChannelMapEnabled) {
+                return;
+            }
+            if (!this.displayedFrame) {
+                this.throttledRequestChannels.cancel();
+                this.debouncedSetActiveChannel.cancel();
+                this.requestDisplayedChannels();
+            } else if (this.displayedFrame.requiredFrameView) {
                 // Track every value that can change the tiles required by any displayed layer.
-                void this.channelsByFrame;
+                void this.channelsByFile;
                 this.displayedFrames.forEach(frame => {
                     void frame.center;
                     void frame.requiredFrameView;
                     void frame.requiredTiles;
                     void frame.zoomLevel;
                     void frame.spatialReference;
-                    void frame.channel;
-                    void frame.stokes;
                 });
 
                 this.throttledRequestChannels();
@@ -111,7 +116,7 @@ export class ChannelMapStore {
         if (!this.isChannelMapEnabled) {
             return;
         }
-        const requestedChannels = Array.from(new Set(this.getChannelsForFrame(frame).filter((channel): channel is number => channel !== null)));
+        const requestedChannels = Array.from(this.channelsByFile.get(frame.frameInfo.fileId)?.requested ?? []).sort((a, b) => a - b);
         if (!requestedChannels.length) {
             TileService.Instance.cancelChannelMapRequests(frame.frameInfo.fileId);
             return;
@@ -331,15 +336,21 @@ export class ChannelMapStore {
      * A null entry means that the matched channel falls outside the frame.
      */
     getChannelsForFrame(frame: FrameStore): Array<number | null> {
-        return this.channelsByFrame.get(frame) ?? [];
+        return this.channelsByFile.get(frame.frameInfo.fileId)?.cells ?? [];
     }
 
     hasDisplayedTileChannel(fileId: number | null | undefined, channel: number | null | undefined, stokes: number | null | undefined): boolean {
-        return this.isChannelMapEnabled && channel != null && this.displayedFrames.some(frame => frame.frameInfo.fileId === fileId && frame.stokes === stokes && this.getChannelsForFrame(frame).includes(channel));
+        const layer = fileId == null ? undefined : this.channelsByFile.get(fileId);
+        return this.isChannelMapEnabled && channel != null && !!layer && layer.frame.stokes === stokes && layer.requested.has(channel);
     }
 
-    @computed private get channelsByFrame(): Map<FrameStore, Array<number | null>> {
-        return new Map(this.displayedFrames.map(frame => [frame, this.mapChannelsForFrame(frame)]));
+    @computed private get channelsByFile(): Map<number, {frame: FrameStore; cells: Array<number | null>; requested: Set<number>}> {
+        return new Map(
+            this.displayedFrames.map(frame => {
+                const cells = this.mapChannelsForFrame(frame);
+                return [frame.frameInfo.fileId, {frame, cells, requested: new Set(cells.filter((channel): channel is number => channel !== null))}];
+            })
+        );
     }
 
     private mapChannelsForFrame(frame: FrameStore): Array<number | null> {

@@ -477,29 +477,18 @@ export class TileService {
     }
 
     clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, requestedChannels: ReadonlySet<number>, currentTileRange: number[], previousTileRange: number[]) {
-        pendingRequests.forEach((value, key) => {
+        const previousTiles = new Set(previousTileRange);
+        const hasNewTiles = currentTileRange.some(tile => !previousTiles.has(tile));
+        pendingRequests.forEach((_value, key) => {
             if (!key) {
                 return;
             }
-            if (Number(key.split("_")[0]) !== fileId) {
+            const [keyFileId, , channel] = key.split("_").map(Number);
+            if (keyFileId !== fileId) {
                 return;
             }
-            for (const tile of currentTileRange) {
-                if (!previousTileRange.includes(tile)) {
-                    pendingRequests.delete(key);
-                    return;
-                }
-            }
-            const splitKey = key?.split("_");
-            if (splitKey.length <= 0) {
-                return;
-            }
-            const keyFileId = parseInt(splitKey[0]);
-            const channel = parseInt(splitKey[splitKey.length - 1]);
-            if (keyFileId === fileId && isFinite(channel) && channel >= 0) {
-                if (!requestedChannels.has(channel)) {
-                    pendingRequests.delete(key);
-                }
+            if (hasNewTiles || (Number.isFinite(channel) && channel >= 0 && !requestedChannels.has(channel))) {
+                pendingRequests.delete(key);
             }
         });
 

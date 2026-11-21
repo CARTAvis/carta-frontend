@@ -33,6 +33,7 @@ describe("RasterViewComponent", () => {
             renderHeight: 10,
             renderConfig: {
                 histChannel: channel,
+                isVisible: true,
                 stokesIndex: 0,
                 isUsingCubeHistogram: false
             }
@@ -66,6 +67,14 @@ describe("RasterViewComponent", () => {
         compositeStates.length = 0;
         secondFrame.stokes = 1;
         component.updateCanvas();
+        expect(compositeStates).toEqual([{alpha: 0.25, operation: "lighter"}]);
+
+        compositeStates.length = 0;
+        secondFrame.stokes = 0;
+        secondFrame.renderConfig.isVisible = false;
+        component.renderMultipleCanvas.mockClear();
+        component.updateCanvas();
+        expect(component.renderMultipleCanvas).toHaveBeenCalledTimes(1);
         expect(compositeStates).toEqual([{alpha: 0.25, operation: "lighter"}]);
 
         component.props = {...component.props, image: {type: ImageType.FRAME, store: baseFrame}, channel: undefined};

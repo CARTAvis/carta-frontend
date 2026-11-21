@@ -180,7 +180,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
         frames.forEach((frame, index) => {
-            if (frame) {
+            if (frame && (image?.type !== ImageType.COLOR_BLENDING || frame.renderConfig.isVisible)) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (

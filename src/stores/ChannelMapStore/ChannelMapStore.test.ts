@@ -202,7 +202,7 @@ describe("ChannelMapStore", () => {
     describe("color blending", () => {
         const setDisplayedImage = image => {
             runInAction(() => {
-                jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages = [image];
+                jest.requireMock("stores").AppStore.Instance.imageViewConfigStore.visibleImages = image ? [image] : [];
             });
         };
 
@@ -222,22 +222,26 @@ describe("ChannelMapStore", () => {
             setDisplayedImage(frameImage);
         });
 
-        it("leaves cells empty when transformed channels round beyond the layer depth", () => {
+        it("preserves descending cell order and requests valid transformed channels in ascending order", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
             const frameImage = appStore.imageViewConfigStore.visibleImages[0];
             const baseFrame = frameImage.store;
             const matchedFrame = {...baseFrame, frameInfo: {fileId: 2, fileInfoExtended: {depth: 3}}};
             store.setNumColumns(2);
-            store.setNumRows(2);
+            store.setNumRows(3);
             store.setStartChannel(0);
-            jest.mocked(getTransformedChannelList).mockReturnValue([2.49, 2.5, 2.51, NaN]);
+            jest.mocked(getTransformedChannelList).mockReturnValue([2.49, 2.5, 2.51, NaN, 1, 0]);
             appStore.spectralMatchingType = SpectralType.FREQ;
             baseFrame.spectralSiblings = [matchedFrame];
             setDisplayedImage({type: 1, store: {frames: [baseFrame, matchedFrame]}});
 
             try {
-                expect(store.getChannelsForFrame(matchedFrame)).toEqual([2, null, null, null]);
+                expect(store.getChannelsForFrame(matchedFrame)).toEqual([2, null, null, null, 1, 0]);
+                store.setChannelMapEnabled(true);
+                store.requestTilesAfterSessionResume();
+                expect(TileService.Instance.requestChannelMapTiles).toHaveBeenLastCalledWith(expect.anything(), matchedFrame, expect.anything(), expect.any(Number), [0, 1, 2], false);
             } finally {
+                store.setChannelMapEnabled(false);
                 appStore.spectralMatchingType = SpectralType.CHANNEL;
                 baseFrame.spectralSiblings = [];
                 setDisplayedImage(frameImage);
@@ -265,6 +269,11 @@ describe("ChannelMapStore", () => {
             expect(requestChannelMapTiles).toHaveBeenCalledTimes(2);
             expect(requestChannelMapTiles.mock.calls[0][4]).toEqual([0, 1, 2, 3]);
             expect(requestChannelMapTiles.mock.calls[1][4]).toEqual([7]);
+
+            const cancelRequests = jest.mocked(TileService.Instance.cancelChannelMapRequests);
+            cancelRequests.mockClear();
+            setDisplayedImage(null);
+            expect(cancelRequests.mock.calls).toEqual([[baseFrame.frameInfo.fileId], [2]]);
 
             store.setChannelMapEnabled(false);
             setDisplayedImage(frameImage);
