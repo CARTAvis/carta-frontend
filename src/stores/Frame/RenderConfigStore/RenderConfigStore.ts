@@ -562,7 +562,7 @@ export class RenderConfigStore {
         this.isInverted = other.isInverted;
     };
 
-    @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
+    @action applyConfig = (config: WorkspaceRenderConfig) => {
         if (isSupportedFrameScaling(config.scaling)) {
             this.scaling = config.scaling;
         }
@@ -588,5 +588,26 @@ export class RenderConfigStore {
         this.isUsingCubeHistogram = false;
         this.isUsingCubeHistogramContours = false;
         this.updateSiblings();
+    };
+
+    public toConfig = (): WorkspaceRenderConfig => {
+        return {
+            scaling: this.scaling,
+            colorMap: this.colorMap,
+            bias: this.bias,
+            contrast: this.contrast,
+            gamma: this.gamma,
+            alphaLog: this.alphaLog,
+            alphaPower: this.alphaPower,
+            alphaSinh: this.alphaSinh,
+            alphaAsinh: this.alphaAsinh,
+            inverted: this.isInverted,
+            useCubeHistogram: this.isUsingCubeHistogram,
+            useCubeHistogramContours: this.isUsingCubeHistogramContours,
+            selectedPercentile: this.selectedPercentile,
+            scaleMin: this.scaleMin,
+            scaleMax: this.scaleMax,
+            visible: this.isVisible
+        };
     };
 }

@@ -1,3 +1,5 @@
+import {type CARTA} from "carta-protobuf";
+
 import {FrequencyUnit, IntensityUnitType, SpectralSystem, SpectralType, SpectralUnit} from "enums";
 
 export interface SpectralTypeSet {
@@ -19,6 +21,51 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "VELO", name: "Apparent radial velocity", unit: "m/s"},
     {code: "BETA", name: "Beta", unit: ""}
 ];
+
+// Non-linear spectral algorithm codes (Table 26 of V4.0 of "Definition of the Flexible Image Transport System"), e.g. WAVE-LOG or FREQ-F2W.
+// "TAB" is left out: the lookup table of such an axis is not available to the frontend, so it cannot be converted.
+const SPECTRAL_ALGORITHM_CODES = ["LOG", "F2W", "F2V", "F2A", "W2F", "W2V", "W2A", "V2F", "V2W", "V2A", "A2F", "A2W", "A2V", "GRI", "GRA"];
+
+/**
+ * Get the spectral coordinate type code of a CTYPE value, without its non-linear algorithm code (e.g. "WAVE" for "WAVE-LOG")
+ * @param ctype - CTYPE value of the spectral axis
+ */
+export const GetSpectralTypeCode = (ctype: string | undefined): string => {
+    const value = ctype?.trim().toUpperCase() ?? "";
+    const match = value.match(/^([A-Z]{4})-([A-Z0-9]{3})$/);
+    return match && SPECTRAL_ALGORITHM_CODES.includes(match[2]) ? match[1] : value;
+};
+
+const NONLINEAR_SPECTRAL_ALGORITHM_CODES = [...SPECTRAL_ALGORITHM_CODES, "TAB"];
+
+export const HasNonlinearSpectralAlgorithm = (ctype: string | undefined): boolean => {
+    const match = ctype
+        ?.trim()
+        .toUpperCase()
+        .match(/^([A-Z]{4})-([A-Z0-9]{3})$/);
+    return !!match && NONLINEAR_SPECTRAL_ALGORITHM_CODES.includes(match[2]);
+};
+
+export const NONLINEAR_SPECTRAL_AXIS_MESSAGE = "Not available for nonlinear spectral axes";
+
+export const HasNonlinearSpectralAxis = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined): boolean => {
+    const spectralNumber = fileInfoExtended?.axesNumbers?.spectral ?? 0;
+    if (spectralNumber <= 0) {
+        return false;
+    }
+    const ctype = fileInfoExtended?.headerEntries?.find(entry => entry.name?.trim() === `CTYPE${spectralNumber}`)?.value;
+    return HasNonlinearSpectralAlgorithm(ctype ?? undefined);
+};
+
+const BACKEND_SPECTRAL_INFO_ENTRIES = ["Frequency", "Frequency range", "Velocity", "Velocity range"];
+
+export const GetComputedEntriesForDisplay = (fileInfoExtended: CARTA.FileInfoExtended.$Properties | null | undefined, isSpectralAxisNonlinear?: boolean): CARTA.HeaderEntry.$Properties[] => {
+    const entries = fileInfoExtended?.computedEntries ?? [];
+    if (!(isSpectralAxisNonlinear ?? HasNonlinearSpectralAxis(fileInfoExtended))) {
+        return entries;
+    }
+    return entries.map(entry => (BACKEND_SPECTRAL_INFO_ENTRIES.includes(entry.name ?? "") ? {...entry, value: NONLINEAR_SPECTRAL_AXIS_MESSAGE} : entry));
+};
 
 // Channel is not a valid standalone spectral type
 export const IsSpectralTypeSupported = (typeStr: string): boolean => {
@@ -109,6 +156,20 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM_SQUARE}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
+
+/**
+ * Get the initial unit of a spectral coordinate: the header unit if it is a supported unit of the type and not the standard base
+ * unit of the type (e.g. Angstrom for a wavelength axis), otherwise the default unit of the type (e.g. GHz for a frequency axis in Hz)
+ * @param type - spectral type of the axis
+ * @param headerUnit - CUNIT value of the axis
+ */
+export const GetInitialSpectralUnit = (type: SpectralType, headerUnit: string | undefined): SpectralUnit | null => {
+    const standardUnit = STANDARD_SPECTRAL_TYPE_SETS.find(set => set.code === type)?.unit;
+    if (headerUnit && headerUnit !== standardUnit && SPECTRAL_COORDS_SUPPORTED.has(GenCoordinateLabel(type, headerUnit as SpectralUnit))) {
+        return headerUnit as SpectralUnit;
+    }
+    return SPECTRAL_DEFAULT_UNIT.get(type) ?? null;
+};
 
 enum Jansky {
     MJy = "MJy",
@@ -255,7 +316,7 @@ const JySrToJyArcsec2 = (isForward: boolean = true): number => {
 };
 
 const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, isForward: boolean = true): number => {
-    const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
+    const coefficient = (2.350443 * 1e-11) / (cdelta1 * cdelta2);
     return isForward ? coefficient : 1 / coefficient;
 };
 
@@ -346,4 +407,35 @@ export const GetIntensityConversion = (config: IntensityConfig | undefined, unit
     } else {
         return FindIntensityConversion(unitFromType, unitToType, scale, config);
     }
+};
+
+export const ShouldUseSumForFluxDensity = (config: IntensityConfig, unitTo: string): boolean => {
+    const unitFromType = FindIntensityUnitType(config.nativeIntensityUnit);
+    const unitToType = FindIntensityUnitType(unitTo);
+    return unitFromType !== IntensityUnitType.Unsupported && unitToType !== IntensityUnitType.Unsupported && unitFromType !== unitToType;
+};
+
+export const GetFluxDensityFromSum = (values: Float32Array | Float64Array, config: IntensityConfig, pixelSizesArcsec: {x: number; y: number}, unitTo: string): Float32Array | Float64Array | undefined => {
+    const unitToType = FindIntensityUnitType(unitTo);
+    if (unitToType === IntensityUnitType.Unsupported) {
+        return undefined;
+    }
+
+    const intensityConversion = GetIntensityConversion(config, unitTo);
+    if (ShouldUseSumForFluxDensity(config, unitTo) && !intensityConversion) {
+        return undefined;
+    }
+
+    const intensityValues = intensityConversion ? intensityConversion(values) : values;
+    const pixelAreaArcsec2 = Math.abs(pixelSizesArcsec.x * pixelSizesArcsec.y);
+    return intensityValues.map((value, index) => {
+        if (unitToType === IntensityUnitType.JyPixel) {
+            return value;
+        } else if (unitToType === IntensityUnitType.JySr) {
+            return value * pixelAreaArcsec2 * JySrToJyArcsec2();
+        } else if (unitToType === IntensityUnitType.JyBeam) {
+            return value * pixelAreaArcsec2 * JyBeamToJySr(config.bmaj?.[index] ?? NaN, config.bmin?.[index] ?? NaN) * JySrToJyArcsec2();
+        }
+        return value * pixelAreaArcsec2;
+    });
 };

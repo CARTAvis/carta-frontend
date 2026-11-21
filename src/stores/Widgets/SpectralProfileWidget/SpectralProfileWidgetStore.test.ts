@@ -1,13 +1,120 @@
 import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
-import {runInAction} from "mobx";
+import {observable, runInAction} from "mobx";
 
 import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
+import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
 import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
+
+describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () => {
+    let widgetStore: SpectralProfileWidgetStore | undefined;
+
+    const createWidgetStore = (isSpectralAxisNonlinear: boolean) => {
+        const intensityConfig = {nativeIntensityUnit: "Jy/beam"};
+        const frame = observable({
+            channelInfo: {},
+            channelValues: [100, 110],
+            channelValueBounds: undefined,
+            filename: "test.fits",
+            frameInfo: {fileId: 7},
+            findChannelIndexByValue: jest.fn((value: number) => value),
+            getIntensityConfig: jest.fn(() => intensityConfig),
+            getRegion: jest.fn(),
+            hasStokes: false,
+            headerUnit: "Jy/beam",
+            intensityConfig,
+            intensityUnit: "Jy/beam",
+            isCoordChannel: false,
+            isSpectralAxisNonlinear,
+            isSpectralChannel: true,
+            regionSet: {focusedRegion: undefined, regions: [], regionMap: new Map()},
+            requiredPolarization: Polarizations.I,
+            requiredUnit: "Jy/beam",
+            resetMomentRequestState: jest.fn(),
+            restFreqStore: {restFreqInHz: undefined},
+            setIsRequestingMoments: jest.fn(),
+            spectralType: SpectralType.FREQ,
+            spectralTypeSecondary: SpectralType.FREQ,
+            spectralUnit: SpectralUnit.GHZ,
+            spectralUnitSecondary: SpectralUnit.GHZ,
+            spectralUnitStr: SpectralUnit.GHZ,
+            spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}}
+        });
+        const appStore = {
+            activeFrame: frame,
+            focusedRegion: undefined,
+            frameNames: [],
+            frames: [frame],
+            getFrame: jest.fn(() => frame),
+            getFrameName: jest.fn(() => "test.fits"),
+            requestMoment: jest.fn(),
+            spatialAndSpectalMatchedFileIds: [],
+            spectralProfiles: new Map()
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        jest.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
+        widgetStore = new SpectralProfileWidgetStore();
+        return {frame, appStore, widgetStore};
+    };
+
+    afterEach(() => {
+        widgetStore?.dispose();
+        jest.restoreAllMocks();
+    });
+
+    test("keeps every moment available and selected on a linear spectral axis", () => {
+        const {widgetStore} = createWidgetStore(false);
+        widgetStore.selectMoment(CARTA.Moment.MEDIAN_COORDINATE);
+        expect(widgetStore.unsupportedMoments).toEqual([]);
+        expect(Array.from(widgetStore.selectedMoments)).toEqual([CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MEDIAN_COORDINATE]);
+    });
+
+    test("starts without the default integrated moment on a nonlinear spectral axis", () => {
+        const {widgetStore} = createWidgetStore(true);
+        expect(widgetStore.unsupportedMoments).toEqual(NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS);
+        expect(Array.from(widgetStore.selectedMoments)).toEqual([]);
+        expect(widgetStore.isMomentSupported(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM)).toBe(false);
+        expect(widgetStore.isMomentSupported(CARTA.Moment.MAX_OF_THE_SPECTRUM)).toBe(true);
+    });
+
+    test("drops the coordinate-dependent moments when the frame changes to a nonlinear spectral axis and refuses to reselect them", () => {
+        const {frame, widgetStore} = createWidgetStore(false);
+        widgetStore.selectMoment(CARTA.Moment.MEDIAN_COORDINATE);
+        widgetStore.selectMoment(CARTA.Moment.MAX_OF_THE_SPECTRUM);
+
+        runInAction(() => {
+            frame.isSpectralAxisNonlinear = true;
+        });
+        expect(Array.from(widgetStore.selectedMoments)).toEqual([CARTA.Moment.MAX_OF_THE_SPECTRUM]);
+
+        widgetStore.selectMoment(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        widgetStore.selectMoment(CARTA.Moment.MIN_OF_THE_SPECTRUM);
+        expect(Array.from(widgetStore.selectedMoments)).toEqual([CARTA.Moment.MAX_OF_THE_SPECTRUM, CARTA.Moment.MIN_OF_THE_SPECTRUM]);
+    });
+
+    test("never submits an unsupported moment", () => {
+        const {frame, appStore, widgetStore} = createWidgetStore(true);
+        runInAction(() => {
+            widgetStore.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM, CARTA.Moment.MAX_OF_THE_SPECTRUM];
+        });
+        expect(widgetStore.supportedSelectedMoments).toEqual([CARTA.Moment.MAX_OF_THE_SPECTRUM]);
+        widgetStore.requestMoment();
+        expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
+        expect(appStore.requestMoment).toHaveBeenLastCalledWith(expect.objectContaining({moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}), frame);
+
+        runInAction(() => {
+            widgetStore.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
+        });
+        expect(widgetStore.supportedSelectedMoments).toEqual([]);
+        widgetStore.requestMoment();
+        expect(appStore.requestMoment).toHaveBeenCalledTimes(1);
+    });
+});
 
 describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
@@ -29,6 +136,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
             channelValueBounds: undefined,
             filename: "test.fits",
             frameInfo: {fileId: 7},
+            getIntensityConfig: jest.fn(() => intensityConfig),
             getRegion: jest.fn(),
             hasStokes: false,
             headerUnit: nativeIntensityUnit,
@@ -530,7 +638,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("rejects invalid redshifts and persists the new X/Y rest-frame settings", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
+        runInAction(() => widgetStore.applyConfig({xAxisRestFrameEnabled: true, restFrameRedshift: 0.25, yAxisRestFrameEnabled: true}));
 
         expect(widgetStore.isXAxisRestFrameEnabled).toBe(true);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
@@ -602,25 +710,25 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
 
     test("restores the shift mode while keeping legacy redshift configs valid", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: -0.001, restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY}));
 
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRadialVelocity).toBeCloseTo(-300.093, 1);
 
-        runInAction(() => widgetStore.init({restFrameRedshift: 0.25}));
+        runInAction(() => widgetStore.applyConfig({restFrameRedshift: 0.25}));
         expect(widgetStore.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
         expect(widgetStore.restFrameRedshift).toBe(0.25);
     });
 
     test("restores the velocity convention while defaulting legacy configs to radio", () => {
         const {widgetStore} = createWidgetStore();
-        runInAction(() => widgetStore.init({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
+        runInAction(() => widgetStore.applyConfig({restFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY, restFrameVelocityConvention: VelocityConvention.OPTICAL}));
 
         expect(widgetStore.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
         expect(widgetStore.restFrameRadialVelocity).toBe(0);
 
         const {widgetStore: legacyWidgetStore} = createWidgetStore();
-        runInAction(() => legacyWidgetStore.init({restFrameRedshift: 0.25}));
+        runInAction(() => legacyWidgetStore.applyConfig({restFrameRedshift: 0.25}));
         expect(legacyWidgetStore.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
         expect(legacyWidgetStore.restFrameRadialVelocity).toBeCloseTo(59958.4916, 3);
     });

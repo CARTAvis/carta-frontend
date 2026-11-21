@@ -545,15 +545,17 @@ export class ImageFittingStore {
                 log += "Region: field of view\n";
                 if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
                     log += getRegionPixelProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
-                    log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                    const wcsProperties = this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation);
+                    if (wcsProperties) {
+                        log += wcsProperties + "\n";
+                    }
                 }
                 break;
             default:
                 const region = this.effectiveFrame?.getRegion(regionId);
                 if (region) {
                     log += `Region: ${region.nameString}\n`;
-                    log += region.regionProperties + "\n";
-                    log += this.effectiveFrame?.getRegionWcsProperties(region) + "\n";
+                    this.effectiveFrame?.getRegionProperties(regionId).forEach(property => (log += `${property}\n`));
                 }
                 break;
         }

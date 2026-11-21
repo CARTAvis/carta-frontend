@@ -1,10 +1,33 @@
 .scatter-plot-component {
     width: 100%;
     height: 100%;
+    position: relative;
     user-select: none;
     .annotation-stage {
         position: absolute;
         top: 0;
         left: 0;
+        z-index: 2;
+    }
+
+    .annotation-stage,
+    .annotation-stage canvas,
+    > canvas {
+        cursor: crosshair !important;
+    }
+
+    &[data-panning="true"] .annotation-stage,
+    &[data-panning="true"] .annotation-stage canvas,
+    &[data-panning="true"] > canvas {
+        cursor: move !important;
+    }
+
+    > canvas:not([data-overlay]):not(.annotation-stage) {
+        position: relative;
+        z-index: 1;
+    }
+
+    > .profiler-toolbar {
+        z-index: 3;
     }
 }

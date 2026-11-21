@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, MomentSelectingMode} from "enums";
-import {MOMENT_TEXT} from "models";
+import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, type FrameStore} from "stores";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
@@ -80,7 +80,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : null;
+        return momentContent ? (
+            <MenuItem
+                text={`${momentContent.tag}: ${momentContent.text}`}
+                onClick={handleClick}
+                key={moment}
+                icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"}
+                disabled={!this.props.widgetStore.isMomentSupported(moment)}
+            />
+        ) : null;
     };
 
     private renderRestFreqInput = (frame: FrameStore) => {
@@ -132,6 +140,12 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         const frame = widgetStore.effectiveFrame;
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = widgetStore.momentRegionInfo;
+        const renderRangeLabelInfo = (labelInfo: string, testId: string) =>
+            labelInfo ? (
+                <span className="label-info" title={labelInfo} data-testid={testId}>
+                    {labelInfo}
+                </span>
+            ) : undefined;
         const spectralRangeLabelInfo = [frame?.spectralUnitStr ? `(${frame.spectralUnitStr})` : "", widgetStore.isXAxisRestFrameActive ? "(rest frame)" : ""].filter(Boolean).join(" ");
         const maskRangeLabelInfo = [frame?.requiredUnit ? `(${frame.requiredUnit})` : "", widgetStore.isYAxisRestFrameActive ? "(rest frame)" : ""].filter(Boolean).join(" ");
 
@@ -188,7 +202,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame.isPVImage || !frame.isSpectralChannel} />
                 {frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={spectralRangeLabelInfo}>
+                    <FormGroup label="Range" inline={true} labelInfo={renderRangeLabelInfo(spectralRangeLabelInfo, "moment-generator-spectral-range-info")}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.displayChannelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
@@ -220,7 +234,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={maskRangeLabelInfo}>
+                    <FormGroup label="Range" inline={true} labelInfo={renderRangeLabelInfo(maskRangeLabelInfo, "moment-generator-mask-range-info")}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.displayMaskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} data-testid="moment-generator-mask-range-from-input" />
@@ -239,7 +253,22 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const isAbleToGenerate = frame && frame.numChannels > 1 && !appStore.animatorStore.isAnimationActive && !appStore.widgetsStore.isSpectralWidgetStreamingData && widgetStore.isMomentRegionValid;
+        const isSpectralAxisNonlinear = !!frame?.isSpectralAxisNonlinear;
+        const isAbleToGenerate =
+            frame &&
+            frame.numChannels > 1 &&
+            !appStore.animatorStore.isAnimationActive &&
+            !appStore.widgetsStore.isSpectralWidgetStreamingData &&
+            widgetStore.isMomentRegionValid &&
+            widgetStore.supportedSelectedMoments.length > 0 &&
+            !isSpectralAxisNonlinear;
+        const nonlinearHint = (
+            <span>
+                <i>
+                    <small>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</small>
+                </i>
+            </span>
+        );
         const hint = (
             <span>
                 <br />
@@ -252,6 +281,8 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         2. Spectral profile generation is complete.
                         <br />
                         3. Point region is not selected.
+                        <br />
+                        4. At least one supported moment is selected.
                     </small>
                 </i>
             </span>
@@ -292,7 +323,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.shouldMatchMoment} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip disabled={!!isAbleToGenerate} content={isSpectralAxisNonlinear ? nonlinearHint : msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>

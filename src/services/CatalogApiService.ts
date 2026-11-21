@@ -7,11 +7,17 @@ import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, Telemet
 import {type CatalogInfo, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, MirrorSiteStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
+import {CATALOG_MIRROR_URLS, CATALOG_MIRRORS_BY_DATABASE} from "utilities/catalog/constants";
 
 import {TelemetryService} from "./TelemetryService";
 
 export class CatalogApiService {
-    public static readonly SIMBAD_HYPER_LINK: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+    public static readonly ADS_ABSTRACT_URL = "https://ui.adsabs.harvard.edu/abs/";
+
+    /** Returns the SIMBAD page of an object, from a base URL given by `getSimbadObjectBaseUrl`. */
+    public static getSimbadObjectUrl(baseUrl: string, mainId: string): string {
+        return `${baseUrl}${encodeURIComponent(mainId)}`;
+    }
 
     private static staticInstance: CatalogApiService;
     private axiosInstanceSimbad: AxiosInstance;
@@ -41,6 +47,17 @@ export class CatalogApiService {
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
         const encoded = encodeURIComponent(query);
         return this.getFromActiveMirror(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${encoded}`);
+    };
+
+    /**
+     * Returns the start of a SIMBAD object page link on the active SIMBAD mirror, or on the first
+     * SIMBAD mirror when no mirror is available. Pass it to `getSimbadObjectUrl` with the object
+     * identifier.
+     */
+    public getSimbadObjectBaseUrl = (): string => {
+        const defaultMirrorUrl = CATALOG_MIRROR_URLS[CATALOG_MIRRORS_BY_DATABASE[CatalogDatabase.SIMBAD][0]];
+        const mirrorUrl = this.normalizeMirrorUrl(CatalogDatabase.SIMBAD, MirrorSiteStore.Instance.getActiveMirror(CatalogDatabase.SIMBAD)) ?? defaultMirrorUrl;
+        return `${new URL("../sim-id", mirrorUrl).toString()}?Ident=`;
     };
 
     public cancelQuery(type: CatalogDatabase) {
@@ -254,14 +271,14 @@ export class CatalogApiService {
             AppToaster.show(ErrorToast("Please load an image file"));
             return;
         }
-        const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
-        if (catalogWidgetId) {
+        const catalogComponentId = appStore.updateCatalogProfile(fileId, appStore.activeFrame, catalogInfo);
+        if (catalogComponentId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
-            appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
             appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
             appStore.fileBrowserStore.hideFileBrowser();
             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
             appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+            appStore.catalogStore.validateCatalogPlotColumns(fileId);
             appStore.dialogStore.hideDialog(DialogId.OnlineDataQuery);
         }
     };

@@ -25,6 +25,27 @@ type Point3D = {x: number; y: number; z?: number};
 type SmoothedPoint3D = Point3D & {sourceZMin: number; sourceZMax: number};
 type SourceChannelRange = {min: number; max: number};
 
+export interface StokesExportName {
+    plotName: string;
+    exportTitle: string;
+}
+
+export function getStokesExportNames(isFractional: boolean): {q: StokesExportName; u: StokesExportName; pi: StokesExportName; pa: StokesExportName; qu: StokesExportName} {
+    const prefix = isFractional ? "fractional-" : "";
+    const fraction = isFractional ? "/I" : "";
+    return {
+        q: {plotName: `${prefix}Q-profile`, exportTitle: `Q${fraction} profile`},
+        u: {plotName: `${prefix}U-profile`, exportTitle: `U${fraction} profile`},
+        pi: {plotName: `${prefix}PI-profile`, exportTitle: `PI${fraction} profile`},
+        pa: {plotName: `${prefix}PA-profile`, exportTitle: "PA profile"},
+        qu: {plotName: `${prefix}QU-scatter`, exportTitle: `Q${fraction} vs U${fraction} scatter`}
+    };
+}
+
+export function getSmoothedStokesExportName(name: StokesExportName): StokesExportName {
+    return {plotName: `${name.plotName}-smoothed`, exportTitle: `${name.exportTitle} (smoothed)`};
+}
+
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private widgetId: string;
@@ -903,6 +924,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         const frame = this.widgetStore.effectiveFrame;
         const imageName = this.widgetStore.effectiveFrame ? this.widgetStore.effectiveFrame.filename : undefined;
+        const exportNames = getStokesExportNames(this.widgetStore.isFractionalPolVisible);
         const quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
@@ -937,7 +959,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yLabel: "Value",
             isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
-            plotName: "piLine",
+            ...exportNames.pi,
             tickTypeY: TickType.Scientific,
             shouldShowXAxisTicks: false,
             shouldShowXAxisLabel: false,
@@ -965,7 +987,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yLabel: "Value",
             isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
-            plotName: "paLine",
+            ...exportNames.pa,
             tickTypeY: TickType.Integer,
             shouldShowXAxisTicks: true,
             shouldShowXAxisLabel: true,
@@ -992,7 +1014,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yLabel: "Channel",
             isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
-            plotName: "quScatter",
+            ...exportNames.qu,
             tickTypeX: TickType.Scientific,
             tickTypeY: TickType.Scientific,
             shouldShowXAxisTicks: true,
@@ -1043,21 +1065,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
                 const qPlotProps: MultiPlotProps = {
                     imageName: imageName ?? "Unknown",
-                    plotName: "q",
+                    ...exportNames.q,
                     data: currentPlotData.qValues.dataset,
                     type: this.widgetStore.plotType,
                     borderColor: primaryLineColor,
-                    order: 1,
-                    comments: [StokesCoordinate.LinearPolarizationQ]
+                    order: 1
                 };
                 const uPlotProps: MultiPlotProps = {
                     imageName: imageName ?? "Unknown",
-                    plotName: "u",
+                    ...exportNames.u,
                     data: currentPlotData.uValues.dataset,
                     type: this.widgetStore.plotType,
                     borderColor: ulinePlotColor,
-                    order: 1,
-                    comments: [StokesCoordinate.LinearPolarizationU]
+                    order: 1
                 };
                 if (quLinePlotProps.multiPlotPropsMap) {
                     quLinePlotProps.multiPlotPropsMap.set(StokesCoordinate.LinearPolarizationQ, qPlotProps);
@@ -1068,7 +1088,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (smoothingStore.type !== SmoothingType.NONE && currentPlotData.qSmoothedValues && currentPlotData.uSmoothedValues && currentPlotData.piSmoothedValues && currentPlotData.piSmoothedValues) {
                     const smoothedQPlotProps: MultiPlotProps = {
                         imageName: imageName ?? "Unknown",
-                        plotName: "q-smoothed",
+                        ...getSmoothedStokesExportName(exportNames.q),
                         data: currentPlotData.qSmoothedValues.dataset,
                         type: smoothingStore.lineType,
                         borderColor: primaryLineColor,
@@ -1077,7 +1097,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     };
                     const smoothedUPlotProps: MultiPlotProps = {
                         imageName: imageName ?? "Unknown",
-                        plotName: "u-smoothed",
+                        ...getSmoothedStokesExportName(exportNames.u),
                         data: currentPlotData.uSmoothedValues.dataset,
                         type: smoothingStore.lineType,
                         borderColor: ulinePlotColor,
@@ -1086,7 +1106,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     };
                     const smoothedPiPlotProps: MultiPlotProps = {
                         imageName: imageName ?? "Unknown",
-                        plotName: "pi-smoothed",
+                        ...getSmoothedStokesExportName(exportNames.pi),
                         data: currentPlotData.piSmoothedValues.dataset,
                         type: smoothingStore.lineType,
                         borderColor: primaryLineColor,
@@ -1095,7 +1115,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     };
                     const smoothedPaPlotProps: MultiPlotProps = {
                         imageName: imageName ?? "Unknown",
-                        plotName: "pa-smoothed",
+                        ...getSmoothedStokesExportName(exportNames.pa),
                         data: currentPlotData.paSmoothedValues.dataset,
                         type: smoothingStore.lineType,
                         borderColor: getColorForTheme(smoothingStore.colorMap.get(StokesCoordinate.PolarizationAngle) ?? primaryLineColor),

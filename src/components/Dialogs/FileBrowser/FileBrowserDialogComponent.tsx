@@ -10,6 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
 import {AnimationMode, BrowserMode, ColormapSet, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {NONLINEAR_SPECTRAL_AXIS_MESSAGE} from "models";
 import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 
@@ -154,7 +155,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -177,7 +178,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -211,7 +212,7 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
 
@@ -222,13 +223,13 @@ export class FileBrowserDialogComponent extends React.Component {
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             const directory = fileBrowserStore.catalogFileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No catalog directory selected");
             }
             yield appStore.appendCatalog(directory, file.fileInfo.name, CatalogProfileStore.INIT_TABLE_ROWS);
         } else {
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
             fileBrowserStore.setImportingRegions(true);
@@ -252,6 +253,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (!activeFrame) {
             throw new Error("No active frame");
         }
+        if (activeFrame.isSpectralAxisNonlinear) {
+            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        }
 
         const saveFilename = fileBrowserStore.saveFilename;
         if (!saveFilename) {
@@ -273,7 +277,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const restFreq = activeFrame.headerRestFreq === fileBrowserStore.saveRestFreqInHz ? NaN : fileBrowserStore.saveRestFreqInHz;
 
         const directory = fileBrowserStore.fileList?.directory;
-        if (!directory) {
+        if (directory == null) {
             throw new Error("No directory selected");
         }
 
@@ -307,7 +311,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             const filename = exportFilename.trim();
             const directory = fileBrowserStore.fileList?.directory;
-            if (!directory) {
+            if (directory == null) {
                 throw new Error("No directory selected");
             }
             await this.exportRegion(directory, filename);
@@ -344,7 +348,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 const filename = exportFilename.trim();
                 const directory = fileBrowserStore.fileList?.directory;
-                if (!directory) {
+                if (directory == null) {
                     throw new Error("No directory selected");
                 }
                 await this.exportRegion(directory, filename, true);
@@ -620,6 +624,8 @@ export class FileBrowserDialogComponent extends React.Component {
                                     <br />
                                     <small>To save color-blending images, please save as a workspace via the File menu.</small>
                                 </span>
+                            ) : appStore.activeFrame?.isSpectralAxisNonlinear ? (
+                                <span>{NONLINEAR_SPECTRAL_AXIS_MESSAGE}</span>
                             ) : (
                                 "Save this file"
                             )
@@ -632,6 +638,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 fileBrowserStore.isLoadingInfo ||
                                 appStore.isFileSaving ||
                                 appStore.activeImage?.type !== ImageType.FRAME ||
+                                !!appStore.activeFrame?.isSpectralAxisNonlinear ||
                                 !fileBrowserStore.saveFilename ||
                                 fileBrowserStore.saveFilename.length === 0
                             }
@@ -945,7 +952,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                     <AnchorButton
                                         icon="repeat"
                                         onClick={() => {
-                                            if (fileList?.directory) {
+                                            if (fileList?.directory != null) {
                                                 fileBrowserStore.selectFolder(fileList.directory, true);
                                             }
                                         }}

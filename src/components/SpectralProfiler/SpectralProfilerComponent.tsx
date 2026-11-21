@@ -390,7 +390,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 for (let i = 0; i < currentPlotData.numProfiles; i++) {
                     const smoothingStore = this.widgetStore.smoothingStore;
                     const imageName = currentPlotData.labels?.[i]?.image ?? "";
-                    const plotName = `Z-profile-${currentPlotData.labels?.[i]?.plot ?? ""}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
+                    const plotName = currentPlotData.exportNames?.[i] ?? "Z-profile";
                     if (i < (currentPlotData.data?.length ?? 0)) {
                         linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
