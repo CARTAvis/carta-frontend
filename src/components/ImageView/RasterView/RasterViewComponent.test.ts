@@ -63,6 +63,11 @@ describe("RasterViewComponent", () => {
             {alpha: 0.75, operation: "lighter"}
         ]);
 
+        compositeStates.length = 0;
+        secondFrame.stokes = 1;
+        component.updateCanvas();
+        expect(compositeStates).toEqual([{alpha: 0.25, operation: "lighter"}]);
+
         component.props = {...component.props, image: {type: ImageType.FRAME, store: baseFrame}, channel: undefined};
         component.renderCanvas = jest.fn();
         component.updateCanvas();

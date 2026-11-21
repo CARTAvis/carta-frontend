@@ -60,8 +60,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
         }
 
-        this.sub = TileService.Instance.tileStream.subscribe(() => {
-            if (this.channels !== undefined || !AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview) {
+        this.sub = TileService.Instance.tileStream.subscribe(({fileId, channel, stokes}) => {
+            const channelMap = AppStore.Instance.channelMapStore;
+            if (this.channels !== undefined ? channelMap.hasDisplayedTileChannel(fileId, channel, stokes) : !channelMap.isChannelMapEnabled || this.imageStore?.isPreview) {
                 this.scheduleCanvasUpdate();
             }
         });
@@ -192,13 +193,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
+                    if (image?.type === ImageType.COLOR_BLENDING) {
+                        ctx.globalAlpha = image.store.alpha[index];
+                    }
+                    ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
                 }
-
-                if (image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = image?.store?.alpha[index];
-                }
-
-                ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
             }
         });
         ctx.globalAlpha = 1;

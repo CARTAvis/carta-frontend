@@ -21,9 +21,21 @@ describe("channel-map color blending", () => {
             channelMapRequestedChannels: new Map(),
             streamingTileRanges: new Map(),
             pendingRequests: new Map(),
+            channelMap: new Map(),
             getRequiredRequestTiles: jest.fn(tiles => tiles),
             updateRemainingTileCount: jest.fn()
         });
+
+    test("drops late decompression from an obsolete Stokes before writing to the cache", () => {
+        const service = makeService();
+        service.channelMap.set(1, {channel: 4, stokes: 1});
+        service.pendingDecompressions = new Map([["1_0_4", new Map([[7, new Map([[42, true]])]])]]);
+        service.cachedTiles = {setpop: jest.fn()};
+
+        service.updateStream(1, 4, 0, new Float32Array([1]), 1, 1, 0, 42, 7);
+
+        expect(service.cachedTiles.setpop).not.toHaveBeenCalled();
+    });
 
     test("requests each layer's channels with the existing range protocol", () => {
         const service = makeService();

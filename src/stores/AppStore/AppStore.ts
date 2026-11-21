@@ -2678,7 +2678,7 @@ export class AppStore {
     private *resumeSession() {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
-        this.tileService.clearRequestQueue();
+        this.tileService.cancelChannelMapRequests();
 
         // Ignore & remove generated in-memory images
         const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);
@@ -2788,6 +2788,7 @@ export class AppStore {
         this.initRequirements();
         this.isResumingSession = false;
         this.backendService.hasConnectionDropped = false;
+        this.channelMapStore.requestTilesAfterSessionResume();
 
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {

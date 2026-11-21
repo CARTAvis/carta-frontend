@@ -252,13 +252,15 @@ describe("ChannelMapStore", () => {
             store.setStartChannel(0);
             const unmatchedFrame = {...baseFrame, channel: 7, frameInfo: {fileId: 2, fileInfoExtended: {depth: 12}}, spectralSiblings: []};
             const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
-            const testStore = store as unknown as {requestDisplayedChannels: () => void};
             setDisplayedImage({type: 1, store: {frames: [baseFrame, unmatchedFrame]}});
             store.setChannelMapEnabled(true);
             requestChannelMapTiles.mockClear();
 
             expect(store.getChannelsForFrame(unmatchedFrame)).toEqual([7, 7, 7, 7]);
-            testStore.requestDisplayedChannels();
+            expect(store.hasDisplayedTileChannel(2, 7, unmatchedFrame.stokes)).toBe(true);
+            expect(store.hasDisplayedTileChannel(2, 0, unmatchedFrame.stokes)).toBe(false);
+            expect(store.hasDisplayedTileChannel(99, 7, unmatchedFrame.stokes)).toBe(false);
+            store.requestTilesAfterSessionResume();
 
             expect(requestChannelMapTiles).toHaveBeenCalledTimes(2);
             expect(requestChannelMapTiles.mock.calls[0][4]).toEqual([0, 1, 2, 3]);

@@ -269,6 +269,10 @@ export class TileService {
         const key = `${fileId}_${stokes}_${channel}`;
 
         if (areChannelsChanged || !this.channelMap.has(fileId)) {
+            const previous = this.channelMap.get(fileId);
+            if (previous && previous.stokes !== stokes) {
+                this.clearGPUCache(fileId);
+            }
             this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
             this.receivedSynchronisedTiles.delete(key);
             this.clearRequestQueue(fileId);
@@ -341,6 +345,7 @@ export class TileService {
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
         const requiredChannel = frame.channel;
+        this.channelMap.set(fileId, {channel: requiredChannel, stokes});
         const requestedChannelSet = new Set(requestedChannels);
         this.channelMapRequestedChannels.set(fileId, requestedChannelSet);
         const fullChannelRange = {min: Math.min(...requestedChannels), max: Math.max(...requestedChannels)};
@@ -354,6 +359,7 @@ export class TileService {
             }
             this.clearRequestQueue(fileId);
             this.clearCompressedCache(fileId);
+            this.clearGPUCache(fileId);
         }
 
         const previousTiles = this.streamingTileRanges.get(fileId);
@@ -406,6 +412,11 @@ export class TileService {
     }
 
     updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
+        const previous = this.channelMap.get(fileId);
+        if (previous && previous.stokes !== stokes) {
+            this.clearCompressedCache(fileId);
+            this.clearGPUCache(fileId);
+        }
         this.channelMap.set(fileId, {channel, stokes});
         this.backendService.setChannels(fileId, channel, stokes, {}, true);
     }
@@ -612,7 +623,7 @@ export class TileService {
             return;
         }
 
-        if (appStore.channelMapStore.isChannelMapEnabled && !(this.channelMapRequestedChannels.get(tileMessage.fileId ?? NaN)?.has(tileMessage.channel ?? NaN) ?? false)) {
+        if (appStore.channelMapStore.isChannelMapEnabled && (currentChannels?.stokes !== tileMessage.stokes || !this.channelMapRequestedChannels.get(tileMessage.fileId ?? NaN)?.has(tileMessage.channel ?? NaN))) {
             console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }
@@ -722,6 +733,11 @@ export class TileService {
         const pendingCompressionMap = this.pendingDecompressions.get(key)?.get(syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID);
         if (!pendingCompressionMap) {
             console.warn(`Problem decompressing tile. Missing pending decompression map ${key}!`);
+            return;
+        }
+
+        if (!this.isAnimationEnabled && this.channelMap.get(fileId ?? NaN)?.stokes !== stokes) {
+            pendingCompressionMap.delete(encodedCoordinate);
             return;
         }
 

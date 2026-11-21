@@ -27,9 +27,7 @@ export class ChannelMapStore {
         autorun(() => {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 // Track every value that can change the tiles required by any displayed layer.
-                void this.channelArray;
-                void this.displayedFrame.spectralSiblings;
-                void AppStore.Instance.spectralMatchingType;
+                void this.channelsByFrame;
                 this.displayedFrames.forEach(frame => {
                     void frame.center;
                     void frame.requiredFrameView;
@@ -38,8 +36,6 @@ export class ChannelMapStore {
                     void frame.spatialReference;
                     void frame.channel;
                     void frame.stokes;
-                    void frame.wcsInfo3D;
-                    void frame.frameInfo.fileInfoExtended.depth;
                 });
 
                 this.throttledRequestChannels();
@@ -335,6 +331,21 @@ export class ChannelMapStore {
      * A null entry means that the matched channel falls outside the frame.
      */
     getChannelsForFrame(frame: FrameStore): Array<number | null> {
+        return this.channelsByFrame.get(frame) ?? [];
+    }
+
+    hasDisplayedTileChannel(fileId: number | null | undefined, channel: number | null | undefined, stokes: number | null | undefined): boolean {
+        return this.isChannelMapEnabled && channel != null && this.displayedFrames.some(frame => frame.frameInfo.fileId === fileId && frame.stokes === stokes && this.getChannelsForFrame(frame).includes(channel));
+    }
+
+    @computed private get channelsByFrame(): Map<FrameStore, Array<number | null>> {
+        return new Map(this.displayedFrames.map(frame => [frame, this.mapChannelsForFrame(frame)]));
+    }
+
+    private mapChannelsForFrame(frame: FrameStore): Array<number | null> {
+        if (!this.channelArray.length) {
+            return [];
+        }
         const baseFrame = this.displayedFrame;
         if (!baseFrame || frame === baseFrame) {
             return this.channelArray;
