@@ -1059,7 +1059,7 @@ interface RegionComponentsProps {
 }
 
 @observer
-class RegionComponents extends React.Component<RegionComponentsProps> {
+export class RegionComponents extends React.Component<RegionComponentsProps> {
     private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
         if (this.props.shouldSuppressSelect?.(evt)) {
             return;
@@ -1085,6 +1085,12 @@ class RegionComponents extends React.Component<RegionComponentsProps> {
 
     public render() {
         const regions = this.props.regions;
+
+        // Draw nothing for a closed image. Its AST handles are deleted, and the ruler would measure with them.
+        // That leaves AST in an error state, and the next image then opens without world coordinates.
+        if (this.props.frame?.isDisposed) {
+            return null;
+        }
 
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;

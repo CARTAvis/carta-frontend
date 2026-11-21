@@ -76,6 +76,10 @@ import {TileService} from "services";
 describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
     describe("setChannelMapEnabled", () => {
         it("updates the channel map mode correctly", () => {
             expect(store.isChannelMapEnabled).toBe(false);
