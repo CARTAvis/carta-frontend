@@ -1914,12 +1914,19 @@ export class AppStore {
     private static readonly ImageThrottleTime = 50;
     private static readonly ImageChannelThrottleTime = 500;
     private static readonly RequirementsCheckInterval = 200;
+    private static readonly VelocityBunitVariants: ReadonlySet<string> = new Set(["km/s", "km s-1", "km s^-1", "km.s-1"]);
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>;
     private histogramRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>;
     private pendingChannelHistograms: Map<string, CARTA.RegionHistogramData.$Properties>;
+
+    /** Returns the tile compression quality for a frame, enforcing at least 32 when BUNIT is a velocity unit. */
+    getImageCompressionQuality = (headerUnit?: string): number => {
+        const compressionQuality = this.preferenceStore.imageCompressionQuality;
+        return headerUnit && AppStore.VelocityBunitVariants.has(headerUnit) ? Math.max(compressionQuality, 32) : compressionQuality;
+    };
 
     @action updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
@@ -1939,10 +1946,7 @@ export class AppStore {
                 this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
-                // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-                const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-                const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.getImageCompressionQuality(frame.headerUnit), true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1990,10 +1994,7 @@ export class AppStore {
                 this.preferenceStore.animationCompressionQuality
             );
         } else if (!this.channelMapStore.isChannelMapEnabled) {
-            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.getImageCompressionQuality(headerUnit));
         }
     };
 

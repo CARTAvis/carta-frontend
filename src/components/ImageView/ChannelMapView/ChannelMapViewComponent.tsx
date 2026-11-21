@@ -99,17 +99,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     style={{top}}
                 >
                     {frame?.frameInfo.fileInfoExtended.depth > 1 && (
-                        <ChannelMapLabelComponent
-                            image={image}
-                            overlaySettings={overlaySettings}
-                            top={top}
-                            left={left}
-                            width={innerRenderWidth}
-                            height={innerRenderHeight}
-                            isDocked={props.isDocked}
-                            channel={channel}
-                            isHighlighted={channel === frame.requiredChannel}
-                        />
+                        <ChannelMapLabelComponent top={top} left={left} width={innerRenderWidth} height={innerRenderHeight} isDocked={props.isDocked} channel={channel} isHighlighted={channel === frame.requiredChannel} />
                     )}
                     <RegionViewComponent
                         key={`region-view-component-${index}`}

@@ -122,9 +122,7 @@ export class ChannelMapStore {
             return;
         }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
-        const preferenceStore = AppStore.Instance.preferenceStore;
-        const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-        const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
+        const compressionQuality = AppStore.Instance.getImageCompressionQuality(frame.headerUnit);
         TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, requestedChannels, isPolarizationChanged);
     };
 

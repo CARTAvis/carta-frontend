@@ -37,6 +37,7 @@ jest.mock("stores", () => {
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
+                getImageCompressionQuality: jest.fn(() => 11),
                 imageViewConfigStore: observable.object(
                     {
                         visibleImages: [
