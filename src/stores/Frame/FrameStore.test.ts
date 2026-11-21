@@ -181,6 +181,23 @@ describe("FrameStore", () => {
         });
     });
 
+    describe("channel map contours", () => {
+        test("keeps the active channel when another channel's contours arrive", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const channelMapStore = AppStore.Instance.channelMapStore;
+            channelMapStore.setChannelMapEnabled(true);
+
+            try {
+                frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 1, progress: 1}));
+
+                expect(frame.channel).toBe(0);
+                expect(frame.stokes).toBe(0);
+            } finally {
+                channelMapStore.setChannelMapEnabled(false);
+            }
+        });
+    });
+
     test("invalidates pending input when selecting the current channel again", () => {
         const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
         const token = frame.channelSelectionToken;
