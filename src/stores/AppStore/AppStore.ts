@@ -35,7 +35,6 @@ import {
     COMPUTED_POLARIZATIONS,
     type FileId,
     FloatingObjzIndexManager,
-    type FrameView,
     type ImageItem,
     type ImageViewItem,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
@@ -85,7 +84,6 @@ import {
     getColorForTheme,
     getExportFileName,
     getPasteRegionOffset,
-    GetRequiredTiles,
     mapToObject,
     markAsScriptingMap,
     offsetPointsToAvoidCollision,
@@ -2182,20 +2180,7 @@ export class AppStore {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
-                    const reqView = frame.requiredFrameView;
-                    const croppedReq: FrameView = {
-                        xMin: Math.max(-0.5, reqView.xMin),
-                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
-                        yMin: Math.max(-0.5, reqView.yMin),
-                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
-                        mip: reqView.mip
-                    };
-
-                    const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                    const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                    const tileSizeFullRes = reqView.mip * 256;
-                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                    const [tiles, midPointTileCoords] = frame.requiredTiles;
                     if (tiles.length) {
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit ?? ""});
                     }
