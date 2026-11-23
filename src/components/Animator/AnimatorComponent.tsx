@@ -405,16 +405,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             </ButtonGroup>
         );
 
-        const numericInputType = AppStore.Instance.animatorStore.step !== 1 ? NumericInputType.Step : this.numericInputType;
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
                 <HTMLSelect
                     disabled={appStore.animatorStore.isAnimationActive || appStore.channelMapStore.isChannelMapEnabled}
-                    value={numericInputType}
+                    value={this.numericInputType}
                     options={[NumericInputType.FrameRate, NumericInputType.Step]}
                     onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
                 />
-                {numericInputType === NumericInputType.FrameRate ? (
+                {this.numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
                         value={appStore.animatorStore.frameRate}
                         min={appStore.animatorStore.minFrameRate}
@@ -429,6 +428,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 ) : (
                     <SafeNumericInput
                         value={appStore.animatorStore.step}
+                        intOnly={true}
                         min={appStore.animatorStore.minStep}
                         max={appStore.animatorStore.maxStep}
                         stepSize={1}

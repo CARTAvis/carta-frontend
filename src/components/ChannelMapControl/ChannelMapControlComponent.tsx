@@ -123,6 +123,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 <FormGroup className="channel-map-control-label" inline={true} label="Channel step" disabled={!channelMapSettings.isChannelMapEnabled}>
                     <SafeNumericInput
                         placeholder="Channel step"
+                        intOnly={true}
                         min={1}
                         max={Math.min(channelMapSettings.totalChannelNum, appStore.animatorStore.maxStep)}
                         value={channelMapSettings.channelStep}

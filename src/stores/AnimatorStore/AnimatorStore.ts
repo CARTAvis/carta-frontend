@@ -40,7 +40,9 @@ export class AnimatorStore {
     };
 
     @action setStep = (val: number) => {
-        this.step = val;
+        if (Number.isInteger(val) && val >= this.minStep && val <= this.maxStep) {
+            this.step = val;
+        }
     };
 
     @flow.bound *startAnimation() {

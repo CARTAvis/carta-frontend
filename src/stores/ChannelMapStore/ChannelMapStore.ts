@@ -26,10 +26,9 @@ export class ChannelMapStore {
         autorun(() => {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
-                const startChannel = this.startChannel;
+                const channelArray = this.channelArray;
                 const numColumns = this.numColumns;
                 const numRows = this.numRows;
-                const endChannel = this.endChannel;
                 const center = this.displayedFrame.center;
                 const requiredFrameView = this.displayedFrame.requiredFrameView;
                 const requiredTiles = this.displayedFrame.requiredTiles;
@@ -45,7 +44,7 @@ export class ChannelMapStore {
             () => this.channelArray,
             channelArray => {
                 const channel = this.displayedFrame?.channel;
-                if (this.isChannelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
+                if (this.isChannelMapEnabled && channelArray.length > 0 && channel !== undefined && !channelArray.includes(channel)) {
                     this.debouncedSetActiveChannel(channelArray[0]);
                 }
             }
@@ -332,13 +331,14 @@ export class ChannelMapStore {
 
     /** The last channel in the image view. */
     @computed get endChannel(): number {
-        const availableChannels = Math.max(0, this.totalChannelNum - this.startChannel);
-        const displayedChannelCount = Math.min(this.numChannels, Math.ceil(availableChannels / this.channelStep));
-        return this.startChannel + Math.max(0, displayedChannelCount - 1) * this.channelStep;
+        return this.channelArray[this.channelArray.length - 1] ?? this.startChannel;
     }
 
     /** The displayed channels in the image view. */
-    @computed get channelArray(): number[] {
-        return Array.from({length: this.endChannel >= this.startChannel ? Math.floor((this.endChannel - this.startChannel) / this.channelStep) + 1 : 0}, (_, i) => this.startChannel + i * this.channelStep);
+    @computed.struct get channelArray(): number[] {
+        const {startChannel, channelStep, totalChannelNum, numChannels} = this;
+        const availableChannels = Math.max(0, totalChannelNum - startChannel);
+        const count = Math.min(numChannels, Math.ceil(availableChannels / channelStep));
+        return Array.from({length: count}, (_, i) => startChannel + i * channelStep);
     }
 }

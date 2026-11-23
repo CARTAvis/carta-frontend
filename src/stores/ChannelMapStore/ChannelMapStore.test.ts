@@ -40,7 +40,7 @@ jest.mock("stores", () => {
                                 {
                                     channel: 0,
                                     requiredChannel: 0,
-                                    frameInfo: {fileInfoExtended: {depth: 12}},
+                                    frameInfo: {fileInfoExtended: observable.object({depth: 12})},
                                     requiredFrameView: false,
                                     requiredTiles: [[], {x: 0, y: 0}],
                                     setChannel: jest.fn()
@@ -222,7 +222,7 @@ describe("ChannelMapStore", () => {
     });
 
     describe("setChannelStep", () => {
-        it("shares the channel step with the animator and requests sparse channels", () => {
+        it("shares the channel step with the animator and derives sparse channels", () => {
             store.setStartChannel(1);
             store.setChannelStep(2);
 
@@ -246,6 +246,36 @@ describe("ChannelMapStore", () => {
 
             store.setChannelStep(13);
             expect(store.channelStep).toBe(1);
+        });
+
+        it("requests the new channel list when the last channel stays the same", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            const depth = info.depth;
+            store.setStartChannel(0);
+            try {
+                runInAction(() => {
+                    info.depth = 7;
+                    Object.assign(frame, {requiredFrameView: true});
+                });
+                store.setChannelMapEnabled(true);
+                store.setChannelStep(2);
+                jest.advanceTimersByTime(100);
+                expect(requestTiles.mock.lastCall?.[4]).toEqual([0, 2, 4, 6]);
+                requestTiles.mockClear();
+
+                store.setChannelStep(3);
+                jest.advanceTimersByTime(100);
+                expect(requestTiles.mock.lastCall?.[4]).toEqual([0, 3, 6]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    info.depth = depth;
+                    Object.assign(frame, {requiredFrameView: false});
+                });
+            }
         });
     });
 
