@@ -282,6 +282,49 @@ describe("FrameStore", () => {
         }
     });
 
+    test("preserves partial animated overlay chunks when the raster advances to their channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.contourConfig.setContourConfiguration([1], CARTA.SmoothingMode.NoSmoothing, 1);
+        frame.contourConfig.setEnabled(true);
+        const vectorTile = {width: 1, height: 1, x: 0, y: 0, mip: 1, imageData: new Uint8Array(new Float32Array([1]).buffer)};
+        const appStore = AppStore.Instance;
+        const {animatorStore, backendService, imageViewConfigStore} = appStore;
+        const previousMode = animatorStore.animationMode;
+        const isAnimationPreviouslyActive = animatorStore.isAnimationActive;
+        const previousAnimationId = backendService.animationId;
+        imageViewConfigStore.addFrame(frame);
+
+        try {
+            runInAction(() => {
+                animatorStore.animationMode = AnimationMode.CHANNEL;
+                animatorStore.isAnimationActive = true;
+                backendService.animationId = 5;
+            });
+
+            frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 0.5, contourSets: [{level: 1}]}));
+            const firstContourStore = frame.contourStores.get(1);
+            frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 0.5, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+            frame.setChannels(2, 0, false);
+            runInAction(() => (frame.channel = 2));
+
+            frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 1, contourSets: [{level: 1}]}));
+            frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 1, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+            expect(frame.contourStores.get(1)).toBe(firstContourStore);
+            expect(frame.contourProgress).toBe(1);
+            expect(frame.vectorOverlayStore.tiles).toHaveLength(2);
+            expect(frame.vectorOverlayStore.progress).toBe(1);
+        } finally {
+            imageViewConfigStore.removeFrame(frame.id);
+            runInAction(() => {
+                animatorStore.animationMode = previousMode;
+                animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+                backendService.animationId = previousAnimationId;
+            });
+        }
+    });
+
     test("invalidates pending input when selecting the current channel again", () => {
         const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
         const token = frame.channelSelectionToken;

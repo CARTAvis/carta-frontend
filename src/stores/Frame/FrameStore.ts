@@ -3221,8 +3221,12 @@ export class FrameStore {
         }
 
         if (this.requiredChannel !== sanitizedChannel || this.requiredStokes !== stokes) {
-            this.isContourStreamActive = false;
-            this.isVectorOverlayStreamActive = false;
+            if (this.contourSelection?.channel !== sanitizedChannel || this.contourSelection.stokes !== stokes) {
+                this.isContourStreamActive = false;
+            }
+            if (this.vectorOverlayChannel !== sanitizedChannel) {
+                this.isVectorOverlayStreamActive = false;
+            }
         }
         this.requiredChannel = sanitizedChannel;
         this.channelSelectionToken = {};

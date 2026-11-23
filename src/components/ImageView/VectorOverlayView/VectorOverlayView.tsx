@@ -22,6 +22,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private vectorOverlayWebGLService: VectorOverlayWebGLService;
+    private updateCanvasFrame?: number;
 
     componentDidMount() {
         this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
@@ -40,10 +41,24 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         appStore.resetImageRatio();
 
+        if (this.updateCanvasFrame !== undefined) {
+            return;
+        }
+
         const baseFrame = this.props.frame;
         const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
         if (vectorOverlayFrames?.some(frame => !frame.hasCurrentVectorOverlay) || vectorOverlayFrames?.every(frame => frame.vectorOverlayStore.isComplete)) {
-            requestAnimationFrame(this.updateCanvas);
+            this.updateCanvasFrame = requestAnimationFrame(() => {
+                this.updateCanvasFrame = undefined;
+                this.updateCanvas();
+            });
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.updateCanvasFrame !== undefined) {
+            cancelAnimationFrame(this.updateCanvasFrame);
+            this.updateCanvasFrame = undefined;
         }
     }
 

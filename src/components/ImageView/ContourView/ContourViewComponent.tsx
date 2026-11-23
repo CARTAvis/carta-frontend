@@ -279,10 +279,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const view = baseFrame.requiredFrameView;
         }
 
+        const isServerAnimationStreaming = AnimatorStore.Instance.isServerAnimationStreaming;
         const contourFrames = appStore.contourFrames.get(baseFrame);
         if (contourFrames) {
             for (const frame of contourFrames) {
                 const hasCurrentContours = frame.hasCurrentContours;
+                const contourProgress = frame.contourProgress;
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
                 const color = config.isColormapEnabled ? config.colormap : config.color;
