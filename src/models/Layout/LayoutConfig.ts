@@ -1,8 +1,7 @@
 import Ajv from "ajv";
 
-import {CatalogOverlayComponent} from "components";
 import {createFlexLayoutModel, extractAbstractConfig, getComponentTabJson, getImageViewWeight, PresetLayout} from "models";
-import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
+import {AppStore, type WidgetConfig} from "stores";
 import {findDeep} from "utilities";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -186,19 +185,12 @@ export class LayoutConfig {
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-            if (config.type === CatalogOverlayComponent.WidgetConfig.type) {
-                const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
-                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
-            } else {
-                widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
-            }
+            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
             if (widgetSettingsConfig) {
                 floatingConfig.widgetSettings = widgetSettingsConfig;
             }
             // add plot type
-            const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(config.id);
+            const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(config.id);
             if (plotWidget) {
                 floatingConfig.plotType = plotWidget.plotType;
             }
@@ -224,18 +216,11 @@ export class LayoutConfig {
                 // since child.id is the collapsed base type (e.g. "catalog-plot")
                 const instanceId = child._instanceId || child.id;
                 const widgetType = child.id.replace(/(-component)?-\d+$/, "");
-                let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
-                if (widgetType === CatalogOverlayComponent.WidgetConfig.type) {
-                    const catalogFileId = CatalogStore.Instance.catalogProfiles.get(instanceId) ?? NaN;
-                    const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
-                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
-                } else {
-                    widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
-                }
+                const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, instanceId);
                 if (widgetSettingsConfig) {
                     child.widgetSettings = widgetSettingsConfig;
                 }
-                const plotWidget = appStore.widgetsStore.catalogPlotWidgets.get(instanceId);
+                const plotWidget = appStore.widgetsStore.getDisplayedCatalogPlotWidget(instanceId);
                 if (plotWidget) {
                     child.plotType = plotWidget.plotType;
                 }

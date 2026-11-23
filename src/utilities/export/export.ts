@@ -9,6 +9,14 @@ export function getUnixTimestamp() {
     return +moment(new Date());
 }
 
+// Longer file names can make browsers refuse the download
+const MAX_EXPORT_NAME_LENGTH = 200;
+
+export function getExportFileName(imageName: string, content: string): string {
+    const name = `${imageName.replaceAll(" ", "__")}-${content.replaceAll(" ", "-")}`.substring(0, MAX_EXPORT_NAME_LENGTH);
+    return `${name}-${getTimestamp()}`;
+}
+
 export function exportTsvFile(imageName: string, plotName: string, content: string) {
     const tsvData = `data:text/tab-separated-values;charset=utf-8,${content}\n`.trim();
     const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
@@ -16,7 +24,7 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
 
-    a.download = `${imageName.replaceAll(" ", "__")}-${plotName.replaceAll(" ", "-")}-${getTimestamp()}.tsv`;
+    a.download = `${getExportFileName(imageName, plotName)}.tsv`;
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;

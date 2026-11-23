@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import {toJS} from "mobx";
 
 import {AppStore} from "stores";
+import {isScriptingMap, parseReturnPath, type ReturnPath} from "utilities";
 
 export class ExecutionEntry {
     target: string | null | undefined;
@@ -10,6 +11,7 @@ export class ExecutionEntry {
     parameters: any[];
     isValid: boolean;
     isAsync: boolean | null | undefined;
+    hasResolvedUndefinedMacro = false;
 
     public static fromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
@@ -61,8 +63,8 @@ export class ExecutionEntry {
     }
 
     async execute() {
-        const targetObject = ExecutionEntry.getTargetObject(AppStore.Instance, this.target);
-        if (targetObject == null) {
+        const {hasTarget, value: targetObject} = ExecutionEntry.resolveTargetObject(AppStore.Instance, this.target);
+        if (!hasTarget || targetObject == null) {
             throw new Error(`Missing target object: ${this.target}`);
         }
         const currentParameters = this.parameters.map(this.mapMacro);
@@ -80,9 +82,9 @@ export class ExecutionEntry {
         return response;
     }
 
-    private static getTargetObject(baseObject: any, targetString: string | null | undefined) {
+    private static resolveTargetObject(baseObject: any, targetString: string | null | undefined): {hasTarget: boolean; value: any} {
         if (!targetString) {
-            return baseObject;
+            return {hasTarget: true, value: baseObject};
         }
 
         let target = baseObject;
@@ -93,26 +95,35 @@ export class ExecutionEntry {
             const matches = arrayRegex.exec(targetEntry);
             // Check if there's an array index in this parameter
             if (matches && matches.length === 3 && matches[2] !== undefined) {
+                if (!_.hasIn(target, matches[1])) {
+                    return {hasTarget: false, value: undefined};
+                }
                 target = target[matches[1]];
                 if (target == null) {
-                    return null;
+                    return {hasTarget: false, value: undefined};
                 }
                 if (target instanceof Map) {
                     const key = JSON.parse(matches[2]);
+                    if (!target.has(key)) {
+                        return {hasTarget: false, value: undefined};
+                    }
                     target = target.get(key);
                 } else if (Array.isArray(target)) {
+                    if (!(Number(matches[2]) in target)) {
+                        return {hasTarget: false, value: undefined};
+                    }
                     target = target[matches[2]];
                 } else {
-                    return null;
+                    return {hasTarget: false, value: undefined};
                 }
             } else {
+                if (!_.hasIn(target, targetEntry)) {
+                    return {hasTarget: false, value: undefined};
+                }
                 target = target[targetEntry];
             }
-            if (target === null) {
-                return null;
-            }
         }
-        return target;
+        return {hasTarget: true, value: target};
     }
 
     private mapMacro = (parameter: any) => {
@@ -124,7 +135,14 @@ export class ExecutionEntry {
                 return undefined;
             }
             const targetString = parameter?.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
-            return ExecutionEntry.getTargetObject(AppStore.Instance, targetString);
+            const {hasTarget, value} = ExecutionEntry.resolveTargetObject(AppStore.Instance, targetString);
+            if (!hasTarget) {
+                throw new Error(`Missing macro target: ${targetString}`);
+            }
+            if (value === undefined) {
+                this.hasResolvedUndefinedMacro = true;
+            }
+            return value;
         }
         return parameter;
     };
@@ -144,6 +162,55 @@ export class ScriptingService {
         return new Promise<void>(resolve => {
             setTimeout(resolve, timeout);
         });
+    }
+
+    private static selectReturnPath(value: any, returnPath: ReturnPath): any {
+        if (typeof returnPath === "string") {
+            return ScriptingService.getReturnPathValue(value, returnPath);
+        }
+
+        const paths = Array.isArray(returnPath) ? returnPath.map(path => [path, path] as const) : Object.entries(returnPath);
+        return Object.fromEntries(paths.map(([key, path]) => [key, ScriptingService.getReturnPathValue(value, path)]));
+    }
+
+    private static applyReturnPath(response: any, returnPath: string): any {
+        const parsedPath = parseReturnPath(returnPath);
+        const selectValue = (value: any) => ScriptingService.selectReturnPath(value, parsedPath);
+
+        if (Array.isArray(response)) {
+            return response.map(selectValue);
+        }
+
+        if (response instanceof Map || isScriptingMap(response)) {
+            const entries = response instanceof Map ? response.entries() : Object.entries(response);
+            return Object.fromEntries(Array.from(entries, ([key, value]) => [key, selectValue(value)]));
+        }
+
+        if (response !== null && typeof response === "object") {
+            return selectValue(response);
+        }
+
+        return response;
+    }
+
+    private static getReturnPathValue(value: any, returnPath: string): any {
+        const hasResponsePath = _.hasIn(value, returnPath);
+        const selectedResponse = _.get(value, returnPath);
+        if (!hasResponsePath) {
+            throw new Error(`Response path not found: ${returnPath}`);
+        }
+        // JSON cannot represent undefined. Preserve the distinction between a
+        // missing path and an existing path without a value by returning null.
+        return selectedResponse === undefined ? null : selectedResponse;
+    }
+
+    private static serializeResponse(response: any): string | undefined {
+        try {
+            return JSON.stringify(toJS(response));
+        } catch (error) {
+            console.error("Failed to serialize scripting response:", error);
+            throw new Error("Response cannot be serialized to JSON because it contains a circular reference or unsupported value. Use return_path to select JSON-serializable fields.");
+        }
     }
 
     handleScriptingRequest = async (requestMessage: CARTA.ScriptingRequest.$Properties): Promise<CARTA.ScriptingResponse.$Properties> => {
@@ -166,21 +233,28 @@ export class ScriptingService {
             }
 
             // Adjust the response to just the specified path if it is non-empty
-            if (typeof response === "object" && requestMessage.returnPath) {
-                response = _.get(response, requestMessage.returnPath);
+            if (requestMessage.returnPath) {
+                if (response === null || typeof response !== "object") {
+                    throw new Error(`Cannot read response path from a non-object response: ${requestMessage.returnPath}`);
+                }
+                response = ScriptingService.applyReturnPath(response, requestMessage.returnPath);
+            }
+
+            if (response === undefined && entry.hasResolvedUndefinedMacro) {
+                response = null;
             }
 
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(toJS(response))
+                response: ScriptingService.serializeResponse(response)
             };
         } catch (err) {
             console.error(err);
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: false,
-                message: err?.toString()
+                message: err instanceof Error ? err.message : String(err)
             };
         }
     };

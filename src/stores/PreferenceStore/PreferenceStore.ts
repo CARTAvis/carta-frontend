@@ -2,7 +2,23 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {BeamType, ColorMap, ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, FrameScaling, ImagePanelMode, PasteOffsetUnit, PreferenceKeys, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {
+    BeamType,
+    ColorMap,
+    ContourGeneratorType,
+    CursorInfoVisibility,
+    FileFilteringType,
+    FileFilterMode,
+    FrameScaling,
+    ImagePanelMode,
+    PasteOffsetUnit,
+    PreferenceKeys,
+    RestFrameShiftMode,
+    SpectralType,
+    TelemetryMode,
+    VelocityConvention,
+    WCSMatchingType
+} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
@@ -21,7 +37,11 @@ const DEFAULTS = {
         imagePanelRows: 2,
         checkNewRelease: true,
         latestRelease: "v" + CARTA_INFO.version,
-        pvAxesOrderReverse: false
+        pvAxesOrderReverse: false,
+        imageViewRestFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY,
+        imageViewRestFrameVelocityConvention: VelocityConvention.RADIO,
+        spectralProfilerRestFrameShiftMode: RestFrameShiftMode.RADIAL_VELOCITY,
+        spectralProfilerRestFrameVelocityConvention: VelocityConvention.RADIO
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -223,6 +243,26 @@ export class PreferenceStore {
 
     @computed get autoWCSMatching(): WCSMatchingType {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+    }
+
+    @computed get imageViewRestFrameShiftMode(): RestFrameShiftMode {
+        const mode = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+        return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.imageViewRestFrameShiftMode;
+    }
+
+    @computed get imageViewRestFrameVelocityConvention(): VelocityConvention {
+        const convention = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+        return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.imageViewRestFrameVelocityConvention;
+    }
+
+    @computed get spectralProfilerRestFrameShiftMode(): RestFrameShiftMode {
+        const mode = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+        return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.spectralProfilerRestFrameShiftMode;
+    }
+
+    @computed get spectralProfilerRestFrameVelocityConvention(): VelocityConvention {
+        const convention = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.spectralProfilerRestFrameVelocityConvention;
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
@@ -757,7 +797,11 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
             PreferenceKeys.IMAGE_PANEL_ROWS,
-            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE,
+            PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE,
+            PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION,
+            PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE,
+            PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION
         ]);
     };
 

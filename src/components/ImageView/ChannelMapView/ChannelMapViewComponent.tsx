@@ -3,8 +3,8 @@ import {NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageType} from "enums";
-import {type CursorInfo} from "models";
+import {BeamOverlayMode, ImageType} from "enums";
+import {type CursorInfo, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -45,8 +45,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
     const gapX = frame.channelMapInnerOverlayStore.gapX;
     const gapY = frame.channelMapInnerOverlayStore.gapY;
-
     const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+    const shouldShowBeamForAllChannels = frame.shouldShowBeamForAllChannels;
 
     const onMouseEnter = () => {
         setImageToolbarVisible(true);
@@ -56,7 +56,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         setImageToolbarVisible(false);
     };
 
-    const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
+    const onRegionViewZoom = (frame: FrameStore, zoom: number | Point2D) => {
         if (frame) {
             regionViewRef?.current?.stageZoomToPoint(frame.renderWidth / 2, frame.renderHeight / 2, zoom);
         }
@@ -88,7 +88,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const row = Math.floor(index / channelMapStore.numColumns);
         const left = outerPadding.left + (innerRenderWidth + gapX) * column;
         const top = outerPadding.top + (innerRenderHeight + gapY) * row;
-        const isCornerOverlay = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
+        const isBottomLeftChannel = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
 
         return (
             channel < frame?.frameInfo.fileInfoExtended.depth && (
@@ -127,7 +127,9 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         dragPanningEnabled={appStore.preferenceStore.isDragPanning}
                         docked={props.isDocked}
                     />
-                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.isDocked} padding={10} />}
+                    {(shouldShowBeamForAllChannels || frame.overlayBeamSettings.channelMapMode === BeamOverlayMode.AllPanels || isBottomLeftChannel) && (
+                        <BeamProfileOverlayComponent frame={frame} channel={channel} top={top} left={left} docked={props.isDocked} padding={10} />
+                    )}
                 </div>
             )
         );

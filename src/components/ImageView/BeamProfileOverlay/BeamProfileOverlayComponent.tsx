@@ -17,6 +17,7 @@ interface BeamProfileOverlayComponentProps {
     frame: FrameStore;
     top: number;
     left: number;
+    channel?: number;
     padding?: number;
 }
 
@@ -25,6 +26,7 @@ interface BeamPlotProps {
     position: Point2D;
     a: number;
     b: number;
+    scale: Point2D;
     theta: number;
     type: BeamType;
     color: string;
@@ -41,12 +43,10 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
     }
 
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps | null => {
-        if (!frame.hasVisibleBeam) {
-            return null;
-        }
-
         const id = frame.frameInfo.fileId;
-        const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * (frame.spatialTransform?.scale ?? 1) : frame.zoomLevel) / AppStore.Instance.imageRatio;
+        const zoomFrame = frame.spatialReference ?? frame;
+        const transformScale = frame.spatialTransform?.scale ?? 1;
+        const zoom = {x: (zoomFrame.effectiveZoomLevel.x * transformScale) / AppStore.Instance.imageRatio, y: (zoomFrame.effectiveZoomLevel.y * transformScale) / AppStore.Instance.imageRatio};
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
@@ -56,13 +56,15 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
 
-        if (!frame.beamProperties) {
+        const beamProperties = frame.getBeamProperties({channel: frame === this.props.frame ? this.props.channel : undefined});
+        if (!beamProperties || !beamProperties.overlayBeamSettings.isVisible) {
             return null;
         }
 
-        const a = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
-        const b = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
-        let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
+        const a = beamProperties.x / 2.0;
+        const b = beamProperties.y / 2.0;
+        const scale = {x: zoom.x / devicePixelRatio, y: zoom.y / devicePixelRatio};
+        let theta = ((90.0 - beamProperties.angle) * Math.PI) / 180.0;
         if (frame.spatialTransform) {
             theta -= frame.spatialTransform.rotation;
         }
@@ -71,8 +73,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const sinTheta = Math.sin(theta);
         const cosTheta = Math.cos(theta);
         const boundingBox = {
-            x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
-            y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
+            x: 2 * scale.x * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
+            y: 2 * scale.y * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
         };
 
         // limit the beam inside the beam overlay
@@ -87,7 +89,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             positionY = upMost;
         }
 
-        return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
+        return {id, position: {x: positionX, y: positionY}, a, b, scale, theta, type, color, axisColor, strokeWidth};
     };
 
     private plotBeam(plotProps: BeamPlotProps | null): React.JSX.Element | null {
@@ -99,17 +101,21 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         switch (plotProps.type) {
             case BeamType.Open:
             default:
-                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} strokeScaleEnabled={false} />;
                 break;
             case BeamType.Solid:
-                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} strokeScaleEnabled={false} />;
                 break;
         }
         return (
-            <Group x={plotProps.position.x} y={plotProps.position.y} rotation={(plotProps.theta * 180.0) / Math.PI} key={plotProps.id}>
-                {plotProps.a > 0 && plotProps.b > 0 && ellipse}
-                <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} />
-                <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} />
+            <Group x={plotProps.position.x} y={plotProps.position.y} key={plotProps.id}>
+                <Group scaleX={plotProps.scale.x} scaleY={plotProps.scale.y}>
+                    <Group rotation={(plotProps.theta * 180.0) / Math.PI}>
+                        {plotProps.a > 0 && plotProps.b > 0 && ellipse}
+                        <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} strokeScaleEnabled={false} />
+                        <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} strokeScaleEnabled={false} />
+                    </Group>
+                </Group>
             </Group>
         );
     }
@@ -118,17 +124,13 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
+        const baseBeamPlotProps = this.getPlotProps(baseFrame);
 
-        if (!baseFrame.hasVisibleBeam && !contourFrames?.length) {
+        if (!baseBeamPlotProps && !contourFrames?.length) {
             return null;
         }
 
         appStore.updateLayerPixelRatio(this.layerRef);
-
-        let baseBeamPlotProps: BeamPlotProps | null = null;
-        if (baseFrame.hasVisibleBeam) {
-            baseBeamPlotProps = this.getPlotProps(baseFrame);
-        }
 
         const contourBeams: React.JSX.Element[] = [];
         contourFrames?.forEach(contourFrame => {

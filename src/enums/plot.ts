@@ -5,10 +5,17 @@ export enum ZoomMode {
     XY
 }
 
+export enum DragMode {
+    Zoom = "zoom",
+    Select = "select",
+    Lasso = "lasso"
+}
+
 export enum InteractionMode {
     NONE,
     SELECTING,
-    PANNING
+    PANNING,
+    LASSO_SELECTING
 }
 
 export enum LinePlotSelectingMode {

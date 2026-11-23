@@ -35,3 +35,11 @@ test("[unit] PlotContainerComponent shouldComponentUpdate handles sparse spatial
     }).not.toThrow();
     expect(shouldUpdate).toBe(true);
 });
+
+test("[unit] PlotContainerComponent treats two absent multicolor arrays as unchanged", () => {
+    const currentProps: PlotContainerProps = {data: []};
+    const nextProps: PlotContainerProps = {data: []};
+    const component = new PlotContainerComponent(currentProps);
+
+    expect(component.shouldComponentUpdate(nextProps)).toBe(false);
+});

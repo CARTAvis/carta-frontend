@@ -47,3 +47,8 @@ export enum BeamType {
     Open = "open",
     Solid = "solid"
 }
+
+export enum BeamOverlayMode {
+    BottomLeft = "bottom-left",
+    AllPanels = "all-panels"
+}

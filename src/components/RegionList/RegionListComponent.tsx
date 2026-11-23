@@ -28,6 +28,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly RotationColumnDefaultWidth = 80;
     private static readonly RowHeight = 35;
     private static readonly HeaderRowHeight = 25;
+    private static readonly TableMargin = 5;
+    private static readonly TableBorderWidth = 1;
     private listRef = React.createRef<any>();
     private tableRef = React.createRef<HTMLDivElement>();
     private readonly disposers: IReactionDisposer[] = [];
@@ -407,9 +409,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const padding = 5;
-        const requiredTableHeight = RegionListComponent.RowHeight * (this.validRegions.length + 1);
+        const padding = RegionListComponent.TableMargin;
+        const tableBorder = 2 * RegionListComponent.TableBorderWidth;
+        const requiredTableHeight = RegionListComponent.RowHeight * (this.validRegions.length + 1) + tableBorder;
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
+        const listHeight = tableHeight - RegionListComponent.HeaderRowHeight - padding * 2 - tableBorder;
 
         let nameWidth = RegionListComponent.NameColumnDefaultWidth;
         const availableWidth = this.width - 2 * padding;
@@ -726,10 +730,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         />
                         <List
                             onRowsRendered={this.onListRendered}
-                            defaultHeight={tableHeight - RegionListComponent.HeaderRowHeight - padding * 2}
+                            defaultHeight={listHeight}
                             rowCount={this.validRegions.length}
                             rowHeight={RegionListComponent.RowHeight}
-                            style={{height: tableHeight - RegionListComponent.HeaderRowHeight - padding * 2, width: "100%"}}
+                            style={{height: listHeight, width: "100%"}}
                             listRef={this.listRef}
                             rowComponent={rowRenderer}
                             rowProps={{} as any}

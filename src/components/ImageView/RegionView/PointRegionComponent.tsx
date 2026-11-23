@@ -9,7 +9,7 @@ import {type FrameStore, type PointAnnotationStore, type RegionStore} from "stor
 import {subtract2D, transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, transformedImageToCanvasPos} from "./shared";
 
 interface PointRegionComponentProps {
     region: RegionStore;
@@ -69,7 +69,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         // trigger re-render when exporting images and  changing devicePixelRatio (switching monitor)
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const pixelRatio = AppStore.Instance.pixelRatio;
-        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        const zoom = getEffectiveZoomLevel(frame);
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference && frame.spatialTransformAST && frame.spatialTransform) {
@@ -99,6 +99,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 pointShape={region.pointShape}
                 pointWidth={region.pointWidth}
                 selectionType={this.props.isFocused ? SelectionType.Active : SelectionType.Secondary}
+                zoom={zoom}
             />
         );
     }

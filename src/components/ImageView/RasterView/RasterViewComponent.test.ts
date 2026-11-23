@@ -67,6 +67,7 @@ describe("RasterViewComponent", () => {
             },
             polarizations: [],
             spatialReference: null,
+            axisZoomLevel: {x: 1, y: 1},
             requiredFrameView: {},
             currentFrameView: {},
             isRenderable: true,

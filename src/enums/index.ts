@@ -22,6 +22,7 @@ export * from "./spectral";
 export * from "./tab";
 export * from "./table";
 export * from "./telemetry";
+export * from "./time";
 export * from "./unit";
 export * from "./vector";
 export * from "./widget";

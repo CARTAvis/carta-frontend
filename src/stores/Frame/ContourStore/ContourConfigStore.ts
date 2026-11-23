@@ -92,7 +92,7 @@ export class ContourConfigStore {
         this.isVisible = !this.isVisible;
     };
 
-    @action updateFromWorkspace = (config: WorkspaceContourConfig) => {
+    @action applyConfig = (config: WorkspaceContourConfig) => {
         this.levels = config.levels;
         this.smoothingMode = config.smoothingMode;
         this.smoothingFactor = config.smoothingFactor;
@@ -110,5 +110,26 @@ export class ContourConfigStore {
         if (config.colormap) {
             this.colormap = config.colormap;
         }
+    };
+
+    public toConfig = (): WorkspaceContourConfig | undefined => {
+        if (!this.isEnabled) {
+            return undefined;
+        }
+
+        return {
+            levels: this.levels,
+            smoothingMode: this.smoothingMode,
+            smoothingFactor: this.smoothingFactor,
+            color: this.color,
+            colormapEnabled: this.isColormapEnabled,
+            colormapInverted: this.isColormapInverted,
+            colormap: this.colormap,
+            colormapContrast: this.colormapContrast,
+            colormapBias: this.colormapBias,
+            dashMode: this.dashMode,
+            thickness: this.thickness,
+            visible: this.isVisible
+        };
     };
 }

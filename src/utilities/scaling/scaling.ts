@@ -63,6 +63,61 @@ export function getScalingForParameterPreference(preferenceKey: PreferenceKeys):
     return undefined;
 }
 
+/** A set of scaling parameters in serialisable form, one entry per scaling that takes a parameter. */
+export interface ScalingParameters {
+    log?: number;
+    gamma?: number;
+    power?: number;
+    sinh?: number;
+    asinh?: number;
+}
+
+/**
+ * The serialised name of each scaling that takes a parameter. These names are part of the stored
+ * format, so they are written out rather than derived from the enum.
+ */
+export const SCALING_PARAMETER_KEYS: ReadonlyArray<[keyof ScalingParameters, FrameScaling]> = [
+    ["log", FrameScaling.LOG],
+    ["gamma", FrameScaling.GAMMA],
+    ["power", FrameScaling.POWER],
+    ["sinh", FrameScaling.SINH],
+    ["asinh", FrameScaling.ASINH]
+];
+
+export const PARAMETERIZED_SCALINGS: ReadonlyArray<FrameScaling> = SCALING_PARAMETER_KEYS.map(([, scaling]) => scaling);
+
+/** A parameter map holding the default for every scaling that takes one. */
+export function createScalingParameters(): Map<FrameScaling, number> {
+    return new Map(PARAMETERIZED_SCALINGS.map(scaling => [scaling, getDefaultScalingParameter(scaling)]));
+}
+
+export function getScalingParameter(parameters: Map<FrameScaling, number>, scaling: FrameScaling): number {
+    return parameters.get(scaling) ?? getDefaultScalingParameter(scaling);
+}
+
+export function scalingParametersToConfig(parameters: Map<FrameScaling, number>): ScalingParameters {
+    const config: ScalingParameters = {};
+    for (const [key, scaling] of SCALING_PARAMETER_KEYS) {
+        const value = parameters.get(scaling);
+        if (value !== undefined) {
+            config[key] = value;
+        }
+    }
+    return config;
+}
+
+/** Parameters a config leaves out fall back to their defaults, and the rest are range checked. */
+export function scalingParametersFromConfig(config: ScalingParameters | undefined): Map<FrameScaling, number> {
+    const parameters = createScalingParameters();
+    for (const [key, scaling] of SCALING_PARAMETER_KEYS) {
+        const value = config?.[key];
+        if (value !== undefined) {
+            parameters.set(scaling, sanitizeScalingParameter(scaling, value));
+        }
+    }
+    return parameters;
+}
+
 export function sanitizeScalingParameter(scaling: FrameScaling, value: number, fallback: number = getDefaultScalingParameter(scaling)): number {
     const config = getScalingParameterConfig(scaling);
     if (!config) {

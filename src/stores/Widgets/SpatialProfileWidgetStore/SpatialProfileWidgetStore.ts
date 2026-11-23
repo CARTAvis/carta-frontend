@@ -342,7 +342,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.selectedStokes = stokes;
     };
 
-    public init = (widgetSettings): void => {
+    public applyConfig = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

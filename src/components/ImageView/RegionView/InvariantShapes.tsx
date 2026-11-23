@@ -3,7 +3,10 @@ import {CARTA} from "carta-protobuf";
 import type Konva from "konva";
 
 import {SelectionType} from "enums";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
+
+import {getZoomInvariantCanvasTransform} from "./shared";
 
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
@@ -24,15 +27,27 @@ const ACTIVE_ANCHOR_STROKE_COLOR = "black";
 const SECONDARY_ANCHOR_FILL_COLOR = "#b5b5b5";
 const SECONDARY_ANCHOR_STROKE_COLOR = "#8a9ba8";
 
-const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: CARTA.PointAnnotationShape) => {
+const ApplyZoomInvariantTransform = (ctx: Konva.Context, shape: Konva.Shape, rotation: number) => {
     const stage = shape.getStage();
     if (!stage) {
         return;
     }
 
-    const inverseScale = 1 / stage.scaleX();
-    const offset = -width * 0.5 * inverseScale;
-    const squareSize = width * inverseScale;
+    const {scaleX, scaleY, skew} = getZoomInvariantCanvasTransform(stage, rotation);
+
+    ctx.transform(scaleX, skew, skew, scaleY, 0, 0);
+};
+
+const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, rotation: number, pointShape?: CARTA.PointAnnotationShape) => {
+    const stage = shape.getStage();
+    if (!stage) {
+        return;
+    }
+
+    ctx.save();
+    ApplyZoomInvariantTransform(ctx, shape, rotation);
+    const offset = -width * 0.5;
+    const squareSize = width;
     ctx.beginPath();
     switch (pointShape) {
         case CARTA.PointAnnotationShape.CIRCLE:
@@ -67,6 +82,7 @@ const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: num
             ctx.closePath();
     }
     ctx.fillStrokeShape(shape);
+    ctx.restore();
 };
 
 interface PointProps {
@@ -77,6 +93,7 @@ interface PointProps {
     opacity: number;
     selectionOpacity: number;
     selectionType: SelectionType;
+    zoom: Point2D;
     listening: boolean;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
@@ -90,11 +107,11 @@ interface PointProps {
 export const Point = (props: PointProps) => {
     const pointWidth = props.pointWidth && props.pointWidth !== 0 ? props.pointWidth : DEFAULT_POINT_WIDTH;
     const handlePointDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
-        HandlePointShapeDraw(ctx, shape, pointWidth, props.pointShape);
+        HandlePointShapeDraw(ctx, shape, pointWidth, props.rotation, props.pointShape);
     };
 
     const handlePointBoundDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
-        HandlePointShapeDraw(ctx, shape, POINT_HOVER_DIST + pointWidth);
+        HandlePointShapeDraw(ctx, shape, POINT_HOVER_DIST + pointWidth, props.rotation);
     };
 
     const fill = props.pointShape === CARTA.PointAnnotationShape.BOX || props.pointShape === CARTA.PointAnnotationShape.CIRCLE_LINED || props.pointShape === CARTA.PointAnnotationShape.DIAMOND_LINED ? undefined : props.color;
@@ -135,6 +152,7 @@ interface AnchorProps {
     interactive: boolean;
     opacity: number;
     selectionType: SelectionType;
+    zoom: Point2D;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
@@ -147,7 +165,7 @@ interface AnchorProps {
 
 export const Anchor = (props: AnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
+        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH, props.rotation);
     };
 
     const handleCircleDraw = (ctx, shape) => {
@@ -156,12 +174,14 @@ export const Anchor = (props: AnchorProps) => {
             return;
         }
 
-        const inverseScale = 1 / stage.scaleX();
-        const radius = CIRCLE_ANCHOR_RADIUS * inverseScale;
-        const offsetY = props.isLineRegion ? 0 : -ROTATOR_ANCHOR_HEIGHT * inverseScale;
+        ctx.save();
+        ApplyZoomInvariantTransform(ctx, shape, props.rotation);
+        const radius = CIRCLE_ANCHOR_RADIUS;
+        const offsetY = props.isLineRegion ? 0 : -ROTATOR_ANCHOR_HEIGHT;
         ctx.beginPath();
         ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
+        ctx.restore();
     };
 
     // Colors:
@@ -204,11 +224,12 @@ interface NonEditableAnchorProps {
     x: number;
     y: number;
     rotation: number;
+    zoom: Point2D;
 }
 
 export const NonEditableAnchor = (props: NonEditableAnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
+        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH, props.rotation);
     };
 
     return <Shape x={props.x} y={props.y} rotation={props.rotation} fill={"white"} strokeWidth={1} stroke={"black"} strokeScaleEnabled={false} opacity={0.5} listening={false} sceneFunc={handleRectDraw} />;
@@ -219,11 +240,12 @@ interface CursorMarkerProps {
     y: number;
     rotation: number;
     color: string;
+    zoom: Point2D;
 }
 
 export const CursorMarker = (props: CursorMarkerProps) => {
     const handleSquareDraw = (ctx, shape) => {
-        HandlePointShapeDraw(ctx, shape, CURSOR_CROSS_CENTER_SQUARE);
+        HandlePointShapeDraw(ctx, shape, CURSOR_CROSS_CENTER_SQUARE, -props.rotation);
     };
 
     const handleCrossDraw = (ctx, shape) => {
@@ -232,16 +254,18 @@ export const CursorMarker = (props: CursorMarkerProps) => {
             return;
         }
 
-        const inverseScale = 1 / stage.scaleX();
-        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * inverseScale;
-        const crossWidth = CURSOR_CROSS_LENGTH * inverseScale;
-        const crossHeight = CURSOR_CROSS_THICKNESS_WIDE * inverseScale;
+        ctx.save();
+        ApplyZoomInvariantTransform(ctx, shape, -props.rotation);
+        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5;
+        const crossWidth = CURSOR_CROSS_LENGTH;
+        const crossHeight = CURSOR_CROSS_THICKNESS_WIDE;
         ctx.beginPath();
         ctx.rect(-offset, offset / 2, crossWidth, crossHeight);
         ctx.rect(offset - crossWidth, offset / 2, crossWidth, crossHeight);
         ctx.rect(offset / 2, -offset, crossHeight, crossWidth);
         ctx.rect(offset / 2, offset - crossWidth, crossHeight, crossWidth);
         ctx.fillStrokeShape(shape);
+        ctx.restore();
     };
 
     return (

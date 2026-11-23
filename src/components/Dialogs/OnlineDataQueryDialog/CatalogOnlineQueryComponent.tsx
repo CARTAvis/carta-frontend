@@ -1,27 +1,40 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Pre, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverNext, PopoverPosition, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AppToaster, ClearableNumericInputComponent, ErrorToast, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, type VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, MirrorSiteStore, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, NUMBER_FORMAT_LABEL} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
+
+type MirrorBenchmarkStatus = "idle" | "pending" | "ok" | "fail" | "disabled";
+type MirrorBenchmark = {status: MirrorBenchmarkStatus; ms?: number};
+
+const MIRROR_BENCHMARK_TIMEOUT_MS = 10000;
 
 @observer
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number | undefined = undefined;
     @observable objectSize: number | undefined = undefined;
+    @observable isBenchmarking: boolean = false;
+    @observable mirrorBenchmarks: Map<string, MirrorBenchmark> = new Map();
+    private mirrorBenchmarkAbort: AbortController | undefined = undefined;
+    private mirrorBenchmarkDatabase: CatalogDatabase | undefined = undefined;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentWillUnmount() {
+        this.cancelMirrorBenchmark();
     }
 
     @action setResultSize(resultSize: number | undefined) {
@@ -63,16 +76,16 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         const isDisabled = configStore.isQuerying || configStore.isObjectQuerying;
-        let sourceIndicater;
+        let sourceIndicator;
         let objectSize: number | undefined = this.objectSize;
         if (configStore.isObjectSearchDisabled) {
             objectSize = undefined;
         }
 
         if (objectSize === 0) {
-            sourceIndicater = <Icon icon="cross" intent="warning" size={30} />;
+            sourceIndicator = <Icon icon="cross" intent="warning" size={30} />;
         } else if (objectSize === 1) {
-            sourceIndicater = <Icon icon="tick" intent="success" size={30} />;
+            sourceIndicator = <Icon icon="tick" intent="success" size={30} />;
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
@@ -82,31 +95,57 @@ export class CatalogQueryComponent extends React.Component {
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
+        const mirrorSites = this.getMirrorSites(configStore.catalogDB);
+        const activeMirror = MirrorSiteStore.Instance.getActiveMirror(configStore.catalogDB);
+        const hasAvailableMirror = activeMirror !== undefined;
+        const isMirrorConfigDisabled = isDisabled || this.isBenchmarking;
+
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={isDisabled} className={isVizier ? "vizier-databse" : ""}>
-                    <Select
-                        items={Object.values(CatalogDatabase)}
-                        activeItem={null}
-                        onItemSelect={db => configStore.setCatalogDB(db)}
-                        itemRenderer={this.renderDBPopOver}
-                        disabled={isDisabled}
-                        popoverProps={{minimal: true}}
-                        filterable={false}
-                        resetOnSelect={true}
-                    >
-                        <Button text={configStore.catalogDB} disabled={isDisabled} endIcon="double-caret-vertical" />
-                    </Select>
-                </FormGroup>
-                {isVizier ? (
-                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={isDisabled} className={isVizier ? "vizier-key-words" : ""}>
-                        <InputGroup asyncControl={false} disabled={isDisabled} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
+                <div className="catalog-db-row">
+                    <FormGroup inline={false} label="Database" disabled={isMirrorConfigDisabled}>
+                        <Select
+                            items={Object.values(CatalogDatabase)}
+                            activeItem={null}
+                            onItemSelect={this.handleDatabaseSelect}
+                            itemRenderer={this.renderDBPopOver}
+                            disabled={isMirrorConfigDisabled}
+                            popoverProps={{minimal: true}}
+                            filterable={false}
+                            resetOnSelect={true}
+                        >
+                            <Button className="database-select-button" text={configStore.catalogDB} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-database-select-button" />
+                        </Select>
                     </FormGroup>
-                ) : null}
+                    <FormGroup inline={false} label="Mirror site" disabled={isDisabled} className="mirror-site-group">
+                        <div className="mirror-site-controls">
+                            <PopoverNext placement="bottom-start" animation="minimal" arrow={false} content={this.renderMirrorManager(configStore.catalogDB, mirrorSites, isDisabled, isMirrorConfigDisabled, activeMirror)}>
+                                <Button className="mirror-select-button" text={this.getMirrorLabel(activeMirror)} disabled={isMirrorConfigDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-mirror-select-button" />
+                            </PopoverNext>
+                        </div>
+                    </FormGroup>
+                    {isVizier ? (
+                        <FormGroup inline={false} label="Keywords (catalog title)" disabled={isDisabled} className="keywords-group">
+                            <InputGroup asyncControl={false} disabled={isDisabled} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
+                        </FormGroup>
+                    ) : null}
+                </div>
                 <FormGroup inline={false} label="Object" disabled={isDisabled}>
-                    <InputGroup asyncControl={false} disabled={isDisabled} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip content="Reset center coordinates by object" disabled={isDisabled || configStore.isObjectSearchDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={isDisabled || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
+                    <InputGroup
+                        asyncControl={false}
+                        disabled={isDisabled}
+                        rightElement={objectSize === undefined ? null : sourceIndicator}
+                        onChange={event => this.updateObjectName(event.target.value)}
+                        value={configStore.objectName}
+                        data-testid="catalog-query-object-name-input"
+                    />
+                    <Tooltip
+                        content={hasAvailableMirror ? "Reset center coordinates by object" : "Enable at least one mirror site"}
+                        disabled={isDisabled || configStore.isObjectSearchDisabled}
+                        position={Position.BOTTOM}
+                        hoverOpenDelay={300}
+                    >
+                        <Button disabled={isDisabled || !hasAvailableMirror || configStore.isObjectSearchDisabled} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} data-testid="catalog-query-resolve-button" />
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={false} label="Search radius" disabled={isDisabled}>
@@ -132,10 +171,10 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.radiusUnits} disabled={isDisabled} endIcon="double-caret-vertical" />
+                        <Button text={configStore.radiusUnits} disabled={isDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-radius-units-button" />
                     </Select>
                     <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={isDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()}>
+                        <Button disabled={isDisabled} onClick={() => configStore.resetSearchRadius()} data-testid="catalog-query-set-to-viewer-button">
                             Set to viewer
                         </Button>
                     </Tooltip>
@@ -151,7 +190,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} endIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={isDisabled} endIcon="double-caret-vertical" data-testid="catalog-query-coordinate-system-button" />
                     </Select>
                     <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
@@ -192,6 +231,7 @@ export class CatalogQueryComponent extends React.Component {
                     displayExponential={false}
                     disabled={isDisabled}
                     inline={false}
+                    data-testid="catalog-query-max-objects-input"
                 />
                 {configStore.shouldShowVizierResult ? (
                     <FormGroup inline={false} label="VizieR catalog" disabled={isDisabled}>
@@ -201,15 +241,30 @@ export class CatalogQueryComponent extends React.Component {
                             popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
                             items={configStore.vizierTable}
                             itemRenderer={this.vizierItemRenderer}
-                            onItemSelect={item => configStore.updateVizierSelectedTable(item)}
+                            onItemSelect={item => configStore.toggleVizierSelectedTable(item)}
                             selectedItems={configStore.vizierSelectedTableName}
                             tagRenderer={item => item.name}
                             itemPredicate={this.filterVizierTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
-                                onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
-                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} />,
-                                tagProps: {minimal: true}
+                                rightElement: <Button icon="cross" variant="minimal" onClick={() => configStore.resetVizierSelectedTable()} data-testid="catalog-query-clear-vizier-selection-button" />,
+                                tagProps: (_tag, index) => ({
+                                    minimal: true,
+                                    className: "vizier-catalog-tag",
+                                    onClickCapture: event => {
+                                        const target = event.target as Element;
+                                        if (!target.closest(`.${Classes.TAG_REMOVE}`)) {
+                                            event.stopPropagation();
+                                        }
+                                    },
+                                    onRemove: event => {
+                                        event.stopPropagation();
+                                        const item = configStore.vizierSelectedTableName[index];
+                                        if (item?.name) {
+                                            configStore.removeVizierSelectedTable(item.name);
+                                        }
+                                    }
+                                })
                             }}
                         />
                     </FormGroup>
@@ -232,16 +287,101 @@ export class CatalogQueryComponent extends React.Component {
                         {tableInfo}
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.canLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
-                        <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlaySettings.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <AnchorButton intent={Intent.SUCCESS} disabled={isDisabled || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} data-testid="catalog-query-cancel-button" />
+                        {configStore.canLoadVizier ? (
+                            <AnchorButton intent={Intent.PRIMARY} disabled={isDisabled || !hasAvailableMirror} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} data-testid="catalog-query-load-selected-button" />
+                        ) : null}
+                        <Tooltip
+                            content={hasAvailableMirror ? "Please select WCS coordinates" : "Enable at least one mirror site"}
+                            disabled={hasAvailableMirror && appStore.overlaySettings.isWcsCoordinates}
+                            position={Position.BOTTOM}
+                            hoverOpenDelay={300}
+                        >
+                            <AnchorButton
+                                intent={Intent.SUCCESS}
+                                disabled={isDisabled || !hasAvailableMirror || appStore.overlaySettings.isImgCoordinates}
+                                onClick={() => this.query()}
+                                text={"Query"}
+                                data-testid="catalog-query-query-button"
+                            />
                         </Tooltip>
                     </div>
                 </div>
             </div>
         );
     }
+
+    private renderMirrorManager = (database: CatalogDatabase, mirrorSites: string[], isQueryDisabled: boolean, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
+        const availableMirrorCount = mirrorSites.filter(site => !MirrorSiteStore.Instance.isMirrorUnavailable(database, site)).length;
+        const isBenchmarkButtonDisabled = isQueryDisabled || (!this.isBenchmarking && availableMirrorCount === 0);
+        return (
+            <div className="mirror-manager">
+                <div className="mirror-manager__header">
+                    <span className="mirror-manager__title">Mirror sites</span>
+                    <div className="mirror-manager__action-buttons">
+                        <Tooltip content="Reset mirror settings" disabled={isMirrorConfigDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="reset" variant="minimal" disabled={isMirrorConfigDisabled} onClick={this.resetMirrorSites} aria-label="Reset mirror settings" data-testid="catalog-query-reset-mirrors-button" />
+                        </Tooltip>
+                        <Tooltip content={this.isBenchmarking ? "Cancel speed test" : "Test all enabled mirrors"} disabled={isBenchmarkButtonDisabled} position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button
+                                variant="minimal"
+                                intent={this.isBenchmarking ? Intent.DANGER : Intent.PRIMARY}
+                                className={`mirror-manager__rank${this.isBenchmarking ? " is-loading" : ""}`}
+                                icon={this.isBenchmarking ? "stop" : "dashboard"}
+                                text={this.isBenchmarking ? "Cancel" : "Test speed"}
+                                disabled={isBenchmarkButtonDisabled}
+                                onClick={this.runMirrorBenchmark}
+                                data-testid="catalog-query-test-mirror-speed-button"
+                            />
+                        </Tooltip>
+                    </div>
+                </div>
+                <div className="mirror-manager__separator" />
+                <div className="mirror-manager__list">{mirrorSites.map((site, index) => this.renderMirrorSite(database, site, index, availableMirrorCount, isMirrorConfigDisabled, activeMirror))}</div>
+            </div>
+        );
+    };
+
+    private renderMirrorSite = (database: CatalogDatabase, site: string, index: number, availableMirrorCount: number, isMirrorConfigDisabled: boolean, activeMirror?: string) => {
+        const isMirrorBlocked = MirrorSiteStore.Instance.isMirrorBlocked(site);
+        const isMirrorUserDisabled = MirrorSiteStore.Instance.isMirrorUserDisabled(database, site);
+        const isMirrorUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, site);
+        const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, site)), isMirrorBlocked, isMirrorUserDisabled);
+        const isActive = site === activeMirror;
+        const isLastAvailableMirror = !isMirrorUnavailable && availableMirrorCount === 1;
+        const isToggleDisabled = isMirrorConfigDisabled || isMirrorBlocked || (!isMirrorUserDisabled && isLastAvailableMirror);
+        const toggleTooltip = isMirrorBlocked ? "Unavailable on secure pages" : isMirrorUserDisabled ? "Enable mirror" : isLastAvailableMirror ? "At least one mirror must remain enabled" : "Disable mirror";
+        const itemClassName = `mirror-manager__item${isActive ? " is-active" : ""}${isMirrorUnavailable ? " is-disabled" : ""}`;
+
+        return (
+            <div key={`${site}-${index}`} className={itemClassName}>
+                <Tooltip content={toggleTooltip} hoverOpenDelay={300}>
+                    <Switch
+                        className="mirror-manager__toggle"
+                        checked={!isMirrorUnavailable}
+                        disabled={isToggleDisabled}
+                        aria-label={isMirrorUnavailable ? "Enable mirror" : "Disable mirror"}
+                        onChange={() => this.handleMirrorToggle(database, site)}
+                        data-testid={`catalog-query-toggle-mirror-button-${index}`}
+                    />
+                </Tooltip>
+                <Button
+                    variant="minimal"
+                    className="mirror-manager__url"
+                    disabled={isMirrorConfigDisabled || isMirrorUnavailable}
+                    onClick={() => this.handleMirrorSelect(database, site)}
+                    aria-label={`Use ${this.getMirrorLabel(site)} mirror`}
+                    title={site}
+                    data-testid={`catalog-query-use-mirror-url-${index}-button`}
+                >
+                    <span className="mirror-manager__url-host">{this.getMirrorLabel(site)}</span>
+                </Button>
+                <div className={`mirror-manager__result is-${status}`} style={resultStyle}>
+                    {this.renderBenchmarkResult(status, label)}
+                </div>
+            </div>
+        );
+    };
 
     private query = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
@@ -283,7 +423,8 @@ export class CatalogQueryComponent extends React.Component {
 
     private handleObjectUpdate = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
+        const objectName = configStore.objectName.replace(/'/g, "''");
+        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${objectName}'`;
         configStore.setObjectQueryStatus(true);
         CatalogApiService.Instance.getSimbadCatalog(query)
             .then(response => {
@@ -304,7 +445,11 @@ export class CatalogQueryComponent extends React.Component {
             .catch(error => {
                 this.setObjectSize(0);
                 configStore.setObjectQueryStatus(false);
-                console.log(`Object search error ${error}`);
+                if (error?.message) {
+                    AppToaster.show(ErrorToast(error.message));
+                } else {
+                    console.log(`Object search error ${error}`);
+                }
             });
     };
 
@@ -327,6 +472,253 @@ export class CatalogQueryComponent extends React.Component {
         this.setObjectSize(undefined);
         this.setResultSize(undefined);
     }
+
+    private getMirrorSites = (database: CatalogDatabase): string[] => {
+        const mirrors = MirrorSiteStore.Instance.getMirrorSites(database);
+        return [...mirrors].sort((first, second) => {
+            const isFirstUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, first);
+            const isSecondUnavailable = MirrorSiteStore.Instance.isMirrorUnavailable(database, second);
+            if (isFirstUnavailable !== isSecondUnavailable) {
+                return Number(isFirstUnavailable) - Number(isSecondUnavailable);
+            }
+            if (isFirstUnavailable) {
+                return this.getMirrorLabel(first).localeCompare(this.getMirrorLabel(second));
+            }
+            return 0;
+        });
+    };
+
+    private resetMirrorSites = () => {
+        const database = CatalogOnlineQueryConfigStore.Instance.catalogDB;
+        this.cancelMirrorBenchmark();
+        MirrorSiteStore.Instance.resetMirrorSettings(database);
+        this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
+    };
+
+    private getMirrorLabel = (url?: string): string => {
+        if (!url) {
+            return "Select mirror";
+        }
+        try {
+            return new URL(url).host;
+        } catch {
+            return url;
+        }
+    };
+
+    private handleDatabaseSelect = (database: CatalogDatabase) => {
+        if (!this.isBenchmarking) {
+            CatalogOnlineQueryConfigStore.Instance.setCatalogDB(database);
+        }
+    };
+
+    private setMirrorSiteOrder = (database: CatalogDatabase, mirrors: string[]) => {
+        this.pruneMirrorBenchmarks(database, mirrors);
+        MirrorSiteStore.Instance.setEnabledMirrors(
+            database,
+            mirrors.filter(mirror => !MirrorSiteStore.Instance.isMirrorUnavailable(database, mirror))
+        );
+    };
+
+    private handleMirrorSelect = (database: CatalogDatabase, mirror: string) => {
+        if (MirrorSiteStore.Instance.isMirrorUnavailable(database, mirror) || this.isBenchmarking) {
+            return;
+        }
+        MirrorSiteStore.Instance.setActiveMirror(database, mirror);
+    };
+
+    private handleMirrorToggle = (database: CatalogDatabase, mirror: string) => {
+        if (this.isBenchmarking) {
+            return;
+        }
+        MirrorSiteStore.Instance.toggleMirror(database, mirror);
+        this.pruneMirrorBenchmarks(database, this.getMirrorSites(database));
+    };
+
+    private getMirrorBenchmarkKey = (database: CatalogDatabase, site: string): string => {
+        return `${database}:${site}`;
+    };
+
+    @action private pruneMirrorBenchmarks = (database: CatalogDatabase, sites: string[]) => {
+        const allowed = new Set(sites.map(site => this.getMirrorBenchmarkKey(database, site)));
+        const databasePrefix = `${database}:`;
+        for (const key of this.mirrorBenchmarks.keys()) {
+            if (key.startsWith(databasePrefix) && !allowed.has(key)) {
+                this.mirrorBenchmarks.delete(key);
+            }
+        }
+    };
+
+    private formatBenchmarkMs = (ms: number): string => {
+        if (!Number.isFinite(ms)) {
+            return "";
+        }
+        if (ms >= 1000) {
+            return `${(ms / 1000).toFixed(2)}s`;
+        }
+        return `${Math.round(ms)}ms`;
+    };
+
+    private getBenchmarkHue = (ms: number): number => {
+        const ratio = Math.min(Math.max(ms / 10000, 0), 1);
+        return Math.round(120 * (1 - ratio));
+    };
+
+    private getMirrorBenchmarkDisplay = (benchmark?: MirrorBenchmark, isBlocked: boolean = false, isUserDisabled: boolean = false): {label: string; resultStyle?: React.CSSProperties; status: MirrorBenchmarkStatus} => {
+        if (isBlocked) {
+            return {label: "Blocked on HTTPS", status: "disabled"};
+        }
+        if (isUserDisabled) {
+            return {label: "Disabled", status: "disabled"};
+        }
+        if (!benchmark) {
+            return {label: "—", status: "idle"};
+        }
+
+        switch (benchmark.status) {
+            case "pending":
+                return {label: "Testing…", status: "pending"};
+            case "fail":
+                return {label: "Failed", status: "fail"};
+            case "ok":
+                if (benchmark.ms !== undefined) {
+                    const hue = this.getBenchmarkHue(benchmark.ms);
+                    return {
+                        label: this.formatBenchmarkMs(benchmark.ms),
+                        resultStyle: {["--bench-hue" as any]: hue} as React.CSSProperties,
+                        status: "ok"
+                    };
+                }
+                break;
+            case "disabled":
+                return {label: "—", status: "idle"};
+            default:
+                return {label: "—", status: benchmark.status};
+        }
+
+        return {label: "—", status: "ok"};
+    };
+
+    @action private runMirrorBenchmark = async () => {
+        if (this.isBenchmarking) {
+            this.cancelMirrorBenchmark(true);
+            return;
+        }
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const database = configStore.catalogDB;
+        const sites = [...this.getMirrorSites(database)];
+        const testableSites = sites.filter(site => !MirrorSiteStore.Instance.isMirrorUnavailable(database, site));
+        if (testableSites.length === 0) {
+            return;
+        }
+
+        const abortController = new AbortController();
+        this.mirrorBenchmarkAbort = abortController;
+        this.mirrorBenchmarkDatabase = database;
+        this.isBenchmarking = true;
+        const testableSiteSet = new Set(testableSites);
+        sites.forEach(site => this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: testableSiteSet.has(site) ? "pending" : "disabled"}));
+
+        try {
+            await Promise.all(
+                testableSites.map(async site => {
+                    const ms = await CatalogApiService.Instance.benchmarkMirror(database, site, MIRROR_BENCHMARK_TIMEOUT_MS, abortController.signal);
+                    runInAction(() => {
+                        if (!this.isBenchmarking || this.mirrorBenchmarkAbort !== abortController) {
+                            return;
+                        }
+                        if (ms === null || !Number.isFinite(ms)) {
+                            this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: "fail"});
+                        } else {
+                            this.mirrorBenchmarks.set(this.getMirrorBenchmarkKey(database, site), {status: "ok", ms});
+                        }
+                    });
+                })
+            );
+            if (this.isBenchmarking && this.mirrorBenchmarkAbort === abortController) {
+                this.sortMirrorsByBenchmark(database);
+            }
+        } finally {
+            runInAction(() => {
+                if (this.mirrorBenchmarkAbort === abortController) {
+                    this.isBenchmarking = false;
+                    this.mirrorBenchmarkAbort = undefined;
+                    this.mirrorBenchmarkDatabase = undefined;
+                }
+            });
+        }
+    };
+
+    private sortMirrorsByBenchmark = (database: CatalogDatabase) => {
+        const mirrors = [...this.getMirrorSites(database)];
+        mirrors.sort((first, second) => {
+            const firstScore = this.getBenchmarkScore(this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, first)));
+            const secondScore = this.getBenchmarkScore(this.mirrorBenchmarks.get(this.getMirrorBenchmarkKey(database, second)));
+            return firstScore - secondScore;
+        });
+        this.setMirrorSiteOrder(database, mirrors);
+    };
+
+    private getBenchmarkScore = (benchmark?: MirrorBenchmark): number => {
+        switch (benchmark?.status) {
+            case "pending":
+                return 1000000;
+            case "ok":
+                return benchmark.ms ?? 2000000;
+            case "fail":
+                return 3000000;
+            case "disabled":
+                return 4000000;
+            default:
+                return 2000000;
+        }
+    };
+
+    @action private cancelMirrorBenchmark = (shouldSortByBenchmark: boolean = false) => {
+        if (!this.isBenchmarking) {
+            return;
+        }
+        const database = this.mirrorBenchmarkDatabase;
+        this.mirrorBenchmarkAbort?.abort();
+        this.mirrorBenchmarkAbort = undefined;
+        this.mirrorBenchmarkDatabase = undefined;
+        this.isBenchmarking = false;
+        if (database !== undefined) {
+            for (const site of this.getMirrorSites(database)) {
+                const key = this.getMirrorBenchmarkKey(database, site);
+                const result = this.mirrorBenchmarks.get(key);
+                if (result?.status === "pending") {
+                    this.mirrorBenchmarks.set(key, {status: "idle"});
+                }
+            }
+            if (shouldSortByBenchmark) {
+                this.sortMirrorsByBenchmark(database);
+            }
+        }
+    };
+
+    private renderBenchmarkResult = (status: MirrorBenchmarkStatus, label: string): React.ReactNode => {
+        switch (status) {
+            case "pending":
+                return <Spinner size={14} intent={Intent.PRIMARY} />;
+            case "fail":
+                return (
+                    <Tooltip content="Connection failed" position="top">
+                        <Icon icon="error" intent={Intent.DANGER} />
+                    </Tooltip>
+                );
+            case "disabled":
+                return (
+                    <Tooltip content={label} position="top">
+                        <Icon icon="disable" intent={Intent.NONE} aria-label={label} />
+                    </Tooltip>
+                );
+            case "idle":
+                return <Icon icon="minus" />;
+            default:
+                return label;
+        }
+    };
 
     private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;

@@ -2,7 +2,19 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
-import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {
+    GetFluxDensityFromSum,
+    GetIntensityOptions,
+    type IntensityConfig,
+    type LineKey,
+    type LineOption,
+    POLARIZATION_LABELS,
+    ShouldUseSumForFluxDensity,
+    STATISTICS_TEXT,
+    StatsTypeString,
+    SUPPORTED_STATISTICS_TYPES,
+    VALID_COORDINATES
+} from "models";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -11,6 +23,7 @@ import {AUTO_COLOR_OPTIONS, type ProcessedSpectralProfile} from "utilities";
 interface ProfileConfig {
     fileId: number | undefined;
     regionId: number | null;
+    regionName: string | undefined;
     statsType: CARTA.StatsType;
     coordinate: string;
     colorKey: LineKey | undefined;
@@ -24,6 +37,30 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.SpectralConfig.$P
 
 const MAXIMUM_PROFILES = 16;
 
+export function getProfilesPlotName(profiles: {imageName: string | undefined; regionName: string | undefined; statsType: CARTA.StatsType; coordinate: string}[]): {image: string; plot: string} {
+    const images: (string | undefined)[] = [];
+    const regions: (string | undefined)[] = [];
+    const statTypes: string[] = [];
+    const coordinates: (string | undefined)[] = [];
+    profiles.forEach((profile, index) => {
+        const previous = profiles[index - 1];
+        if (index === 0 || previous.imageName !== profile.imageName) {
+            images.push(profile.imageName);
+        }
+        if (index === 0 || previous.regionName !== profile.regionName) {
+            regions.push(profile.regionName);
+        }
+        if (index === 0 || previous.statsType !== profile.statsType) {
+            statTypes.push(StatsTypeString(profile.statsType));
+        }
+        if (index === 0 || previous.coordinate !== profile.coordinate) {
+            coordinates.push(POLARIZATION_LABELS.get(profile.coordinate.slice(0, profile.coordinate.length - 1)));
+        }
+    });
+    const plot = `Z-profile-${regions.join(",")}-Statistic_${statTypes.join(",")}-Coordinate_${coordinates.join(",")}`.replace(/\s/g, "_");
+    return {image: images.join(","), plot};
+}
+
 type Profile = {
     fileId: number | undefined;
     regionId: number | null;
@@ -35,8 +72,10 @@ type Profile = {
         image: string | undefined;
         plot: string;
     };
+    exportName: string;
     intensityConfig: IntensityConfig;
     intensityUnit: string | undefined;
+    isFluxDensityDerivedFromSum: boolean;
 };
 
 export class SpectralProfileSelectionStore {
@@ -59,8 +98,7 @@ export class SpectralProfileSelectionStore {
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                const statsTypes: CARTA.StatsType[] = [];
-                profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
+                const statsTypes = Array.from(new Set(profileConfigs.map(profileConfig => this.getRequiredStatsType(profileConfig))));
                 formattedSpectralConfigs.push({
                     fileId: profileConfigs[0].fileId,
                     regionId: profileConfigs[0].regionId,
@@ -72,13 +110,25 @@ export class SpectralProfileSelectionStore {
                     formattedSpectralConfigs.push({
                         fileId: profileConfig.fileId,
                         regionId: profileConfig.regionId,
-                        statsTypes: [profileConfig.statsType],
+                        statsTypes: [this.getRequiredStatsType(profileConfig)],
                         coordinate: profileConfig.coordinate
                     });
                 });
             }
         }
         return formattedSpectralConfigs;
+    };
+
+    private getTargetIntensityUnit = (frame: FrameStore): string | undefined => {
+        return this.activeProfileCategory === MultiProfileCategory.IMAGE ? this.widgetStore.intensityUnit : frame.intensityUnit;
+    };
+
+    private getRequiredStatsType = (profileConfig: ProfileConfig, frame = AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)): CARTA.StatsType => {
+        const unitTo = frame && this.getTargetIntensityUnit(frame);
+        if (profileConfig.statsType !== CARTA.StatsType.FluxDensity || !frame || !unitTo) {
+            return profileConfig.statsType;
+        }
+        return ShouldUseSumForFluxDensity(frame.intensityConfig, unitTo) ? CARTA.StatsType.Sum : profileConfig.statsType;
     };
 
     private genProfileLabel = (fileId: number | undefined, regionName: string | undefined, statsType: CARTA.StatsType, coordinate: string): {image: string | undefined; plot: string} => {
@@ -106,6 +156,7 @@ export class SpectralProfileSelectionStore {
                                 profileConfigs.push({
                                     fileId: fileId,
                                     regionId: this.effectiveRegionId,
+                                    regionName: region?.nameString,
                                     statsType: statsType,
                                     coordinate: selectedCoordinate,
                                     colorKey: fileId,
@@ -118,6 +169,7 @@ export class SpectralProfileSelectionStore {
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
                         regionId: this.effectiveRegionId,
+                        regionName: region?.nameString,
                         statsType: statsType,
                         coordinate: selectedCoordinate,
                         colorKey: this.selectedFrameFileId,
@@ -134,6 +186,7 @@ export class SpectralProfileSelectionStore {
                         profileConfigs.push({
                             fileId: this.selectedFrameFileId,
                             regionId: selectedRegionId,
+                            regionName: region?.nameString,
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: selectedRegionId,
@@ -149,6 +202,7 @@ export class SpectralProfileSelectionStore {
                         profileConfigs.push({
                             fileId: this.selectedFrameFileId,
                             regionId: this.effectiveRegionId,
+                            regionName: region?.nameString,
                             statsType: statsType,
                             coordinate: selectedCoordinate,
                             colorKey: statsType,
@@ -159,6 +213,7 @@ export class SpectralProfileSelectionStore {
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
                         regionId: this.effectiveRegionId,
+                        regionName: region?.nameString,
                         statsType: CARTA.StatsType.Sum,
                         coordinate: selectedCoordinate,
                         colorKey: CARTA.StatsType.Sum,
@@ -173,6 +228,7 @@ export class SpectralProfileSelectionStore {
                     profileConfigs.push({
                         fileId: this.selectedFrameFileId,
                         regionId: this.effectiveRegionId,
+                        regionName: region?.nameString,
                         statsType: statsType,
                         coordinate: coordinate,
                         colorKey: coordinate,
@@ -191,18 +247,28 @@ export class SpectralProfileSelectionStore {
             const frame = appStore.getFrame(profileConfig.fileId ?? NaN);
             const frameProfileStoreMap = appStore.spectralProfiles.get(profileConfig.fileId ?? NaN);
             const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId ?? NaN);
-            const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
             if (frame) {
+                const requiredStatsType = this.getRequiredStatsType(profileConfig, frame);
+                const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, requiredStatsType);
+                const pixelSizesArcsec = frame.pixelUnitSizeArcsec;
+                const unitTo = this.getTargetIntensityUnit(frame);
+                const polarization = profileConfig.coordinate === "z" ? undefined : Polarizations[profileConfig.coordinate.slice(0, -1)];
+                const intensityConfig = polarization === undefined ? frame.intensityConfig : frame.getIntensityConfig(polarization);
+                const isFluxDensityDerivedFromSum = requiredStatsType !== profileConfig.statsType;
+                const fluxDensityValues = isFluxDensityDerivedFromSum && profileData?.values && pixelSizesArcsec && unitTo ? GetFluxDensityFromSum(profileData.values, intensityConfig, pixelSizesArcsec, unitTo) : undefined;
+                const data = isFluxDensityDerivedFromSum && profileData ? {...profileData, statsType: CARTA.StatsType.FluxDensity, values: fluxDensityValues ?? null} : profileData;
                 profiles.push({
                     fileId: profileConfig.fileId,
                     regionId: profileConfig.regionId,
                     channelValues: frame.channelValues,
                     channelSecondaryValues: frame.channelSecondaryValues,
-                    data: profileData,
+                    data,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
-                    intensityConfig: frame.intensityConfig,
-                    intensityUnit: frame.intensityUnit
+                    exportName: getProfilesPlotName([this.getPlotNameProfile(profileConfig)]).plot,
+                    intensityConfig,
+                    intensityUnit: frame.intensityUnit,
+                    isFluxDensityDerivedFromSum
                 });
             }
         });
@@ -210,31 +276,17 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profilesPlotName(): {image: string; plot: string} {
-        let images, regions, statTypes, coordinates;
-        let prevFileId, prevRegionId, prevStatsType, prevCoordinate;
-        images = regions = statTypes = coordinates = "";
-        prevFileId = prevRegionId = prevStatsType = prevCoordinate = undefined;
-        this.profileConfigs?.forEach((profileConfig, index) => {
-            const fileName = AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)?.filename;
-            if (prevFileId !== profileConfig.fileId) {
-                images += `${index === 0 ? "" : ","}${fileName}`;
-            }
-            if (prevRegionId !== profileConfig.regionId) {
-                regions += `${index === 0 ? "" : ","}${profileConfig.regionId === RegionId.CURSOR ? "Cursor" : profileConfig.regionId}`;
-            }
-            if (prevStatsType !== profileConfig.statsType) {
-                statTypes += `${index === 0 ? "" : ","}${StatsTypeString(profileConfig.statsType)}`;
-            }
-            if (prevCoordinate !== profileConfig.coordinate) {
-                coordinates += `${index === 0 ? "" : ","}${POLARIZATION_LABELS.get(profileConfig.coordinate.slice(0, profileConfig.coordinate.length - 1))}}`;
-            }
-            prevFileId = profileConfig.fileId;
-            prevRegionId = profileConfig.regionId;
-            prevStatsType = profileConfig.statsType;
-            prevCoordinate = profileConfig.coordinate;
-        });
-        return {image: images, plot: `Z-Profile-Region_${regions}-Statistic_${statTypes}-Coordinate_${coordinates}`};
+        return getProfilesPlotName(this.profileConfigs.map(this.getPlotNameProfile));
     }
+
+    private getPlotNameProfile = (profileConfig: ProfileConfig) => {
+        return {
+            imageName: AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)?.filename,
+            regionName: profileConfig.regionName,
+            statsType: profileConfig.statsType,
+            coordinate: profileConfig.coordinate
+        };
+    };
 
     @computed get profileOrderedKeys(): LineKey[] | undefined {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {

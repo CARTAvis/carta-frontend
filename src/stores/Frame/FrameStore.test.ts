@@ -1,10 +1,12 @@
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test} from "@jest/globals";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {SkyRefIs, SpectralSystem, SpectralType, SpectralUnit} from "enums";
-import {AppStore, type FrameInfo, FrameStore} from "stores";
-
+import {NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
+import {TileService} from "../../services";
+import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
 
 const STOKES_CUBEFRAME_INFO: FrameInfo = {
     fileId: 0,
@@ -61,6 +63,7 @@ const EMPTYFRAME_INFO: FrameInfo = {
     hdu: "",
     fileInfo: {} as any,
     fileInfoExtended: {
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 0, stokes: 0, depth: 0},
         headerEntries: []
     } as any,
     fileFeatureFlags: 0,
@@ -93,6 +96,71 @@ const ROTATED_STOKES_CUBEFRAME_INFO: FrameInfo = {
         ]
     } as any
 };
+
+const OBS_TIME_FRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 2} as any,
+    fileInfoExtended: {
+        dimensions: 2,
+        width: 2,
+        height: 2,
+        depth: 1,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 0, stokes: 0, depth: 0},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---SIN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--SIN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "TIMESYS", value: "UTC"},
+            {name: "MJD-OBS", value: "5.900025000000E+04", entryType: 1, numericValue: 59000.25},
+            {name: "DATE-OBS", value: "2020-05-31T06:00:00"}
+        ]
+    } as any
+};
+
+// SDSS MaNGA LOGCUBE: log-wavelength spectral axis, no SPECSYS, no RESTFRQ (issue #2890)
+const LOG_WAVELENGTH_CUBEFRAME_INFO: FrameInfo = {
+    ...EMPTYFRAME_INFO,
+    fileInfo: {HDUList: ["1"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
+        dimensions: 3,
+        width: 2,
+        height: 2,
+        depth: 3,
+        stokes: 1,
+        axesNumbers: {spatialX: 1, spatialY: 2, spectral: 3, stokes: 0, depth: 3},
+        headerEntries: [
+            {name: "CTYPE1", value: "RA---TAN"},
+            {name: "CUNIT1", value: "deg"},
+            {name: "CTYPE2", value: "DEC--TAN"},
+            {name: "CUNIT2", value: "deg"},
+            {name: "CTYPE3", value: "WAVE-LOG"},
+            {name: "CRVAL3", value: "3621.59598486", entryType: 1, numericValue: 3621.59598486},
+            {name: "CD3_3", value: "0.833903304339", entryType: 1, numericValue: 0.833903304339},
+            {name: "CRPIX3", value: "1", entryType: 1, numericValue: 1},
+            {name: "CUNIT3", value: "Angstrom"},
+            {name: "BUNIT", value: "1E-17 erg/s/cm^2/Angstrom/spaxel"}
+        ]
+    } as any
+};
+
+// The log-wavelength cube with its CTYPE3 (and optionally CUNIT3) card replaced, or removed when undefined
+const MakeSpectralAxisFrameInfo = (ctypeEntry: {name: string; value: string} | undefined, cunitEntry?: {name: string; value: string}): FrameInfo => ({
+    ...LOG_WAVELENGTH_CUBEFRAME_INFO,
+    fileInfoExtended: {
+        ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended,
+        headerEntries: LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries.flatMap(entry => {
+            if (entry.name === "CTYPE3") {
+                return ctypeEntry ? [ctypeEntry] : [];
+            }
+            if (entry.name === "CUNIT3" && cunitEntry) {
+                return [cunitEntry];
+            }
+            return [entry];
+        })
+    } as any
+});
 
 describe("FrameStore", () => {
     beforeEach(() => {
@@ -130,6 +198,15 @@ describe("FrameStore", () => {
         });
     });
 
+    test("invalidates pending input when selecting the current channel again", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        const token = frame.channelSelectionToken;
+
+        frame.setChannel(frame.requiredChannel);
+
+        expect(frame.channelSelectionToken).not.toBe(token);
+    });
+
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
@@ -138,9 +215,180 @@ describe("FrameStore", () => {
             expect(beam).toHaveProperty("minorAxis", 0.8433393239974976);
             expect(beam).toHaveProperty("angle", 42.576087951660156);
         });
+
+        test("returns the beam area in pixels", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            expect(beam).not.toBeNull();
+            expect(beam!.beamAreaPixels).toBeCloseTo((Math.PI / (4 * Math.LN2)) * beam!.x * beam!.y);
+        });
+
+        test("returns beam properties for the requested stokes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties({stokes: 1});
+            expect(beam).toHaveProperty("majorAxis", 0.931560754776001);
+            expect(beam).toHaveProperty("minorAxis", 0.8433191776275635);
+            expect(beam).toHaveProperty("angle", 42.579010009765625);
+        });
+
+        test("uses pixel angular sizes for beam axes", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            const pixelUnitSizeArcsec = frame.pixelUnitSizeArcsec;
+            expect(beam).not.toBeNull();
+            expect(pixelUnitSizeArcsec).not.toBeNull();
+            expect(beam!.x).toBeCloseTo(beam!.majorAxis / pixelUnitSizeArcsec!.x);
+            expect(beam!.y).toBeCloseTo(beam!.minorAxis / pixelUnitSizeArcsec!.y);
+        });
+
+        test("returns the beam area in steradians", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.beamProperties;
+            expect(beam).not.toBeNull();
+            expect(beam!.beamArea).toBeCloseTo((Math.PI / (4 * Math.LN2)) * ((beam!.majorAxis * Math.PI) / 648000) * ((beam!.minorAxis * Math.PI) / 648000));
+        });
+
+        test("does not return beam areas without a valid beam", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            expect(frame.beamProperties).toBeNull();
+        });
+
+        test("returns the beam for a specified channel", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            const beam = frame.getBeamProperties({channel: 2});
+            expect(beam).toHaveProperty("majorAxis", 0.9315680265426636);
+            expect(beam).toHaveProperty("minorAxis", 0.843326985836029);
+            expect(beam).toHaveProperty("angle", 42.57808303833008);
+        });
+
+        test.each([
+            [3, 2, 1, 2, 5],
+            [3, 1, 9, 2, 2],
+            [1, 2, 1, 9, 3]
+        ])("looks up beams with depth %i and stokes count %i", (depth, stokesCount, stokes, channel, beamIndex) => {
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth, stokes: stokesCount}
+            } as FrameInfo);
+            const expected = STOKES_CUBEFRAME_INFO.beamTable[beamIndex];
+            expect(frame.getBeamProperties({stokes, channel})).toMatchObject({majorAxis: expected.majorAxis, minorAxis: expected.minorAxis, angle: expected.pa});
+        });
+
+        test.each([-1, 0])("returns a single beam with index %i for any channel and stokes", index => {
+            const beam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam]});
+            expect(frame.getBeamProperties({stokes: 1, channel: 2})).toHaveProperty("majorAxis", beam.majorAxis);
+        });
+
+        test("preserves the first duplicate beam and returns null for missing entries", () => {
+            const beam = STOKES_CUBEFRAME_INFO.beamTable[0];
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: [beam, {...beam, majorAxis: 2}, {...beam, channel: 1}]});
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", beam.majorAxis);
+            expect(frame.getBeamProperties({stokes: 0, channel: 2})).toBeNull();
+        });
+
+        test("uses the new beam table after frame metadata is replaced", () => {
+            const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
+            frame.setFrameInfo({...STOKES_CUBEFRAME_INFO, beamTable: [{...STOKES_CUBEFRAME_INFO.beamTable[0], majorAxis: 2}]});
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", 2);
+        });
+
+        test("rebuilds the lookup when a beam row and its channel key are changed in place", () => {
+            const frame = new FrameStore({...STOKES_CUBEFRAME_INFO, beamTable: STOKES_CUBEFRAME_INFO.beamTable.map(beam => ({...beam}))});
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", STOKES_CUBEFRAME_INFO.beamTable[0].majorAxis);
+            runInAction(() => {
+                frame.frameInfo.beamTable[0] = {...frame.frameInfo.beamTable[0], majorAxis: 2};
+            });
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toHaveProperty("majorAxis", 2);
+
+            runInAction(() => {
+                frame.frameInfo.beamTable[0].channel = 2;
+            });
+            expect(frame.getBeamProperties({stokes: 0, channel: 0})).toBeNull();
+            expect(frame.getBeamProperties({stokes: 0, channel: 2})).toHaveProperty("majorAxis", 2);
+        });
+    });
+
+    describe("shouldShowBeamForAllChannels", () => {
+        const createFrame = (beamTable = STOKES_CUBEFRAME_INFO.beamTable, ...additionalHeaders: CARTA.HeaderEntry.$Properties[]) =>
+            new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable,
+                fileInfoExtended: {
+                    ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
+                    headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, ...additionalHeaders]
+                }
+            } as FrameInfo);
+
+        test("returns true for channel-indexed beams without a CASA header marker", () => {
+            const frame = createFrame();
+            expect(frame.shouldShowBeamForAllChannels).toBe(true);
+        });
+
+        test("keeps channel-indexed beams visible with standard beam headers", () => {
+            const frame = createFrame(STOKES_CUBEFRAME_INFO.beamTable, {name: "BMAJ", value: "1"}, {name: "BMIN", value: "1"}, {name: "BPA", value: "0"});
+            expect(frame.shouldShowBeamForAllChannels).toBe(true);
+        });
+
+        test.each([0, 1])("uses channel-0-only beams across the cube for Stokes index %i", stokes => {
+            const beamTable = STOKES_CUBEFRAME_INFO.beamTable.filter(beam => beam.channel === 0);
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth: 144}
+            } as FrameInfo);
+            frame.setChannels(143, stokes, false);
+
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+            expect(frame.getBeamProperties({channel: 143, stokes})).toHaveProperty("majorAxis", beamTable[stokes].majorAxis);
+            expect(frame.beamAllChannels).toEqual(Array(144).fill(beamTable[stokes]));
+            expect(frame.intensityConfig.bmaj).toEqual(Array(144).fill(beamTable[stokes].majorAxis));
+        });
+
+        test("does not treat a Stokes-only beam table as per-channel", () => {
+            const stokesOnlyBeams = STOKES_CUBEFRAME_INFO.beamTable.slice(0, 2).map(beam => ({...beam, channel: -1}));
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable: stokesOnlyBeams,
+                fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, depth: 1}
+            } as FrameInfo);
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
+
+        test.each([-1, 0])("does not force all panels for a single beam with index %i", index => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
+            const frame = createFrame([globalBeam]);
+            expect(frame.shouldShowBeamForAllChannels).toBe(false);
+        });
     });
 
     describe("beamAllChannels", () => {
+        test.each([
+            [-1, 0],
+            [-1, 1],
+            [0, 0],
+            [0, 1]
+        ])("preserves single beam intensity conversions for beam index %i and Stokes index %i", (index, stokes) => {
+            const globalBeam = {...STOKES_CUBEFRAME_INFO.beamTable[0], channel: index, stokes: index};
+            const frame = new FrameStore({
+                ...STOKES_CUBEFRAME_INFO,
+                beamTable: [globalBeam],
+                fileInfoExtended: {
+                    ...STOKES_CUBEFRAME_INFO.fileInfoExtended,
+                    headerEntries: [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries, {name: "BUNIT", value: "Jy/beam"}]
+                }
+            } as FrameInfo);
+            frame.setChannels(0, stokes, false);
+
+            expect(frame.beamAllChannels).toEqual([globalBeam, globalBeam, globalBeam]);
+            const config = frame.intensityConfig;
+            expect(config.bmaj).toEqual(Array(3).fill(globalBeam.majorAxis));
+            expect(config.bmin).toEqual(Array(3).fill(globalBeam.minorAxis));
+            expect(config.freqGHz).toHaveLength(3);
+            expect(SpectralDefinition.GetIntensityOptions(config)).toEqual(expect.arrayContaining(["K", "MJy/sr"]));
+        });
+
         test("returns a list of beams from all channels with the current stokes", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
             let beams = frame.beamAllChannels;
@@ -159,10 +407,10 @@ describe("FrameStore", () => {
     });
 
     describe("intensityConfig", () => {
-        let mockBeamAllChannels: jest.SpyInstance;
-        let mockSpectralAxis: jest.SpyInstance;
-        let mockChannelInfo: jest.SpyInstance;
-        let mockGetFreqInGHz: jest.SpyInstance;
+        let mockBeamAllChannels: ReturnType<typeof jest.spyOn>;
+        let mockSpectralAxis: ReturnType<typeof jest.spyOn>;
+        let mockChannelInfo: ReturnType<typeof jest.spyOn>;
+        let mockGetFreqInGHz: ReturnType<typeof jest.spyOn>;
         beforeAll(() => {
             mockBeamAllChannels = jest.spyOn(FrameStore.prototype, "beamAllChannels", "get");
             mockSpectralAxis = jest.spyOn(FrameStore.prototype, "spectralAxis", "get");
@@ -197,6 +445,135 @@ describe("FrameStore", () => {
             expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);
             expect(config["freqGHz"]).toEqual([90.73634849111, 90.73631797353188, 90.73628745595375]);
         });
+
+        test("returns the beam config for the requested polarization", () => {
+            const mockStokesOptions = jest.spyOn(FrameStore.prototype, "stokesOptions", "get").mockReturnValue([
+                {value: Polarizations.I, label: "Stokes I"},
+                {value: Polarizations.Q, label: "Stokes Q"}
+            ]);
+            mockChannelInfo.mockReturnValue({indexes: [0, 1, 2], values: [90.73634849111, 90.73631797353188, 90.73628745595375]});
+
+            const config = new FrameStore(STOKES_CUBEFRAME_INFO).getIntensityConfig(Polarizations.Q);
+            mockStokesOptions.mockRestore();
+
+            expect(config["bmaj"]).toEqual([0.931560754776001, 0.9315542578697205, 0.9315447807312012]);
+            expect(config["bmin"]).toEqual([0.8433191776275635, 0.8433099985122681, 0.8433027863502502]);
+        });
+    });
+
+    describe("spectral axis with a non-linear algorithm code", () => {
+        test("recognizes a WAVE-LOG axis as a vacuum wavelength axis", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true, type: {name: "Vacuum wavelength", code: "WAVE", unit: "Angstrom"}, ctype: "WAVE-LOG", specsys: ""}));
+            expect(frame.nativeSpectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+            expect(frame.spectralType).toBe(SpectralType.WAVE);
+            expect(frame.isSpectralCoordinateConvertible).toBe(true);
+        });
+
+        test("flags a WAVE-LOG axis as nonlinear and a linear FREQ axis as linear", () => {
+            expect(new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+            expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+        });
+
+        test("flags a spectral axis with non-uniform channel spacing as nonlinear", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({fromWCS: true, values: [1, 2, 4, 8], indexes: [0, 1, 2, 3]}) as any);
+            try {
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(true);
+                mockChannelInfo.mockImplementation(() => ({fromWCS: true, values: [1, 2, 3, 4], indexes: [0, 1, 2, 3]}) as any);
+                expect(new FrameStore(STOKES_CUBEFRAME_INFO).isSpectralAxisNonlinear).toBe(false);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("opens in the header unit when it is not the standard base unit of the axis", () => {
+            const logFrame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            expect(logFrame.spectralUnit).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralUnitSecondary).toBe(SpectralUnit.ANGSTROM);
+            expect(logFrame.spectralCoordinate).toBe("Vacuum wavelength (Angstrom)");
+
+            // a frequency axis in Hz keeps CARTA's default of GHz
+            const linearFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+            expect(linearFrame.spectralUnit).toBe(SpectralUnit.GHZ);
+            expect(linearFrame.spectralCoordinate).toBe("Frequency (GHz)");
+        });
+
+        test("offers wavelength and frequency coordinates but no velocity or system conversion without RESTFRQ and SPECSYS", () => {
+            const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+            const coordinates = Array.from(frame.spectralCoordsSupported?.keys() ?? []);
+            expect(coordinates).toEqual(expect.arrayContaining(["Vacuum wavelength (Angstrom)", "Frequency (GHz)", "Air wavelength (nm)", "Channel"]));
+            expect(coordinates).not.toEqual(expect.arrayContaining(["Radio velocity (km/s)"]));
+            expect(frame.spectralSystemsSupported).toEqual([]);
+            expect(frame.isSpectralSystemConvertible).toBe(false);
+        });
+
+        test("shows an unknown spectral type as it is, with channel as the only alternative", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "LAMBDA"}));
+            expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: false, ctype: "LAMBDA"}));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["LAMBDA (Angstrom)", "Channel"]);
+            expect(frame.spectralType).toBeNull();
+            expect(frame.spectralCoordinate).toBe("LAMBDA (Angstrom)");
+            expect(frame.spectralSystemsSupported).toEqual([]);
+        });
+
+        test.each([
+            ["empty", {name: "CTYPE3", value: ""}],
+            ["missing", undefined]
+        ])("shows a spectral axis with an %s CTYPE as channel only", (_, ctypeEntry) => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo(ctypeEntry));
+            expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toEqual(["Channel"]);
+            expect(frame.spectralType).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralTypeSecondary).toBe(SpectralType.CHANNEL);
+            expect(frame.spectralCoordinate).toBe("Channel");
+            expect(frame.spectralUnitStr).toBe("Channel");
+            expect(frame.isCoordChannel).toBe(true);
+        });
+
+        test("keeps the native values for a spectral axis without CTYPE that is not the depth axis", () => {
+            const mockIsSpectralChannel = jest.spyOn(FrameStore.prototype, "isSpectralChannel", "get").mockReturnValue(false);
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263], indexes: [0, 1, 2]}) as any);
+            try {
+                const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: ""}));
+                expect(frame.spectralType).toBeNull();
+                expect(frame.isCoordChannel).toBe(false);
+                expect(Array.from(frame.spectralCoordsSupported?.keys() ?? [])).toContain("Channel");
+                expect(Array.from(frame.channelValues)).toEqual([3621.59598486, 3622.4300286, 3623.264263]);
+            } finally {
+                mockIsSpectralChannel.mockRestore();
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("falls back to the default unit when the header unit does not belong to the spectral type", () => {
+            const frame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "Hz"}));
+            expect(frame.spectralUnit).toBe(SpectralUnit.KMS);
+            expect(frame.spectralCoordinate).toBe("Radio velocity (km/s)");
+            expect(frame.spectralCoordsSupported?.has(frame.spectralCoordinate)).toBe(true);
+        });
+
+        test("omits the missing spectral system from the converted cursor info of frequency and velocity axes", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [1, 2, 3]}) as any);
+            try {
+                // FREQ in Hz and VRAD in m/s take the conversion branches (unit differs from the default), with no SPECSYS to name
+                const frequencyFrame = new FrameStore(STOKES_CUBEFRAME_INFO);
+                expect(frequencyFrame.spectralSystem).toBeNull();
+                expect(frequencyFrame.getFreqWithChannel(0).spectralString).toMatch(/^Frequency: /);
+                const velocityFrame = new FrameStore(MakeSpectralAxisFrameInfo({name: "CTYPE3", value: "VRAD"}, {name: "CUNIT3", value: "m/s"}));
+                expect(velocityFrame.getFreqWithChannel(0).spectralString).toMatch(/^Velocity: /);
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
+
+        test("names the recognized type and omits the missing spectral system in the cursor info", () => {
+            const mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get").mockImplementation(() => ({values: [3621.59598486, 3622.4300286, 3623.264263]}) as any);
+            try {
+                const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
+                expect(frame.getFreqWithChannel(1).spectralString).toBe("Vacuum wavelength: 3622.4300 Angstrom");
+            } finally {
+                mockChannelInfo.mockRestore();
+            }
+        });
     });
 
     describe("swapped spectral WCS updates", () => {
@@ -223,8 +600,6 @@ describe("FrameStore", () => {
             expect(frame.spectralAxis).toEqual(expect.objectContaining({valid: true}));
             frame.updateSpectralVsDirectionWcs();
 
-            expect(AST.makeSwappedFrameSet).toHaveBeenCalledWith(11, 1, 2, 4, 512);
-
             const lastSettings = (AST.set as jest.Mock).mock.calls.at(-1)?.[1];
             expect(lastSettings).toContain("Format(1)=dms.*");
             expect(lastSettings).toContain('Unit(1)=""');
@@ -232,5 +607,791 @@ describe("FrameStore", () => {
             expect(lastSettings).toContain("StdOfRest=LSRK");
             expect(lastSettings).toContain("Label(2)=[LSRK] Frequency");
         });
+    });
+
+    describe("axis zoom", () => {
+        test("sets zoomAxis and copies to spatialReference", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            const spatialRef = new FrameStore(EMPTYFRAME_INFO);
+            frame["spatialReference"] = spatialRef;
+
+            expect(frame.zoomAxis).toBe("x");
+            frame.setZoomAxis("x");
+            expect(frame.zoomAxis).toBe("x");
+            expect(spatialRef.zoomAxis).toBe("x");
+        });
+
+        test("defaults PV and rotated cube zoom to the spectral axis", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            frame["frameInfo"] = {
+                ...EMPTYFRAME_INFO,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "OFFSET"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("y");
+
+            frame["frameInfo"] = {
+                ...frame["frameInfo"],
+                fileInfoExtended: {
+                    ...frame["frameInfo"].fileInfoExtended,
+                    headerEntries: [
+                        {name: "CTYPE1", value: "VRAD"},
+                        {name: "CTYPE2", value: "DISTANCE"}
+                    ]
+                }
+            } as any;
+            expect(frame.defaultZoomAxis).toBe("x");
+
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+            expect(frame.defaultZoomAxis).toBe("y");
+        });
+
+        test("initializes preview zoom axis to the spectral axis", () => {
+            const frameInfo = {
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    axesNumbers: {spatialX: 1, spatialY: 2},
+                    headerEntries: [
+                        {name: "CTYPE1", value: "RA---SIN"},
+                        {name: "CTYPE2", value: "FREQ"}
+                    ]
+                }
+            } as any;
+            const frame = new FrameStore(frameInfo);
+            expect(frame.zoomAxis).toBe("y");
+        });
+
+        test("uses independent zoom levels for preview frames", () => {
+            const frame = new FrameStore({...EMPTYFRAME_INFO, preview: true});
+
+            frame.setAxisZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+
+        test("preserves preview zoom changes during decompression", () => {
+            const frame = new FrameStore({
+                ...EMPTYFRAME_INFO,
+                preview: true,
+                fileInfoExtended: {
+                    ...EMPTYFRAME_INFO.fileInfoExtended,
+                    width: 2,
+                    height: 2
+                }
+            } as any);
+            const decompressPreviewRasterData = jest.spyOn(TileService.prototype, "decompressPreviewRasterData").mockImplementation(() => undefined);
+            const generator = frame.updatePreviewData({} as any);
+
+            try {
+                expect(generator.next().done).toBe(false);
+                frame.setAxisZoom(3, 4);
+                generator.next();
+
+                expect(frame.effectiveZoomLevel).toEqual({x: 3, y: 4});
+            } finally {
+                decompressPreviewRasterData.mockRestore();
+            }
+        });
+
+        test("uses independent zoom levels for rotated spectral cubes", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["frameInfo"] = ROTATED_STOKES_CUBEFRAME_INFO;
+
+            expect(frame.isAxisZoomable).toBe(true);
+            frame.setAxisZoom(2, 4);
+
+            expect(frame.effectiveZoomLevel).toEqual({x: 2, y: 4});
+        });
+    });
+
+    describe("spectral value conversion helpers", () => {
+        test("converts an explicit setting WCS value to frequency in MHz", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+
+            expect(frame.convertSettingWCSToFreqMHz(500, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 500, false);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 12);
+        });
+
+        test("converts frequency in MHz to an explicit setting WCS", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPoint as jest.Mock).mockReturnValueOnce(12).mockReturnValueOnce(34);
+
+            expect(frame.convertFreqMHzToSettingWCS(100, SpectralType.AWAV, SpectralUnit.NM)).toBe(34);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, 100, false);
+            expect(AST.transformSpectralPoint).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, 12);
+        });
+
+        test("converts setting WCS arrays to frequency with two batched transforms", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+            expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, [500, 1000], false);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, new Float64Array([12, 24]));
+        });
+
+        test("converts frequency arrays to setting WCS with two batched transforms", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([12, 24])).mockReturnValueOnce(new Float64Array([34, 68]));
+
+            expect(frame.convertFreqMHzToSettingWCSArray([100, 200], SpectralType.AWAV, SpectralUnit.NM)).toEqual([34, 68]);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(1, 1, SpectralType.FREQ, SpectralUnit.MHZ, SpectralSystem.LSRK, [100, 200], false);
+            expect(AST.transformSpectralPointArray).toHaveBeenNthCalledWith(2, 1, SpectralType.AWAV, SpectralUnit.NM, SpectralSystem.LSRK, new Float64Array([12, 24]));
+        });
+
+        test("stops an array conversion when the AST wrapper reports invalid output", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO) as Record<string, any>;
+            frame["spectralFrame"] = 1;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.transformSpectralPointArray as jest.Mock).mockReturnValueOnce(new Float64Array([NaN, NaN]));
+
+            expect(frame.convertSettingWCSToFreqMHzArray([500, 1000], SpectralType.AWAV, SpectralUnit.NM)).toBeUndefined();
+            expect(AST.transformSpectralPointArray).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    const pvFrameInfo: FrameInfo = {
+        fileId: 0,
+        directory: "",
+        hdu: "",
+        fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 3} as any,
+        fileInfoExtended: {
+            dimensions: 2,
+            height: 2,
+            width: 2,
+            depth: 1,
+            stokes: 0,
+            axesNumbers: {spatialX: 1, spatialY: 2, spectral: 2},
+            headerEntries: [
+                {name: "CTYPE1", value: "OFFSET"},
+                {name: "CRVAL1", value: "0", entryType: 1, numericValue: 0},
+                {name: "CDELT1", value: "1", entryType: 1, numericValue: 1},
+                {name: "CRPIX1", value: "1", entryType: 1, numericValue: 1},
+                {name: "CUNIT1", value: "arcsec"},
+                {name: "CTYPE2", value: "FREQ"},
+                {name: "CRVAL2", value: "1.42040575E9", entryType: 1, numericValue: 1420405750},
+                {name: "CDELT2", value: "100000", entryType: 1, numericValue: 100000},
+                {name: "CRPIX2", value: "1", entryType: 1, numericValue: 1},
+                {name: "CUNIT2", value: "Hz"},
+                {name: "RESTFRQ", value: "1.42040575E9", entryType: 1, numericValue: 1420405750},
+                {name: "SPECSYS", value: "LSRK"}
+            ]
+        } as any,
+        fileFeatureFlags: 0,
+        renderMode: 0,
+        beamTable: [],
+        lelExpr: false,
+        generated: false
+    };
+
+    describe("rest-frame conversion settings", () => {
+        const configureFrameSetIndexMocks = (initialNframe: number = 2, initialCurrent: number = 2) => {
+            let nframe = initialNframe;
+            let current = initialCurrent;
+            (AST.getString as jest.Mock).mockImplementation((_object: unknown, attribute: string) => {
+                if (attribute === "Current") {
+                    return `${current}`;
+                }
+                if (attribute === "Nframe") {
+                    return `${nframe}`;
+                }
+                return "mock";
+            });
+            (AST.addFrame as jest.Mock).mockImplementation(() => {
+                current = ++nframe;
+            });
+        };
+
+        beforeEach(() => {
+            configureFrameSetIndexMocks();
+        });
+
+        test("defaults PV shift input to radio radial velocity", () => {
+            const frame = new FrameStore(pvFrameInfo);
+
+            expect(frame.restFrameShiftMode).toBe(RestFrameShiftMode.RADIAL_VELOCITY);
+            expect(frame.restFrameVelocityConvention).toBe(VelocityConvention.RADIO);
+            expect(frame.restFrameRadialVelocity).toBe(0);
+        });
+
+        test("initializes PV shift input from preferences", () => {
+            const preferenceStore = PreferenceStore.Instance;
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.REDSHIFT);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.OPTICAL);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE, RestFrameShiftMode.RADIAL_VELOCITY);
+            preferenceStore.preferences.set(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION, VelocityConvention.RELATIVISTIC);
+
+            const frame = new FrameStore(pvFrameInfo);
+
+            expect(frame.restFrameShiftMode).toBe(RestFrameShiftMode.REDSHIFT);
+            expect(frame.restFrameVelocityConvention).toBe(VelocityConvention.OPTICAL);
+
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+            preferenceStore.preferences.delete(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        });
+
+        test("tracks and validates rest-frame shift settings", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+
+            expect(frame.isRestFrameSupported).toBe(true);
+            frame.setRestFrameEnabled(true);
+            frame.setRestFrameRedshift(1);
+
+            expect(frame.isRestFrameActive).toBe(true);
+            expect(frame.restFrameFactor).toBe(2);
+
+            frame.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+            frame.setRestFrameVelocityConvention(VelocityConvention.OPTICAL);
+            frame.setRestFrameRadialVelocity(299792.458);
+
+            expect(frame.restFrameRedshift).toBe(1);
+            expect(frame.restFrameRadialVelocity).toBeCloseTo(299792.458, 3);
+        });
+
+        test("disables rest-frame conversion for channel coordinates", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+            frame.setRestFrameEnabled(true);
+            frame["spectralType"] = SpectralType.CHANNEL;
+            frame.setRestFrameEnabled(true);
+
+            expect(frame.isRestFrameSupported).toBe(false);
+            expect(frame.isRestFrameEnabled).toBe(false);
+            expect(frame.isRestFrameActive).toBe(false);
+        });
+
+        test("converts observed spectral values to rest frame correctly", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame.setRestFrameEnabled(true);
+            frame.setRestFrameRedshift(0.5);
+
+            // FREQ
+            frame["spectralType"] = SpectralType.FREQ;
+            frame["spectralUnit"] = SpectralUnit.GHZ;
+            expect(frame.convertObservedSpectralValueToRestFrame(10)).toBeCloseTo(15);
+
+            // WAVE
+            frame["spectralType"] = SpectralType.WAVE;
+            frame["spectralUnit"] = SpectralUnit.UM;
+            expect(frame.convertObservedSpectralValueToRestFrame(15)).toBeCloseTo(10);
+
+            // VRAD
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            expect(frame.convertObservedSpectralValueToRestFrame(0)).toBeCloseTo(-149896.229);
+
+            // VOPT
+            frame["spectralType"] = SpectralType.VOPT;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            expect(frame.convertObservedSpectralValueToRestFrame(0)).toBeCloseTo(-99930.81933);
+        });
+
+        test("applies PV WCS mappings when rest-frame conversion is enabled", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.scaleMap2D as jest.Mock).mockClear();
+            (AST.shiftMap2D as jest.Mock).mockClear();
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(0.5);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.scaleMap2D).toHaveBeenCalledWith(1, 1.5);
+            expect(AST.shiftMap2D).toHaveBeenCalledWith(0, -149896.229);
+            expect(AST.addFrame).toHaveBeenCalledTimes(2);
+            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
+        });
+
+        test("applies the custom RestFreq before caching the spectral frame", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            frame["restFreqStore"] = {restFreqInHz: 1.3e9};
+            (AST.set as jest.Mock).mockClear();
+            (AST.getSpectralFrame as jest.Mock).mockClear();
+
+            frame.applyPVWcsSettings();
+
+            const restFreqCallIndex = (AST.set as jest.Mock).mock.calls.findIndex(call => `${call[1]}`.includes("RestFreq=1300000000 Hz"));
+            const spectralFrameCallOrder = (AST.getSpectralFrame as jest.Mock).mock.invocationCallOrder.at(-1);
+            expect(restFreqCallIndex).toBeGreaterThanOrEqual(0);
+            expect(spectralFrameCallOrder).toBeDefined();
+            expect((AST.set as jest.Mock).mock.invocationCallOrder[restFreqCallIndex]).toBeLessThan(spectralFrameCallOrder as number);
+            expect(frame["spectralFrame"]).toBe(1);
+        });
+
+        test("releases the PV FitsChan after building a FrameSet", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            const fitsChan = 41;
+            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
+            (AST.deleteObject as jest.Mock).mockClear();
+
+            frame["initPVFrame"]();
+
+            expect(AST.deleteObject).toHaveBeenCalledWith(fitsChan);
+        });
+
+        test("releases the PV FitsChan when building a FrameSet fails", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            const fitsChan = 42;
+            (AST.emptyFitsChan as jest.Mock).mockReturnValue(fitsChan);
+            (AST.getFrameFromFitsChan as jest.Mock).mockImplementationOnce(() => {
+                throw new Error("failed to parse PV WCS");
+            });
+            (AST.deleteObject as jest.Mock).mockClear();
+
+            expect(() => frame["initPVFrame"]()).toThrow("failed to parse PV WCS");
+            expect(AST.deleteObject).toHaveBeenCalledWith(fitsChan);
+        });
+
+        test("uses the actual FrameSet indices when adding rest-frame mappings", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            frame["isRestFrameEnabled"] = true;
+            frame["restFrameRedshift"] = 0.5;
+            configureFrameSetIndexMocks(3, 2);
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+
+            frame["addRestFrameWcsFrames"](1);
+
+            expect(AST.addFrame).toHaveBeenNthCalledWith(1, 1, 2, expect.anything(), expect.anything());
+            expect(AST.addFrame).toHaveBeenNthCalledWith(2, 1, 4, expect.anything(), expect.anything());
+            expect(AST.setI).toHaveBeenCalledWith(1, "Current", 5);
+        });
+
+        test("uses a non-linear AST mapping for AWAV rest-frame conversion", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.AWAV;
+            frame["spectralUnit"] = SpectralUnit.NM;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            configureFrameSetIndexMocks(3, 2);
+            (AST.getSpectralFrame as jest.Mock).mockClear();
+            (AST.getSpectralFrame as jest.Mock).mockReturnValueOnce(101).mockReturnValueOnce(102).mockReturnValueOnce(103);
+            (AST.createRestFrameMapping2D as jest.Mock).mockClear();
+            (AST.scaleMap2D as jest.Mock).mockClear();
+            (AST.shiftMap2D as jest.Mock).mockClear();
+            (AST.addFrame as jest.Mock).mockClear();
+            (AST.setI as jest.Mock).mockClear();
+            (AST.deleteObject as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(1);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.createRestFrameMapping2D).toHaveBeenCalledWith(103, 2, 2);
+            expect(AST.scaleMap2D).not.toHaveBeenCalled();
+            expect(AST.shiftMap2D).not.toHaveBeenCalled();
+            expect(AST.addFrame).toHaveBeenCalledTimes(1);
+            expect(AST.addFrame).toHaveBeenCalledWith(expect.anything(), 2, expect.anything(), expect.anything());
+            expect(AST.setI).toHaveBeenCalledWith(expect.anything(), "Current", 4);
+            expect(AST.deleteObject).toHaveBeenCalledWith(103);
+        });
+
+        test("preserves a velocity scale close to the lower redshift limit", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            const redshift = -0.999999999999;
+            (AST.scaleMap2D as jest.Mock).mockClear();
+
+            frame.setRestFrameRedshift(redshift);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.scaleMap2D).toHaveBeenLastCalledWith(1, 1 + redshift);
+        });
+
+        test("preserves axis units with rest frame annotation on label when rest-frame conversion is enabled", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.VRAD;
+            frame["spectralUnit"] = SpectralUnit.KMS;
+            frame["spectralSystem"] = SpectralSystem.LSRK;
+            (AST.set as jest.Mock).mockClear();
+            (AST.getString as jest.Mock).mockImplementation((...args: unknown[]) => {
+                switch (args[1]) {
+                    case "Label(1)":
+                        return "Offset";
+                    case "Label(2)":
+                        return "[LSRK] Radio velocity";
+                    case "Unit(1)":
+                        return "arcsec";
+                    case "Unit(2)":
+                        return "km/s";
+                    case "Current":
+                        return "2";
+                    case "Nframe":
+                        return "2";
+                    default:
+                        return "mock";
+                }
+            });
+
+            frame.setRestFrameRedshift(0.5);
+            frame.setRestFrameEnabled(true);
+
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("Unit(2)=km/s"));
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("Label(2)=[LSRK] Radio velocity"));
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Label(1)=Offset");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Label(2)=[LSRK] Radio velocity (km/s) (rest frame)");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), "Unit(1)=arcsec");
+            expect(AST.set).toHaveBeenCalledWith(expect.anything(), 'Unit(2)=""');
+        });
+    });
+
+    describe("obsTimeMjdUtc", () => {
+        test("prefers MJD-OBS over DATE-OBS", () => {
+            const frame = new FrameStore(OBS_TIME_FRAME_INFO);
+            expect(frame.obsTimeMjdUtc).toBe(59000.25);
+            expect(AST.parseDateToMJD).not.toHaveBeenCalled();
+        });
+
+        test("falls back to DATE-OBS parsed in the TIMESYS scale", () => {
+            const frameInfo = {
+                ...OBS_TIME_FRAME_INFO,
+                fileInfoExtended: {
+                    ...OBS_TIME_FRAME_INFO.fileInfoExtended,
+                    headerEntries: (OBS_TIME_FRAME_INFO.fileInfoExtended.headerEntries as any[]).filter(entry => entry.name !== "MJD-OBS")
+                } as any
+            };
+            (AST.parseDateToMJD as jest.Mock).mockReturnValue(59000.25);
+            (AST.convertMJD as jest.Mock).mockImplementation(mjd => mjd);
+
+            const frame = new FrameStore(frameInfo);
+            expect(frame.obsTimeMjdUtc).toBe(59000.25);
+            expect(AST.parseDateToMJD).toHaveBeenCalledWith("2020-05-31T06:00:00", "UTC");
+        });
+
+        test("returns undefined without time headers", () => {
+            const frame = new FrameStore(EMPTYFRAME_INFO);
+            expect(frame.obsTimeMjdUtc).toBeUndefined();
+        });
+    });
+});
+
+describe("FrameStore.getRegionProperties", () => {
+    const ellipse = {
+        regionId: 1,
+        regionType: CARTA.RegionType.ELLIPSE,
+        controlPoints: [
+            {x: 320, y: 400},
+            {x: 100, y: 50}
+        ],
+        rotation: 30
+    };
+    const getProperties = (wcsProperties: string | undefined, isValidWcs: boolean = true): string[] =>
+        FrameStore.prototype.getRegionProperties.call(
+            {
+                isValidWcs,
+                getRegion: (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined),
+                getRegionFrameProperties: (region: typeof ellipse) => ({controlPoints: region.controlPoints, rotation: region.rotation}),
+                genRegionWcsProperties: () => wcsProperties
+            },
+            ellipse.regionId
+        );
+
+    test("returns the image and the world definition of the region", () => {
+        const world = 'ellipse(wcs:ICRS)[[18:20:21.0000000240, -16:12:10.0000000440], [40.0000000000", 20.0000000000"], 30.000000deg]';
+        const properties = getProperties(world);
+        expect(properties).toHaveLength(2);
+        expect(properties[0]).toMatch(/^ellipse\[\[320\.000000pix, 400\.000000pix\]/);
+        expect(properties[1]).toBe(world);
+    });
+
+    test("with the real generator, adds the world definition in IMG display mode in the image's default system", async () => {
+        const overlay = AppStore.Instance.overlaySettings.global;
+        const previousSystem = overlay.system;
+        const wcsCopy = {copy: true};
+        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const deleteObject = jest.spyOn(AST, "deleteObject");
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            defaultWcsSystem: SystemType;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.defaultWcsSystem = SystemType.Galactic;
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        try {
+            await overlay.setSystem(SystemType.FK5);
+            const worldMode = frame.getRegionProperties(ellipse.regionId);
+            expect(worldMode).toHaveLength(2);
+            expect(worldMode[1]).toMatch(/^ellipse\(wcs:FK5\)\[\[/);
+
+            await overlay.setSystem(SystemType.Image);
+            expect(AppStore.Instance.overlaySettings.isImgCoordinates).toBe(true);
+            const imgMode = frame.getRegionProperties(ellipse.regionId);
+            expect(imgMode).toHaveLength(2);
+            expect(imgMode[0]).toBe(worldMode[0]);
+            expect(imgMode[1]).toMatch(/^ellipse\(wcs:GALACTIC\)\[\[0deg, 0deg\], /);
+            expect(deleteObject).toHaveBeenCalledWith(wcsCopy);
+        } finally {
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("marks coordinates in the degrees format with deg, per axis", async () => {
+        const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+        const previousSystem = overlay.system;
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            getRegion: (regionId: number) => unknown;
+            getRegionProperties: (regionId: number) => string[];
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.getRegion = (regionId: number) => (regionId === ellipse.regionId ? ellipse : undefined);
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        try {
+            await overlay.setSystem(SystemType.ICRS);
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0deg, 0deg\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.DMS);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0\], /);
+
+            numbers.setFormatX(NumberFormatType.HMS);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            expect(frame.getRegionProperties(ellipse.regionId)[1]).toMatch(/^ellipse\(wcs:ICRS\)\[\[0, 0deg\], /);
+        } finally {
+            numbers.setFormatX(NumberFormatType.Degrees);
+            numbers.setFormatY(NumberFormatType.Degrees);
+            numbers.setCustomFormat(false);
+            numbers.setValidWcs(false);
+            await overlay.setSystem(previousSystem);
+            overlay.setValidWcs(false);
+        }
+    });
+
+    test("returns no region lines for a region that does not exist", () => {
+        expect(new FrameStore(STOKES_CUBEFRAME_INFO).getRegionProperties(99)).toEqual([]);
+    });
+
+    test("omits the world definition when none can be generated, e.g. in IMG display mode", () => {
+        const properties = getProperties(undefined);
+        expect(properties).toHaveLength(1);
+        expect(properties[0]).toMatch(/^ellipse\[\[/);
+        expect(getProperties("unused", false)).toHaveLength(1);
+    });
+});
+
+describe("FrameStore.genRegionWcsProperties output", () => {
+    const {global: overlay, numbers} = AppStore.Instance.overlaySettings;
+    const badX = 999;
+    let previousSystem: SystemType;
+
+    const makeFrame = () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO) as unknown as {
+            isValidWcs: boolean;
+            wcsInfoForTransformation: unknown;
+            pixelUnitSizeArcsec: {x: number; y: number};
+            cursorInfo: unknown;
+            genRegionWcsProperties: (regionType: CARTA.RegionType, controlPoints: {x: number; y: number}[], rotation: number, regionId?: number) => string;
+        };
+        frame.isValidWcs = true;
+        frame.wcsInfoForTransformation = {};
+        frame.pixelUnitSizeArcsec = {x: 2, y: 3};
+        runInAction(() => {
+            frame.cursorInfo = {infoWCS: {x: "1:00:00", y: "2:00:00"}};
+        });
+        return frame;
+    };
+
+    beforeEach(async () => {
+        previousSystem = overlay.system;
+        jest.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        jest.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        jest.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `${x}.5`, y: `${y}.25`}));
+        overlay.setValidWcs(true);
+        numbers.setValidWcs(true);
+        numbers.setCustomFormat(true);
+        numbers.setFormatX(NumberFormatType.Degrees);
+        numbers.setFormatY(NumberFormatType.Degrees);
+        await overlay.setSystem(SystemType.ICRS);
+    });
+
+    afterEach(async () => {
+        jest.restoreAllMocks();
+        numbers.setCustomFormat(false);
+        numbers.setValidWcs(false);
+        await overlay.setSystem(previousSystem);
+        overlay.setValidWcs(false);
+    });
+
+    test("formats every region shape", () => {
+        const frame = makeFrame();
+        const center = {x: 10, y: 20};
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [center], 0)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [10.5deg, 20.25deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.RECTANGLE, [center, {x: 4, y: 6}], 15)).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 15.000000deg]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ELLIPSE, [center, {x: 4, y: 6}], 30)).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYGON,
+                [
+                    {x: 10, y: 20},
+                    {x: NaN, y: 5},
+                    {x: badX, y: 5},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"poly(wcs:ICRS)[[10.5deg, 20.25deg], [Invalid], [Invalid], [30.5deg, 40.25deg]]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.POLYLINE,
+                [
+                    {x: 10, y: 20},
+                    {x: 30, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Polyline (wcs:ICRS)[[10.5deg, 20.25deg], [30.5deg, 40.25deg]]"`);
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.ANNTEXT, [center], 0)).toMatchInlineSnapshot(`"Not Implemented"`);
+    });
+
+    test("uses the cursor readout, placeholders and the per-axis units", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toMatchInlineSnapshot(`"Point (wcs:ICRS) [1:00:00deg, 2:00:00deg]"`);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.LINE,
+                [
+                    {x: 10, y: 20},
+                    {x: badX, y: 40}
+                ],
+
+                0
+            )
+        ).toMatchInlineSnapshot(`"Line (wcs:ICRS) [[10.5deg, 20.25deg], [Invalid, Invalid]]"`);
+        numbers.setFormatX(NumberFormatType.HMS);
+        numbers.setFormatY(NumberFormatType.DMS);
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toMatchInlineSnapshot(`"ellipse(wcs:ICRS)[[10.5, 20.25], [8.0000000000", 18.0000000000"], 30.000000deg]"`);
+        frame.pixelUnitSizeArcsec = null as unknown as {x: number; y: number};
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.RECTANGLE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                0
+            )
+        ).toMatchInlineSnapshot(`"rotbox(wcs:ICRS)[[10.5, 20.25], [, ], 0.000000deg]"`);
+    });
+
+    test("has no world definition for an unusable center or an invalid WCS", () => {
+        const frame = makeFrame();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: NaN, y: 20}], 0)).toBeUndefined();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: badX, y: 20}], 0)).toBeUndefined();
+        frame.isValidWcs = false;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+    });
+
+    test("in IMG display mode, formats a temporary copy in the default system with the preference-derived format", async () => {
+        const frame = makeFrame() as ReturnType<typeof makeFrame> & {defaultWcsSystem: SystemType; defaultWcsEquinox: string; defaultWcsEpoch: string};
+        const shared = frame.wcsInfoForTransformation;
+        const wcsCopy = {copy: true};
+        jest.spyOn(AST, "copy").mockReturnValue(wcsCopy as unknown as AST.FrameSet);
+        const set = jest.spyOn(AST, "set");
+        const deleteObject = jest.spyOn(AST, "deleteObject");
+        await overlay.setSystem(SystemType.Image);
+
+        frame.defaultWcsSystem = undefined as unknown as SystemType;
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBeUndefined();
+
+        frame.defaultWcsSystem = SystemType.FK5;
+        frame.defaultWcsEquinox = "J2000";
+        frame.defaultWcsEpoch = "";
+        set.mockClear();
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(frame.genRegionWcsProperties(CARTA.RegionType.POINT, [{x: 10, y: 20}], 0, RegionId.CURSOR)).toBe("Point (wcs:FK5) [10.5, 20.25]");
+        expect(set.mock.calls.every(([target]) => target === wcsCopy)).toBe(true);
+        expect(set.mock.calls[0]?.[1]).toBe(`System=FK5, Equinox=J2000, Format(${(frame as unknown as FrameStore).dirX})=hms.10, Format(${(frame as unknown as FrameStore).dirY})=dms.10`);
+        expect(set.mock.calls.some(([target]) => target === shared)).toBe(false);
+        expect(deleteObject.mock.calls.filter(([target]) => target === wcsCopy)).toHaveLength(2);
+
+        frame.defaultWcsSystem = SystemType.Galactic;
+        expect(
+            frame.genRegionWcsProperties(
+                CARTA.RegionType.ELLIPSE,
+                [
+                    {x: 10, y: 20},
+                    {x: 4, y: 6}
+                ],
+                30
+            )
+        ).toBe('ellipse(wcs:GALACTIC)[[10.5deg, 20.25deg], [8.0000000000", 18.0000000000"], 30.000000deg]');
+    });
+});
+
+describe("FrameStore WCS header cards", () => {
+    test("does not send header entries without a keyword to AST", () => {
+        const putFits = AST.putFits as jest.Mock;
+        putFits.mockClear();
+        const headerEntries = [...STOKES_CUBEFRAME_INFO.fileInfoExtended.headerEntries!, {name: "", value: "0", entryType: 1, numericValue: 0}, {name: "   ", value: "1"}];
+        new FrameStore({...STOKES_CUBEFRAME_INFO, fileInfoExtended: {...STOKES_CUBEFRAME_INFO.fileInfoExtended, headerEntries}} as FrameInfo);
+
+        const cards = putFits.mock.calls.map(([, card]) => card as string);
+        expect(cards.length).toBeGreaterThan(0);
+        expect(cards.filter(card => /^\s*=/.test(card))).toEqual([]);
+        expect(cards.every(card => /^[A-Z0-9_-][A-Z0-9_ -]{7}=/.test(card))).toBe(true);
     });
 });

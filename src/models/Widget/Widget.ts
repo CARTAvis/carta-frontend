@@ -2,6 +2,7 @@ import {type ComponentType} from "react";
 
 import {
     AnimatorComponent,
+    AnimatorSettingsPanelComponent,
     CatalogOverlayComponent,
     CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
@@ -65,7 +66,7 @@ const CreateWidgetMap = () =>
         [RenderConfigComponent.WidgetConfig.type, {config: RenderConfigComponent.WidgetConfig, settingsConfig: RenderConfigSettingsPanelComponent.WidgetConfig, component: RenderConfigComponent}],
         [LayerListComponent.WidgetConfig.type, {config: LayerListComponent.WidgetConfig, settingsConfig: LayerListSettingsPanelComponent.WidgetConfig, component: LayerListComponent}],
         [LogComponent.WidgetConfig.type, {config: LogComponent.WidgetConfig, component: LogComponent}],
-        [AnimatorComponent.WidgetConfig.type, {config: AnimatorComponent.WidgetConfig, component: AnimatorComponent}],
+        [AnimatorComponent.WidgetConfig.type, {config: AnimatorComponent.WidgetConfig, settingsConfig: AnimatorSettingsPanelComponent.WidgetConfig, component: AnimatorComponent}],
         [ChannelMapControlComponent.WidgetConfig.type, {config: ChannelMapControlComponent.WidgetConfig, component: ChannelMapControlComponent}],
         [SpatialProfilerComponent.WidgetConfig.type, {config: SpatialProfilerComponent.WidgetConfig, settingsConfig: SpatialProfilerSettingsPanelComponent.WidgetConfig, component: SpatialProfilerComponent}],
         [SpectralProfilerComponent.WidgetConfig.type, {config: SpectralProfilerComponent.WidgetConfig, settingsConfig: SpectralProfilerSettingsPanelComponent.WidgetConfig, component: SpectralProfilerComponent}],

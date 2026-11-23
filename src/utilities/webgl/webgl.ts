@@ -15,6 +15,7 @@ export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: st
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, GL2.COMPILE_STATUS)) {
             console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
             return null;
         }
     }
@@ -29,16 +30,33 @@ export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString:
     const vertexShader = getShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
     const fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
 
-    const shaderProgram = gl.createProgram();
-    if (shaderProgram && vertexShader && fragmentShader) {
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
-
-        if (!gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
-            console.log("Could not initialise shaders");
-            return null;
+    if (!vertexShader || !fragmentShader) {
+        if (vertexShader) {
+            gl.deleteShader(vertexShader);
         }
+        if (fragmentShader) {
+            gl.deleteShader(fragmentShader);
+        }
+        return null;
+    }
+
+    const shaderProgram = gl.createProgram();
+    if (!shaderProgram) {
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        return null;
+    }
+
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    if (!gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
+        console.log("Could not initialise shaders");
+        gl.deleteProgram(shaderProgram);
+        return null;
     }
     return shaderProgram;
 }
