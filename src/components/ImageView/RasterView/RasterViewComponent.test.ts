@@ -30,6 +30,22 @@ describe("RasterViewComponent", () => {
         expect(component.scheduleCanvasUpdate).toHaveBeenCalledTimes(1);
     });
 
+    test("ignores normal-view tile events for stale channels or stokes", () => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({channelMapStore: {isChannelMapEnabled: false}} as any);
+        const frame = {frameInfo: {fileId: 1}, channel: 2, stokes: 1};
+        const component = new RasterViewComponent({image: {type: ImageType.FRAME, store: frame}} as any) as any;
+        component.scheduleCanvasUpdate = jest.fn();
+        component.componentDidMount();
+        const subscribe = jest.requireMock("services").TileService.Instance.tileStream.subscribe as jest.Mock;
+        const notify = subscribe.mock.lastCall?.[0];
+
+        notify({fileId: 1, channel: 1, stokes: 1});
+        notify({fileId: 1, channel: 2, stokes: 0});
+        notify({fileId: 1, channel: 2, stokes: 1});
+
+        expect(component.scheduleCanvasUpdate).toHaveBeenCalledTimes(1);
+    });
+
     test("keeps the current canvas until the new channel histogram is ready", () => {
         const clearRect = jest.fn();
         const drawImage = jest.fn();

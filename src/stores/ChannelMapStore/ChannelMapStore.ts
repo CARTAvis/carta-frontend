@@ -97,6 +97,7 @@ export class ChannelMapStore {
         const frame = this.displayedFrame;
         if (frame && this.channelArray.length && !this.channelArray.includes(frame.requiredChannel)) {
             frame.setChannel(this.channelArray[0]);
+            frame.channel = this.channelArray[0];
         }
     }, 200);
 
@@ -133,6 +134,15 @@ export class ChannelMapStore {
         }
         if (isEnabled) {
             AppStore.Instance.animatorStore.stopAnimation();
+            const frame = this.displayedFrame;
+            if (frame) {
+                if (frame.requiredChannel !== undefined) {
+                    frame.channel = frame.requiredChannel;
+                }
+                if (frame.requiredStokes !== undefined) {
+                    frame.stokes = frame.requiredStokes;
+                }
+            }
         }
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {

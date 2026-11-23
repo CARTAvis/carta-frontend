@@ -215,6 +215,36 @@ describe("FrameStore", () => {
 
         expect(frame.hasCurrentContours).toBe(true);
         expect(frame.hasCurrentVectorOverlay).toBe(true);
+
+        frame.clearContours(false);
+        frame.clearVectorOverlay(false);
+
+        expect(frame.hasCurrentContours).toBe(false);
+        expect(frame.hasCurrentVectorOverlay).toBe(false);
+    });
+
+    test("replaces partial overlay data when a stream restarts on the same channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.contourConfig.setContourConfiguration([1], CARTA.SmoothingMode.NoSmoothing, 1);
+        const vectorTile = {width: 1, height: 1, x: 0, y: 0, mip: 1, imageData: new Uint8Array(new Float32Array([1]).buffer)};
+
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.5, contourSets: [{level: 1}]}));
+        const firstContourStore = frame.contourStores.get(1);
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.5, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
+
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.75, contourSets: [{level: 1}]}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.75, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+        expect(frame.contourStores.get(1)).toBe(firstContourStore);
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(2);
+
+        frame.setChannel(0);
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.25, contourSets: [{level: 1}]}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.25, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+        expect(frame.contourStores.get(1)).not.toBe(firstContourStore);
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
+        expect(frame.vectorOverlayStore.progress).toBe(0.25);
     });
 
     test("invalidates pending input when selecting the current channel again", () => {

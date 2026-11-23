@@ -2447,25 +2447,27 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         const isRequiredTileStream = !!frame && tileStreamDetails.tileCount !== undefined && tileStreamDetails.channel === frame.requiredChannel && tileStreamDetails.stokes === frame.requiredStokes;
         const isRequiredViewReady = isRequiredTileStream && this.tileService.getNormalViewRemainingTiles(fileId) === 0;
-        if (this.animatorStore.isServerAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
-            // Get stokes from the backend tile stream message
-            const stokes = tileStreamDetails.stokes ?? 0;
+        if (this.animatorStore.isServerAnimationActive) {
+            if (fileId === this.activeFrameFileId) {
+                // Get stokes from the backend tile stream message
+                const stokes = tileStreamDetails.stokes ?? 0;
 
-            // Set stokes index in the animation flow control message
-            const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame?.polarizations.indexOf(stokes) : stokes;
+                // Set stokes index in the animation flow control message
+                const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame?.polarizations.indexOf(stokes) : stokes;
 
-            // Flow control
-            const flowControlMessage: CARTA.AnimationFlowControl.$Properties = {
-                fileId: tileStreamDetails.fileId,
-                animationId: 0,
-                receivedFrame: {
-                    channel: tileStreamDetails.channel,
-                    stokes: stokesIndex
-                },
-                timestamp: Long.fromNumber(Date.now())
-            };
+                // Flow control
+                const flowControlMessage: CARTA.AnimationFlowControl.$Properties = {
+                    fileId: tileStreamDetails.fileId,
+                    animationId: 0,
+                    receivedFrame: {
+                        channel: tileStreamDetails.channel,
+                        stokes: stokesIndex
+                    },
+                    timestamp: Long.fromNumber(Date.now())
+                };
 
-            this.backendService.sendAnimationFlowControl(flowControlMessage);
+                this.backendService.sendAnimationFlowControl(flowControlMessage);
+            }
 
             if (frame) {
                 const tileStreamChannel = tileStreamDetails.channel ?? 0;

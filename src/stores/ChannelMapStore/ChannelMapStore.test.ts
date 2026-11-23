@@ -172,6 +172,55 @@ describe("ChannelMapStore", () => {
 
             expect(appStore.updateChannels).toHaveBeenCalledWith([{frame, channel: 2, stokes: 1}]);
         });
+
+        it("promotes pending channel and Stokes selections when enabled", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; stokes: number; requiredChannel: number; requiredStokes: number};
+            store.setChannelMapEnabled(false);
+            runInAction(() => {
+                frame.channel = 0;
+                frame.stokes = 0;
+                frame.requiredChannel = 3;
+                frame.requiredStokes = 1;
+            });
+
+            store.setChannelMapEnabled(true);
+
+            expect(frame.channel).toBe(3);
+            expect(frame.stokes).toBe(1);
+
+            runInAction(() => {
+                frame.channel = 0;
+                frame.stokes = 0;
+                frame.requiredChannel = 0;
+                frame.requiredStokes = 0;
+            });
+            store.setChannelMapEnabled(false);
+        });
+
+        it("promotes the fallback channel immediately when the active channel leaves the page", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.channel = 3;
+                frame.requiredChannel = 3;
+            });
+            frame.setChannel.mockClear();
+
+            store.setNumColumns(1);
+            jest.advanceTimersByTime(200);
+
+            expect(frame.setChannel).toHaveBeenCalledWith(0);
+            expect(frame.channel).toBe(0);
+
+            runInAction(() => {
+                frame.channel = 0;
+                frame.requiredChannel = 0;
+            });
+            store.setNumColumns(2);
+            store.setChannelMapEnabled(false);
+        });
     });
 
     describe("setStartChannel", () => {

@@ -45,11 +45,7 @@ export class AlertStore {
         if (this.isAlertVisible && ev.key === "Escape" && hasNoModifier) {
             ev.preventDefault();
             ev.stopPropagation();
-            if (this.alertType === AlertType.Interactive || this.alertType === AlertType.Retry) {
-                this.handleInteractiveAlertClosed(false);
-            } else {
-                this.dismissAlert();
-            }
+            this.handleInteractiveAlertClosed(false);
         }
     };
 

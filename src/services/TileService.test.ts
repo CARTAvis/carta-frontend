@@ -767,6 +767,44 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels).toHaveBeenCalledWith(1, 2, 0, {});
     });
 
+    test("does not duplicate the active channel when a Stokes transition occurs while another request is active", () => {
+        const service = CreateService();
+        service.getRequiredRequestTiles = jest.fn(() => []);
+        const frame = {frameInfo: {fileId: 1}, stokes: 1, channel: 1};
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
+        service.queueChannelMapRequests(1, [MakeRequest(0, [4])]);
+
+        service.requestChannelMapTiles([], frame as never, {x: 0, y: 0}, 11, [0, 1, 2]);
+        expect((GetChannelMapState(service)?.queue as Array<{channel: number}>).map(request => request.channel)).toEqual([1]);
+
+        service.handleChannelMapFlowControl(1, Complete(0));
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+        service.handleChannelMapFlowControl(2, Complete(1));
+        expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
+    });
+
+    test("flushes animated synchronized tiles without a prior view generation", () => {
+        const service = CreateService();
+        service.setAnimationEnabled(true);
+        service.fileStateMap.set(1, {channel: 1, stokes: 0});
+        service.cachedTiles = {has: jest.fn(), setpop: jest.fn()};
+        service.textureCoordinateQueue = [1];
+
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
+        service.handleStreamedTiles({
+            fileId: 1,
+            channel: 1,
+            stokes: 0,
+            syncId: 7,
+            animationId: 0,
+            compressionType: CARTA.CompressionType.NONE,
+            tiles: [{x: 0, y: 0, layer: 0, width: 1, height: 1, imageData: new Uint8Array(new Float32Array([1]).buffer)}]
+        });
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: true});
+
+        expect(service.tileStream.next).toHaveBeenLastCalledWith({tileCount: 1, fileId: 1, channel: 1, stokes: 0, flush: true});
+    });
+
     test("abandons the sequence when sending fails", () => {
         const service = CreateService();
         service.backendService.setChannels.mockReturnValue(null);

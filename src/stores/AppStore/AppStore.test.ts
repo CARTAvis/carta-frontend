@@ -1,6 +1,7 @@
 import type {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
+import {AnimationMode, CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
 import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
@@ -413,6 +414,47 @@ describe("AppStore.updateHistogram", () => {
         expect(frame.channel).toBe(2);
         expect(frame.stokes).toBe(1);
         expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
+    });
+
+    test("updates channel and stokes for animated sibling frames without sending flow control", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            requiredChannel: 0,
+            requiredStokes: 0,
+            polarizations: [],
+            setChannels: jest.fn((channel: number, stokes: number) => {
+                frame.requiredChannel = channel;
+                frame.requiredStokes = stokes;
+            }),
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        const sendFlowControl = jest.spyOn(appStore.backendService, "sendAnimationFlowControl").mockImplementation();
+        const previousAnimationMode = appStore.animatorStore.animationMode;
+        const isAnimationPreviouslyActive = appStore.animatorStore.isAnimationActive;
+        runInAction(() => {
+            appStore.animatorStore.animationMode = AnimationMode.CHANNEL;
+            appStore.animatorStore.isAnimationActive = true;
+        });
+
+        try {
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, flush: true});
+
+            expect(sendFlowControl).not.toHaveBeenCalled();
+            expect(frame.setChannels).toHaveBeenCalledWith(5, 1, false);
+            expect(frame.channel).toBe(5);
+            expect(frame.stokes).toBe(1);
+        } finally {
+            runInAction(() => {
+                appStore.animatorStore.animationMode = previousAnimationMode;
+                appStore.animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+            });
+        }
     });
 });
 

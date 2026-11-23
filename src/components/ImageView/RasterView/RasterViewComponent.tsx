@@ -48,11 +48,17 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
             const {image, channel: channels} = this.props;
             const frames = image?.type === ImageType.COLOR_BLENDING ? image.store.frames : [image?.store];
-            if (
+            const hasMatchingFrame =
                 tileMessage.fileId != null &&
-                frames.some(frame => frame?.frameInfo.fileId === tileMessage.fileId) &&
-                (channels ? channels.includes(tileMessage.channel ?? 0) : !AppStore.Instance.channelMapStore.isChannelMapEnabled || isPreview)
-            ) {
+                frames.some(
+                    frame =>
+                        frame?.frameInfo.fileId === tileMessage.fileId &&
+                        (tileMessage.stokes == null || frame.stokes == null || frame.stokes === tileMessage.stokes) &&
+                        (channels
+                            ? channels.includes(tileMessage.channel ?? 0)
+                            : isPreview || (!AppStore.Instance.channelMapStore.isChannelMapEnabled && (tileMessage.channel == null || frame.channel == null || frame.channel === tileMessage.channel)))
+                );
+            if (hasMatchingFrame) {
                 this.scheduleCanvasUpdate();
             }
         });

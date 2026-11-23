@@ -209,6 +209,8 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore> = new Map();
     @observable private contourSelection: {channel: number; stokes: number} | undefined = undefined;
     @observable private vectorOverlayChannel: number | undefined = undefined;
+    private isContourStreamActive = false;
+    private isVectorOverlayStreamActive = false;
     @observable isMoving: boolean = false;
     @observable isZooming: boolean = false;
 
@@ -3093,7 +3095,8 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const {channel, stokes} = contourImageData;
+        const channel = contourImageData.channel ?? 0;
+        const stokes = contourImageData.stokes ?? 0;
         const isAnimating = AnimatorStore.Instance.isServerAnimationActive;
         if (!isAnimating && (channel !== this.requiredChannel || stokes !== this.requiredStokes)) {
             return;
@@ -3102,9 +3105,10 @@ export class FrameStore {
             this.channel = this.requiredChannel = channel;
             this.stokes = this.requiredStokes = stokes;
         }
-        if (this.contourSelection?.channel !== channel || this.contourSelection.stokes !== stokes) {
+        if (!this.isContourStreamActive || this.contourSelection?.channel !== channel || this.contourSelection.stokes !== stokes) {
             this.contourStores.forEach(store => store.clearData());
             this.contourStores.clear();
+            this.isContourStreamActive = true;
             this.contourSelection = {channel, stokes};
         }
 
@@ -3143,9 +3147,10 @@ export class FrameStore {
             return;
         }
         if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            if (this.vectorOverlayChannel === channel && !this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            if (this.isVectorOverlayStreamActive && this.vectorOverlayChannel === channel && !this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
                 this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             } else {
+                this.isVectorOverlayStreamActive = true;
                 this.vectorOverlayChannel = channel;
                 this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             }
@@ -3217,6 +3222,8 @@ export class FrameStore {
         this.requiredChannel = sanitizedChannel;
         this.channelSelectionToken = {};
         this.requiredStokes = stokes;
+        this.isContourStreamActive = false;
+        this.isVectorOverlayStreamActive = false;
 
         if (isRecursive) {
             this.spectralSiblings.forEach(frame => {
@@ -3525,6 +3532,7 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
+        this.isContourStreamActive = false;
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
@@ -3551,6 +3559,8 @@ export class FrameStore {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
+        this.isContourStreamActive = false;
+        this.contourSelection = undefined;
         if (shouldUpdateBackend) {
             // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
             const contourParameters: CARTA.SetContourParameters.$Properties = {
@@ -3569,6 +3579,7 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
+        this.isVectorOverlayStreamActive = false;
         config.setEnabled(true);
 
         const parameters: CARTA.SetVectorOverlayParameters.$Properties = {
@@ -3597,6 +3608,8 @@ export class FrameStore {
     @action clearVectorOverlay = (shouldUpdateBackend: boolean = true) => {
         // Clear up GPU resources
         this.vectorOverlayStore.clearData();
+        this.isVectorOverlayStreamActive = false;
+        this.vectorOverlayChannel = undefined;
 
         if (shouldUpdateBackend) {
             // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated

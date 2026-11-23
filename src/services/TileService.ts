@@ -641,8 +641,7 @@ export class TileService {
             !activeRequest.requiredTiles.tiles?.length &&
             activeRequest.channels?.length === requestedChannels.length &&
             activeRequest.channels.every((channel, index) => channel === requestedChannels[index]);
-        const hasDifferentActiveRequest = !!activeRequest && (activeRequest.channel !== frame.channel || activeRequest.stokes !== stokes);
-        const shouldAppendActiveChannel = requests.some(request => request.channel !== frame.channel) || hasDifferentActiveRequest || (!requests.length && !isActiveChannelRequestPending);
+        const shouldAppendActiveChannel = requests.some(request => request.channel !== frame.channel) || (!requests.length && !isActiveChannelRequestPending);
         if (shouldAppendActiveChannel) {
             requests.push(activeChannelRequest);
         }
@@ -685,7 +684,8 @@ export class TileService {
                 fileId,
                 channel: this.fileStateMap.get(fileId)?.channel ?? request.channel,
                 stokes: desiredStokes,
-                requiredTiles: {}
+                requiredTiles: {},
+                rasterRequest: undefined
             };
             tiles = [];
         }
@@ -858,14 +858,7 @@ export class TileService {
     }
 
     @action resetForSessionResume() {
-        this.channelMapStates.forEach(state => {
-            this.dismissChannelMapTimeoutAlert(state.activeRequest?.batchTiming);
-            if (state.timeout !== undefined) {
-                clearTimeout(state.timeout);
-            }
-            state.activeRequest = undefined;
-        });
-        this.channelMapStates.clear();
+        this.cancelChannelMapRequests();
         this.resetRasterRequests();
     }
 
@@ -1194,7 +1187,7 @@ export class TileService {
         const isCurrentView = appStore.channelMapStore.isChannelMapEnabled
             ? appStore.channelMapStore.channelArray.includes(channel ?? NaN) && currentFileState?.stokes === stokes
             : currentFileState?.channel === channel && currentFileState?.stokes === stokes;
-        const isLatestView = syncState.viewGeneration === this.rasterViewGenerations.get(key) && isCurrentView;
+        const isLatestView = syncState.viewGeneration === (this.rasterViewGenerations.get(key) ?? 0) && isCurrentView;
         this.tileStream.next({tileCount, fileId, channel, stokes, flush: isLatestView});
     }
 
