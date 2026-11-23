@@ -1337,6 +1337,9 @@ export class AppStore {
         const previewFrame = this.previewFrames.get(previewId);
         previewFrame?.dispose?.();
         if (this.previewFrames.delete(previewId)) {
+            if (previewFrame && this.hoveredFrame === previewFrame) {
+                this.hoveredFrame = null;
+            }
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
         }

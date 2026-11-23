@@ -861,6 +861,63 @@ describe("AppStore.removeAllFrames", () => {
     });
 });
 
+describe("AppStore closing one image", () => {
+    const frameOf = (fileId: number) =>
+        Object.assign(Object.create(FrameStore.prototype), {
+            frameInfo: {fileId, fileInfoExtended: {depth: 1}},
+            secondarySpatialImages: [],
+            secondarySpectralImages: [],
+            clearSpatialReference: jest.fn(),
+            clearSpectralReference: jest.fn(),
+            clearContours: jest.fn()
+        }) as FrameStore;
+
+    const closeWith = (closed: FrameStore, hovered: FrameStore, isClosedByBackend: boolean) => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(isClosedByBackend);
+        jest.spyOn(appStore.tileService, "handleFileClosed").mockImplementation(jest.fn());
+        const imageList = (appStore.imageViewConfigStore as any).imageList;
+        runInAction(() => {
+            new Set([closed, hovered]).forEach(frame => imageList.push({type: ImageType.FRAME, store: frame}));
+            appStore.hoveredFrame = hovered;
+        });
+        (appStore as any).removeFrame(closed);
+        const hoveredFileId = appStore.hoveredFrame?.frameInfo.fileId;
+        runInAction(() => {
+            appStore.hoveredFrame = null;
+            imageList.replace(imageList.filter((image: {store: FrameStore}) => image.store !== closed && image.store !== hovered));
+        });
+        jest.restoreAllMocks();
+        return hoveredFileId;
+    };
+
+    test("forgets the image under the mouse when that image closes", () => {
+        const frame = frameOf(4);
+        expect(closeWith(frame, frame, true)).toBeUndefined();
+    });
+
+    test("keeps the image under the mouse when another image closes, or when the backend does not close the image", () => {
+        expect(closeWith(frameOf(4), frameOf(5), true)).toBe(5);
+        const frame = frameOf(4);
+        expect(closeWith(frame, frame, false)).toBe(4);
+    });
+
+    test("forgets a PV preview under the mouse when the preview closes", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closePvPreview").mockReturnValue(true);
+        const preview = {dispose: jest.fn()} as unknown as FrameStore;
+        runInAction(() => {
+            appStore.previewFrames.set(6, preview as never);
+            appStore.hoveredFrame = appStore.previewFrames.get(6) as never;
+        });
+
+        appStore.removePreviewFrame(6);
+
+        expect(appStore.hoveredFrame).toBeNull();
+        jest.restoreAllMocks();
+    });
+});
+
 describe("AppStore.startingWorkspace", () => {
     afterEach(() => {
         window.history.replaceState(null, "", "/");
