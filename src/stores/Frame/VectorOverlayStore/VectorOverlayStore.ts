@@ -11,7 +11,7 @@ export interface VectorOverlayTile {
 }
 
 export class VectorOverlayStore {
-    @observable progress: number;
+    @observable progress = -1;
     @observable tiles: VectorOverlayTile[] = [];
     @observable intensityMin: number | undefined = undefined;
     @observable intensityMax: number | undefined = undefined;

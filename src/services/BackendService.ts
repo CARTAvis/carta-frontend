@@ -66,7 +66,7 @@ export class BackendService {
     @observable hasConnectionDropped: boolean = false;
     @observable endToEndPing: number = NaN;
 
-    @observable public animationId: number;
+    @observable public animationId = INVALID_ANIMATION_ID;
     public sessionId: number;
     public serverFeatureFlags: number;
     public serverUrl: string;
@@ -105,7 +105,6 @@ export class BackendService {
 
         this.eventCounter = 1;
         this.sessionId = 0;
-        this.animationId = INVALID_ANIMATION_ID;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.rasterSyncStream = new Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>();
         this.channelMapFlowControlStream = new Subject<ChannelMapFlowControlEvent>();
