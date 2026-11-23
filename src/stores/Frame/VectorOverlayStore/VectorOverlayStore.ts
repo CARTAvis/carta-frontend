@@ -11,7 +11,7 @@ export interface VectorOverlayTile {
 }
 
 export class VectorOverlayStore {
-    @observable progress: number;
+    @observable progress = -1;
     @observable tiles: VectorOverlayTile[] = [];
     @observable intensityMin: number | undefined = undefined;
     @observable intensityMax: number | undefined = undefined;
@@ -30,6 +30,7 @@ export class VectorOverlayStore {
     }
 
     @action clearData = () => {
+        this.progress = -1;
         if (this.gl && this.tiles) {
             for (const tile of this.tiles) {
                 if (tile.texture) {

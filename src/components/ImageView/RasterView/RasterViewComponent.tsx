@@ -1,16 +1,15 @@
 import * as React from "react";
 import classNames from "classnames";
-import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {type Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
 import {ImageType} from "enums";
-import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
+import {COMPUTED_POLARIZATIONS, type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GL2, LayerToMip, multiply2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -33,22 +32,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvasFrame: number | undefined;
     private static readonly Float32Max = 3.402823466e38;
 
-    @observable private channels: number[] | undefined;
-    @observable private image: ImageItem | undefined;
-    @observable private imageStore: FrameStore | undefined;
-
-    constructor(props: RasterViewComponentProps) {
-        super(props);
-        makeObservable(this);
-
-        // Initialize observable properties
-        this.channels = props.channel;
-        this.image = props.image;
-        this.imageStore = props.image?.store as FrameStore;
-    }
-
     componentDidMount() {
-        const isPreview = this.image?.type === ImageType.PV_PREVIEW;
+        const isPreview = this.props.image?.type === ImageType.PV_PREVIEW;
         const gl = isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl;
         if (!gl) {
             return;
@@ -61,22 +46,25 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.isChannelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
+            const {image, channel: channels} = this.props;
+            const frames = image?.type === ImageType.COLOR_BLENDING ? image.store.frames : [image?.store];
+            const hasMatchingFrame =
+                tileMessage.fileId != null &&
+                frames.some(
+                    frame =>
+                        frame?.frameInfo.fileId === tileMessage.fileId &&
+                        (tileMessage.stokes == null || frame.stokes == null || frame.stokes === tileMessage.stokes) &&
+                        (channels
+                            ? channels.includes(tileMessage.channel ?? 0)
+                            : isPreview || (!AppStore.Instance.channelMapStore.isChannelMapEnabled && (tileMessage.channel == null || frame.channel == null || frame.channel === tileMessage.channel)))
+                );
+            if (hasMatchingFrame) {
                 this.scheduleCanvasUpdate();
             }
         });
     }
 
-    @action componentDidUpdate(prevProps: RasterViewComponentProps) {
-        // Update observable properties when props change
-        if (prevProps.channel !== this.props.channel) {
-            this.channels = this.props.channel;
-        }
-        if (prevProps.image !== this.props.image) {
-            this.image = this.props.image;
-            this.imageStore = this.props.image?.store as FrameStore;
-        }
-
+    componentDidUpdate() {
         this.scheduleCanvasUpdate();
     }
 
@@ -179,7 +167,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const w = canvas.width;
         const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+        let isCanvasCleared = false;
 
         if (image?.type === ImageType.COLOR_BLENDING) {
             ctx.globalCompositeOperation = "lighter";
@@ -190,23 +178,26 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
-                if (
-                    (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) &&
-                    (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
-                ) {
+                const frameStokesIndex = COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes;
+                const canRender = (frame.renderConfig.isUsingCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.isChannelMapEnabled) && frameStokesIndex === histStokesIndex;
+                if (canRender) {
+                    if (!isCanvasCleared) {
+                        ctx.clearRect(0, 0, w, h);
+                        isCanvasCleared = true;
+                    }
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
                     if (channel && isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame);
                     } else {
                         this.renderCanvas(frame, xOffset, yOffset, renderWidth, renderHeight, frame.channel);
                     }
-                }
 
-                if (image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = image?.store?.alpha[index];
-                }
+                    if (image?.type === ImageType.COLOR_BLENDING) {
+                        ctx.globalAlpha = image?.store?.alpha[index];
+                    }
 
-                ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                    ctx.drawImage(this.gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+                }
             }
         });
     };
@@ -322,24 +313,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTiledCanvas(frame: FrameStore, channel: number) {
-        const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-        const boundedView: FrameView = {
-            xMin: Math.max(-0.5, frame.requiredFrameView.xMin),
-            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x - 0.5),
-            yMin: Math.max(-0.5, frame.requiredFrameView.yMin),
-            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y - 0.5),
-            mip: frame.requiredFrameView.mip
-        };
-
         this.gl.activeTexture(GL2.TEXTURE0);
 
-        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const [requiredTiles] = frame.requiredTiles;
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
+            const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
             const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
             this.renderTiles(frame, requiredTiles, channel, mip, false, 3, true);
         } else {
-            this.renderTiles(frame, requiredTiles, channel, boundedView.mip, false, 3, true);
+            this.renderTiles(frame, requiredTiles, channel, frame.requiredFrameView.mip, false, 3, true);
         }
     }
 
@@ -354,7 +337,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.encodeCoordinate(tile);
-            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, shouldPeek);
+            const rasterTile = tileService.getTile(frame.frameInfo.fileId, frame.stokes, channel, encodedCoordinate, shouldPeek);
             if (rasterTile) {
                 this.renderTile(frame, tile, rasterTile, mip);
             } else {
@@ -524,6 +507,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const spatialReference = frame.spatialReference || frame;
                 const frameView = spatialReference.requiredFrameView;
                 const currentView = spatialReference.currentFrameView;
+                const channel = frame.channel;
+                const stokes = frame.stokes;
+                const histChannel = frame.renderConfig.histChannel;
+                const histStokesIndex = frame.renderConfig.stokesIndex;
+                const isUsingCubeHistogram = frame.renderConfig.isUsingCubeHistogram;
                 const colorMapping = {
                     min: frame.renderConfig.scaleMinVal,
                     max: frame.renderConfig.scaleMaxVal,

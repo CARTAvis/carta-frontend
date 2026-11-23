@@ -46,14 +46,14 @@ export class ChannelMapStore {
             channelArray => {
                 const channel = this.displayedFrame?.channel;
                 if (this.isChannelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
-                    this.debouncedSetActiveChannel(channelArray[0]);
+                    this.debouncedSetActiveChannel();
                 }
             }
         );
 
         reaction(
-            () => this.displayedFrame?.channel,
-            channel => {
+            () => ({frame: this.displayedFrame, channel: this.displayedFrame?.requiredChannel}),
+            ({channel}) => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
                 } else if (!this.channelArray.includes(channel)) {
@@ -93,20 +93,35 @@ export class ChannelMapStore {
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
+    private debouncedSetActiveChannel = debounce(() => {
+        const frame = this.displayedFrame;
+        if (frame && this.channelArray.length && !this.channelArray.includes(frame.requiredChannel)) {
+            frame.setChannel(this.channelArray[0]);
+            frame.channel = this.channelArray[0];
+        }
+    }, 200);
 
     /**
-     * Clears the cache and requests new tiles when the polarization changes.
+     * Requests tiles immediately when the displayed polarization changes.
      * @param frame - the frame to request tiles for.
      */
-    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
+    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame);
 
-    private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
+    private requestChannels = (frame: FrameStore) => {
+        if (!this.isChannelMapEnabled || frame !== this.displayedFrame) {
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, isPolarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray);
+    };
+
+    requestTilesAfterSessionResume = () => {
+        if (this.displayedFrame) {
+            this.requestChannels(this.displayedFrame);
+        }
     };
 
     /**
@@ -114,7 +129,29 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        if (isEnabled === this.isChannelMapEnabled) {
+            return;
+        }
+        if (isEnabled) {
+            AppStore.Instance.animatorStore.stopAnimation();
+            const frame = this.displayedFrame;
+            if (frame) {
+                if (frame.requiredChannel !== undefined) {
+                    frame.channel = frame.requiredChannel;
+                }
+                if (frame.requiredStokes !== undefined) {
+                    frame.stokes = frame.requiredStokes;
+                }
+            }
+        }
         this.isChannelMapEnabled = isEnabled;
+        if (!isEnabled) {
+            this.throttledRequestChannels.cancel();
+            this.debouncedSetActiveChannel.cancel();
+            TileService.Instance.cancelChannelMapRequests();
+            const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}));
+            AppStore.Instance.updateChannels(updates);
+        }
     };
 
     /**
@@ -127,6 +164,11 @@ export class ChannelMapStore {
             return;
         }
         this.startChannel = startChannel;
+        const frame = this.displayedFrame;
+        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+            frame.setChannel(startChannel);
+            frame.channel = startChannel;
+        }
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */

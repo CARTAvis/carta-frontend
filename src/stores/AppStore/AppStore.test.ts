@@ -1,6 +1,7 @@
 import type {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
+import {AnimationMode, CatalogOverlay, CatalogPlotType, CatalogSystemType, CatalogUpdateMode} from "enums";
 import {AppStore, CatalogStore, scaleZoomForImageRatio} from "stores";
 import {CatalogAxisEligibility, ProtobufProcessing} from "utilities";
 
@@ -311,6 +312,198 @@ describe("AppStore.handleCatalogFilterStream", () => {
         } as unknown as CARTA.CatalogFilterResponse);
 
         expect(catalogStore.acceptsCatalogResponse(7, 42)).toBe(false);
+    });
+});
+
+describe("AppStore.updateHistogram", () => {
+    const appStore = AppStore.Instance;
+    const pendingChannelHistograms = (appStore as unknown as {pendingChannelHistograms: Map<string, CARTA.RegionHistogramData.$Properties>}).pendingChannelHistograms;
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        pendingChannelHistograms.clear();
+        appStore.channelMapStore.setChannelMapEnabled(false);
+    });
+
+    test("ignores non-active channel-map histograms", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            polarizations: [],
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        appStore.channelMapStore.setChannelMapEnabled(true);
+        pendingChannelHistograms.set("1_0_1", {fileId: 1, stokes: 0, channel: 1, histograms: {}});
+
+        appStore.updateHistogram(1, 0, 1);
+
+        expect(frame.channel).toBe(0);
+        expect(frame.stokes).toBe(0);
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+    });
+
+    test("applies the active channel-map histogram", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            polarizations: [],
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        appStore.channelMapStore.setChannelMapEnabled(true);
+        pendingChannelHistograms.set("1_0_0", {fileId: 1, stokes: 0, channel: 0, histograms: {}});
+
+        appStore.updateHistogram(1, 0, 0);
+
+        expect(frame.renderConfig.setHistChannel).toHaveBeenCalledWith(0);
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
+    });
+
+    test("applies the current normal-view histogram without waiting for new tiles", () => {
+        const frame = {channel: 1, stokes: 0};
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        const updateHistogram = jest.spyOn(appStore, "updateHistogram").mockImplementation();
+
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+
+        expect(updateHistogram).toHaveBeenCalledWith(1, 0, 1);
+    });
+
+    test("keeps the previous normal-view channel until the requested viewport is ready", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            requiredChannel: 2,
+            requiredStokes: 1,
+            polarizations: [],
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 2, stokes: 1, histograms: {}} as CARTA.RegionHistogramData);
+        expect(frame.channel).toBe(0);
+
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 1, stokes: 0, animationId: 0});
+        expect(frame.channel).toBe(0);
+        expect(frame.stokes).toBe(0);
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        expect(pendingChannelHistograms.has("1_0_1")).toBe(false);
+
+        const remainingTiles = jest.spyOn(appStore.tileService, "getNormalViewRemainingTiles").mockReturnValue(1);
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, animationId: 0});
+        expect(frame.channel).toBe(0);
+        expect(pendingChannelHistograms.has("1_1_2")).toBe(true);
+
+        remainingTiles.mockReturnValue(0);
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, animationId: 0});
+
+        expect(frame.channel).toBe(2);
+        expect(frame.stokes).toBe(1);
+        expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalled();
+    });
+
+    test("updates channel and stokes for animated sibling frames without sending flow control", () => {
+        const frame = {
+            channel: 0,
+            stokes: 0,
+            requiredChannel: 0,
+            requiredStokes: 0,
+            polarizations: [],
+            setChannels: jest.fn((channel: number, stokes: number) => {
+                frame.requiredChannel = channel;
+                frame.requiredStokes = stokes;
+            }),
+            renderConfig: {
+                setStokesIndex: jest.fn(),
+                setHistChannel: jest.fn(),
+                updateChannelHistogram: jest.fn()
+            }
+        };
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        const sendFlowControl = jest.spyOn(appStore.backendService, "sendAnimationFlowControl").mockImplementation();
+        const previousAnimationId = appStore.backendService.animationId;
+        const previousAnimationMode = appStore.animatorStore.animationMode;
+        const isAnimationPreviouslyActive = appStore.animatorStore.isAnimationActive;
+        runInAction(() => {
+            appStore.animatorStore.animationMode = AnimationMode.CHANNEL;
+            appStore.animatorStore.isAnimationActive = true;
+        });
+
+        try {
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 0});
+            expect(frame.setChannels).not.toHaveBeenCalled();
+            expect(frame.channel).toBe(0);
+
+            runInAction(() => (appStore.backendService.animationId = 5));
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 4});
+            expect(frame.setChannels).not.toHaveBeenCalled();
+
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 5});
+
+            expect(sendFlowControl).not.toHaveBeenCalled();
+            expect(frame.setChannels).toHaveBeenCalledWith(5, 1, false);
+            expect(frame.channel).toBe(5);
+            expect(frame.stokes).toBe(1);
+        } finally {
+            runInAction(() => {
+                appStore.backendService.animationId = previousAnimationId;
+                appStore.animatorStore.animationMode = previousAnimationMode;
+                appStore.animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+            });
+        }
+    });
+});
+
+describe("AppStore channel-map data streams", () => {
+    const appStore = AppStore.Instance;
+    const frame = {frameInfo: {fileId: 1}, channel: 0, stokes: 0, setCursorValue: jest.fn()};
+
+    beforeEach(() => {
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
+        frame.setCursorValue.mockClear();
+        appStore.channelMapStore.setChannelMapEnabled(true);
+        appStore.spatialProfiles.clear();
+        appStore.regionStats.clear();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        appStore.channelMapStore.setChannelMapEnabled(false);
+    });
+
+    test("ignores spatial profiles from a non-active channel", () => {
+        appStore.handleSpatialProfileStream({fileId: 1, regionId: 0, channel: 1, stokes: 0});
+
+        expect(appStore.spatialProfiles.size).toBe(0);
+        expect(frame.setCursorValue).not.toHaveBeenCalled();
+    });
+
+    test("ignores statistics from a non-active channel", () => {
+        appStore.handleRegionStatsStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, statistics: []} as CARTA.RegionStatsData);
+
+        expect(appStore.regionStats.size).toBe(0);
+    });
+
+    test("ignores region histograms from a non-active channel", () => {
+        appStore.regionHistograms.clear();
+
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+
+        expect(appStore.regionHistograms.size).toBe(0);
     });
 });
 

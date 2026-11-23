@@ -18,6 +18,11 @@ interface IBackendResponse {
     message?: string | null;
 }
 
+export interface ChannelMapFlowControlEvent {
+    eventId: number;
+    flowControl: CARTA.ChannelMapFlowControl;
+}
+
 // Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
 export class Deferred<T> {
     private _resolve: (value: T) => void = () => {};
@@ -51,7 +56,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 30;
+    private static readonly IcdVersion = 31;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -61,7 +66,7 @@ export class BackendService {
     @observable hasConnectionDropped: boolean = false;
     @observable endToEndPing: number = NaN;
 
-    public animationId: number;
+    @observable public animationId = INVALID_ANIMATION_ID;
     public sessionId: number;
     public serverFeatureFlags: number;
     public serverUrl: string;
@@ -74,7 +79,8 @@ export class BackendService {
     private pingIntervalHandle: ReturnType<typeof setInterval> | undefined;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
-    readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
+    readonly rasterSyncStream: Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>;
+    readonly channelMapFlowControlStream: Subject<ChannelMapFlowControlEvent>;
     readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     readonly errorStream: Subject<CARTA.ErrorData>;
     readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
@@ -99,9 +105,9 @@ export class BackendService {
 
         this.eventCounter = 1;
         this.sessionId = 0;
-        this.animationId = INVALID_ANIMATION_ID;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
-        this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
+        this.rasterSyncStream = new Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>();
+        this.channelMapFlowControlStream = new Subject<ChannelMapFlowControlEvent>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
@@ -134,7 +140,7 @@ export class BackendService {
             [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onSaveFileAndRegionAck}],
             [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onDeferredResponse}],
-            [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onStartAnimationAck}],
+            [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.RASTER_TILE_DATA, {messageClass: CARTA.RasterTileData, handler: this.onStreamedRasterTileData}],
             [CARTA.EventType.REGION_HISTOGRAM_DATA, {messageClass: CARTA.RegionHistogramData, handler: this.onStreamedRegionHistogramData}],
             [CARTA.EventType.ERROR_DATA, {messageClass: CARTA.ErrorData, handler: this.onStreamedErrorData}],
@@ -144,6 +150,7 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, {messageClass: CARTA.ContourImageData, handler: this.onStreamedContourData}],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, {messageClass: CARTA.CatalogFilterResponse, handler: this.onStreamedCatalogData}],
             [CARTA.EventType.RASTER_TILE_SYNC, {messageClass: CARTA.RasterTileSync, handler: this.onStreamedRasterSync}],
+            [CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, {messageClass: CARTA.ChannelMapFlowControl, handler: this.onChannelMapFlowControl}],
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
             [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
@@ -510,24 +517,16 @@ export class BackendService {
     }
 
     @action("set channels")
-    setChannels(
-        fileId: number,
-        channel: number | undefined,
-        stokes: number,
-        requiredTiles: CARTA.AddRequiredTiles.$Properties,
-        isChannelMapEnabled?: boolean,
-        _channelRange?: CARTA.IntBounds.$Properties | undefined,
-        currentRange?: CARTA.IntBounds.$Properties
-    ): boolean {
+    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.AddRequiredTiles.$Properties, isChannelMapEnabled?: boolean, channels?: number[]): number | null {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const channelRange: CARTA.IntBounds.$Properties | null = _channelRange || null;
-            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelMapEnabled: isChannelMapEnabled, channelRange, currentRange});
-            this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelMapEnabled: isChannelMapEnabled, channels});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
-                return true;
+                return requestId;
             }
         }
-        return false;
+        return null;
     }
 
     @action("set cursor")
@@ -637,15 +636,16 @@ export class BackendService {
     }
 
     @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number, currentTiles?: number[]): boolean {
+    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): number | null {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP, currentTiles});
-            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
-                return true;
+                return requestId;
             }
         }
-        return false;
+        return null;
     }
 
     @action("remove required tiles")
@@ -660,6 +660,7 @@ export class BackendService {
         return false;
     }
 
+    @action("start animation")
     async startAnimation(animationMessage: CARTA.StartAnimation.$Properties): Promise<CARTA.StartAnimationAck.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -667,6 +668,7 @@ export class BackendService {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
+                this.animationId = INVALID_ANIMATION_ID;
                 const deferredResponse = new Deferred<CARTA.StartAnimationAck.$Properties>();
                 this.deferredMap.set(requestId, deferredResponse);
                 return await deferredResponse.promise;
@@ -693,17 +695,6 @@ export class BackendService {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @action("channel map flow control")
-    sendChannelMapFlowControl(message: CARTA.ChannelMapFlowControl.$Properties) {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, CARTA.ChannelMapFlowControl.encode(message).finish())) {
                 return true;
             }
         }
@@ -991,17 +982,16 @@ export class BackendService {
         this.onDeferredResponse(eventId, ack);
     }
 
-    private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
-        this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
-        this.onDeferredResponse(eventId, ack);
-    }
-
     private onStreamedRasterTileData(_eventId: number, rasterTileData: CARTA.RasterTileData) {
         this.rasterTileStream.next(rasterTileData);
     }
 
-    private onStreamedRasterSync(_eventId: number, rasterTileSync: CARTA.RasterTileSync) {
-        this.rasterSyncStream.next(rasterTileSync);
+    private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
+        this.rasterSyncStream.next({eventId, rasterTileSync});
+    }
+
+    private onChannelMapFlowControl(eventId: number, flowControl: CARTA.ChannelMapFlowControl) {
+        this.channelMapFlowControlStream.next({eventId, flowControl});
     }
 
     private onStreamedRegionHistogramData(_eventId: number, regionHistogramData: CARTA.RegionHistogramData) {
