@@ -22,6 +22,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private vectorOverlayWebGLService: VectorOverlayWebGLService;
+    private updateCanvasFrame?: number;
 
     componentDidMount() {
         this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
@@ -40,10 +41,24 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         appStore.resetImageRatio();
 
+        if (this.updateCanvasFrame !== undefined) {
+            return;
+        }
+
         const baseFrame = this.props.frame;
         const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
-        if (vectorOverlayFrames?.every(f => f?.vectorOverlayStore?.isComplete)) {
-            requestAnimationFrame(this.updateCanvas);
+        if (vectorOverlayFrames?.some(frame => !frame.hasCurrentVectorOverlay) || vectorOverlayFrames?.every(frame => frame.vectorOverlayStore.isComplete)) {
+            this.updateCanvasFrame = requestAnimationFrame(() => {
+                this.updateCanvasFrame = undefined;
+                this.updateCanvas();
+            });
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.updateCanvasFrame !== undefined) {
+            cancelAnimationFrame(this.updateCanvasFrame);
+            this.updateCanvasFrame = undefined;
         }
     }
 
@@ -111,6 +126,9 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     };
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
+        if (!frame.hasCurrentVectorOverlay || !frame.vectorOverlayStore.isComplete) {
+            return;
+        }
         const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
         const appStore = AppStore.Instance;
         const isActive = frame === baseFrame;
@@ -249,6 +267,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
+                const hasCurrentVectorOverlay = frame.hasCurrentVectorOverlay;
+                const isComplete = frame.vectorOverlayStore.isComplete;
                 const config = frame.vectorOverlayConfig;
                 const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, isColormapInverted, colormap, lengthMin, lengthMax, isVisible} = config;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;

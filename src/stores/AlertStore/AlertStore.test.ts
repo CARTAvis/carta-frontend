@@ -43,4 +43,18 @@ describe("AlertStore", () => {
         await expect(activeResult).resolves.toBe(true);
         expect(store.isAlertVisible).toBe(false);
     });
+
+    test("shows informational alerts after an active confirmation resolves", async () => {
+        const result = store.showInteractiveAlert("Confirm");
+        store.showAlert("Information");
+
+        expect(store.alertType).toBe(AlertType.Interactive);
+
+        store.handleInteractiveAlertClosed(true);
+        await expect(result).resolves.toBe(true);
+        expect(store.alertType).toBe(AlertType.Info);
+        expect(store.alertText).toBe("Information");
+        store.dismissAlert();
+        expect(store.isAlertVisible).toBe(false);
+    });
 });

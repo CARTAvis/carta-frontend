@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
+import {AnimationMode, NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
 import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
@@ -196,6 +196,133 @@ describe("FrameStore", () => {
                 channelMapStore.setChannelMapEnabled(false);
             }
         });
+    });
+
+    test("keeps new overlays hidden until the raster shows their channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.setChannel(2);
+
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 1}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 1, intensityTiles: [], angleTiles: []});
+
+        expect(frame.channel).toBe(0);
+        expect(frame.hasCurrentContours).toBe(false);
+        expect(frame.hasCurrentVectorOverlay).toBe(false);
+
+        runInAction(() => (frame.channel = 2));
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 1, stokes: 0, progress: 1}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 1, progress: 1, intensityTiles: [], angleTiles: []});
+
+        expect(frame.hasCurrentContours).toBe(true);
+        expect(frame.hasCurrentVectorOverlay).toBe(true);
+
+        frame.clearContours(false);
+        frame.clearVectorOverlay(false);
+
+        expect(frame.hasCurrentContours).toBe(false);
+        expect(frame.hasCurrentVectorOverlay).toBe(false);
+    });
+
+    test("replaces partial overlay data when a stream restarts on the same channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.contourConfig.setContourConfiguration([1], CARTA.SmoothingMode.NoSmoothing, 1);
+        const vectorTile = {width: 1, height: 1, x: 0, y: 0, mip: 1, imageData: new Uint8Array(new Float32Array([1]).buffer)};
+
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.5, contourSets: [{level: 1}]}));
+        const firstContourStore = frame.contourStores.get(1);
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.5, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
+
+        frame.setChannel(0);
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.75, contourSets: [{level: 1}]}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.75, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+        expect(frame.contourStores.get(1)).toBe(firstContourStore);
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(2);
+
+        frame.applyContours();
+        frame.applyVectorOverlay();
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.25, contourSets: [{level: 1}]}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.25, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+        expect(frame.contourStores.get(1)).not.toBe(firstContourStore);
+        expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
+        expect(frame.vectorOverlayStore.progress).toBe(0.25);
+    });
+
+    test("waits for the animated raster before promoting contours in a visible viewport", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        const appStore = AppStore.Instance;
+        const {animatorStore, backendService, imageViewConfigStore} = appStore;
+        const previousMode = animatorStore.animationMode;
+        const isAnimationPreviouslyActive = animatorStore.isAnimationActive;
+        const previousAnimationId = backendService.animationId;
+        imageViewConfigStore.addFrame(frame);
+
+        try {
+            expect(imageViewConfigStore.visibleFrames).toContain(frame);
+            expect(frame.requiredTiles[0].length).toBeGreaterThan(0);
+            runInAction(() => {
+                animatorStore.animationMode = AnimationMode.CHANNEL;
+                animatorStore.isAnimationActive = true;
+                backendService.animationId = 5;
+            });
+            frame.updateFromContourData(CARTA.ContourImageData.create({channel: 2, stokes: 0, progress: 1}));
+
+            expect(frame.channel).toBe(0);
+            expect(frame.hasCurrentContours).toBe(false);
+            runInAction(() => (frame.channel = 2));
+            expect(frame.hasCurrentContours).toBe(true);
+        } finally {
+            imageViewConfigStore.removeFrame(frame.id);
+            runInAction(() => {
+                animatorStore.animationMode = previousMode;
+                animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+                backendService.animationId = previousAnimationId;
+            });
+        }
+    });
+
+    test("preserves partial animated overlay chunks when the raster advances to their channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.contourConfig.setContourConfiguration([1], CARTA.SmoothingMode.NoSmoothing, 1);
+        frame.contourConfig.setEnabled(true);
+        const vectorTile = {width: 1, height: 1, x: 0, y: 0, mip: 1, imageData: new Uint8Array(new Float32Array([1]).buffer)};
+        const appStore = AppStore.Instance;
+        const {animatorStore, backendService, imageViewConfigStore} = appStore;
+        const previousMode = animatorStore.animationMode;
+        const isAnimationPreviouslyActive = animatorStore.isAnimationActive;
+        const previousAnimationId = backendService.animationId;
+        imageViewConfigStore.addFrame(frame);
+
+        try {
+            runInAction(() => {
+                animatorStore.animationMode = AnimationMode.CHANNEL;
+                animatorStore.isAnimationActive = true;
+                backendService.animationId = 5;
+            });
+
+            frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 0.5, contourSets: [{level: 1}]}));
+            const firstContourStore = frame.contourStores.get(1);
+            frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 0.5, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+            frame.setChannels(2, 0, false);
+            runInAction(() => (frame.channel = 2));
+
+            frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 1, contourSets: [{level: 1}]}));
+            frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 1, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
+
+            expect(frame.contourStores.get(1)).toBe(firstContourStore);
+            expect(frame.contourProgress).toBe(1);
+            expect(frame.vectorOverlayStore.tiles).toHaveLength(2);
+            expect(frame.vectorOverlayStore.progress).toBe(1);
+        } finally {
+            imageViewConfigStore.removeFrame(frame.id);
+            runInAction(() => {
+                animatorStore.animationMode = previousMode;
+                animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+                backendService.animationId = previousAnimationId;
+            });
+        }
     });
 
     test("invalidates pending input when selecting the current channel again", () => {

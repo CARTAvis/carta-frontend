@@ -66,7 +66,7 @@ export class BackendService {
     @observable hasConnectionDropped: boolean = false;
     @observable endToEndPing: number = NaN;
 
-    public animationId: number;
+    @observable public animationId = INVALID_ANIMATION_ID;
     public sessionId: number;
     public serverFeatureFlags: number;
     public serverUrl: string;
@@ -105,7 +105,6 @@ export class BackendService {
 
         this.eventCounter = 1;
         this.sessionId = 0;
-        this.animationId = INVALID_ANIMATION_ID;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.rasterSyncStream = new Subject<{eventId: number; rasterTileSync: CARTA.RasterTileSync}>();
         this.channelMapFlowControlStream = new Subject<ChannelMapFlowControlEvent>();
@@ -141,7 +140,7 @@ export class BackendService {
             [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onSaveFileAndRegionAck}],
             [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onDeferredResponse}],
-            [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onStartAnimationAck}],
+            [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.RASTER_TILE_DATA, {messageClass: CARTA.RasterTileData, handler: this.onStreamedRasterTileData}],
             [CARTA.EventType.REGION_HISTOGRAM_DATA, {messageClass: CARTA.RegionHistogramData, handler: this.onStreamedRegionHistogramData}],
             [CARTA.EventType.ERROR_DATA, {messageClass: CARTA.ErrorData, handler: this.onStreamedErrorData}],
@@ -661,6 +660,7 @@ export class BackendService {
         return false;
     }
 
+    @action("start animation")
     async startAnimation(animationMessage: CARTA.StartAnimation.$Properties): Promise<CARTA.StartAnimationAck.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -668,6 +668,7 @@ export class BackendService {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
+                this.animationId = INVALID_ANIMATION_ID;
                 const deferredResponse = new Deferred<CARTA.StartAnimationAck.$Properties>();
                 this.deferredMap.set(requestId, deferredResponse);
                 return await deferredResponse.promise;
@@ -978,11 +979,6 @@ export class BackendService {
         this.serverFeatureFlags = ack.serverFeatureFlags;
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
-        this.onDeferredResponse(eventId, ack);
-    }
-
-    private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
-        this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
         this.onDeferredResponse(eventId, ack);
     }
 

@@ -153,14 +153,14 @@ describe("ChannelMapStore", () => {
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
         });
 
-        it("synchronizes tile delivery after a polarization change", () => {
+        it("requests the displayed frame after a polarization change", () => {
             const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
             store.setChannelMapEnabled(true);
             requestChannelMapTiles.mockClear();
 
             store.handlePolarizationChanged(store.displayedFrame);
 
-            expect(requestChannelMapTiles.mock.lastCall?.[5]).toBe(true);
+            expect(requestChannelMapTiles.mock.lastCall?.[1]).toBe(store.displayedFrame);
             store.setChannelMapEnabled(false);
         });
 
@@ -190,7 +190,7 @@ describe("ChannelMapStore", () => {
 
         it("synchronizes visible frames when disabled", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
-            const frame = {...store.displayedFrame, channel: 2, stokes: 1};
+            const frame = {...store.displayedFrame, channel: 1, stokes: 0, requiredChannel: 2, requiredStokes: 1};
             appStore.imageViewConfigStore.visibleFrames = [frame];
             appStore.updateChannels.mockClear();
 
@@ -223,6 +223,55 @@ describe("ChannelMapStore", () => {
                 });
                 store.setStartChannel(0);
             }
+        });
+
+        it("promotes pending channel and Stokes selections when enabled", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; stokes: number; requiredChannel: number; requiredStokes: number};
+            store.setChannelMapEnabled(false);
+            runInAction(() => {
+                frame.channel = 0;
+                frame.stokes = 0;
+                frame.requiredChannel = 3;
+                frame.requiredStokes = 1;
+            });
+
+            store.setChannelMapEnabled(true);
+
+            expect(frame.channel).toBe(3);
+            expect(frame.stokes).toBe(1);
+
+            runInAction(() => {
+                frame.channel = 0;
+                frame.stokes = 0;
+                frame.requiredChannel = 0;
+                frame.requiredStokes = 0;
+            });
+            store.setChannelMapEnabled(false);
+        });
+
+        it("promotes the fallback channel immediately when the active channel leaves the page", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.channel = 3;
+                frame.requiredChannel = 3;
+            });
+            frame.setChannel.mockClear();
+
+            store.setNumColumns(1);
+            jest.advanceTimersByTime(200);
+
+            expect(frame.setChannel).toHaveBeenCalledWith(0);
+            expect(frame.channel).toBe(0);
+
+            runInAction(() => {
+                frame.channel = 0;
+                frame.requiredChannel = 0;
+            });
+            store.setNumColumns(2);
+            store.setChannelMapEnabled(false);
         });
     });
 

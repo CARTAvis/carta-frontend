@@ -207,6 +207,10 @@ export class FrameStore {
     @observable currentFrameView: FrameView | null = null;
     @observable currentCompressionQuality: number = 100;
     @observable contourStores: Map<number, ContourStore> = new Map();
+    @observable private contourSelection: {channel: number; stokes: number} | undefined = undefined;
+    @observable private vectorOverlayChannel: number | undefined = undefined;
+    private isContourStreamActive = false;
+    private isVectorOverlayStreamActive = false;
     @observable isMoving: boolean = false;
     @observable isZooming: boolean = false;
 
@@ -1273,7 +1277,7 @@ export class FrameStore {
         }
 
         // Progress is zero if we haven't received any contours yet
-        if (!this.contourStores || !this.contourStores.size) {
+        if (!this.contourStores?.size || this.contourSelection?.channel !== this.requiredChannel || this.contourSelection.stokes !== this.requiredStokes) {
             return 0;
         }
 
@@ -1285,6 +1289,14 @@ export class FrameStore {
         });
 
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+    }
+
+    @computed get hasCurrentContours() {
+        return this.contourSelection?.channel === this.channel && this.contourSelection.stokes === this.stokes;
+    }
+
+    @computed get hasCurrentVectorOverlay() {
+        return this.vectorOverlayChannel === this.channel;
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
@@ -3083,18 +3095,25 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
+        const channel = contourImageData.channel ?? 0;
+        const stokes = contourImageData.stokes ?? 0;
+        const isAnimating = AnimatorStore.Instance.isServerAnimationStreaming;
+        if (!isAnimating && (channel !== this.requiredChannel || stokes !== this.requiredStokes)) {
+            return;
+        }
+        // A raster sync advances the displayed selection when the viewport is receiving tiles.
+        if (isAnimating && (!AppStore.Instance.imageViewConfigStore.visibleFrames.includes(this) || !this.requiredTiles[0].length)) {
+            this.channel = this.requiredChannel = channel;
+            this.stokes = this.requiredStokes = stokes;
+        }
+        if (!this.isContourStreamActive || this.contourSelection?.channel !== channel || this.contourSelection.stokes !== stokes) {
+            this.contourStores.forEach(store => store.clearData());
+            this.contourStores.clear();
+            this.isContourStreamActive = true;
+            this.contourSelection = {channel, stokes};
+        }
+
         const processedData = ProtobufProcessing.processContourData(contourImageData);
-        if (!AppStore.Instance.channelMapStore.isChannelMapEnabled) {
-            this.stokes = processedData.stokes ?? 0;
-            this.channel = processedData.channel ?? 0;
-        }
-
-        const animatorStore = AnimatorStore.Instance;
-        if (animatorStore.isServerAnimationActive) {
-            this.requiredChannel = processedData.channel ?? 0;
-            this.requiredStokes = processedData.stokes ?? 0;
-        }
-
         for (const contourSet of processedData.contourSets ?? []) {
             if (contourSet.level != null) {
                 let contourStore = this.contourStores.get(contourSet.level);
@@ -3124,10 +3143,16 @@ export class FrameStore {
     }
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.VectorOverlayTileData.$Properties) {
+        const channel = vectorOverlayData.channel ?? 0;
+        if (!AnimatorStore.Instance.isServerAnimationStreaming && channel !== this.requiredChannel) {
+            return;
+        }
         if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            if (this.isVectorOverlayStreamActive && this.vectorOverlayChannel === channel && !this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
                 this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             } else {
+                this.isVectorOverlayStreamActive = true;
+                this.vectorOverlayChannel = channel;
                 this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             }
         }
@@ -3195,6 +3220,14 @@ export class FrameStore {
             this.renderConfig.updateCubeHistogram(null, 0);
         }
 
+        if (this.requiredChannel !== sanitizedChannel || this.requiredStokes !== stokes) {
+            if (this.contourSelection?.channel !== sanitizedChannel || this.contourSelection.stokes !== stokes) {
+                this.isContourStreamActive = false;
+            }
+            if (this.vectorOverlayChannel !== sanitizedChannel) {
+                this.isVectorOverlayStreamActive = false;
+            }
+        }
         this.requiredChannel = sanitizedChannel;
         this.channelSelectionToken = {};
         this.requiredStokes = stokes;
@@ -3506,6 +3539,7 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
+        this.isContourStreamActive = false;
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
@@ -3532,6 +3566,8 @@ export class FrameStore {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
+        this.isContourStreamActive = false;
+        this.contourSelection = undefined;
         if (shouldUpdateBackend) {
             // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
             const contourParameters: CARTA.SetContourParameters.$Properties = {
@@ -3550,6 +3586,7 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
+        this.isVectorOverlayStreamActive = false;
         config.setEnabled(true);
 
         const parameters: CARTA.SetVectorOverlayParameters.$Properties = {
@@ -3578,6 +3615,8 @@ export class FrameStore {
     @action clearVectorOverlay = (shouldUpdateBackend: boolean = true) => {
         // Clear up GPU resources
         this.vectorOverlayStore.clearData();
+        this.isVectorOverlayStreamActive = false;
+        this.vectorOverlayChannel = undefined;
 
         if (shouldUpdateBackend) {
             // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated

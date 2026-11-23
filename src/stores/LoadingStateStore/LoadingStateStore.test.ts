@@ -1,13 +1,16 @@
 import {LoadingStateStore} from "./LoadingStateStore";
 
 describe("LoadingStateStore", () => {
-    const tileService = {channelMapRemainingTiles: 0, normalViewRemainingTiles: 0};
+    const pendingTiles = new Map<number, number>();
+    const tileService = {channelMapRemainingTiles: 0, getNormalViewRemainingTiles: (fileId: number) => pendingTiles.get(fileId) ?? 0};
     const channelMapStore = {isChannelMapEnabled: false};
     const activeFrame = {
+        frameInfo: {fileId: 1},
         contourProgress: -1,
         vectorOverlayStore: {progress: -1}
     };
     const otherFrame = {
+        frameInfo: {fileId: 2},
         contourProgress: -1,
         vectorOverlayStore: {progress: -1}
     };
@@ -20,7 +23,7 @@ describe("LoadingStateStore", () => {
 
     beforeEach(() => {
         tileService.channelMapRemainingTiles = 0;
-        tileService.normalViewRemainingTiles = 0;
+        pendingTiles.clear();
         channelMapStore.isChannelMapEnabled = false;
         activeFrame.contourProgress = -1;
         activeFrame.vectorOverlayStore.progress = -1;
@@ -53,9 +56,16 @@ describe("LoadingStateStore", () => {
     });
 
     test("includes pending L2 decompressions in normal-view tile loading", () => {
-        tileService.normalViewRemainingTiles = 1;
+        pendingTiles.set(2, 1);
 
         expect(store.remainingTiles).toBe(1);
         expect(store.isLoading).toBe(true);
+    });
+
+    test("ignores tiles pending for frames outside the current page", () => {
+        pendingTiles.set(3, 2);
+
+        expect(store.remainingTiles).toBe(0);
+        expect(store.isLoading).toBe(false);
     });
 });
