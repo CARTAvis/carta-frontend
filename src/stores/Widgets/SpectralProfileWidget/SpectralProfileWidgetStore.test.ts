@@ -671,6 +671,17 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
+    test("shows and exports a typed relativistic radial velocity as it was typed", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
+        widgetStore.setRestFrameShift(-500);
+
+        expect(widgetStore.restFrameRadialVelocity).toBe(-500);
+        expect(widgetStore.restFrameCorrectionExportComments).toContain("radial velocity (relativistic, km/s): -500");
+    });
+
     test.each([
         [VelocityConvention.RADIO, 300, 300 / (299792.458 - 300)],
         [VelocityConvention.OPTICAL, 300, 300 / 299792.458]

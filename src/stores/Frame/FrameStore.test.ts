@@ -852,6 +852,16 @@ describe("FrameStore", () => {
             expect(frame.restFrameRadialVelocity).toBeCloseTo(299792.458, 3);
         });
 
+        test("shows a typed relativistic radial velocity as it was typed", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+            frame.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+            frame.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
+            frame.setRestFrameShift(-500);
+
+            expect(frame.restFrameRadialVelocity).toBe(-500);
+        });
+
         test("disables rest-frame conversion for channel coordinates", () => {
             const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
             frame["spectralType"] = SpectralType.FREQ;

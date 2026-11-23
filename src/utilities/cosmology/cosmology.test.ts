@@ -94,7 +94,7 @@ describe("velocity and redshift validity", () => {
 
 describe("the radial velocity shown for a typed velocity", () => {
     // Velocities as a user types them: every magnitude from 1e-6 to 1e5 km/s, both signs, with 0 to 6 decimals.
-    const typedVelocities = [0, -500, 299792.457, -299792.457];
+    const typedVelocities = [0, -500, 299792.457, -299792.457, 299792.457999, 123456.789012, -98765.4321098, 0.000123456789012];
     for (let magnitude = -6; magnitude <= 5; magnitude++) {
         for (let digits = 1; digits <= 999; digits += 37) {
             for (let decimals = 0; decimals <= 6; decimals++) {
@@ -118,11 +118,18 @@ describe("the radial velocity shown for a typed velocity", () => {
         expect(redshift).toBeCloseTo(beta + beta ** 2 / 2, 20);
     });
 
-    test("gives the same relativistic redshift as the square root form, to 1e-14", () => {
-        for (let velocityKms = -299000; velocityKms <= 299000; velocityKms += 997) {
+    test("gives the same relativistic redshift as the square root form, to a relative 1e-13 from 1000 km/s, where the square root form is accurate", () => {
+        for (let velocityKms = -299792; velocityKms <= 299792; velocityKms += 997) {
             const beta = velocityKms / SPEED_OF_LIGHT_KMS;
-            expect(Math.abs(redshiftFromRelativisticVelocity(velocityKms) - (Math.sqrt((1 + beta) / (1 - beta)) - 1))).toBeLessThan(1e-14);
+            const redshift = redshiftFromRelativisticVelocity(velocityKms);
+            if (Math.abs(velocityKms) >= 1000) {
+                expect(Math.abs(redshift - (Math.sqrt((1 + beta) / (1 - beta)) - 1)) / Math.abs(redshift)).toBeLessThan(1e-13);
+            }
         }
+    });
+
+    test("shows -0 as 0", () => {
+        expect(Object.is(displayVelocityFromRedshift(redshiftFromVelocity(-0, VelocityConvention.RELATIVISTIC), VelocityConvention.RELATIVISTIC), -0)).toBe(false);
     });
 
     test("is NaN for a redshift that has no velocity", () => {
