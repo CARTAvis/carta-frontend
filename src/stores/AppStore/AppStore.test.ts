@@ -834,6 +834,31 @@ describe("AppStore.removeAllFrames", () => {
         expect(appStore.activeImage).toBeNull();
         jest.restoreAllMocks();
     });
+
+    test("forgets the image under the mouse, so that Cursor Info shows the next active image and not a closed one", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(true);
+        const closed = {frameInfo: {fileId: 3}} as FrameStore;
+        runInAction(() => (appStore.hoveredFrame = closed));
+
+        appStore.removeAllFrames();
+
+        expect(appStore.hoveredFrame).toBeNull();
+        jest.restoreAllMocks();
+    });
+
+    test("keeps the image under the mouse when the backend does not close the images", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(false);
+        const open = {frameInfo: {fileId: 3}} as FrameStore;
+        runInAction(() => (appStore.hoveredFrame = open));
+
+        appStore.removeAllFrames();
+
+        expect(appStore.hoveredFrame?.frameInfo.fileId).toBe(3);
+        runInAction(() => (appStore.hoveredFrame = null));
+        jest.restoreAllMocks();
+    });
 });
 
 describe("AppStore.startingWorkspace", () => {

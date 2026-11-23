@@ -1218,6 +1218,10 @@ export class AppStore {
                 if (this.contourDataSource?.frameInfo.fileId === fileId) {
                     this.contourDataSource = firstFrame;
                 }
+                // Forget the image under the mouse. Cursor Info then shows the active image until the mouse moves over an image.
+                if (this.hoveredFrame === frame) {
+                    this.hoveredFrame = null;
+                }
                 // Clean up if frame is currently spatial reference
                 if (isRemovedFrameSpatialReference) {
                     const newReference = firstFrame;
@@ -1304,6 +1308,8 @@ export class AppStore {
             // image of the image view active, and that image is closed below. A closed image that
             // stays active breaks the WCS of the next image that opens.
             this.setActiveImage(null);
+            // Cursor Info shows the image under the mouse. No image is left under it.
+            this.hoveredFrame = null;
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
