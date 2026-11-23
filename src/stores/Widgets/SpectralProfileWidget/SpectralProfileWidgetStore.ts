@@ -48,14 +48,14 @@ import {applyLinePlotDataRange, type LinePlotDataRangeField} from "stores/Widget
 import {
     clamp,
     convertRestFrameSpectralValue,
+    displayVelocityFromRedshift,
     getColorForTheme,
     isAutoColor,
     isRestFrameSpectralType,
     isValidRedshift,
     pixelToFluxDensityUnit,
     redshiftFromRestFrameShift,
-    restFrequencyFactorFromRedshift,
-    velocityFromRedshift
+    restFrequencyFactorFromRedshift
 } from "utilities";
 
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
@@ -764,7 +764,7 @@ export class SpectralProfileWidgetStore
     }
 
     @computed get restFrameRadialVelocity(): number {
-        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
+        return displayVelocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isYAxisRestFrameSupported(): boolean {

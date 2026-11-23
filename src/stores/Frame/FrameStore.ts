@@ -51,6 +51,7 @@ import {
     convertSettingWCSToFreqMHz as convertSettingWCSToFreqMHzUtility,
     convertSettingWCSToFreqMHzArray as convertSettingWCSToFreqMHzArrayUtility,
     convertToNativeWCS as convertToNativeWCSUtility,
+    displayVelocityFromRedshift,
     formattedArcsec,
     formattedFrequency,
     frequencyFromVelocity,
@@ -87,8 +88,7 @@ import {
     subtract2D,
     toFixed,
     transformPoint,
-    trimFitsComment,
-    velocityFromRedshift
+    trimFitsComment
 } from "utilities";
 
 import {OverlayBeamStore} from "./OverlayBeamStore/OverlayBeamStore";
@@ -1162,7 +1162,7 @@ export class FrameStore {
     }
 
     @computed get restFrameRadialVelocity(): number {
-        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
+        return displayVelocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isSpectralPropsEqual(): boolean {

@@ -1,6 +1,7 @@
 import {VelocityConvention} from "enums";
 
 import {
+    displayVelocityFromRedshift,
     isValidRedshift,
     isValidVelocity,
     observedFrequencyFactorFromRedshift,
@@ -88,5 +89,43 @@ describe("velocity and redshift validity", () => {
         [Infinity, false]
     ])("validates redshift %s as %s", (redshift, isExpected) => {
         expect(isValidRedshift(redshift)).toBe(isExpected);
+    });
+});
+
+describe("the radial velocity shown for a typed velocity", () => {
+    // Velocities as a user types them: every magnitude from 1e-6 to 1e5 km/s, both signs, with 0 to 6 decimals.
+    const typedVelocities = [0, -500, 299792.457, -299792.457];
+    for (let magnitude = -6; magnitude <= 5; magnitude++) {
+        for (let digits = 1; digits <= 999; digits += 37) {
+            for (let decimals = 0; decimals <= 6; decimals++) {
+                const velocityKms = Number((digits * 10 ** magnitude).toFixed(decimals));
+                if (velocityKms !== 0 && Math.abs(velocityKms) < SPEED_OF_LIGHT_KMS) {
+                    typedVelocities.push(velocityKms, -velocityKms);
+                }
+            }
+        }
+    }
+
+    test.each([VelocityConvention.RADIO, VelocityConvention.OPTICAL, VelocityConvention.RELATIVISTIC])("is the typed velocity in the %s convention", convention => {
+        const wrong = typedVelocities.filter(velocityKms => displayVelocityFromRedshift(redshiftFromVelocity(velocityKms, convention), convention) !== velocityKms);
+        expect(wrong).toEqual([]);
+    });
+
+    test("keeps the precision of small relativistic velocities, which the square root form loses", () => {
+        const redshift = redshiftFromRelativisticVelocity(0.00001);
+        expect(relativisticVelocityFromRedshift(redshift) / 0.00001).toBeCloseTo(1, 12);
+        const beta = 0.00001 / SPEED_OF_LIGHT_KMS;
+        expect(redshift).toBeCloseTo(beta + beta ** 2 / 2, 20);
+    });
+
+    test("gives the same relativistic redshift as the square root form, to 1e-14", () => {
+        for (let velocityKms = -299000; velocityKms <= 299000; velocityKms += 997) {
+            const beta = velocityKms / SPEED_OF_LIGHT_KMS;
+            expect(Math.abs(redshiftFromRelativisticVelocity(velocityKms) - (Math.sqrt((1 + beta) / (1 - beta)) - 1))).toBeLessThan(1e-14);
+        }
+    });
+
+    test("is NaN for a redshift that has no velocity", () => {
+        expect(displayVelocityFromRedshift(-2, VelocityConvention.RELATIVISTIC)).toBeNaN();
     });
 });
