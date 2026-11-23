@@ -78,6 +78,18 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private onChannelSliderKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if ((event.key !== "ArrowRight" && event.key !== "ArrowUp") || !(event.target instanceof HTMLElement) || event.target.getAttribute("role") !== "slider") {
+            return;
+        }
+        const {activeFrame, channelMapStore} = AppStore.Instance;
+        // Blueprint clamps arrow keys to the maximum. Keep the same step boundary as Animator Next.
+        if (channelMapStore.isChannelMapEnabled && activeFrame && channelMapStore.getAdjacentChannel(activeFrame.requiredChannel, 1) === activeFrame.requiredChannel) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+
     private cancelPendingChannelChange = () => {
         this.throttledChannelChange.cancel();
     };
@@ -298,7 +310,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const {values: channelTick, step: channelStep} = getDiscreteSliderTicks(numChannels);
             const channelStepSize = Math.min(appStore.animatorStore.step, numChannels - 1);
             channelSlider = (
-                <div className="animator-slider" data-testid="animator-slider">
+                <div className="animator-slider" data-testid="animator-slider" onKeyDownCapture={this.onChannelSliderKeyDown}>
                     <Radio
                         value={AnimationMode.CHANNEL}
                         disabled={appStore.animatorStore.isAnimationActive}
