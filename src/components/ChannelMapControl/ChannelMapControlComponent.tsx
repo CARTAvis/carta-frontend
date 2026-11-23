@@ -122,10 +122,10 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         placeholder="Channel step"
                         intOnly={true}
                         min={1}
-                        max={Math.min(channelMapSettings.totalChannelNum, appStore.animatorStore.maxStep)}
+                        max={channelMapSettings.maxChannelStep}
                         value={channelMapSettings.channelStep}
                         stepSize={1}
-                        onValueChange={(value: number) => channelMapSettings.setChannelStep(value)}
+                        onValueChange={channelMapSettings.setChannelStep}
                         disabled={!channelMapSettings.isChannelMapEnabled}
                     />
                 </FormGroup>

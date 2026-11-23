@@ -189,7 +189,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.nextImage();
                 break;
             case AnimationMode.CHANNEL:
-                frame.incrementChannels(1, 0);
+                frame.incrementChannels(appStore.channelMapStore.isChannelMapEnabled ? appStore.animatorStore.step : 1, 0);
                 break;
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, 1);
@@ -216,7 +216,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.prevImage();
                 break;
             case AnimationMode.CHANNEL:
-                frame.incrementChannels(-1, 0);
+                frame.incrementChannels(appStore.channelMapStore.isChannelMapEnabled ? -appStore.animatorStore.step : -1, 0);
                 break;
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, -1);
@@ -281,6 +281,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Channel Control
         if (numChannels > 1 && activeFrame) {
             const {values: channelTick, step: channelStep} = getDiscreteSliderTicks(numChannels);
+            const channelStepSize = Math.min(appStore.animatorStore.step, numChannels - 1);
             channelSlider = (
                 <div className="animator-slider" data-testid="animator-slider">
                     <Radio
@@ -291,15 +292,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label={activeFrame.channelType}
                     />
                     {shouldHideSliders && (
-                        <SafeNumericInput
-                            value={activeFrame.requiredChannel}
-                            min={-1}
-                            max={numChannels}
-                            stepSize={appStore.animatorStore.step}
-                            onValueChange={this.onChannelChanged}
-                            fill={true}
-                            disabled={appStore.animatorStore.isAnimationActive}
-                        />
+                        <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={channelStepSize} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />
                     )}
                     {!shouldHideSliders && (
                         <React.Fragment>
@@ -311,7 +304,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelValues={channelTick}
                                 labelPrecision={0}
                                 showTrackFill={false}
-                                stepSize={appStore.animatorStore.step}
+                                stepSize={channelStepSize}
                                 onChange={this.onChannelChanged}
                                 disabled={appStore.animatorStore.isAnimationActive}
                             />

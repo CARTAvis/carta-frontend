@@ -134,7 +134,7 @@ describe("AnimatorComponent", () => {
                 selectedChannel = (selectedChannel + delta + 100) % 100;
             })
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL}, channelMapStore: {isChannelMapEnabled: true}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL, step: 1}, channelMapStore: {isChannelMapEnabled: true}} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         jest.advanceTimersByTime(20);
@@ -184,6 +184,29 @@ describe("AnimatorComponent", () => {
         const select = findSelect(component.render());
         expect(select?.props.disabled).toBe(isChannelMapEnabled);
         expect(select?.props.value).toBe(isChannelMapEnabled ? NumericInputType.Step : NumericInputType.FrameRate);
+        component.componentWillUnmount();
+    });
+
+    test.each([
+        [false, 1],
+        [true, 3]
+    ])("steps channels on Next/Previous when channel-map mode is %s (delta %i)", (isChannelMapEnabled, expectedStep) => {
+        const frame = {
+            frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            incrementChannels: jest.fn()
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: frame,
+            animatorStore: {animationMode: AnimationMode.CHANNEL, step: 3},
+            channelMapStore: {isChannelMapEnabled}
+        } as any);
+        const component = new AnimatorComponent({} as any);
+
+        component.onNextClicked();
+        expect(frame.incrementChannels).toHaveBeenLastCalledWith(expectedStep, 0);
+
+        component.onPrevClicked();
+        expect(frame.incrementChannels).toHaveBeenLastCalledWith(-expectedStep, 0);
         component.componentWillUnmount();
     });
 });

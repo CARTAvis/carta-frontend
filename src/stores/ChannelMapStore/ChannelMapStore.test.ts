@@ -16,10 +16,13 @@ jest.mock("stores", () => {
     const animatorStore = observable.object(
         {
             step: 1,
+            minStep: 1,
             maxStep: 50,
             stopAnimation: jest.fn(),
             setStep(step: number) {
-                this.step = step;
+                if (Number.isInteger(step) && step >= this.minStep && step <= this.maxStep) {
+                    this.step = step;
+                }
             }
         },
         {},
@@ -286,6 +289,14 @@ describe("ChannelMapStore", () => {
             expect(store.endChannel).toBe(3);
             expect(store.channelArray).toEqual([0, 1, 2, 3]);
         });
+
+        it("clamps to channel 0 when startChannel is positive but less than channelStep", () => {
+            store.setStartChannel(1);
+            store.setChannelStep(3);
+            store.setPrevChannel();
+            expect(store.startChannel).toBe(0);
+            expect(store.channelArray).toEqual([0, 3, 6, 9]);
+        });
     });
 
     describe("setNextChannel", () => {
@@ -306,9 +317,14 @@ describe("ChannelMapStore", () => {
             expect(store.channelArray).toEqual([1, 2, 3, 4]);
         });
 
-        it("skips when the new start is out of range", () => {
+        it("clamps to channel 0 when startChannel is less than a full page stride and skips at 0", () => {
             store.setPrevPage();
-            expect(store.startChannel).toBe(1);
+            expect(store.startChannel).toBe(0);
+
+            store.setPrevPage();
+            expect(store.startChannel).toBe(0);
+
+            store.setStartChannel(1);
         });
     });
 

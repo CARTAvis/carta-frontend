@@ -27,8 +27,6 @@ export class ChannelMapStore {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const channelArray = this.channelArray;
-                const numColumns = this.numColumns;
-                const numRows = this.numRows;
                 const center = this.displayedFrame.center;
                 const requiredFrameView = this.displayedFrame.requiredFrameView;
                 const requiredTiles = this.displayedFrame.requiredTiles;
@@ -92,8 +90,13 @@ export class ChannelMapStore {
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
     /** The increment between displayed channels, shared with the animator. */
-    get channelStep(): number {
+    @computed get channelStep(): number {
         return AppStore.Instance.animatorStore.step;
+    }
+
+    /** The maximum allowed channel step for the displayed image. */
+    @computed get maxChannelStep(): number {
+        return Math.max(1, Math.min(this.totalChannelNum, AppStore.Instance.animatorStore.maxStep));
     }
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
@@ -162,7 +165,9 @@ export class ChannelMapStore {
 
     /** Sets the first channel at the top-left corner to the previous channel. */
     @action setPrevChannel() {
-        this.setStartChannel(this.startChannel - this.channelStep);
+        if (this.startChannel > 0) {
+            this.setStartChannel(Math.max(0, this.startChannel - this.channelStep));
+        }
     }
 
     /** Sets the first channel at the top-left corner to the next channel. */
@@ -172,28 +177,22 @@ export class ChannelMapStore {
 
     /** Moves to the previous page of channels. */
     @action setPrevPage() {
-        const newStart = this.startChannel - this.numChannels * this.channelStep;
-
-        if (newStart >= 0) {
-            this.setStartChannel(newStart);
+        if (this.startChannel > 0) {
+            this.setStartChannel(Math.max(0, this.startChannel - this.numChannels * this.channelStep));
         }
     }
 
     /** Moves to the next page of channels. */
     @action setNextPage() {
-        const newStart = this.startChannel + this.numChannels * this.channelStep;
-
-        if (newStart >= 0) {
-            this.setStartChannel(newStart);
-        }
+        this.setStartChannel(this.startChannel + this.numChannels * this.channelStep);
     }
 
     /** Sets the increment between displayed channels. */
-    @action setChannelStep(channelStep: number) {
-        if (Number.isInteger(channelStep) && channelStep > 0 && channelStep <= this.totalChannelNum && channelStep <= AppStore.Instance.animatorStore.maxStep) {
+    @action setChannelStep = (channelStep: number) => {
+        if (channelStep <= this.maxChannelStep) {
             AppStore.Instance.animatorStore.setStep(channelStep);
         }
-    }
+    };
 
     /**
      * Sets the number of columns in the image view.
