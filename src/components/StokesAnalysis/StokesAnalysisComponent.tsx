@@ -135,7 +135,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.disposers.push(
             autorun(() => {
                 if (this.widgetStore) {
-                    const frame = this.widgetStore.effectiveFrame;
                     let progressString = "";
                     const currentData = this.plotData;
                     if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
@@ -145,11 +144,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         }
                         this.minProgress = minProgress;
                     }
-                    if (frame) {
-                        const regionId = this.widgetStore.effectiveRegionId;
-                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                        const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                        appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    const title = this.widgetStore.tabTitleWith(progressString);
+                    if (title !== undefined) {
+                        appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
                     }
                 } else {
                     appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis: Cursor`);

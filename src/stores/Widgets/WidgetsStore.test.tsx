@@ -355,6 +355,19 @@ describe("WidgetsStore PV preview test ids", () => {
         ]);
     });
 
+    test("names the tab of each restored widget, also when the tab is not mounted", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("spatial-profiler", "spatial-profiler-2", {widgetId: "spatial-profiler-0"}, "workspace");
+        widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-1"}, "workspace");
+        const setWidgetTitle = jest.spyOn(widgetsStore, "setWidgetTitle").mockImplementation(() => {});
+
+        // The statistics widget is not in the workspace, so its tab keeps its name.
+        widgetsStore.nameRestoredWidgetTabs({"spatial-profiler-0": {type: "spatial-profiler"}, "stats-9": {type: "stats"}});
+
+        expect(setWidgetTitle).toHaveBeenCalledTimes(1);
+        expect(setWidgetTitle).toHaveBeenCalledWith("spatial-profiler-2", "X Profile: Cursor");
+    });
+
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);

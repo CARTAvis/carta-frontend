@@ -407,6 +407,21 @@ export class StokesAnalysisWidgetStore
         this.shouldShowReferenceAxes = shouldShowReferenceAxes;
     };
 
+    @computed get tabTitle(): string | undefined {
+        return this.tabTitleWith("");
+    }
+
+    /** Returns the title of the widget's tab, with the progress of the profiles, such as "[50% complete]". Returns undefined when no image is open. */
+    public tabTitleWith(progressString: string): string | undefined {
+        if (!this.effectiveFrame) {
+            return undefined;
+        }
+        const regionId = this.effectiveRegionId;
+        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+        const selectedString = this.isMatchingSelectedRegion ? "(Active)" : "";
+        return `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`;
+    }
+
     @computed get isLinePlotsAutoScaledX() {
         return this.sharedMinX === undefined || this.sharedMaxX === undefined;
     }

@@ -527,6 +527,20 @@ export class WidgetsStore {
         });
     }
 
+    /**
+     * Names the tab of each profile, analysis and statistics widget after the image and region that
+     * it shows. A tab that is not shown is not mounted, so its widget cannot name it.
+     */
+    @action public nameRestoredWidgetTabs(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
+        Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
+            this.widgetsMap.get(config.type)?.forEach((widgetStore, id) => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId && typeof widgetStore.tabTitle === "string") {
+                    this.setWidgetTitle(id, widgetStore.tabTitle);
+                }
+            });
+        });
+    }
+
     /** Fetches again the data that each profile, analysis and statistics widget showed and that the workspace does not save, such as the result of an online query. */
     public async restorePlotWidgetResults(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, isWanted: () => boolean = () => true): Promise<WorkspaceIssue[]> {
         const pending: Promise<WorkspaceIssue[]>[] = [];

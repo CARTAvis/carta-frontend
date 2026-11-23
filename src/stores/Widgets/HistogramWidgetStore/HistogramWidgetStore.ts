@@ -203,6 +203,14 @@ export class HistogramWidgetStore
         this.maxNumBins = maxNumBins;
     };
 
+    @computed get tabTitle(): string {
+        if (!this.effectiveFrame) {
+            return "Histogram";
+        }
+        const selectedString = this.isMatchingSelectedRegion ? "(Active)" : "";
+        return `Histogram: ${this.effectiveRegionInfo ?? "Unknown"} ${selectedString}`;
+    }
+
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;
     }

@@ -16,6 +16,14 @@ export class StatsWidgetStore extends RegionWidgetStore implements WorkspaceLayo
     widgetId: string = "";
     @observable coordinate: string = "z";
 
+    @computed get tabTitle(): string {
+        if (!this.effectiveFrame) {
+            return "Statistics";
+        }
+        const selectedString = this.isMatchingSelectedRegion ? "(Active)" : "";
+        return `Statistics: ${this.effectiveRegionInfo ?? "Unknown"} ${selectedString}`;
+    }
+
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceStatsWidgetConfig => ({...this.toWorkspaceBinding(ids), coordinate: this.coordinate});
 
     public applyWorkspaceBinding = (config: WorkspaceStatsWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);

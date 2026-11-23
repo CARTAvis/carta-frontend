@@ -209,6 +209,12 @@ export class SpatialProfileWidgetStore
         return `${stokes?.replace("Stokes ", "") ?? ""}${this.isLineOrPolyline ? "" : this.coordinate}`;
     }
 
+    @computed get tabTitle(): string {
+        const coordinateString = this.isLineOrPolyline ? "" : this.coordinate.toUpperCase();
+        const regionString = this.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.effectiveRegionId}`;
+        return `${coordinateString} Profile: ${regionString}`;
+    }
+
     @computed get isLineOrPolyline(): boolean {
         return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }

@@ -87,6 +87,11 @@ export interface WorkspaceIdReader {
  * range. A widget can also skip the zoom when the second step has problems.
  */
 export interface WorkspaceConfigurableWidget<TConfig> extends IdentifiedWidgetStore {
+    /**
+     * The title of the widget's tab, when it depends on the image or region that the widget shows.
+     * A tab that is not shown is not mounted, so the restore names it from this title.
+     */
+    readonly tabTitle?: string;
     toWorkspaceConfig(ids: WorkspaceIdWriter): TConfig;
     applyWorkspaceBinding(config: TConfig, ids: WorkspaceIdReader): string[];
     applyWorkspaceConfig(config: TConfig, ids: WorkspaceIdReader): string[];

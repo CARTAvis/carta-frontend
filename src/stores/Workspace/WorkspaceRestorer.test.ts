@@ -278,6 +278,7 @@ function createSession() {
             restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
             restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            nameRestoredWidgetTabs: jest.fn((_plotWidgets?: unknown): void => {}),
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
@@ -1702,6 +1703,9 @@ describe("WorkspaceRestorer", () => {
             calls.push("restorePlotWidgetViews");
             return [viewIssue];
         });
+        appStore.widgetsStore.nameRestoredWidgetTabs.mockImplementationOnce(() => {
+            calls.push("nameRestoredWidgetTabs");
+        });
         const queryIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "spectral-line-query-0", message: "Could not fully restore the widget spectral-line-query-0: the spectral line query returned no result"};
         appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetResults");
@@ -1719,7 +1723,15 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledWith(plotWidgets, restorer);
 
         // The results of online queries are fetched again last, and their problems are reported.
-        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews", "restorePlotWidgetResults"]);
+        // The tabs are named after what the widgets show, also the tabs that are not mounted.
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot") || call === "nameRestoredWidgetTabs")).toEqual([
+            "applyLayout",
+            "restorePlotWidgetBindings",
+            "restorePlotWidgets",
+            "restorePlotWidgetViews",
+            "nameRestoredWidgetTabs",
+            "restorePlotWidgetResults"
+        ]);
         expect(step.value).toContainEqual(queryIssue);
         expect(didSettleBeforeTheRest).toBe(true);
         expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);

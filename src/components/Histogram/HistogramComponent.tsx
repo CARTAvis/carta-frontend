@@ -123,23 +123,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         this.disposers.push(
             autorun(() => {
-                if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                    let regionString = "Unknown";
-                    const regionId = this.widgetStore.effectiveRegionId;
-
-                    if (regionId === -1) {
-                        regionString = "Image";
-                    } else if (this.widgetStore.effectiveFrame.regionSet) {
-                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                        if (region) {
-                            regionString = region.nameString;
-                        }
-                    }
-                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
-                } else {
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, this.widgetStore?.tabTitle ?? "Histogram");
                 const widgetStore = this.widgetStore;
                 if (widgetStore) {
                     const currentData = this.plotData;

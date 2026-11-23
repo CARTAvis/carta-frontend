@@ -126,23 +126,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         this.disposers.push(
             autorun(() => {
-                if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                    let regionString = "Unknown";
-
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                    if (regionId === -1) {
-                        regionString = "Image";
-                    } else if (this.widgetStore.effectiveFrame.regionSet) {
-                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                        if (region) {
-                            regionString = region.nameString;
-                        }
-                    }
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
-                } else {
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, this.widgetStore?.tabTitle ?? "Statistics");
             })
         );
 

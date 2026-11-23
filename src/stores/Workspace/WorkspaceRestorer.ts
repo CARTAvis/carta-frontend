@@ -2836,6 +2836,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this)));
+        this.appStore.widgetsStore.nameRestoredWidgetTabs(this.workspace.plotWidgets);
         this.restoreImageFitting();
         const waiting = {isSkipped: false};
         const results = this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets, () => this.isCurrent && !waiting.isSkipped);
