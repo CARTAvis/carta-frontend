@@ -222,4 +222,46 @@ describe("AnimatorComponent", () => {
         }
         component.componentWillUnmount();
     });
+
+    test.each([
+        [false, 1, -1, 20, 10],
+        [true, 1, 0, 19, 10],
+        [false, 3, 0, 19, 10],
+        [true, 15, 0, 19, 15]
+    ])("configures compact channel input bounds and majorStepSize (channelMap=%s, step=%i)", (isChannelMapEnabled, step, expectedMin, expectedMax, expectedMajorStepSize) => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: {
+                requiredChannel: 2,
+                channelType: "Channel",
+                frameInfo: {fileInfoExtended: {depth: 20, stokes: 1}}
+            },
+            activeImageIndex: 0,
+            imageViewConfigStore: {imageNum: 1},
+            widgetsStore: {animatorWidgets: new Map()},
+            timeSeriesStore: {elements: []},
+            animatorStore: {animationMode: AnimationMode.CHANNEL, step, minStep: 1, maxStep: 50, frameRate: 5, minFrameRate: 1, maxFrameRate: 15, isAnimationActive: false},
+            channelMapStore: {isChannelMapEnabled}
+        } as any);
+        const component = new AnimatorComponent({} as any);
+        component.onResize(350, 200);
+
+        const {SafeNumericInput: mockSafeNumericInput} = jest.requireMock("components/Shared");
+        const findChannelInput = (node: React.ReactNode): React.ReactElement<{min: number; max: number; stepSize: number; majorStepSize?: number; intOnly?: boolean}> | undefined => {
+            if (!React.isValidElement<{children?: React.ReactNode}>(node)) {
+                return undefined;
+            }
+            if (node.type === mockSafeNumericInput && (node.props as {fill?: boolean}).fill) {
+                return node as React.ReactElement<{min: number; max: number; stepSize: number; majorStepSize?: number; intOnly?: boolean}>;
+            }
+            return React.Children.toArray(node.props.children).map(findChannelInput).find(Boolean);
+        };
+
+        const input = findChannelInput(component.render());
+        expect(input?.props.intOnly).toBe(true);
+        expect(input?.props.min).toBe(expectedMin);
+        expect(input?.props.max).toBe(expectedMax);
+        expect(input?.props.stepSize).toBe(Math.min(step, 19));
+        expect(input?.props.majorStepSize).toBe(expectedMajorStepSize);
+        component.componentWillUnmount();
+    });
 });

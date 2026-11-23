@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {HelpType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {clamp, getDiscreteSliderTicks, SWATCH_COLORS} from "utilities";
+import {getDiscreteSliderTicks, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
 
@@ -38,14 +38,6 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
     @action onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
-    };
-
-    @action onChannelChanged = (val: number) => {
-        const channelMapStore = AppStore.Instance.channelMapStore;
-        const frame = channelMapStore.displayedFrame;
-        if (frame) {
-            channelMapStore.setStartChannel(clamp(val, 0, channelMapStore.totalChannelNum - 1));
-        }
     };
 
     public render() {
@@ -115,7 +107,15 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.isChannelMapEnabled}>
-                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={this.onChannelChanged} disabled={!channelMapSettings.isChannelMapEnabled} />
+                    <SafeNumericInput
+                        placeholder="Start channel"
+                        intOnly={true}
+                        value={channelMapSettings.startChannel}
+                        min={0}
+                        max={numChannels - 1}
+                        onValueChange={channelMapSettings.setStartChannel}
+                        disabled={!channelMapSettings.isChannelMapEnabled}
+                    />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Channel step" disabled={!channelMapSettings.isChannelMapEnabled}>
                     <SafeNumericInput
@@ -130,10 +130,28 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of columns" disabled={!channelMapSettings.isChannelMapEnabled}>
-                    <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={channelMapSettings.setNumColumns} disabled={!channelMapSettings.isChannelMapEnabled} />
+                    <SafeNumericInput
+                        placeholder="Number of columns"
+                        intOnly={true}
+                        min={1}
+                        max={10}
+                        value={channelMapSettings.numColumns}
+                        stepSize={1}
+                        onValueChange={channelMapSettings.setNumColumns}
+                        disabled={!channelMapSettings.isChannelMapEnabled}
+                    />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of rows" disabled={!channelMapSettings.isChannelMapEnabled}>
-                    <SafeNumericInput placeholder="Number of rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={channelMapSettings.setNumRows} disabled={!channelMapSettings.isChannelMapEnabled} />
+                    <SafeNumericInput
+                        placeholder="Number of rows"
+                        intOnly={true}
+                        min={1}
+                        max={10}
+                        value={channelMapSettings.numRows}
+                        stepSize={1}
+                        onValueChange={channelMapSettings.setNumRows}
+                        disabled={!channelMapSettings.isChannelMapEnabled}
+                    />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Show channel string" disabled={!channelMapSettings.isChannelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>

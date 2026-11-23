@@ -186,6 +186,31 @@ describe("ChannelMapStore", () => {
 
             expect(appStore.updateChannels).toHaveBeenCalledWith([{frame, channel: 2, stokes: 1}]);
         });
+
+        it("aligns startChannel when enabling channel-map mode with requiredChannel outside channelArray", () => {
+            const frame = store.displayedFrame as unknown as {requiredChannel: number};
+            const previousChannel = frame.requiredChannel;
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.requiredChannel = 1;
+            });
+            store.setChannelStep(2);
+
+            try {
+                expect(store.channelArray).toEqual([0, 2, 4, 6]);
+
+                store.setChannelMapEnabled(true);
+
+                expect(store.startChannel).toBe(1);
+                expect(store.channelArray).toEqual([1, 3, 5, 7]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previousChannel;
+                });
+                store.setStartChannel(0);
+            }
+        });
     });
 
     describe("setStartChannel", () => {
@@ -215,8 +240,11 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
-        it("skips when the channel is out of range", () => {
+        it("skips when the channel is out of range or non-integer", () => {
             store.setStartChannel(-1);
+            expect(store.startChannel).toBe(1);
+
+            store.setStartChannel(1.5);
             expect(store.startChannel).toBe(1);
 
             store.setStartChannel(100);
@@ -297,11 +325,18 @@ describe("ChannelMapStore", () => {
             }
         });
 
-        it("resets startChannel when totalChannelNum shrinks below startChannel", () => {
-            const frame = store.displayedFrame;
+        it("resets startChannel when totalChannelNum shrinks below startChannel and requiredChannel", () => {
+            const frame = store.displayedFrame as unknown as {
+                requiredChannel: number;
+                frameInfo: {fileInfoExtended: {depth: number}};
+            };
             const info = frame.frameInfo.fileInfoExtended;
             const depth = info.depth;
+            const previousChannel = frame.requiredChannel;
             store.setStartChannel(8);
+            runInAction(() => {
+                frame.requiredChannel = 9;
+            });
             try {
                 runInAction(() => {
                     info.depth = 5;
@@ -312,6 +347,7 @@ describe("ChannelMapStore", () => {
             } finally {
                 runInAction(() => {
                     info.depth = depth;
+                    frame.requiredChannel = previousChannel;
                 });
                 store.setStartChannel(0);
             }

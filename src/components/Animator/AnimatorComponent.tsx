@@ -308,8 +308,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {shouldHideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredChannel}
-                            min={-1}
-                            max={numChannels}
+                            intOnly={true}
+                            min={appStore.channelMapStore.isChannelMapEnabled || channelStepSize > 1 ? 0 : -1}
+                            max={appStore.channelMapStore.isChannelMapEnabled || channelStepSize > 1 ? numChannels - 1 : numChannels}
                             stepSize={channelStepSize}
                             majorStepSize={Math.max(channelStepSize, 10)}
                             onValueChange={this.onChannelChanged}

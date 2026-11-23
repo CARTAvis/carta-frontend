@@ -48,11 +48,11 @@ export class ChannelMapStore {
 
         reaction(
             () => [this.displayedFrame?.requiredChannel, this.totalChannelNum] as const,
-            ([channel]) => {
+            ([channel, totalChannelNum]) => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
                 } else if (!this.channelArray.includes(channel)) {
-                    this.setStartChannel(channel);
+                    this.setStartChannel(channel < totalChannelNum ? channel : 0);
                 }
             }
         );
@@ -138,7 +138,12 @@ export class ChannelMapStore {
         }
         const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
-        if (!isEnabled) {
+        if (isEnabled) {
+            const channel = this.displayedFrame?.requiredChannel;
+            if (channel !== undefined && !this.channelArray.includes(channel)) {
+                this.setStartChannel(channel < this.totalChannelNum ? channel : 0);
+            }
+        } else {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
@@ -155,9 +160,10 @@ export class ChannelMapStore {
      */
     @action setStartChannel = (startChannel: number) => {
         // Add checks for valid startChannel number for the masterFrame
-        if (startChannel < 0 || startChannel > this.totalChannelNum - 1) {
+        if (!Number.isInteger(startChannel) || startChannel < 0 || startChannel > this.totalChannelNum - 1) {
             return;
         }
+        this.debouncedSetActiveChannel.cancel();
         this.startChannel = startChannel;
         const frame = this.displayedFrame;
         if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
@@ -211,7 +217,7 @@ export class ChannelMapStore {
      * @param numColumns - The number of columns in the image view.
      */
     @action setNumColumns = (numColumns: number) => {
-        if (isFinite(numColumns) && numColumns > 0) {
+        if (Number.isInteger(numColumns) && numColumns > 0) {
             this.numColumns = numColumns;
         }
     };
@@ -221,7 +227,7 @@ export class ChannelMapStore {
      * @param numRows - The number of rows in the image view.
      */
     @action setNumRows = (numRows: number) => {
-        if (isFinite(numRows) && numRows > 0) {
+        if (Number.isInteger(numRows) && numRows > 0) {
             this.numRows = numRows;
         }
     };
