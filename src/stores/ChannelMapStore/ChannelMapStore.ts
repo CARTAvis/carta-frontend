@@ -147,13 +147,11 @@ export class ChannelMapStore {
         if (isEnabled) {
             const frame = this.displayedFrame;
             if (frame) {
-                if (frame.requiredChannel !== undefined) {
-                    frame.channel = frame.requiredChannel;
-                }
                 if (frame.requiredStokes !== undefined) {
                     frame.stokes = frame.requiredStokes;
                 }
                 if (frame.requiredChannel !== undefined) {
+                    frame.channel = frame.requiredChannel;
                     this.alignStartChannel(frame.requiredChannel);
                 }
             }
