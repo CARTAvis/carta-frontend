@@ -144,7 +144,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         }
                         this.minProgress = minProgress;
                     }
-                    const title = this.widgetStore.tabTitleWith(progressString);
+                    this.widgetStore.setProgressString(progressString);
+                }
+            })
+        );
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const title = this.widgetStore.tabTitle;
                     if (title !== undefined) {
                         appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
                     }

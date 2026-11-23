@@ -355,17 +355,30 @@ describe("WidgetsStore PV preview test ids", () => {
         ]);
     });
 
-    test("names the tab of each restored widget, also when the tab is not mounted", () => {
+    test("keeps the tab of each restored widget named after what it shows, until the widget is removed", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         widgetsStore.addWidget("spatial-profiler", "spatial-profiler-2", {widgetId: "spatial-profiler-0"}, "workspace");
         widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-1"}, "workspace");
+        widgetsStore.addWidget("stokes", "stokes-4", {widgetId: "stokes-0"}, "workspace");
+        widgetsStore.addWidget("histogram", "histogram-5", {widgetId: "histogram-0"}, "workspace");
         const setWidgetTitle = jest.spyOn(widgetsStore, "setWidgetTitle").mockImplementation(() => {});
 
-        // The statistics widget is not in the workspace, so its tab keeps its name.
-        widgetsStore.nameRestoredWidgetTabs({"spatial-profiler-0": {type: "spatial-profiler"}, "stats-9": {type: "stats"}});
+        // The histogram is not in the workspace, so its tab keeps its name. With no image open, the Stokes analysis widget has no title to set.
+        widgetsStore.nameRestoredWidgetTabs({"spatial-profiler-0": {type: "spatial-profiler"}, "stats-1": {type: "stats"}, "stokes-0": {type: "stokes"}, "histogram-9": {type: "histogram"}});
+        expect(setWidgetTitle.mock.calls).toEqual([
+            ["spatial-profiler-2", "X Profile: Cursor"],
+            ["stats-3", "Statistics"]
+        ]);
 
-        expect(setWidgetTitle).toHaveBeenCalledTimes(1);
-        expect(setWidgetTitle).toHaveBeenCalledWith("spatial-profiler-2", "X Profile: Cursor");
+        setWidgetTitle.mockClear();
+        widgetsStore.spatialProfileWidgets.get("spatial-profiler-2")!.setCoordinate("y");
+        expect(setWidgetTitle.mock.calls).toEqual([["spatial-profiler-2", "Y Profile: Cursor"]]);
+
+        setWidgetTitle.mockClear();
+        const store = widgetsStore.spatialProfileWidgets.get("spatial-profiler-2")!;
+        widgetsStore.removeWidget("spatial-profiler-2", "spatial-profiler");
+        store.setCoordinate("x");
+        expect(setWidgetTitle).not.toHaveBeenCalled();
     });
 
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {

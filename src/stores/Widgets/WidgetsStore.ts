@@ -2,7 +2,7 @@ import * as React from "react";
 import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
 import {PopoutKeyboardForwarder} from "HotkeyWrapper";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {Observer} from "mobx-react";
 
 import {
@@ -190,6 +190,8 @@ export class WidgetsStore {
     private layoutCatalogWidgetsOnFirstCatalog: CatalogWidgetStore[] = [];
     /** The file IDs of the display stores that a regular layout made for catalogs that were not open. */
     private readonly layoutDisplayStoreFileIds = new Set<number>();
+    /** The reactions that keep the tabs of restored widgets named, by the component ID. */
+    private readonly tabTitleDisposers = new Map<string, IReactionDisposer>();
     private beingUnpinned: Set<string> = new Set();
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
@@ -528,14 +530,24 @@ export class WidgetsStore {
     }
 
     /**
-     * Names the tab of each profile, analysis and statistics widget after the image and region that
-     * it shows. A tab that is not shown is not mounted, so its widget cannot name it.
+     * Keeps the tab of each restored profile, analysis and statistics widget named after the image
+     * and region that it shows, until the widget is removed. A tab that is not shown is not mounted,
+     * so its widget cannot name it. The widget, once mounted, sets the same title.
      */
     @action public nameRestoredWidgetTabs(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
         Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
             this.widgetsMap.get(config.type)?.forEach((widgetStore, id) => {
-                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId && typeof widgetStore.tabTitle === "string") {
-                    this.setWidgetTitle(id, widgetStore.tabTitle);
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId && "tabTitle" in widgetStore) {
+                    this.tabTitleDisposers.get(id)?.();
+                    this.tabTitleDisposers.set(
+                        id,
+                        autorun(() => {
+                            const title = widgetStore.tabTitle;
+                            if (typeof title === "string") {
+                                this.setWidgetTitle(id, title);
+                            }
+                        })
+                    );
                 }
             });
         });
@@ -634,6 +646,8 @@ export class WidgetsStore {
     }
 
     public removeWidget = (widgetId: string, widgetType: string) => {
+        this.tabTitleDisposers.get(widgetId)?.();
+        this.tabTitleDisposers.delete(widgetId);
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             // remove associated floating settings according current widgetId

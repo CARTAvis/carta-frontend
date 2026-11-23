@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {observable, runInAction} from "mobx";
 
 // "stores" loads before the widget stores. A widget store alone reaches ColormapComponent through a circular import before "utilities" is initialised.
 import {AppStore} from "stores";
@@ -17,7 +18,8 @@ describe("the tab title of a region widget", () => {
     let appStoreMock: {activeFrame: unknown; frames: unknown[]; focusedRegion: unknown};
 
     beforeEach(() => {
-        appStoreMock = {activeFrame: frame, frames: [frame], focusedRegion: {regionId: 0}};
+        // Observable, because the spatial profiler store keeps its computed values alive with a reaction.
+        appStoreMock = observable({activeFrame: frame, frames: [frame], focusedRegion: {regionId: 0}}, {}, {deep: false});
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStoreMock as any);
     });
 
@@ -32,6 +34,9 @@ describe("the tab title of a region widget", () => {
         store.setCoordinate("y");
         store.setRegionId(ACTIVE_FILE_ID, 1);
         expect(store.tabTitle).toBe(" Profile: Region #1");
+
+        runInAction(() => (appStoreMock.activeFrame = null));
+        expect(store.tabTitle).toBe("Y Profile: Cursor");
     });
 
     test("names the region that a statistics widget or a histogram shows", () => {
@@ -45,7 +50,13 @@ describe("the tab title of a region widget", () => {
         expect(stats.tabTitle).toBe("Statistics: Region 2 ");
         expect(histogram.tabTitle).toBe("Histogram: Region 2 ");
 
-        appStoreMock.activeFrame = null;
+        runInAction(() => (appStoreMock.focusedRegion = rectangle));
+        expect(stats.tabTitle).toBe("Statistics: Region 2 (Active)");
+
+        stats.setRegionId(ACTIVE_FILE_ID, 7);
+        expect(stats.tabTitle).toBe("Statistics: Unknown ");
+
+        runInAction(() => (appStoreMock.activeFrame = null));
         expect(stats.tabTitle).toBe("Statistics");
         expect(histogram.tabTitle).toBe("Histogram");
     });
@@ -54,9 +65,10 @@ describe("the tab title of a region widget", () => {
         const store = new StokesAnalysisWidgetStore();
         store.setRegionId(ACTIVE_FILE_ID, 2);
         expect(store.tabTitle).toBe("Stokes Analysis : Region #2  ");
-        expect(store.tabTitleWith("[50% complete]")).toBe("Stokes Analysis : Region #2  [50% complete]");
+        store.setProgressString("[50% complete]");
+        expect(store.tabTitle).toBe("Stokes Analysis : Region #2  [50% complete]");
 
-        appStoreMock.activeFrame = null;
+        runInAction(() => (appStoreMock.activeFrame = null));
         expect(store.tabTitle).toBeUndefined();
     });
 });
