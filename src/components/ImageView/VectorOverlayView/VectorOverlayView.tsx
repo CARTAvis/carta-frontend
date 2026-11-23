@@ -111,6 +111,9 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     };
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
+        if (!frame.hasCurrentVectorOverlay) {
+            return;
+        }
         const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
         const appStore = AppStore.Instance;
         const isActive = frame === baseFrame;
@@ -249,6 +252,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
+                const hasCurrentVectorOverlay = frame.hasCurrentVectorOverlay;
                 const config = frame.vectorOverlayConfig;
                 const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, isColormapInverted, colormap, lengthMin, lengthMax, isVisible} = config;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;

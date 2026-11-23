@@ -2,10 +2,10 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AnimationMode, PlayMode} from "enums";
-import {type FrameView, getNextPlaybackState, type PlaybackDirection, type Point2D} from "models";
+import {getNextPlaybackState, type PlaybackDirection} from "models";
 import {AppStore, PreferenceStore, TimeSeriesStore} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
+import {clamp, getTransformedChannelList, mapToObject} from "utilities";
 
 type AnimationFrames = {
     startFrame: CARTA.AnimationFrame.$Properties;
@@ -89,11 +89,11 @@ export class AnimatorStore {
     };
 
     @flow.bound *startAnimation() {
-        if (this.shouldStartAnimationDisable) {
+        const appStore = AppStore.Instance;
+        if (this.isAnimationActive || this.shouldStartAnimationDisable || appStore.channelMapStore.isChannelMapEnabled) {
             return;
         }
 
-        const appStore = AppStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
         const activeFrame = appStore.activeFrame;
 
@@ -118,21 +118,10 @@ export class AnimatorStore {
         if (!animationFrames) {
             return;
         }
-        // Calculate new required frame view (cropped to file size)
-        const reqView = activeFrame.requiredFrameView;
-
-        const croppedReq: FrameView = {
-            xMin: Math.max(-0.5, reqView.xMin),
-            xMax: Math.min(activeFrame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
-            yMin: Math.max(-0.5, reqView.yMin),
-            yMax: Math.min(activeFrame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
-            mip: reqView.mip
-        };
-        const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
-        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
+        const [tiles] = activeFrame.requiredTiles;
         const requiredTiles: CARTA.AddRequiredTiles.$Properties = {
             fileId: activeFrame.frameInfo.fileId,
-            tiles: tiles,
+            tiles: tiles.map(tile => tile.encode()),
             compressionType: CARTA.CompressionType.ZFP,
             compressionQuality: preferenceStore.animationCompressionQuality
         };
@@ -162,15 +151,30 @@ export class AnimatorStore {
             })
         };
 
+        const startRequest = Symbol();
+        this.serverAnimationStartRequest = startRequest;
         this.isAnimationActive = true;
 
         try {
             yield appStore.backendService.startAnimation(animationMessage);
+            if (this.serverAnimationStartRequest !== startRequest) {
+                if (!this.isServerAnimationActive) {
+                    // Stop again if the backend started after the original stop request.
+                    appStore.backendService.stopAnimation({fileId: animationMessage.fileId, endFrame: {channel: activeFrame.channel, stokes: activeFrame.stokes}});
+                }
+                return;
+            }
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
+            if (this.serverAnimationStartRequest !== startRequest) {
+                return;
+            }
             console.error(err);
+            this.serverAnimationStartRequest = undefined;
+            this.isAnimationActive = false;
             appStore.tileService.setAnimationEnabled(false);
+            return;
         }
         clearTimeout(this.stopHandle);
         this.stopHandle = undefined;
@@ -188,10 +192,7 @@ export class AnimatorStore {
 
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        if (!frame) {
-            return;
-        }
-
+        this.serverAnimationStartRequest = undefined;
         this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.isFrontendAnimationMode) {
@@ -199,7 +200,7 @@ export class AnimatorStore {
                 clearInterval(this.animateHandle);
                 this.animateHandle = undefined;
             }
-        } else {
+        } else if (frame) {
             const endFrame: CARTA.AnimationFrame.$Properties = {
                 channel: frame.channel,
                 stokes: frame.stokes
@@ -241,6 +242,7 @@ export class AnimatorStore {
 
     private animateHandle: ReturnType<typeof setInterval> | undefined;
     private stopHandle: ReturnType<typeof setTimeout> | undefined;
+    private serverAnimationStartRequest: symbol | undefined;
     private animationDirection: PlaybackDirection = 1;
 
     constructor() {

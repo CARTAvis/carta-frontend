@@ -198,6 +198,25 @@ describe("FrameStore", () => {
         });
     });
 
+    test("keeps new overlays hidden until the raster shows their channel", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        frame.setChannel(2);
+
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 2, stokes: 0, progress: 1}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 2, progress: 1, intensityTiles: [], angleTiles: []});
+
+        expect(frame.channel).toBe(0);
+        expect(frame.hasCurrentContours).toBe(false);
+        expect(frame.hasCurrentVectorOverlay).toBe(false);
+
+        runInAction(() => (frame.channel = 2));
+        frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 1, stokes: 0, progress: 1}));
+        frame.updateFromVectorOverlayData({fileId: 0, channel: 1, progress: 1, intensityTiles: [], angleTiles: []});
+
+        expect(frame.hasCurrentContours).toBe(true);
+        expect(frame.hasCurrentVectorOverlay).toBe(true);
+    });
+
     test("invalidates pending input when selecting the current channel again", () => {
         const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
         const token = frame.channelSelectionToken;

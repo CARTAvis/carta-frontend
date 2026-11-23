@@ -207,6 +207,8 @@ export class FrameStore {
     @observable currentFrameView: FrameView | null = null;
     @observable currentCompressionQuality: number = 100;
     @observable contourStores: Map<number, ContourStore> = new Map();
+    @observable private contourSelection: {channel: number; stokes: number} | undefined = undefined;
+    @observable private vectorOverlayChannel: number | undefined = undefined;
     @observable isMoving: boolean = false;
     @observable isZooming: boolean = false;
 
@@ -1273,7 +1275,7 @@ export class FrameStore {
         }
 
         // Progress is zero if we haven't received any contours yet
-        if (!this.contourStores || !this.contourStores.size) {
+        if (!this.contourStores?.size || this.contourSelection?.channel !== this.requiredChannel || this.contourSelection.stokes !== this.requiredStokes) {
             return 0;
         }
 
@@ -1285,6 +1287,14 @@ export class FrameStore {
         });
 
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+    }
+
+    @computed get hasCurrentContours() {
+        return this.contourSelection?.channel === this.channel && this.contourSelection.stokes === this.stokes;
+    }
+
+    @computed get hasCurrentVectorOverlay() {
+        return this.vectorOverlayChannel === this.channel;
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
@@ -3083,18 +3093,22 @@ export class FrameStore {
     };
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
+        const {channel, stokes} = contourImageData;
+        const isAnimating = AnimatorStore.Instance.isServerAnimationActive;
+        if (!isAnimating && (channel !== this.requiredChannel || stokes !== this.requiredStokes)) {
+            return;
+        }
+        if (isAnimating) {
+            this.channel = this.requiredChannel = channel;
+            this.stokes = this.requiredStokes = stokes;
+        }
+        if (this.contourSelection?.channel !== channel || this.contourSelection.stokes !== stokes) {
+            this.contourStores.forEach(store => store.clearData());
+            this.contourStores.clear();
+            this.contourSelection = {channel, stokes};
+        }
+
         const processedData = ProtobufProcessing.processContourData(contourImageData);
-        if (!AppStore.Instance.channelMapStore.isChannelMapEnabled) {
-            this.stokes = processedData.stokes ?? 0;
-            this.channel = processedData.channel ?? 0;
-        }
-
-        const animatorStore = AnimatorStore.Instance;
-        if (animatorStore.isServerAnimationActive) {
-            this.requiredChannel = processedData.channel ?? 0;
-            this.requiredStokes = processedData.stokes ?? 0;
-        }
-
         for (const contourSet of processedData.contourSets ?? []) {
             if (contourSet.level != null) {
                 let contourStore = this.contourStores.get(contourSet.level);
@@ -3124,10 +3138,15 @@ export class FrameStore {
     }
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.VectorOverlayTileData.$Properties) {
+        const channel = vectorOverlayData.channel ?? 0;
+        if (!AnimatorStore.Instance.isServerAnimationActive && channel !== this.requiredChannel) {
+            return;
+        }
         if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            if (this.vectorOverlayChannel === channel && !this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
                 this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             } else {
+                this.vectorOverlayChannel = channel;
                 this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
             }
         }

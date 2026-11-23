@@ -113,13 +113,13 @@ describe("ChannelMapStore", () => {
         it("cancels delayed active-channel changes when disabled", () => {
             jest.useFakeTimers();
             const testStore = store as unknown as {
-                debouncedSetActiveChannel: (channel: number) => void;
+                debouncedSetActiveChannel: () => void;
             };
             const setChannel = store.displayedFrame?.setChannel as jest.Mock;
             setChannel.mockClear();
 
             store.setChannelMapEnabled(true);
-            testStore.debouncedSetActiveChannel(4);
+            testStore.debouncedSetActiveChannel();
             store.setChannelMapEnabled(false);
             jest.runOnlyPendingTimers();
 
@@ -139,14 +139,14 @@ describe("ChannelMapStore", () => {
             expect(requestChannelMapTiles).not.toHaveBeenCalled();
         });
 
-        it("synchronizes tile delivery after a polarization change", () => {
+        it("requests the displayed frame after a polarization change", () => {
             const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
             store.setChannelMapEnabled(true);
             requestChannelMapTiles.mockClear();
 
             store.handlePolarizationChanged(store.displayedFrame);
 
-            expect(requestChannelMapTiles.mock.lastCall?.[5]).toBe(true);
+            expect(requestChannelMapTiles.mock.lastCall?.[1]).toBe(store.displayedFrame);
             store.setChannelMapEnabled(false);
         });
 
@@ -163,7 +163,7 @@ describe("ChannelMapStore", () => {
 
         it("synchronizes visible frames when disabled", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
-            const frame = {...store.displayedFrame, channel: 2, stokes: 1};
+            const frame = {...store.displayedFrame, channel: 1, stokes: 0, requiredChannel: 2, requiredStokes: 1};
             appStore.imageViewConfigStore.visibleFrames = [frame];
             appStore.updateChannels.mockClear();
 

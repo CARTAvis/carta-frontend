@@ -46,14 +46,14 @@ export class ChannelMapStore {
             channelArray => {
                 const channel = this.displayedFrame?.channel;
                 if (this.isChannelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
-                    this.debouncedSetActiveChannel(channelArray[0]);
+                    this.debouncedSetActiveChannel();
                 }
             }
         );
 
         reaction(
-            () => this.displayedFrame?.requiredChannel,
-            channel => {
+            () => ({frame: this.displayedFrame, channel: this.displayedFrame?.requiredChannel}),
+            ({channel}) => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
                 } else if (!this.channelArray.includes(channel)) {
@@ -93,23 +93,28 @@ export class ChannelMapStore {
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
+    private debouncedSetActiveChannel = debounce(() => {
+        const frame = this.displayedFrame;
+        if (frame && this.channelArray.length && !this.channelArray.includes(frame.requiredChannel)) {
+            frame.setChannel(this.channelArray[0]);
+        }
+    }, 200);
 
     /**
-     * Clears the cache and requests new tiles when the polarization changes.
+     * Requests tiles immediately when the displayed polarization changes.
      * @param frame - the frame to request tiles for.
      */
-    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
+    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame);
 
-    private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
-        if (!this.isChannelMapEnabled) {
+    private requestChannels = (frame: FrameStore) => {
+        if (!this.isChannelMapEnabled || frame !== this.displayedFrame) {
             return;
         }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray, isPolarizationChanged);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray);
     };
 
     requestTilesAfterSessionResume = () => {
@@ -123,19 +128,19 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
-        if (isEnabled && !this.isChannelMapEnabled) {
+        if (isEnabled === this.isChannelMapEnabled) {
+            return;
+        }
+        if (isEnabled) {
             AppStore.Instance.animatorStore.stopAnimation();
         }
-        const isDisablingChannelMap = this.isChannelMapEnabled && !isEnabled;
         this.isChannelMapEnabled = isEnabled;
         if (!isEnabled) {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
-            if (isDisablingChannelMap) {
-                const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.channel, stokes: frame.stokes}));
-                AppStore.Instance.updateChannels(updates);
-            }
+            const updates = AppStore.Instance.imageViewConfigStore.visibleFrames.map(frame => ({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}));
+            AppStore.Instance.updateChannels(updates);
         }
     };
 

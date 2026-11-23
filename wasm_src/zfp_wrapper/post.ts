@@ -116,8 +116,7 @@ ctx.onmessage = (event => {
                 oldAspectRatio: eventArgs.oldAspectRatio,
                 oldHeight: eventArgs.oldHeight,
                 oldWidth: eventArgs.oldWidth,
-                syncId: eventArgs.syncId,
-                generation: eventArgs.generation
+                syncId: eventArgs.syncId
             }, event.data[3]], [event.data[1]]);
 
             if (Module.debugOutput) {

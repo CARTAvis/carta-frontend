@@ -1,8 +1,14 @@
+import {flowResult} from "mobx";
+
 const MOCK_APP_STORE = {
     activeFrame: null as {frameInfo: {fileInfoExtended: {depth: number; stokes: number}}} | null,
     activeImageIndex: 3,
     imageViewConfigStore: {imageNum: 5},
-    setActiveImageByIndex: jest.fn()
+    setActiveImageByIndex: jest.fn(),
+    backendService: {startAnimation: jest.fn(), stopAnimation: jest.fn()},
+    tileService: {setAnimationEnabled: jest.fn()},
+    channelMapStore: {isChannelMapEnabled: false},
+    updateChannels: jest.fn()
 };
 
 const MOCK_TIME_SERIES_STORE = {
@@ -32,6 +38,35 @@ describe("AnimatorStore image playback", () => {
 
         expect(MOCK_APP_STORE.setActiveImageByIndex).toHaveBeenCalledWith(1);
     });
+});
+
+test("does not restart tile animation when a stopped request is acknowledged", async () => {
+    const store = new AnimatorStore();
+    const frame = {
+        frameInfo: {fileId: 1, fileInfoExtended: {depth: 3, stokes: 1}},
+        channel: 0,
+        stokes: 0,
+        requiredChannel: 0,
+        requiredStokes: 0,
+        requiredPolarizationIndex: 0,
+        requiredTiles: [[]],
+        animationChannelRange: [0, 2],
+        polarizations: [1],
+        spectralSiblings: [],
+        setChannels: jest.fn()
+    };
+    MOCK_APP_STORE.activeFrame = frame;
+    let acknowledge: () => void;
+    MOCK_APP_STORE.backendService.startAnimation.mockReturnValue(new Promise<void>(resolve => (acknowledge = resolve)));
+
+    const starting = flowResult(store.startAnimation());
+    store.stopAnimation();
+    acknowledge!();
+    await starting;
+
+    expect(store.isAnimationActive).toBe(false);
+    expect(MOCK_APP_STORE.tileService.setAnimationEnabled.mock.calls).toEqual([[false]]);
+    expect(MOCK_APP_STORE.backendService.stopAnimation).toHaveBeenCalledTimes(2);
 });
 
 describe("AnimatorStore animation mode", () => {

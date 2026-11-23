@@ -377,7 +377,7 @@ describe("AppStore.updateHistogram", () => {
         expect(updateHistogram).toHaveBeenCalledWith(1, 0, 1);
     });
 
-    test("keeps the previous normal-view channel until the requested tile arrives", () => {
+    test("keeps the previous normal-view channel until the requested viewport is ready", () => {
         const frame = {
             channel: 0,
             stokes: 0,
@@ -402,6 +402,12 @@ describe("AppStore.updateHistogram", () => {
         expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
         expect(pendingChannelHistograms.has("1_0_1")).toBe(false);
 
+        const remainingTiles = jest.spyOn(appStore.tileService, "getNormalViewRemainingTiles").mockReturnValue(1);
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, flush: false});
+        expect(frame.channel).toBe(0);
+        expect(pendingChannelHistograms.has("1_1_2")).toBe(true);
+
+        remainingTiles.mockReturnValue(0);
         appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, flush: true});
 
         expect(frame.channel).toBe(2);

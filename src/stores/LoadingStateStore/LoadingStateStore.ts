@@ -16,7 +16,7 @@ export class LoadingStateStore {
     }
 
     @computed get remainingTiles() {
-        return this.channelMapStore.isChannelMapEnabled ? this.tileService.channelMapRemainingTiles : this.tileService.normalViewRemainingTiles;
+        return this.channelMapStore.isChannelMapEnabled ? this.tileService.channelMapRemainingTiles : this.getVisibleFrames().reduce((count, frame) => count + this.tileService.getNormalViewRemainingTiles(frame.frameInfo.fileId), 0);
     }
 
     @computed get isLoadingContours() {

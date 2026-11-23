@@ -124,6 +124,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     };
 
     private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
+        if (!frame.hasCurrentContours) {
+            return;
+        }
         const isActive = frame === baseFrame;
         let dashFactor: number;
         let transformScale = 1;
@@ -264,6 +267,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const contourFrames = appStore.contourFrames.get(baseFrame);
         if (contourFrames) {
             for (const frame of contourFrames) {
+                const hasCurrentContours = frame.hasCurrentContours;
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
                 const color = config.isColormapEnabled ? config.colormap : config.color;

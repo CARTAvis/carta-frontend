@@ -30,6 +30,7 @@ export class VectorOverlayStore {
     }
 
     @action clearData = () => {
+        this.progress = -1;
         if (this.gl && this.tiles) {
             for (const tile of this.tiles) {
                 if (tile.texture) {
