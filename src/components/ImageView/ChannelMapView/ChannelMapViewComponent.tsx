@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {BeamOverlayMode, ImageType} from "enums";
-import {type CursorInfo, type Point2D} from "models";
+import {type CursorInfo, type ImageViewItem, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -188,7 +188,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     );
 });
 
-const ChannelMapInnerOverlayComponent = observer(({image, frame, docked: isDocked}: {image: NonNullable<typeof AppStore.Instance.channelMapStore.displayedImage>; frame: FrameStore; docked: boolean}) => {
+const ChannelMapInnerOverlayComponent = observer(({image, frame, docked: isDocked}: {image: ImageViewItem; frame: FrameStore; docked: boolean}) => {
     const appStore = AppStore.Instance;
     const overlaySettings = appStore.overlaySettings;
     const channelMapStore = appStore.channelMapStore;

@@ -172,6 +172,11 @@ export class ChannelMapStore {
         }
     };
 
+    /**
+     * Returns the adjacent stepped channel index, clamped to 0 on decrement and unchanged if incrementing past the end.
+     * @param channel - The starting channel index.
+     * @param direction - Step direction (-1 for previous, 1 for next).
+     */
     getAdjacentChannel(channel: number, direction: -1 | 1): number {
         const next = Math.max(0, channel + direction * this.channelStep);
         return next < this.totalChannelNum ? next : channel;
