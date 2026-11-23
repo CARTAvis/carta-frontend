@@ -3097,11 +3097,12 @@ export class FrameStore {
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const channel = contourImageData.channel ?? 0;
         const stokes = contourImageData.stokes ?? 0;
-        const isAnimating = AnimatorStore.Instance.isServerAnimationActive;
+        const isAnimating = AnimatorStore.Instance.isServerAnimationStreaming;
         if (!isAnimating && (channel !== this.requiredChannel || stokes !== this.requiredStokes)) {
             return;
         }
-        if (isAnimating) {
+        // A raster sync advances the displayed selection when the viewport is receiving tiles.
+        if (isAnimating && (!AppStore.Instance.imageViewConfigStore.visibleFrames.includes(this) || !this.requiredTiles[0].length)) {
             this.channel = this.requiredChannel = channel;
             this.stokes = this.requiredStokes = stokes;
         }
@@ -3143,7 +3144,7 @@ export class FrameStore {
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.VectorOverlayTileData.$Properties) {
         const channel = vectorOverlayData.channel ?? 0;
-        if (!AnimatorStore.Instance.isServerAnimationActive && channel !== this.requiredChannel) {
+        if (!AnimatorStore.Instance.isServerAnimationStreaming && channel !== this.requiredChannel) {
             return;
         }
         if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
@@ -3219,11 +3220,13 @@ export class FrameStore {
             this.renderConfig.updateCubeHistogram(null, 0);
         }
 
+        if (this.requiredChannel !== sanitizedChannel || this.requiredStokes !== stokes) {
+            this.isContourStreamActive = false;
+            this.isVectorOverlayStreamActive = false;
+        }
         this.requiredChannel = sanitizedChannel;
         this.channelSelectionToken = {};
         this.requiredStokes = stokes;
-        this.isContourStreamActive = false;
-        this.isVectorOverlayStreamActive = false;
 
         if (isRecursive) {
             this.spectralSiblings.forEach(frame => {

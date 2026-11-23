@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
+import {AnimationMode, NumberFormatType, Polarizations, PreferenceKeys, RegionId, RestFrameShiftMode, SkyRefIs, SpectralSystem, SpectralType, SpectralUnit, SystemType, VelocityConvention} from "../../enums";
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 import {TileService} from "../../services";
 import {AppStore, type FrameInfo, FrameStore, PreferenceStore} from "../index";
@@ -233,18 +233,53 @@ describe("FrameStore", () => {
         frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.5, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
         expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
 
+        frame.setChannel(0);
         frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.75, contourSets: [{level: 1}]}));
         frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.75, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
         expect(frame.contourStores.get(1)).toBe(firstContourStore);
         expect(frame.vectorOverlayStore.tiles).toHaveLength(2);
 
-        frame.setChannel(0);
+        frame.applyContours();
+        frame.applyVectorOverlay();
         frame.updateFromContourData(CARTA.ContourImageData.create({fileId: 0, channel: 0, stokes: 0, progress: 0.25, contourSets: [{level: 1}]}));
         frame.updateFromVectorOverlayData({fileId: 0, channel: 0, progress: 0.25, intensityTiles: [vectorTile], angleTiles: [vectorTile]});
 
         expect(frame.contourStores.get(1)).not.toBe(firstContourStore);
         expect(frame.vectorOverlayStore.tiles).toHaveLength(1);
         expect(frame.vectorOverlayStore.progress).toBe(0.25);
+    });
+
+    test("waits for the animated raster before promoting contours in a visible viewport", () => {
+        const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
+        const appStore = AppStore.Instance;
+        const {animatorStore, backendService, imageViewConfigStore} = appStore;
+        const previousMode = animatorStore.animationMode;
+        const isAnimationPreviouslyActive = animatorStore.isAnimationActive;
+        const previousAnimationId = backendService.animationId;
+        imageViewConfigStore.addFrame(frame);
+
+        try {
+            expect(imageViewConfigStore.visibleFrames).toContain(frame);
+            expect(frame.requiredTiles[0].length).toBeGreaterThan(0);
+            runInAction(() => {
+                animatorStore.animationMode = AnimationMode.CHANNEL;
+                animatorStore.isAnimationActive = true;
+                backendService.animationId = 5;
+            });
+            frame.updateFromContourData(CARTA.ContourImageData.create({channel: 2, stokes: 0, progress: 1}));
+
+            expect(frame.channel).toBe(0);
+            expect(frame.hasCurrentContours).toBe(false);
+            runInAction(() => (frame.channel = 2));
+            expect(frame.hasCurrentContours).toBe(true);
+        } finally {
+            imageViewConfigStore.removeFrame(frame.id);
+            runInAction(() => {
+                animatorStore.animationMode = previousMode;
+                animatorStore.isAnimationActive = isAnimationPreviouslyActive;
+                backendService.animationId = previousAnimationId;
+            });
+        }
     });
 
     test("invalidates pending input when selecting the current channel again", () => {

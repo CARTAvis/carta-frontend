@@ -2440,14 +2440,18 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        const fileId = tileStreamDetails.fileId;
+        const {fileId, animationId} = tileStreamDetails;
         if (fileId === undefined || fileId === null) {
+            return;
+        }
+        const isAnimationFrame = animationId === this.backendService.animationId && this.animatorStore.isServerAnimationStreaming;
+        if (animationId !== 0 && !isAnimationFrame) {
             return;
         }
         const frame = this.getFrame(fileId);
         const isRequiredTileStream = !!frame && tileStreamDetails.tileCount !== undefined && tileStreamDetails.channel === frame.requiredChannel && tileStreamDetails.stokes === frame.requiredStokes;
         const isRequiredViewReady = isRequiredTileStream && this.tileService.getNormalViewRemainingTiles(fileId) === 0;
-        if (this.animatorStore.isServerAnimationActive) {
+        if (isAnimationFrame) {
             if (fileId === this.activeFrameFileId) {
                 // Get stokes from the backend tile stream message
                 const stokes = tileStreamDetails.stokes ?? 0;
@@ -2458,7 +2462,7 @@ export class AppStore {
                 // Flow control
                 const flowControlMessage: CARTA.AnimationFlowControl.$Properties = {
                     fileId: tileStreamDetails.fileId,
-                    animationId: 0,
+                    animationId,
                     receivedFrame: {
                         channel: tileStreamDetails.channel,
                         stokes: stokesIndex
@@ -2483,7 +2487,7 @@ export class AppStore {
 
         const stokes = tileStreamDetails.stokes ?? 0;
         const channel = tileStreamDetails.channel ?? 0;
-        const shouldUpdateHistogram = this.channelMapStore.isChannelMapEnabled || this.animatorStore.isServerAnimationActive || isRequiredViewReady;
+        const shouldUpdateHistogram = this.channelMapStore.isChannelMapEnabled || isAnimationFrame || isRequiredViewReady;
         if (shouldUpdateHistogram) {
             this.updateHistogram(fileId, stokes, channel);
         } else if (!isRequiredTileStream) {

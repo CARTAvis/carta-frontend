@@ -2,6 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {Point2D} from "models";
+import {type Subscription} from "rxjs";
 
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
@@ -30,6 +31,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
+    private contourSubscription?: Subscription;
+    private updateCanvasFrame?: number;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
@@ -42,7 +45,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const contourStream = AppStore.Instance.backendService.contourStream;
         this.triggerUpdate();
         if (this.canvas) {
-            contourStream.subscribe(this.triggerUpdate);
+            this.contourSubscription = contourStream.subscribe(this.triggerUpdate);
         }
     }
 
@@ -51,13 +54,25 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.triggerUpdate();
     }
 
+    componentWillUnmount() {
+        this.contourSubscription?.unsubscribe();
+        if (this.updateCanvasFrame !== undefined) {
+            cancelAnimationFrame(this.updateCanvasFrame);
+            this.updateCanvasFrame = undefined;
+        }
+    }
+
     private triggerUpdate = () => {
+        if (this.updateCanvasFrame !== undefined) {
+            return;
+        }
         const animatorStore = AnimatorStore.Instance;
         const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
-        } else if (!animatorStore.isServerAnimationActive) {
-            requestAnimationFrame(this.updateCanvas);
+        if (!animatorStore.isServerAnimationStreaming || contourFrames?.some(frame => !frame.hasCurrentContours) || contourFrames?.every(frame => frame.contourProgress === 1)) {
+            this.updateCanvasFrame = requestAnimationFrame(() => {
+                this.updateCanvasFrame = undefined;
+                this.updateCanvas();
+            });
         }
     };
 
@@ -124,7 +139,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     };
 
     private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
-        if (!frame.hasCurrentContours) {
+        if (!frame.hasCurrentContours || (AnimatorStore.Instance.isServerAnimationStreaming && frame.contourProgress !== 1)) {
             return;
         }
         const isActive = frame === baseFrame;

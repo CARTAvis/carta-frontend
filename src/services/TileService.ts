@@ -27,7 +27,7 @@ export interface TileStreamDetails {
     fileId: number | null | undefined;
     channel: number | null | undefined;
     stokes: number | null | undefined;
-    flush: boolean;
+    animationId: number;
 }
 
 export const TEXTURE_SIZE = 4096;
@@ -105,12 +105,12 @@ interface ActiveChannelMapRequest extends ChannelMapRequest {
 interface RasterRequestState {
     key: string;
     requestedTiles: Set<number>;
-    viewGeneration: number;
     shouldSynchronize: boolean;
     setsChannel?: boolean;
 }
 
 interface RasterSyncState extends RasterRequestState {
+    animationId: number;
     pendingRequestTiles: Set<number>;
     pendingDecompressions: Map<number, number>;
     receivedTiles: Map<number, RasterTile>;
@@ -167,8 +167,8 @@ export class TileService {
     private isAnimationEnabled: boolean;
     private readonly gl: WebGL2RenderingContext | null;
     private readonly rasterSyncStates: Map<number, RasterSyncState>;
+    private readonly lastPresentedAnimationSync = new Map<number, number>();
     private readonly pendingRasterRequests: Map<number, RasterRequestState>;
-    private readonly rasterViewGenerations: Map<string, number>;
     private readonly channelMapStates: Map<number, ChannelMapFileState>;
     private readonly channelMapPendingTiles: Set<string>;
     private readonly normalViewPendingTiles = observable.map<number, Set<string>>();
@@ -252,7 +252,6 @@ export class TileService {
         this.pendingDecompressions = new Map<string, Map<number, Map<number, number>>>();
         this.rasterSyncStates = new Map<number, RasterSyncState>();
         this.pendingRasterRequests = new Map<number, RasterRequestState>();
-        this.rasterViewGenerations = new Map<string, number>();
         this.channelMapStates = new Map<number, ChannelMapFileState>();
         this.channelMapPendingTiles = new Set<string>();
 
@@ -307,12 +306,6 @@ export class TileService {
             this.channelMapStates.set(fileId, state);
         }
         return state;
-    }
-
-    private beginRasterView(key: string) {
-        const generation = (this.rasterViewGenerations.get(key) ?? 0) + 1;
-        this.rasterViewGenerations.set(key, generation);
-        return generation;
     }
 
     private queueRasterRequest(requestId: number, request: RasterRequestState) {
@@ -515,11 +508,9 @@ export class TileService {
         const shouldSynchronize = isChannelTransition || shouldSelectChannel || !currentSelection;
 
         if (shouldSelectChannel) {
-            this.clearRequestQueue(fileId);
-            this.clearRasterSynchronization(fileId);
+            this.retireRasterRequests(fileId);
         }
 
-        const viewGeneration = this.beginRasterView(key);
         const newRequests = this.getRequiredRequestTiles(tiles, fileId, channel, stokes);
         this.setNormalViewTargetTiles(tiles, fileId, stokes, channel);
 
@@ -542,7 +533,7 @@ export class TileService {
             }
             // sort by distance to midpoint and encode
             const sortedRequests = sortTilesByFocus(newRequests, focusPoint).map(tile => tile.encode());
-            const rasterRequest: RasterRequestState = {key, requestedTiles: new Set(sortedRequests), viewGeneration, shouldSynchronize, setsChannel: shouldSendSelection};
+            const rasterRequest: RasterRequestState = {key, requestedTiles: new Set(sortedRequests), shouldSynchronize, setsChannel: shouldSendSelection};
             if (shouldSendSelection) {
                 requestId = this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
             } else {
@@ -570,7 +561,7 @@ export class TileService {
                 this.setCurrentChannel(fileId, channel, stokes, shouldSendSelection);
             }
             if ((!shouldSendSelection || requestId !== null) && !this.normalViewPendingTiles.has(fileId)) {
-                this.tileStream.next({tileCount: 0, fileId, channel, stokes, flush: false});
+                this.tileStream.next({tileCount: 0, fileId, channel, stokes, animationId: 0});
             }
             return;
         }
@@ -584,8 +575,12 @@ export class TileService {
             return;
         }
         const fileId = frame.frameInfo.fileId;
-        if (this.channelMapTargetFileId !== undefined && this.channelMapTargetFileId !== fileId) {
-            this.cancelChannelMapRequests(this.channelMapTargetFileId);
+        if (this.channelMapTargetFileId !== fileId) {
+            if (this.channelMapTargetFileId !== undefined) {
+                this.cancelChannelMapRequests(this.channelMapTargetFileId);
+            }
+            // The first channel-map selection can replace an unstarted normal-view selection on the backend.
+            this.retireRasterRequests(fileId);
         }
         const stokes = frame.stokes;
         const previousStokes = this.fileStateMap.get(fileId)?.stokes;
@@ -595,11 +590,6 @@ export class TileService {
         }
         channelMapState.desiredStokes = stokes;
         this.setCurrentChannel(fileId, frame.channel, stokes);
-        const viewGenerations = new Map<number, number>();
-        for (const channel of requestedChannels) {
-            viewGenerations.set(channel, this.beginRasterView(getTileRequestKey(fileId, stokes, channel)));
-        }
-
         const requests: ChannelMapRequest[] = [];
         const tilesByFocus = sortTilesByFocus([...tiles], focusPoint);
         for (const channel of requestedChannels) {
@@ -615,7 +605,6 @@ export class TileService {
                     rasterRequest: {
                         key,
                         requestedTiles: new Set(sortedTiles),
-                        viewGeneration: viewGenerations.get(channel) ?? 0,
                         shouldSynchronize: false
                     }
                 });
@@ -704,10 +693,9 @@ export class TileService {
                 this.startChannelMapRequestTimeout(fileId, requestId, remainingBatchTimeMs);
             }
         } else {
-            this.clearRequestQueue(fileId);
             channelMapState.queue = [];
             this.dismissChannelMapTimeoutAlert(request.batchTiming);
-            this.clearRasterSynchronization(fileId);
+            this.retireRasterRequests(fileId);
         }
     }
 
@@ -730,10 +718,9 @@ export class TileService {
         channelMapState.activeRequest = undefined;
         if (message.status !== CARTA.ChannelMapFlowControl.Status.COMPLETED) {
             console.warn(`Channel Map request ${eventId} failed with status ${CARTA.ChannelMapFlowControl.Status[message.status ?? -1]}`);
-            this.clearRequestQueue(fileId);
             channelMapState.queue = [];
             this.dismissChannelMapTimeoutAlert(activeRequest.batchTiming);
-            this.clearRasterSynchronization(fileId);
+            this.retireRasterRequests(fileId);
             return;
         }
 
@@ -789,9 +776,8 @@ export class TileService {
 
         this.clearChannelMapRequestTimers(fileId);
         channelMapState.activeRequest = undefined;
-        this.clearRequestQueue(fileId);
         channelMapState.queue = [];
-        this.clearRasterSynchronization(fileId);
+        this.retireRasterRequests(fileId);
         const selectedChannels = this.fileStateMap.get(fileId);
         if (selectedChannels?.channel !== null && selectedChannels?.channel !== undefined && selectedChannels.stokes !== null && selectedChannels.stokes !== undefined) {
             this.backendService.setChannels(fileId, selectedChannels.channel, selectedChannels.stokes, {});
@@ -821,14 +807,15 @@ export class TileService {
             this.dismissChannelMapTimeoutAlert(channelMapState.activeRequest?.batchTiming);
             channelMapState.queue.forEach(request => this.dismissChannelMapTimeoutAlert(request.batchTiming));
             this.clearChannelMapRequestTimers(id);
-            this.clearRequestQueue(id);
-            this.clearRasterSynchronization(id);
+            this.retireRasterRequests(id);
             channelMapState.activeRequest = undefined;
             this.channelMapStates.delete(id);
         });
     }
 
-    private clearRasterSynchronization(fileId: number) {
+    private retireRasterRequests(fileId: number) {
+        this.clearRequestQueue(fileId);
+        this.lastPresentedAnimationSync.delete(fileId);
         this.pendingDecompressions.forEach((_syncMaps, key) => {
             if (isTileKeyForFile(key, fileId)) {
                 this.pendingDecompressions.delete(key);
@@ -844,15 +831,11 @@ export class TileService {
                 this.pendingRasterRequests.delete(requestId);
             }
         });
-        this.rasterViewGenerations.forEach((_generation, key) => {
-            if (isTileKeyForFile(key, fileId)) {
-                this.rasterViewGenerations.delete(key);
-            }
-        });
     }
 
     updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
         if (this.backendService.setChannels(fileId, channel, stokes, {}) !== null) {
+            this.retireRasterRequests(fileId);
             this.setCurrentChannel(fileId, channel, stokes, true);
         }
     }
@@ -864,10 +847,10 @@ export class TileService {
 
     private resetRasterRequests() {
         this.clearRequestQueue();
+        this.lastPresentedAnimationSync.clear();
         this.pendingDecompressions.clear();
         this.rasterSyncStates.clear();
         this.pendingRasterRequests.clear();
-        this.rasterViewGenerations.clear();
     }
 
     clearGPUCache(fileId: number | null | undefined) {
@@ -963,9 +946,8 @@ export class TileService {
 
     @action private handleStreamSync(syncMessage: CARTA.RasterTileSync.$Properties, requestId: number = 0) {
         const key = getTileRequestKey(syncMessage.fileId, syncMessage.stokes, syncMessage.channel);
-        if (this.isAnimationEnabled && syncMessage.animationId !== this.backendService.animationId) {
-            return;
-        } else if (!this.isAnimationEnabled && syncMessage.animationId !== 0) {
+        const animationId = syncMessage.animationId ?? 0;
+        if (animationId !== (this.isAnimationEnabled ? this.backendService.animationId : 0)) {
             return;
         }
 
@@ -991,7 +973,8 @@ export class TileService {
             const requestedTiles = queuedRequest?.requestedTiles ?? new Set<number>();
             const pendingDecompressions = new Map<number, number>();
             this.rasterSyncStates.set(syncId, {
-                ...(queuedRequest ?? {key, viewGeneration: 0, shouldSynchronize: true}),
+                ...(queuedRequest ?? {key, shouldSynchronize: true}),
+                animationId,
                 requestedTiles,
                 pendingRequestTiles: new Set(requestedTiles),
                 pendingDecompressions,
@@ -1006,7 +989,7 @@ export class TileService {
             syncMaps.set(syncId, pendingDecompressions);
         } else {
             const syncState = this.rasterSyncStates.get(syncId);
-            if (syncState?.key !== key || syncState.isComplete) {
+            if (syncState?.key !== key || syncState.isComplete || syncState.animationId !== animationId) {
                 return;
             }
             syncState.isComplete = true;
@@ -1026,17 +1009,13 @@ export class TileService {
         const key = getTileRequestKey(tileMessage.fileId, tileMessage.stokes, tileMessage.channel);
         const syncState = this.rasterSyncStates.get(tileMessage.syncId ?? NaN);
         const animationId = this.isAnimationEnabled ? this.backendService.animationId : 0;
-        if (syncState?.key !== key || syncState.isComplete || tileMessage.animationId !== animationId) {
+        if (syncState?.key !== key || syncState.isComplete || syncState.animationId !== animationId || (tileMessage.animationId ?? 0) !== animationId) {
             return;
         }
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
             console.error("Unsupported compression type");
             return;
         }
-        if (this.isAnimationEnabled && tileMessage.fileId !== null && tileMessage.fileId !== undefined) {
-            this.setCurrentChannel(tileMessage.fileId, tileMessage.channel, tileMessage.stokes);
-        }
-
         for (const tile of tileMessage.tiles ?? []) {
             const encodedCoordinate = TileCoordinate.encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
             const tileCacheKey = getTileCacheKey(tileMessage.fileId, tileMessage.stokes, tileMessage.channel, encodedCoordinate);
@@ -1147,7 +1126,7 @@ export class TileService {
             }
             this.resolveChannelMapTile(fileId, stokes, channel, encodedCoordinate);
             this.resolveNormalViewTile(fileId, stokes, channel, encodedCoordinate);
-            this.tileStream.next({tileCount: 1, fileId, channel, stokes, flush: false});
+            this.tileStream.next({tileCount: 1, fileId, channel, stokes, animationId: 0});
             if (syncState && syncId != null) {
                 this.completeSynchronisedTiles({fileId, channel, stokes, syncId});
             }
@@ -1162,9 +1141,16 @@ export class TileService {
         }
 
         this.clearRasterSync(key, syncId);
+        if (syncState.animationId > 0 && fileId != null) {
+            if (syncState.animationId !== this.backendService.animationId || syncId <= (this.lastPresentedAnimationSync.get(fileId) ?? -Infinity)) {
+                return;
+            }
+            this.lastPresentedAnimationSync.set(fileId, syncId);
+            this.setCurrentChannel(fileId, channel, stokes);
+        }
         if (!syncState.shouldSynchronize) {
             if (!this.getNormalViewRemainingTiles(fileId ?? NaN)) {
-                this.tileStream.next({tileCount: 0, fileId, channel, stokes, flush: false});
+                this.tileStream.next({tileCount: 0, fileId, channel, stokes, animationId: 0});
             }
             return;
         }
@@ -1182,13 +1168,7 @@ export class TileService {
             this.resolveChannelMapTile(fileId, stokes, channel, coordinate);
             this.resolveNormalViewTile(fileId, stokes, channel, coordinate);
         });
-        const currentFileState = this.fileStateMap.get(fileId ?? NaN);
-        const appStore = AppStore.Instance;
-        const isCurrentView = appStore.channelMapStore.isChannelMapEnabled
-            ? appStore.channelMapStore.channelArray.includes(channel ?? NaN) && currentFileState?.stokes === stokes
-            : currentFileState?.channel === channel && currentFileState?.stokes === stokes;
-        const isLatestView = syncState.viewGeneration === (this.rasterViewGenerations.get(key) ?? 0) && isCurrentView;
-        this.tileStream.next({tileCount, fileId, channel, stokes, flush: isLatestView});
+        this.tileStream.next({tileCount, fileId, channel, stokes, animationId: syncState.animationId});
     }
 
     private clearRasterSync(key: string, syncId: number) {

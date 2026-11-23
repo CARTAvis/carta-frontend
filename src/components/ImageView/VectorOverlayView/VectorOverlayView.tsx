@@ -42,7 +42,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         const baseFrame = this.props.frame;
         const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
-        if (vectorOverlayFrames?.every(f => f?.vectorOverlayStore?.isComplete)) {
+        if (vectorOverlayFrames?.some(frame => !frame.hasCurrentVectorOverlay) || vectorOverlayFrames?.every(frame => frame.vectorOverlayStore.isComplete)) {
             requestAnimationFrame(this.updateCanvas);
         }
     }
@@ -111,7 +111,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     };
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
-        if (!frame.hasCurrentVectorOverlay) {
+        if (!frame.hasCurrentVectorOverlay || !frame.vectorOverlayStore.isComplete) {
             return;
         }
         const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
@@ -253,6 +253,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         if (overlayFrames) {
             for (const frame of overlayFrames) {
                 const hasCurrentVectorOverlay = frame.hasCurrentVectorOverlay;
+                const isComplete = frame.vectorOverlayStore.isComplete;
                 const config = frame.vectorOverlayConfig;
                 const {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, isColormapInverted, colormap, lengthMin, lengthMax, isVisible} = config;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;

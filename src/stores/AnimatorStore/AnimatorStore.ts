@@ -156,14 +156,18 @@ export class AnimatorStore {
         this.isAnimationActive = true;
 
         try {
-            yield appStore.backendService.startAnimation(animationMessage);
+            const ack = (yield appStore.backendService.startAnimation(animationMessage)) as CARTA.StartAnimationAck.$Properties;
             if (this.serverAnimationStartRequest !== startRequest) {
-                if (!this.isServerAnimationActive) {
+                if (this.serverAnimationStartRequest === undefined) {
                     // Stop again if the backend started after the original stop request.
                     appStore.backendService.stopAnimation({fileId: animationMessage.fileId, endFrame: {channel: activeFrame.channel, stokes: activeFrame.stokes}});
                 }
                 return;
             }
+            if (ack.animationId == null || ack.animationId <= 0) {
+                throw new Error("The server did not assign an animation ID");
+            }
+            appStore.backendService.animationId = ack.animationId;
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
@@ -257,6 +261,10 @@ export class AnimatorStore {
 
     @computed get isServerAnimationActive() {
         return this.isAnimationActive && !this.isFrontendAnimationMode;
+    }
+
+    @computed get isServerAnimationStreaming() {
+        return this.isServerAnimationActive && AppStore.Instance.backendService.animationId > 0;
     }
 
     /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */

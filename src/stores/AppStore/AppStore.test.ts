@@ -397,19 +397,19 @@ describe("AppStore.updateHistogram", () => {
         appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 2, stokes: 1, histograms: {}} as CARTA.RegionHistogramData);
         expect(frame.channel).toBe(0);
 
-        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 1, stokes: 0, flush: true});
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 1, stokes: 0, animationId: 0});
         expect(frame.channel).toBe(0);
         expect(frame.stokes).toBe(0);
         expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
         expect(pendingChannelHistograms.has("1_0_1")).toBe(false);
 
         const remainingTiles = jest.spyOn(appStore.tileService, "getNormalViewRemainingTiles").mockReturnValue(1);
-        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, flush: false});
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, animationId: 0});
         expect(frame.channel).toBe(0);
         expect(pendingChannelHistograms.has("1_1_2")).toBe(true);
 
         remainingTiles.mockReturnValue(0);
-        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, flush: true});
+        appStore.handleTileStream({tileCount: 1, fileId: 1, channel: 2, stokes: 1, animationId: 0});
 
         expect(frame.channel).toBe(2);
         expect(frame.stokes).toBe(1);
@@ -435,6 +435,7 @@ describe("AppStore.updateHistogram", () => {
         };
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
         const sendFlowControl = jest.spyOn(appStore.backendService, "sendAnimationFlowControl").mockImplementation();
+        const previousAnimationId = appStore.backendService.animationId;
         const previousAnimationMode = appStore.animatorStore.animationMode;
         const isAnimationPreviouslyActive = appStore.animatorStore.isAnimationActive;
         runInAction(() => {
@@ -443,7 +444,15 @@ describe("AppStore.updateHistogram", () => {
         });
 
         try {
-            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, flush: true});
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 0});
+            expect(frame.setChannels).not.toHaveBeenCalled();
+            expect(frame.channel).toBe(0);
+
+            runInAction(() => (appStore.backendService.animationId = 5));
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 4});
+            expect(frame.setChannels).not.toHaveBeenCalled();
+
+            appStore.handleTileStream({tileCount: 1, fileId: 2, channel: 5, stokes: 1, animationId: 5});
 
             expect(sendFlowControl).not.toHaveBeenCalled();
             expect(frame.setChannels).toHaveBeenCalledWith(5, 1, false);
@@ -451,6 +460,7 @@ describe("AppStore.updateHistogram", () => {
             expect(frame.stokes).toBe(1);
         } finally {
             runInAction(() => {
+                appStore.backendService.animationId = previousAnimationId;
                 appStore.animatorStore.animationMode = previousAnimationMode;
                 appStore.animatorStore.isAnimationActive = isAnimationPreviouslyActive;
             });
