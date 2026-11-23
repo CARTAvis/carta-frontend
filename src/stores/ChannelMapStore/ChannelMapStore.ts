@@ -24,13 +24,13 @@ export class ChannelMapStore {
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
+            const frame = this.displayedFrame;
+            if (this.isChannelMapEnabled && frame?.requiredFrameView && this.channelArray.length > 0) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
-                const channelArray = this.channelArray;
-                const requiredTiles = this.displayedFrame.requiredTiles;
-                const channel = this.displayedFrame.channel;
+                const requiredTiles = frame.requiredTiles;
+                const channel = frame.channel;
 
-                this.throttledRequestChannels(this.displayedFrame);
+                this.throttledRequestChannels(frame);
             }
         });
 
@@ -93,13 +93,16 @@ export class ChannelMapStore {
     }
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetActiveChannel = debounce((frame: FrameStore) => {
-        const channels = this.channelArray;
-        if (this.isChannelMapEnabled && frame === this.displayedFrame && channels.length > 0 && !channels.includes(frame.requiredChannel)) {
-            frame.setChannel(channels[0]);
-            frame.channel = channels[0];
-        }
-    }, 200);
+    private debouncedSetActiveChannel = debounce(
+        action((frame: FrameStore) => {
+            const channels = this.channelArray;
+            if (this.isChannelMapEnabled && frame === this.displayedFrame && channels.length > 0 && !channels.includes(frame.requiredChannel)) {
+                frame.setChannel(channels[0]);
+                frame.channel = channels[0];
+            }
+        }),
+        200
+    );
 
     /**
      * Requests tiles immediately when the displayed polarization changes.
@@ -111,11 +114,15 @@ export class ChannelMapStore {
         if (!this.isChannelMapEnabled || frame !== this.displayedFrame) {
             return;
         }
+        const channels = this.channelArray;
+        if (!channels.length) {
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, channels);
     };
 
     requestTilesAfterSessionResume = () => {

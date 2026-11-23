@@ -1,4 +1,4 @@
-import {runInAction} from "mobx";
+import {autorun, runInAction} from "mobx";
 
 import {ChannelMapStore} from "./ChannelMapStore";
 
@@ -249,7 +249,7 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
-        it("promotes the fallback channel immediately when the active channel leaves the page", () => {
+        it("promotes the fallback channel atomically when the active channel leaves the page", () => {
             jest.useFakeTimers();
             const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
             store.setChannelMapEnabled(true);
@@ -259,19 +259,32 @@ describe("ChannelMapStore", () => {
                 frame.requiredChannel = 3;
             });
             frame.setChannel.mockClear();
-
-            store.setNumColumns(1);
-            jest.advanceTimersByTime(200);
-
-            expect(frame.setChannel).toHaveBeenCalledWith(0);
-            expect(frame.channel).toBe(0);
-
-            runInAction(() => {
-                frame.channel = 0;
-                frame.requiredChannel = 0;
+            frame.setChannel.mockImplementationOnce((channel: number) => {
+                runInAction(() => {
+                    frame.requiredChannel = channel;
+                });
             });
-            store.setNumColumns(2);
-            store.setChannelMapEnabled(false);
+            const selections: number[][] = [];
+            const stopObserving = autorun(() => selections.push([frame.requiredChannel, frame.channel]));
+
+            try {
+                store.setNumColumns(1);
+                jest.advanceTimersByTime(200);
+
+                expect(frame.setChannel).toHaveBeenCalledWith(0);
+                expect(selections).toEqual([
+                    [3, 3],
+                    [0, 0]
+                ]);
+            } finally {
+                stopObserving();
+                runInAction(() => {
+                    frame.channel = 0;
+                    frame.requiredChannel = 0;
+                });
+                store.setNumColumns(2);
+                store.setChannelMapEnabled(false);
+            }
         });
     });
 
@@ -467,6 +480,40 @@ describe("ChannelMapStore", () => {
                     info.depth = depth;
                     Object.assign(frame, {requiredFrameView: false});
                 });
+            }
+        });
+
+        it("waits for a valid channel list before requesting tiles after a depth change", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            const previous = {channel: frame.channel, requiredChannel: frame.requiredChannel, start: store.startChannel};
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            try {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    Object.assign(frame, {channel: 8, requiredChannel: 8, requiredFrameView: true});
+                });
+                store.setStartChannel(8);
+                store.setChannelMapEnabled(true);
+                jest.advanceTimersByTime(101);
+                requestTiles.mockClear();
+
+                runInAction(() => {
+                    info.depth = 3;
+                    Object.assign(frame, {channel: 1, requiredChannel: 1});
+                });
+                jest.advanceTimersByTime(100);
+
+                expect(requestTiles.mock.calls.map(call => call[4])).toEqual([[1, 2]]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    info.depth = depth;
+                    Object.assign(frame, {channel: previous.channel, requiredChannel: previous.requiredChannel, requiredFrameView: false});
+                });
+                store.setStartChannel(previous.start);
             }
         });
     });
