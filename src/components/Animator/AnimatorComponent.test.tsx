@@ -78,6 +78,22 @@ describe("AnimatorComponent", () => {
         component.componentWillUnmount();
     });
 
+    test.each([false, true])("drops a pending channel change after leaving the map (re-enabled: %s)", isChannelMapEnabled => {
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
+        const appStore = {activeFrame: frame, channelMapStore: {isChannelMapEnabled: true, modeVersion: 0}};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        const component = new AnimatorComponent({} as any);
+        component.onChannelChanged(10);
+        component.onChannelChanged(20);
+
+        appStore.channelMapStore.modeVersion += isChannelMapEnabled ? 2 : 1;
+        appStore.channelMapStore.isChannelMapEnabled = isChannelMapEnabled;
+        jest.advanceTimersByTime(50);
+
+        expect(frame.setChannel.mock.calls).toEqual([[10]]);
+        component.componentWillUnmount();
+    });
+
     test.each([7, 10])("preserves a later panel selection of channel %i", channel => {
         const frame = {
             requiredChannel: 0,

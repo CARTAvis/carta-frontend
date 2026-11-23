@@ -175,6 +175,19 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
+        it("does not request channel-map tiles after a hidden frame changes polarization", () => {
+            const hiddenFrame = {...store.displayedFrame} as typeof store.displayedFrame;
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            store.setChannelMapEnabled(true);
+            requestTiles.mockClear();
+            try {
+                store.handlePolarizationChanged(hiddenFrame);
+                expect(requestTiles).not.toHaveBeenCalled();
+            } finally {
+                store.setChannelMapEnabled(false);
+            }
+        });
+
         it("synchronizes visible frames when disabled", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
             const frame = {...store.displayedFrame, channel: 2, stokes: 1};
@@ -249,6 +262,31 @@ describe("ChannelMapStore", () => {
 
             store.setStartChannel(100);
             expect(store.startChannel).toBe(1);
+        });
+
+        it("re-selects the rendered channel when a different channel is pending", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
+            const previous = {channel: frame.channel, requiredChannel: frame.requiredChannel, start: store.startChannel};
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(1);
+            try {
+                runInAction(() => {
+                    frame.channel = 1;
+                    frame.requiredChannel = 2;
+                });
+                frame.setChannel.mockClear();
+
+                store.setStartChannel(1);
+
+                expect(frame.setChannel).toHaveBeenCalledWith(1);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previous.requiredChannel;
+                    frame.channel = previous.channel;
+                });
+                store.setStartChannel(previous.start);
+            }
         });
     });
 

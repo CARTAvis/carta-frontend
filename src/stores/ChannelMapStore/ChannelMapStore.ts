@@ -27,7 +27,6 @@ export class ChannelMapStore {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const channelArray = this.channelArray;
-                const requiredFrameView = this.displayedFrame.requiredFrameView;
                 const requiredTiles = this.displayedFrame.requiredTiles;
                 const channel = this.displayedFrame.channel;
 
@@ -48,13 +47,7 @@ export class ChannelMapStore {
 
         reaction(
             () => [this.displayedFrame?.requiredChannel, this.totalChannelNum] as const,
-            ([channel, totalChannelNum]) => {
-                if (channel === undefined) {
-                    this.setStartChannel(0);
-                } else if (!this.channelArray.includes(channel)) {
-                    this.setStartChannel(channel < totalChannelNum ? channel : 0);
-                }
-            }
+            ([channel]) => this.alignStartChannel(channel)
         );
     }
 
@@ -68,6 +61,8 @@ export class ChannelMapStore {
     @observable numRows: number = 2;
     /** Indicates whether the channel map mode is enabled. */
     @observable isChannelMapEnabled: boolean = false;
+    /** Invalidates pending Animator input when the mode changes. */
+    modeVersion = 0;
     /** Indicates whether to show the channel string. */
     @observable shouldShowChannelString: boolean = false;
     /** Indicates whether to show the frequency string. */
@@ -112,7 +107,7 @@ export class ChannelMapStore {
     handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
     private requestChannels = (frame: FrameStore, isPolarizationChanged: boolean = false) => {
-        if (!this.isChannelMapEnabled) {
+        if (!this.isChannelMapEnabled || frame !== this.displayedFrame) {
             return;
         }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
@@ -133,6 +128,9 @@ export class ChannelMapStore {
      * @param isEnabled - Whether to enable the channel map mode.
      */
     @action setChannelMapEnabled = (isEnabled: boolean) => {
+        if (this.isChannelMapEnabled !== isEnabled) {
+            this.modeVersion++;
+        }
         if (isEnabled && !this.isChannelMapEnabled) {
             AppStore.Instance.animatorStore.stopAnimation();
         }
@@ -140,8 +138,8 @@ export class ChannelMapStore {
         this.isChannelMapEnabled = isEnabled;
         if (isEnabled) {
             const channel = this.displayedFrame?.requiredChannel;
-            if (channel !== undefined && !this.channelArray.includes(channel)) {
-                this.setStartChannel(channel < this.totalChannelNum ? channel : 0);
+            if (channel !== undefined) {
+                this.alignStartChannel(channel);
             }
         } else {
             this.throttledRequestChannels.cancel();
@@ -153,6 +151,12 @@ export class ChannelMapStore {
             }
         }
     };
+
+    private alignStartChannel(channel: number | undefined) {
+        if (channel === undefined || !this.channelArray.includes(channel)) {
+            this.setStartChannel(channel !== undefined && channel < this.totalChannelNum ? channel : 0);
+        }
+    }
 
     /**
      * Sets the first channel at the top-left corner. Skips when the channel is out of range.
@@ -166,7 +170,7 @@ export class ChannelMapStore {
         this.debouncedSetActiveChannel.cancel();
         this.startChannel = startChannel;
         const frame = this.displayedFrame;
-        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+        if (this.isChannelMapEnabled && frame && (frame.requiredChannel !== startChannel || frame.channel !== startChannel)) {
             frame.setChannel(startChannel);
             frame.channel = startChannel;
         }
