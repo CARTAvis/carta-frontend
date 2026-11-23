@@ -134,7 +134,12 @@ describe("AnimatorComponent", () => {
                 selectedChannel = (selectedChannel + delta + 100) % 100;
             })
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL, step: 1}, channelMapStore: {isChannelMapEnabled: true}} as any);
+        const channelMapStore = {
+            isChannelMapEnabled: true,
+            setNextChannel: () => frame.incrementChannels(1),
+            setPrevChannel: () => frame.incrementChannels(-1)
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL, step: 1}, channelMapStore} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         jest.advanceTimersByTime(20);
@@ -187,26 +192,31 @@ describe("AnimatorComponent", () => {
         component.componentWillUnmount();
     });
 
-    test.each([
-        [false, 1],
-        [true, 3]
-    ])("steps channels on Next/Previous when channel-map mode is %s (delta %i)", (isChannelMapEnabled, expectedStep) => {
+    test.each([false, true])("uses channel-map navigation when channel-map mode is %s", isChannelMapEnabled => {
         const frame = {
             frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
             incrementChannels: jest.fn()
         };
+        const channelMapStore = {isChannelMapEnabled, setNextChannel: jest.fn(), setPrevChannel: jest.fn()};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
             activeFrame: frame,
             animatorStore: {animationMode: AnimationMode.CHANNEL, step: 3},
-            channelMapStore: {isChannelMapEnabled}
+            channelMapStore
         } as any);
         const component = new AnimatorComponent({} as any);
 
         component.onNextClicked();
-        expect(frame.incrementChannels).toHaveBeenLastCalledWith(expectedStep, 0);
-
         component.onPrevClicked();
-        expect(frame.incrementChannels).toHaveBeenLastCalledWith(-expectedStep, 0);
+        if (isChannelMapEnabled) {
+            expect(channelMapStore.setNextChannel).toHaveBeenCalledTimes(1);
+            expect(channelMapStore.setPrevChannel).toHaveBeenCalledTimes(1);
+            expect(frame.incrementChannels).not.toHaveBeenCalled();
+        } else {
+            expect(frame.incrementChannels.mock.calls).toEqual([
+                [1, 0],
+                [-1, 0]
+            ]);
+        }
         component.componentWillUnmount();
     });
 });

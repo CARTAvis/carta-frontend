@@ -189,7 +189,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.nextImage();
                 break;
             case AnimationMode.CHANNEL:
-                frame.incrementChannels(appStore.channelMapStore.isChannelMapEnabled ? appStore.animatorStore.step : 1, 0);
+                if (appStore.channelMapStore.isChannelMapEnabled) {
+                    appStore.channelMapStore.setNextChannel();
+                } else {
+                    frame.incrementChannels(1, 0);
+                }
                 break;
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, 1);
@@ -216,7 +220,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.prevImage();
                 break;
             case AnimationMode.CHANNEL:
-                frame.incrementChannels(appStore.channelMapStore.isChannelMapEnabled ? -appStore.animatorStore.step : -1, 0);
+                if (appStore.channelMapStore.isChannelMapEnabled) {
+                    appStore.channelMapStore.setPrevChannel();
+                } else {
+                    frame.incrementChannels(-1, 0);
+                }
                 break;
             case AnimationMode.STOKES:
                 frame.incrementChannels(0, -1);

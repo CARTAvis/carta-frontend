@@ -38,9 +38,10 @@ export class ChannelMapStore {
         reaction(
             () => this.channelArray,
             channelArray => {
-                const channel = this.displayedFrame?.channel;
-                if (this.isChannelMapEnabled && channelArray.length > 0 && channel !== undefined && !channelArray.includes(channel)) {
-                    this.debouncedSetActiveChannel(channelArray[0]);
+                const frame = this.displayedFrame;
+                const channel = frame?.requiredChannel;
+                if (frame && this.isChannelMapEnabled && channelArray.length > 0 && channel !== undefined && !channelArray.includes(channel)) {
+                    this.debouncedSetActiveChannel(frame);
                 }
             }
         );
@@ -97,7 +98,12 @@ export class ChannelMapStore {
     }
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
+    private debouncedSetActiveChannel = debounce((frame: FrameStore) => {
+        const channels = this.channelArray;
+        if (this.isChannelMapEnabled && frame === this.displayedFrame && channels.length > 0 && !channels.includes(frame.requiredChannel)) {
+            frame.setChannel(channels[0]);
+        }
+    }, 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.

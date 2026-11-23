@@ -127,13 +127,13 @@ describe("ChannelMapStore", () => {
         it("cancels delayed active-channel changes when disabled", () => {
             jest.useFakeTimers();
             const testStore = store as unknown as {
-                debouncedSetActiveChannel: (channel: number) => void;
+                debouncedSetActiveChannel: (frame: typeof store.displayedFrame) => void;
             };
             const setChannel = store.displayedFrame?.setChannel as jest.Mock;
             setChannel.mockClear();
 
             store.setChannelMapEnabled(true);
-            testStore.debouncedSetActiveChannel(4);
+            testStore.debouncedSetActiveChannel(store.displayedFrame);
             store.setChannelMapEnabled(false);
             jest.runOnlyPendingTimers();
 
@@ -225,6 +225,31 @@ describe("ChannelMapStore", () => {
     });
 
     describe("setChannelStep", () => {
+        it("keeps the selected channel when reversing a step change before the fallback", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame as unknown as {requiredChannel: number; setChannel: jest.Mock};
+            const previousChannel = frame.requiredChannel;
+            const previousStart = store.startChannel;
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.requiredChannel = 1;
+            });
+            frame.setChannel.mockClear();
+            store.setChannelMapEnabled(true);
+            try {
+                store.setChannelStep(2);
+                store.setChannelStep(1);
+                jest.advanceTimersByTime(200);
+                expect(frame.setChannel).not.toHaveBeenCalled();
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previousChannel;
+                });
+                store.setStartChannel(previousStart);
+            }
+        });
+
         it("shares the channel step with the animator and derives sparse channels", () => {
             store.setStartChannel(1);
             store.setChannelStep(2);
