@@ -27,11 +27,8 @@ export class ChannelMapStore {
             if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const channelArray = this.channelArray;
-                const center = this.displayedFrame.center;
                 const requiredFrameView = this.displayedFrame.requiredFrameView;
                 const requiredTiles = this.displayedFrame.requiredTiles;
-                const zoomLevel = this.displayedFrame.zoomLevel;
-                const spatialReference = this.displayedFrame.spatialReference;
                 const channel = this.displayedFrame.channel;
 
                 this.throttledRequestChannels(this.displayedFrame);
@@ -49,8 +46,8 @@ export class ChannelMapStore {
         );
 
         reaction(
-            () => this.displayedFrame?.requiredChannel,
-            channel => {
+            () => [this.displayedFrame?.requiredChannel, this.totalChannelNum] as const,
+            ([channel]) => {
                 if (channel === undefined) {
                     this.setStartChannel(0);
                 } else if (!this.channelArray.includes(channel)) {
@@ -91,7 +88,7 @@ export class ChannelMapStore {
 
     /** The increment between displayed channels, shared with the animator. */
     @computed get channelStep(): number {
-        return AppStore.Instance.animatorStore.step;
+        return Math.min(AppStore.Instance.animatorStore.step, this.maxChannelStep);
     }
 
     /** The maximum allowed channel step for the displayed image. */
@@ -150,7 +147,7 @@ export class ChannelMapStore {
      * Sets the first channel at the top-left corner. Skips when the channel is out of range.
      * @param startChannel - The first channel at the top-left corner.
      */
-    @action setStartChannel(startChannel: number) {
+    @action setStartChannel = (startChannel: number) => {
         // Add checks for valid startChannel number for the masterFrame
         if (startChannel < 0 || startChannel > this.totalChannelNum - 1) {
             return;
@@ -161,31 +158,31 @@ export class ChannelMapStore {
             frame.setChannel(startChannel);
             frame.channel = startChannel;
         }
-    }
+    };
 
     /** Sets the first channel at the top-left corner to the previous channel. */
-    @action setPrevChannel() {
+    @action setPrevChannel = () => {
         if (this.startChannel > 0) {
             this.setStartChannel(Math.max(0, this.startChannel - this.channelStep));
         }
-    }
+    };
 
     /** Sets the first channel at the top-left corner to the next channel. */
-    @action setNextChannel() {
+    @action setNextChannel = () => {
         this.setStartChannel(this.startChannel + this.channelStep);
-    }
+    };
 
     /** Moves to the previous page of channels. */
-    @action setPrevPage() {
+    @action setPrevPage = () => {
         if (this.startChannel > 0) {
             this.setStartChannel(Math.max(0, this.startChannel - this.numChannels * this.channelStep));
         }
-    }
+    };
 
     /** Moves to the next page of channels. */
-    @action setNextPage() {
+    @action setNextPage = () => {
         this.setStartChannel(this.startChannel + this.numChannels * this.channelStep);
-    }
+    };
 
     /** Sets the increment between displayed channels. */
     @action setChannelStep = (channelStep: number) => {
@@ -198,21 +195,21 @@ export class ChannelMapStore {
      * Sets the number of columns in the image view.
      * @param numColumns - The number of columns in the image view.
      */
-    @action setNumColumns(numColumns: number) {
+    @action setNumColumns = (numColumns: number) => {
         if (isFinite(numColumns) && numColumns > 0) {
             this.numColumns = numColumns;
         }
-    }
+    };
 
     /**
      * Sets the number of rows in the image view.
      * @param numRows - The number of rows in the image view.
      */
-    @action setNumRows(numRows: number) {
+    @action setNumRows = (numRows: number) => {
         if (isFinite(numRows) && numRows > 0) {
             this.numRows = numRows;
         }
-    }
+    };
 
     /**
      * Sets the threshold value below which pixels are displayed in grayscale.

@@ -63,22 +63,22 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 <div className="channel-map-channel-control">
                     <ButtonGroup fill={true} className="channel-map-channel-control-buttons">
                         <Tooltip content="Previous page" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
-                            <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()} disabled={!channelMapSettings.isChannelMapEnabled}>
+                            <Button icon={"chevron-backward"} onClick={channelMapSettings.setPrevPage} disabled={!channelMapSettings.isChannelMapEnabled}>
                                 {!isIconOnly && "Page"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Previous channel" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
-                            <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()} disabled={!channelMapSettings.isChannelMapEnabled}>
+                            <Button icon={"step-backward"} onClick={channelMapSettings.setPrevChannel} disabled={!channelMapSettings.isChannelMapEnabled}>
                                 {!isIconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next channel" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
-                            <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()} disabled={!channelMapSettings.isChannelMapEnabled}>
+                            <Button icon={"step-forward"} onClick={channelMapSettings.setNextChannel} disabled={!channelMapSettings.isChannelMapEnabled}>
                                 {!isIconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next page" position={Position.TOP} disabled={!channelMapSettings.isChannelMapEnabled}>
-                            <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()} disabled={!channelMapSettings.isChannelMapEnabled}>
+                            <Button icon={"chevron-forward"} onClick={channelMapSettings.setNextPage} disabled={!channelMapSettings.isChannelMapEnabled}>
                                 {!isIconOnly && "Page"}
                             </Button>
                         </Tooltip>
@@ -99,8 +99,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         max={channelMapSettings.totalChannelNum - 1}
                         labelValues={channelTick}
                         stepSize={1}
-                        value={appStore.channelMapStore.startChannel}
-                        onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
+                        value={channelMapSettings.startChannel}
+                        onChange={channelMapSettings.setStartChannel}
                         disabled={!channelMapSettings.isChannelMapEnabled || channelMapSettings.totalChannelNum <= 1}
                     />
                 </FormGroup>
@@ -130,26 +130,10 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of columns" disabled={!channelMapSettings.isChannelMapEnabled}>
-                    <SafeNumericInput
-                        placeholder="Number of columns"
-                        min={1}
-                        max={10}
-                        value={channelMapSettings.numColumns}
-                        stepSize={1}
-                        onValueChange={(value: number) => channelMapSettings.setNumColumns(value)}
-                        disabled={!channelMapSettings.isChannelMapEnabled}
-                    />
+                    <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={channelMapSettings.setNumColumns} disabled={!channelMapSettings.isChannelMapEnabled} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of rows" disabled={!channelMapSettings.isChannelMapEnabled}>
-                    <SafeNumericInput
-                        placeholder="Number of rows"
-                        min={1}
-                        max={10}
-                        value={channelMapSettings.numRows}
-                        stepSize={1}
-                        onValueChange={(value: number) => channelMapSettings.setNumRows(value)}
-                        disabled={!channelMapSettings.isChannelMapEnabled}
-                    />
+                    <SafeNumericInput placeholder="Number of rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={channelMapSettings.setNumRows} disabled={!channelMapSettings.isChannelMapEnabled} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Show channel string" disabled={!channelMapSettings.isChannelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>

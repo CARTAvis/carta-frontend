@@ -90,3 +90,21 @@ describe("AnimatorStore animation mode", () => {
         expect(store.animationMode).toBe(AnimationMode.NONE);
     });
 });
+
+describe("AnimatorStore setStep", () => {
+    test("accepts valid integer steps within bounds and rejects invalid values", () => {
+        const store = new AnimatorStore();
+
+        store.setStep(5);
+        expect(store.step).toBe(5);
+
+        store.setStep(0);
+        expect(store.step).toBe(5);
+
+        store.setStep(51);
+        expect(store.step).toBe(5);
+
+        store.setStep(2.5);
+        expect(store.step).toBe(5);
+    });
+});

@@ -251,6 +251,47 @@ describe("ChannelMapStore", () => {
             expect(store.channelStep).toBe(1);
         });
 
+        it("clamps channelStep to maxChannelStep when the image has fewer channels than animator step", () => {
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            try {
+                store.setChannelStep(10);
+                expect(store.channelStep).toBe(10);
+
+                runInAction(() => {
+                    info.depth = 6;
+                });
+
+                expect(store.maxChannelStep).toBe(6);
+                expect(store.channelStep).toBe(6);
+            } finally {
+                runInAction(() => {
+                    info.depth = depth;
+                });
+            }
+        });
+
+        it("resets startChannel when totalChannelNum shrinks below startChannel", () => {
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            store.setStartChannel(8);
+            try {
+                runInAction(() => {
+                    info.depth = 5;
+                });
+
+                expect(store.startChannel).toBe(0);
+                expect(store.channelArray).toEqual([0, 1, 2, 3]);
+            } finally {
+                runInAction(() => {
+                    info.depth = depth;
+                });
+                store.setStartChannel(0);
+            }
+        });
+
         it("requests the new channel list when the last channel stays the same", () => {
             jest.useFakeTimers();
             const frame = store.displayedFrame;

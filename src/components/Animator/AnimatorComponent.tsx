@@ -292,7 +292,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label={activeFrame.channelType}
                     />
                     {shouldHideSliders && (
-                        <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={channelStepSize} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.isAnimationActive} />
+                        <SafeNumericInput
+                            value={activeFrame.requiredChannel}
+                            min={-1}
+                            max={numChannels}
+                            stepSize={channelStepSize}
+                            majorStepSize={Math.max(channelStepSize, 10)}
+                            onValueChange={this.onChannelChanged}
+                            fill={true}
+                            disabled={appStore.animatorStore.isAnimationActive}
+                        />
                     )}
                     {!shouldHideSliders && (
                         <React.Fragment>
