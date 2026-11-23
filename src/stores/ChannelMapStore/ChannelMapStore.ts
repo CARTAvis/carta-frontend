@@ -166,16 +166,25 @@ export class ChannelMapStore {
         }
     };
 
+    getAdjacentChannel(channel: number, direction: -1 | 1): number {
+        const next = Math.max(0, channel + direction * this.channelStep);
+        return next < this.totalChannelNum ? next : channel;
+    }
+
     /** Sets the first channel at the top-left corner to the previous channel. */
     @action setPrevChannel = () => {
-        if (this.startChannel > 0) {
-            this.setStartChannel(Math.max(0, this.startChannel - this.channelStep));
+        const channel = this.getAdjacentChannel(this.startChannel, -1);
+        if (channel !== this.startChannel) {
+            this.setStartChannel(channel);
         }
     };
 
     /** Sets the first channel at the top-left corner to the next channel. */
     @action setNextChannel = () => {
-        this.setStartChannel(this.startChannel + this.channelStep);
+        const channel = this.getAdjacentChannel(this.startChannel, 1);
+        if (channel !== this.startChannel) {
+            this.setStartChannel(channel);
+        }
     };
 
     /** Moves to the previous page of channels. */

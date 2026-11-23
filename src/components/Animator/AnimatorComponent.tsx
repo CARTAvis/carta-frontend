@@ -190,7 +190,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 break;
             case AnimationMode.CHANNEL:
                 if (appStore.channelMapStore.isChannelMapEnabled) {
-                    appStore.channelMapStore.setNextChannel();
+                    const channel = appStore.channelMapStore.getAdjacentChannel(frame.requiredChannel, 1);
+                    if (channel !== frame.requiredChannel) {
+                        frame.setChannel(channel);
+                    }
                 } else {
                     frame.incrementChannels(1, 0);
                 }
@@ -221,7 +224,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 break;
             case AnimationMode.CHANNEL:
                 if (appStore.channelMapStore.isChannelMapEnabled) {
-                    appStore.channelMapStore.setPrevChannel();
+                    const channel = appStore.channelMapStore.getAdjacentChannel(frame.requiredChannel, -1);
+                    if (channel !== frame.requiredChannel) {
+                        frame.setChannel(channel);
+                    }
                 } else {
                     frame.incrementChannels(-1, 0);
                 }

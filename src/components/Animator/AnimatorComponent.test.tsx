@@ -121,6 +121,9 @@ describe("AnimatorComponent", () => {
         let selectedChannel = 5;
         const frame = {
             frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            get requiredChannel() {
+                return selectedChannel;
+            },
             channel: 5,
             stokes: 0,
             polarizations: [0],
@@ -136,8 +139,7 @@ describe("AnimatorComponent", () => {
         };
         const channelMapStore = {
             isChannelMapEnabled: true,
-            setNextChannel: () => frame.incrementChannels(1),
-            setPrevChannel: () => frame.incrementChannels(-1)
+            getAdjacentChannel: (channel: number, direction: number) => channel + direction
         };
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL, step: 1}, channelMapStore} as any);
         const component = new AnimatorComponent({} as any);
@@ -195,9 +197,11 @@ describe("AnimatorComponent", () => {
     test.each([false, true])("uses channel-map navigation when channel-map mode is %s", isChannelMapEnabled => {
         const frame = {
             frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            requiredChannel: 6,
+            setChannel: jest.fn(),
             incrementChannels: jest.fn()
         };
-        const channelMapStore = {isChannelMapEnabled, setNextChannel: jest.fn(), setPrevChannel: jest.fn()};
+        const channelMapStore = {isChannelMapEnabled, startChannel: 0, getAdjacentChannel: (channel: number, direction: number) => channel + 2 * direction};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
             activeFrame: frame,
             animatorStore: {animationMode: AnimationMode.CHANNEL, step: 3},
@@ -208,8 +212,7 @@ describe("AnimatorComponent", () => {
         component.onNextClicked();
         component.onPrevClicked();
         if (isChannelMapEnabled) {
-            expect(channelMapStore.setNextChannel).toHaveBeenCalledTimes(1);
-            expect(channelMapStore.setPrevChannel).toHaveBeenCalledTimes(1);
+            expect(frame.setChannel.mock.calls).toEqual([[8], [4]]);
             expect(frame.incrementChannels).not.toHaveBeenCalled();
         } else {
             expect(frame.incrementChannels.mock.calls).toEqual([
