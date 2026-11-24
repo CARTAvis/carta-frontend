@@ -794,6 +794,18 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(restored.restoredInfoHeight).toBe(64);
     });
 
+    test("saves a restored height again when the widget was not shown, such as in a tab that is not selected", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight: 64}, WORKSPACE_IDS));
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS).infoHeight).toBe(64);
+    });
+
+    test("restores a saved height below the smallest height of the area as the smallest height", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight: 5}, WORKSPACE_IDS));
+        expect(widgetStore.restoredInfoHeight).toBe(SpectralProfileWidgetStore.INFO_HEIGHT_MIN);
+    });
+
     test.each([0, -10, Infinity, NaN, "64"])("ignores a saved height of %p for the area below the plot", infoHeight => {
         const {widgetStore} = createWidgetStore();
         runInAction(() => widgetStore.applyWorkspaceView({infoHeight} as never, WORKSPACE_IDS));

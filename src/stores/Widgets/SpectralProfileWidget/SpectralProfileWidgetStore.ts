@@ -168,6 +168,9 @@ export class SpectralProfileWidgetStore
 
     @observable shouldKeep: boolean = false;
 
+    /** The smallest height of the area below the plot, in pixels. */
+    public static readonly INFO_HEIGHT_MIN = 28;
+
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -1564,7 +1567,10 @@ export class SpectralProfileWidgetStore
      */
     @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
         if (typeof config.infoHeight === "number" && isFinite(config.infoHeight) && config.infoHeight > 0) {
-            this.restoredInfoHeight = config.infoHeight;
+            // Keep the height also as the recorded one. A widget in a tab that is not shown records
+            // nothing, and the next save still keeps the height.
+            this.restoredInfoHeight = Math.max(config.infoHeight, SpectralProfileWidgetStore.INFO_HEIGHT_MIN);
+            this.infoHeight = this.restoredInfoHeight;
         }
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);

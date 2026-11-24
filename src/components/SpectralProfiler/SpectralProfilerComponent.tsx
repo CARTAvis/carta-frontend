@@ -20,7 +20,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 
 import "./SpectralProfilerComponent.scss";
 
-const INFO_HEIGHT_MIN = 28;
+const INFO_HEIGHT_MIN = SpectralProfileWidgetStore.INFO_HEIGHT_MIN;
 const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -109,8 +109,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (!element || typeof ResizeObserver === "undefined") {
             return;
         }
+        // Use the border box, so that the height includes a horizontal scroll bar.
         this.infoResizeObserver = new ResizeObserver(entries => {
-            const height = entries[0]?.contentRect.height;
+            const height = entries[0]?.borderBoxSize?.[0]?.blockSize ?? element.offsetHeight;
             if (height > 0) {
                 this.widgetStore.infoHeight = Math.round(height);
             }
@@ -599,6 +600,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const className = classNames("spectral-profiler-widget", {"linked-to-widget-highlighted": this.widgetStore.isHighlighted});
         // A restored height replaces the default height. The new key makes the split pane take it.
+        // When the widget is shown again, such as after it is docked, it keeps the last height.
         const restoredInfoHeight = this.widgetStore.restoredInfoHeight;
         const defaultInfoHeight = clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX);
 
@@ -612,7 +614,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
-                        <Pane ref={this.observeInfoPane} className={"info-container"} defaultSize={restoredInfoHeight ?? defaultInfoHeight} minSize={INFO_HEIGHT_MIN}>
+                        <Pane ref={this.observeInfoPane} className={"info-container"} defaultSize={restoredInfoHeight !== undefined ? (this.widgetStore.infoHeight ?? restoredInfoHeight) : defaultInfoHeight} minSize={INFO_HEIGHT_MIN}>
                             <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
                         </Pane>
                     </SplitPane>
