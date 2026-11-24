@@ -29,6 +29,7 @@ rs.mock("./TelemetryService", () => ({TelemetryService: {Instance: {addTelemetry
 interface TestableCatalogApiService {
     axiosInstanceSimbad: AxiosInstance;
     getSimbadCatalog: (query: string) => Promise<unknown>;
+    getSimbadObjectBaseUrl: () => string;
     normalizeMirrorUrl: (database: CatalogDatabase, url?: string) => string | null;
     joinUrl: (baseUrl: string, path: string) => string;
 }
@@ -76,5 +77,28 @@ describe("CatalogApiService active mirror", () => {
 
         expect(normalized).toBe("https://active.example/viz-bin/?tenant=one#section");
         expect(service.joinUrl(normalized as string, "votable?-out.max=1")).toBe("https://active.example/viz-bin/votable?-out.max=1&tenant=one");
+    });
+
+    test("links SIMBAD objects to the active mirror", () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        rs.mocked(MirrorSiteStore.Instance.getActiveMirror).mockReturnValueOnce("https://simbad.idia.ac.za/simbad/sim-tap/");
+
+        expect(service.getSimbadObjectBaseUrl()).toBe("https://simbad.idia.ac.za/simbad/sim-id?Ident=");
+    });
+
+    test("links SIMBAD objects to the first SIMBAD mirror when no mirror is available", () => {
+        const service = new CatalogApiService() as unknown as TestableCatalogApiService;
+        rs.mocked(MirrorSiteStore.Instance.getActiveMirror).mockReturnValueOnce(undefined);
+
+        expect(service.getSimbadObjectBaseUrl()).toBe("https://simbad.u-strasbg.fr/simbad/sim-id?Ident=");
+    });
+
+    test.each([
+        ["BD+40 4124", "BD%2B40%204124"],
+        ["* alf Cen", "*%20alf%20Cen"],
+        ["NAME A&B #1", "NAME%20A%26B%20%231"],
+        ["NAME Mönch", "NAME%20M%C3%B6nch"]
+    ])("encodes the SIMBAD identifier %s in the object link", (mainId, encoded) => {
+        expect(CatalogApiService.getSimbadObjectUrl("https://simbad.idia.ac.za/simbad/sim-id?Ident=", mainId)).toBe(`https://simbad.idia.ac.za/simbad/sim-id?Ident=${encoded}`);
     });
 });

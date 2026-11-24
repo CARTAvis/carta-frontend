@@ -37,6 +37,7 @@ describe("[unit] MirrorSiteStore", () => {
     const preferenceKey = PreferenceKeys.CATALOG_QUERY_SIMBAD_ENABLED_MIRRORS;
     const strasbourgUrl = CATALOG_MIRROR_URLS[SimbadMirror.STRASBOURG];
     const cfaHarvardUrl = CATALOG_MIRROR_URLS[SimbadMirror.CFA_HARVARD];
+    const idiaUrl = CATALOG_MIRROR_URLS[SimbadMirror.IDIA];
 
     beforeEach(() => {
         PreferenceStore.Instance.preferences.clear();
@@ -51,11 +52,17 @@ describe("[unit] MirrorSiteStore", () => {
         expect(ApiService.Instance.setPreference).toHaveBeenCalledWith(preferenceKey, [SimbadMirror.CFA_HARVARD, SimbadMirror.STRASBOURG]);
     });
 
+    test("enables every SIMBAD mirror in the default order when no preference is saved", () => {
+        expect(mirrorStore.getMirrorSites(CatalogDatabase.SIMBAD)).toEqual([strasbourgUrl, cfaHarvardUrl, idiaUrl]);
+        expect(mirrorStore.isMirrorUserDisabled(CatalogDatabase.SIMBAD, idiaUrl)).toBe(false);
+    });
+
     test("keeps disabled mirrors out of the enabled preference and appends them after enabled mirrors", () => {
         mirrorStore.setEnabledMirrors(CatalogDatabase.SIMBAD, [cfaHarvardUrl]);
 
-        expect(mirrorStore.getMirrorSites(CatalogDatabase.SIMBAD)).toEqual([cfaHarvardUrl, strasbourgUrl]);
+        expect(mirrorStore.getMirrorSites(CatalogDatabase.SIMBAD)).toEqual([cfaHarvardUrl, strasbourgUrl, idiaUrl]);
         expect(mirrorStore.isMirrorUserDisabled(CatalogDatabase.SIMBAD, strasbourgUrl)).toBe(true);
+        expect(mirrorStore.isMirrorUserDisabled(CatalogDatabase.SIMBAD, idiaUrl)).toBe(true);
     });
 
     test("uses the first available mirror when no active mirror has been selected", () => {

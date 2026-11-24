@@ -31,7 +31,7 @@ rs.mock("stores", () => ({
 
 import {RegionMode} from "enums";
 
-import {RegionViewComponent} from "./RegionViewComponent";
+import {RegionComponents, RegionViewComponent} from "./RegionViewComponent";
 
 describe("RegionViewComponent shift+drag box selection click suppression", () => {
     let mockFrame: any;
@@ -240,5 +240,26 @@ describe("RegionViewComponent shift+drag box selection click suppression", () =>
 
         // Anchor drag start calls onSelect without a mouse event and must keep updating the selection.
         expect((component as any).shouldSuppressRegionSelection()).toBe(false);
+    });
+});
+
+describe("RegionComponents", () => {
+    const makeProps = (isDisposed: boolean): any => {
+        const regionSet = {focusedRegion: null, selectedRegionIds: new Set(), mode: RegionMode.MOVING};
+        return {
+            frame: {isDisposed, regionSet},
+            regions: [{regionId: 1, regionType: 14}],
+            width: 800,
+            height: 600,
+            stageRef: {current: null}
+        };
+    };
+
+    test("draws the regions of an open image", () => {
+        expect(new RegionComponents(makeProps(false)).render()).toHaveLength(1);
+    });
+
+    test("draws nothing for a closed image", () => {
+        expect(new RegionComponents(makeProps(true)).render()).toBeNull();
     });
 });

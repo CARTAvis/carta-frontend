@@ -15,6 +15,10 @@ rs.mock("stores", () => ({
 describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
+    afterEach(() => {
+        rs.useRealTimers();
+    });
+
     describe("setChannelMapEnabled", () => {
         it("updates the channel map mode correctly", () => {
             expect(store.isChannelMapEnabled).toBe(false);
