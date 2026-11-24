@@ -797,9 +797,22 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         };
         const histogramAt = (channel: number, stokes: number) => ({...histogramOf(channel), stokes}) as unknown as CARTA.RegionHistogramData;
 
-        test("skips the histogram of a channel or Stokes that the image has left", () => {
-            expect(arrive(histogramOf(0), 0).renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
-            expect(arrive(histogramAt(32, 1), 32, 1).renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        test.each([
+            ["a channel", 0, 0],
+            ["a Stokes", 32, 1],
+            ["the shown channel with the Stokes it is set to", 3, 1]
+        ])("skips the histogram of %s that the image has left, and keeps its channel", (_name, channel, stokes) => {
+            const frame = arrive(histogramAt(channel, stokes), channel, stokes);
+            expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+            expect(frame.renderConfig.setHistChannel).not.toHaveBeenCalled();
+            expect([frame.channel, frame.stokes]).toEqual([3, 0]);
+        });
+
+        test("drops a skipped histogram, so that it is not applied when the image returns to its channel", () => {
+            const frame = arrive(histogramOf(0), 0);
+            Object.assign(frame, {channel: 0, requiredChannel: 0});
+            appStore.updateHistogram(7, 0, 0);
+            expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
         });
 
         test("applies the histogram of the channel that the image shows, such as a channel passed while dragging the slider", () => {
