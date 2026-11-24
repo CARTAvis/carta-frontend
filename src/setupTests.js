@@ -39,6 +39,9 @@ if (typeof global.TextEncoder === "undefined") {
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
 
+// Prism must see manual mode before it loads so it skips scheduling a page-wide highlight.
+window.Prism = {manual: true};
+
 if (typeof global.Worker === "undefined") {
     global.Worker = class {
         postMessage() {}
