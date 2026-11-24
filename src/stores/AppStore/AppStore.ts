@@ -2692,8 +2692,12 @@ export class AppStore {
             // Skip the histogram of a channel or Stokes that the image has left. Its tiles can arrive
             // late, such as when a workspace restore sets the channel right after it opens the image.
             // Applying it would set the image back to that channel, and the view would ask for tiles
-            // of that channel, which the backend no longer sends.
-            const isLeft = !!updatedFrame && !this.channelMapStore.isChannelMapEnabled && (channel !== updatedFrame.requiredChannel || stokes !== updatedFrame.requiredStokes);
+            // of that channel, which the backend no longer sends. Apply the histogram of the channel
+            // that the image shows or is set to. During an animation, apply every histogram, because
+            // the images matched to the active image follow it only through their histograms.
+            const isCurrent = channel === updatedFrame?.channel && stokes === updatedFrame.stokes;
+            const isRequired = channel === updatedFrame?.requiredChannel && stokes === updatedFrame.requiredStokes;
+            const isLeft = !!updatedFrame && !this.channelMapStore.isChannelMapEnabled && !this.animatorStore.isServerAnimationActive && !isCurrent && !isRequired;
             if (updatedFrame && channelHist && !isLeft) {
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;

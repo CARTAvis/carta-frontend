@@ -786,15 +786,58 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         expect(frame.channel).toBe(2);
     });
 
-    test("skips the histogram of a channel that the image has left when the tiles of that channel arrive", () => {
-        const frame = {...makeFrame(), channel: 2, requiredChannel: 32};
-        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
-        appStore.handleRegionHistogramStream(histogramOf(2));
+    describe("when the tiles of a channel arrive after the image was set to another channel", () => {
+        // The image shows channel 3 and is set to channel 32. The histogram waits for the tiles of its channel.
+        const arrive = (histogram: CARTA.RegionHistogramData, channel: number, stokes = 0) => {
+            const frame = {...makeFrame(), channel: 3, stokes: 0, requiredChannel: 32, requiredStokes: 0};
+            jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+            appStore.handleRegionHistogramStream(histogram);
+            appStore.updateHistogram(7, stokes, channel);
+            return frame;
+        };
+        const histogramAt = (channel: number, stokes: number) => ({...histogramOf(channel), stokes}) as unknown as CARTA.RegionHistogramData;
 
-        appStore.updateHistogram(7, 0, 2);
+        test("skips the histogram of a channel or Stokes that the image has left", () => {
+            expect(arrive(histogramOf(0), 0).renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+            expect(arrive(histogramAt(32, 1), 32, 1).renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        });
 
-        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
-        expect(frame.channel).toBe(2);
+        test("applies the histogram of the channel that the image shows, such as a channel passed while dragging the slider", () => {
+            expect(arrive(histogramOf(3), 3).renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        });
+
+        test("applies the histogram of the channel that the image is set to", () => {
+            const frame = arrive(histogramOf(32), 32);
+            expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+            expect(frame.channel).toBe(32);
+        });
+
+        test("applies the histogram of a computed polarization that the image is set to", () => {
+            const frame = {...makeFrame(), channel: 3, stokes: 0, requiredChannel: 32, requiredStokes: 17, polarizations: [17]};
+            jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+            appStore.handleRegionHistogramStream(histogramAt(32, 17));
+            appStore.updateHistogram(7, 17, 32);
+            expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        });
+
+        test("applies every histogram during an animation, so that a matched image follows the active image", () => {
+            runInAction(() => (appStore.animatorStore.isAnimationActive = true));
+            try {
+                expect(appStore.animatorStore.isServerAnimationActive).toBe(true);
+                expect(arrive(histogramOf(40), 40).channel).toBe(40);
+            } finally {
+                runInAction(() => (appStore.animatorStore.isAnimationActive = false));
+            }
+        });
+
+        test("applies every histogram in the channel map", () => {
+            runInAction(() => (appStore.channelMapStore.isChannelMapEnabled = true));
+            try {
+                expect(arrive(histogramOf(40), 40).renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+            } finally {
+                runInAction(() => (appStore.channelMapStore.isChannelMapEnabled = false));
+            }
+        });
     });
 
     test("applies a waiting histogram when the Contour dialog is set to the image", () => {
