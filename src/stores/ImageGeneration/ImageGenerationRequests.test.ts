@@ -1,12 +1,13 @@
 import {describe, expect, test} from "@jest/globals";
 import {CARTA} from "carta-protobuf";
 
+import {RegionId} from "enums";
 import {type FrameStore} from "stores/Frame";
 
 // Load the stores in dependency order before importing one of them directly
 import "stores";
 
-import {isLineInOnePixel, isLineOnImage, momentProblemOf, pvProblemOf} from "./ImageGenerationRequests";
+import {isLineInOnePixel, isLineOnImage, isRegionShape, isSameRegionShape, momentProblemOf, pvProblemOf, regionShapeOf} from "./ImageGenerationRequests";
 
 const NONLINEAR_SPECTRAL_AXIS_MESSAGE = "Not available for nonlinear spectral axes";
 
@@ -156,5 +157,73 @@ describe("line checks", () => {
         expect(isLineInOnePixel(lineOf(10.4, 10.4, 9.6, 9.6))).toBe(true);
         expect(isLineInOnePixel(lineOf(10.4, 10.4, 10.6, 10.4))).toBe(false);
         expect(isLineInOnePixel(undefined)).toBe(false);
+    });
+});
+
+describe("the shape of the region of a generated image", () => {
+    const line = {
+        regionType: CARTA.RegionType.LINE,
+        controlPoints: [
+            {x: 10, y: 10},
+            {x: 90, y: 90}
+        ],
+        rotation: 45
+    };
+
+    test("is recorded as a copy for a region of its own, and not for the whole image or the field of view", () => {
+        const frame = {getRegion: (regionId: number) => (regionId === 4 ? line : undefined)} as never;
+
+        const shape = regionShapeOf(frame, 4);
+
+        expect(shape).toEqual(line);
+        expect(shape?.controlPoints[0]).not.toBe(line.controlPoints[0]);
+        expect(regionShapeOf(frame, RegionId.IMAGE)).toBeUndefined();
+        expect(regionShapeOf(frame, 0)).toBeUndefined();
+    });
+
+    test.each([
+        ["the same shape", line, true],
+        [
+            "the same shape within rounding",
+            {
+                ...line,
+                controlPoints: [
+                    {x: 10 + 1e-9, y: 10},
+                    {x: 90, y: 90}
+                ]
+            },
+            true
+        ],
+        ["a rotated line", {...line, rotation: 135}, false],
+        [
+            "a moved point",
+            {
+                ...line,
+                controlPoints: [
+                    {x: 10, y: 11},
+                    {x: 90, y: 90}
+                ]
+            },
+            false
+        ],
+        ["another kind of region", {...line, regionType: CARTA.RegionType.POLYLINE}, false],
+        ["more points", {...line, controlPoints: [...line.controlPoints, {x: 1, y: 1}]}, false]
+    ])("counts %s as %p", (_name, region, isSame) => {
+        expect(isSameRegionShape(region, line)).toBe(isSame);
+    });
+
+    test("is not the same as a region that is gone", () => {
+        expect(isSameRegionShape(undefined, line)).toBe(false);
+    });
+
+    test.each([
+        ["a shape", line, true],
+        ["no points", {...line, controlPoints: []}, false],
+        ["a point that is not finite", {...line, controlPoints: [{x: NaN, y: 1}]}, false],
+        ["a rotation that is not a number", {...line, rotation: "45"}, false],
+        ["a region type that is not an integer", {...line, regionType: 1.5}, false],
+        ["nothing", undefined, false]
+    ])("is read from a workspace only when it is %s", (_name, value, isValid) => {
+        expect(isRegionShape(value)).toBe(isValid);
     });
 });

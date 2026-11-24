@@ -2422,6 +2422,34 @@ describe("WorkspaceRestorer", () => {
             });
         });
 
+        test("makes moment images over the shape that their region had when they were made, when the region was changed after", async () => {
+            const {requestMoment, backend} = createGeneratingSession();
+            const madeOver = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            frameOverrides = {...frameOverrides, getRegion: (regionId: number) => (regionId === 105 ? {...madeOver, rotation: 30} : undefined)};
+            const appStore = AppStore.Instance as unknown as {backendService: object};
+            const backendService = {
+                ...appStore.backendService,
+                setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                removeRegion: jest.fn((_regionId: number) => true)
+            };
+            Object.assign(appStore, {backendService});
+
+            await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}], generatedImages: [{request: {...momentRequest, regionShape: madeOver}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, madeOver);
+            // The backend keeps the data of the region before the moments are asked for over it.
+            expect(backend.setStatsRequirements.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: 1, regionId: 500}));
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({regionId: 500}), expect.anything(), expect.anything());
+            expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+        });
+
         describe("a PV image", () => {
             const savedLine = {id: 6, type: CARTA.RegionType.LINE, rotation: 0, points: []};
             const pvRequest = {type: "pv" as const, sourceImageId: 1, regionId: 6, width: 3, channelRange: {min: 2, max: 8}, reverse: false};
@@ -2444,6 +2472,82 @@ describe("WorkspaceRestorer", () => {
                 expect(issues).toEqual([]);
                 expect(requestPV).toHaveBeenCalledTimes(1);
                 expect(requestPV.mock.calls[0].slice(0, 3)).toEqual([expect.objectContaining({fileId: 1, regionId: 106, width: 3, spectralRange: {min: 2, max: 8}}), appStore.frames[0], true]);
+            });
+
+            describe("whose line was changed or deleted after the PV image was made", () => {
+                const madeAlong = {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 10, y: 10},
+                        {x: 90, y: 90}
+                    ],
+                    rotation: 45
+                };
+                const movedLine = {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 10, y: 90},
+                        {x: 90, y: 10}
+                    ],
+                    rotation: 135
+                };
+
+                /** Restores a PV image made along `madeAlong`, when the session has the line `sessionLine` as region 106. */
+                async function restorePvMadeAlong(sessionLine: typeof madeAlong | undefined, setRegionAck: Promise<unknown> = Promise.resolve({success: true, regionId: 500})) {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => setRegionAck),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService});
+                    const made: {generation?: {request: {type: string; regionId: number; regionShape?: unknown}}}[] = [];
+                    session.requestPV.mockImplementation((message: CARTA.PvRequest.$Properties) => {
+                        const frame = {...createFrame(200), generation: {request: {type: "pv", regionId: message.regionId ?? NaN}}};
+                        made.push(frame);
+                        (session.appStore.frameMap as Map<number, unknown>).set(200, frame);
+                        session.appStore.frames.push(frame as never);
+                        return Promise.resolve(frame as never);
+                    });
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? sessionLine : undefined)};
+                    const files = sessionLine ? [{...IMAGE, regionsSet: {regions: [savedLine]}}] : [IMAGE];
+                    const issues = await restoreIssues(createWorkspace({files, generatedImages: [{request: {...pvRequest, regionShape: madeAlong}, images: [{id: 2, name: "image_pv.fits"}]}]}));
+                    return {...session, backendService, made, issues};
+                }
+
+                test("is made along the line it was made along when the line has not changed", async () => {
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(madeAlong);
+
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).not.toHaveBeenCalled();
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 106}));
+                });
+
+                test("is made along the line it was made along, over a region that only the backend knows and that is removed after", async () => {
+                    const {requestPV, backendService, made, issues} = await restorePvMadeAlong(movedLine);
+
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, madeAlong);
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 500}));
+                    expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                    // A later save names the line of the workspace, and keeps the line it was made along.
+                    expect(made[0].generation?.request).toEqual(expect.objectContaining({regionId: 106, regionShape: madeAlong}));
+                });
+
+                test("is made along the line it was made along when the line was deleted", async () => {
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(undefined);
+
+                    expect(issues).toEqual([]);
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 500}));
+                    expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                });
+
+                test("is reported as failed when the backend does not add the line it was made along", async () => {
+                    const {requestPV, issues} = await restorePvMadeAlong(movedLine, Promise.resolve({success: false, message: "no region"}));
+
+                    expect(requestPV).not.toHaveBeenCalled();
+                    expect(issues).toEqual([expect.objectContaining({message: "Could not make the PV image of image.fits: the shape of the region it was made over could not be set up (no region)", outcome: WorkspaceIssueOutcome.Failed})]);
+                });
             });
 
             test("is reported as failed, and not offered in Recovery, when its line does not cross the image", async () => {

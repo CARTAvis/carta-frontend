@@ -53,6 +53,7 @@ import {
     type WorkspaceImageSource,
     type WorkspaceIssue,
     type WorkspacePvGeneratorWidgetConfig,
+    type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
 import {CatalogApiService, MirrorTimeoutError} from "services";
@@ -69,8 +70,8 @@ import {
     StreamingRowSource,
     type WorkspaceLoadingStep
 } from "stores";
-import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
-import {momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
+import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN, type RegionStore} from "stores/Frame";
+import {isRegionShape, isSameRegionShape, momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -1573,7 +1574,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Returns the failure when the backend could not make the images. The user can retry them.
      */
     private *makeImagesAgain(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {reason: string | undefined}, any> {
-        const {request, images} = generated;
+        const {request} = generated;
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
@@ -1595,12 +1596,69 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             return [];
         }
-        const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
-        if (regionId === undefined) {
+        const savedRegionId = typeof request.regionId === "number" ? request.regionId : undefined;
+        const restoredRegionId = savedRegionId !== undefined ? this.regionIdOf(request.sourceImageId, savedRegionId) : undefined;
+        // When the region was changed or deleted after the images were made, make them over the shape
+        // that the region had then. A region that only the backend knows has this shape.
+        const savedShape = isRegionShape(request.regionShape) ? request.regionShape : undefined;
+        const isShapeChanged = !!savedShape && !isSameRegionShape(restoredRegionId !== undefined ? source.getRegion(restoredRegionId) : undefined, savedShape);
+        if (restoredRegionId === undefined && !isShapeChanged) {
             const reason = "the region it is made over was not restored";
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
+        let shapeRegionId: number | undefined;
+        if (isShapeChanged && savedShape) {
+            try {
+                const ack = yield* awaited(this.appStore.backendService.setRegion(source.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
+                if (!ack.success || typeof ack.regionId !== "number") {
+                    throw new Error(ack.message || "the backend did not add the region");
+                }
+                shapeRegionId = ack.regionId;
+            } catch (err) {
+                const reason = `the shape of the region it was made over could not be set up (${reasonOf(err) ?? "unknown error"})`;
+                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
+                return [];
+            }
+            if (!this.isCurrent) {
+                this.appStore.backendService.removeRegion(shapeRegionId);
+                return [];
+            }
+        }
+        try {
+            const made = yield* this.makeImagesOver(generated, source, shapeRegionId ?? (restoredRegionId as number), isShapeChanged ? savedShape : undefined);
+            if (shapeRegionId !== undefined && Array.isArray(made)) {
+                // The images were made over a region that is removed below. They name the region of
+                // the workspace, and keep the shape, so that a later save makes them the same way.
+                made.forEach(frame => {
+                    const madeRequest = frame.generation?.request;
+                    if (madeRequest && madeRequest.type !== "hips") {
+                        madeRequest.regionId = restoredRegionId ?? savedRegionId ?? madeRequest.regionId;
+                        madeRequest.regionShape = savedShape;
+                    }
+                });
+            }
+            return made;
+        } finally {
+            if (shapeRegionId !== undefined) {
+                this.appStore.backendService.removeRegion(shapeRegionId);
+            }
+        }
+    }
+
+    /**
+     * Makes the images of a saved moment, PV or image fitting request over the region `regionId` of
+     * the image `source`.
+     *
+     * @param regionShape - the shape of the region, when the session does not know the region.
+     */
+    private *makeImagesOver(generated: WorkspaceGeneratedImages, source: FrameStore, regionId: number, regionShape: WorkspaceRegionShape | undefined): Generator<Promise<unknown>, FrameStore[] | {reason: string | undefined}, any> {
+        const {request, images} = generated;
+        if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
+            return [];
+        }
+        const subject = this.subjectOf(request);
+        const details = {label: capitalized(subject), imageIds: generated.images.map(image => image.id), causeImageId: request.sourceImageId};
 
         let outcome: FrameStore[] | "skipped" | undefined;
         let reason: string | undefined;
@@ -1672,7 +1730,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         } else {
             const message = pvMessageOf(request, source, regionId, true);
             const spectralRange = message?.spectralRange;
-            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined);
+            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined, regionShape);
             if (problem) {
                 this.reportProblem(subject, problem, details);
                 return [];

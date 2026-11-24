@@ -64,7 +64,7 @@ import {
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
 import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
-import {ImageRequestCancelledError, type ImageRequestOptions, momentProblemOf, pvProblemOf} from "stores/ImageGeneration/ImageGenerationRequests";
+import {ImageRequestCancelledError, type ImageRequestOptions, momentProblemOf, pvProblemOf, regionShapeOf} from "stores/ImageGeneration/ImageGenerationRequests";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -1699,7 +1699,8 @@ export class AppStore {
                     moments: message.moments ?? [],
                     channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
                     mask: message.mask ?? CARTA.MomentMask.None,
-                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0}
+                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0},
+                    regionShape: regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR)
                 };
                 const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
                 for (const [index, openFileAck] of ack.openFileAcks.entries()) {
@@ -1808,7 +1809,8 @@ export class AppStore {
                                 regionId: message.regionId ?? RegionIdType.NONE,
                                 width: message.width ?? 1,
                                 channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
-                                reverse: !!message.reverse
+                                reverse: !!message.reverse,
+                                regionShape: regionShapeOf(frame, message.regionId ?? RegionIdType.NONE)
                             }
                         };
                         pvImage = newPVImage;
@@ -1939,7 +1941,8 @@ export class AppStore {
                           initialValues: message.initialValues ?? [],
                           fixedParams: message.fixedParams ?? [],
                           offset: message.offset ?? 0,
-                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky
+                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky,
+                          regionShape: regionShapeOf(frame, message.regionId ?? 0)
                       }
                     : undefined;
                 this.imageFittingStore.setResultString(

@@ -365,6 +365,16 @@ export interface WorkspaceFile {
     };
 }
 
+/**
+ * The shape that a region had when an image was made over it, in the pixels of the image. A restore
+ * makes the image over this shape when the region was changed or deleted after the image was made.
+ */
+export interface WorkspaceRegionShape {
+    regionType: CARTA.RegionType;
+    controlPoints: Point2D[];
+    rotation: number;
+}
+
 /** A request for moment images. The request names its image and region by their workspace IDs. */
 export interface WorkspaceMomentRequest {
     type: "moment";
@@ -379,6 +389,8 @@ export interface WorkspaceMomentRequest {
     /** How the pixel range masks the cube. */
     mask: CARTA.MomentMask;
     pixelRange: {min: number; max: number};
+    /** The shape of the region when the moments were made. Left out for the whole image. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 /** A request for a PV image. The request names its image and cut by their workspace IDs. */
@@ -393,6 +405,8 @@ export interface WorkspacePvRequest {
     channelRange?: {min: number; max: number};
     /** Whether the position axis is drawn vertically. */
     reverse: boolean;
+    /** The shape of the line or polyline when the PV image was made. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 /** A HiPS query. It does not depend on any other data in the session. */
@@ -433,6 +447,8 @@ export interface WorkspaceFittingRequest {
     /** The initial background offset. */
     offset: number;
     solver: CARTA.FittingSolverType;
+    /** The shape of the region when it was fitted. Left out for the field of view and the whole image. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest | WorkspaceFittingRequest;

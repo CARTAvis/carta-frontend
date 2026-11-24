@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {comparer, reaction} from "mobx";
 
-import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D, type WorkspaceMomentRequest, type WorkspacePvRequest} from "models";
+import {MOMENT_TEXT, NONLINEAR_SPECTRAL_AXIS_MESSAGE, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D, type WorkspaceMomentRequest, type WorkspacePvRequest, type WorkspaceRegionShape} from "models";
 import {BackendService} from "services";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 
@@ -94,15 +94,16 @@ export function momentProblemOf(source: FrameStore, moments: CARTA.Moment[] | nu
  *
  * @param channelRange - the first and last channel, as channel indices. Leave it out to use all
  *                       channels.
+ * @param regionShape - the shape of the cut, when the session does not know the region.
  */
-export function pvProblemOf(source: FrameStore, regionId: number, channelRange?: {min: number; max: number}): string | undefined {
+export function pvProblemOf(source: FrameStore, regionId: number, channelRange?: {min: number; max: number}, regionShape?: Pick<RegionStore, "regionType" | "controlPoints">): string | undefined {
     if (source.isSpectralAxisNonlinear) {
         return NONLINEAR_SPECTRAL_AXIS_MESSAGE;
     }
     if (source.numChannels <= 1) {
         return "The image has only one channel";
     }
-    const region = source.getRegion(regionId);
+    const region = regionShape ?? source.getRegion(regionId);
     if (!region) {
         return `The image has no region ${regionId}`;
     }
@@ -272,4 +273,43 @@ export class ImageRequestCancelledError extends Error {
         super("The request was cancelled");
         this.name = "ImageRequestCancelledError";
     }
+}
+
+/**
+ * Returns the shape of a region of an image, to record with an image made over the region. Returns
+ * nothing for an ID that is not a region of its own, such as the whole image or the field of view.
+ */
+export function regionShapeOf(frame: FrameStore | undefined, regionId: number): WorkspaceRegionShape | undefined {
+    const region = regionId > 0 ? frame?.getRegion(regionId) : undefined;
+    return region ? {regionType: region.regionType, controlPoints: region.controlPoints.map(({x, y}) => ({x, y})), rotation: region.rotation} : undefined;
+}
+
+/** Returns whether a value is a region shape as a workspace saves it, with finite numbers. */
+export function isRegionShape(value: unknown): value is WorkspaceRegionShape {
+    const shape = value as WorkspaceRegionShape | undefined;
+    const isFiniteNumber = (n: unknown): n is number => typeof n === "number" && isFinite(n);
+    return (
+        !!shape &&
+        typeof shape === "object" &&
+        Number.isInteger(shape.regionType) &&
+        isFiniteNumber(shape.rotation) &&
+        Array.isArray(shape.controlPoints) &&
+        shape.controlPoints.length > 0 &&
+        shape.controlPoints.every(point => isFiniteNumber(point?.x) && isFiniteNumber(point?.y))
+    );
+}
+
+/** The largest difference, in pixels or degrees, that still counts as the same region shape. */
+const SAME_SHAPE_TOLERANCE = 1e-6;
+
+/** Returns whether a region has this shape. */
+export function isSameRegionShape(region: Pick<RegionStore, "regionType" | "controlPoints" | "rotation"> | undefined, shape: WorkspaceRegionShape): boolean {
+    const isClose = (a: number, b: number) => Math.abs(a - b) <= SAME_SHAPE_TOLERANCE * Math.max(1, Math.abs(a), Math.abs(b));
+    return (
+        !!region &&
+        region.regionType === shape.regionType &&
+        isClose(region.rotation, shape.rotation) &&
+        region.controlPoints.length === shape.controlPoints.length &&
+        region.controlPoints.every((point, index) => isClose(point.x, shape.controlPoints[index].x) && isClose(point.y, shape.controlPoints[index].y))
+    );
 }

@@ -16,6 +16,7 @@ import {
     type WorkspaceGenerationRequest,
     type WorkspaceImageSource,
     type WorkspaceIssue,
+    type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore, MirrorSiteStore} from "stores";
@@ -605,7 +606,15 @@ export class WorkspaceSnapshotter {
             return undefined;
         }
         if (request.type === "pv") {
-            return {type: "pv", sourceImageId, regionId: request.regionId, width: request.width, channelRange: request.channelRange && {...request.channelRange}, reverse: request.reverse};
+            return {
+                type: "pv",
+                sourceImageId,
+                regionId: request.regionId,
+                width: request.width,
+                channelRange: request.channelRange && {...request.channelRange},
+                reverse: request.reverse,
+                ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
+            };
         }
         if (request.type === "fitting") {
             return WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId);
@@ -619,8 +628,14 @@ export class WorkspaceSnapshotter {
             moments: moments.every(moment => moment !== undefined) ? (moments as CARTA.Moment[]) : [...request.moments],
             channelRange: {...request.channelRange},
             mask: request.mask,
-            pixelRange: {...request.pixelRange}
+            pixelRange: {...request.pixelRange},
+            ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
         };
+    }
+
+    /** Returns the shape of the region of a request as the workspace saves it, or no field when the request has none. */
+    private static regionShapeFieldOf(shape: WorkspaceRegionShape | undefined): {regionShape?: WorkspaceRegionShape} {
+        return shape ? {regionShape: {regionType: shape.regionType, controlPoints: shape.controlPoints.map(({x, y}) => ({x, y})), rotation: shape.rotation}} : {};
     }
 
     /**
@@ -643,7 +658,8 @@ export class WorkspaceSnapshotter {
             })),
             fixedParams: [...request.fixedParams],
             offset: request.offset,
-            solver: request.solver
+            solver: request.solver,
+            ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
         };
     }
 

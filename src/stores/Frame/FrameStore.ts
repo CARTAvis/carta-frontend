@@ -34,6 +34,7 @@ import {
     type TileCoordinate,
     Transform2D,
     type WCSPoint2D,
+    type WorkspaceRegionShape,
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
@@ -122,8 +123,10 @@ export type ImageGenerationRequest =
           channelRange: {min: number; max: number};
           mask: CARTA.MomentMask;
           pixelRange: {min: number; max: number};
+          /** The shape of the region when the images were made. Left out for the whole image. */
+          regionShape?: WorkspaceRegionShape;
       }
-    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean; regionShape?: WorkspaceRegionShape}
     | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties}
     | {
           type: "fitting";
@@ -136,6 +139,8 @@ export type ImageGenerationRequest =
           fixedParams: boolean[];
           offset: number;
           solver: CARTA.FittingSolverType;
+          /** The shape of the region when it was fitted. Left out for the field of view and the whole image. */
+          regionShape?: WorkspaceRegionShape;
       };
 
 /**

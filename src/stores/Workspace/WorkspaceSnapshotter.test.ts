@@ -825,6 +825,30 @@ describe("WorkspaceSnapshotter", () => {
                 images: [expect.objectContaining({id: 2, name: "image0_pv.fits"})]
             });
         });
+
+        test("saves the shape that the cut had when the PV image was made, as a copy", () => {
+            const {appStore, frame} = createSession();
+            frame.regionSet = {regions: [{regionId: 4, regionType: CARTA.RegionType.LINE, controlPoints: [], isTemporary: false}], focusedRegion: undefined} as never;
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 3);
+            const regionShape = {
+                regionType: CARTA.RegionType.LINE,
+                controlPoints: [
+                    {x: 10, y: 10},
+                    {x: 90, y: 90}
+                ],
+                rotation: 45
+            };
+            const pvImage = createFrame(3, {
+                frameInfo: {fileId: 3, directory: "", hdu: "", fileInfo: {name: "image0_pv.fits"}, generated: true},
+                generation: {request: {type: "pv", source: frame, regionId: 4, width: 3, channelRange: undefined, reverse: true, regionShape}}
+            });
+            appStore.frames.push(pvImage as never);
+
+            const saved = new WorkspaceSnapshotter().capture().workspace.generatedImages?.[0].request;
+
+            expect(saved).toEqual(expect.objectContaining({regionId: 4, regionShape}));
+            expect((saved as {regionShape: typeof regionShape}).regionShape.controlPoints).not.toBe(regionShape.controlPoints);
+        });
     });
 
     test("saves an image fitting with the model and residual images it made, and an initial value that the backend generates as null", () => {
