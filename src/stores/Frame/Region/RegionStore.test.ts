@@ -105,7 +105,7 @@ test("sizing a click-created annulus preserves its initial center", () => {
     const annulus = MakeRegion(CARTA.RegionType.ANNULUS, [center, {x: 0, y: 0}, {x: 0, y: 0}]);
     expect(annulus.isValid).toBe(false);
     annulus.setSize({x: 10, y: 20});
-    annulus.setInnerSize({x: 5, y: 10});
+    expect(annulus.innerSize).toEqual({x: 5, y: 10});
     expect(annulus.isValid).toBe(true);
     expect(annulus.center).toEqual(center);
     expect(annulus.controlPoints[0]).toEqual(center);

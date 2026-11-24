@@ -11,7 +11,7 @@ import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type FrameView, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
-import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, subtract2D, transformPoint} from "utilities";
 import {setupKonvaPopoutDragListeners} from "utilities/konva/popoutDrag";
 import {isAnnulusRegionType} from "utilities/region/region";
 
@@ -318,9 +318,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     const zoomX = isAnnulusRegionType(this.creatingRegion.regionType) ? zoom.y : zoom.x;
                     const zoomY = isAnnulusRegionType(this.creatingRegion.regionType) ? zoom.x : zoom.y;
                     this.creatingRegion.setSize({x: (size.x * sizeFactor) / zoomX, y: (size.y * sizeFactor) / zoomY});
-                    if (isAnnulusRegionType(this.creatingRegion.regionType)) {
-                        this.creatingRegion.setInnerSize(scale2D(this.creatingRegion.size, 0.5));
-                    }
                 }
                 break;
             case CARTA.RegionType.ANNCOMPASS:

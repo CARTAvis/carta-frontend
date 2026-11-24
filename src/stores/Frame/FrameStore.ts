@@ -55,6 +55,7 @@ import {
     formattedFrequency,
     frequencyFromVelocity,
     getAngleInRad,
+    getAnnulusWcsAxisScale,
     getDefaultWcsFormats,
     getFormattedWCSPoint,
     getHeaderNumericValue,
@@ -2603,14 +2604,7 @@ export class FrameStore {
     }
 
     public getAnnulusWcsAxisScale(rotation: number): Point2D {
-        const scale = this.pixelUnitSizeArcsec;
-        if (!scale) {
-            return {x: NaN, y: NaN};
-        }
-        const angle = (rotation * Math.PI) / 180;
-        const sine = Math.sin(angle);
-        const cosine = Math.cos(angle);
-        return {x: Math.hypot(scale.x * sine, scale.y * cosine), y: Math.hypot(scale.x * cosine, scale.y * sine)};
+        return getAnnulusWcsAxisScale(this.pixelUnitSizeArcsec, rotation);
     }
 
     public getAnnulusWcsSizeInArcsec(size: Point2D, rotation: number): Point2D {

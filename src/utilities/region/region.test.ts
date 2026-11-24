@@ -30,6 +30,7 @@ import {
     getPasteShiftDelta,
     getRegionSelectionPoints,
     getRegionSelectionSegments,
+    getTransformedAnnulusProperties,
     getTransformedRegionProperties,
     offsetPointsToAvoidCollision,
     PASTE_OFFSET
@@ -90,6 +91,18 @@ describe("region transform utilities", () => {
         expect(result.controlPoints[2].x).toBeCloseTo(1.5);
         expect(result.controlPoints[2].y).toBeCloseTo(3.5);
         expect(result.rotation % 180).toBeCloseTo(150);
+    });
+
+    test("annulus mappings retain a very thin ellipse and reject a collapsed mapping", () => {
+        const region = MakeRegion({regionType: CARTA.RegionType.ANNULUS, size: {x: 1e-9, y: 7}, innerSize: {x: 5e-10, y: 3.5}});
+        const mapping = {} as any;
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({...point}));
+        const result = getTransformedAnnulusProperties(region, mapping);
+        expect(result.controlPoints[1]).toEqual(region.size);
+        expect(result.controlPoints[2]).toEqual(region.innerSize);
+
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({x: point.x, y: 0}));
+        expect(getTransformedAnnulusProperties(region, mapping)).toBeNull();
     });
 
     test("treats ANNCOMPASS as a center-plus-size region when transforming", () => {

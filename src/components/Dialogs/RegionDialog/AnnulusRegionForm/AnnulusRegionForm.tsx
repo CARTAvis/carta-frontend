@@ -5,47 +5,27 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {IsValidWcsPoint, Point2D} from "models";
+import {IsValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {isAnnulusRegionType} from "utilities/region/region";
 
-import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
-
 @observer
 export class AnnulusRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private static readonly RegionPixelEps = 1.0e-3;
 
-    get outerSizeWCS(): WCSPoint2D | null {
-        const region = this.props.region;
-        if (!region || region.controlPoints.length < 3 || !region.size || !this.props.frame) {
+    private formatWcsSize(size: Point2D): WCSPoint2D | null {
+        const {region, frame, wcsInfo} = this.props;
+        if (!wcsInfo) {
             return null;
         }
-        const size = region.size;
-        const wcsSize = this.props.frame.getAnnulusWcsSizeInArcsec(size, region.rotation);
+        const wcsSize = frame.getAnnulusWcsSizeInArcsec(size, region.rotation);
         if (IsValidWcsPoint(wcsSize)) {
-            const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
-            const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
-            if (formattedX && formattedY) {
-                return {x: formattedX, y: formattedY};
-            }
-        }
-        return null;
-    }
-
-    get innerSizeWCS(): WCSPoint2D | null {
-        const region = this.props.region;
-        if (!region || region.controlPoints.length < 3 || !region.innerSize || !this.props.frame) {
-            return null;
-        }
-        const size = region.innerSize;
-        const wcsSize = this.props.frame.getAnnulusWcsSizeInArcsec(size, region.rotation);
-        if (IsValidWcsPoint(wcsSize)) {
-            const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
-            const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
-            if (formattedX && formattedY) {
-                return {x: formattedX, y: formattedY};
+            const x = formattedArcsec(wcsSize.x, WCS_PRECISION);
+            const y = formattedArcsec(wcsSize.y, WCS_PRECISION);
+            if (x && y) {
+                return {x, y};
             }
         }
         return null;
@@ -105,93 +85,30 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         return false;
     };
 
-    private handleOuterMajorAxisChange = (value: number): boolean => {
-        const existingValue = this.props.region.size.x;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
-            return true;
+    private handleAxisChange(value: number, axis: keyof Point2D, isInner: boolean): boolean {
+        const region = this.props.region;
+        const size = isInner ? region.innerSize : region.size;
+        if (!isFinite(value) || value <= 0 || closeTo(value, size[axis], AnnulusRegionForm.RegionPixelEps)) {
+            return false;
         }
-        return false;
-    };
 
-    private handleOuterMajorAxisWCSChange = (wcsString: string): boolean => {
+        const newSize = {...size, [axis]: value};
+        if (isInner) {
+            region.setInnerSize(newSize, false, axis);
+        } else {
+            region.setSize(newSize);
+        }
+        return true;
+    }
+
+    private handleWcsAxisChange(wcsString: string, axis: keyof Point2D, isInner: boolean): boolean {
         const arcsecValue = getValueFromArcsecString(wcsString);
-        if (arcsecValue !== null) {
-            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).x;
-            const existingValue = this.props.region.size.x;
-            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-                this.props.region.setSize({x: value, y: this.props.region.size.y});
-                return true;
-            }
+        if (arcsecValue === null) {
+            return false;
         }
-        return false;
-    };
-
-    private handleOuterMinorAxisChange = (value: number): boolean => {
-        const existingValue = this.props.region.size.y;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
-            return true;
-        }
-        return false;
-    };
-
-    private handleOuterMinorAxisWCSChange = (wcsString: string): boolean => {
-        const arcsecValue = getValueFromArcsecString(wcsString);
-        if (arcsecValue !== null) {
-            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).y;
-            const existingValue = this.props.region.size.y;
-            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-                this.props.region.setSize({x: this.props.region.size.x, y: value});
-                return true;
-            }
-        }
-        return false;
-    };
-
-    private handleInnerMajorAxisChange = (value: number): boolean => {
-        const existingValue = this.props.region.innerSize.x;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-            this.props.region.setInnerSize({x: value, y: this.props.region.innerSize.y});
-            return true;
-        }
-        return false;
-    };
-
-    private handleInnerMajorAxisWCSChange = (wcsString: string): boolean => {
-        const arcsecValue = getValueFromArcsecString(wcsString);
-        if (arcsecValue !== null) {
-            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).x;
-            const existingValue = this.props.region.innerSize.x;
-            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-                this.props.region.setInnerSize({x: value, y: this.props.region.innerSize.y});
-                return true;
-            }
-        }
-        return false;
-    };
-
-    private handleInnerMinorAxisChange = (value: number): boolean => {
-        const existingValue = this.props.region.innerSize.y;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-            this.props.region.setInnerSize({x: this.props.region.innerSize.x, y: value});
-            return true;
-        }
-        return false;
-    };
-
-    private handleInnerMinorAxisWCSChange = (wcsString: string): boolean => {
-        const arcsecValue = getValueFromArcsecString(wcsString);
-        if (arcsecValue !== null) {
-            const value = arcsecValue / this.props.frame.getAnnulusWcsAxisScale(this.props.region.rotation).y;
-            const existingValue = this.props.region.innerSize.y;
-            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, AnnulusRegionForm.RegionPixelEps)) {
-                this.props.region.setInnerSize({x: this.props.region.innerSize.x, y: value});
-                return true;
-            }
-        }
-        return false;
-    };
+        const {frame, region} = this.props;
+        return this.handleAxisChange(arcsecValue / frame.getAnnulusWcsAxisScale(region.rotation)[axis], axis, isInner);
+    }
 
     private handleRotationChange = (value: number): boolean => {
         const existingValue = this.props.region.rotation;
@@ -245,17 +162,17 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
 
         const outerSize = region.size;
-        const outerSizeWCS = this.outerSizeWCS;
+        const outerSizeWCS = this.formatWcsSize(outerSize);
         const outerWidthInput = (
             <CoordNumericInput
                 data-testid="annulus-outer-major-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={outerSize.x}
-                onChange={this.handleOuterMajorAxisChange}
+                onChange={value => this.handleAxisChange(value, "x", false)}
                 valueWcs={outerSizeWCS?.x || null}
-                onChangeWcs={this.handleOuterMajorAxisWCSChange}
-                wcsDisabled={!this.props.wcsInfo}
+                onChangeWcs={value => this.handleWcsAxisChange(value, "x", false)}
+                wcsDisabled={!outerSizeWCS}
                 customPlaceholder="Semi-major"
             />
         );
@@ -265,10 +182,10 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={outerSize.y}
-                onChange={this.handleOuterMinorAxisChange}
+                onChange={value => this.handleAxisChange(value, "y", false)}
                 valueWcs={outerSizeWCS?.y || null}
-                onChangeWcs={this.handleOuterMinorAxisWCSChange}
-                wcsDisabled={!this.props.wcsInfo}
+                onChangeWcs={value => this.handleWcsAxisChange(value, "y", false)}
+                wcsDisabled={!outerSizeWCS}
                 customPlaceholder="Semi-minor"
             />
         );
@@ -278,17 +195,17 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 : `Image (Semi-major, Semi-minor): ${Point2D.toString(outerSize, "px", 3)}`;
 
         const innerSize = region.innerSize;
-        const innerSizeWCS = this.innerSizeWCS;
+        const innerSizeWCS = this.formatWcsSize(innerSize);
         const innerWidthInput = (
             <CoordNumericInput
                 data-testid="annulus-inner-major-input"
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={innerSize.x}
-                onChange={this.handleInnerMajorAxisChange}
+                onChange={value => this.handleAxisChange(value, "x", true)}
                 valueWcs={innerSizeWCS?.x || null}
-                onChangeWcs={this.handleInnerMajorAxisWCSChange}
-                wcsDisabled={!this.props.wcsInfo}
+                onChangeWcs={value => this.handleWcsAxisChange(value, "x", true)}
+                wcsDisabled={!innerSizeWCS}
                 customPlaceholder="Semi-major"
             />
         );
@@ -298,10 +215,10 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 coord={region.coordinate}
                 inputType={InputType.Size}
                 value={innerSize.y}
-                onChange={this.handleInnerMinorAxisChange}
+                onChange={value => this.handleAxisChange(value, "y", true)}
                 valueWcs={innerSizeWCS?.y || null}
-                onChangeWcs={this.handleInnerMinorAxisWCSChange}
-                wcsDisabled={!this.props.wcsInfo}
+                onChangeWcs={value => this.handleWcsAxisChange(value, "y", true)}
+                wcsDisabled={!innerSizeWCS}
                 customPlaceholder="Semi-minor"
             />
         );

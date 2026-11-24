@@ -12,6 +12,7 @@ import {type FrameStore, type RegionStore, type TextAnnotationStore} from "store
 import {
     add2D,
     angle2D,
+    getAnnulusInnerSize,
     getResizedSimpleShapeFromCenter,
     getResizedSimpleShapeFromCorner,
     getSimpleShapeAnchorName,
@@ -22,7 +23,6 @@ import {
     multiply2D,
     rotate2D,
     scale2D,
-    SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX,
     subtract2D,
     transformPoint,
     usesSimpleShapeBoxSize
@@ -201,7 +201,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         const delta = subtract2D(newAnchorPoint, region.center);
         const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
-        region.setInnerSize({x: Math.abs(localDelta.y), y: region.innerSize.y}, false, "x");
+        region.setInnerSize({x: localDelta.y, y: region.innerSize.y}, false, "x");
     };
 
     private getBoundedInnerRadiusAnchorPosition = (position: Point2D): Point2D => {
@@ -213,12 +213,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
         const delta = subtract2D(imagePosition, region.center);
         const localDelta = rotate2D(delta, (-region.rotation * Math.PI) / 180.0);
-        const boundedY = Math.sign(localDelta.y || 1) * Math.min(Math.abs(localDelta.y), region.size.x);
-        let boundedPosition = add2D(region.center, rotate2D({x: 0, y: boundedY}, (region.rotation * Math.PI) / 180.0));
-        if (frame.spatialReference && frame.spatialTransformAST) {
-            boundedPosition = transformPoint(frame.spatialTransformAST, boundedPosition, false);
-        }
-        const boundedCanvasPosition = transformedImageToCanvasPos(boundedPosition, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+        const boundedSize = getAnnulusInnerSize(region.size, {x: localDelta.y, y: region.innerSize.y}, "x");
+        const boundedCanvasPosition = this.getAnchorCanvasPosition(region, {x: 0, y: boundedSize.x});
         return adjustPosToUnityStage(boundedCanvasPosition, this.props.stageRef.current);
     };
 
@@ -263,6 +259,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 return "all-scroll";
             case "top":
             case "bottom":
+            case "inner-radius":
                 anchorAngle = 0;
                 break;
             case "left":
@@ -502,8 +499,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 posCanvas = this.getAnchorCanvasPosition(region, config.offset);
             }
 
-            const isSelectedSimpleShapeAnchor =
-                region.hasSelectedPoint && (config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex) || (config.anchor === "inner-radius" && region.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX));
+            const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex);
             return (
                 <Anchor
                     key={config.anchor}

@@ -19,6 +19,11 @@ test("preserves formatter precision and normalization for sexagesimal coordinate
     expect(WCSPoint2D.toString(point, 0)).toBe("(23:59:59.9996, -12:34:56.789)");
 });
 
+test("preserves textual coordinates with fractional seconds", () => {
+    const point = {x: "12h 03m 09.1234", y: "-34d 12m 05.6789"};
+    expect(WCSPoint2D.toString(point, 3)).toBe("(12h 03m 09.1234, -34d 12m 05.6789)");
+});
+
 test("preserves decimal coordinate precision when using the WCS formatter output", () => {
     expect(WCSPoint2D.toString({x: "123.456789 deg", y: "-12.345678 deg"})).toBe("(123.456789 deg, -12.345678 deg)");
 });

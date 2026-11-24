@@ -22,13 +22,7 @@ export class WCSPoint2D {
             const unitMatch = coordinate.match(/(\s*(?:deg|["']))$/i);
             const unit = unitMatch?.[1] ?? "";
             const value = unit ? coordinate.slice(0, -unit.length) : coordinate;
-            const match = value.match(/^(.*\.)(\d+)$/);
-            if (!match) {
-                return coordinate;
-            }
-
-            if (value.includes(":")) {
-                // Preserve the WCS formatter's precision and coordinate normalization.
+            if (!/^[+-]?\d*\.\d+$/.test(value.trim())) {
                 return coordinate;
             }
             return `${toFixed(Number(value), decimals)}${unit}`;

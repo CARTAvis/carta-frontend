@@ -532,7 +532,7 @@ export class RegionStore {
         let approximation = this.annulusApproximationMap.get(astTransform);
         if (!approximation) {
             approximation = {
-                outer: getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TargetVertexCount),
+                outer: this.getRegionApproximation(astTransform),
                 inner: getApproximateEllipsePoints(astTransform, this.center, this.innerSize.y, this.innerSize.x, this.rotation, RegionStore.TargetVertexCount)
             };
             this.annulusApproximationMap.set(astTransform, approximation);

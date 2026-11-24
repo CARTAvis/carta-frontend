@@ -449,15 +449,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
-        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, regionSet.regions.length - 1);
-        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, regionSet.regions.length - 1);
+        const regions = this.validRegions;
+        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, Math.max(0, regions.length - 1));
+        const lastVisibleRegion = Math.min(this.lastVisibleRow, regions.length - 1);
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
-            const region = regionSet.regions[i];
+            const region = regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const _isRegionLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
-            const _size = region.size.x + region.size.y;
+            const _size = region.size;
             const _innerSize = region.innerSize;
             const _opacity = region.opacity;
             /* eslint-enable @typescript-eslint/no-unused-vars */

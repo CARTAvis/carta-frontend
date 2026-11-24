@@ -41,6 +41,17 @@ export function hasValidAnnulusShape(outerSize: Point2D, innerSize: Point2D): bo
     const innerRatio = innerSize.x / innerSize.y;
     return Math.abs(outerRatio - innerRatio) <= ANNULUS_SHAPE_TOLERANCE * Math.max(outerRatio, innerRatio);
 }
+
+export function getAnnulusWcsAxisScale(pixelScale: Point2D | null, rotation: number): Point2D {
+    if (!pixelScale) {
+        return {x: NaN, y: NaN};
+    }
+    const angle = (rotation * Math.PI) / 180;
+    const sine = Math.sin(angle);
+    const cosine = Math.cos(angle);
+    return {x: Math.hypot(pixelScale.x * sine, pixelScale.y * cosine), y: Math.hypot(pixelScale.x * cosine, pixelScale.y * sine)};
+}
+
 export const PASTE_OFFSET = 20;
 
 /**
@@ -72,6 +83,12 @@ export interface RegionTransformSource {
 
 /** Transform both annulus axes so rotations, reflections, and unequal scales retain the ellipse geometry. */
 export function getTransformedAnnulusProperties(region: RegionTransformSource, spatialTransformAST: AST.Mapping, isForward = false): {controlPoints: Point2D[]; rotation: number} | null {
+    const innerSize = region.innerSize ?? region.controlPoints[2];
+    const innerRatio = innerSize ? innerSize.x / region.size.x : NaN;
+    if (!(innerRatio > 0 && innerRatio < 1)) {
+        return null;
+    }
+
     const angle = (region.rotation * Math.PI) / 180;
     const firstDirection = {x: -Math.sin(angle), y: Math.cos(angle)};
     const secondDirection = {x: Math.cos(angle), y: Math.sin(angle)};
@@ -89,7 +106,12 @@ export function getTransformedAnnulusProperties(region: RegionTransformSource, s
     const xy = firstAxis.x * firstAxis.y + secondAxis.x * secondAxis.y;
     const difference = Math.hypot(xx - yy, 2 * xy);
     const major = Math.sqrt((xx + yy + difference) / 2);
-    const minor = Math.sqrt(Math.max(0, (xx + yy - difference) / 2));
+    // The product of the principal radii is the absolute determinant of the transformed axes.
+    // Computing the smaller radius from that product avoids subtracting nearly equal eigenvalue terms.
+    const minor = Math.abs(firstAxis.x * secondAxis.y - firstAxis.y * secondAxis.x) / major;
+    if (!(minor > 0) || !Number.isFinite(minor) || !Number.isFinite(major)) {
+        return null;
+    }
     const isFirstMajor = region.size.x > region.size.y;
     const size = isFirstMajor ? {x: major, y: minor} : {x: minor, y: major};
     let rotation = ((Math.atan2(2 * xy, xx - yy) * 90) / Math.PI - (isFirstMajor ? 90 : 0) + 360) % 360;
@@ -102,7 +124,6 @@ export function getTransformedAnnulusProperties(region: RegionTransformSource, s
             rotation = (rotation + 180) % 360;
         }
     }
-    const innerRatio = region.innerSize ? region.innerSize.x / region.size.x : 1;
     return {controlPoints: [center, size, scale2D(size, innerRatio)], rotation};
 }
 
@@ -228,11 +249,7 @@ export function getRegionWcsProperties(regionType: CARTA.RegionType, controlPoin
             return `ellipse(wcs:${system})[[${center}], [${formatSize(controlPoints[SIZE_POINT_INDEX])}], ${toFixed(rotation, 6)}deg]`;
         case CARTA.RegionType.ANNULUS:
         case CARTA.RegionType.ANNANNULUS: {
-            const angle = (rotation * Math.PI) / 180;
-            const sine = Math.sin(angle);
-            const cosine = Math.cos(angle);
-            const pixelScale = context.pixelUnitSizeArcsec;
-            const axisScale = pixelScale ? {x: Math.hypot(pixelScale.x * sine, pixelScale.y * cosine), y: Math.hypot(pixelScale.x * cosine, pixelScale.y * sine)} : null;
+            const axisScale = getAnnulusWcsAxisScale(context.pixelUnitSizeArcsec, rotation);
             return `annulus(wcs:${system})[[${center}], [${formatSize(controlPoints[2], axisScale)}], [${formatSize(controlPoints[SIZE_POINT_INDEX], axisScale)}], ${toFixed(rotation, 6)}deg]`;
         }
         case CARTA.RegionType.POLYGON:

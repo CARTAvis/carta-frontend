@@ -23,6 +23,25 @@ const ANNULUS_ANCHORS: Array<[string, {x: number; y: number}]> = [
     ["bottom-right", {x: 6, y: -3}]
 ];
 
+test("keeps the inner resize handle between the center and outer radius", () => {
+    const region = {center: {x: 20, y: 20}, size: {x: 3, y: 6}, innerSize: {x: 1.5, y: 3}, rotation: 0};
+    const view = {xMin: 0, xMax: 100, yMin: 0, yMax: 100};
+    const component = new SimpleShapeRegionComponent({
+        region,
+        frame: {requiredFrameView: view, unitFrameView: view},
+        layerWidth: 100,
+        layerHeight: 100,
+        stageRef: {current: {getPosition: () => ({x: 0, y: 0}), scaleX: () => 1, scaleY: () => 1}}
+    } as any);
+    const pastCenter = (component as any).getBoundedInnerRadiusAnchorPosition({x: 30, y: 90});
+    expect(pastCenter.x).toBe(20);
+    expect(pastCenter.y).toBeCloseTo(79.999, 6);
+
+    const pastOuterRadius = (component as any).getBoundedInnerRadiusAnchorPosition({x: 30, y: 70});
+    expect(pastOuterRadius.x).toBe(20);
+    expect(pastOuterRadius.y).toBeCloseTo(77.003, 6);
+});
+
 test.each(ANNULUS_ANCHORS)("keeps the annulus %s resize handle on its projected anchor", (anchor, offset) => {
     for (const regionType of [CARTA.RegionType.ANNULUS, CARTA.RegionType.ANNANNULUS]) {
         for (const aspectRatio of [0.5, 2]) {
