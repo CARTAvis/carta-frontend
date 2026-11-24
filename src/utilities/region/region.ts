@@ -509,7 +509,7 @@ export function getRegionSelectionSegments(region: RegionStore, points: Point2D[
         return getPathSegments(points, isClosed);
     }
 
-    if (region.isSimpleShapeRegion || isAnnulusRegionType(region.regionType)) {
+    if (region.isSimpleShapeRegion) {
         return getPathSegments(points, true);
     }
 

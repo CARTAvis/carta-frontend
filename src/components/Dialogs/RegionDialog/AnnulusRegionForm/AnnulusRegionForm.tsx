@@ -8,7 +8,7 @@ import {CoordinateMode, InputType} from "enums";
 import {IsValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+import {closeTo, formattedArcsec, getAnnulusInnerSize, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, MIN_EDITED_REGION_DIMENSION} from "utilities";
 import {isAnnulusRegionType} from "utilities/region/region";
 
 @observer
@@ -86,13 +86,18 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
     };
 
     private handleAxisChange(value: number, axis: keyof Point2D, isInner: boolean): boolean {
-        const region = this.props.region;
-        const size = isInner ? region.innerSize : region.size;
-        if (!isFinite(value) || value <= 0 || closeTo(value, size[axis], AnnulusRegionForm.RegionPixelEps)) {
+        if (!isFinite(value) || value <= 0) {
             return false;
         }
 
+        const region = this.props.region;
+        const size = isInner ? region.innerSize : region.size;
         const newSize = {...size, [axis]: value};
+        const clampedValue = isInner ? getAnnulusInnerSize(region.size, newSize, axis)[axis] : Math.max(MIN_EDITED_REGION_DIMENSION * 2, value);
+        if (closeTo(clampedValue, size[axis], AnnulusRegionForm.RegionPixelEps)) {
+            return false;
+        }
+
         if (isInner) {
             region.setInnerSize(newSize, false, axis);
         } else {
@@ -142,7 +147,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x || null}
+                valueWcs={centerWCSPoint?.x ?? null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -154,7 +159,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y || null}
+                valueWcs={centerWCSPoint?.y ?? null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -170,7 +175,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.Size}
                 value={outerSize.x}
                 onChange={value => this.handleAxisChange(value, "x", false)}
-                valueWcs={outerSizeWCS?.x || null}
+                valueWcs={outerSizeWCS?.x ?? null}
                 onChangeWcs={value => this.handleWcsAxisChange(value, "x", false)}
                 wcsDisabled={!outerSizeWCS}
                 customPlaceholder="Semi-major"
@@ -183,7 +188,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.Size}
                 value={outerSize.y}
                 onChange={value => this.handleAxisChange(value, "y", false)}
-                valueWcs={outerSizeWCS?.y || null}
+                valueWcs={outerSizeWCS?.y ?? null}
                 onChangeWcs={value => this.handleWcsAxisChange(value, "y", false)}
                 wcsDisabled={!outerSizeWCS}
                 customPlaceholder="Semi-minor"
@@ -203,7 +208,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.Size}
                 value={innerSize.x}
                 onChange={value => this.handleAxisChange(value, "x", true)}
-                valueWcs={innerSizeWCS?.x || null}
+                valueWcs={innerSizeWCS?.x ?? null}
                 onChangeWcs={value => this.handleWcsAxisChange(value, "x", true)}
                 wcsDisabled={!innerSizeWCS}
                 customPlaceholder="Semi-major"
@@ -216,7 +221,7 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
                 inputType={InputType.Size}
                 value={innerSize.y}
                 onChange={value => this.handleAxisChange(value, "y", true)}
-                valueWcs={innerSizeWCS?.y || null}
+                valueWcs={innerSizeWCS?.y ?? null}
                 onChangeWcs={value => this.handleWcsAxisChange(value, "y", true)}
                 wcsDisabled={!innerSizeWCS}
                 customPlaceholder="Semi-minor"

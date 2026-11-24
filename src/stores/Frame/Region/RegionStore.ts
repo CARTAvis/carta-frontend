@@ -46,7 +46,15 @@ export const SIZE_POINT_INDEX = 1;
 // when selecting individual control points is intentionally unsupported.
 const POINT_SELECTION_UNSUPPORTED_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POINT, CARTA.RegionType.ANNPOINT]);
 
-const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.RECTANGLE, CARTA.RegionType.ANNRECTANGLE, CARTA.RegionType.ELLIPSE, CARTA.RegionType.ANNELLIPSE, CARTA.RegionType.ANNTEXT]);
+const SIMPLE_SHAPE_REGION_TYPES = new Set<CARTA.RegionType>([
+    CARTA.RegionType.RECTANGLE,
+    CARTA.RegionType.ANNRECTANGLE,
+    CARTA.RegionType.ELLIPSE,
+    CARTA.RegionType.ANNELLIPSE,
+    CARTA.RegionType.ANNULUS,
+    CARTA.RegionType.ANNANNULUS,
+    CARTA.RegionType.ANNTEXT
+]);
 const LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR, CARTA.RegionType.ANNRULER]);
 const ROTATION_SELECTABLE_LINE_LIKE_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.LINE, CARTA.RegionType.ANNLINE, CARTA.RegionType.ANNVECTOR]);
 const POLYGONAL_REGION_TYPES = new Set<CARTA.RegionType>([CARTA.RegionType.POLYGON, CARTA.RegionType.POLYLINE, CARTA.RegionType.ANNPOLYGON, CARTA.RegionType.ANNPOLYLINE]);
@@ -436,10 +444,7 @@ export class RegionStore {
     @computed get selectablePointCount(): number {
         const hasSquarePixels = !!this.activeFrame?.hasSquarePixels;
         if (this.isSimpleShapeRegion) {
-            return hasSquarePixels ? 9 : 8;
-        }
-        if (isAnnulusRegionType(this.regionType)) {
-            return hasSquarePixels ? 10 : 9;
+            return (hasSquarePixels ? 9 : 8) + (isAnnulusRegionType(this.regionType) ? 1 : 0);
         }
         if (this.isRotationSelectableLineLikeRegion) {
             return this.controlPoints.length + (hasSquarePixels ? 1 : 0);
@@ -451,7 +456,7 @@ export class RegionStore {
     }
 
     @computed get selectablePointIndices(): number[] {
-        if (this.isSimpleShapeRegion || isAnnulusRegionType(this.regionType)) {
+        if (this.isSimpleShapeRegion) {
             return getSimpleShapePointSelectionOrder(!!this.activeFrame?.hasSquarePixels, isAnnulusRegionType(this.regionType));
         }
         return Array.from({length: this.selectablePointCount}, (_, index) => index);
@@ -482,7 +487,7 @@ export class RegionStore {
     }
 
     @computed get rotationPointIndex(): number {
-        if (this.isSimpleShapeRegion || isAnnulusRegionType(this.regionType)) {
+        if (this.isSimpleShapeRegion) {
             return SIMPLE_SHAPE_ROTATION_POINT_INDEX;
         }
         if (this.isRotationSelectableLineLikeRegion) {
@@ -651,8 +656,7 @@ export class RegionStore {
             const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
             this.setControlPoints([newStart, newEnd], shouldSkipUpdate);
         } else if (isAnnulusRegionType(this.regionType) && this.controlPoints.length >= 3) {
-            const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-            this.setAnnulusGeometry(this.controlPoints[CENTER_POINT_INDEX], p, ratio, shouldSkipUpdate);
+            this.setAnnulusGeometry(this.controlPoints[CENTER_POINT_INDEX], p, undefined, shouldSkipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, shouldSkipUpdate);
         }
@@ -667,7 +671,7 @@ export class RegionStore {
         }
     };
 
-    @action setAnnulusGeometry = (center: Point2D, outerSize: Point2D, innerRatio: number, shouldSkipUpdate = false) => {
+    @action setAnnulusGeometry = (center: Point2D, outerSize: Point2D, innerRatio: number = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5, shouldSkipUpdate = false) => {
         if (isAnnulusRegionType(this.regionType) && this.controlPoints.length >= 3) {
             const size = {
                 x: Math.max(MIN_EDITED_REGION_DIMENSION * 2, Math.abs(outerSize.x)),
@@ -888,7 +892,7 @@ export class RegionStore {
         if (!Number.isInteger(index)) {
             return false;
         }
-        if (this.isSimpleShapeRegion || isAnnulusRegionType(this.regionType)) {
+        if (this.isSimpleShapeRegion) {
             return this.selectablePointIndices.includes(index);
         }
         return index >= 0 && index < this.selectablePointCount;
@@ -918,7 +922,7 @@ export class RegionStore {
             return;
         }
 
-        if (this.isSimpleShapeRegion || isAnnulusRegionType(this.regionType)) {
+        if (this.isSimpleShapeRegion) {
             this.cycleSimpleShapePointSelection(direction);
             return;
         }
@@ -957,12 +961,7 @@ export class RegionStore {
         }
 
         if (this.isSimpleShapeRegion) {
-            this.moveSelectedSimpleShapeSide(deltaX, deltaY);
-            return;
-        }
-
-        if (isAnnulusRegionType(this.regionType)) {
-            if (this.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX) {
+            if (isAnnulusRegionType(this.regionType) && this.selectedPointIndex === SIMPLE_SHAPE_INNER_RADIUS_POINT_INDEX) {
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const localDelta = rotate2D({x: deltaX, y: deltaY}, -rotation);
                 const newInnerX = this.innerSize.x + localDelta.y;
@@ -999,8 +998,7 @@ export class RegionStore {
         });
         if (edit) {
             if (isAnnulusRegionType(this.regionType)) {
-                const ratio = this.size.y > 0 ? this.innerSize.y / this.size.y : 0.5;
-                this.setAnnulusGeometry(edit.center, edit.size, ratio);
+                this.setAnnulusGeometry(edit.center, edit.size);
             } else {
                 this.setControlPoints([edit.center, edit.size]);
             }
