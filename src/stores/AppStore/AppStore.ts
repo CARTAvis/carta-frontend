@@ -3248,6 +3248,16 @@ export class AppStore {
             return "Cannot save workspace while an image view is popped out. Please dock it first.";
         }
 
+        // During an animation the channel, the Stokes or the image changes all the time, so the
+        // workspace would keep one frame of the animation that the user did not choose.
+        if (this.animatorStore?.isAnimationActive) {
+            // The Stop button of the animator is disabled while the channel map mode is on.
+            if (this.channelMapStore?.isChannelMapEnabled) {
+                return "Cannot save workspace while an animation is playing. Please turn off the channel map mode and stop the animation first.";
+            }
+            return "Cannot save workspace while an animation is playing. Please stop it first.";
+        }
+
         // A workspace still being restored is only partly in the session: saving it now would write
         // back less than was opened, without the user being told.
         if (this.isLoadingWorkspace) {

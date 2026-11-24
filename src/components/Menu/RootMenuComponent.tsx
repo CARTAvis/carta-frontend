@@ -322,8 +322,12 @@ export class RootMenuComponent extends React.Component {
                 </MenuItem>
                 <MenuDivider />
                 <MenuItem text="Open Workspace" disabled={appStore.isOpenFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
-                <Tooltip content={"Not allowed in read-only mode"} disabled={!appStore.isReadOnly} position={Position.LEFT}>
-                    <MenuItem text="Save Workspace" disabled={appStore.isOpenFileDisabled || appStore.isReadOnly} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
+                <Tooltip content={appStore.isReadOnly ? "Not allowed in read-only mode" : appStore.workspaceSaveBlocker} disabled={!appStore.isReadOnly && !appStore.animatorStore.isAnimationActive} position={Position.LEFT}>
+                    <MenuItem
+                        text="Save Workspace"
+                        disabled={appStore.isOpenFileDisabled || appStore.isReadOnly || appStore.animatorStore.isAnimationActive}
+                        onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})}
+                    />
                 </Tooltip>
                 <MenuDivider />
                 <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />

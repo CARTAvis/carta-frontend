@@ -639,6 +639,52 @@ describe("AppStore.saveWorkspace", () => {
         appStore.imageViewConfigStore.removeAllImages();
     });
 
+    test("refuses to save while an animation is playing, and saves again when it stops", async () => {
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+        runInAction(() => (appStore.animatorStore.isAnimationActive = true));
+        try {
+            await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(appStore.alertStore.alertText).toBe("Cannot save workspace while an animation is playing. Please stop it first.");
+            appStore.alertStore.dismissAlert();
+        } finally {
+            runInAction(() => (appStore.animatorStore.isAnimationActive = false));
+            saveSpy.mockRestore();
+        }
+        expect(appStore.workspaceSaveBlocker).toBeUndefined();
+    });
+
+    test("asks to turn off the channel map mode first, because its Stop button is disabled there", () => {
+        runInAction(() => {
+            appStore.animatorStore.isAnimationActive = true;
+            appStore.channelMapStore.isChannelMapEnabled = true;
+        });
+        try {
+            expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while an animation is playing. Please turn off the channel map mode and stop the animation first.");
+        } finally {
+            runInAction(() => {
+                appStore.animatorStore.isAnimationActive = false;
+                appStore.channelMapStore.isChannelMapEnabled = false;
+            });
+        }
+    });
+
+    test("names the animation before a workspace that is still loading", () => {
+        runInAction(() => {
+            appStore.animatorStore.isAnimationActive = true;
+            appStore.isLoadingWorkspace = true;
+        });
+        try {
+            expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while an animation is playing. Please stop it first.");
+        } finally {
+            runInAction(() => {
+                appStore.animatorStore.isAnimationActive = false;
+                appStore.isLoadingWorkspace = false;
+            });
+        }
+    });
+
     test("names the image that is still being made, while the shared loading flag is also set", () => {
         const job = Object.assign(Object.create(FrameStore.prototype), {isRequestingMoments: false, isRequestingPV: true});
         appStore.imageViewConfigStore.addFrame(job);

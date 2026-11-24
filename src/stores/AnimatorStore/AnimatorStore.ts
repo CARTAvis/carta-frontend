@@ -196,13 +196,14 @@ export class AnimatorStore {
             return;
         }
 
+        // Clear the flag even without an active image, so that it cannot keep blocking a workspace save.
+        this.isAnimationActive = false;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
 
-        this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.isFrontendAnimationMode) {
             if (this.animateHandle !== undefined) {

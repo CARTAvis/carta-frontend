@@ -90,3 +90,15 @@ describe("AnimatorStore animation mode", () => {
         expect(store.animationMode).toBe(AnimationMode.NONE);
     });
 });
+
+describe("AnimatorStore stop", () => {
+    test("clears the playing flag when there is no active image", () => {
+        MOCK_APP_STORE.activeFrame = null;
+        const store = new AnimatorStore();
+        store.isAnimationActive = true;
+
+        store.stopAnimation();
+
+        expect(store.isAnimationActive).toBe(false);
+    });
+});
