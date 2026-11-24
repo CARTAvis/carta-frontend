@@ -2073,7 +2073,8 @@ export class WidgetsStore {
         const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
-            zIndexManager.updateIndexOnRemove(id);
+            // The stack holds a widget by its component ID when it has one, such as a catalog plot.
+            zIndexManager.updateIndexOnRemove(widget.componentId || id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (shouldPreserveStore) {
                 return;
