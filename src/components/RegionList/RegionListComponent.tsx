@@ -458,6 +458,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const _name = region.name;
             const _angle = region.rotation;
             const _size = region.size.x + region.size.y;
+            const _innerSize = region.innerSize;
             const _opacity = region.opacity;
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
@@ -561,22 +562,28 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (shouldShowSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.isValidWcs) {
-                        sizeContent = isAnnulusRegionType(region.regionType) ? (
+                    if (isAnnulusRegionType(region.regionType)) {
+                        const outerSize = frame.isValidWcs ? region.wcsSize : region.size;
+                        const innerSize = frame.isValidWcs ? region.wcsInnerSize : region.innerSize;
+                        const formatAxis = (axis: number) => (frame.isValidWcs ? formattedArcsec(axis, WCS_PRECISION) : toFixed(axis, 1));
+                        sizeContent = (
                             <React.Fragment>
-                                {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.x, WCS_PRECISION)}
+                                {formatAxis(outerSize.x)} / {formatAxis(innerSize.x)}
                                 <br />
-                                {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)} / {formattedArcsec(region.wcsInnerSize?.y, WCS_PRECISION)}
-                            </React.Fragment>
-                        ) : region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                            formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
-                        ) : (
-                            <React.Fragment>
-                                {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
-                                <br />
-                                {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
+                                {formatAxis(outerSize.y)} / {formatAxis(innerSize.y)}
                             </React.Fragment>
                         );
+                    } else if (frame.isValidWcs) {
+                        sizeContent =
+                            region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
+                                formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
+                            ) : (
+                                <React.Fragment>
+                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
+                                    <br />
+                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
+                                </React.Fragment>
+                            );
                     } else {
                         sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size && length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
