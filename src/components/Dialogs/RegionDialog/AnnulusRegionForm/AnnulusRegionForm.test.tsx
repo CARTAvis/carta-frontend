@@ -129,6 +129,19 @@ describe("AnnulusRegionForm", () => {
         expect(innerInput.value).toBe(String(maxInner.x));
     });
 
+    test("applies a clamped inner-radius edit when the other radius changes", () => {
+        const size = {x: 0.002, y: 20};
+        const innerSize = {x: 0.001, y: 10};
+        const props = makeProps({region: {size, innerSize, controlPoints: [{x: 50, y: 60}, size, innerSize]}});
+        render(<AnnulusRegionForm {...props} />);
+
+        const innerInput = screen.getByTestId("annulus-inner-major-input");
+        fireEvent.change(innerInput, {target: {value: "0.003"}});
+        fireEvent.keyDown(innerInput, {key: "Enter"});
+
+        expect(props.region.setInnerSize).toHaveBeenCalledWith({x: 0.003, y: 10}, false, "x");
+    });
+
     test("updates axes in world coordinates and disables WCS size inputs when WCS size is unavailable", () => {
         const props = makeProps({
             region: {coordinate: CoordinateMode.World}

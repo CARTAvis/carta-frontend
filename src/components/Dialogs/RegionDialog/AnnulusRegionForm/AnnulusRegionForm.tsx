@@ -93,14 +93,17 @@ export class AnnulusRegionForm extends React.Component<{region: RegionStore; fra
         const region = this.props.region;
         const size = isInner ? region.innerSize : region.size;
         const newSize = {...size, [axis]: value};
-        const clampedValue = isInner ? getAnnulusInnerSize(region.size, newSize, axis)[axis] : Math.max(MIN_EDITED_REGION_DIMENSION * 2, value);
-        if (closeTo(clampedValue, size[axis], AnnulusRegionForm.RegionPixelEps)) {
-            return false;
-        }
-
         if (isInner) {
+            const clampedSize = getAnnulusInnerSize(region.size, newSize, axis);
+            if (closeTo(clampedSize.x, size.x, AnnulusRegionForm.RegionPixelEps) && closeTo(clampedSize.y, size.y, AnnulusRegionForm.RegionPixelEps)) {
+                return false;
+            }
             region.setInnerSize(newSize, false, axis);
         } else {
+            const clampedValue = Math.max(MIN_EDITED_REGION_DIMENSION * 2, value);
+            if (closeTo(clampedValue, size[axis], AnnulusRegionForm.RegionPixelEps)) {
+                return false;
+            }
             region.setSize(newSize);
         }
         return true;
