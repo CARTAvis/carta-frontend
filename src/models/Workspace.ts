@@ -366,8 +366,10 @@ export interface WorkspaceFile {
 }
 
 /**
- * The shape that a region had when an image was made over it, in the pixels of the image. A restore
- * makes the image over this shape when the region was changed or deleted after the image was made.
+ * The shape that a region had when an image was made over it, in the pixels of the image that the
+ * region belongs to. That is the image that the source image is matched to, when it is matched. A
+ * restore makes the image over this shape when the region was changed or deleted after the image
+ * was made.
  */
 export interface WorkspaceRegionShape {
     regionType: CARTA.RegionType;

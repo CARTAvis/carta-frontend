@@ -1598,27 +1598,30 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const savedRegionId = typeof request.regionId === "number" ? request.regionId : undefined;
         const restoredRegionId = savedRegionId !== undefined ? this.regionIdOf(request.sourceImageId, savedRegionId) : undefined;
+        // A region of an image that is matched to another image belongs to that other image, and its
+        // shape is in the pixels of that image.
+        const ownerImageId = this.images.get(request.sourceImageId)?.references?.spatial ?? request.sourceImageId;
+        const regionOwner = this.frameOf(ownerImageId);
         // When the region was changed or deleted after the images were made, make them over the shape
         // that the region had then. A region that only the backend knows has this shape.
-        const savedShape = isRegionShape(request.regionShape) ? request.regionShape : undefined;
-        const isShapeChanged = !!savedShape && !isSameRegionShape(restoredRegionId !== undefined ? source.getRegion(restoredRegionId) : undefined, savedShape);
+        const savedShape = isRegionShape(request.regionShape) && regionOwner ? request.regionShape : undefined;
+        const isShapeChanged = !!savedShape && !isSameRegionShape(restoredRegionId !== undefined ? regionOwner?.getRegion(restoredRegionId) : undefined, savedShape);
         if (restoredRegionId === undefined && !isShapeChanged) {
             const reason = "the region it is made over was not restored";
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
         let shapeRegionId: number | undefined;
-        if (isShapeChanged && savedShape) {
+        if (isShapeChanged && savedShape && regionOwner) {
             try {
-                const ack = yield* awaited(this.appStore.backendService.setRegion(source.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
+                const ack = yield* awaited(this.appStore.backendService.setRegion(regionOwner.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
                 if (!ack.success || typeof ack.regionId !== "number") {
                     throw new Error(ack.message || "the backend did not add the region");
                 }
                 shapeRegionId = ack.regionId;
             } catch (err) {
-                const reason = `the shape of the region it was made over could not be set up (${reasonOf(err) ?? "unknown error"})`;
-                this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
-                return [];
+                // The user can retry it in Recovery, as other errors of the backend.
+                return {reason: `the shape of the region it was made over could not be set up (${reasonOf(err) ?? "unknown error"})`};
             }
             if (!this.isCurrent) {
                 this.appStore.backendService.removeRegion(shapeRegionId);

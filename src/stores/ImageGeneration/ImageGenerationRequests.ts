@@ -285,7 +285,7 @@ export class ImageRequestCancelledError extends Error {
  * Returns the shape of a region of an image, to record with an image made over the region. Returns
  * nothing for an ID that is not a region of its own, such as the whole image or the field of view.
  */
-export function regionShapeOf(frame: FrameStore | undefined, regionId: number): WorkspaceRegionShape | undefined {
+export function regionShapeOf(frame: FrameStore | null | undefined, regionId: number): WorkspaceRegionShape | undefined {
     const region = regionId > 0 ? frame?.getRegion(regionId) : undefined;
     return region ? {regionType: region.regionType, controlPoints: region.controlPoints.map(({x, y}) => ({x, y})), rotation: region.rotation} : undefined;
 }

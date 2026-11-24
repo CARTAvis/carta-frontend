@@ -89,6 +89,45 @@ describe("AppStore requests that make moment and PV images", () => {
         expect(requestPV).toHaveBeenCalledWith(expect.objectContaining({regionId: 2}));
     });
 
+    test("record the shape that the cut had when the PV image was asked for, also when the cut changes before the image comes", async () => {
+        const cut = {
+            regionType: CARTA.RegionType.LINE,
+            controlPoints: [
+                {x: 1, y: 1},
+                {x: 8, y: 8}
+            ],
+            rotation: 45
+        };
+        const movingFrame = {...frame, getRegion: (regionId: number) => (regionId === 1 ? cut : undefined), addPvImage: jest.fn()} as unknown as FrameStore;
+        jest.spyOn(appStore.backendService, "requestPV").mockImplementation(() => {
+            // The user rotates the cut while the backend makes the PV image.
+            cut.controlPoints = [
+                {x: 1, y: 8},
+                {x: 8, y: 1}
+            ];
+            cut.rotation = 135;
+            return Promise.resolve({success: true, openFileAck: {fileId: 9}} as CARTA.PvResponse.$Properties);
+        });
+        const pvImage = {frameInfo: {fileId: 9}} as unknown as FrameStore;
+        jest.spyOn(appStore, "addFrame").mockReturnValue(true);
+        jest.spyOn(appStore, "frames", "get").mockReturnValue([pvImage]);
+
+        await appStore.requestPV(pvMessage, movingFrame, true);
+
+        expect(pvImage.generation?.request).toEqual(
+            expect.objectContaining({
+                regionShape: {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 1, y: 1},
+                        {x: 8, y: 8}
+                    ],
+                    rotation: 45
+                }
+            })
+        );
+    });
+
     test("throw an ImageRequestCancelledError when the user cancels a PV request that is asked to throw", async () => {
         // The backend answers a cancelled PV request with success false, so the request is rejected with the message.
         const cancellingFrame = frame as unknown as {isRequestPVCancelling: boolean};

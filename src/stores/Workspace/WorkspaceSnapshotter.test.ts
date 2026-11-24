@@ -744,6 +744,25 @@ describe("WorkspaceSnapshotter", () => {
             expect(workspace.selectedFile).toBeUndefined();
         });
 
+        test("saves a request whose region has been deleted when the request kept the shape of the region", () => {
+            const {appStore, frame} = createSession();
+            const regionShape = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            appStore.frames.push(momentImage as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues).toEqual([]);
+            expect(workspace.generatedImages?.[0].request).toEqual(expect.objectContaining({type: "moment", regionShape}));
+        });
+
         test("saves a request made of an image another request made after that one, whatever order the session lists them in", () => {
             const {appStore} = createSession();
             const hips = createFrame(6, {frameInfo: {fileId: 6, directory: "", hdu: "", fileInfo: {name: "DSS2.fits"}, generated: true}});

@@ -1668,6 +1668,8 @@ export class AppStore {
         if (problem) {
             throw new Error(problem);
         }
+        // Take the shape of the region now. The user can change the region while the backend works.
+        const regionShape = options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR);
 
         const isStillWanted = options.isStillWanted ?? (() => true);
         const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
@@ -1700,7 +1702,7 @@ export class AppStore {
                     channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
                     mask: message.mask ?? CARTA.MomentMask.None,
                     pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0},
-                    regionShape: options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR)
+                    regionShape
                 };
                 const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
                 for (const [index, openFileAck] of ack.openFileAcks.entries()) {
@@ -1774,6 +1776,8 @@ export class AppStore {
         if (problem) {
             throw new Error(problem);
         }
+        // Take the shape of the cut now. The user can change the cut while the backend works.
+        const regionShape = options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.NONE);
 
         const isStillWanted = options.isStillWanted ?? (() => true);
         const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
@@ -1810,7 +1814,7 @@ export class AppStore {
                                 width: message.width ?? 1,
                                 channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
                                 reverse: !!message.reverse,
-                                regionShape: options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.NONE)
+                                regionShape
                             }
                         };
                         pvImage = newPVImage;
@@ -1921,6 +1925,8 @@ export class AppStore {
         }
         frame?.resetFitting();
         this.restartTaskProgress();
+        // Take the shape of the region now. The user can change the region while the backend works.
+        const regionShape = regionShapeOf(frame, message.regionId ?? 0);
 
         const fittingImages: FrameStore[] = [];
         let failure: unknown;
@@ -1942,7 +1948,7 @@ export class AppStore {
                           fixedParams: message.fixedParams ?? [],
                           offset: message.offset ?? 0,
                           solver: message.solver ?? CARTA.FittingSolverType.Cholesky,
-                          regionShape: regionShapeOf(frame, message.regionId ?? 0)
+                          regionShape
                       }
                     : undefined;
                 this.imageFittingStore.setResultString(

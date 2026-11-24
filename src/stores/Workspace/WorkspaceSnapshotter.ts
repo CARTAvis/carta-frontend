@@ -268,7 +268,9 @@ export class WorkspaceSnapshotter {
         if (this.imageIdOf(regionOwner) === undefined) {
             return {reason: "referenceNotSaved"};
         }
-        if (request.regionId > RegionId.CURSOR && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
+        // A request that kept the shape of its region is made again over that shape, also when the
+        // region was deleted.
+        if (request.regionId > RegionId.CURSOR && !("regionShape" in request && request.regionShape) && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
             return {reason: "regionDeleted"};
         }
         return undefined;

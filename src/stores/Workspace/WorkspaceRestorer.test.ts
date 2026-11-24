@@ -2403,6 +2403,43 @@ describe("WorkspaceRestorer", () => {
                 });
             });
 
+            test("is made again over the shape that its region had when it was fitted, when the region was changed after", async () => {
+                const {appStore, requestFitting} = createGeneratingSession();
+                const fittedOver = {
+                    regionType: CARTA.RegionType.RECTANGLE,
+                    controlPoints: [
+                        {x: 50, y: 50},
+                        {x: 20, y: 20}
+                    ],
+                    rotation: 0
+                };
+                frameOverrides = {...frameOverrides, getRegion: (regionId: number) => (regionId === 105 ? {...fittedOver, rotation: 30} : undefined)};
+                const backendService = {
+                    ...(appStore as unknown as {backendService: object}).backendService,
+                    setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                    removeRegion: jest.fn((_regionId: number) => true)
+                };
+                Object.assign(appStore, {backendService});
+                requestFitting.mockImplementation(() => {
+                    const frame = {...createFrame(300), generation: {request: {type: "fitting", regionId: 500}, fittingImage: "residual"}};
+                    (appStore.frameMap as Map<number, unknown>).set(300, frame);
+                    appStore.frames.push(frame as never);
+                    return Promise.resolve([frame] as never);
+                });
+
+                await restored(
+                    createWorkspace({
+                        files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                        generatedImages: [{request: {...fittingRequest, regionShape: fittedOver}, images: [{id: 2, name: "image_residual.fits", fittingImage: "residual"}]}]
+                    })
+                );
+
+                expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, fittedOver);
+                expect(requestFitting).toHaveBeenCalledWith(expect.objectContaining({regionId: 500}), expect.any(Function));
+                expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                expect((appStore.frames.find(frame => frame.frameInfo.fileId === 300) as any).generation.request).toEqual(expect.objectContaining({regionId: 105, regionShape: fittedOver}));
+            });
+
             test("says why the fit failed", async () => {
                 const {requestFitting} = createGeneratingSession();
                 requestFitting.mockImplementation(() => Promise.reject(new Error("fit did not converge")));
@@ -2493,14 +2530,14 @@ describe("WorkspaceRestorer", () => {
                 };
 
                 /** Restores a PV image made along `madeAlong`, when the session has the line `sessionLine` as region 106. */
-                async function restorePvMadeAlong(sessionLine: typeof madeAlong | undefined, setRegionAck: Promise<unknown> = Promise.resolve({success: true, regionId: 500})) {
+                async function restorePvMadeAlong(sessionLine: typeof madeAlong | undefined, setRegionAcks: unknown[] = [{success: true, regionId: 500}], onRecovery?: (recovery: WorkspaceRecoveryStore) => void) {
                     const session = createGeneratingSession();
                     const backendService = {
                         ...(session.appStore as unknown as {backendService: object}).backendService,
-                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => setRegionAck),
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve(setRegionAcks.length > 1 ? setRegionAcks.shift() : setRegionAcks[0])),
                         removeRegion: jest.fn((_regionId: number) => true)
                     };
-                    Object.assign(session.appStore, {backendService});
+                    Object.assign(session.appStore, {backendService, ...(onRecovery ? {onRecovery} : {})});
                     const made: {generation?: {request: {type: string; regionId: number; regionShape?: unknown}}}[] = [];
                     session.requestPV.mockImplementation((message: CARTA.PvRequest.$Properties) => {
                         const frame = {...createFrame(200), generation: {request: {type: "pv", regionId: message.regionId ?? NaN}}};
@@ -2542,11 +2579,53 @@ describe("WorkspaceRestorer", () => {
                     expect(backendService.removeRegion).toHaveBeenCalledWith(500);
                 });
 
-                test("is reported as failed when the backend does not add the line it was made along", async () => {
-                    const {requestPV, issues} = await restorePvMadeAlong(movedLine, Promise.resolve({success: false, message: "no region"}));
+                test("is made along a line of the image that its image is matched to, in the pixels of that image", async () => {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService});
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? movedLine : undefined)};
+                    const matched = {id: 3, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
 
-                    expect(requestPV).not.toHaveBeenCalled();
-                    expect(issues).toEqual([expect.objectContaining({message: "Could not make the PV image of image.fits: the shape of the region it was made over could not be set up (no region)", outcome: WorkspaceIssueOutcome.Failed})]);
+                    const issues = await restoreIssues(
+                        createWorkspace({
+                            files: [{...IMAGE, regionsSet: {regions: [savedLine]}}, matched],
+                            generatedImages: [{request: {...pvRequest, sourceImageId: 3, regionShape: madeAlong}, images: [{id: 2, name: "matched_pv.fits"}]}]
+                        })
+                    );
+
+                    expect(issues).toEqual([]);
+                    // The line belongs to image 1, so the backend gets it on image 1, and the PV image is made of image 3.
+                    const [imageOne, imageThree] = session.appStore.frames;
+                    expect(backendService.setRegion).toHaveBeenCalledWith(imageOne.frameInfo.fileId, -1, madeAlong);
+                    expect(session.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: imageThree.frameInfo.fileId, regionId: 500}));
+                    expect(imageThree.frameInfo.fileId).not.toBe(imageOne.frameInfo.fileId);
+                });
+
+                test("is offered again in Recovery when the backend does not add the line it was made along, and is made when the user retries", async () => {
+                    const items: unknown[] = [];
+                    const onRecovery = (recovery: WorkspaceRecoveryStore) => {
+                        items.push(...recovery.items);
+                        recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                        recovery.continue();
+                    };
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(
+                        movedLine,
+                        [
+                            {success: false, message: "no region"},
+                            {success: true, regionId: 500}
+                        ],
+                        onRecovery
+                    );
+
+                    expect(items).toEqual([expect.objectContaining({message: "Could not make the PV image of image.fits: the shape of the region it was made over could not be set up (no region)", canRetry: true})]);
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).toHaveBeenCalledTimes(2);
+                    expect(requestPV).toHaveBeenCalledTimes(1);
+                    expect(backendService.removeRegion).toHaveBeenCalledTimes(1);
                 });
             });
 
