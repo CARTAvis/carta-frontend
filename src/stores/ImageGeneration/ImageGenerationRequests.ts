@@ -271,6 +271,8 @@ export interface ImageRequestOptions {
      * region that only the backend knows.
      */
     regionShape?: WorkspaceRegionShape;
+    /** The image that the region of `regionShape` belongs to, in whose pixels the shape is. */
+    regionShapeOwner?: FrameStore;
 }
 
 /** The error of a request that makes images, when the request is cancelled. */
@@ -301,7 +303,8 @@ export function isRegionShape(value: unknown): value is WorkspaceRegionShape {
         isFiniteNumber(shape.rotation) &&
         Array.isArray(shape.controlPoints) &&
         shape.controlPoints.length > 0 &&
-        shape.controlPoints.every(point => isFiniteNumber(point?.x) && isFiniteNumber(point?.y))
+        shape.controlPoints.every(point => isFiniteNumber(point?.x) && isFiniteNumber(point?.y)) &&
+        (shape.imageId === undefined || (Number.isInteger(shape.imageId) && shape.imageId > 0))
     );
 }
 

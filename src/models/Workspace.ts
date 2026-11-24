@@ -367,14 +367,16 @@ export interface WorkspaceFile {
 
 /**
  * The shape that a region had when an image was made over it, in the pixels of the image that the
- * region belongs to. That is the image that the source image is matched to, when it is matched. A
- * restore makes the image over this shape when the region was changed or deleted after the image
- * was made.
+ * region belonged to then. That is the image that the source image was matched to, when it was
+ * matched. A restore makes the image over this shape when the region was changed or deleted after
+ * the image was made.
  */
 export interface WorkspaceRegionShape {
     regionType: CARTA.RegionType;
     controlPoints: Point2D[];
     rotation: number;
+    /** The image that the region belonged to, by its workspace ID. Left out in the session, which keeps the image itself. */
+    imageId?: number;
 }
 
 /** A request for moment images. The request names its image and region by their workspace IDs. */

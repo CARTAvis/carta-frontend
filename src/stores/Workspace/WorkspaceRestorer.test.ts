@@ -2605,6 +2605,34 @@ describe("WorkspaceRestorer", () => {
                     expect(imageThree.frameInfo.fileId).not.toBe(imageOne.frameInfo.fileId);
                 });
 
+                test.each([
+                    ["made before its image was matched", {references: {spatial: 1}}, 3],
+                    ["made while its image was matched, and saved after the matching ended", {}, 1]
+                ])("is made along the line it was made along, on the image the line belonged to then, when it was %s", async (_name, matching, shapeImageId) => {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService});
+                    // The line of the workspace has the same shape. It belongs to another image, so it is another line.
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? madeAlong : undefined)};
+                    const source = {id: 3, source: {type: "file" as const, filename: "source.fits"}, regionsSet: {regions: [savedLine]}, ...matching};
+
+                    const issues = await restoreIssues(
+                        createWorkspace({
+                            files: [{...IMAGE, regionsSet: {regions: [savedLine]}}, source],
+                            generatedImages: [{request: {...pvRequest, sourceImageId: 3, regionShape: {...madeAlong, imageId: shapeImageId}}, images: [{id: 2, name: "source_pv.fits"}]}]
+                        })
+                    );
+
+                    expect(issues).toEqual([]);
+                    const [imageOne, imageThree] = session.appStore.frames;
+                    expect(backendService.setRegion).toHaveBeenCalledWith((shapeImageId === 1 ? imageOne : imageThree).frameInfo.fileId, -1, {...madeAlong, imageId: shapeImageId});
+                    expect(session.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: imageThree.frameInfo.fileId, regionId: 500}));
+                });
+
                 test("is offered again in Recovery when the backend does not add the line it was made along, and is made when the user retries", async () => {
                     const items: unknown[] = [];
                     const onRecovery = (recovery: WorkspaceRecoveryStore) => {

@@ -1598,23 +1598,31 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         const savedRegionId = typeof request.regionId === "number" ? request.regionId : undefined;
         const restoredRegionId = savedRegionId !== undefined ? this.regionIdOf(request.sourceImageId, savedRegionId) : undefined;
-        // A region of an image that is matched to another image belongs to that other image, and its
-        // shape is in the pixels of that image.
+        // A region of an image that is matched to another image belongs to that other image. The saved
+        // shape names the image that the region belonged to when the images were made, and is in the
+        // pixels of that image. The images may have been made before the source was matched, or after.
         const ownerImageId = this.images.get(request.sourceImageId)?.references?.spatial ?? request.sourceImageId;
-        const regionOwner = this.frameOf(ownerImageId);
-        // When the region was changed or deleted after the images were made, make them over the shape
-        // that the region had then. A region that only the backend knows has this shape.
-        const savedShape = isRegionShape(request.regionShape) && regionOwner ? request.regionShape : undefined;
-        const isShapeChanged = !!savedShape && !isSameRegionShape(restoredRegionId !== undefined ? regionOwner?.getRegion(restoredRegionId) : undefined, savedShape);
+        const validShape = isRegionShape(request.regionShape) ? request.regionShape : undefined;
+        const shapeOwnerImageId = validShape?.imageId ?? ownerImageId;
+        const shapeOwner = this.frameOf(shapeOwnerImageId);
+        if (validShape && !shapeOwner && this.awaitedImageIds.has(shapeOwnerImageId)) {
+            return "deferred";
+        }
+        // When the region was changed or deleted after the images were made, or it belongs to another
+        // image now, make them over the shape that the region had then. A region that only the
+        // backend knows has this shape.
+        const savedShape = shapeOwner ? validShape : undefined;
+        const isSameRegion = shapeOwnerImageId === ownerImageId && restoredRegionId !== undefined && !!savedShape && isSameRegionShape(shapeOwner?.getRegion(restoredRegionId), savedShape);
+        const isShapeChanged = !!savedShape && !isSameRegion;
         if (restoredRegionId === undefined && !isShapeChanged) {
             const reason = "the region it is made over was not restored";
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
         let shapeRegionId: number | undefined;
-        if (isShapeChanged && savedShape && regionOwner) {
+        if (isShapeChanged && savedShape && shapeOwner) {
             try {
-                const ack = yield* awaited(this.appStore.backendService.setRegion(regionOwner.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
+                const ack = yield* awaited(this.appStore.backendService.setRegion(shapeOwner.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
                 if (!ack.success || typeof ack.regionId !== "number") {
                     throw new Error(ack.message || "the backend did not add the region");
                 }
@@ -1629,7 +1637,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
         }
         try {
-            const made = yield* this.makeImagesOver(generated, source, shapeRegionId ?? (restoredRegionId as number), isShapeChanged ? savedShape : undefined);
+            const made = yield* this.makeImagesOver(generated, source, shapeRegionId ?? (restoredRegionId as number), isShapeChanged && shapeOwner ? {shape: savedShape, owner: shapeOwner} : undefined);
             if (shapeRegionId !== undefined && Array.isArray(made)) {
                 // The images were made over a region that is removed below. They name the region of
                 // the workspace, and keep the shape, so that a later save makes them the same way.
@@ -1638,6 +1646,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                     if (madeRequest && madeRequest.type !== "hips") {
                         madeRequest.regionId = restoredRegionId ?? savedRegionId ?? madeRequest.regionId;
                         madeRequest.regionShape = savedShape;
+                        madeRequest.regionShapeOwner = shapeOwner;
                     }
                 });
             }
@@ -1653,9 +1662,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Makes the images of a saved moment, PV or image fitting request over the region `regionId` of
      * the image `source`.
      *
-     * @param regionShape - the shape of the region, when the session does not know the region.
+     * @param regionShape - the shape of the region and the image that it belongs to, when the session
+     *                      does not know the region.
      */
-    private *makeImagesOver(generated: WorkspaceGeneratedImages, source: FrameStore, regionId: number, regionShape: WorkspaceRegionShape | undefined): Generator<Promise<unknown>, FrameStore[] | {reason: string | undefined}, any> {
+    private *makeImagesOver(
+        generated: WorkspaceGeneratedImages,
+        source: FrameStore,
+        regionId: number,
+        regionShape: {shape: WorkspaceRegionShape | undefined; owner: FrameStore} | undefined
+    ): Generator<Promise<unknown>, FrameStore[] | {reason: string | undefined}, any> {
         const {request, images} = generated;
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
@@ -1690,7 +1705,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape}) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const made = (
+                    this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape: regionShape?.shape, regionShapeOwner: regionShape?.owner}) as unknown as Promise<
+                        FrameStore[] | undefined
+                    >
+                ).then(frames => frames ?? []);
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1733,7 +1752,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         } else {
             const message = pvMessageOf(request, source, regionId, true);
             const spectralRange = message?.spectralRange;
-            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined, regionShape);
+            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined, regionShape?.shape);
             if (problem) {
                 this.reportProblem(subject, problem, details);
                 return [];
@@ -1741,7 +1760,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape}) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const made = (
+                    this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape: regionShape?.shape, regionShapeOwner: regionShape?.owner}) as unknown as Promise<
+                        FrameStore | undefined
+                    >
+                ).then(frame => (frame ? [frame] : []));
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(

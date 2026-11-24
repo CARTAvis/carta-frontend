@@ -754,13 +754,33 @@ describe("WorkspaceSnapshotter", () => {
                 ],
                 rotation: 0
             };
-            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape, regionShapeOwner: frame}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
             appStore.frames.push(momentImage as never);
 
             const {workspace, issues} = new WorkspaceSnapshotter().capture();
 
             expect(issues).toEqual([]);
-            expect(workspace.generatedImages?.[0].request).toEqual(expect.objectContaining({type: "moment", regionShape}));
+            expect(workspace.generatedImages?.[0].request).toEqual(expect.objectContaining({type: "moment", regionShape: {...regionShape, imageId: 1}}));
+        });
+
+        test("reports a request whose region has been deleted when the image that the shape of the region is in is closed", () => {
+            const {appStore, frame} = createSession();
+            const regionShape = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            const closedImage = createFrame(8);
+            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape, regionShapeOwner: closedImage}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            appStore.frames.push(momentImage as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues.map(issue => issue.message)).toEqual(["Could not save the moment images of image0.fits: the region it was made over has been deleted"]);
+            expect(workspace.generatedImages).toBeUndefined();
         });
 
         test("saves a request made of an image another request made after that one, whatever order the session lists them in", () => {
@@ -859,13 +879,14 @@ describe("WorkspaceSnapshotter", () => {
             };
             const pvImage = createFrame(3, {
                 frameInfo: {fileId: 3, directory: "", hdu: "", fileInfo: {name: "image0_pv.fits"}, generated: true},
-                generation: {request: {type: "pv", source: frame, regionId: 4, width: 3, channelRange: undefined, reverse: true, regionShape}}
+                generation: {request: {type: "pv", source: frame, regionId: 4, width: 3, channelRange: undefined, reverse: true, regionShape, regionShapeOwner: frame}}
             });
             appStore.frames.push(pvImage as never);
 
             const saved = new WorkspaceSnapshotter().capture().workspace.generatedImages?.[0].request;
 
-            expect(saved).toEqual(expect.objectContaining({regionId: 4, regionShape}));
+            // The shape names the image whose pixels it is in.
+            expect(saved).toEqual(expect.objectContaining({regionId: 4, regionShape: {...regionShape, imageId: 1}}));
             expect((saved as {regionShape: typeof regionShape}).regionShape.controlPoints).not.toBe(regionShape.controlPoints);
         });
     });

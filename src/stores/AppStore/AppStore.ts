@@ -1702,7 +1702,8 @@ export class AppStore {
                     channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
                     mask: message.mask ?? CARTA.MomentMask.None,
                     pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0},
-                    regionShape
+                    regionShape,
+                    regionShapeOwner: regionShape ? (options.regionShapeOwner ?? frame.spatialReference ?? frame) : undefined
                 };
                 const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
                 for (const [index, openFileAck] of ack.openFileAcks.entries()) {
@@ -1814,7 +1815,8 @@ export class AppStore {
                                 width: message.width ?? 1,
                                 channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
                                 reverse: !!message.reverse,
-                                regionShape
+                                regionShape,
+                                regionShapeOwner: regionShape ? (options.regionShapeOwner ?? frame.spatialReference ?? frame) : undefined
                             }
                         };
                         pvImage = newPVImage;
@@ -1948,7 +1950,8 @@ export class AppStore {
                           fixedParams: message.fixedParams ?? [],
                           offset: message.offset ?? 0,
                           solver: message.solver ?? CARTA.FittingSolverType.Cholesky,
-                          regionShape
+                          regionShape,
+                          regionShapeOwner: regionShape ? (frame.spatialReference ?? frame) : undefined
                       }
                     : undefined;
                 this.imageFittingStore.setResultString(

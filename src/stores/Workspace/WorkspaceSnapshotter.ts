@@ -257,7 +257,10 @@ export class WorkspaceSnapshotter {
         // Use the region of the image that the source is shown with. When the source is matched to
         // another image, the region belongs to that image.
         const regionOwner = source.spatialReference ?? source;
-        for (const image of [source, regionOwner]) {
+        // The image that the shape of the region is in. It is saved before the request, so that a
+        // restore can make the region on it again.
+        const shapeOwner = "regionShapeOwner" in request ? request.regionShapeOwner : undefined;
+        for (const image of [source, regionOwner, ...(shapeOwner ? [shapeOwner] : [])]) {
             if (image.frameInfo.generated && !this.savedGeneratedImages.has(image)) {
                 return {reason: image === source ? "sourceNotSaved" : "referenceNotSaved", isWaiting: !!image.generation};
             }
@@ -270,7 +273,8 @@ export class WorkspaceSnapshotter {
         }
         // A request that kept the shape of its region is made again over that shape, also when the
         // region was deleted.
-        if (request.regionId > RegionId.CURSOR && !("regionShape" in request && request.regionShape) && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
+        const hasShape = "regionShape" in request && !!request.regionShape && !!shapeOwner && this.imageIdOf(shapeOwner) !== undefined;
+        if (request.regionId > RegionId.CURSOR && !hasShape && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
             return {reason: "regionDeleted"};
         }
         return undefined;
@@ -615,11 +619,11 @@ export class WorkspaceSnapshotter {
                 width: request.width,
                 channelRange: request.channelRange && {...request.channelRange},
                 reverse: request.reverse,
-                ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
+                ...this.regionShapeFieldOf(request)
             };
         }
         if (request.type === "fitting") {
-            return WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId);
+            return {...WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId), ...this.regionShapeFieldOf(request)};
         }
         // Save only the moments whose images are still shown. The other images were closed.
         const moments = frames.map(frame => frame.generation?.moment);
@@ -631,13 +635,18 @@ export class WorkspaceSnapshotter {
             channelRange: {...request.channelRange},
             mask: request.mask,
             pixelRange: {...request.pixelRange},
-            ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
+            ...this.regionShapeFieldOf(request)
         };
     }
 
-    /** Returns the shape of the region of a request as the workspace saves it, or no field when the request has none. */
-    private static regionShapeFieldOf(shape: WorkspaceRegionShape | undefined): {regionShape?: WorkspaceRegionShape} {
-        return shape ? {regionShape: {regionType: shape.regionType, controlPoints: shape.controlPoints.map(({x, y}) => ({x, y})), rotation: shape.rotation}} : {};
+    /**
+     * Returns the shape of the region of a request as the workspace saves it, with the image that the
+     * region belonged to. Returns no field when the request has no shape, or when that image is not saved.
+     */
+    private regionShapeFieldOf(request: {regionShape?: WorkspaceRegionShape; regionShapeOwner?: FrameStore}): {regionShape?: WorkspaceRegionShape} {
+        const shape = request.regionShape;
+        const imageId = request.regionShapeOwner ? this.imageIdOf(request.regionShapeOwner) : undefined;
+        return shape && imageId !== undefined ? {regionShape: {regionType: shape.regionType, controlPoints: shape.controlPoints.map(({x, y}) => ({x, y})), rotation: shape.rotation, imageId}} : {};
     }
 
     /**
@@ -660,8 +669,7 @@ export class WorkspaceSnapshotter {
             })),
             fixedParams: [...request.fixedParams],
             offset: request.offset,
-            solver: request.solver,
-            ...WorkspaceSnapshotter.regionShapeFieldOf(request.regionShape)
+            solver: request.solver
         };
     }
 

@@ -125,8 +125,10 @@ export type ImageGenerationRequest =
           pixelRange: {min: number; max: number};
           /** The shape of the region when the images were made. Left out for the whole image. */
           regionShape?: WorkspaceRegionShape;
+          /** The image that the region belonged to then, in whose pixels `regionShape` is. */
+          regionShapeOwner?: FrameStore;
       }
-    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean; regionShape?: WorkspaceRegionShape}
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean; regionShape?: WorkspaceRegionShape; regionShapeOwner?: FrameStore}
     | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties}
     | {
           type: "fitting";
@@ -141,6 +143,8 @@ export type ImageGenerationRequest =
           solver: CARTA.FittingSolverType;
           /** The shape of the region when it was fitted. Left out for the field of view and the whole image. */
           regionShape?: WorkspaceRegionShape;
+          /** The image that the region belonged to then, in whose pixels `regionShape` is. */
+          regionShapeOwner?: FrameStore;
       };
 
 /**
