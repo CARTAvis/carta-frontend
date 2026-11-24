@@ -781,6 +781,25 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(restored.toWorkspaceConfig(WORKSPACE_IDS).spectralLines).toEqual(config.spectralLines);
     });
 
+    test("saves the height of the area below the plot, and gives it back on restore", () => {
+        const {widgetStore} = createWidgetStore();
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).not.toHaveProperty("infoHeight");
+
+        widgetStore.infoHeight = 64;
+        const config = widgetStore.toWorkspaceConfig(WORKSPACE_IDS);
+        expect(config.infoHeight).toBe(64);
+
+        const restored = createWidgetStore().widgetStore;
+        runInAction(() => restored.applyWorkspaceView(config, WORKSPACE_IDS));
+        expect(restored.restoredInfoHeight).toBe(64);
+    });
+
+    test.each([0, -10, Infinity, NaN, "64"])("ignores a saved height of %p for the area below the plot", infoHeight => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight} as never, WORKSPACE_IDS));
+        expect(widgetStore.restoredInfoHeight).toBeUndefined();
+    });
+
     test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {
         const {widgetStore} = createWidgetStore();
         runInAction(() => {

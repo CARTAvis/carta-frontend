@@ -762,6 +762,8 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
     yAxisRestFrameEnabled?: boolean;
     /** The spectral lines that a spectral line query plotted on the widget, at the frequencies they were plotted at, in MHz. The query shifted them by its redshift. */
     spectralLines?: {species: string; value: number; qn: string}[];
+    /** The height of the area below the plot that shows the values at the cursor, in pixels. */
+    infoHeight?: number;
     /** The fitting settings. Left out when the widget does not show an image that the workspace saves. */
     fitting?: WorkspaceSpectralFitting;
     /** The moment generator settings. Left out when the widget does not show an image that the workspace saves. */

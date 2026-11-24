@@ -27,6 +27,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private readonly cachedWidgetStore: SpectralProfileWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
+    private infoResizeObserver: ResizeObserver | undefined;
 
     public static get WidgetConfig(): DefaultWidgetConfig {
         return {
@@ -98,7 +99,24 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
+        this.infoResizeObserver?.disconnect();
     }
+
+    /** Records the height of the area below the plot in the widget store, so that a workspace saves it. */
+    private observeInfoPane = (element: HTMLDivElement | null) => {
+        this.infoResizeObserver?.disconnect();
+        this.infoResizeObserver = undefined;
+        if (!element || typeof ResizeObserver === "undefined") {
+            return;
+        }
+        this.infoResizeObserver = new ResizeObserver(entries => {
+            const height = entries[0]?.contentRect.height;
+            if (height > 0) {
+                this.widgetStore.infoHeight = Math.round(height);
+            }
+        });
+        this.infoResizeObserver.observe(element);
+    };
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
@@ -580,6 +598,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const className = classNames("spectral-profiler-widget", {"linked-to-widget-highlighted": this.widgetStore.isHighlighted});
+        // A restored height replaces the default height. The new key makes the split pane take it.
+        const restoredInfoHeight = this.widgetStore.restoredInfoHeight;
+        const defaultInfoHeight = clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX);
 
         return (
             <div className={className}>
@@ -587,15 +608,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                     </div>
-                    <SplitPane className="body-split-pane" direction="vertical">
+                    <SplitPane key={restoredInfoHeight ?? "default"} className="body-split-pane" direction="vertical">
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
-                        <Pane
-                            className={"info-container"}
-                            defaultSize={clamp(this.plotData?.numProfiles && this.plotData.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
-                            minSize={INFO_HEIGHT_MIN}
-                        >
+                        <Pane ref={this.observeInfoPane} className={"info-container"} defaultSize={restoredInfoHeight ?? defaultInfoHeight} minSize={INFO_HEIGHT_MIN}>
                             <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
                         </Pane>
                     </SplitPane>
