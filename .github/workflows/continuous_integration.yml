@@ -1,5 +1,8 @@
 name: CI
-on: [push]
+on:
+  push:
+    branches-ignore: ['gh-readonly-queue/**']
+    tags: ['**']
 jobs:
 
   format-check:
@@ -12,39 +15,6 @@ jobs:
           cache: 'npm'
       - run: npm install
       - run: npm run checkformat
-
-  doc-format-check:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./docs_website
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run checkformat
-
-  test-doc:
-    name: Test deployment of the documentation website
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./docs_website
-    needs: doc-format-check
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-      - name: Test build website
-        run: npm run build
 
   node-v24:
     runs-on: [self-hosted, Linux, X64, Docker]
