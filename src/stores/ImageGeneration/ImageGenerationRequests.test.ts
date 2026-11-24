@@ -223,7 +223,8 @@ describe("the shape of the region of a generated image", () => {
         ["a rotation that is not a number", {...line, rotation: "45"}, false],
         ["a region type that is not an integer", {...line, regionType: 1.5}, false],
         ["a shape with the image it is in", {...line, imageId: 2}, true],
-        ["an image ID that is not a workspace ID", {...line, imageId: 0}, false],
+        ["a shape in the image with workspace ID 0", {...line, imageId: 0}, true],
+        ["an image ID that is not a workspace ID", {...line, imageId: -1}, false],
         ["nothing", undefined, false]
     ])("is read from a workspace only when it is %s", (_name, value, isValid) => {
         expect(isRegionShape(value)).toBe(isValid);

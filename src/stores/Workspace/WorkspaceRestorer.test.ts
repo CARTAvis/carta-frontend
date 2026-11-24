@@ -2579,7 +2579,7 @@ describe("WorkspaceRestorer", () => {
                     expect(backendService.removeRegion).toHaveBeenCalledWith(500);
                 });
 
-                test("is made along a line of the image that its image is matched to, in the pixels of that image", async () => {
+                test("is made along a line of the image that its image is matched to, when the shape does not name the image it is in", async () => {
                     const session = createGeneratingSession();
                     const backendService = {
                         ...(session.appStore as unknown as {backendService: object}).backendService,
