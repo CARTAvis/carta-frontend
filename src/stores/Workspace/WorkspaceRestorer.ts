@@ -1687,7 +1687,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const made = (this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape}) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1738,7 +1738,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent}) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const made = (this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape}) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(

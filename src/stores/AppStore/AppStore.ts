@@ -1700,7 +1700,7 @@ export class AppStore {
                     channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
                     mask: message.mask ?? CARTA.MomentMask.None,
                     pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0},
-                    regionShape: regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR)
+                    regionShape: options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR)
                 };
                 const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
                 for (const [index, openFileAck] of ack.openFileAcks.entries()) {
@@ -1770,7 +1770,7 @@ export class AppStore {
             return undefined;
         }
         const spectralRange = message.spectralRange ? {min: message.spectralRange.min ?? 0, max: message.spectralRange.max ?? 0} : undefined;
-        const problem = pvProblemOf(frame, message.regionId ?? RegionIdType.NONE, spectralRange);
+        const problem = pvProblemOf(frame, message.regionId ?? RegionIdType.NONE, spectralRange, options.regionShape);
         if (problem) {
             throw new Error(problem);
         }
@@ -1810,7 +1810,7 @@ export class AppStore {
                                 width: message.width ?? 1,
                                 channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
                                 reverse: !!message.reverse,
-                                regionShape: regionShapeOf(frame, message.regionId ?? RegionIdType.NONE)
+                                regionShape: options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.NONE)
                             }
                         };
                         pvImage = newPVImage;

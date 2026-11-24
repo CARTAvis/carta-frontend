@@ -71,6 +71,24 @@ describe("AppStore requests that make moment and PV images", () => {
         expect(frame.resetPvRequestState).toHaveBeenCalled();
     });
 
+    test("check the cut of a PV request by the shape that they are given, for a region that only the backend knows", async () => {
+        const requestPV = jest.spyOn(appStore.backendService, "requestPV").mockRejectedValue("PV generation failed");
+        const regionShape = {
+            regionType: CARTA.RegionType.LINE,
+            controlPoints: [
+                {x: 1, y: 8},
+                {x: 8, y: 1}
+            ],
+            rotation: 90
+        };
+
+        await expect(appStore.requestPV({fileId: 5, regionId: 2}, frame, true)).rejects.toThrow("The image has no region 2");
+        expect(requestPV).not.toHaveBeenCalled();
+
+        await expect(appStore.requestPV({fileId: 5, regionId: 2}, frame, true, {regionShape})).resolves.toBeUndefined();
+        expect(requestPV).toHaveBeenCalledWith(expect.objectContaining({regionId: 2}));
+    });
+
     test("throw an ImageRequestCancelledError when the user cancels a PV request that is asked to throw", async () => {
         // The backend answers a cancelled PV request with success false, so the request is rejected with the message.
         const cancellingFrame = frame as unknown as {isRequestPVCancelling: boolean};

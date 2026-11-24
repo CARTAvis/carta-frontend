@@ -265,6 +265,12 @@ export interface ImageRequestOptions {
      * never throws an `ImageRequestCancelledError`.
      */
     shouldThrow?: boolean;
+    /**
+     * The shape of the region of the request, when the session does not know the region. A workspace
+     * restore makes an image over the shape that its region had when the image was made, with a
+     * region that only the backend knows.
+     */
+    regionShape?: WorkspaceRegionShape;
 }
 
 /** The error of a request that makes images, when the request is cancelled. */
