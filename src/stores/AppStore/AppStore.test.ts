@@ -786,6 +786,17 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         expect(frame.channel).toBe(2);
     });
 
+    test("skips the histogram of a channel that the image has left when the tiles of that channel arrive", () => {
+        const frame = {...makeFrame(), channel: 2, requiredChannel: 32};
+        jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+        appStore.handleRegionHistogramStream(histogramOf(2));
+
+        appStore.updateHistogram(7, 0, 2);
+
+        expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        expect(frame.channel).toBe(2);
+    });
+
     test("applies a waiting histogram when the Contour dialog is set to the image", () => {
         const frame = makeFrame();
         // The image is not known yet when its histogram arrives, so the histogram waits.

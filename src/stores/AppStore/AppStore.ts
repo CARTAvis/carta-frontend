@@ -2689,7 +2689,12 @@ export class AppStore {
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
-            if (updatedFrame && channelHist) {
+            // Skip the histogram of a channel or Stokes that the image has left. Its tiles can arrive
+            // late, such as when a workspace restore sets the channel right after it opens the image.
+            // Applying it would set the image back to that channel, and the view would ask for tiles
+            // of that channel, which the backend no longer sends.
+            const isLeft = !!updatedFrame && !this.channelMapStore.isChannelMapEnabled && (channel !== updatedFrame.requiredChannel || stokes !== updatedFrame.requiredStokes);
+            if (updatedFrame && channelHist && !isLeft) {
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
