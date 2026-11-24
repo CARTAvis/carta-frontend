@@ -128,10 +128,12 @@ jobs:
     needs: [format-check, node-v22, node-v24]
     if: always()
     steps:
-      - name: Notify Slack
-        uses: baijunyao/action-slack-notify@v3.1.0
-        if: ${{ github.event_name == 'push' }}
-        with:
-          slack_channel_id: actions-build-status
-          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
-          github_context: ${{ toJson(github) }}
+      - name: Summarize CI results
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          | Check | Result |
+          | --- | --- |
+          | Formatting | ${{ needs.format-check.result }} |
+          | Node.js 22 | ${{ needs.node-v22.result }} |
+          | Node.js 24 | ${{ needs.node-v24.result }} |
+          EOF
