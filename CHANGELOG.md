@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed regions and annotations without a name getting other numbers, such as "Region 3" becoming "Region 2", when a workspace is opened ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 * Fixed a ruler made by a click having a P.A. of NaN, which kept the workspace from being saved ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 * Fixed workspace saving and deleting, and region exports from the region list and the region dialog, being offered in read-only mode and then failing ([#3084](https://github.com/CARTAvis/carta-frontend/issues/3084)).
+* Fixed the streaming indicator staying on after a workspace with images on other channels is opened ([#3086](https://github.com/CARTAvis/carta-frontend/issues/3086)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).
