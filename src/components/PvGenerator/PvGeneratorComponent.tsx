@@ -313,6 +313,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
+                        checked={this.widgetStore.shouldKeep}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.widgetStore.setKeep(e.checked);
@@ -321,7 +322,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
 
                 <FormGroup className="label-info-group" inline={true} label="Preview region">
-                    <HTMLSelect options={this.widgetStore.previewRegionOptions} onChange={this.handlePreviewRegionChanged} />
+                    <HTMLSelect value={this.widgetStore.effectivePreviewRegionId} options={this.widgetStore.previewRegionOptions} onChange={this.handlePreviewRegionChanged} />
                 </FormGroup>
 
                 <FormGroup className="label-info-group" inline={true} label="Preview rebin" labelInfo={`(px)`}>
