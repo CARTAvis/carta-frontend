@@ -17,13 +17,13 @@ describe("getRegionWcsProperties", () => {
     };
 
     beforeEach(() => {
-        jest.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
-        jest.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
-        jest.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `x${x}`, y: `y${y}`}));
+        rs.spyOn(AST, "transformPoint").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "normalizeCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => ({x, y}));
+        rs.spyOn(AST, "getFormattedCoordinates").mockImplementation((_frame: unknown, x: number, y: number) => (x === badX ? null : {x: `x${x}`, y: `y${y}`}));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("formats the shapes with the given system, sizes in arcsec and rotation", () => {

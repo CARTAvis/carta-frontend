@@ -25,7 +25,7 @@ const MakeFrame = (specsys: string, spectralSystemsSupported: string[]) =>
     }) as unknown as FrameStore;
 
 const RenderSelects = (frame: FrameStore): {coordinateSelect: HTMLSelectElement; systemSelect: HTMLSelectElement} => {
-    const {container} = render(<SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={jest.fn()} onSpectralSystemChange={jest.fn()} disable={false} />);
+    const {container} = render(<SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={rs.fn()} onSpectralSystemChange={rs.fn()} disable={false} />);
     const selects = container.querySelectorAll("select");
     expect(selects).toHaveLength(2);
     return {coordinateSelect: selects[0] as HTMLSelectElement, systemSelect: selects[1] as HTMLSelectElement};

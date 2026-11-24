@@ -1,8 +1,10 @@
+const {rs: RS} = require("@rstest/core");
+
 module.exports = {
     Model: {
-        fromJson: jest.fn()
+        fromJson: RS.fn()
     },
-    Layout: jest.fn(),
+    Layout: RS.fn(),
     Actions: {
         // Action type constants, mirroring flexlayout-react, so that tests dispatching one
         // action are not matched by the handler for another.
@@ -23,10 +25,10 @@ module.exports = {
         CLOSE_POPOUT: "FlexLayout_ClosePopout",
         MOVE_POPOUT_TO_FRONT: "FlexLayout_MoveFloatToFront",
         CREATE_SUBLAYOUT: "FlexLayout_CreateSubLayout",
-        moveNode: jest.fn(),
-        deleteTab: jest.fn(),
-        renameTab: jest.fn(),
-        updateNodeAttributes: jest.fn()
+        moveNode: RS.fn(),
+        deleteTab: RS.fn(),
+        renameTab: RS.fn(),
+        updateNodeAttributes: RS.fn()
     },
     DockLocation: {
         CENTER: "center",

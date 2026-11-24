@@ -1,12 +1,13 @@
 import * as React from "react";
+import {rs} from "@rstest/core";
 import {render} from "@testing-library/react";
 
 import {BeamType} from "enums/overlay";
 
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlayComponent";
 
-jest.mock("react-konva", () => {
-    const reactApi = jest.requireActual("react") as typeof React;
+rs.mock("react-konva", () => {
+    const reactApi = React;
     return {
         Ellipse: (props: {radiusX: number; radiusY: number}) => reactApi.createElement("beam-ellipse", {"data-radius-x": props.radiusX, "data-radius-y": props.radiusY}),
         Group: ({children}: {children?: React.ReactNode}) => reactApi.createElement("beam-group", null, children),
@@ -15,13 +16,13 @@ jest.mock("react-konva", () => {
         Stage: ({children}: {children?: React.ReactNode}) => reactApi.createElement("beam-stage", null, children)
     };
 });
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: Object.defineProperty({}, "Instance", {
         configurable: true,
-        get: () => ({contourFrames: new Map(), imageRatio: 1, updateLayerPixelRatio: jest.fn()})
+        get: () => ({contourFrames: new Map(), imageRatio: 1, updateLayerPixelRatio: rs.fn()})
     })
 }));
-jest.mock("utilities", () => ({getColorForTheme: (color: string) => color}));
+rs.mock("utilities", () => ({getColorForTheme: (color: string) => color}));
 
 describe("BeamProfileOverlayComponent", () => {
     test("renders the beam from each channel's beam metadata", () => {
@@ -33,7 +34,7 @@ describe("BeamProfileOverlayComponent", () => {
             overlayBeamSettings: {color: "#ffffff", type: BeamType.Open, width: 1, shiftX: 0, shiftY: 0},
             renderWidth: 100,
             renderHeight: 100,
-            getBeamProperties: jest.fn(({channel}: {stokes?: number; channel?: number}) => ({
+            getBeamProperties: rs.fn(({channel}: {stokes?: number; channel?: number}) => ({
                 x: channel === 3 ? 4 : 10,
                 y: 2,
                 angle: 0,
@@ -57,7 +58,7 @@ describe("BeamProfileOverlayComponent", () => {
             overlayBeamSettings: {color: "#ffffff", type: BeamType.Open, width: 1, shiftX: 0, shiftY: 0},
             renderWidth: 100,
             renderHeight: 100,
-            getBeamProperties: jest.fn(() => ({x: 4, y: 2, angle: 0, overlayBeamSettings: {isVisible: false}}))
+            getBeamProperties: rs.fn(() => ({x: 4, y: 2, angle: 0, overlayBeamSettings: {isVisible: false}}))
         };
 
         const rendered = render(<BeamProfileOverlayComponent frame={frame as any} channel={3} top={0} left={0} docked={false} />);

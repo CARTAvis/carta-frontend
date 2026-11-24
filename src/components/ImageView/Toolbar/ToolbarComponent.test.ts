@@ -1,3 +1,5 @@
+import {rs} from "@rstest/core";
+
 import {ToolbarComponent} from "./ToolbarComponent";
 
 describe("ToolbarComponent axis zoom", () => {
@@ -10,10 +12,10 @@ describe("ToolbarComponent axis zoom", () => {
             zoomAxis,
             effectiveZoomLevel: {x: 2, y: 1},
             zoomLevel: 2,
-            setAxisZoom: jest.fn(),
-            setZoom: jest.fn()
+            setAxisZoom: rs.fn(),
+            setZoom: rs.fn()
         };
-        const onRegionViewZoom = jest.fn();
+        const onRegionViewZoom = rs.fn();
         const component = new ToolbarComponent({frame, onRegionViewZoom} as any);
         return {component, frame, onRegionViewZoom};
     };

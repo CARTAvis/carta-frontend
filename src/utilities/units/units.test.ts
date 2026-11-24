@@ -1,6 +1,8 @@
+import {rs} from "@rstest/core";
+
 import {getValueFromArcsecString, pixelToFluxDensityUnit, toFixed} from "./units";
 
-jest.mock("models", () => ({}));
+rs.mock("models", () => ({}));
 
 describe("toFixed", () => {
     it("rounds to the requested number of decimals", () => {

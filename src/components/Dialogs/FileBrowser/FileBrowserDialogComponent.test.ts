@@ -1,3 +1,4 @@
+import {type Mock, rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {BrowserMode, FrequencyUnit} from "enums";
@@ -8,7 +9,7 @@ import {FileBrowserDialogComponent} from "./FileBrowserDialogComponent";
 
 interface TestableFileBrowserDialogComponent {
     imageArithmeticString: string;
-    loadSelectedFiles: jest.Mock<Promise<FrameStore[]>>;
+    loadSelectedFiles: Mock<() => Promise<FrameStore[]>>;
     loadAsTimeSeries: () => Promise<void>;
     loadFile: (file: ISelectedFile) => Promise<FrameStore | undefined>;
     loadExpression: () => Promise<FrameStore>;
@@ -20,7 +21,7 @@ interface TestableFileBrowserDialogComponent {
 
 describe("FileBrowserDialogComponent", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     describe("top-level directory", () => {
@@ -33,10 +34,10 @@ describe("FileBrowserDialogComponent", () => {
                 browserMode: BrowserMode.File,
                 fileList: {directory: ""},
                 catalogFileList: {directory: ""},
-                saveStartingDirectory: jest.fn(),
-                setImportingRegions: jest.fn(),
-                showLoadingDialog: jest.fn(),
-                resetLoadingStates: jest.fn(),
+                saveStartingDirectory: rs.fn(),
+                setImportingRegions: rs.fn(),
+                showLoadingDialog: rs.fn(),
+                resetLoadingStates: rs.fn(),
                 saveFilename: "image.fits",
                 saveFileType: CARTA.FileType.FITS,
                 saveRegionId: 0,
@@ -52,15 +53,15 @@ describe("FileBrowserDialogComponent", () => {
                 fileBrowserStore,
                 frames: [{}],
                 activeFrame: {numChannels: 1, headerRestFreq: 2},
-                openFile: jest.fn(),
-                appendFile: jest.fn(),
-                appendCatalog: jest.fn(),
-                importRegion: jest.fn(),
-                saveFile: jest.fn(),
-                exportRegions: jest.fn()
+                openFile: rs.fn(),
+                appendFile: rs.fn(),
+                appendCatalog: rs.fn(),
+                importRegion: rs.fn(),
+                saveFile: rs.fn(),
+                exportRegions: rs.fn()
             } as unknown as AppStore;
-            jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore);
-            jest.spyOn(FileBrowserStore, "Instance", "get").mockReturnValue(fileBrowserStore);
+            rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore);
+            rs.spyOn(FileBrowserStore, "Instance", "get").mockReturnValue(fileBrowserStore);
             component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
         });
 
@@ -132,9 +133,9 @@ describe("FileBrowserDialogComponent", () => {
     });
 
     test("handleSaveFile refuses a cube with a nonlinear spectral axis", async () => {
-        const saveFile = jest.fn();
+        const saveFile = rs.fn();
         const activeFrame = {isSpectralAxisNonlinear: true, restFreqStore: {customRestFreq: {value: NaN, unit: FrequencyUnit.HZ}}};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame, saveFile} as unknown as AppStore);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame, saveFile} as unknown as AppStore);
 
         const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
         await expect(component.handleSaveFile()).rejects.toThrow("Not available for nonlinear spectral axes");
@@ -147,26 +148,26 @@ describe("FileBrowserDialogComponent", () => {
         const loadedFrameA = {filename: "loaded-a.fits"} as FrameStore;
         const loadedFrameB = {filename: "loaded-b.fits"} as FrameStore;
         const loadedFrames = [loadedFrameA, loadedFrameB];
-        const setSpatialMatchingEnabled = jest.fn(async (frame: FrameStore) => {
+        const setSpatialMatchingEnabled = rs.fn(async (frame: FrameStore) => {
             frame.spatialReference = spatialReference;
         });
-        const setTimeSeriesMember = jest.fn();
+        const setTimeSeriesMember = rs.fn();
 
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             frames: [spatialReference, existingFrame, ...loadedFrames],
             spatialReference,
             setSpatialMatchingEnabled,
             setTimeSeriesMember,
             timeSeriesStore: {
                 elements: [{frame: loadedFrameA}, {frame: loadedFrameB}],
-                first: jest.fn()
+                first: rs.fn()
             },
-            animatorStore: {setAnimationMode: jest.fn()},
-            widgetsStore: {selectDockedWidgetTab: jest.fn()}
+            animatorStore: {setAnimationMode: rs.fn()},
+            widgetsStore: {selectDockedWidgetTab: rs.fn()}
         } as unknown as AppStore);
 
         const component = new FileBrowserDialogComponent({}) as unknown as TestableFileBrowserDialogComponent;
-        component.loadSelectedFiles = jest.fn().mockResolvedValue(loadedFrames);
+        component.loadSelectedFiles = rs.fn().mockResolvedValue(loadedFrames);
 
         await component.loadAsTimeSeries();
 

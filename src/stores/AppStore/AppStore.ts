@@ -2278,7 +2278,9 @@ export class AppStore {
         });
 
         // Update requirements every 200 ms
-        setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
+        if (process.env.NODE_ENV !== "test") {
+            setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
+        }
 
         // Subscribe to frontend streams
         this.backendService.spatialProfileStream.subscribe(this.handleSpatialProfileStream);

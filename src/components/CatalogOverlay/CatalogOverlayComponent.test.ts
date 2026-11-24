@@ -1,4 +1,5 @@
 import {Regions} from "@blueprintjs/table";
+import {type Mock, rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
@@ -25,10 +26,10 @@ type MockWidgetStore = {
     hasAttemptedAutoSelectImageOverlayAxes: boolean;
     catalogPlotType: CatalogPlotType;
     hasPlottedImageOverlay: boolean;
-    setAutoSelectImageOverlayAxesAttempted: jest.Mock<void, [boolean]>;
-    setCatalogPlotType: jest.Mock<void, [CatalogPlotType]>;
-    setxAxis: jest.Mock<void, [string]>;
-    setyAxis: jest.Mock<void, [string]>;
+    setAutoSelectImageOverlayAxesAttempted: Mock<(attempted: boolean) => void>;
+    setxAxis: Mock<(axis: string) => void>;
+    setyAxis: Mock<(axis: string) => void>;
+    setCatalogPlotType: Mock<(plotType: CatalogPlotType) => void>;
     xAxis: string;
     yAxis: string;
 };
@@ -43,12 +44,12 @@ type MockProfileStore = {
     isNumericColumn: (columnName: string) => boolean;
     isFileBasedCatalog: boolean;
     maxRows: number;
+    setCatalogCoordinateSystem: Mock<(system: CatalogSystemType) => void>;
+    setIsUpdateColumn: Mock<(isUpdate: boolean) => void>;
+    setHeaderDisplay: Mock<(display: boolean, column: string) => void>;
+    setUpdateMode: Mock<(mode: CatalogUpdateMode) => void>;
     shouldUpdateData?: boolean;
-    getCoordinateEligibility: jest.Mock<CatalogAxisEligibilityResult, [string]>;
-    setCatalogCoordinateSystem: jest.Mock<void, [CatalogSystemType]>;
-    setIsUpdateColumn: jest.Mock<void, [boolean]>;
-    setHeaderDisplay: jest.Mock<void, [boolean, string]>;
-    setUpdateMode: jest.Mock<void, [CatalogUpdateMode]>;
+    getCoordinateEligibility: Mock<(columnName: string) => CatalogAxisEligibilityResult>;
 };
 
 const SYSTEM_OVERLAY_MAP = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
@@ -73,16 +74,16 @@ const CreateWidgetStore = (xAxis: string = CatalogOverlay.NONE, yAxis: string = 
         yAxis
     } as MockWidgetStore;
 
-    widgetStore.setCatalogPlotType = jest.fn((nextPlotType: CatalogPlotType) => {
-        widgetStore.catalogPlotType = nextPlotType;
-    });
-    widgetStore.setxAxis = jest.fn((nextXAxis: string) => {
+    widgetStore.setxAxis = rs.fn((nextXAxis: string) => {
+        widgetStore.setCatalogPlotType = rs.fn((nextPlotType: CatalogPlotType) => {
+            widgetStore.catalogPlotType = nextPlotType;
+        });
         widgetStore.xAxis = nextXAxis;
     });
-    widgetStore.setyAxis = jest.fn((nextYAxis: string) => {
+    widgetStore.setyAxis = rs.fn((nextYAxis: string) => {
         widgetStore.yAxis = nextYAxis;
     });
-    widgetStore.setAutoSelectImageOverlayAxesAttempted = jest.fn((isAttempted: boolean) => {
+    widgetStore.setAutoSelectImageOverlayAxesAttempted = rs.fn((isAttempted: boolean) => {
         widgetStore.hasAttemptedAutoSelectImageOverlayAxes = isAttempted;
     });
 
@@ -131,11 +132,11 @@ const CreateProfileStore = (system: CatalogSystemType, columns: MockColumn[]): M
         isNumericColumn,
         isFileBasedCatalog: false,
         maxRows: 100,
-        getCoordinateEligibility: jest.fn(),
-        setCatalogCoordinateSystem: jest.fn(),
-        setIsUpdateColumn: jest.fn(),
-        setHeaderDisplay: jest.fn(),
-        setUpdateMode: jest.fn()
+        setCatalogCoordinateSystem: rs.fn(),
+        setIsUpdateColumn: rs.fn(),
+        setHeaderDisplay: rs.fn(),
+        setUpdateMode: rs.fn(),
+        getCoordinateEligibility: rs.fn()
     } as MockProfileStore;
 
     profileStore.getCoordinateEligibility.mockImplementation((columnName: string) => {
@@ -288,7 +289,7 @@ afterEach(() => {
         });
     });
     CONSTRUCTED_COMPONENTS.length = 0;
-    jest.restoreAllMocks();
+    rs.restoreAllMocks();
 });
 
 describe("CatalogOverlayComponent", () => {
@@ -303,7 +304,7 @@ describe("CatalogOverlayComponent", () => {
             profileStore: first.profileStore,
             widgetStore: first.widgetStore
         });
-        const scrollToRegion = jest.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+        const scrollToRegion = rs.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
 
         second.component["onCompleteRender"]();
 
@@ -319,7 +320,7 @@ describe("CatalogOverlayComponent", () => {
             second.profileStore.selectedPointIndices = [100];
         });
         second.widgetStore.requestCatalogTableAutoScroll();
-        const scrollToRegion = jest.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+        const scrollToRegion = rs.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
 
         // Adoption and the selection request can happen within the same MobX action.
         runInAction(() => {
@@ -344,7 +345,7 @@ describe("CatalogOverlayComponent", () => {
             CatalogStore.Instance.catalogDisplayStores.delete(catalogFileId);
         });
         displayStore.requestCatalogTableAutoScroll();
-        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
 
         runInAction(() => {
             CatalogStore.Instance.catalogDisplayStores.set(catalogFileId, displayStore);
@@ -367,7 +368,7 @@ describe("CatalogOverlayComponent", () => {
         runInAction(() => {
             profileStore.selectedPointIndices = [100];
         });
-        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
 
         component["onCompleteRender"]();
 
@@ -391,8 +392,8 @@ describe("CatalogOverlayComponent", () => {
 
         displayStore.setShowSelectedData(true);
         displayStore.requestCatalogTableAutoScroll();
-        const firstScroll = jest.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
-        const secondScroll = jest.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
+        const firstScroll = rs.spyOn(first.component, "scrollToRegion").mockImplementation(() => undefined);
+        const secondScroll = rs.spyOn(second.component, "scrollToRegion").mockImplementation(() => undefined);
 
         first.component["onCompleteRender"]();
         second.component["onCompleteRender"]();
@@ -407,7 +408,7 @@ describe("CatalogOverlayComponent", () => {
             profileStore.selectedPointIndices = Array.from({length: 50}, (_, index) => index + 100);
         });
         displayStore.setShowSelectedData(false);
-        const scrollToRegion = jest.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
+        const scrollToRegion = rs.spyOn(component, "scrollToRegion").mockImplementation(() => undefined);
 
         component["onCompleteRender"]();
         expect(scrollToRegion).not.toHaveBeenCalled();
@@ -529,7 +530,7 @@ describe("CatalogOverlayComponent", () => {
                 shouldUpdateData: true,
                 updateMode: CatalogUpdateMode.TableUpdate
             });
-            component["updateByInfiniteScroll"] = jest.fn();
+            component["updateByInfiniteScroll"] = rs.fn();
 
             expect(component["autoSelectAxes"]()).toBe(true);
             expect(component["updateByInfiniteScroll"]).toHaveBeenCalledTimes(1);
@@ -549,7 +550,7 @@ describe("CatalogOverlayComponent", () => {
                 shouldUpdateData: true,
                 updateMode: CatalogUpdateMode.TableUpdate
             });
-            component["updateByInfiniteScroll"] = jest.fn();
+            component["updateByInfiniteScroll"] = rs.fn();
 
             expect(component["autoSelectAxes"]()).toBe(false);
             expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
@@ -568,7 +569,7 @@ describe("CatalogOverlayComponent", () => {
                 shouldUpdateData: true,
                 updateMode: CatalogUpdateMode.TableUpdate
             });
-            component["updateByInfiniteScroll"] = jest.fn();
+            component["updateByInfiniteScroll"] = rs.fn();
 
             expect(component["autoSelectAxes"]()).toBe(false);
             expect(component["updateByInfiniteScroll"]).not.toHaveBeenCalled();
@@ -816,7 +817,7 @@ describe("CatalogOverlayComponent", () => {
             const {component, profileStore, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "flux"}, {name: "xcentroid", display: false}, {name: "ycentroid", display: false}]);
 
             profileStore.isFileBasedCatalog = true;
-            component["handleFilterRequest"] = jest.fn();
+            component["handleFilterRequest"] = rs.fn();
 
             component["autoSelectAxes"]();
 
@@ -841,7 +842,7 @@ describe("CatalogOverlayComponent", () => {
             );
 
             profileStore.isFileBasedCatalog = true;
-            component["handleFilterRequest"] = jest.fn();
+            component["handleFilterRequest"] = rs.fn();
 
             component["autoSelectAxes"]();
 
@@ -908,7 +909,7 @@ describe("CatalogOverlayComponent", () => {
         test("retries after a coordinate-system change leaves string axes unresolved", () => {
             const profileStore = CreateCatalogProfileStore(12347, CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}, {name: "GLON", dataType: CARTA.ColumnType.String}, {name: "GLAT", dataType: CARTA.ColumnType.String}], 200);
             const {component, widgetStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [], {profileStore});
-            component["updateByInfiniteScroll"] = jest.fn();
+            component["updateByInfiniteScroll"] = rs.fn();
 
             expect(widgetStore.xAxis).toBe("ra");
             expect(widgetStore.yAxis).toBe("dec");
@@ -986,7 +987,7 @@ describe("CatalogOverlayComponent", () => {
         test("uses table update mode for file-based column display updates", () => {
             const {component, profileStore} = CreateComponentHarness(CatalogSystemType.FK5, [{name: "_RAJ2000", display: false}, {name: "_DEJ2000"}], "RAJ2000", "_DEJ2000");
             profileStore.isFileBasedCatalog = true;
-            component["handleFilterRequest"] = jest.fn();
+            component["handleFilterRequest"] = rs.fn();
 
             component["handleHeaderDisplayChange"]({target: {checked: true}}, "_RAJ2000");
 
@@ -1039,7 +1040,7 @@ describe("CatalogOverlayComponent", () => {
         test("reselects xAxis without auto-applying the image overlay", () => {
             const {component, widgetStore} = CreateComponentHarness(CatalogSystemType.Pixel0, [{name: "x"}, {name: "y"}, {name: "xcentroid"}, {name: "ycentroid"}], "x", "y");
 
-            component["applyImageOverlayPlot"] = jest.fn();
+            component["applyImageOverlayPlot"] = rs.fn();
 
             component["handleHeaderDisplayChange"]({target: {checked: false}}, "x");
 
@@ -1106,7 +1107,7 @@ describe("CatalogOverlayComponent", () => {
         const {component, componentId, widgetStore: displayStore} = CreateConstructedComponentHarness(CatalogSystemType.ICRS, [{name: "ra"}, {name: "dec"}]);
         const widgetStore = WidgetsStore.Instance.catalogWidgets.get(componentId);
         displayStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
-        jest.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(jest.fn());
+        rs.spyOn(WidgetsStore.Instance, "createFloatingSettingsWidget").mockImplementation(rs.fn());
 
         component["shortcutoOnClick"](CatalogSettingsTabs.COLOR);
 

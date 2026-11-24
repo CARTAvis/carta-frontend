@@ -1,8 +1,10 @@
+import {rs} from "@rstest/core";
+
 import {BeamOverlayMode, BeamType} from "enums";
 
 import {OverlayBeamStore} from "./OverlayBeamStore";
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     PreferenceStore: {
         Instance: {
             isBeamVisible: true,

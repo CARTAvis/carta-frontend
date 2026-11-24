@@ -1,13 +1,14 @@
+import {rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 
 import {RegionOpacity} from "enums";
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             imageRatio: 1,
-            resetCursorRegionSpectralProfileProgress: jest.fn(),
-            resetRegionSpectralProfileProgress: jest.fn()
+            resetCursorRegionSpectralProfileProgress: rs.fn(),
+            resetRegionSpectralProfileProgress: rs.fn()
         }
     },
     PreferenceStore: {
@@ -22,8 +23,8 @@ jest.mock("stores", () => ({
     }
 }));
 
-jest.mock("models", () => ({
-    isValidWcsPoint: jest.fn(() => true)
+rs.mock("models", () => ({
+    isValidWcsPoint: rs.fn(() => true)
 }));
 
 import {MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_RIGHT_POINT_INDEX, SIMPLE_SHAPE_ROTATION_POINT_INDEX, SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX, SIMPLE_SHAPE_TOP_POINT_INDEX, SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX} from "utilities";
@@ -33,8 +34,8 @@ import {CompassAnnotationStore} from "../AnnotationStore";
 import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
 const BACKEND_SERVICE = {
-    setCursor: jest.fn(),
-    setRegion: jest.fn(() => Promise.resolve({regionId: 1}))
+    setCursor: rs.fn(),
+    setRegion: rs.fn(() => Promise.resolve({regionId: 1}))
 };
 
 const MakeFrame = (overrides: Partial<any> = {}) =>
@@ -42,8 +43,8 @@ const MakeFrame = (overrides: Partial<any> = {}) =>
         hasSquarePixels: true,
         renderHeight: 100,
         renderWidth: 100,
-        setCenter: jest.fn(),
-        setZoom: jest.fn(),
+        setCenter: rs.fn(),
+        setZoom: rs.fn(),
         validWcs: false,
         zoomLevel: 1,
         ...overrides
@@ -57,7 +58,7 @@ const MakeRegion = (regionType: CARTA.RegionType, controlPoints: Array<{x: numbe
 
 describe("RegionStore selection and keyboard-edit helpers", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.clearAllMocks();
     });
 
     test("rejects unsupported and out-of-range point selections", () => {
@@ -252,7 +253,7 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
     });
 
     test("focus preserves independent axis zoom ratio", () => {
-        const setAxisZoom = jest.fn();
+        const setAxisZoom = rs.fn();
         const rectangle = MakeRegion(
             CARTA.RegionType.RECTANGLE,
             [

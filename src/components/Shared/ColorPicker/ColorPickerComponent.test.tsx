@@ -1,13 +1,14 @@
 import React from "react";
+import {rs} from "@rstest/core";
 import {render, waitFor} from "@testing-library/react";
 import type {ColorResult} from "@uiw/react-color";
 
 import {ColorPickerComponent} from "./ColorPickerComponent";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-const mockColorPickerChange = jest.fn();
+const mockColorPickerChange = rs.fn();
 
-jest.mock("./ColorPickerPopover", () => ({
+rs.mock("./ColorPickerPopover", () => ({
     ColorPickerPopover: ({onChange, children}: {onChange: (color: ColorResult) => void; children: React.ReactNode}) => {
         mockColorPickerChange.mockImplementation(onChange);
         return children;
@@ -16,7 +17,7 @@ jest.mock("./ColorPickerPopover", () => ({
 
 describe("ColorPickerComponent", () => {
     it("preserves RGB values when alpha is zero", async () => {
-        const setColor = jest.fn();
+        const setColor = rs.fn();
         const redWithZeroAlpha: ColorResult = {
             rgb: {r: 255, g: 0, b: 0},
             hsl: {h: 0, s: 100, l: 50},

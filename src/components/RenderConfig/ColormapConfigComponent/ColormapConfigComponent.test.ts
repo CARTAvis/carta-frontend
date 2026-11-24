@@ -1,3 +1,5 @@
+import {rs} from "@rstest/core";
+
 import {FrameScaling} from "enums";
 import {type RenderConfigStore} from "stores/Frame";
 
@@ -26,14 +28,14 @@ function createRenderConfig(scaling: FrameScaling, colorMap: string = "inferno")
     const renderConfig = {
         scaling,
         colorMap,
-        setScaling: jest.fn((newScaling: FrameScaling) => {
+        setScaling: rs.fn((newScaling: FrameScaling) => {
             renderConfig.scaling = newScaling;
         }),
-        setColorMap: jest.fn((newColorMap: string) => {
+        setColorMap: rs.fn((newColorMap: string) => {
             renderConfig.colorMap = newColorMap;
         }),
-        getScalingParameter: jest.fn(() => 0.3),
-        setScalingParameter: jest.fn()
+        getScalingParameter: rs.fn(() => 0.3),
+        setScalingParameter: rs.fn()
     };
     return renderConfig as unknown as RenderConfigStore;
 }

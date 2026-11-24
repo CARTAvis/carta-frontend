@@ -1,20 +1,22 @@
 // Mock for gsl_wrapper WASM module
 
+const {rs: RS} = require("@rstest/core");
+
 const MOCK_GSL_WRAPPER = {
     onReady: Promise.resolve(),
 
     // Mock GSL wrapper functions
-    linearRegression: jest.fn(() => 0),
-    filterBoxcar: jest.fn(() => 0),
-    filterGaussian: jest.fn(() => 0),
-    filterHanning: jest.fn(() => 0),
-    filterDecimation: jest.fn(() => 0),
-    filterBinning: jest.fn(() => 0),
-    filterSavitzkyGolay: jest.fn(() => 0),
-    fittingGaussian: jest.fn(() => "mock"),
+    linearRegression: RS.fn(() => 0),
+    filterBoxcar: RS.fn(() => 0),
+    filterGaussian: RS.fn(() => 0),
+    filterHanning: RS.fn(() => 0),
+    filterDecimation: RS.fn(() => 0),
+    filterBinning: RS.fn(() => 0),
+    filterSavitzkyGolay: RS.fn(() => 0),
+    fittingGaussian: RS.fn(() => "mock"),
 
     // Mock analysis functions
-    getFittingParameters: jest.fn(() => ({
+    getFittingParameters: RS.fn(() => ({
         intercept: 0,
         slope: 1,
         cov00: 0,
@@ -22,13 +24,13 @@ const MOCK_GSL_WRAPPER = {
         cov11: 0,
         rss: 0
     })),
-    boxcarSmooth: jest.fn(() => new Float64Array([0])),
-    gaussianSmooth: jest.fn(() => new Float64Array([0])),
-    hanningSmooth: jest.fn(() => new Float64Array([0])),
-    decimation: jest.fn(() => ({x: new Float64Array([0]), y: new Float64Array([0])})),
-    binning: jest.fn(() => new Float64Array([0])),
-    savitzkyGolaySmooth: jest.fn(() => new Float64Array([0])),
-    fitting: jest.fn(() => ({
+    boxcarSmooth: RS.fn(() => new Float64Array([0])),
+    gaussianSmooth: RS.fn(() => new Float64Array([0])),
+    hanningSmooth: RS.fn(() => new Float64Array([0])),
+    decimation: RS.fn(() => ({x: new Float64Array([0]), y: new Float64Array([0])})),
+    binning: RS.fn(() => new Float64Array([0])),
+    savitzkyGolaySmooth: RS.fn(() => new Float64Array([0])),
+    fitting: RS.fn(() => ({
         yIntercept: 0,
         yInterceptError: 0,
         slope: 1,
@@ -42,12 +44,12 @@ const MOCK_GSL_WRAPPER = {
     })),
 
     // Mock memory management
-    _malloc: jest.fn(() => 0),
-    _free: jest.fn(),
-    HEAPF64: {buffer: new ArrayBuffer(8), set: jest.fn()},
-    HEAPF32: {buffer: new ArrayBuffer(4), set: jest.fn()},
-    HEAP32: {set: jest.fn()},
-    getValue: jest.fn(() => 0)
+    _malloc: RS.fn(() => 0),
+    _free: RS.fn(),
+    HEAPF64: {buffer: new ArrayBuffer(8), set: RS.fn()},
+    HEAPF32: {buffer: new ArrayBuffer(4), set: RS.fn()},
+    HEAP32: {set: RS.fn()},
+    getValue: RS.fn(() => 0)
 };
 
 module.exports = MOCK_GSL_WRAPPER;

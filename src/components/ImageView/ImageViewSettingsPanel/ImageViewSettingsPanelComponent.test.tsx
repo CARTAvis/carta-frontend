@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Intent} from "@blueprintjs/core";
-import {act, fireEvent, render, screen} from "@testing-library/react";
+import {rs} from "@rstest/core";
+import {fireEvent, render, screen} from "@testing-library/react";
 import axios from "axios";
 import {observable, runInAction} from "mobx";
 
@@ -22,15 +23,15 @@ interface TestableImageViewSettingsPanelComponent {
 
 describe("ImageViewSettingsPanelComponent beam placement", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
-    test.each([false, true])("uses the selected image's per-plane beam status (%s) instead of the displayed image's", async hasSelectedPerPlaneBeams => {
-        jest.spyOn(axios, "get").mockResolvedValue({data: []});
+    test.each([false, true])("uses the selected image's per-plane beam status (%s) instead of the displayed image's", hasSelectedPerPlaneBeams => {
+        rs.spyOn(axios, "get").mockResolvedValue({data: []});
         const realApp = AppStore.Instance;
         const beamSettings = new OverlayBeamStore();
-        const getFrame = jest.fn().mockReturnValue({shouldShowBeamForAllChannels: hasSelectedPerPlaneBeams});
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        const getFrame = rs.fn().mockReturnValue({shouldShowBeamForAllChannels: hasSelectedPerPlaneBeams});
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             activeFrame: undefined,
             overlaySettings: {...realApp.overlaySettings, beam: {selectedFileId: 23, isSelectedFrameValid: true, settingsForDisplay: beamSettings}},
             preferenceStore: realApp.preferenceStore,
@@ -42,12 +43,8 @@ describe("ImageViewSettingsPanelComponent beam placement", () => {
             isDarkTheme: false
         } as unknown as AppStore);
 
-        await act(async () => {
-            render(React.createElement(ImageViewSettingsPanelComponent, {} as any));
-        });
-        await act(async () => {
-            fireEvent.click(screen.getByRole("tab", {name: "Beam"}));
-        });
+        render(React.createElement(ImageViewSettingsPanelComponent, {} as any));
+        fireEvent.click(screen.getByRole("tab", {name: "Beam"}));
 
         expect(getFrame).toHaveBeenCalledWith(23);
         expect(screen.getByRole("option", {name: "Bottom-left panel only"})).toHaveProperty("disabled", hasSelectedPerPlaneBeams);
@@ -59,7 +56,7 @@ describe("ImageViewSettingsPanelComponent beam placement", () => {
 
 describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("clears validation intent when the active frame changes", () => {
@@ -69,7 +66,7 @@ describe("ImageViewSettingsPanelComponent rest-frame validation", () => {
                 return activeFrame.get();
             }
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as unknown as AppStore);
 
         const component = new ImageViewSettingsPanelComponent({} as any) as unknown as TestableImageViewSettingsPanelComponent;
         component.restFrameShiftInputIntent = Intent.DANGER;

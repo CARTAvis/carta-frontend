@@ -1,14 +1,16 @@
-jest.mock("components/Dialogs", () => ({DraggableDialogComponent: jest.fn()}));
-jest.mock("components/Shared", () => ({
-    ClearableNumericInputComponent: jest.fn(),
-    ColormapComponent: jest.fn(),
-    ColorPickerComponent: jest.fn(),
-    SafeNumericInput: jest.fn(),
-    ScrollShadow: jest.fn()
+import {rs} from "@rstest/core";
+
+rs.mock("components/Dialogs", () => ({DraggableDialogComponent: rs.fn()}));
+rs.mock("components/Shared", () => ({
+    ClearableNumericInputComponent: rs.fn(),
+    ColormapComponent: rs.fn(),
+    ColorPickerComponent: rs.fn(),
+    SafeNumericInput: rs.fn(),
+    ScrollShadow: rs.fn()
 }));
-jest.mock("icons/CustomIcons", () => ({CustomIcon: {}}));
-jest.mock("stores", () => ({AppStore: {Instance: {activeFrame: null}}}));
-jest.mock("utilities", () => ({SWATCH_COLORS: []}));
+rs.mock("icons/CustomIcons", () => ({CustomIcon: {}}));
+rs.mock("stores", () => ({AppStore: {Instance: {activeFrame: null}}}));
+rs.mock("utilities", () => ({SWATCH_COLORS: []}));
 
 import {type VectorOverlayConfigStore} from "stores/Frame";
 
@@ -25,7 +27,7 @@ interface TestableVectorOverlayDialogComponent {
 function createConfig(colormap: string = "inferno"): VectorOverlayConfigStore {
     const config = {
         colormap,
-        setColormap: jest.fn((newColormap: string) => (config.colormap = newColormap))
+        setColormap: rs.fn((newColormap: string) => (config.colormap = newColormap))
     };
     return config as unknown as VectorOverlayConfigStore;
 }

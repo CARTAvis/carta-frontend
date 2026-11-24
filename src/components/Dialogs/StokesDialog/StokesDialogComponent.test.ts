@@ -1,3 +1,4 @@
+import {rs} from "@rstest/core";
 import {CARTA} from "carta-protobuf";
 import {observable, runInAction} from "mobx";
 
@@ -8,16 +9,16 @@ import {StokesDialogComponent} from "./StokesDialogComponent";
 
 describe("StokesDialogComponent", () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test.each([false, true])("submits polarization files from an empty directory (append: %s)", async isAppendingFrame => {
         const stokes = {directory: "", file: "image.fits", hdu: "0", polarizationType: CARTA.PolarizationType.I};
-        const openConcatFile = jest.fn().mockResolvedValue(undefined);
-        const appendConcatFile = jest.fn().mockResolvedValue(undefined);
-        const setStokesFiles = jest.fn();
-        const saveStartingDirectory = jest.fn();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        const openConcatFile = rs.fn().mockResolvedValue(undefined);
+        const appendConcatFile = rs.fn().mockResolvedValue(undefined);
+        const setStokesFiles = rs.fn();
+        const saveStartingDirectory = rs.fn();
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             dialogStore: {dialogVisible: observable.map<DialogId, boolean>()},
             activeFrame: {setStokesFiles},
             frames: [{}],
@@ -30,7 +31,7 @@ describe("StokesDialogComponent", () => {
                 saveStartingDirectory
             }
         } as unknown as AppStore);
-        jest.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({isDynamicLayoutEnabled: false} as PreferenceStore);
+        rs.spyOn(PreferenceStore, "Instance", "get").mockReturnValue({isDynamicLayoutEnabled: false} as PreferenceStore);
 
         const component = new StokesDialogComponent({});
         try {
@@ -48,9 +49,9 @@ describe("StokesDialogComponent", () => {
 
     test.each(["", "images"])("loads polarization file metadata from directory '%s'", async directory => {
         const stokes = {directory, file: "image.fits", hdu: "0", polarizationType: CARTA.PolarizationType.I};
-        const getStokesFile = jest.fn().mockResolvedValue(stokes);
+        const getStokesFile = rs.fn().mockResolvedValue(stokes);
         const dialogVisible = observable.map<DialogId, boolean>();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             dialogStore: {dialogVisible},
             fileBrowserStore: {
                 fileList: {directory},

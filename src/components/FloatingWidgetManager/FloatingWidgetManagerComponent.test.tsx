@@ -1,3 +1,5 @@
+import {rs} from "@rstest/core";
+
 import {CatalogOverlayComponent} from "components/CatalogOverlay/CatalogOverlayComponent";
 import {WidgetsStore} from "stores";
 
@@ -7,7 +9,7 @@ describe("FloatingWidgetManagerComponent catalog widgets", () => {
     afterEach(() => {
         WidgetsStore.Instance.catalogWidgets.clear();
         WidgetsStore.Instance.floatingWidgets = [];
-        jest.restoreAllMocks();
+        rs.restoreAllMocks();
     });
 
     test("removes the widget store when a floating catalog overlay closes", () => {

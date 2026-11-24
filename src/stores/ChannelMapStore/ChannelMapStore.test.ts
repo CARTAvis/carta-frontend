@@ -1,6 +1,8 @@
+import {rs} from "@rstest/core";
+
 import {ChannelMapStore} from "./ChannelMapStore";
 
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AppStore: {
         Instance: {
             imageViewConfigStore: {
@@ -14,7 +16,7 @@ describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
     afterEach(() => {
-        jest.useRealTimers();
+        rs.useRealTimers();
     });
 
     describe("setChannelMapEnabled", () => {

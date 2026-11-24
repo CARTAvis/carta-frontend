@@ -1,3 +1,5 @@
+import {type MockInstance, rs} from "@rstest/core";
+
 import {AngularSizeUnit} from "enums";
 
 import {AngularSize, FACTOR_TO_ARCSEC} from "./AngularSize";
@@ -17,9 +19,13 @@ describe("AngularSize", () => {
     });
 
     describe("convertFromArcsec", () => {
-        let mockConvertValueFromArcsec: jest.SpyInstance;
+        let mockConvertValueFromArcsec: MockInstance;
         beforeAll(() => {
-            mockConvertValueFromArcsec = jest.spyOn(AngularSize, "convertValueFromArcsec");
+            mockConvertValueFromArcsec = rs.spyOn(AngularSize, "convertValueFromArcsec");
+        });
+
+        afterAll(() => {
+            mockConvertValueFromArcsec.mockRestore();
         });
 
         test("returns values with required unit", () => {

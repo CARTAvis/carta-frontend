@@ -1,4 +1,6 @@
-jest.mock("components/Shared", () => ({ColormapComponent: jest.fn(), SafeNumericInput: jest.fn()}));
+import {rs} from "@rstest/core";
+
+rs.mock("components/Shared", () => ({ColormapComponent: rs.fn(), SafeNumericInput: rs.fn()}));
 
 import {ScatterPlotSettingsPanelComponent, type ScatterPlotSettingsPanelComponentProps} from "./ScatterPlotSettingsPanelComponent";
 
@@ -15,7 +17,7 @@ interface TestableScatterPlotSettingsPanelComponent {
 function createProps(colorMap: string = "inferno"): ScatterPlotSettingsPanelComponentProps {
     const props = {
         colorMap,
-        setColormap: jest.fn((colormap: string) => (props.colorMap = colormap))
+        setColormap: rs.fn((colormap: string) => (props.colorMap = colormap))
     };
     return props as unknown as ScatterPlotSettingsPanelComponentProps;
 }

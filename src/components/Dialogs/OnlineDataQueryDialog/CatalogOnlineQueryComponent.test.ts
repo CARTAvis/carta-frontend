@@ -1,45 +1,50 @@
 import type {CSSProperties} from "react";
+import {type Mock, rs} from "@rstest/core";
 import {autorun, runInAction} from "mobx";
 
-jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()},
-    ClearableNumericInputComponent: jest.fn(),
-    ErrorToast: jest.fn((message: string) => ({message})),
-    SafeNumericInput: jest.fn(),
-    ScrollShadow: jest.fn()
+rs.mock("components/Shared", () => ({
+    AppToaster: {show: rs.fn()},
+    ClearableNumericInputComponent: rs.fn(),
+    ErrorToast: rs.fn((message: string) => ({message})),
+    SafeNumericInput: rs.fn(),
+    ScrollShadow: rs.fn()
 }));
-jest.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: jest.fn(), getSimbadCatalog: jest.fn()}}}));
+rs.mock("services", () => ({CatalogApiService: {Instance: {benchmarkMirror: rs.fn(), getSimbadCatalog: rs.fn()}}}));
 
-const MOCK_CONFIG_STORE = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB: jest.fn(), setObjectQueryStatus: jest.fn()};
-const MOCK_MIRROR_SITES: Partial<Record<CatalogDatabase, string[]>> = {};
-const MOCK_ACTIVE_MIRRORS: Partial<Record<CatalogDatabase, string>> = {};
-const MOCK_MIRROR_STORE = {
-    getMirrorSites: jest.fn((database: CatalogDatabase) => MOCK_MIRROR_SITES[database] ?? []),
-    getActiveMirror: jest.fn((database: CatalogDatabase) => MOCK_ACTIVE_MIRRORS[database]),
-    isMirrorBlocked: jest.fn((_site: string) => false),
-    isMirrorUserDisabled: jest.fn((_database: CatalogDatabase, _site: string) => false),
-    isMirrorUnavailable: jest.fn(),
-    setActiveMirror: jest.fn((database: CatalogDatabase, mirror: string) => {
-        MOCK_ACTIVE_MIRRORS[database] = mirror;
-    }),
-    setEnabledMirrors: jest.fn((database: CatalogDatabase, mirrors: string[]) => {
-        MOCK_MIRROR_SITES[database] = mirrors;
-    }),
-    toggleMirror: jest.fn(),
-    resetMirrorSettings: jest.fn()
-};
+const {MOCK_CONFIG_STORE, MOCK_MIRROR_SITES, MOCK_ACTIVE_MIRRORS, MOCK_MIRROR_STORE} = rs.hoisted(() => {
+    const configStore = {catalogDB: "SIMBAD", objectName: "M31", setCatalogDB: rs.fn(), setObjectQueryStatus: rs.fn()};
+    const mirrorSites: Partial<Record<CatalogDatabase, string[]>> = {};
+    const activeMirrors: Partial<Record<CatalogDatabase, string>> = {};
+    const mirrorStore = {
+        getMirrorSites: rs.fn((database: CatalogDatabase) => mirrorSites[database] ?? []),
+        getActiveMirror: rs.fn((database: CatalogDatabase) => activeMirrors[database]),
+        isMirrorBlocked: rs.fn((_site: string) => false),
+        isMirrorUserDisabled: rs.fn((_database: CatalogDatabase, _site: string) => false),
+        isMirrorUnavailable: rs.fn(),
+        setActiveMirror: rs.fn((database: CatalogDatabase, mirror: string) => {
+            activeMirrors[database] = mirror;
+        }),
+        setEnabledMirrors: rs.fn((database: CatalogDatabase, mirrors: string[]) => {
+            mirrorSites[database] = mirrors;
+        }),
+        toggleMirror: rs.fn(),
+        resetMirrorSettings: rs.fn()
+    };
 
-jest.mock("stores", () => ({
+    return {MOCK_CONFIG_STORE: configStore, MOCK_MIRROR_SITES: mirrorSites, MOCK_ACTIVE_MIRRORS: activeMirrors, MOCK_MIRROR_STORE: mirrorStore};
+});
+
+rs.mock("stores", () => ({
     AppStore: {Instance: {}},
     CatalogOnlineQueryConfigStore: {Instance: MOCK_CONFIG_STORE},
     MirrorSiteStore: {Instance: MOCK_MIRROR_STORE}
 }));
-jest.mock("utilities", () => ({
+rs.mock("utilities", () => ({
     NUMBER_FORMAT_LABEL: new Map(),
-    clamp: jest.fn(),
-    getFormattedWCSPoint: jest.fn(),
-    getPixelValueFromWCS: jest.fn(),
-    isWCSStringFormatValid: jest.fn()
+    clamp: rs.fn(),
+    getFormattedWCSPoint: rs.fn(),
+    getPixelValueFromWCS: rs.fn(),
+    isWCSStringFormatValid: rs.fn()
 }));
 
 import {AppToaster, ErrorToast} from "components/Shared";
@@ -68,7 +73,7 @@ interface TestableCatalogQueryComponent {
 
 describe("CatalogQueryComponent mirror benchmark cancellation", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.clearAllMocks();
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "not-tested", "fast"];
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = ["vizier-default"];
@@ -81,7 +86,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
 
     test("does not reorder mirrors when cancellation occurs after a database change", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
-        const abort = jest.fn();
+        const abort = rs.fn();
         runInAction(() => {
             component.isBenchmarking = true;
             component.mirrorBenchmarkAbort = {abort};
@@ -105,7 +110,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
 
     test("sorts completed benchmark results when speed testing is canceled", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
-        const abort = jest.fn();
+        const abort = rs.fn();
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "fast"];
         runInAction(() => {
             component.isBenchmarking = true;
@@ -142,7 +147,7 @@ describe("CatalogQueryComponent mirror benchmark cancellation", () => {
 
 describe("CatalogQueryComponent MobX actions", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        rs.clearAllMocks();
         MOCK_CONFIG_STORE.catalogDB = CatalogDatabase.SIMBAD;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["slow", "fast"];
         MOCK_MIRROR_SITES[CatalogDatabase.VIZIER] = [];
@@ -155,12 +160,12 @@ describe("CatalogQueryComponent MobX actions", () => {
 
     test("updates benchmark observables inside actions and sorts mirrors by response time", async () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
-        const consoleWarn = jest.spyOn(console, "warn").mockImplementation();
+        const consoleWarn = rs.spyOn(console, "warn").mockImplementation();
         const dispose = autorun(() => {
             void component.isBenchmarking;
             Array.from(component.mirrorBenchmarks.values());
         });
-        (CatalogApiService.Instance.benchmarkMirror as jest.Mock).mockImplementation((_database, site) => Promise.resolve(site === "fast" ? 50 : 200));
+        (CatalogApiService.Instance.benchmarkMirror as Mock).mockImplementation((_database, site) => Promise.resolve(site === "fast" ? 50 : 200));
 
         try {
             await component.runMirrorBenchmark();
@@ -206,7 +211,7 @@ describe("CatalogQueryComponent MobX actions", () => {
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
         MOCK_MIRROR_SITES[CatalogDatabase.SIMBAD] = ["http://legacy.example/", "https://secure.example/"];
         MOCK_MIRROR_STORE.isMirrorBlocked.mockImplementation((site: string) => site.startsWith("http://"));
-        (CatalogApiService.Instance.benchmarkMirror as jest.Mock).mockResolvedValue(50);
+        (CatalogApiService.Instance.benchmarkMirror as Mock).mockResolvedValue(50);
 
         await component.runMirrorBenchmark();
 
@@ -239,7 +244,7 @@ describe("CatalogQueryComponent MobX actions", () => {
 describe("CatalogQueryComponent object resolution error", () => {
     test("shows the actionable mirror error in a toast", async () => {
         const error = new Error("Request to mirror active.example failed. Select another mirror site and retry.");
-        (CatalogApiService.Instance.getSimbadCatalog as jest.Mock).mockRejectedValueOnce(error);
+        (CatalogApiService.Instance.getSimbadCatalog as Mock).mockRejectedValueOnce(error);
         const component = new CatalogQueryComponent({}) as unknown as TestableCatalogQueryComponent;
 
         component.handleObjectUpdate();

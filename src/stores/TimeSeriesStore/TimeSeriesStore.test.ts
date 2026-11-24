@@ -1,11 +1,14 @@
-const MOCK_APP_STORE = {
-    activeImage: null as any,
-    setActiveImageById: jest.fn()
-};
+import {rs} from "@rstest/core";
 
-jest.mock("stores", () => ({
+const MOCK_APP_STORE = rs.hoisted(() => ({
+    activeImage: null as any,
+    setActiveImageById: rs.fn()
+}));
+
+rs.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE}
 }));
+rs.mock("utilities", () => ({formatMjdUtcAsIso: rs.fn(() => "")}));
 
 import {ImageType} from "enums";
 
@@ -20,7 +23,7 @@ const MakeMockFrame = (id: number, obsTimeMjdUtc: number | undefined, options: M
         id,
         isPreview: options.isPreview ?? false,
         obsTimeMjdUtc,
-        setChannel: jest.fn()
+        setChannel: rs.fn()
     };
 };
 

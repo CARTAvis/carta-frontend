@@ -1,4 +1,6 @@
-jest.mock("carta_computation", () => {
+import {rs} from "@rstest/core";
+
+rs.mock("carta_computation", () => {
     const fs = require("fs");
     const path = require("path");
     const wasmDir = path.resolve(__dirname, "../../../wasm_src/carta_computation/build");
@@ -25,10 +27,12 @@ jest.mock("carta_computation", () => {
     const fn = new Function("module", "exports", "require", "__dirname", "__filename", code);
     fn(mockModule, mockModule.exports, customRequire, wasmDir, path.resolve(wasmDir, "index.js"));
 
-    mockModule.exports.__esModule = true;
-    mockModule.exports.default = mockModule.exports;
-
-    return mockModule.exports;
+    return {
+        onReady: mockModule.exports.onReady,
+        Decode: (data: Uint8Array, size: number, decimationFactor: number) => mockModule.exports.Decode(data, size, decimationFactor),
+        ConvertInt64Array: (data: Uint8Array, isSigned: boolean) => mockModule.exports.ConvertInt64Array(data, isSigned),
+        default: mockModule.exports
+    };
 });
 
 import * as CARTACompute from "carta_computation";

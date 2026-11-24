@@ -35,10 +35,10 @@ test("returns identical round trip coordinates", () => {
     }
 });
 
-/** Timings under Jest's parallel workers are noisy in one direction only, so the fastest
- *  run of several is the stable estimate; the first runs are also JIT warm-up. */
+/** Timings under parallel workers are noisy in one direction only, so the fastest
+ *  run of several is the stable estimate; the first run is also JIT warm-up. */
 function fastestRun(run: () => void, samples = 5): number {
-    run(); // warm up
+    run();
     let best = Infinity;
     for (let i = 0; i < samples; i++) {
         const tStart = performance.now();
@@ -48,10 +48,12 @@ function fastestRun(run: () => void, samples = 5): number {
     return best;
 }
 
-test("encodes 1M coordinates in less than 20 ms", () => {
+const TILE_COORDINATE_DURATION_BUDGET = process.env.CARTA_TEST_COVERAGE === "1" ? 100 : 20;
+
+test("encodes 1M coordinates within the performance budget", () => {
     const layer = 12;
     let encodedVal = 0;
-    const dt = fastestRun(() => {
+    const duration = fastestRun(() => {
         encodedVal = 0;
         for (let i = 0; i < 1000; i++) {
             for (let j = 0; j < 1000; j++) {
@@ -60,14 +62,14 @@ test("encodes 1M coordinates in less than 20 ms", () => {
         }
     });
     expect(encodedVal).toBe(203373043500000);
-    expect(dt).toBeLessThan(20);
+    expect(duration).toBeLessThan(TILE_COORDINATE_DURATION_BUDGET);
 });
 
-test("decodes 1M coordinates in less than 20 ms", () => {
+test("decodes 1M coordinates within the performance budget", () => {
     const layer = 12;
     const layerWidth = 2 ** layer;
     let counter = 0;
-    const dt = fastestRun(() => {
+    const duration = fastestRun(() => {
         counter = 0;
         let encVal = TileCoordinate.encode(0, 0, layer);
         for (let i = 0; i < 1000; i++) {
@@ -79,5 +81,5 @@ test("decodes 1M coordinates in less than 20 ms", () => {
         }
     });
     expect(counter).toBe(2046486240);
-    expect(dt).toBeLessThan(20);
+    expect(duration).toBeLessThan(TILE_COORDINATE_DURATION_BUDGET);
 });

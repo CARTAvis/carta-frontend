@@ -1,37 +1,44 @@
 import * as React from "react";
 import {HTMLSelect} from "@blueprintjs/core";
+import {rs} from "@rstest/core";
 
 import {AnimationMode, NumericInputType} from "enums/animation";
 import {AppStore} from "stores";
 
 import {AnimatorComponent} from "./AnimatorComponent";
 
-jest.mock("components/Shared", () => ({
+rs.mock("components/Shared", () => ({
     ResizeDetector: () => null,
     SafeNumericInput: () => null,
     ScrollShadow: () => null
 }));
-jest.mock("stores", () => ({
+rs.mock("stores", () => ({
     AnimatorStore: {Instance: {}},
     AppStore: Object.defineProperty({}, "Instance", {configurable: true, get: () => undefined})
+}));
+rs.mock("utilities", () => ({
+    formatTimeSeriesTickLabels: () => [],
+    getDiscreteSliderTicks: () => [],
+    getTimeLabelFormatName: () => "",
+    toFixed: (value: number, digits: number) => value.toFixed(digits)
 }));
 
 describe("AnimatorComponent", () => {
     beforeEach(() => {
-        jest.useFakeTimers();
+        rs.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        jest.useRealTimers();
+        rs.restoreAllMocks();
+        rs.useRealTimers();
     });
 
     test("throttles channel changes and delivers the final value", () => {
         const frame = {
             frameInfo: {fileInfoExtended: {depth: 100_000}},
-            setChannel: jest.fn()
+            setChannel: rs.fn()
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
         const component = new AnimatorComponent({} as any);
 
         component.onChannelChanged(10);
@@ -39,7 +46,7 @@ describe("AnimatorComponent", () => {
         expect(frame.setChannel).toHaveBeenCalledTimes(1);
         expect(frame.setChannel).toHaveBeenLastCalledWith(10);
 
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
         expect(frame.setChannel).toHaveBeenCalledTimes(2);
         expect(frame.setChannel).toHaveBeenLastCalledWith(20);
 
@@ -47,9 +54,9 @@ describe("AnimatorComponent", () => {
     });
 
     test("applies normal channel changes immediately and cancels a pending throttled value", () => {
-        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: rs.fn()};
         const appStore = {activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         component.onChannelChanged(15);
@@ -58,21 +65,21 @@ describe("AnimatorComponent", () => {
 
         expect(frame.setChannel).toHaveBeenCalledTimes(2);
         expect(frame.setChannel).toHaveBeenLastCalledWith(20);
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
         expect(frame.setChannel).toHaveBeenCalledTimes(2);
         component.componentWillUnmount();
     });
 
     test("does not apply a pending channel change to a different active frame", () => {
-        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
-        const otherFrame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: rs.fn()};
+        const otherFrame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: rs.fn()};
         const appStore = {activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         component.onChannelChanged(20);
         appStore.activeFrame = otherFrame;
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
         expect(frame.setChannel).toHaveBeenCalledTimes(1);
         expect(otherFrame.setChannel).not.toHaveBeenCalled();
         component.componentWillUnmount();
@@ -83,18 +90,18 @@ describe("AnimatorComponent", () => {
             requiredChannel: 0,
             channelSelectionToken: {},
             frameInfo: {fileInfoExtended: {depth: 100}},
-            setChannel: jest.fn((selectedChannel: number) => {
+            setChannel: rs.fn((selectedChannel: number) => {
                 frame.requiredChannel = selectedChannel;
                 frame.channelSelectionToken = {};
             })
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         component.onChannelChanged(20);
         frame.setChannel(channel);
 
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
 
         expect(frame.requiredChannel).toBe(channel);
         expect(frame.setChannel).toHaveBeenCalledTimes(2);
@@ -102,13 +109,13 @@ describe("AnimatorComponent", () => {
     });
 
     test("cancels the pending channel change on unmount", () => {
-        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: rs.fn()};
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: true}} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         component.onChannelChanged(20);
         component.componentWillUnmount();
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
         expect(frame.setChannel).toHaveBeenCalledTimes(1);
     });
 
@@ -124,26 +131,26 @@ describe("AnimatorComponent", () => {
             channel: 5,
             stokes: 0,
             polarizations: [0],
-            setChannel: jest.fn((channel: number) => {
+            setChannel: rs.fn((channel: number) => {
                 selectedChannel = channel;
             }),
-            setChannels: jest.fn((channel: number) => {
+            setChannels: rs.fn((channel: number) => {
                 selectedChannel = channel;
             }),
-            incrementChannels: jest.fn((delta: number) => {
+            incrementChannels: rs.fn((delta: number) => {
                 selectedChannel = (selectedChannel + delta + 100) % 100;
             })
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL}, channelMapStore: {isChannelMapEnabled: true}} as any);
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL}, channelMapStore: {isChannelMapEnabled: true}} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
-        jest.advanceTimersByTime(20);
+        rs.advanceTimersByTime(20);
         component.onChannelChanged(20);
-        jest.advanceTimersByTime(10);
+        rs.advanceTimersByTime(10);
 
         (component as any)[handler]();
         expect(selectedChannel).toBe(expectedChannel);
-        jest.advanceTimersByTime(50);
+        rs.advanceTimersByTime(50);
         expect(selectedChannel).toBe(expectedChannel);
         component.componentWillUnmount();
     });
@@ -152,8 +159,8 @@ describe("AnimatorComponent", () => {
         [-1, 99],
         [100, 0]
     ])("wraps channel %i to %i", (input, expected) => {
-        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: false}} as any);
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: rs.fn()};
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, channelMapStore: {isChannelMapEnabled: false}} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(input);
         expect(frame.setChannel).toHaveBeenLastCalledWith(expected);
@@ -161,7 +168,7 @@ describe("AnimatorComponent", () => {
     });
 
     test.each([false, true])("selects the appropriate control with step two and channel-map mode %s", isChannelMapEnabled => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+        rs.spyOn(AppStore, "Instance", "get").mockReturnValue({
             activeFrame: {frameInfo: {fileInfoExtended: {depth: 1, stokes: 1}}},
             activeImageIndex: 0,
             imageViewConfigStore: {imageNum: 2},

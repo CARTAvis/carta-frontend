@@ -79,7 +79,9 @@ export class TelemetryService {
             ev.preventDefault();
         };
 
-        this.telemetrySubmissionHandle = setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        if (process.env.NODE_ENV !== "test") {
+            this.telemetrySubmissionHandle = setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        }
         window.addEventListener("unload", this.dispose);
         makeObservable(this);
     }

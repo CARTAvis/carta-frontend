@@ -44,6 +44,10 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         }
     }, ColorPickerComponent.ChangeDelay);
 
+    componentWillUnmount() {
+        this.handleColorChange.cancel();
+    }
+
     public render() {
         const buttonColor = tinycolor(this.props.color);
 

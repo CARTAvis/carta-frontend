@@ -1,7 +1,8 @@
+import {rs} from "@rstest/core";
 import {action, observable} from "mobx";
 
-jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()}
+rs.mock("components/Shared", () => ({
+    AppToaster: {show: rs.fn()}
 }));
 
 import {ColormapSet} from "../../enums";
@@ -11,8 +12,8 @@ import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
 
-const MOCK_CONSOLE_ERROR = jest.spyOn(console, "error").mockImplementation(() => {});
-const GET_COLORS_FOR_VALUES = jest.spyOn(colorUtils, "getColorsForValues");
+const MOCK_CONSOLE_ERROR = rs.spyOn(console, "error").mockImplementation(() => {});
+const GET_COLORS_FOR_VALUES = rs.spyOn(colorUtils, "getColorsForValues");
 
 describe("ColorBlendingStore", () => {
     let colorBlendingStore: ColorBlendingStore;
@@ -21,7 +22,7 @@ describe("ColorBlendingStore", () => {
     const mockMatchedFrame3 = "mockFrameStore3";
     const mockMatchedFrame4 = "mockFrameStore4";
 
-    const mockReferenceSetColorMap = jest.fn();
+    const mockReferenceSetColorMap = rs.fn();
     const mockSpatialReference = observable({
         secondarySpatialImages: [] as any[],
         renderConfig: {setColorMap: mockReferenceSetColorMap}
@@ -31,7 +32,7 @@ describe("ColorBlendingStore", () => {
     });
 
     beforeEach(() => {
-        jest.spyOn(AppStore, "Instance", "get").mockImplementation(() => {
+        rs.spyOn(AppStore, "Instance", "get").mockImplementation(() => {
             return {spatialReference: mockSpatialReference} as any;
         });
         setMatchedFrames([mockMatchedFrame1 as any, mockMatchedFrame2 as any]);
@@ -201,10 +202,10 @@ describe("ColorBlendingStore", () => {
 
     describe("applyColormapSet", () => {
         it("applies a single gradient colormap correctly", () => {
-            const mockSetColorMap1 = jest.fn();
-            const mockSetCustomHexEnd1 = jest.fn();
-            const mockSetColorMap2 = jest.fn();
-            const mockSetCustomHexEnd2 = jest.fn();
+            const mockSetColorMap1 = rs.fn();
+            const mockSetCustomHexEnd1 = rs.fn();
+            const mockSetColorMap2 = rs.fn();
+            const mockSetCustomHexEnd2 = rs.fn();
 
             const red = [255, 0, 0, 255]; // Red
             const orange = [254, 180, 97, 255];
@@ -235,8 +236,8 @@ describe("ColorBlendingStore", () => {
         });
 
         it("applies a collection of colormaps correctly", () => {
-            const mockSetColorMap1 = jest.fn();
-            const mockSetColorMap2 = jest.fn();
+            const mockSetColorMap1 = rs.fn();
+            const mockSetColorMap2 = rs.fn();
 
             // one layer
             colorBlendingStore.selectedFrames = [];
