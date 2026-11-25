@@ -257,6 +257,8 @@ describe("workspace schema 2", () => {
 
         expect(validate(withView({view}))).toBe(true);
         expect(validate(withView({view: {center: view.center, zoomLevel: 2}}))).toBe(false);
+        // The size of the viewer has none of the fields of the size of the image view.
+        expect(validate(withView({view: {...view, viewSize: {...view.viewSize, fullWidth: 800}}}))).toBe(false);
     });
 
     test("accepts the number of decimal places of a ruler", () => {

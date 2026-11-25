@@ -438,8 +438,9 @@ export class CatalogWidgetBindingStore {
     /**
      * Point the table and plot widgets at the catalogs they were saved against, once the Workspace's
      * catalogs and Layout have been restored, and put back what each of them showed. A widget whose
-     * catalog is unavailable takes the catalog it falls back to as its own, with nothing it was
-     * drawn from: that means nothing against another catalog.
+     * catalog is unavailable takes the catalog it falls back to as its own. The settings that it
+     * showed are not applied to that catalog. A plot tab gets the plot that it kept for that
+     * catalog, if the workspace saved one.
      *
      * @param catalogWidgets - what each widget showed, by stable widget ID.
      * @param catalogIds - Workspace catalog ID : the file ID it was restored as.
@@ -553,7 +554,7 @@ export class CatalogWidgetBindingStore {
                 continue;
             }
             restoreShownPlot(widgetId, config, state, config.catalogId);
-            issues.push(...this.restoreOtherPlots(widgetId, state, config.otherPlots, catalogIds, describe));
+            issues.push(...this.restoreOtherPlots(widgetId, state, config, catalogIds, describe));
         }
         return issues;
     };
@@ -565,7 +566,8 @@ export class CatalogWidgetBindingStore {
      *
      * @returns the columns that the catalogs no longer have, as issues.
      */
-    @action private restoreOtherPlots(widgetId: string, state: CatalogPlotState, otherPlots: WorkspaceCatalogPlotConfig["otherPlots"], catalogIds: Map<number, number>, describe: (id: number) => string): WorkspaceIssue[] {
+    @action private restoreOtherPlots(widgetId: string, state: CatalogPlotState, tabConfig: WorkspaceCatalogPlotConfig, catalogIds: Map<number, number>, describe: (id: number) => string): WorkspaceIssue[] {
+        const otherPlots = tabConfig.otherPlots;
         const issues: WorkspaceIssue[] = [];
         const componentId = Array.from(this.plots.entries()).find(([, candidate]) => candidate === state)?.[0];
         const plotType = this.plotTypeOf(state);
@@ -575,7 +577,9 @@ export class CatalogWidgetBindingStore {
         for (const [key, config] of Object.entries(otherPlots)) {
             const savedCatalogId = Number(key);
             const catalogFileId = catalogIds.get(savedCatalogId);
-            if (catalogFileId === undefined || !config || typeof config !== "object") {
+            // The plot of the catalog that the tab shows is restored from the tab itself. A save
+            // does not write it twice, so such an entry comes only from an edited workspace.
+            if (catalogFileId === undefined || savedCatalogId === tabConfig.catalogId || !config || typeof config !== "object") {
                 continue;
             }
             let plotWidgetId = state.plotFor(catalogFileId);

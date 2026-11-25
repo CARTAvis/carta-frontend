@@ -224,6 +224,60 @@ describe("CatalogWidgetBindingStore", () => {
             expect(widgets.catalogPlotWidgets.has(other?.widgetId ?? "")).toBe(false);
         });
 
+        test("rebinds the plot that a layout brought back on another catalog, then gives that catalog its own saved plot", () => {
+            // The layout put the tab on file 6 before the restore knew which catalog it showed.
+            const layoutPlotId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
+            bindings.register("catalog-plot-component-0", 6, layoutPlotId);
+            catalogs.catalogProfileStores.set(5, numeric);
+            catalogs.catalogProfileStores.set(6, numeric);
+
+            bindings.restore(
+                {"catalog-plot-0": {type: "catalog-plot", catalogId: 1, xColumnName: "RA", yColumnName: "DEC", otherPlots: {"2": {xColumnName: "FLUX", yColumnName: "SIZE"}}}},
+                [
+                    {id: 1, source: {type: "file", filename: "a.vot"}},
+                    {id: 2, source: {type: "file", filename: "b.vot"}}
+                ],
+                new Map([
+                    [1, 5],
+                    [2, 6]
+                ])
+            );
+
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 5, widgetId: layoutPlotId});
+            bindings.show("catalog-plot-component-0", 6);
+            const other = bindings.displayedForComponent("catalog-plot-component-0")?.widgetId ?? "";
+            expect(other).not.toBe(layoutPlotId);
+            expect(widgets.catalogPlotWidgets.get(other)).toMatchObject({xColumnName: "FLUX", yColumnName: "SIZE"});
+        });
+
+        test("gives a histogram tab histograms, makes no second plot when it is restored again, and ignores a plot saved for the catalog it shows", () => {
+            bindings.register("catalog-plot-component-0", 5, widgets.addCatalogPlotWidget({xColumnName: "RA", plotType: CatalogPlotType.Histogram}, "catalog-plot-0") as string);
+            catalogs.catalogProfileStores.set(5, numeric);
+            catalogs.catalogProfileStores.set(6, numeric);
+            const restore = () =>
+                bindings.restore(
+                    // Only an edited workspace saves the catalog that the tab shows in `otherPlots`.
+                    {"catalog-plot-0": {type: "catalog-plot", catalogId: 1, xColumnName: "RA", otherPlots: {"1": {xColumnName: "SIZE"}, "2": {xColumnName: "FLUX", nBinX: 7}}}},
+                    [
+                        {id: 1, source: {type: "file", filename: "a.vot"}},
+                        {id: 2, source: {type: "file", filename: "b.vot"}}
+                    ],
+                    new Map([
+                        [1, 5],
+                        [2, 6]
+                    ])
+                );
+
+            restore();
+            const plotCount = widgets.catalogPlotWidgets.size;
+            restore();
+
+            expect(widgets.catalogPlotWidgets.size).toBe(plotCount);
+            expect(widgets.catalogPlotWidgets.get(bindings.displayedForComponent("catalog-plot-component-0")?.widgetId ?? "")?.xColumnName).toBe("RA");
+            bindings.show("catalog-plot-component-0", 6);
+            expect(widgets.catalogPlotWidgets.get(bindings.displayedForComponent("catalog-plot-component-0")?.widgetId ?? "")).toMatchObject({xColumnName: "FLUX", yColumnName: undefined, nBinX: 7, plotType: CatalogPlotType.Histogram});
+        });
+
         test("gives a tab whose own catalog is gone the saved plot of the catalog that it shows instead", () => {
             const shownId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
             bindings.register("catalog-plot-component-0", 6, shownId);

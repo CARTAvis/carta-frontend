@@ -861,8 +861,11 @@ export interface WorkspacePvPreview {
     renderConfig?: WorkspaceRenderConfig;
     /** Whether the preview was the active image. Left out when it was not. */
     isActive?: boolean;
-    /** The zoom and the center of the preview, and the size of the area that it was drawn in. A restore scales the zoom by how that size changed, as for an image. */
-    view?: {center: Point2D; zoomLevel: number; axisZoomLevel?: Point2D; zoomAxis?: WorkspaceFile["zoomAxis"]; viewSize: WorkspaceImageViewSize};
+    /**
+     * The zoom and the center of the preview, and the size of the area that it was drawn in, in CSS
+     * pixels. A restore scales the zoom by how that size changed, as for an image.
+     */
+    view?: {center: Point2D; zoomLevel: number; axisZoomLevel?: Point2D; zoomAxis?: WorkspaceFile["zoomAxis"]; viewSize: {width: number; height: number; devicePixelRatio: number}};
     /** The estimated size of the cube that the preview reads, in GB. The Workspace dialog compares it with the PV preview cube size limit of the user. */
     cubeSize?: number;
     /**

@@ -339,4 +339,12 @@ describe("RulerAnnotationStore styles", () => {
 
         expect(ruler.decimals).toBe(6);
     });
+
+    test("puts back the smallest and the largest number of decimal places that the appearance form allows", () => {
+        const ruler = makeRuler();
+        ruler.initializeStyles({...ruler.getAnnotationStyles(), decimals: 0});
+        expect(ruler.decimals).toBe(0);
+        ruler.initializeStyles({...ruler.getAnnotationStyles(), decimals: 6});
+        expect(ruler.decimals).toBe(6);
+    });
 });

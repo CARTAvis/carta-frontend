@@ -256,6 +256,7 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         Object.assign(appStore, {devicePixelRatio: 1});
         const previewFrame = {
             renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+            frameInfo: {fileInfoExtended: {width: 50, height: 20}},
             center: {x: 40, y: 7},
             zoomLevel: 2,
             isAxisZoomable: true,
@@ -287,6 +288,96 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
         expect(previewFrame.setZoomAxis).toHaveBeenCalledWith("y");
         expect(previewFrame.setCenter).toHaveBeenCalledWith(40, 7);
+    });
+
+    describe("the saved view of a restored preview", () => {
+        // A preview of 50 by 20 pixels, shown in a viewer of 400 by 200 pixels at a zoom of 2 by 3.
+        const restoreView = async () => {
+            const session = createSession(1);
+            Object.assign(session.appStore, {devicePixelRatio: 1});
+            const previewFrame = {
+                renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+                frameInfo: {fileInfoExtended: {width: 50, height: 20}},
+                center: {x: 40, y: 7},
+                zoomLevel: 2,
+                isAxisZoomable: true,
+                isStretchedToView: true,
+                effectiveZoomLevel: {x: 2, y: 3},
+                zoomAxis: "y",
+                renderWidth: 400,
+                renderHeight: 200,
+                setAxisZoom: jest.fn(function (this: {effectiveZoomLevel: {x: number; y: number}}, x: number, y: number) {
+                    this.effectiveZoomLevel = {x, y};
+                }),
+                setZoomAxis: jest.fn(),
+                setCenter: jest.fn(),
+                fitZoom: jest.fn()
+            };
+            const {store, appStore} = session;
+            store.setPreviewFrame(previewFrame as never);
+            const config = store.toWorkspaceConfig({imageIdOf: () => 1});
+            appStore.requestPreviewPV.mockImplementation(async (_message: unknown, _frame: unknown, id: string) => {
+                appStore.widgetsStore.pvGeneratorWidgets.get(id)?.setPreviewFrame(previewFrame as never);
+            });
+            store.setPreviewFrame(null);
+            expect(await store.restoreWorkspaceResult(config)).toEqual([]);
+            // The store keeps the preview as an observable copy. A resize changes the copy.
+            const shown = store.previewFrame as unknown as typeof previewFrame;
+            const resize = (width: number, height: number) => {
+                Object.assign(shown, {renderWidth: width, renderHeight: height});
+                store.onResizePreviewWidget(width, height);
+            };
+            previewFrame.setAxisZoom.mockClear();
+            return {store, shown, previewFrame, resize};
+        };
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        test("puts the saved view back on each resize, instead of the fitted zoom, until the viewer keeps one size", async () => {
+            const {previewFrame, resize} = await restoreView();
+
+            // The viewer is twice as tall. A preview is stretched to its viewer, so only the heights count.
+            resize(300, 400);
+            expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+            expect(previewFrame.fitZoom).not.toHaveBeenCalled();
+
+            jest.advanceTimersByTime(1000);
+            resize(300, 300);
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+        });
+
+        test("drops the saved view when a preview of another size replaces it, such as one from a moved cut", async () => {
+            const {shown, previewFrame, resize} = await restoreView();
+
+            shown.frameInfo.fileInfoExtended.width = 60;
+            resize(300, 400);
+
+            expect(previewFrame.setAxisZoom).not.toHaveBeenCalled();
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+        });
+
+        test("keeps the saved view waiting while the tab is in the background", async () => {
+            const hidden = jest.spyOn(document, "hidden", "get").mockReturnValue(true);
+            const {previewFrame, resize} = await restoreView();
+
+            jest.advanceTimersByTime(5000);
+            hidden.mockReturnValue(false);
+            document.dispatchEvent(new Event("visibilitychange"));
+            // The tab reports the size of the viewer once it is shown.
+            resize(300, 400);
+            expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+
+            jest.advanceTimersByTime(1000);
+            resize(300, 300);
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+            hidden.mockRestore();
+        });
     });
 
     test("does not save the zoom of a preview whose viewer is not shown", () => {
