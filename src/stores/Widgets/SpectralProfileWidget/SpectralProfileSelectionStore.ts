@@ -392,10 +392,10 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const enabledExtras = EXTRA_STATISTICS_TYPES.filter(type => AppStore.Instance.preferenceStore.statistics.includes(type));
-        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES, ...enabledExtras].sort((a, b) => a - b);
+        const enabledStatistics = AppStore.Instance.preferenceStore.statistics;
+        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES, ...EXTRA_STATISTICS_TYPES].sort((a, b) => a - b);
         return sortedKeys.map(key => {
-            return {value: key, label: STATISTICS_NAME_MAP.get(key)};
+            return {value: key, label: STATISTICS_NAME_MAP.get(key), disabled: EXTRA_STATISTICS_TYPES.includes(key) && !enabledStatistics.includes(key)};
         });
     }
 
@@ -668,7 +668,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
-        if (this.statsTypeOptions.some(option => option.value === statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType && !option.disabled)) {
             this.selectedStatsTypes = [statsType];
         }
     };
@@ -700,7 +700,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
-        if (this.statsTypeOptions.some(option => option.value === statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType && !option.disabled)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);

@@ -89,19 +89,22 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         jest.restoreAllMocks();
     });
 
-    test("adds enabled extra statistics to the menu and accepts them in single and multi modes", () => {
+    test("lists extra statistics and accepts them in single and multi modes only when enabled", () => {
         const {widgetStore} = createWidgetStore(false);
         const selection = widgetStore.profileSelectionStore;
-        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Median)).toBe(false);
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Median, label: "Median", disabled: true});
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        selection.selectStatMultiMode(CARTA.StatsType.Median);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
         runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
-        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Quartile, label: "Quartile (Q3-Q1)"});
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Quartile, label: "Quartile (Q3-Q1)", disabled: false});
         selection.selectStatSingleMode(CARTA.StatsType.Median);
         expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median]);
         selection.selectStatMultiMode(CARTA.StatsType.Quartile);
         expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median, CARTA.StatsType.Quartile]);
         runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
-        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Median)).toBe(false);
-        expect(selection.statsTypeOptions.some(option => option.value === CARTA.StatsType.Mean)).toBe(true);
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Median, label: "Median", disabled: true});
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Mean, label: "Mean", disabled: false});
     });
 
     test("assigns a color to Mean when disabled extras leave it as the multi-profile fallback", () => {
