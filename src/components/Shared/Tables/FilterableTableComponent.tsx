@@ -158,18 +158,18 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: ArrayLike<any>) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader.$Properties, columnData: ArrayLike<any>, simbadObjectBaseUrl?: string) => {
         return (
             <Column
                 key={columnHeader.name ?? "data"}
                 name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData ?? [], columnHeader)}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData ?? [], columnHeader, simbadObjectBaseUrl)}
             />
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.CatalogHeader.$Properties) => {
+    private renderCell = (index: number, columnIndex: number, columnData: ArrayLike<any>, columnHeader: CARTA.CatalogHeader.$Properties, simbadObjectBaseUrl?: string) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
@@ -185,7 +185,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         if (this.props.catalogType === CatalogType.SIMBAD) {
             if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
                 cell = (
-                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.ADS_ABSTRACT_URL}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -193,7 +193,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
             if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
                 cell = (
-                    <a href={`${CatalogApiService.SIMBAD_HYPER_LINK.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={simbadObjectBaseUrl ? CatalogApiService.getSimbadObjectUrl(simbadObjectBaseUrl, String(cellContext)) : undefined} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -330,11 +330,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const tableColumns: React.JSX.Element[] = [];
         const tableData = table.dataset;
         let lineSelectionIndex: number | undefined;
+        // Read here, not in renderCell, so the links follow a change of the active SIMBAD mirror.
+        const simbadObjectBaseUrl = table.catalogType === CatalogType.SIMBAD ? CatalogApiService.Instance.getSimbadObjectBaseUrl() : undefined;
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             if (columnIndex != null) {
                 const dataArray = tableData.get(columnIndex)?.data;
-                const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray ?? []);
+                const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray ?? [], simbadObjectBaseUrl);
                 tableColumns.push(column);
                 if (header.name === SpectralLineHeaders.LineSelection) {
                     lineSelectionIndex = columnIndex;
@@ -362,7 +364,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 enableRowResizing={false}
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
-                cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
+                cellRendererDependencies={[tableCheckData, simbadObjectBaseUrl]} // trigger re-render on line selection or SIMBAD mirror change
                 getCellClipboardData={undefined}
             >
                 {tableColumns}
