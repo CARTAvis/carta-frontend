@@ -698,6 +698,8 @@ export interface WorkspaceCatalogPlotConfig {
     isFittingEnabled?: boolean;
     /** The values the cursor last read off the plot: a scatter point, or a histogram bin's center and count. */
     cursor?: Point2D;
+    /** The plot that the tab keeps for each other catalog it has shown, by the Workspace ID of that catalog. */
+    otherPlots?: Record<string, Omit<WorkspaceCatalogPlotConfig, "catalogId" | "otherPlots">>;
 }
 
 /** The image and region that a widget shows, by their IDs in the workspace. When the image is left out, the widget shows the active image. */
@@ -859,6 +861,8 @@ export interface WorkspacePvPreview {
     renderConfig?: WorkspaceRenderConfig;
     /** Whether the preview was the active image. Left out when it was not. */
     isActive?: boolean;
+    /** The zoom and the center of the preview, and the size of the area that it was drawn in. A restore scales the zoom by how that size changed, as for an image. */
+    view?: {center: Point2D; zoomLevel: number; axisZoomLevel?: Point2D; zoomAxis?: WorkspaceFile["zoomAxis"]; viewSize: WorkspaceImageViewSize};
     /** The estimated size of the cube that the preview reads, in GB. The Workspace dialog compares it with the PV preview cube size limit of the user. */
     cubeSize?: number;
     /**

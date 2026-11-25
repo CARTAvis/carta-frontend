@@ -2749,10 +2749,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** The columns the saved plots of one catalog are drawn from. */
+    /** The columns the saved plots of one catalog are drawn from, including the plots that a tab keeps for a catalog it does not show. */
     private plotColumnsOf(workspaceCatalogId: number): string[] {
         return Object.values(this.workspace.catalogWidgets ?? {})
-            .flatMap(config => (isWidgetWorkspaceConfigOf(config, "catalog-plot") && config.catalogId === workspaceCatalogId ? [config.xColumnName, config.yColumnName, config.statisticColumnName] : []))
+            .flatMap(config => {
+                if (!isWidgetWorkspaceConfigOf(config, "catalog-plot")) {
+                    return [];
+                }
+                const other = config.otherPlots?.[workspaceCatalogId];
+                const plots = [...(config.catalogId === workspaceCatalogId ? [config] : []), ...(other && typeof other === "object" ? [other] : [])];
+                return plots.flatMap(plot => [plot.xColumnName, plot.yColumnName, plot.statisticColumnName]);
+            })
             .filter((columnName): columnName is string => typeof columnName === "string");
     }
 

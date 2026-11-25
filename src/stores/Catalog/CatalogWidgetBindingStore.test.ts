@@ -155,6 +155,94 @@ describe("CatalogWidgetBindingStore", () => {
         });
     });
 
+    describe("the plots that a tab keeps for the catalogs it does not show", () => {
+        const numeric = {getColumnHeader: (name: string) => (name === "Gone" ? undefined : {dataType: CARTA.ColumnType.Double})} as any;
+
+        test("saves the plot of each other saved catalog with the tab", () => {
+            catalogs.catalogProfileStores.set(5, numeric);
+            catalogs.catalogProfileStores.set(6, numeric);
+            catalogs.catalogProfileStores.set(7, numeric);
+            WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 5, 1);
+            WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 6, 2);
+            WorkspaceIdRegistry.Instance.adopt(WorkspaceItemKind.Catalog, 7, 3);
+            // The tab shows catalog 1, the first catalog it was registered on.
+            bindings.register("catalog-plot-component-0", 5, widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string);
+            bindings.register("catalog-plot-component-0", 6, widgets.addCatalogPlotWidget({xColumnName: "FLUX", yColumnName: "SIZE", plotType: CatalogPlotType.D2Scatter}, "catalog-plot-1") as string);
+            bindings.register("catalog-plot-component-0", 7, widgets.addCatalogPlotWidget(plot, "catalog-plot-2") as string);
+
+            // Catalog 3 is not saved, so its plot is left out.
+            const saved = bindings.savedCatalogWidgets(new Set([1, 2]));
+
+            expect(saved["catalog-plot-0"]).toMatchObject({type: "catalog-plot", catalogId: 1, xColumnName: "RA"});
+            expect(Object.keys((saved["catalog-plot-0"] as any).otherPlots)).toEqual(["2"]);
+            expect((saved["catalog-plot-0"] as any).otherPlots["2"]).toMatchObject({xColumnName: "FLUX", yColumnName: "SIZE"});
+        });
+
+        test("gives the tab back a plot for each other restored catalog, and reports a column that is gone", () => {
+            const shownId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
+            bindings.register("catalog-plot-component-0", 5, shownId);
+            catalogs.catalogProfileStores.set(5, numeric);
+            catalogs.catalogProfileStores.set(6, numeric);
+            catalogs.catalogProfileStores.set(7, numeric);
+
+            const issues = bindings.restore(
+                {
+                    "catalog-plot-0": {
+                        type: "catalog-plot",
+                        catalogId: 1,
+                        xColumnName: "RA",
+                        yColumnName: "DEC",
+                        // Catalog 9 is not restored.
+                        otherPlots: {"2": {xColumnName: "FLUX", yColumnName: "Gone", isLogScaleY: false}, "9": {xColumnName: "RA"}}
+                    }
+                },
+                [
+                    {id: 1, source: {type: "file", filename: "a.vot"}},
+                    {id: 2, source: {type: "file", filename: "b.vot"}}
+                ],
+                new Map([
+                    [1, 5],
+                    [2, 6]
+                ])
+            );
+
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 5, widgetId: shownId});
+            bindings.show("catalog-plot-component-0", 6);
+            const other = bindings.displayedForComponent("catalog-plot-component-0");
+            expect(other?.catalogFileId).toBe(6);
+            expect(widgets.catalogPlotWidgets.get(other?.widgetId ?? "")).toMatchObject({xColumnName: "FLUX", yColumnName: CatalogOverlay.NONE, isLogScaleY: false, plotType: CatalogPlotType.D2Scatter});
+            expect(issues).toEqual([
+                {
+                    kind: WorkspaceItemKind.CatalogPlot,
+                    subject: "catalog-plot-0",
+                    message: "Could not fully restore catalog plot catalog-plot-0 for the catalog b.vot: column Gone is unavailable",
+                    reason: "column Gone of the catalog b.vot is unavailable"
+                }
+            ]);
+            // Closing the tab drops the plot it got back too.
+            bindings.closeComponent("catalog-plot-component-0");
+            expect(widgets.catalogPlotWidgets.has(other?.widgetId ?? "")).toBe(false);
+        });
+
+        test("gives a tab whose own catalog is gone the saved plot of the catalog that it shows instead", () => {
+            const shownId = widgets.addCatalogPlotWidget(plot, "catalog-plot-0") as string;
+            bindings.register("catalog-plot-component-0", 6, shownId);
+            catalogs.catalogProfileStores.set(6, {...numeric, catalogInfo: {fileInfo: {name: "b.vot"}}});
+
+            bindings.restore(
+                {"catalog-plot-0": {type: "catalog-plot", catalogId: 1, otherPlots: {"2": {xColumnName: "FLUX", yColumnName: "SIZE"}}}},
+                [
+                    {id: 1, source: {type: "file", filename: "missing.vot"}},
+                    {id: 2, source: {type: "file", filename: "b.vot"}}
+                ],
+                new Map([[2, 6]])
+            );
+
+            expect(bindings.displayedForComponent("catalog-plot-component-0")).toEqual({catalogFileId: 6, widgetId: shownId});
+            expect(widgets.catalogPlotWidgets.get(shownId)).toMatchObject({xColumnName: "FLUX", yColumnName: "SIZE"});
+        });
+    });
+
     describe("falling back when a widget's catalog is gone", () => {
         const loaded = {catalogInfo: {fileInfo: {name: "loaded.vot"}}, catalogHeader: [], getColumnHeader: () => ({dataType: CARTA.ColumnType.Double})} as any;
 

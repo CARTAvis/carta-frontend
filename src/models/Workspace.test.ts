@@ -243,6 +243,37 @@ describe("workspace schema 2", () => {
         expect(validate(workspace)).toBe(true);
     });
 
+    test("accepts the plots that a catalog plot tab keeps for its other catalogs, and rejects a field that a plot does not have", () => {
+        const plotTab = {type: "catalog-plot", catalogId: 1, xColumnName: "RA", otherPlots: {"2": {xColumnName: "FLUX", yColumnName: "SIZE", isLogScaleY: false}}};
+        const withPlotTab = (tab: object) => createWorkspace({catalogs: [catalog, {...catalog, id: 2}], catalogWidgets: {"catalog-plot-0": tab}});
+
+        expect(validate(withPlotTab(plotTab))).toBe(true);
+        expect(validate(withPlotTab({...plotTab, otherPlots: {"2": {catalogId: 2}}}))).toBe(false);
+    });
+
+    test("accepts the zoom, the center and the view size of a PV preview, and rejects a view without its size", () => {
+        const view = {center: {x: 40, y: 7}, zoomLevel: 2, axisZoomLevel: {x: 2, y: 3}, zoomAxis: "y", viewSize: {width: 400, height: 200, devicePixelRatio: 2}};
+        const withView = (preview: object) => createWorkspace({plotWidgets: {"pv-generator-0": {type: "pv-generator", preview}}});
+
+        expect(validate(withView({view}))).toBe(true);
+        expect(validate(withView({view: {center: view.center, zoomLevel: 2}}))).toBe(false);
+    });
+
+    test("accepts the number of decimal places of a ruler", () => {
+        const ruler = {
+            id: 1,
+            points: [
+                {x: 0, y: 0},
+                {x: 10, y: 10}
+            ],
+            rotation: 0,
+            type: 14,
+            annotationStyles: {fontSize: 13, decimals: 2}
+        };
+
+        expect(validate(createWorkspace({files: [{id: 0, source: {type: "file", filename: "image.fits"}, regionsSet: {regions: [ruler]}}]}))).toBe(true);
+    });
+
     test("accepts the zoom of each axis, the zoom axis and the time series membership of an image, and rejects other types", () => {
         const image = {id: 1, source: {type: "file", filename: "pv.fits"}, axisZoomLevel: {x: 2, y: 0.5}, zoomAxis: "x", timeSeriesMember: true};
         const generated = {request: {type: "pv", sourceImageId: 1, regionId: 3, width: 1, reverse: false}, images: [{id: 2, axisZoomLevel: {x: 1, y: 3}, zoomAxis: "both"}]};

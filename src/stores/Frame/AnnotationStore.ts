@@ -559,6 +559,7 @@ export class RulerAnnotationStore extends RegionStore {
             auxiliaryLineVisible: this.isAuxiliaryLineVisible,
             auxiliaryLineDashLength: this.auxiliaryLineDashLength,
             auxiliaryTextVisible: this.isAuxiliaryTextVisible,
+            decimals: this.decimals,
             textOffset: this.textOffset,
             xTextOffset: this.xTextOffset,
             yTextOffset: this.yTextOffset
@@ -581,6 +582,7 @@ export class RulerAnnotationStore extends RegionStore {
         auxiliaryLineVisible: boolean;
         auxiliaryLineDashLength: number;
         auxiliaryTextVisible: boolean;
+        decimals?: number;
         textOffset: Point2D;
         xTextOffset: Point2D;
         yTextOffset: Point2D;
@@ -591,6 +593,9 @@ export class RulerAnnotationStore extends RegionStore {
         this.setAuxiliaryLineVisible(annotationStyles.auxiliaryLineVisible ?? this.isAuxiliaryLineVisible);
         this.setAuxiliaryLineDashLength(annotationStyles.auxiliaryLineDashLength ?? this.auxiliaryLineDashLength);
         this.setAuxiliaryTextVisible(annotationStyles.auxiliaryTextVisible ?? this.isAuxiliaryTextVisible);
+        if (Number.isInteger(annotationStyles.decimals) && (annotationStyles.decimals as number) >= 0 && (annotationStyles.decimals as number) <= 6) {
+            this.setDecimals(annotationStyles.decimals as number);
+        }
         this.setTextOffset(annotationStyles.textOffset?.x ?? this.textOffset.x, true);
         this.setTextOffset(annotationStyles.textOffset?.y ?? this.textOffset.y, false);
         this.setXTextOffset(annotationStyles.xTextOffset?.x ?? this.xTextOffset.x, true);

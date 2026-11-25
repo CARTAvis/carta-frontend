@@ -28,7 +28,7 @@ jest.mock("models", () => ({
 
 import {MIN_EDITED_REGION_DIMENSION, SIMPLE_SHAPE_RIGHT_POINT_INDEX, SIMPLE_SHAPE_ROTATION_POINT_INDEX, SIMPLE_SHAPE_TOP_LEFT_POINT_INDEX, SIMPLE_SHAPE_TOP_POINT_INDEX, SIMPLE_SHAPE_TOP_RIGHT_POINT_INDEX} from "utilities";
 
-import {CompassAnnotationStore} from "../AnnotationStore";
+import {CompassAnnotationStore, RulerAnnotationStore} from "../AnnotationStore";
 
 import {CURSOR_REGION_ID, RegionStore} from "./RegionStore";
 
@@ -305,5 +305,38 @@ describe("RegionStore selection and keyboard-edit helpers", () => {
 
         compass.moveSelectedPoint(-100, 0);
         expect(compass.length).toBe(MIN_EDITED_REGION_DIMENSION);
+    });
+});
+
+describe("RulerAnnotationStore styles", () => {
+    const makeRuler = () =>
+        new RulerAnnotationStore(
+            BACKEND_SERVICE as any,
+            1,
+            MakeFrame(),
+            [
+                {x: 0, y: 0},
+                {x: 10, y: 10}
+            ],
+            CARTA.RegionType.ANNRULER,
+            1
+        );
+
+    test("saves the number of decimal places and puts it back", () => {
+        const ruler = makeRuler();
+        ruler.setDecimals(2);
+        const styles = ruler.getAnnotationStyles();
+        expect(styles.decimals).toBe(2);
+
+        const restored = makeRuler();
+        restored.initializeStyles(styles);
+        expect(restored.decimals).toBe(2);
+    });
+
+    test("keeps the default number of decimal places for a value that the appearance form does not allow", () => {
+        const ruler = makeRuler();
+        [7, -1, 1.5, undefined].forEach(decimals => ruler.initializeStyles({...ruler.getAnnotationStyles(), decimals}));
+
+        expect(ruler.decimals).toBe(6);
     });
 });

@@ -251,6 +251,51 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         expect(panel.setDefaultSize).toHaveBeenCalledWith(300, 200);
     });
 
+    test("saves the zoom and the center of a shown preview, and puts them back scaled by the size of its viewer", async () => {
+        const {store, appStore} = createSession(1);
+        Object.assign(appStore, {devicePixelRatio: 1});
+        const previewFrame = {
+            renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+            center: {x: 40, y: 7},
+            zoomLevel: 2,
+            isAxisZoomable: true,
+            isStretchedToView: true,
+            effectiveZoomLevel: {x: 2, y: 3},
+            zoomAxis: "y",
+            renderWidth: 400,
+            renderHeight: 200,
+            // The store keeps the preview as an observable copy, so the zoom is set on the copy.
+            setAxisZoom: jest.fn(function (this: {effectiveZoomLevel: {x: number; y: number}}, x: number, y: number) {
+                this.effectiveZoomLevel = {x, y};
+            }),
+            setZoomAxis: jest.fn(),
+            setCenter: jest.fn()
+        };
+        store.setPreviewFrame(previewFrame as never);
+
+        const config = store.toWorkspaceConfig({imageIdOf: () => 1});
+        expect(config.preview?.view).toEqual({center: {x: 40, y: 7}, zoomLevel: 2, axisZoomLevel: {x: 2, y: 3}, zoomAxis: "y", viewSize: {width: 400, height: 200, devicePixelRatio: 1}});
+
+        // The viewer is twice as tall now. A preview is stretched to its viewer, so only the heights count.
+        Object.assign(previewFrame, {renderWidth: 300, renderHeight: 400, effectiveZoomLevel: {x: 1, y: 1}});
+        appStore.requestPreviewPV.mockImplementation(async (_message: unknown, _frame: unknown, id: string) => {
+            appStore.widgetsStore.pvGeneratorWidgets.get(id)?.setPreviewFrame(previewFrame as never);
+        });
+        store.setPreviewFrame(null);
+        expect(await store.restoreWorkspaceResult(config)).toEqual([]);
+
+        expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+        expect(previewFrame.setZoomAxis).toHaveBeenCalledWith("y");
+        expect(previewFrame.setCenter).toHaveBeenCalledWith(40, 7);
+    });
+
+    test("does not save the zoom of a preview whose viewer is not shown", () => {
+        const {store} = createSession(1);
+        store.setPreviewFrame({renderConfig: {toConfig: jest.fn(() => ({}))}, renderWidth: 1, renderHeight: 1} as never);
+
+        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview?.view).toBeUndefined();
+    });
+
     test("saves the request that made the preview, and makes the preview again with it, though the widget shows other settings", async () => {
         const {store, appStore} = createSession(1);
         await store.requestPV(true, "pv-generator-0");

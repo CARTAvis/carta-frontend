@@ -14,9 +14,10 @@ import {
     type WorkspacePvPreviewRequest
 } from "models";
 import {TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore, restoreWorkspaceZoom, scaleFrameZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {PV_DEFAULT_WIDTH} from "stores/ImageGeneration/ImageGenerationRequests";
+import {getFieldOfViewScale, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {length2D, toFixed} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -481,9 +482,20 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
                 : {}),
             ...(this.previewFrame ? {renderConfig: this.previewFrame.renderConfig.toConfig()} : {}),
             ...(this.previewFrame && AppStore.Instance.activeFrame === this.previewFrame ? {isActive: true} : {}),
+            ...(this.previewFrame && this.previewFrame.renderWidth > 1 && this.previewFrame.renderHeight > 1 ? {view: PvGeneratorWidgetStore.workspaceViewOf(this.previewFrame)} : {}),
             // The size of the preview that is shown, which the widget settings can differ from.
             ...(typeof (this.previewCubeSize ?? this.estimatedCubeSize) === "number" ? {cubeSize: this.previewCubeSize ?? this.estimatedCubeSize} : {}),
             ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number, ...PvGeneratorWidgetStore.widgetsBelowOf(panel)}} : {})
+        };
+    }
+
+    /** Returns the zoom and the center of a preview, and the size of the area that it is drawn in. Call it only for a preview that is shown. */
+    private static workspaceViewOf(frame: FrameStore): NonNullable<WorkspacePvPreview["view"]> {
+        return {
+            center: {x: frame.center.x, y: frame.center.y},
+            zoomLevel: frame.zoomLevel,
+            ...(frame.isAxisZoomable ? {axisZoomLevel: {...frame.effectiveZoomLevel}, zoomAxis: frame.zoomAxis} : {}),
+            viewSize: {width: frame.renderWidth, height: frame.renderHeight, devicePixelRatio: AppStore.Instance.devicePixelRatio}
         };
     }
 
@@ -567,7 +579,33 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
             panel.setDefaultPosition(saved.x, saved.y);
             panel.setDefaultSize(saved.width, saved.height);
         }
+        await this.restorePreviewView(preview.view, isWanted);
         return [];
+    };
+
+    /**
+     * Puts back the zoom and the center of the preview. The viewer fits the zoom to its size each
+     * time it is resized, so wait until its size stops changing first. Then scale the zoom by how the
+     * size changed, as for an image. A viewer that is not shown keeps the zoom that fits it.
+     */
+    private restorePreviewView = async (view: WorkspacePvPreview["view"], isWanted: () => boolean): Promise<void> => {
+        const frame = this.previewFrame;
+        if (!frame || !view || typeof view !== "object" || !isValidImageViewSize(view.viewSize)) {
+            return;
+        }
+        await waitForStableSize(() => ({width: frame.renderWidth, height: frame.renderHeight}));
+        if (!isWanted() || this.previewFrame !== frame || !(frame.renderWidth > 1 && frame.renderHeight > 1)) {
+            return;
+        }
+        restoreWorkspaceZoom(frame, view);
+        const scale = getFieldOfViewScale(view.viewSize, {width: frame.renderWidth, height: frame.renderHeight}, AppStore.Instance.devicePixelRatio, frame.isStretchedToView);
+        if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
+            scaleFrameZoom(frame, scale);
+        }
+        const center = view.center;
+        if (center && Number.isFinite(center.x) && Number.isFinite(center.y)) {
+            frame.setCenter(center.x, center.y);
+        }
     };
 
     public applyWorkspaceBinding = (config: WorkspacePvGeneratorWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
