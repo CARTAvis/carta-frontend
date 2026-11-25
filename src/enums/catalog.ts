@@ -11,7 +11,8 @@ export enum CatalogDatabase {
 
 export enum SimbadMirror {
     STRASBOURG = "simbad.u-strasbg.fr",
-    CFA_HARVARD = "simbad.cfa.harvard.edu"
+    CFA_HARVARD = "simbad.cfa.harvard.edu",
+    IDIA = "simbad.idia.ac.za"
 }
 
 export enum VizierMirror {
