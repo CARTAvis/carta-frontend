@@ -2,21 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
-import {
-    EXTRA_STATISTICS_TYPES,
-    GetFluxDensityFromSum,
-    GetIntensityOptions,
-    type IntensityConfig,
-    type LineKey,
-    type LineOption,
-    POLARIZATION_LABELS,
-    ShouldUseSumForFluxDensity,
-    STATISTICS_NAME_MAP,
-    type StatsDisplayType,
-    StatsTypeString,
-    SUPPORTED_STATISTICS_TYPES,
-    VALID_COORDINATES
-} from "models";
+import {GetFluxDensityFromSum, GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, ShouldUseSumForFluxDensity, VALID_COORDINATES} from "models";
+import {EXTRA_STATISTICS_TYPES, STATISTICS_NAME_MAP, type StatsDisplayType, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models/StatisticsDefinition/StatisticsDefinition";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
