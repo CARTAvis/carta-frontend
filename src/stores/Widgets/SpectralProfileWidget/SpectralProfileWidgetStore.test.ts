@@ -5,7 +5,7 @@ import {observable, runInAction} from "mobx";
 
 import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
-import {QUANTILE_STATISTICS_TYPES} from "../../../models/StatisticsDefinition/StatisticsDefinition";
+import {EXTRA_STATISTICS_TYPES, QUANTILE_STATISTICS_TYPES} from "../../../models/StatisticsDefinition/StatisticsDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
 import {AppStore, PreferenceStore} from "../..";
@@ -90,6 +90,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
     test("lists extra statistics and accepts them in single and multi modes only when enabled", () => {
         const {widgetStore} = createWidgetStore(false);
         const selection = widgetStore.profileSelectionStore;
+        expect(selection.statsTypeOptions.slice(-EXTRA_STATISTICS_TYPES.length).map(option => option.value)).toEqual(EXTRA_STATISTICS_TYPES);
         expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Median, label: "Median", disabled: true});
         selection.selectStatSingleMode(CARTA.StatsType.Median);
         selection.selectStatMultiMode(CARTA.StatsType.Median);

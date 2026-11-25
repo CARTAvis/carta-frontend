@@ -38,6 +38,7 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.SpectralConfig.$P
 }
 
 const MAXIMUM_PROFILES = 16;
+const SPECTRAL_STATISTICS_ORDER = [...SUPPORTED_STATISTICS_TYPES].sort((a, b) => a - b).concat(EXTRA_STATISTICS_TYPES);
 
 export function getProfilesPlotName(profiles: {imageName: string | undefined; regionName: string | undefined; statsType: CARTA.StatsType; coordinate: string}[]): {image: string; plot: string} {
     const images: (string | undefined)[] = [];
@@ -393,8 +394,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get statsTypeOptions(): LineOption[] {
         const enabledStatistics = AppStore.Instance.preferenceStore.statistics;
-        const sortedKeys = [...SUPPORTED_STATISTICS_TYPES, ...EXTRA_STATISTICS_TYPES].sort((a, b) => a - b);
-        return sortedKeys.map(key => {
+        return SPECTRAL_STATISTICS_ORDER.map(key => {
             return {value: key, label: STATISTICS_NAME_MAP.get(key), disabled: EXTRA_STATISTICS_TYPES.includes(key) && !enabledStatistics.includes(key)};
         });
     }
