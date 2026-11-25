@@ -1044,7 +1044,7 @@ export class FrameStore {
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralTypeCode === type.code);
                 const valueHeader = entries.find(entry => entry.name?.includes(`CRVAL${this.spectralNumber}`));
                 const unitHeader = entries.find(entry => entry.name?.includes(`CUNIT${this.spectralNumber}`));
-                const specSysHeader = entries.find(entry => entry.name?.includes("SPECSYS"));
+                const specSysHeader = entries.find(entry => entry.name === "SPECSYS");
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : "";
                 if (spectralType) {
                     return {
