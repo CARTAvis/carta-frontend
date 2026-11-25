@@ -444,6 +444,17 @@ describe("FrameStore", () => {
         });
     });
 
+    test.each(["LSRK", ""])("uses only the primary SPECSYS header when its value is %j", specsys => {
+        const frameInfo = {
+            ...LOG_WAVELENGTH_CUBEFRAME_INFO,
+            fileInfoExtended: new CARTA.FileInfoExtended({
+                ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended,
+                headerEntries: [{name: "SPECSYSA", value: "BARYCENT"}, ...LOG_WAVELENGTH_CUBEFRAME_INFO.fileInfoExtended.headerEntries, ...(specsys ? [{name: "SPECSYS", value: specsys}] : [])]
+            })
+        };
+        expect(new FrameStore(frameInfo).spectralAxis?.specsys).toBe(specsys);
+    });
+
     describe("spectral axis with a non-linear algorithm code", () => {
         test("recognizes a WAVE-LOG axis as a vacuum wavelength axis", () => {
             const frame = new FrameStore(LOG_WAVELENGTH_CUBEFRAME_INFO);
