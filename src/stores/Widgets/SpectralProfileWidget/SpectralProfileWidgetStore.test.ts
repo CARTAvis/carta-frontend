@@ -13,21 +13,19 @@ import {AppStore, PreferenceStore} from "../..";
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
 
 describe("SpectralProfileWidgetStore quantile requirements", () => {
-    test.each(QUANTILE_STATISTICS_TYPES)("requests the quantile group once when initially selecting %s", type => {
+    test.each(QUANTILE_STATISTICS_TYPES)("requests only the selected quantile %s", type => {
         let statsTypes = [type];
         const widget = {
             profileSelectionStore: {getFormattedSpectralConfigs: () => [{fileId: 0, regionId: 1, coordinate: "z", statsTypes}]}
         } as unknown as SpectralProfileWidgetStore;
         const widgets = new Map([["a", widget]]);
         const original = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
-        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual(expect.arrayContaining(QUANTILE_STATISTICS_TYPES));
-        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).not.toContain(CARTA.StatsType.MedAbsDevMed);
+        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual([type]);
 
-        statsTypes = [...QUANTILE_STATISTICS_TYPES];
-        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, SpectralProfileWidgetStore.calculateRequirementsMap(widgets))).toEqual([]);
-
-        statsTypes.push(CARTA.StatsType.MedAbsDevMed);
-        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, SpectralProfileWidgetStore.calculateRequirementsMap(widgets))).toHaveLength(1);
+        const nextType = QUANTILE_STATISTICS_TYPES.find(candidate => candidate !== type)!;
+        statsTypes = [nextType];
+        const updated = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, updated)[0]?.spectralProfiles?.[0].statsTypes).toEqual([nextType]);
     });
 });
 

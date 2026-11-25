@@ -22,7 +22,6 @@ import {
     VelocityConvention
 } from "enums";
 import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsFrequencyDensityUnit, IsIntensitySupported, type LineKey, NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS, type Point2D} from "models";
-import {ExpandQuantileStatistics} from "models/StatisticsDefinition/StatisticsDefinition";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -1061,10 +1060,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
                 const existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
-                const statsTypes = ExpandQuantileStatistics(spectralConfig.statsTypes ?? []);
+                const statsTypes = spectralConfig.statsTypes ?? [];
                 if (!existingSpectralConfig) {
                     // create new spectral config
-                    regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes});
+                    regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: [...statsTypes]});
                 } else {
                     statsTypes.forEach(statsType => {
                         if (!existingSpectralConfig?.statsTypes?.includes(statsType)) {

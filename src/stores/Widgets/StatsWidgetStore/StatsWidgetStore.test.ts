@@ -11,21 +11,19 @@ jest.mock("stores", () => ({AppStore: {Instance: {preferenceStore: {statistics: 
 jest.mock("stores/Widgets", () => ({RegionWidgetStore: class {}}));
 
 describe("StatsWidgetStore requirements", () => {
-    test.each(QUANTILE_STATISTICS_TYPES)("requests the quantile group once when initially selecting %s", type => {
+    test.each(QUANTILE_STATISTICS_TYPES)("requests only the enabled quantile %s", type => {
         const previousStatistics = AppStore.Instance.preferenceStore.statistics;
         const frame = {frameInfo: {fileId: 0}, regionSet: {regions: []}};
         const widgets = new Map([["a", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "z"} as any]]);
         try {
             Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, type]});
             const original = StatsWidgetStore.calculateRequirementsMap(widgets);
-            expect(original.get(0)?.get(-1)?.statsConfigs?.[0].statsTypes).toEqual(expect.arrayContaining(QUANTILE_STATISTICS_TYPES));
-            expect(original.get(0)?.get(-1)?.statsConfigs?.[0].statsTypes).not.toContain(CARTA.StatsType.MedAbsDevMed);
+            expect(original.get(0)?.get(-1)?.statsConfigs?.[0].statsTypes).toEqual([CARTA.StatsType.Mean, type]);
 
-            Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, ...QUANTILE_STATISTICS_TYPES]});
-            expect(StatsWidgetStore.diffStatsRequirements(original, StatsWidgetStore.calculateRequirementsMap(widgets))).toEqual([]);
-
-            Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, ...QUANTILE_STATISTICS_TYPES, CARTA.StatsType.MedAbsDevMed]});
-            expect(StatsWidgetStore.diffStatsRequirements(original, StatsWidgetStore.calculateRequirementsMap(widgets))).toHaveLength(1);
+            const nextType = QUANTILE_STATISTICS_TYPES.find(candidate => candidate !== type);
+            Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, nextType]});
+            const updated = StatsWidgetStore.calculateRequirementsMap(widgets);
+            expect(StatsWidgetStore.diffStatsRequirements(original, updated)[0]?.statsConfigs?.[0].statsTypes).toEqual([CARTA.StatsType.Mean, nextType]);
         } finally {
             Object.assign(AppStore.Instance.preferenceStore, {statistics: previousStatistics});
         }

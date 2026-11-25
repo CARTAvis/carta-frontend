@@ -21,10 +21,6 @@ export const QUANTILE_STATISTICS_TYPES = [CARTA.StatsType.Median, CARTA.StatsTyp
 
 export const EXTRA_STATISTICS_TYPES = [...QUANTILE_STATISTICS_TYPES, CARTA.StatsType.MedAbsDevMed];
 
-export const ExpandQuantileStatistics = (types: CARTA.StatsType[]): CARTA.StatsType[] => {
-    return QUANTILE_STATISTICS_TYPES.some(type => types.includes(type)) ? Array.from(new Set([...types, ...QUANTILE_STATISTICS_TYPES])) : [...types];
-};
-
 export const STATISTICS_NAME_MAP = new Map<StatsDisplayType, string>([
     [CARTA.StatsType.NumPixels, "NumPixels"],
     [NUM_BEAMS_STATS_TYPE, "NumBeams"],
