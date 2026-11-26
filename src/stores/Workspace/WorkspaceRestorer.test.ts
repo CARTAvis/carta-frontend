@@ -2397,6 +2397,26 @@ describe("WorkspaceRestorer", () => {
             expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
         });
 
+        test("applies the channels that the animator plays of a generated image", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+            requestMoment.mockImplementationOnce(() => {
+                const frame = {...createFrame(201), frameInfo: {fileId: 201, fileInfoExtended: {depth: 10}}, generation: {moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}, setAnimationRange: jest.fn()};
+                (appStore.frameMap as Map<number, unknown>).set(201, frame);
+                appStore.frames.push(frame as never);
+                return Promise.resolve([frame]);
+            });
+
+            const restorer = await restored(
+                createWorkspace({
+                    files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                    generatedImages: [{request: {...momentRequest, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, animationChannelRange: [1, 3]}]}]
+                })
+            );
+
+            const generated = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
+            expect(generated.setAnimationRange).toHaveBeenCalledWith([1, 3]);
+        });
+
         describe("an image fitting", () => {
             const fittingRequest = {
                 type: "fitting" as const,

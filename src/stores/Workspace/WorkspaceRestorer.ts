@@ -850,7 +850,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private restoreAnimator(): void {
         const isInteger = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
-        for (const fileInfo of this.workspace.files ?? []) {
+        for (const fileInfo of this.allImages) {
             const frame = this.frameOf(fileInfo.id);
             const range = fileInfo.animationChannelRange;
             const depth = frame?.frameInfo.fileInfoExtended?.depth ?? 1;
@@ -1293,7 +1293,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (fileInfo.timeSeriesMember) {
             this.appStore.setTimeSeriesMember(frame, true);
             if (!this.appStore.timeSeriesStore.isMember(frame)) {
-                const imageName = describeImageSource(fileInfo.source);
+                const imageName = this.nameOf(fileInfo);
                 this.report(WorkspaceItemKind.Image, imageName, `${imageName} is not in the time series, because it has no observation time`);
             }
         }
@@ -2175,7 +2175,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.takeSessionRegionIds();
         // Add the regions at once. Added one at a time, a few thousand regions take minutes, because
         // the views draw every region again for each one.
-        const imageName = describeImageSource(fileInfo.source);
+        const imageName = this.nameOf(fileInfo);
         const nameOf = (regionInfo: (typeof regionInfos)[number]) => (regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`);
         // A style that the workspace did not save is left out. Then the region gets the default of its
         // type from the preferences, such as the annotation color for an annotation.
