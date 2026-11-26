@@ -1956,6 +1956,32 @@ describe("WorkspaceRestorer", () => {
             expect(restorer.regionIdOf(1, 2)).toBe(102);
         });
 
+        test("leaves out the styles that the workspace did not save, so that each region gets the default of its type", async () => {
+            const {appStore} = createSession();
+            const styled = {...region(2), color: "#ff0000", lineWidth: 3, dashes: [4]};
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), styled]}}]}));
+
+            const styles = appStore.frames[0].regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[]).slice(4, 7));
+            expect(styles).toEqual([
+                [undefined, undefined, undefined],
+                ["#ff0000", 3, [4]]
+            ]);
+        });
+
+        test("moves a saved line width into the range of the Region dialog, and reports it", async () => {
+            const {appStore} = createSession();
+            const widths = [0, 0.5, 10, 50];
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: widths.map((lineWidth, index) => ({...region(index + 1), lineWidth}))}}]}));
+
+            expect(appStore.frames[0].regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[])[5])).toEqual([0.5, 0.5, 10, 10]);
+            expect(problems).toEqual([
+                "The line width of the region Region 1 of image.fits is 0.5, because the saved width 0 is not between 0.5 and 10",
+                "The line width of the region Region 4 of image.fits is 10, because the saved width 50 is not between 0.5 and 10"
+            ]);
+        });
+
         test("asks the backend for each region's saved ID, so that its name stays the same", async () => {
             const {appStore} = createSession();
             const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}};

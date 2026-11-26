@@ -70,13 +70,13 @@ import {
     StreamingRowSource,
     type WorkspaceLoadingStep
 } from "stores";
-import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN, type RegionStore} from "stores/Frame";
+import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN, RegionStore} from "stores/Frame";
 import {isRegionShape, isSameRegionShape, momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
-import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, clamp, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /** Returns the host of a URL, such as "simbad.u-strasbg.fr", or the whole URL when it cannot be parsed. */
 function hostOf(url: string): string {
@@ -2140,12 +2140,26 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * A region that the backend does not accept is left out and reported, so that no saved ID
      * points at it.
      */
+    /**
+     * Returns the saved line width of a region, moved into the range that the Region dialog allows,
+     * such as 0.5 for 0. Reports a width that is moved. Returns undefined when no width was saved.
+     */
+    private restoredLineWidth(lineWidth: number | undefined, regionName: string, imageName: string): number | undefined {
+        if (typeof lineWidth !== "number" || !Number.isFinite(lineWidth)) {
+            return undefined;
+        }
+        const restored = clamp(lineWidth, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH);
+        if (restored !== lineWidth) {
+            this.report(WorkspaceItemKind.Image, imageName, `The line width of ${regionName} is ${restored}, because the saved width ${lineWidth} is not between ${RegionStore.MIN_LINE_WIDTH} and ${RegionStore.MAX_LINE_WIDTH}`);
+        }
+        return restored;
+    }
+
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
             return;
         }
 
-        const preferenceStore = this.appStore.preferenceStore;
         const regionIds = new Map<number, number>();
         this.regionIds.set(fileInfo.id, regionIds);
         const selectedRegion = fileInfo.regionsSet.selectedRegion;
@@ -2153,15 +2167,19 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.takeSessionRegionIds();
         // Add the regions at once. Added one at a time, a few thousand regions take minutes, because
         // the views draw every region again for each one.
+        const imageName = describeImageSource(fileInfo.source);
+        const nameOf = (regionInfo: (typeof regionInfos)[number]) => (regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`);
+        // A style that the workspace did not save is left out. Then the region gets the default of its
+        // type from the preferences, such as the annotation color for an annotation.
         const regions = await frame.regionSet.addExistingRegionsAsync(
             regionInfos.map(regionInfo => ({
                 points: regionInfo.points,
                 rotation: regionInfo.rotation,
                 regionType: regionInfo.type,
                 name: regionInfo.name ?? "",
-                color: regionInfo.color ?? preferenceStore.regionColor,
-                lineWidth: regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                dashes: regionInfo.dashes ?? [preferenceStore.regionDashLength],
+                color: regionInfo.color,
+                lineWidth: this.restoredLineWidth(regionInfo.lineWidth, `${nameOf(regionInfo)} of ${imageName}`, imageName),
+                dashes: regionInfo.dashes,
                 annotationStyles: regionInfo.annotationStyles,
                 requestedId: this.regionIdToRequest(regionInfo.id)
             }))
@@ -2170,8 +2188,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             regionInfos.forEach((regionInfo, index) => {
                 const region = regions[index];
                 if (!region) {
-                    const imageName = describeImageSource(fileInfo.source);
-                    const regionName = regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`;
+                    const regionName = nameOf(regionInfo);
                     this.report(WorkspaceItemKind.Image, imageName, `Could not restore ${regionName} of ${imageName}: the backend did not accept it`);
                     return;
                 }

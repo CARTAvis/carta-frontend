@@ -25,9 +25,12 @@ export interface ExistingRegionSettings {
     rotation: number;
     regionType: CARTA.RegionType;
     name: string;
-    color: string;
-    lineWidth: number;
-    dashes: number[];
+    /** Undefined gives the default of the region type. */
+    color: string | undefined;
+    /** Undefined gives the default of the region type. */
+    lineWidth: number | undefined;
+    /** Undefined or an empty list gives the default of the region type. */
+    dashes: number[] | undefined;
     annotationStyles?: any;
     /** A positive ID to ask the backend for, or -1 for a new ID. */
     requestedId?: number;
@@ -543,7 +546,18 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, isTemporary);
     };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], isTemporary = true, annotationStyles?: any) => {
+    @action addExistingRegion = (
+        points: Point2D[],
+        rotation: number,
+        regionType: CARTA.RegionType,
+        regionId: number,
+        name: string,
+        color: string | undefined,
+        lineWidth: number | undefined,
+        dashes: number[] | undefined,
+        isTemporary = true,
+        annotationStyles?: any
+    ) => {
         const region = this.addRegion(points, rotation, regionType, isTemporary, regionId, name);
         // additional imported style properties;
         if (color) {
