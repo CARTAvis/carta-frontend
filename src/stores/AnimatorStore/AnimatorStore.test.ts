@@ -18,7 +18,7 @@ const MOCK_TIME_SERIES_STORE = {
 
 jest.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE},
-    PreferenceStore: {Instance: {}},
+    PreferenceStore: {Instance: {stopAnimationPlaybackMinutes: 5}},
     TimeSeriesStore: {Instance: MOCK_TIME_SERIES_STORE}
 }));
 

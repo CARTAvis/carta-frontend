@@ -1,6 +1,6 @@
 jest.mock("services", () => ({
     PreviewWebGLService: {Instance: {}},
-    TileService: {Instance: {tileStream: {subscribe: jest.fn()}}},
+    TileService: {Instance: {getTile: jest.fn(), tileStream: {subscribe: jest.fn()}}},
     TileWebGLService: {Instance: {cmapTexture: {}, gl: {}}}
 }));
 jest.mock("stores", () => ({
@@ -14,6 +14,17 @@ import {RasterViewComponent} from "./RasterViewComponent";
 
 describe("RasterViewComponent", () => {
     afterEach(() => jest.restoreAllMocks());
+
+    test("looks up the panel channel with the frame's Stokes value", () => {
+        const frame = {frameInfo: {fileId: 1}, channel: 3, stokes: 2};
+        const component = new RasterViewComponent({image: {type: ImageType.FRAME, store: frame}} as any) as any;
+        const tileCache = jest.requireMock("services").TileService.Instance;
+        tileCache.getTile.mockClear();
+
+        component.renderTiles(frame, [{x: 0, y: 0, layer: 0}], 5, 1, false, 0, false);
+
+        expect(tileCache.getTile).toHaveBeenCalledWith(1, 2, 5, 0, false);
+    });
 
     test("ignores tile events for other files and off-page channels", () => {
         const frame = {frameInfo: {fileId: 1}};
@@ -77,6 +88,7 @@ describe("RasterViewComponent", () => {
 
         component.updateCanvas();
         expect(clearRect).not.toHaveBeenCalled();
+        expect(drawImage).not.toHaveBeenCalled();
 
         frame.renderConfig.histChannel = 2;
         component.updateCanvas();

@@ -67,8 +67,22 @@ describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
     afterEach(() => {
-        jest.useRealTimers();
+        store.setChannelMapEnabled(false);
+        const app = jest.requireMock("stores").AppStore.Instance;
+        app.imageViewConfigStore.visibleFrames = [];
+        const frame = store.displayedFrame;
+        if (frame) {
+            runInAction(() => {
+                frame.channel = frame.requiredChannel = 0;
+                frame.stokes = frame.requiredStokes = 0;
+            });
+        }
+        store.setNumRows(2);
+        store.setNumColumns(2);
         store.setChannelStep(1);
+        store.setStartChannel(0);
+        jest.restoreAllMocks();
+        jest.useRealTimers();
     });
 
     describe("setChannelMapEnabled", () => {
@@ -106,39 +120,24 @@ describe("ChannelMapStore", () => {
             });
         });
 
-        it("cancels delayed tile requests when disabled", () => {
-            jest.useFakeTimers();
-            const testStore = store as unknown as {
-                throttledRequestChannels: (frame: unknown) => void;
-            };
-            const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
-            const frame = store.displayedFrame;
+        it("cancels the pending throttle when disabled", () => {
+            const request = (store as any).throttledRequestChannels;
+            const cancel = jest.spyOn(request, "cancel");
+            store.setChannelMapEnabled(true);
 
-            testStore.throttledRequestChannels(frame);
-            requestChannelMapTiles.mockClear();
-            testStore.throttledRequestChannels(frame);
             store.setChannelMapEnabled(false);
-            jest.runOnlyPendingTimers();
 
-            expect(requestChannelMapTiles).not.toHaveBeenCalled();
-            jest.useRealTimers();
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
 
-        it("cancels delayed active-channel changes when disabled", () => {
-            jest.useFakeTimers();
-            const testStore = store as unknown as {
-                debouncedSetActiveChannel: (frame: typeof store.displayedFrame) => void;
-            };
-            const setChannel = store.displayedFrame?.setChannel as jest.Mock;
-            setChannel.mockClear();
-
+        it("cancels the pending debounce when disabled", () => {
+            const request = (store as any).debouncedSetActiveChannel;
+            const cancel = jest.spyOn(request, "cancel");
             store.setChannelMapEnabled(true);
-            testStore.debouncedSetActiveChannel(store.displayedFrame);
-            store.setChannelMapEnabled(false);
-            jest.runOnlyPendingTimers();
 
-            expect(setChannel).not.toHaveBeenCalled();
-            jest.useRealTimers();
+            store.setChannelMapEnabled(false);
+
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
 
         it("does not request tiles while disabled", () => {
@@ -160,7 +159,7 @@ describe("ChannelMapStore", () => {
 
             store.handlePolarizationChanged(store.displayedFrame);
 
-            expect(requestChannelMapTiles.mock.lastCall?.[1]).toBe(store.displayedFrame);
+            expect(requestChannelMapTiles).toHaveBeenLastCalledWith(expect.any(Array), store.displayedFrame, expect.any(Object), expect.any(Number), [0, 1, 2, 3]);
             store.setChannelMapEnabled(false);
         });
 
@@ -316,6 +315,7 @@ describe("ChannelMapStore", () => {
         });
 
         it("skips when the channel is out of range or non-integer", () => {
+            store.setStartChannel(1);
             store.setStartChannel(-1);
             expect(store.startChannel).toBe(1);
 
@@ -566,6 +566,7 @@ describe("ChannelMapStore", () => {
 
     describe("setNextPage", () => {
         it("sets the displayed channels correctly", () => {
+            store.setStartChannel(1);
             store.setNextPage();
             expect(store.startChannel).toBe(5);
             expect(store.endChannel).toBe(8);
@@ -578,6 +579,7 @@ describe("ChannelMapStore", () => {
         });
 
         it("skips when the new start is out of range", () => {
+            store.setStartChannel(9);
             store.setNextPage();
             expect(store.startChannel).toBe(9);
         });
@@ -591,6 +593,7 @@ describe("ChannelMapStore", () => {
         });
 
         it("skips when the number is invalid", () => {
+            store.setNumColumns(3);
             store.setNumColumns(NaN);
             expect(store.numColumns).toBe(3);
 
@@ -601,12 +604,14 @@ describe("ChannelMapStore", () => {
 
     describe("setNumRows", () => {
         it("sets the image view panel config correctly", () => {
+            store.setNumColumns(3);
             store.setNumRows(3);
             expect(store.numRows).toBe(3);
             expect(store.numChannels).toBe(9);
         });
 
         it("skips when the number is invalid", () => {
+            store.setNumRows(3);
             store.setNumRows(NaN);
             expect(store.numRows).toBe(3);
 

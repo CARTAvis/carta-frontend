@@ -840,7 +840,7 @@ export class TileService {
         }
     }
 
-    @action resetForSessionResume() {
+    @action resetPendingRasterWork() {
         this.cancelChannelMapRequests();
         this.resetRasterRequests();
     }
@@ -861,7 +861,7 @@ export class TileService {
         for (const [key, tile] of this.cachedTiles) {
             // Clear tile if it matches the fileId, otherwise add it to the collection of tiles to add to the new cache
             if (fileId !== null && fileId !== undefined && isTileKeyForFile(key, fileId)) {
-                this.clearTile(tile, key);
+                this.clearTile(tile);
             } else {
                 keys.push(key);
                 tiles.push(tile);
@@ -937,12 +937,12 @@ export class TileService {
         };
     }
 
-    private clearTile = (tile: RasterTile, _key: any) => {
+    private clearTile(tile: RasterTile) {
         if (tile.data) {
             delete tile.data;
         }
         this.textureCoordinateQueue.push(tile.textureCoordinate);
-    };
+    }
 
     @action private handleStreamSync(syncMessage: CARTA.RasterTileSync.$Properties, requestId: number = 0) {
         const key = getTileRequestKey(syncMessage.fileId, syncMessage.stokes, syncMessage.channel);
@@ -1115,7 +1115,7 @@ export class TileService {
             const tileCacheKey = getTileCacheKey(fileId, stokes, channel, encodedCoordinate);
             const oldValue = this.cachedTiles.setpop(tileCacheKey, rasterTile);
             if (oldValue) {
-                this.clearTile(oldValue.value, oldValue.key);
+                this.clearTile(oldValue.value);
             }
             rasterTile.textureCoordinate = this.textureCoordinateQueue.pop();
 
@@ -1161,7 +1161,7 @@ export class TileService {
             const tileCacheKey = getTileCacheKey(fileId, stokes, channel, coordinate);
             const oldValue = this.cachedTiles.setpop(tileCacheKey, tile);
             if (oldValue) {
-                this.clearTile(oldValue.value, oldValue.key);
+                this.clearTile(oldValue.value);
             }
             // This needs to be after clearTile to avoid empty textureCoordinateQueue
             tile.textureCoordinate = this.textureCoordinateQueue.pop();
