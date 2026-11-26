@@ -33,10 +33,6 @@ export class StatsWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
         const selectedStatistics = AppStore.Instance.preferenceStore.statistics;
         const statsTypes = selectedStatistics.filter(type => typeof type === "number") as CARTA.StatsType[];
-        const hasDerivedStatistic = selectedStatistics.some(type => typeof type === "string");
-        if (hasDerivedStatistic && !statsTypes.includes(CARTA.StatsType.NumPixels)) {
-            statsTypes.unshift(CARTA.StatsType.NumPixels);
-        }
 
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
@@ -66,9 +62,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
                 const statsConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!statsConfig) {
-                    if (statsTypes.length) {
-                        regionRequirements?.statsConfigs.push({coordinate, statsTypes: [...statsTypes]});
-                    }
+                    regionRequirements?.statsConfigs.push({coordinate, statsTypes: [...statsTypes]});
                 }
             }
         });

@@ -694,9 +694,7 @@ export class SpectralProfileSelectionStore {
                 this.widgetStore.removeProfileColor(statsType);
             } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {
-                    return a - b;
-                });
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => SPECTRAL_STATISTICS_ORDER.indexOf(a) - SPECTRAL_STATISTICS_ORDER.indexOf(b));
                 this.assignColor(statsType as number);
             }
         }

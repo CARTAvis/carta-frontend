@@ -1,84 +1,58 @@
 import {CARTA} from "carta-protobuf";
+import {runInAction} from "mobx";
 
-import {QUANTILE_STATISTICS_TYPES} from "models/StatisticsDefinition/StatisticsDefinition";
-import {AppStore} from "stores";
+import {PreferenceKeys} from "enums/preference";
+import {DEFAULT_STATS_DISPLAY_TYPES, QUANTILE_STATISTICS_TYPES} from "models/StatisticsDefinition/StatisticsDefinition";
+import {ApiService} from "services";
+import {AppStore, PreferenceStore} from "stores";
 
 import {StatsWidgetStore} from "./StatsWidgetStore";
 
-jest.mock("enums", () => ({Polarizations: {}, RegionsType: {CLOSED: 0}}));
-jest.mock("models", () => ({VALID_COORDINATES: ["z"]}));
-jest.mock("stores", () => ({AppStore: {Instance: {preferenceStore: {statistics: []}}}}));
-jest.mock("stores/Widgets", () => ({RegionWidgetStore: class {}}));
-
 describe("StatsWidgetStore requirements", () => {
-    test.each(QUANTILE_STATISTICS_TYPES)("requests only the enabled quantile %s", type => {
-        const previousStatistics = AppStore.Instance.preferenceStore.statistics;
-        const frame = {frameInfo: {fileId: 0}, regionSet: {regions: []}};
-        const widgets = new Map([["a", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "z"} as any]]);
-        try {
-            Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, type]});
-            const original = StatsWidgetStore.calculateRequirementsMap(widgets);
-            expect(original.get(0)?.get(-1)?.statsConfigs?.[0].statsTypes).toEqual([CARTA.StatsType.Mean, type]);
+    const preferenceStore = PreferenceStore.Instance;
+    const standardTypes = DEFAULT_STATS_DISPLAY_TYPES.filter(type => typeof type === "number");
+    const frame = {frameInfo: {fileId: 0}, regionSet: {regions: []}};
+    const widget = {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "z"} as StatsWidgetStore;
 
-            const nextType = QUANTILE_STATISTICS_TYPES.find(candidate => candidate !== type);
-            Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, nextType]});
-            const updated = StatsWidgetStore.calculateRequirementsMap(widgets);
-            expect(StatsWidgetStore.diffStatsRequirements(original, updated)[0]?.statsConfigs?.[0].statsTypes).toEqual([CARTA.StatsType.Mean, nextType]);
-        } finally {
-            Object.assign(AppStore.Instance.preferenceStore, {statistics: previousStatistics});
-        }
+    beforeEach(() => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({preferenceStore} as AppStore);
+        jest.spyOn(ApiService.Instance, "setPreference").mockResolvedValue(true);
     });
 
-    test("detects changes to requested statistic types", () => {
-        const originalRequirements = new Map([
-            [
-                0,
-                new Map([
-                    [
-                        -1,
-                        new CARTA.SetStatsRequirements({
-                            fileId: 0,
-                            regionId: -1,
-                            statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean]}]
-                        })
-                    ]
-                ])
-            ]
-        ]);
-        const updatedRequirements = new Map([
-            [
-                0,
-                new Map([
-                    [
-                        -1,
-                        new CARTA.SetStatsRequirements({
-                            fileId: 0,
-                            regionId: -1,
-                            statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean, CARTA.StatsType.Median]}]
-                        })
-                    ]
-                ])
-            ]
-        ]);
-
-        expect(StatsWidgetStore.diffStatsRequirements(originalRequirements, updatedRequirements)).toEqual([updatedRequirements.get(0)?.get(-1)]);
+    afterEach(() => {
+        runInAction(() => preferenceStore.preferences.delete(PreferenceKeys.STATISTICS));
+        jest.restoreAllMocks();
     });
 
-    test("shares selected-statistic processing but gives each coordinate its own list", () => {
-        const previousStatistics = AppStore.Instance.preferenceStore.statistics;
-        Object.assign(AppStore.Instance.preferenceStore, {statistics: [CARTA.StatsType.Mean, "SNR"]});
-        const frame = {frameInfo: {fileId: 0}, regionSet: {regions: []}};
+    test.each(QUANTILE_STATISTICS_TYPES)("adds and drops only the enabled quantile %s", type => {
+        const widgets = new Map([["a", widget]]);
+        const original = StatsWidgetStore.calculateRequirementsMap(widgets);
+        expect(original.get(0)?.get(-1)?.statsConfigs?.[0].statsTypes).toEqual(standardTypes);
+
+        preferenceStore.toggleStatistic(type);
+        const enabled = StatsWidgetStore.calculateRequirementsMap(widgets);
+        expect(StatsWidgetStore.diffStatsRequirements(original, enabled).map(req => req.statsConfigs?.[0].statsTypes)).toEqual([[...standardTypes, type]]);
+
+        const nextType = type === CARTA.StatsType.Median ? CARTA.StatsType.Q1 : CARTA.StatsType.Median;
+        preferenceStore.toggleStatistic(type);
+        preferenceStore.toggleStatistic(nextType);
+        const switched = StatsWidgetStore.calculateRequirementsMap(widgets);
+        expect(StatsWidgetStore.diffStatsRequirements(enabled, switched).map(req => req.statsConfigs?.[0].statsTypes)).toEqual([[...standardTypes, nextType]]);
+
+        preferenceStore.toggleStatistic(nextType);
+        const disabled = StatsWidgetStore.calculateRequirementsMap(widgets);
+        expect(StatsWidgetStore.diffStatsRequirements(switched, disabled).map(req => req.statsConfigs?.[0].statsTypes)).toEqual([standardTypes]);
+    });
+
+    test("requests pixel counts and gives each coordinate its own list", () => {
         const widgets = new Map([
-            ["a", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "z"} as any],
-            ["b", {effectiveFrame: frame, effectiveRegionId: -1, coordinate: "x"} as any]
+            ["a", widget],
+            ["b", {...widget, coordinate: "Iz"} as StatsWidgetStore]
         ]);
-
         const requirements = StatsWidgetStore.calculateRequirementsMap(widgets).get(0)?.get(-1)?.statsConfigs ?? [];
-
         expect(requirements).toHaveLength(2);
-        expect(requirements[0].statsTypes).toEqual([CARTA.StatsType.NumPixels, CARTA.StatsType.Mean]);
-        expect(requirements[1].statsTypes).toEqual([CARTA.StatsType.NumPixels, CARTA.StatsType.Mean]);
-        expect(requirements[0].statsTypes).not.toBe(requirements[1].statsTypes);
-        Object.assign(AppStore.Instance.preferenceStore, {statistics: previousStatistics});
+        expect(requirements[0].statsTypes).toContain(CARTA.StatsType.NumPixels);
+        expect(requirements[1].statsTypes).toEqual(requirements[0].statsTypes);
+        expect(requirements[1].statsTypes).not.toBe(requirements[0].statsTypes);
     });
 });

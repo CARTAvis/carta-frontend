@@ -110,14 +110,43 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
         const {widgetStore} = createWidgetStore(false);
         const selection = widgetStore.profileSelectionStore;
         runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
-        selection.selectStatMultiMode(CARTA.StatsType.Median);
-        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
         selection.setActiveProfileCategory(MultiProfileCategory.STATISTIC);
+        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median, CARTA.StatsType.Quartile]);
+        expect(widgetStore.getProfileColor(CARTA.StatsType.Mean)).toBeUndefined();
 
         runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
 
         expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
         expect(widgetStore.getProfileColor(CARTA.StatsType.Mean)).toBeDefined();
+    });
+
+    test("keeps multi-selected statistics in menu order", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, EXTRA_STATISTICS_TYPES));
+        selection.selectStatSingleMode(CARTA.StatsType.MedAbsDevMed);
+        selection.setActiveProfileCategory(MultiProfileCategory.STATISTIC);
+        [...QUANTILE_STATISTICS_TYPES].reverse().forEach(selection.selectStatMultiMode);
+        expect(selection.selectedStatsTypes).toEqual(EXTRA_STATISTICS_TYPES);
+    });
+
+    test("requests Mean when a disabled statistic was the single profile", () => {
+        const {frame, widgetStore} = createWidgetStore(false);
+        jest.spyOn(frame, "getRegion").mockReturnValue({isClosedRegion: true, nameString: "Region 1"});
+        widgetStore.setRegionId(widgetStore.fileId, 1);
+        const selection = widgetStore.profileSelectionStore;
+        const widgets = new Map([["a", widgetStore]]);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median]));
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        const original = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(original.get(7)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual([CARTA.StatsType.Median]);
+
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+        const updated = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, updated)[0]?.spectralProfiles?.[0].statsTypes).toEqual([CARTA.StatsType.Mean]);
     });
 
     test("keeps every moment available and selected on a linear spectral axis", () => {
