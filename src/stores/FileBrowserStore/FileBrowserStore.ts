@@ -14,6 +14,16 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD | CARTA.FileType.ZARR;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+/**
+ * Returns the keys of `fileInfoExtended` in the order of `hduList`, then the keys that `hduList` leaves out.
+ * A protobuf map keeps no order. `hduList` puts the default image of a Zarr store first.
+ */
+export function orderedHDUs(fileInfoExtended: {[k: string]: unknown} | null | undefined, hduList: string[] | null | undefined): string[] {
+    const keys = Object.keys(fileInfoExtended ?? {});
+    const listed = (hduList ?? []).filter(hdu => keys.includes(hdu));
+    return [...listed, ...keys.filter(key => !listed.includes(key))];
+}
+
 type DirectoryInfo = CARTA.FileInfo.$Properties & Omit<CARTA.DirectoryInfo.$Properties, keyof CARTA.FileInfo.$Properties>;
 
 export interface BrowserFileList {
@@ -47,6 +57,7 @@ export class FileBrowserStore {
     @observable selectedFile: CARTA.FileInfo.$Properties | CARTA.CatalogFileInfo.$Properties | null | undefined = undefined;
     @observable selectedHDU: string | null = null;
     @observable HDUfileInfoExtended: {[k: string]: CARTA.FileInfoExtended.$Properties} | null = null;
+    @observable HDUOrder: string[] = [];
     @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable isLoadingList: boolean = false;
@@ -191,6 +202,7 @@ export class FileBrowserStore {
         this.selectedFile = null;
         this.selectedHDU = null;
         this.HDUfileInfoExtended = null;
+        this.HDUOrder = [];
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
         const filterMode = ToFileListFilterMode(appStore.preferenceStore.fileFilterMode);
@@ -269,15 +281,16 @@ export class FileBrowserStore {
         this.isLoadingInfo = true;
         this.isFileInfoResp = false;
         this.HDUfileInfoExtended = null;
+        this.HDUOrder = [];
         this.responseErrorMessage = "";
 
         try {
             const res = yield backendService.getFileInfo(directory, file, hdu);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.HDUfileInfoExtended = res.fileInfoExtended;
-                const HDUList = Object.keys(this.HDUfileInfoExtended ?? {});
-                if (HDUList?.length >= 1) {
-                    this.selectedHDU = HDUList[0];
+                this.HDUOrder = orderedHDUs(res.fileInfoExtended, res.fileInfo.HDUList);
+                if (this.HDUOrder.length >= 1) {
+                    this.selectedHDU = this.HDUOrder[0];
                 }
                 this.updateFileInfoInFileList(res.fileInfo);
                 this.isLoadingInfo = false;
@@ -288,6 +301,7 @@ export class FileBrowserStore {
             this.responseErrorMessage = err;
             this.isFileInfoResp = false;
             this.HDUfileInfoExtended = null;
+            this.HDUOrder = [];
             this.isLoadingInfo = false;
         }
     }
@@ -381,7 +395,7 @@ export class FileBrowserStore {
         try {
             const response = await this.getConcatFilesHeader(directory, file, hdu);
             // In fileInfoExtended: { [k: string]: CARTA.FileInfoExtended.$Properties }, sometimes k is " "
-            const k = Object.keys(response.info ?? {})[0];
+            const k = orderedHDUs(response.info, response.hduList)[0];
             return {
                 directory,
                 file,
@@ -402,9 +416,13 @@ export class FileBrowserStore {
      * @param hdu - The Header Data Unit (HDU) identifier of the file.
      * @returns A promise resolving to the header information.
      */
-    private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string | null | undefined; info: CARTA.FileInfoExtended.$Properties | null | undefined}> => {
+    private getConcatFilesHeader = async (
+        directory: string,
+        file: string,
+        hdu: string
+    ): Promise<{file: string | null | undefined; info: {[k: string]: CARTA.FileInfoExtended.$Properties} | null | undefined; hduList: string[] | null | undefined}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
-        return {file: res.fileInfo?.name, info: res.fileInfoExtended};
+        return {file: res.fileInfo?.name, info: res.fileInfoExtended, hduList: res.fileInfo?.HDUList};
     };
 
     /**
@@ -666,7 +684,7 @@ export class FileBrowserStore {
                 continue;
             }
 
-            const HDUList = Object.keys(res.fileInfoExtended ?? {});
+            const HDUList = orderedHDUs(res.fileInfoExtended, res.fileInfo.HDUList);
             const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
             const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
 
@@ -762,7 +780,7 @@ export class FileBrowserStore {
 
     @computed get HDUList(): OptionProps[] | null {
         return this.HDUfileInfoExtended
-            ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+            ? this.HDUOrder.map(hdu => {
                   // hdu extension name is in field 3 of fileInfoExtended computed entries
                   const extName =
                       (this.HDUfileInfoExtended?.[hdu]?.computedEntries?.length ?? NaN) >= 3 && this.HDUfileInfoExtended?.[hdu].computedEntries?.[2]?.name === "Extension name"
