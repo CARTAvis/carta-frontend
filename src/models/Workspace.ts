@@ -48,6 +48,28 @@ import {type WidgetWorkspaceConfig} from "./Widget/WidgetWorkspaceConfig";
 /** The version written by this frontend, matching `workspace_schema_2.json`. */
 export const WORKSPACE_VERSION = 2;
 
+/**
+ * Returns the version of a workspace that a newer version of CARTA saved, such as 3. Returns
+ * undefined for a workspace of this version or an older one.
+ */
+export function newerWorkspaceVersion(workspace: unknown): number | undefined {
+    const version = workspace && typeof workspace === "object" ? (workspace as {workspaceVersion?: unknown}).workspaceVersion : undefined;
+    return typeof version === "number" && Number.isFinite(version) && version > WORKSPACE_VERSION ? version : undefined;
+}
+
+/** Says that a newer version of CARTA saved a workspace that this version can still read. */
+export function describeNewerWorkspace(version: number): string {
+    return `A newer version of CARTA saved this workspace, with workspace version ${version}. This version of CARTA reads workspace version ${WORKSPACE_VERSION}, so it may not restore every setting.`;
+}
+
+/** Thrown when a newer version of CARTA saved a workspace that this version cannot read. */
+export class NewerWorkspaceError extends Error {
+    constructor(public readonly version: number) {
+        super(`A newer version of CARTA saved this workspace, with workspace version ${version}. This version of CARTA cannot read it.`);
+        this.name = "NewerWorkspaceError";
+    }
+}
+
 /** The largest number of components of a profile fitting or an image fitting that a restore reads. Then a damaged workspace cannot create very many components. The profile fitting panel offers up to 20 components, and auto detect can find more. */
 export const MAX_WORKSPACE_FITTING_COMPONENTS = 100;
 

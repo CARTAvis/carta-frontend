@@ -4,11 +4,11 @@ import {AnchorButton, Classes, type DialogProps, Icon, InputGroup, Intent, NonId
 import classNames from "classnames";
 import {comparer, reaction} from "mobx";
 import {observer} from "mobx-react";
-import type {WorkspaceIssue, WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
+import {NewerWorkspaceError, type Workspace, type WorkspaceIssue, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
@@ -118,13 +118,21 @@ export const WorkspaceDialogComponent = observer(() => {
             setPreflight(undefined);
             setReadErrorMessage("");
             setIsReadingWorkspace(true);
-            const workspace = await appStore.apiService.getWorkspace(entry.name);
+            let workspace: Workspace | undefined;
+            let errorMessage = "Could not read the workspace";
+            try {
+                workspace = await appStore.apiService.getWorkspace(entry.name);
+            } catch (err) {
+                if (err instanceof NewerWorkspaceError) {
+                    errorMessage = err.message;
+                }
+            }
             if (selection.current !== entry.name) {
                 return;
             }
             setIsReadingWorkspace(false);
             if (!workspace) {
-                setReadErrorMessage("Could not read the workspace");
+                setReadErrorMessage(errorMessage);
                 return;
             }
             const store = new WorkspacePreflightStore(entry.name, workspace, workspace.editable !== false && !appStore.isReadOnly);

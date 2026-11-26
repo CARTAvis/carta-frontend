@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {describeCatalogSource, describeImageSource, getLelFileNames, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
+import {describeCatalogSource, describeImageSource, getLelFileNames, newerWorkspaceVersion, type Workspace, WORKSPACE_VERSION, type WorkspaceCatalogQuerySource, WorkspaceConfig} from "./Workspace";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
 
@@ -330,6 +330,18 @@ describe("workspace schema 2", () => {
         expect(runtimeWorkspace.catalogWidgets).toEqual({"catalog-plot-0": plot});
         // The stored workspace is left as it was.
         expect(storedWorkspace.catalogWidgets?.["catalog-plot-0"]).toHaveProperty("fittingRange");
+    });
+});
+
+describe("newerWorkspaceVersion", () => {
+    test("returns the version of a workspace that a newer version of CARTA saved", () => {
+        expect(newerWorkspaceVersion({workspaceVersion: WORKSPACE_VERSION + 1})).toBe(WORKSPACE_VERSION + 1);
+    });
+
+    test("returns undefined for a workspace of this version or an older one, or without a version number", () => {
+        for (const workspace of [{workspaceVersion: WORKSPACE_VERSION}, {workspaceVersion: 0}, {workspaceVersion: "3"}, {workspaceVersion: Infinity}, {}, undefined, null]) {
+            expect(newerWorkspaceVersion(workspace)).toBeUndefined();
+        }
     });
 });
 

@@ -2,7 +2,7 @@ import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {BrowserMode, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
-import {type Workspace, type WorkspaceIssue} from "models";
+import {NewerWorkspaceError, type Workspace, type WorkspaceIssue} from "models";
 import {AppStore, WorkspaceRecoveryStore, WorkspaceRestorer} from "stores";
 
 function deferred<T>() {
@@ -292,6 +292,32 @@ describe("AppStore workspace restore report", () => {
         restoreIssues = [];
         await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
         expect(appStore.workspaceRestoreReport).toBeUndefined();
+    });
+
+    test("shows the report for a workspace that a newer version of CARTA saved, even when everything was restored", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue({...workspace, workspaceVersion: 3});
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            return [];
+        });
+        const addWarning = jest.spyOn(appStore.logStore, "addWarning");
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
+
+        expect(appStore.workspaceRestoreReport).toMatchObject({name: "cubes", issues: [], newerVersion: 3});
+        expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("workspace version 3"), ["workspace"]);
+    });
+
+    test("says why a workspace that a newer version of CARTA saved could not be read", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockRejectedValue(new NewerWorkspaceError(3));
+        const restore = jest.spyOn(WorkspaceRestorer.prototype, "restore");
+        const toaster = jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(false);
+
+        expect(restore).not.toHaveBeenCalled();
+        expect(toaster).toHaveBeenCalledWith(expect.objectContaining({message: expect.stringMatching(/^Could not load workspace "cubes"\. A newer version of CARTA saved this workspace, with workspace version 3\./)}));
+        expect(appStore.isLoadingWorkspace).toBe(false);
     });
 
     describe("new file locations", () => {

@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {AppToaster} from "components/Shared";
 import {ConvertToGB, FrameScaling, LegacyASTColor, PreferenceKeys} from "enums";
-import {LayoutConfig, type Snippet, type Workspace, WorkspaceConfig, type WorkspaceListItem} from "models";
+import {LayoutConfig, NewerWorkspaceError, newerWorkspaceVersion, type Snippet, type Workspace, WorkspaceConfig, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 import {sanitizeScalingParameter} from "utilities/scaling/scaling";
 
@@ -619,39 +619,37 @@ export class ApiService {
         }
     };
 
+    /**
+     * Reads a workspace and upgrades it to the form that a restore reads. Returns undefined when the
+     * workspace cannot be read or is not valid.
+     *
+     * @throws A `NewerWorkspaceError` when the workspace is not valid and a newer version of CARTA
+     * saved it.
+     */
     public getWorkspace = async (name: string, isKey = false): Promise<Workspace | undefined> => {
-        if (ApiService.runtimeConfig.apiAddress) {
-            try {
+        let stored: Workspace | undefined;
+        try {
+            if (ApiService.runtimeConfig.apiAddress) {
                 const url = `${ApiService.runtimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
-                if (response?.data?.success) {
-                    const workspace = WorkspaceConfig.upgradeForRuntime(response.data.workspace);
-                    const isValid = ApiService.workspaceValidator(workspace);
-                    if (!isValid) {
-                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
-                        return undefined;
-                    }
-                    return workspace;
-                }
-            } catch (err) {
-                console.error(err);
+                stored = response?.data?.success ? response.data.workspace : undefined;
+            } else if (!isKey) {
+                stored = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}")?.[name] || undefined;
             }
-        } else if (!isKey) {
-            try {
-                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
-                const storedWorkspace = existingWorkspaces?.[name];
-                if (storedWorkspace) {
-                    const workspace = WorkspaceConfig.upgradeForRuntime(storedWorkspace);
-                    const isValid = ApiService.workspaceValidator(workspace);
-                    if (isValid) {
-                        return workspace;
-                    } else {
-                        console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
-                    }
-                }
-            } catch (err) {
-                console.error(err);
+            if (!stored) {
+                return undefined;
             }
+            const workspace = WorkspaceConfig.upgradeForRuntime(stored);
+            if (ApiService.workspaceValidator(workspace)) {
+                return workspace;
+            }
+            console.error("Workspace validation failed:", ApiService.workspaceValidator.errors);
+        } catch (err) {
+            console.error(err);
+        }
+        const newerVersion = newerWorkspaceVersion(stored);
+        if (newerVersion !== undefined) {
+            throw new NewerWorkspaceError(newerVersion);
         }
         return undefined;
     };

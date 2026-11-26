@@ -1,10 +1,10 @@
 import * as React from "react";
-import {AnchorButton, Classes, Dialog, H5, Icon, type IconName, Intent, Tag, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Callout, Classes, Dialog, H5, Icon, type IconName, Intent, Tag, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {WorkspaceIssueOutcome} from "enums";
-import {describeCatalogSource, describeImageSource, type WorkspaceIssue} from "models";
+import {describeCatalogSource, describeImageSource, describeNewerWorkspace, type WorkspaceIssue} from "models";
 import {AppStore} from "stores";
 
 import {FileName, FileNameText, ItemIcon} from "./FileNameText";
@@ -113,7 +113,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
         <Dialog
             portalClassName="dialog-portal"
             className={classNames("workspace-restore-report-dialog", {[Classes.DARK]: appStore.isDarkTheme})}
-            icon={issues.length ? "warning-sign" : "info-sign"}
+            icon={issues.length || report?.newerVersion !== undefined ? "warning-sign" : "info-sign"}
             title={
                 <>
                     Workspace restore report
@@ -125,6 +125,11 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
             canOutsideClickClose={false}
         >
             <div className={Classes.DIALOG_BODY}>
+                {report?.newerVersion !== undefined && (
+                    <Callout className="report-newer-version" intent={Intent.WARNING} icon="outdated" data-testid="workspace-restore-report-newer-version">
+                        {describeNewerWorkspace(report.newerVersion)}
+                    </Callout>
+                )}
                 {/* Sum up the sections only when there are two or more. One section says it by its title. */}
                 {[leftOutCount, changedCount, repointed.length].filter(count => count > 0).length > 1 && (
                     <div className="report-summary" data-testid="workspace-restore-report-summary">

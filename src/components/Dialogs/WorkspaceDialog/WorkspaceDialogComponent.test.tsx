@@ -28,6 +28,8 @@ jest.mock("stores/Workspace/WorkspaceSnapshotter", () => ({WorkspaceSnapshotter:
 jest.mock("components/Dialogs", () => ({DraggableDialogComponent: (props: {children: unknown}) => <div>{props.children as never}</div>}));
 jest.mock("../../Shared", () => ({AppToaster: {show: jest.fn()}, ErrorToast: jest.fn(), ScrollShadow: (props: {children: unknown}) => <div>{props.children as never}</div>, SuccessToast: jest.fn()}));
 
+import {NewerWorkspaceError} from "models";
+
 import {WorkspaceDialogComponent} from "./WorkspaceDialogComponent";
 
 const ISSUE = {kind: WorkspaceItemKind.Catalog, subject: "a.vot", message: "Could not save the catalog a.vot: it is not one this session opened"};
@@ -181,6 +183,17 @@ describe("WorkspaceDialogComponent with several workspaces selected", () => {
         fireEvent.change(screen.getByPlaceholderText("Enter workspace name"), {target: {value: "b"}});
 
         expect(selectedRows()).toEqual(["b"]);
+    });
+
+    test("says when a workspace cannot be read because a newer version of CARTA saved it", async () => {
+        MOCK_APP_STORE.apiService.getWorkspace.mockImplementationOnce(() => Promise.reject(new NewerWorkspaceError(3)));
+        await renderDialog();
+        await act(async () => fireEvent.click(row("a")));
+
+        expect(screen.getByText("A newer version of CARTA saved this workspace, with workspace version 3. This version of CARTA cannot read it.")).toBeInTheDocument();
+
+        await act(async () => fireEvent.click(row("b")));
+        expect(screen.getByText("Could not read the workspace")).toBeInTheDocument();
     });
 
     test("lists at most 10 names in the confirmation of a delete", async () => {

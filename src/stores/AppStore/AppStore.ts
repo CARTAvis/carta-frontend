@@ -17,12 +17,15 @@ import {
     CARTA_INFO,
     type CatalogInfo,
     COMPUTED_POLARIZATIONS,
+    describeNewerWorkspace,
     type FileId,
     FloatingObjzIndexManager,
     type FrameView,
     type ImageItem,
     type ImageViewItem,
     momentsMade,
+    NewerWorkspaceError,
+    newerWorkspaceVersion,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
     type Point2D,
     PresetLayout,
@@ -170,6 +173,8 @@ export interface WorkspaceRestoreReport {
      * workspace opened through a shared link.
      */
     storedName?: string;
+    /** The version of the workspace, when a newer version of CARTA saved it. */
+    newerVersion?: number;
 }
 
 /** What a workspace load is waiting for. */
@@ -3069,14 +3074,18 @@ export class AppStore {
                 return false;
             }
             restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
+            const newerVersion = newerWorkspaceVersion(workspace);
+            if (newerVersion !== undefined) {
+                this.logStore.addWarning(describeNewerWorkspace(newerVersion), ["workspace"]);
+            }
 
             // Take the name before `finishLoadingWorkspace` clears it. The report shows the name.
             const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
             const {repointed} = restorer;
-            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size) {
-                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined});
+            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size || newerVersion !== undefined) {
+                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined, newerVersion});
             }
             return true;
         } catch (err) {
@@ -3084,7 +3093,8 @@ export class AppStore {
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+            const message = err instanceof NewerWorkspaceError ? `Could not load workspace "${name}". ${err.message}` : `Could not load workspace "${name}"`;
+            AppToaster.show({icon: "warning-sign", message, intent: "danger", timeout: err instanceof NewerWorkspaceError ? 6000 : 3000});
             this.finishLoadingWorkspace();
             return false;
         }
