@@ -48,6 +48,9 @@ import {type WidgetWorkspaceConfig} from "./Widget/WidgetWorkspaceConfig";
 /** The version written by this frontend, matching `workspace_schema_2.json`. */
 export const WORKSPACE_VERSION = 2;
 
+/** The largest number of components of a profile fitting or an image fitting that a restore reads. Then a damaged workspace cannot create very many components. The profile fitting panel offers up to 20 components, and auto detect can find more. */
+export const MAX_WORKSPACE_FITTING_COMPONENTS = 100;
+
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;

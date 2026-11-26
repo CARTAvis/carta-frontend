@@ -3,13 +3,11 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {FittingContinuum, FittingFunction} from "enums";
-import {type Point2D, type WorkspaceSpectralFitResult, type WorkspaceSpectralFitting} from "models";
+import {MAX_WORKSPACE_FITTING_COMPONENTS, type Point2D, type WorkspaceSpectralFitResult, type WorkspaceSpectralFitting} from "models";
 import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
 export class ProfileFittingStore {
-    /** The largest number of components that a restore reads. The panel offers up to 20 components, and auto detect can find more. */
-    public static readonly MAX_WORKSPACE_COMPONENTS = 100;
     @observable function: FittingFunction = FittingFunction.GAUSSIAN;
     @observable components: ProfileFittingIndividualStore[] = [new ProfileFittingIndividualStore()];
     @observable continuum: FittingContinuum = FittingContinuum.NONE;
@@ -567,7 +565,7 @@ export class ProfileFittingStore {
         this.setLockedYIntercept(isTrue(config.yInterceptLocked));
         this.setLockedSlope(isTrue(config.slopeLocked));
         // Read a limited number of components. Then a damaged workspace cannot create very many components.
-        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, ProfileFittingStore.MAX_WORKSPACE_COMPONENTS) : [];
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, MAX_WORKSPACE_FITTING_COMPONENTS) : [];
         if (components.length) {
             this.setComponents(components.length, true);
             components.forEach((saved, index) => {
