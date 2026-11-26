@@ -874,6 +874,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (Object.values(AnimationMode).includes(saved.mode) && saved.mode !== AnimationMode.NONE) {
             animator.setAnimationMode(saved.mode);
+            // The animator refuses the time series mode when the time series has fewer than 2 images.
+            if (saved.mode === AnimationMode.TIME_SERIES && animator.animationMode !== saved.mode) {
+                this.report(WorkspaceItemKind.Layout, "Animator", "The animator does not play the time series, because fewer than 2 images of the time series were restored");
+            }
         }
         if (Object.values(NumericInputType).includes(saved.numericInputType as NumericInputType)) {
             animator.setNumericInputType(saved.numericInputType as NumericInputType);
@@ -1288,6 +1292,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (fileInfo.timeSeriesMember) {
             this.appStore.setTimeSeriesMember(frame, true);
+            if (!this.appStore.timeSeriesStore.isMember(frame)) {
+                const imageName = describeImageSource(fileInfo.source);
+                this.report(WorkspaceItemKind.Image, imageName, `${imageName} is not in the time series, because it has no observation time`);
+            }
         }
     }
 

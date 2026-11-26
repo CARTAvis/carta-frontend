@@ -6,6 +6,7 @@ import {Subject} from "rxjs";
 
 import {AppToaster} from "components/Shared";
 import {
+    AnimationMode,
     BeamType,
     CatalogDatabase,
     CatalogSystemType,
@@ -229,6 +230,7 @@ function createSession() {
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
         setTimeSeriesMember: jest.fn(),
+        timeSeriesStore: {isMember: jest.fn((_frame: unknown) => true)},
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
@@ -384,6 +386,25 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
         expect(appStore.animatorStore.setNumericInputType).toHaveBeenCalledWith("Step");
         expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
+    });
+
+    test("reports an image that is not in the time series, and the animator when it cannot play the time series", async () => {
+        const {appStore} = createSession();
+        appStore.timeSeriesStore.isMember.mockReturnValue(false);
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, timeSeriesMember: true}], animator: {mode: AnimationMode.TIME_SERIES} as never}));
+
+        expect(appStore.setTimeSeriesMember).toHaveBeenCalledWith(appStore.frames[0], true);
+        expect(problems).toEqual(["image.fits is not in the time series, because it has no observation time", "The animator does not play the time series, because fewer than 2 images of the time series were restored"]);
+    });
+
+    test("reports nothing when the images are in the time series and the animator plays it", async () => {
+        const {appStore} = createSession();
+        appStore.animatorStore.setAnimationMode.mockImplementation((mode: AnimationMode) => Object.assign(appStore.animatorStore, {animationMode: mode}));
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, timeSeriesMember: true}], animator: {mode: AnimationMode.TIME_SERIES} as never}));
+
+        expect(problems).toEqual([]);
     });
 
     test("applies the level and the hidden tags of the Log widget, and keeps the current ones when they are not valid", async () => {
