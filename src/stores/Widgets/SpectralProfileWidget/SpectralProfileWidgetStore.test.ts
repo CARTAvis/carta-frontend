@@ -3,13 +3,31 @@ import {CARTA} from "carta-protobuf";
 import * as GSL from "gsl_wrapper";
 import {observable, runInAction} from "mobx";
 
-import {MomentSelectingMode, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
+import {MomentSelectingMode, MultiProfileCategory, Polarizations, PreferenceKeys, RestFrameShiftMode, SpectralType, SpectralUnit, VelocityConvention} from "../../../enums";
 import {NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS} from "../../../models/MomentDefinition/MomentDefinition";
+import {EXTRA_STATISTICS_TYPES, QUANTILE_STATISTICS_TYPES} from "../../../models/StatisticsDefinition/StatisticsDefinition";
 import {TelemetryService} from "../../../services";
 import {SPEED_OF_LIGHT, SPEED_OF_LIGHT_KMS} from "../../../utilities/cosmology/cosmology";
 import {AppStore, PreferenceStore} from "../..";
 
 import {SpectralProfileWidgetStore} from "./SpectralProfileWidgetStore";
+
+describe("SpectralProfileWidgetStore quantile requirements", () => {
+    test.each(QUANTILE_STATISTICS_TYPES)("requests only the selected quantile %s", type => {
+        let statsTypes = [type];
+        const widget = {
+            profileSelectionStore: {getFormattedSpectralConfigs: () => [{fileId: 0, regionId: 1, coordinate: "z", statsTypes}]}
+        } as unknown as SpectralProfileWidgetStore;
+        const widgets = new Map([["a", widget]]);
+        const original = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(original.get(0)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual([type]);
+
+        const nextType = QUANTILE_STATISTICS_TYPES.find(candidate => candidate !== type)!;
+        statsTypes = [nextType];
+        const updated = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, updated)[0]?.spectralProfiles?.[0].statsTypes).toEqual([nextType]);
+    });
+});
 
 describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
@@ -46,6 +64,7 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
             spectralAxis: {type: {code: SpectralType.FREQ, unit: SpectralUnit.GHZ}}
         });
         const appStore = {
+            preferenceStore: PreferenceStore.Instance,
             activeFrame: frame,
             focusedRegion: undefined,
             frameNames: [],
@@ -64,7 +83,70 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
 
     afterEach(() => {
         widgetStore?.dispose();
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
         jest.restoreAllMocks();
+    });
+
+    test("lists extra statistics and accepts them in single and multi modes only when enabled", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        expect(selection.statsTypeOptions.slice(-EXTRA_STATISTICS_TYPES.length).map(option => option.value)).toEqual(EXTRA_STATISTICS_TYPES);
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Median, label: "Median", disabled: true});
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        selection.selectStatMultiMode(CARTA.StatsType.Median);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Quartile, label: "Quartile (Q3-Q1)", disabled: false});
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median]);
+        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median, CARTA.StatsType.Quartile]);
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Median, label: "Median", disabled: true});
+        expect(selection.statsTypeOptions).toContainEqual({value: CARTA.StatsType.Mean, label: "Mean", disabled: false});
+    });
+
+    test("assigns a color to Mean when disabled extras leave it as the multi-profile fallback", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median, CARTA.StatsType.Quartile]));
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        selection.setActiveProfileCategory(MultiProfileCategory.STATISTIC);
+        selection.selectStatMultiMode(CARTA.StatsType.Quartile);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Median, CARTA.StatsType.Quartile]);
+        expect(widgetStore.getProfileColor(CARTA.StatsType.Mean)).toBeUndefined();
+
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
+        expect(widgetStore.getProfileColor(CARTA.StatsType.Mean)).toBeDefined();
+    });
+
+    test("keeps multi-selected statistics in menu order", () => {
+        const {widgetStore} = createWidgetStore(false);
+        const selection = widgetStore.profileSelectionStore;
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, EXTRA_STATISTICS_TYPES));
+        selection.selectStatSingleMode(CARTA.StatsType.MedAbsDevMed);
+        selection.setActiveProfileCategory(MultiProfileCategory.STATISTIC);
+        [...QUANTILE_STATISTICS_TYPES].reverse().forEach(selection.selectStatMultiMode);
+        expect(selection.selectedStatsTypes).toEqual(EXTRA_STATISTICS_TYPES);
+    });
+
+    test("requests Mean when a disabled statistic was the single profile", () => {
+        const {frame, widgetStore} = createWidgetStore(false);
+        jest.spyOn(frame, "getRegion").mockReturnValue({isClosedRegion: true, nameString: "Region 1"});
+        widgetStore.setRegionId(widgetStore.fileId, 1);
+        const selection = widgetStore.profileSelectionStore;
+        const widgets = new Map([["a", widgetStore]]);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.STATISTICS, [CARTA.StatsType.Median]));
+        selection.selectStatSingleMode(CARTA.StatsType.Median);
+        const original = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(original.get(7)?.get(1)?.spectralProfiles?.[0].statsTypes).toEqual([CARTA.StatsType.Median]);
+
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.STATISTICS));
+        const updated = SpectralProfileWidgetStore.calculateRequirementsMap(widgets);
+        expect(selection.selectedStatsTypes).toEqual([CARTA.StatsType.Mean]);
+        expect(SpectralProfileWidgetStore.diffSpectralRequirements(original, updated)[0]?.spectralProfiles?.[0].statsTypes).toEqual([CARTA.StatsType.Mean]);
     });
 
     test("keeps every moment available and selected on a linear spectral axis", () => {
@@ -116,6 +198,29 @@ describe("SpectralProfileWidgetStore moments on a nonlinear spectral axis", () =
     });
 });
 
+describe("SpectralProfileWidgetStore spectral requirement diffs", () => {
+    test("compares statistic enums numerically without mutating either requirement", () => {
+        const original = new CARTA.SetSpectralRequirements({
+            fileId: 0,
+            regionId: 1,
+            spectralProfiles: [{coordinate: "z", statsTypes: [CARTA.StatsType.Extrema, CARTA.StatsType.Mean]}]
+        });
+        const updated = new CARTA.SetSpectralRequirements({
+            fileId: 0,
+            regionId: 1,
+            spectralProfiles: [{coordinate: "z", statsTypes: [CARTA.StatsType.Mean, CARTA.StatsType.Extrema]}]
+        });
+        const originalStats = [...original.spectralProfiles[0].statsTypes];
+        const updatedStats = [...updated.spectralProfiles[0].statsTypes];
+
+        const diff = SpectralProfileWidgetStore.diffSpectralRequirements(new Map([[0, new Map([[1, original]])]]), new Map([[0, new Map([[1, updated]])]]));
+
+        expect(diff).toEqual([]);
+        expect(original.spectralProfiles[0].statsTypes).toEqual(originalStats);
+        expect(updated.spectralProfiles[0].statsTypes).toEqual(updatedStats);
+    });
+});
+
 describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
     let widgetStore: SpectralProfileWidgetStore | undefined;
 
@@ -161,6 +266,7 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         };
         const appStore = {
             activeFrame: frame,
+            preferenceStore: PreferenceStore.Instance,
             focusedRegion: undefined,
             frameNames: [],
             frames: [frame],

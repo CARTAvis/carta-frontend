@@ -43,11 +43,18 @@
             display: flex;
             flex-wrap: wrap;
             box-sizing: content-box;
-            .log-event-checkbox {
-                width: 265px;
-                margin-bottom: 0;
-            }
         }
+    }
+
+    .log-event-checkbox,
+    .statistics-checkbox {
+        width: 265px;
+        margin-bottom: 0;
+    }
+
+    .statistics-panel > .#{$ns}-label {
+        min-width: 0;
+        text-align: left;
     }
 
     .wcs-matching {

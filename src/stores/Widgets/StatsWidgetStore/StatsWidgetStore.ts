@@ -31,6 +31,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
     public static calculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
+        const selectedStatistics = AppStore.Instance.preferenceStore.statistics;
+        const statsTypes = selectedStatistics.filter(type => typeof type === "number") as CARTA.StatsType[];
 
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
@@ -58,9 +60,9 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                const histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
-                if (!histogramConfig) {
-                    regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
+                const statsConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
+                if (!statsConfig) {
+                    regionRequirements?.statsConfigs.push({coordinate, statsTypes: [...statsTypes]});
                 }
             }
         });
@@ -117,13 +119,20 @@ export class StatsWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.statsConfigs.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
-                        const sortedConfigs = regionRequirements.statsConfigs.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
+                        const sortedUpdatedConfigs = [...updatedRegionRequirements.statsConfigs].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
+                        const sortedConfigs = [...regionRequirements.statsConfigs].sort((a, b) => (a.coordinate ?? "").localeCompare(b.coordinate ?? ""));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
                             const config = sortedConfigs[i];
                             if (updatedConfig.coordinate !== config.coordinate) {
+                                diffList.push(updatedRegionRequirements);
+                                return;
+                            }
+
+                            const updatedStatsTypes = [...(updatedConfig.statsTypes ?? [])].sort((a, b) => a - b);
+                            const statsTypes = [...(config.statsTypes ?? [])].sort((a, b) => a - b);
+                            if (updatedStatsTypes.length !== statsTypes.length || updatedStatsTypes.some((type, index) => type !== statsTypes[index])) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
                             }

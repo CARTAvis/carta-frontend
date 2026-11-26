@@ -2,19 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, Polarizations, RegionId} from "enums";
-import {
-    GetFluxDensityFromSum,
-    GetIntensityOptions,
-    type IntensityConfig,
-    type LineKey,
-    type LineOption,
-    POLARIZATION_LABELS,
-    ShouldUseSumForFluxDensity,
-    STATISTICS_TEXT,
-    StatsTypeString,
-    SUPPORTED_STATISTICS_TYPES,
-    VALID_COORDINATES
-} from "models";
+import {GetFluxDensityFromSum, GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, ShouldUseSumForFluxDensity, VALID_COORDINATES} from "models";
+import {EXTRA_STATISTICS_TYPES, STATISTICS_NAME_MAP, type StatsDisplayType, StatsTypeString, SUPPORTED_STATISTICS_TYPES} from "models/StatisticsDefinition/StatisticsDefinition";
 import {AppStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -36,6 +25,7 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.SpectralConfig.$P
 }
 
 const MAXIMUM_PROFILES = 16;
+const SPECTRAL_STATISTICS_ORDER = [...SUPPORTED_STATISTICS_TYPES].sort((a, b) => a - b).concat(EXTRA_STATISTICS_TYPES);
 
 export function getProfilesPlotName(profiles: {imageName: string | undefined; regionName: string | undefined; statsType: CARTA.StatsType; coordinate: string}[]): {image: string; plot: string} {
     const images: (string | undefined)[] = [];
@@ -390,11 +380,9 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {
-            return a - b;
-        });
-        return sortedKeys?.map(key => {
-            return {value: key, label: STATISTICS_TEXT.get(key)};
+        const enabledStatistics = AppStore.Instance.preferenceStore.statistics;
+        return SPECTRAL_STATISTICS_ORDER.map(key => {
+            return {value: key, label: STATISTICS_NAME_MAP.get(key), disabled: EXTRA_STATISTICS_TYPES.includes(key) && !enabledStatistics.includes(key)};
         });
     }
 
@@ -667,7 +655,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatSingleMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType && !option.disabled)) {
             this.selectedStatsTypes = [statsType];
         }
     };
@@ -699,16 +687,14 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectStatMultiMode = (statsType: CARTA.StatsType) => {
-        if (SUPPORTED_STATISTICS_TYPES.includes(statsType)) {
+        if (this.statsTypeOptions.some(option => option.value === statsType && !option.disabled)) {
             if (this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length > 1) {
                 // remove selection
                 this.selectedStatsTypes = this.selectedStatsTypes.filter(type => type !== statsType);
                 this.widgetStore.removeProfileColor(statsType);
             } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {
-                    return a - b;
-                });
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => SPECTRAL_STATISTICS_ORDER.indexOf(a) - SPECTRAL_STATISTICS_ORDER.indexOf(b));
                 this.assignColor(statsType as number);
             }
         }
@@ -825,7 +811,29 @@ export class SpectralProfileSelectionStore {
                 }
             )
         );
+
+        this.disposers.push(
+            autorun(() => {
+                this.reconcileStatisticSelections(AppStore.Instance.preferenceStore.statistics);
+            })
+        );
     }
+
+    @action private reconcileStatisticSelections = (enabledStatistics: StatsDisplayType[]) => {
+        const disabledSelections = this.selectedStatsTypes.filter(type => EXTRA_STATISTICS_TYPES.includes(type) && !enabledStatistics.includes(type));
+        if (!disabledSelections.length) {
+            return;
+        }
+
+        const remainingSelections = this.selectedStatsTypes.filter(type => !disabledSelections.includes(type));
+        this.selectedStatsTypes = remainingSelections.length ? remainingSelections : [CARTA.StatsType.Mean];
+        if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
+            disabledSelections.forEach(type => this.widgetStore.removeProfileColor(type));
+        }
+        if (this.activeProfileCategory === MultiProfileCategory.STATISTIC && !remainingSelections.length) {
+            this.assignColor(CARTA.StatsType.Mean);
+        }
+    };
 
     public dispose = () => {
         this.disposers.forEach(disposer => disposer());
