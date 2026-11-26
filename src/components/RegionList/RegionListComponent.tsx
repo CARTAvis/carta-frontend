@@ -489,6 +489,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
+        const shouldShowWcsCenter = frame.isValidWcs && !appStore.overlaySettings.isImgCoordinates;
+
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
             const className = classNames("row-header", {[Classes.DARK]: isDarkTheme});
             const isLockDisabled = !regionSet.visibleEditableRegionsList.length;
@@ -514,7 +516,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         Type
                     </div>
                     <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                        {frame.isValidWcs ? "Center" : "Pixel Center"}
+                        {shouldShowWcsCenter ? "Center" : "Pixel Center"}
                     </div>
                     {shouldShowSizeColumn && (
                         <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
@@ -541,7 +543,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.isValidWcs) {
+                if (shouldShowWcsCenter) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -612,7 +614,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Width and height";
                 }
                 sizeEntry = (
-                    <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
+                    <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth, overflow: "hidden"}}>
                         {region.regionType !== CARTA.RegionType.POINT && (
                             <Tooltip content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}

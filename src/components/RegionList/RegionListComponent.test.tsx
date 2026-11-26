@@ -17,7 +17,7 @@ jest.mock("stores/Frame", () => ({CURSOR_REGION_ID: 0, RegionStore: {regionTypeS
 jest.mock("utilities", () => ({
     ...jest.requireActual("utilities/units/units"),
     clamp: jest.requireActual("utilities/math/math").clamp,
-    getFormattedWCSPoint: () => null
+    getFormattedWCSPoint: () => ({x: "12:34:56", y: "+10:20:30"})
 }));
 
 test.each([CARTA.RegionType.ANNULUS, CARTA.RegionType.ANNANNULUS])("shows and tracks the inner axes on the visible annulus row for type %s", async regionType => {
@@ -55,4 +55,32 @@ test.each([CARTA.RegionType.ANNULUS, CARTA.RegionType.ANNANNULUS])("shows and tr
         });
     });
     expect(screen.getByTestId("region-list-table-row-1")).toHaveTextContent("24.6 / 6.240.2 / 10.1");
+});
+
+test("switches the center between world and pixel coordinates on a WCS image", async () => {
+    const overlaySettings = observable({isImgCoordinates: false, global: {}, numbers: {}});
+    const region = {regionId: 1, regionType: CARTA.RegionType.POINT, center: {x: 100, y: 200}, size: {x: 0, y: 0}, rotation: 0};
+    const regionSet = {regions: [region], selectedRegionIds: new Set(), visibleEditableRegionsList: [region]};
+    Object.assign(AppStore.Instance, {activeFrame: {isValidWcs: true, regionSet}, overlaySettings});
+    await act(async () => {
+        render(<RegionListComponent id="region-list" docked={false} />);
+    });
+
+    expect(screen.getByText("Center")).toBeInTheDocument();
+    expect(screen.getByTestId("region-list-table-row-1")).toHaveTextContent("12:34:56+10:20:30");
+
+    act(() =>
+        runInAction(() => {
+            overlaySettings.isImgCoordinates = true;
+        })
+    );
+    expect(screen.getByText("Pixel Center")).toBeInTheDocument();
+    expect(screen.getByText("(100.0, 200.0)")).toBeInTheDocument();
+
+    act(() =>
+        runInAction(() => {
+            overlaySettings.isImgCoordinates = false;
+        })
+    );
+    expect(screen.getByTestId("region-list-table-row-1")).toHaveTextContent("12:34:56+10:20:30");
 });
