@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {BeamOverlayMode, ImageType} from "enums";
-import {type CursorInfo, type Point2D} from "models";
+import {type CursorInfo, type ImageViewItem, type Point2D} from "models";
 import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -102,10 +102,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 >
                     {frame?.frameInfo.fileInfoExtended.depth > 1 && (
                         <ChannelMapLabelComponent
-                            image={{
-                                type: ImageType.FRAME,
-                                store: frame
-                            }}
+                            image={image}
                             overlaySettings={overlaySettings}
                             top={top}
                             left={left}
@@ -147,7 +144,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             onMouseOver={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <ChannelMapInnerOverlayComponent frame={frame} docked={props.isDocked} />
+            <ChannelMapInnerOverlayComponent image={image} frame={frame} docked={props.isDocked} />
             {overlayComponents}
             <RasterViewComponent
                 key={"raster-view-component-channel-map"}
@@ -186,22 +183,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
             {overlaySettings.colorbar.isVisible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
-            <OverlayComponent
-                key={`overlay-view-component-outer`}
-                image={{
-                    type: ImageType.FRAME,
-                    store: frame
-                }}
-                overlaySettings={overlaySettings}
-                overlayStore={frame.channelMapOuterOverlayStore}
-                isDocked={props.isDocked}
-                isUnscaled={true}
-            />
+            <OverlayComponent key={`overlay-view-component-outer`} image={image} overlaySettings={overlaySettings} overlayStore={frame.channelMapOuterOverlayStore} isDocked={props.isDocked} isUnscaled={true} />
         </div>
     );
 });
 
-const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {frame: FrameStore; docked: boolean}) => {
+const ChannelMapInnerOverlayComponent = observer(({image, frame, docked: isDocked}: {image: ImageViewItem; frame: FrameStore; docked: boolean}) => {
     const appStore = AppStore.Instance;
     const overlaySettings = appStore.overlaySettings;
     const channelMapStore = appStore.channelMapStore;
@@ -313,10 +300,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked: isDocked}: {fr
                 ) : null;
             })}
             <OverlayComponent
-                image={{
-                    type: ImageType.FRAME,
-                    store: frame
-                }}
+                image={image}
                 overlaySettings={overlaySettings}
                 overlayStore={frame.channelMapInnerOverlayStore}
                 top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}

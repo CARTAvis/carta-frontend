@@ -57,4 +57,17 @@ describe("AlertStore", () => {
         store.dismissAlert();
         expect(store.isAlertVisible).toBe(false);
     });
+
+    test("dismissing the active alert reveals the next alert and Escape cancels it", async () => {
+        const first = store.showInteractiveAlert("First");
+        const second = store.showRetryAlert("Second");
+
+        store.dismissInteractiveAlert(first);
+        await expect(first).resolves.toBe(false);
+        expect(store.interactiveAlertText).toBe("Second");
+
+        document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}));
+        await expect(second).resolves.toBe(false);
+        expect(store.isAlertVisible).toBe(false);
+    });
 });

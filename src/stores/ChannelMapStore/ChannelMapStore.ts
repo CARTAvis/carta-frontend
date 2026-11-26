@@ -24,42 +24,30 @@ export class ChannelMapStore {
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            if (this.displayedFrame?.requiredFrameView && this.isChannelMapEnabled) {
+            const frame = this.displayedFrame;
+            if (this.isChannelMapEnabled && frame?.requiredFrameView && this.channelArray.length > 0) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
-                const startChannel = this.startChannel;
-                const numColumns = this.numColumns;
-                const numRows = this.numRows;
-                const endChannel = this.endChannel;
-                const center = this.displayedFrame.center;
-                const requiredFrameView = this.displayedFrame.requiredFrameView;
-                const requiredTiles = this.displayedFrame.requiredTiles;
-                const zoomLevel = this.displayedFrame.zoomLevel;
-                const spatialReference = this.displayedFrame.spatialReference;
-                const channel = this.displayedFrame.channel;
+                const requiredTiles = frame.requiredTiles;
+                const channel = frame.channel;
 
-                this.throttledRequestChannels(this.displayedFrame);
+                this.throttledRequestChannels(frame);
             }
         });
 
         reaction(
             () => this.channelArray,
             channelArray => {
-                const channel = this.displayedFrame?.channel;
-                if (this.isChannelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
-                    this.debouncedSetActiveChannel();
+                const frame = this.displayedFrame;
+                const channel = frame?.requiredChannel;
+                if (frame && this.isChannelMapEnabled && channelArray.length > 0 && channel !== undefined && !channelArray.includes(channel)) {
+                    this.debouncedSetActiveChannel(frame);
                 }
             }
         );
 
         reaction(
-            () => ({frame: this.displayedFrame, channel: this.displayedFrame?.requiredChannel}),
-            ({channel}) => {
-                if (channel === undefined) {
-                    this.setStartChannel(0);
-                } else if (!this.channelArray.includes(channel)) {
-                    this.setStartChannel(channel);
-                }
-            }
+            () => [this.displayedFrame?.requiredChannel, this.totalChannelNum, this.displayedFrame] as const,
+            ([channel]) => this.alignStartChannel(channel)
         );
     }
 
@@ -73,6 +61,8 @@ export class ChannelMapStore {
     @observable numRows: number = 2;
     /** Indicates whether the channel map mode is enabled. */
     @observable isChannelMapEnabled: boolean = false;
+    /** Invalidates pending Animator input when the mode changes. */
+    modeVersion = 0;
     /** Indicates whether to show the channel string. */
     @observable shouldShowChannelString: boolean = false;
     /** Indicates whether to show the frequency string. */
@@ -92,14 +82,27 @@ export class ChannelMapStore {
     /** The custom color used for rendering the channel map label. */
     @observable color: string = ChannelMapStore.DEFAULT_LABEL_COLOR;
 
+    /** The increment between displayed channels, shared with the animator. */
+    @computed get channelStep(): number {
+        return Math.min(AppStore.Instance.animatorStore.step, this.maxChannelStep);
+    }
+
+    /** The maximum allowed channel step for the displayed image. */
+    @computed get maxChannelStep(): number {
+        return Math.max(1, Math.min(this.totalChannelNum, AppStore.Instance.animatorStore.maxStep));
+    }
+
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetActiveChannel = debounce(() => {
-        const frame = this.displayedFrame;
-        if (frame && this.channelArray.length && !this.channelArray.includes(frame.requiredChannel)) {
-            frame.setChannel(this.channelArray[0]);
-            frame.channel = this.channelArray[0];
-        }
-    }, 200);
+    private debouncedSetActiveChannel = debounce(
+        action((frame: FrameStore) => {
+            const channels = this.channelArray;
+            if (this.isChannelMapEnabled && frame === this.displayedFrame && channels.length > 0 && !channels.includes(frame.requiredChannel)) {
+                frame.setChannel(channels[0]);
+                frame.channel = channels[0];
+            }
+        }),
+        200
+    );
 
     /**
      * Requests tiles immediately when the displayed polarization changes.
@@ -111,11 +114,15 @@ export class ChannelMapStore {
         if (!this.isChannelMapEnabled || frame !== this.displayedFrame) {
             return;
         }
+        const channels = this.channelArray;
+        if (!channels.length) {
+            return;
+        }
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, this.channelArray);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, channels);
     };
 
     requestTilesAfterSessionResume = () => {
@@ -132,20 +139,23 @@ export class ChannelMapStore {
         if (isEnabled === this.isChannelMapEnabled) {
             return;
         }
+        this.modeVersion++;
         if (isEnabled) {
             AppStore.Instance.animatorStore.stopAnimation();
+        }
+        this.isChannelMapEnabled = isEnabled;
+        if (isEnabled) {
             const frame = this.displayedFrame;
             if (frame) {
-                if (frame.requiredChannel !== undefined) {
-                    frame.channel = frame.requiredChannel;
-                }
                 if (frame.requiredStokes !== undefined) {
                     frame.stokes = frame.requiredStokes;
                 }
+                if (frame.requiredChannel !== undefined) {
+                    frame.channel = frame.requiredChannel;
+                    this.alignStartChannel(frame.requiredChannel);
+                }
             }
-        }
-        this.isChannelMapEnabled = isEnabled;
-        if (!isEnabled) {
+        } else {
             this.throttledRequestChannels.cancel();
             this.debouncedSetActiveChannel.cancel();
             TileService.Instance.cancelChannelMapRequests();
@@ -154,70 +164,94 @@ export class ChannelMapStore {
         }
     };
 
+    private alignStartChannel(channel: number | undefined) {
+        if (channel === undefined || !this.channelArray.includes(channel)) {
+            this.setStartChannel(channel !== undefined && channel < this.totalChannelNum ? channel : 0);
+        }
+    }
+
     /**
      * Sets the first channel at the top-left corner. Skips when the channel is out of range.
      * @param startChannel - The first channel at the top-left corner.
      */
-    @action setStartChannel(startChannel: number) {
+    @action setStartChannel = (startChannel: number) => {
         // Add checks for valid startChannel number for the masterFrame
-        if (startChannel < 0 || startChannel > this.totalChannelNum - 1) {
+        if (!Number.isInteger(startChannel) || startChannel < 0 || startChannel > this.totalChannelNum - 1) {
             return;
         }
+        this.debouncedSetActiveChannel.cancel();
         this.startChannel = startChannel;
         const frame = this.displayedFrame;
-        if (this.isChannelMapEnabled && frame && frame.channel !== startChannel) {
+        if (this.isChannelMapEnabled && frame && (frame.requiredChannel !== startChannel || frame.channel !== startChannel)) {
             frame.setChannel(startChannel);
             frame.channel = startChannel;
         }
+    };
+
+    /**
+     * Returns the adjacent stepped channel index, clamped to 0 on decrement and unchanged if incrementing past the end.
+     * @param channel - The starting channel index.
+     * @param direction - Step direction (-1 for previous, 1 for next).
+     */
+    getAdjacentChannel(channel: number, direction: -1 | 1): number {
+        const next = Math.max(0, channel + direction * this.channelStep);
+        return next < this.totalChannelNum ? next : channel;
     }
 
     /** Sets the first channel at the top-left corner to the previous channel. */
-    @action setPrevChannel() {
-        this.setStartChannel(this.startChannel - 1);
-    }
+    @action setPrevChannel = () => {
+        const channel = this.getAdjacentChannel(this.startChannel, -1);
+        if (channel !== this.startChannel) {
+            this.setStartChannel(channel);
+        }
+    };
 
     /** Sets the first channel at the top-left corner to the next channel. */
-    @action setNextChannel() {
-        this.setStartChannel(this.startChannel + 1);
-    }
+    @action setNextChannel = () => {
+        const channel = this.getAdjacentChannel(this.startChannel, 1);
+        if (channel !== this.startChannel) {
+            this.setStartChannel(channel);
+        }
+    };
 
     /** Moves to the previous page of channels. */
-    @action setPrevPage() {
-        const newStart = this.startChannel - this.numChannels;
-
-        if (newStart >= 0) {
-            this.setStartChannel(newStart);
+    @action setPrevPage = () => {
+        if (this.startChannel > 0) {
+            this.setStartChannel(Math.max(0, this.startChannel - this.numChannels * this.channelStep));
         }
-    }
+    };
 
     /** Moves to the next page of channels. */
-    @action setNextPage() {
-        const newStart = this.startChannel + this.numChannels;
+    @action setNextPage = () => {
+        this.setStartChannel(this.startChannel + this.numChannels * this.channelStep);
+    };
 
-        if (newStart >= 0) {
-            this.setStartChannel(newStart);
+    /** Sets the increment between displayed channels. */
+    @action setChannelStep = (channelStep: number) => {
+        if (channelStep <= this.maxChannelStep) {
+            AppStore.Instance.animatorStore.setStep(channelStep);
         }
-    }
+    };
 
     /**
      * Sets the number of columns in the image view.
      * @param numColumns - The number of columns in the image view.
      */
-    @action setNumColumns(numColumns: number) {
-        if (isFinite(numColumns) && numColumns > 0) {
+    @action setNumColumns = (numColumns: number) => {
+        if (Number.isInteger(numColumns) && numColumns > 0) {
             this.numColumns = numColumns;
         }
-    }
+    };
 
     /**
      * Sets the number of rows in the image view.
      * @param numRows - The number of rows in the image view.
      */
-    @action setNumRows(numRows: number) {
-        if (isFinite(numRows) && numRows > 0) {
+    @action setNumRows = (numRows: number) => {
+        if (Number.isInteger(numRows) && numRows > 0) {
             this.numRows = numRows;
         }
-    }
+    };
 
     /**
      * Sets the threshold value below which pixels are displayed in grayscale.
@@ -335,11 +369,14 @@ export class ChannelMapStore {
 
     /** The last channel in the image view. */
     @computed get endChannel(): number {
-        return Math.min(this.startChannel + this.numChannels - 1, this.totalChannelNum - 1);
+        return this.channelArray[this.channelArray.length - 1] ?? this.startChannel;
     }
 
     /** The displayed channels in the image view. */
-    @computed get channelArray(): number[] {
-        return Array.from({length: this.endChannel - this.startChannel + 1}, (_, i) => this.startChannel + i);
+    @computed.struct get channelArray(): number[] {
+        const {startChannel, channelStep, totalChannelNum, numChannels} = this;
+        const availableChannels = Math.max(0, totalChannelNum - startChannel);
+        const count = Math.min(numChannels, Math.ceil(availableChannels / channelStep));
+        return Array.from({length: count}, (_, i) => startChannel + i * channelStep);
     }
 }

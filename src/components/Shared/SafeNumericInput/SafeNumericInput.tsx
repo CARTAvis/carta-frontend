@@ -65,21 +65,14 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     safeHandleValueChanged = (valueAsNumber: number, valueAsString: string, inputElement: HTMLInputElement) => {
-        if (this.props.intOnly) {
-            const roundValue = Math.ceil(valueAsNumber);
-            if (isFinite(roundValue)) {
-                valueAsNumber = roundValue;
-                valueAsString = roundValue.toString();
-                inputElement.value = roundValue.toString();
+        const {intOnly: isIntOnly, min, max, onValueChange} = this.props;
+        const value = isIntOnly ? Math.ceil(valueAsNumber) : valueAsNumber;
+        if (onValueChange && isFinite(valueAsNumber) && (min === undefined || !isFinite(min) || min <= valueAsNumber) && (max === undefined || !isFinite(max) || max >= value)) {
+            if (isIntOnly) {
+                valueAsString = value.toString();
+                inputElement.value = valueAsString;
             }
-        }
-        if (
-            this.props.onValueChange &&
-            isFinite(valueAsNumber) &&
-            (this.props.min === undefined || !isFinite(this.props.min) || this.props.min <= valueAsNumber) &&
-            (this.props.max === undefined || !isFinite(this.props.max) || this.props.max >= valueAsNumber)
-        ) {
-            this.props.onValueChange(valueAsNumber, valueAsString, inputElement);
+            onValueChange(value, valueAsString, inputElement);
             this.setValueString(valueAsString);
         }
     };

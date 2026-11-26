@@ -1,4 +1,4 @@
-import {runInAction} from "mobx";
+import {autorun, runInAction} from "mobx";
 
 import {ChannelMapStore} from "./ChannelMapStore";
 
@@ -13,12 +13,25 @@ jest.mock("services", () => ({
 
 jest.mock("stores", () => {
     const {observable} = jest.requireActual("mobx");
+    const animatorStore = observable.object(
+        {
+            step: 1,
+            minStep: 1,
+            maxStep: 50,
+            stopAnimation: jest.fn(),
+            setStep(step: number) {
+                if (Number.isInteger(step) && step >= this.minStep && step <= this.maxStep) {
+                    this.step = step;
+                }
+            }
+        },
+        {},
+        {deep: false}
+    );
     return {
         AppStore: {
             Instance: {
-                animatorStore: {
-                    stopAnimation: jest.fn()
-                },
+                animatorStore,
                 preferenceStore: {
                     imageCompressionQuality: 11
                 },
@@ -30,7 +43,7 @@ jest.mock("stores", () => {
                                 {
                                     channel: 0,
                                     requiredChannel: 0,
-                                    frameInfo: {fileInfoExtended: {depth: 12}},
+                                    frameInfo: {fileInfoExtended: observable.object({depth: 12})},
                                     requiredFrameView: false,
                                     requiredTiles: [[], {x: 0, y: 0}],
                                     setChannel: jest.fn()
@@ -54,6 +67,21 @@ describe("ChannelMapStore", () => {
     const store = ChannelMapStore.Instance;
 
     afterEach(() => {
+        store.setChannelMapEnabled(false);
+        const app = jest.requireMock("stores").AppStore.Instance;
+        app.imageViewConfigStore.visibleFrames = [];
+        const frame = store.displayedFrame;
+        if (frame) {
+            runInAction(() => {
+                frame.channel = frame.requiredChannel = 0;
+                frame.stokes = frame.requiredStokes = 0;
+            });
+        }
+        store.setNumRows(2);
+        store.setNumColumns(2);
+        store.setChannelStep(1);
+        store.setStartChannel(0);
+        jest.restoreAllMocks();
         jest.useRealTimers();
     });
 
@@ -92,39 +120,24 @@ describe("ChannelMapStore", () => {
             });
         });
 
-        it("cancels delayed tile requests when disabled", () => {
-            jest.useFakeTimers();
-            const testStore = store as unknown as {
-                throttledRequestChannels: (frame: unknown) => void;
-            };
-            const requestChannelMapTiles = TileService.Instance.requestChannelMapTiles as jest.Mock;
-            const frame = store.displayedFrame;
+        it("cancels the pending throttle when disabled", () => {
+            const request = (store as any).throttledRequestChannels;
+            const cancel = jest.spyOn(request, "cancel");
+            store.setChannelMapEnabled(true);
 
-            testStore.throttledRequestChannels(frame);
-            requestChannelMapTiles.mockClear();
-            testStore.throttledRequestChannels(frame);
             store.setChannelMapEnabled(false);
-            jest.runOnlyPendingTimers();
 
-            expect(requestChannelMapTiles).not.toHaveBeenCalled();
-            jest.useRealTimers();
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
 
-        it("cancels delayed active-channel changes when disabled", () => {
-            jest.useFakeTimers();
-            const testStore = store as unknown as {
-                debouncedSetActiveChannel: () => void;
-            };
-            const setChannel = store.displayedFrame?.setChannel as jest.Mock;
-            setChannel.mockClear();
-
+        it("cancels the pending debounce when disabled", () => {
+            const request = (store as any).debouncedSetActiveChannel;
+            const cancel = jest.spyOn(request, "cancel");
             store.setChannelMapEnabled(true);
-            testStore.debouncedSetActiveChannel();
-            store.setChannelMapEnabled(false);
-            jest.runOnlyPendingTimers();
 
-            expect(setChannel).not.toHaveBeenCalled();
-            jest.useRealTimers();
+            store.setChannelMapEnabled(false);
+
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
 
         it("does not request tiles while disabled", () => {
@@ -146,7 +159,7 @@ describe("ChannelMapStore", () => {
 
             store.handlePolarizationChanged(store.displayedFrame);
 
-            expect(requestChannelMapTiles.mock.lastCall?.[1]).toBe(store.displayedFrame);
+            expect(requestChannelMapTiles).toHaveBeenLastCalledWith(expect.any(Array), store.displayedFrame, expect.any(Object), expect.any(Number), [0, 1, 2, 3]);
             store.setChannelMapEnabled(false);
         });
 
@@ -161,6 +174,19 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
+        it("does not request channel-map tiles after a hidden frame changes polarization", () => {
+            const hiddenFrame = {...store.displayedFrame} as typeof store.displayedFrame;
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            store.setChannelMapEnabled(true);
+            requestTiles.mockClear();
+            try {
+                store.handlePolarizationChanged(hiddenFrame);
+                expect(requestTiles).not.toHaveBeenCalled();
+            } finally {
+                store.setChannelMapEnabled(false);
+            }
+        });
+
         it("synchronizes visible frames when disabled", () => {
             const appStore = jest.requireMock("stores").AppStore.Instance;
             const frame = {...store.displayedFrame, channel: 1, stokes: 0, requiredChannel: 2, requiredStokes: 1};
@@ -171,6 +197,31 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
 
             expect(appStore.updateChannels).toHaveBeenCalledWith([{frame, channel: 2, stokes: 1}]);
+        });
+
+        it("aligns startChannel when enabling channel-map mode with requiredChannel outside channelArray", () => {
+            const frame = store.displayedFrame as unknown as {requiredChannel: number};
+            const previousChannel = frame.requiredChannel;
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.requiredChannel = 1;
+            });
+            store.setChannelStep(2);
+
+            try {
+                expect(store.channelArray).toEqual([0, 2, 4, 6]);
+
+                store.setChannelMapEnabled(true);
+
+                expect(store.startChannel).toBe(1);
+                expect(store.channelArray).toEqual([1, 3, 5, 7]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previousChannel;
+                });
+                store.setStartChannel(0);
+            }
         });
 
         it("promotes pending channel and Stokes selections when enabled", () => {
@@ -197,7 +248,7 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
-        it("promotes the fallback channel immediately when the active channel leaves the page", () => {
+        it("promotes the fallback channel atomically when the active channel leaves the page", () => {
             jest.useFakeTimers();
             const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
             store.setChannelMapEnabled(true);
@@ -207,19 +258,32 @@ describe("ChannelMapStore", () => {
                 frame.requiredChannel = 3;
             });
             frame.setChannel.mockClear();
-
-            store.setNumColumns(1);
-            jest.advanceTimersByTime(200);
-
-            expect(frame.setChannel).toHaveBeenCalledWith(0);
-            expect(frame.channel).toBe(0);
-
-            runInAction(() => {
-                frame.channel = 0;
-                frame.requiredChannel = 0;
+            frame.setChannel.mockImplementationOnce((channel: number) => {
+                runInAction(() => {
+                    frame.requiredChannel = channel;
+                });
             });
-            store.setNumColumns(2);
-            store.setChannelMapEnabled(false);
+            const selections: number[][] = [];
+            const stopObserving = autorun(() => selections.push([frame.requiredChannel, frame.channel]));
+
+            try {
+                store.setNumColumns(1);
+                jest.advanceTimersByTime(200);
+
+                expect(frame.setChannel).toHaveBeenCalledWith(0);
+                expect(selections).toEqual([
+                    [3, 3],
+                    [0, 0]
+                ]);
+            } finally {
+                stopObserving();
+                runInAction(() => {
+                    frame.channel = 0;
+                    frame.requiredChannel = 0;
+                });
+                store.setNumColumns(2);
+                store.setChannelMapEnabled(false);
+            }
         });
     });
 
@@ -250,12 +314,207 @@ describe("ChannelMapStore", () => {
             store.setChannelMapEnabled(false);
         });
 
-        it("skips when the channel is out of range", () => {
+        it("skips when the channel is out of range or non-integer", () => {
+            store.setStartChannel(1);
             store.setStartChannel(-1);
+            expect(store.startChannel).toBe(1);
+
+            store.setStartChannel(1.5);
             expect(store.startChannel).toBe(1);
 
             store.setStartChannel(100);
             expect(store.startChannel).toBe(1);
+        });
+
+        it("re-selects the rendered channel when a different channel is pending", () => {
+            const frame = store.displayedFrame as unknown as {channel: number; requiredChannel: number; setChannel: jest.Mock};
+            const previous = {channel: frame.channel, requiredChannel: frame.requiredChannel, start: store.startChannel};
+            store.setChannelMapEnabled(true);
+            store.setStartChannel(1);
+            try {
+                runInAction(() => {
+                    frame.channel = 1;
+                    frame.requiredChannel = 2;
+                });
+                frame.setChannel.mockClear();
+
+                store.setStartChannel(1);
+
+                expect(frame.setChannel).toHaveBeenCalledWith(1);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previous.requiredChannel;
+                    frame.channel = previous.channel;
+                });
+                store.setStartChannel(previous.start);
+            }
+        });
+    });
+
+    describe("setChannelStep", () => {
+        it("keeps the selected channel when reversing a step change before the fallback", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame as unknown as {requiredChannel: number; setChannel: jest.Mock};
+            const previousChannel = frame.requiredChannel;
+            const previousStart = store.startChannel;
+            store.setStartChannel(0);
+            runInAction(() => {
+                frame.requiredChannel = 1;
+            });
+            frame.setChannel.mockClear();
+            store.setChannelMapEnabled(true);
+            try {
+                store.setChannelStep(2);
+                store.setChannelStep(1);
+                jest.advanceTimersByTime(200);
+                expect(frame.setChannel).not.toHaveBeenCalled();
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    frame.requiredChannel = previousChannel;
+                });
+                store.setStartChannel(previousStart);
+            }
+        });
+
+        it("shares the channel step with the animator and derives sparse channels", () => {
+            store.setStartChannel(1);
+            store.setChannelStep(2);
+
+            expect(store.channelStep).toBe(2);
+            expect(store.endChannel).toBe(7);
+            expect(store.channelArray).toEqual([1, 3, 5, 7]);
+
+            store.setChannelStep(3);
+            expect(store.channelArray).toEqual([1, 4, 7, 10]);
+
+            store.setChannelStep(1);
+            store.setStartChannel(0);
+        });
+
+        it("rejects invalid channel steps", () => {
+            store.setChannelStep(0);
+            expect(store.channelStep).toBe(1);
+
+            store.setChannelStep(1.5);
+            expect(store.channelStep).toBe(1);
+
+            store.setChannelStep(13);
+            expect(store.channelStep).toBe(1);
+        });
+
+        it("clamps channelStep to maxChannelStep when the image has fewer channels than animator step", () => {
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            try {
+                store.setChannelStep(10);
+                expect(store.channelStep).toBe(10);
+
+                runInAction(() => {
+                    info.depth = 6;
+                });
+
+                expect(store.maxChannelStep).toBe(6);
+                expect(store.channelStep).toBe(6);
+            } finally {
+                runInAction(() => {
+                    info.depth = depth;
+                });
+            }
+        });
+
+        it("resets startChannel when totalChannelNum shrinks below startChannel and requiredChannel", () => {
+            const frame = store.displayedFrame as unknown as {
+                requiredChannel: number;
+                frameInfo: {fileInfoExtended: {depth: number}};
+            };
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            const previousChannel = frame.requiredChannel;
+            store.setStartChannel(8);
+            runInAction(() => {
+                frame.requiredChannel = 9;
+            });
+            try {
+                runInAction(() => {
+                    info.depth = 5;
+                });
+
+                expect(store.startChannel).toBe(0);
+                expect(store.channelArray).toEqual([0, 1, 2, 3]);
+            } finally {
+                runInAction(() => {
+                    info.depth = depth;
+                    frame.requiredChannel = previousChannel;
+                });
+                store.setStartChannel(0);
+            }
+        });
+
+        it("requests the new channel list when the last channel stays the same", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            const depth = info.depth;
+            store.setStartChannel(0);
+            try {
+                runInAction(() => {
+                    info.depth = 7;
+                    Object.assign(frame, {requiredFrameView: true});
+                });
+                store.setChannelMapEnabled(true);
+                store.setChannelStep(2);
+                jest.advanceTimersByTime(100);
+                expect(requestTiles.mock.lastCall?.[4]).toEqual([0, 2, 4, 6]);
+                requestTiles.mockClear();
+
+                store.setChannelStep(3);
+                jest.advanceTimersByTime(100);
+                expect(requestTiles.mock.lastCall?.[4]).toEqual([0, 3, 6]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    info.depth = depth;
+                    Object.assign(frame, {requiredFrameView: false});
+                });
+            }
+        });
+
+        it("waits for a valid channel list before requesting tiles after a depth change", () => {
+            jest.useFakeTimers();
+            const frame = store.displayedFrame;
+            const info = frame.frameInfo.fileInfoExtended;
+            const depth = info.depth;
+            const previous = {channel: frame.channel, requiredChannel: frame.requiredChannel, start: store.startChannel};
+            const requestTiles = jest.mocked(TileService.Instance.requestChannelMapTiles);
+            try {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    Object.assign(frame, {channel: 8, requiredChannel: 8, requiredFrameView: true});
+                });
+                store.setStartChannel(8);
+                store.setChannelMapEnabled(true);
+                jest.advanceTimersByTime(101);
+                requestTiles.mockClear();
+
+                runInAction(() => {
+                    info.depth = 3;
+                    Object.assign(frame, {channel: 1, requiredChannel: 1});
+                });
+                jest.advanceTimersByTime(100);
+
+                expect(requestTiles.mock.calls.map(call => call[4])).toEqual([[1, 2]]);
+            } finally {
+                store.setChannelMapEnabled(false);
+                runInAction(() => {
+                    info.depth = depth;
+                    Object.assign(frame, {channel: previous.channel, requiredChannel: previous.requiredChannel, requiredFrameView: false});
+                });
+                store.setStartChannel(previous.start);
+            }
         });
     });
 
@@ -265,6 +524,14 @@ describe("ChannelMapStore", () => {
             expect(store.startChannel).toBe(0);
             expect(store.endChannel).toBe(3);
             expect(store.channelArray).toEqual([0, 1, 2, 3]);
+        });
+
+        it("clamps to channel 0 when startChannel is positive but less than channelStep", () => {
+            store.setStartChannel(1);
+            store.setChannelStep(3);
+            store.setPrevChannel();
+            expect(store.startChannel).toBe(0);
+            expect(store.channelArray).toEqual([0, 3, 6, 9]);
         });
     });
 
@@ -286,14 +553,20 @@ describe("ChannelMapStore", () => {
             expect(store.channelArray).toEqual([1, 2, 3, 4]);
         });
 
-        it("skips when the new start is out of range", () => {
+        it("clamps to channel 0 when startChannel is less than a full page stride and skips at 0", () => {
             store.setPrevPage();
-            expect(store.startChannel).toBe(1);
+            expect(store.startChannel).toBe(0);
+
+            store.setPrevPage();
+            expect(store.startChannel).toBe(0);
+
+            store.setStartChannel(1);
         });
     });
 
     describe("setNextPage", () => {
         it("sets the displayed channels correctly", () => {
+            store.setStartChannel(1);
             store.setNextPage();
             expect(store.startChannel).toBe(5);
             expect(store.endChannel).toBe(8);
@@ -306,6 +579,7 @@ describe("ChannelMapStore", () => {
         });
 
         it("skips when the new start is out of range", () => {
+            store.setStartChannel(9);
             store.setNextPage();
             expect(store.startChannel).toBe(9);
         });
@@ -319,6 +593,7 @@ describe("ChannelMapStore", () => {
         });
 
         it("skips when the number is invalid", () => {
+            store.setNumColumns(3);
             store.setNumColumns(NaN);
             expect(store.numColumns).toBe(3);
 
@@ -329,12 +604,14 @@ describe("ChannelMapStore", () => {
 
     describe("setNumRows", () => {
         it("sets the image view panel config correctly", () => {
+            store.setNumColumns(3);
             store.setNumRows(3);
             expect(store.numRows).toBe(3);
             expect(store.numChannels).toBe(9);
         });
 
         it("skips when the number is invalid", () => {
+            store.setNumRows(3);
             store.setNumRows(NaN);
             expect(store.numRows).toBe(3);
 

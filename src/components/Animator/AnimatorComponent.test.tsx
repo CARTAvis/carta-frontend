@@ -78,6 +78,22 @@ describe("AnimatorComponent", () => {
         component.componentWillUnmount();
     });
 
+    test.each([false, true])("drops a pending channel change after leaving the map (re-enabled: %s)", isChannelMapEnabled => {
+        const frame = {frameInfo: {fileInfoExtended: {depth: 100}}, setChannel: jest.fn()};
+        const appStore = {activeFrame: frame, channelMapStore: {isChannelMapEnabled: true, modeVersion: 0}};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
+        const component = new AnimatorComponent({} as any);
+        component.onChannelChanged(10);
+        component.onChannelChanged(20);
+
+        appStore.channelMapStore.modeVersion += isChannelMapEnabled ? 2 : 1;
+        appStore.channelMapStore.isChannelMapEnabled = isChannelMapEnabled;
+        jest.advanceTimersByTime(50);
+
+        expect(frame.setChannel.mock.calls).toEqual([[10]]);
+        component.componentWillUnmount();
+    });
+
     test.each([7, 10])("preserves a later panel selection of channel %i", channel => {
         const frame = {
             requiredChannel: 0,
@@ -121,6 +137,9 @@ describe("AnimatorComponent", () => {
         let selectedChannel = 5;
         const frame = {
             frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            get requiredChannel() {
+                return selectedChannel;
+            },
             channel: 5,
             stokes: 0,
             polarizations: [0],
@@ -134,7 +153,11 @@ describe("AnimatorComponent", () => {
                 selectedChannel = (selectedChannel + delta + 100) % 100;
             })
         };
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL}, channelMapStore: {isChannelMapEnabled: true}} as any);
+        const channelMapStore = {
+            isChannelMapEnabled: true,
+            getAdjacentChannel: (channel: number, direction: number) => channel + direction
+        };
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, animatorStore: {animationMode: AnimationMode.CHANNEL, step: 1}, channelMapStore} as any);
         const component = new AnimatorComponent({} as any);
         component.onChannelChanged(10);
         jest.advanceTimersByTime(20);
@@ -184,6 +207,77 @@ describe("AnimatorComponent", () => {
         const select = findSelect(component.render());
         expect(select?.props.disabled).toBe(isChannelMapEnabled);
         expect(select?.props.value).toBe(isChannelMapEnabled ? NumericInputType.Step : NumericInputType.FrameRate);
+        component.componentWillUnmount();
+    });
+
+    test.each([false, true])("uses channel-map navigation when channel-map mode is %s", isChannelMapEnabled => {
+        const frame = {
+            frameInfo: {fileInfoExtended: {depth: 100, stokes: 1}},
+            requiredChannel: 6,
+            setChannel: jest.fn(),
+            incrementChannels: jest.fn()
+        };
+        const channelMapStore = {isChannelMapEnabled, startChannel: 0, getAdjacentChannel: (channel: number, direction: number) => channel + 2 * direction};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: frame,
+            animatorStore: {animationMode: AnimationMode.CHANNEL, step: 3},
+            channelMapStore
+        } as any);
+        const component = new AnimatorComponent({} as any);
+
+        component.onNextClicked();
+        component.onPrevClicked();
+        if (isChannelMapEnabled) {
+            expect(frame.setChannel.mock.calls).toEqual([[8], [4]]);
+            expect(frame.incrementChannels).not.toHaveBeenCalled();
+        } else {
+            expect(frame.incrementChannels.mock.calls).toEqual([
+                [1, 0],
+                [-1, 0]
+            ]);
+        }
+        component.componentWillUnmount();
+    });
+
+    test.each([
+        [false, 1, -1, 20, 10],
+        [true, 1, 0, 19, 10],
+        [false, 3, 0, 19, 10],
+        [true, 15, 0, 19, 15]
+    ])("configures compact channel input bounds and majorStepSize (channelMap=%s, step=%i)", (isChannelMapEnabled, step, expectedMin, expectedMax, expectedMajorStepSize) => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: {
+                requiredChannel: 2,
+                channelType: "Channel",
+                frameInfo: {fileInfoExtended: {depth: 20, stokes: 1}}
+            },
+            activeImageIndex: 0,
+            imageViewConfigStore: {imageNum: 1},
+            widgetsStore: {animatorWidgets: new Map()},
+            timeSeriesStore: {elements: []},
+            animatorStore: {animationMode: AnimationMode.CHANNEL, step, minStep: 1, maxStep: 50, frameRate: 5, minFrameRate: 1, maxFrameRate: 15, isAnimationActive: false},
+            channelMapStore: {isChannelMapEnabled}
+        } as any);
+        const component = new AnimatorComponent({} as any);
+        component.onResize(350, 200);
+
+        const {SafeNumericInput: mockSafeNumericInput} = jest.requireMock("components/Shared");
+        const findChannelInput = (node: React.ReactNode): React.ReactElement<{min: number; max: number; stepSize: number; majorStepSize?: number; intOnly?: boolean}> | undefined => {
+            if (!React.isValidElement<{children?: React.ReactNode}>(node)) {
+                return undefined;
+            }
+            if (node.type === mockSafeNumericInput && (node.props as {fill?: boolean}).fill) {
+                return node as React.ReactElement<{min: number; max: number; stepSize: number; majorStepSize?: number; intOnly?: boolean}>;
+            }
+            return React.Children.toArray(node.props.children).map(findChannelInput).find(Boolean);
+        };
+
+        const input = findChannelInput(component.render());
+        expect(input?.props.intOnly).toBe(true);
+        expect(input?.props.min).toBe(expectedMin);
+        expect(input?.props.max).toBe(expectedMax);
+        expect(input?.props.stepSize).toBe(Math.min(step, 19));
+        expect(input?.props.majorStepSize).toBe(expectedMajorStepSize);
         component.componentWillUnmount();
     });
 });

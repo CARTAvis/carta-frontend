@@ -18,7 +18,7 @@ const MOCK_TIME_SERIES_STORE = {
 
 jest.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE},
-    PreferenceStore: {Instance: {}},
+    PreferenceStore: {Instance: {stopAnimationPlaybackMinutes: 5}},
     TimeSeriesStore: {Instance: MOCK_TIME_SERIES_STORE}
 }));
 
@@ -151,5 +151,23 @@ describe("AnimatorStore animation mode", () => {
 
         expect(store.selectFirstAvailableAnimationMode()).toBe(false);
         expect(store.animationMode).toBe(AnimationMode.NONE);
+    });
+});
+
+describe("AnimatorStore setStep", () => {
+    test("accepts valid integer steps within bounds and rejects invalid values", () => {
+        const store = new AnimatorStore();
+
+        store.setStep(5);
+        expect(store.step).toBe(5);
+
+        store.setStep(0);
+        expect(store.step).toBe(5);
+
+        store.setStep(51);
+        expect(store.step).toBe(5);
+
+        store.setStep(2.5);
+        expect(store.step).toBe(5);
     });
 });

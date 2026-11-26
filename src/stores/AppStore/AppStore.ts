@@ -2301,7 +2301,7 @@ export class AppStore {
             if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE) {
                 setTimeout(this.hideSplashScreen, 500);
             } else {
-                this.tileService.cancelChannelMapRequests();
+                this.tileService.resetPendingRasterWork();
                 this.showSplashScreen();
             }
         });
@@ -2702,7 +2702,7 @@ export class AppStore {
     private *resumeSession() {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
-        this.tileService.resetForSessionResume();
+        this.tileService.resetPendingRasterWork();
 
         // Ignore & remove generated in-memory images
         const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);

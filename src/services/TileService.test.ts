@@ -1,4 +1,4 @@
-jest.mock("models", () => ({TileCoordinate: {encode: (x: number) => x}}));
+jest.mock("models", () => jest.requireActual("models/Tile/TileCoordinate"));
 jest.mock("services", () => ({BackendService: {Instance: {}}, TileWebGLService: {Instance: {gl: null}}}));
 jest.mock("stores", () => ({
     AppStore: {
@@ -13,7 +13,9 @@ jest.mock("utilities", () => ({clamp: jest.fn(), copyToFP32Texture: jest.fn(), c
 jest.mock("!worker-loader!zfp_wrapper", () => jest.fn());
 
 import {CARTA} from "carta-protobuf";
+import {LRUCache} from "mnemonist";
 
+import {TileCoordinate} from "models/Tile/TileCoordinate";
 import {AppStore} from "stores";
 
 import {TileService} from "./TileService";
@@ -58,7 +60,7 @@ type TestTileService = {
     requestChannelMapTiles: TileService["requestChannelMapTiles"];
     requestTiles: TileService["requestTiles"];
     cancelChannelMapRequests: TileService["cancelChannelMapRequests"];
-    resetForSessionResume: TileService["resetForSessionResume"];
+    resetPendingRasterWork: TileService["resetPendingRasterWork"];
     setChannelMapTargetTiles: (tiles: Array<{layer: number; encode: () => number}>, fileId: number, stokes: number, channels: number[]) => void;
     setAnimationEnabled: TileService["setAnimationEnabled"];
     tileStream: {next: jest.Mock};
@@ -109,7 +111,9 @@ const MakeRequest = (channel: number, tiles: number[] = []) => ({
     fileId: 1,
     channel,
     stokes: 0,
-    requiredTiles: {tiles}
+    requiredTiles: {tiles},
+    channels: [channel],
+    rasterRequest: tiles.length ? {key: `1_0_${channel}`, requestedTiles: new Set(tiles), shouldSynchronize: false} : undefined
 });
 
 const Complete = (channel: number) => ({
@@ -153,7 +157,7 @@ describe("TileService channel map request queue", () => {
         service.queueChannelMapRequests(1, [MakeRequest(2), MakeRequest(3)]);
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
-        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 2, 0, {tiles: []}, true);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 2, 0, {tiles: []}, true, [2]);
 
         service.handleChannelMapFlowControl(1, Complete(9));
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(1);
@@ -163,7 +167,7 @@ describe("TileService channel map request queue", () => {
 
         service.handleChannelMapFlowControl(1, Complete(2));
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
-        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 3, 0, {tiles: []}, true);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 3, 0, {tiles: []}, true, [3]);
     });
 
     test("replaces unsent channels while allowing the active request to finish", () => {
@@ -174,7 +178,7 @@ describe("TileService channel map request queue", () => {
         service.handleChannelMapFlowControl(1, Complete(1));
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
-        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 7, 0, {tiles: []}, true);
+        expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 7, 0, {tiles: []}, true, [7]);
     });
 
     test("requests the active channel histogram when all tiles are cached", () => {
@@ -288,7 +292,9 @@ describe("TileService channel map request queue", () => {
     test.each([CARTA.ChannelMapFlowControl.Status.REJECTED, CARTA.ChannelMapFlowControl.Status.CANCELLED])("stops the sequence when the backend returns status %s", status => {
         const service = CreateService();
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
-        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false});
+        service.handleStreamSync({fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1, endSync: false}, 1);
+        expect(service.rasterSyncStates.has(7)).toBe(true);
+        expect(service.pendingDecompressions.has("1_0_1")).toBe(true);
 
         service.handleChannelMapFlowControl(1, {
             fileId: 1,
@@ -303,13 +309,76 @@ describe("TileService channel map request queue", () => {
         expect(service.rasterSyncStates.has(7)).toBe(false);
     });
 
+    test("streams both requested channels and reuses evicted texture slots", () => {
+        const service = CreateService();
+        const cache = new LRUCache(Array, Array, 2);
+        service.cachedTiles = cache as never;
+        service.textureCoordinateQueue = [0, 1];
+        service.getCompressedCache = jest.fn(() => new Map());
+        const frame = {frameInfo: {fileId: 1}, channel: 1, stokes: 0};
+        const tiles = [new TileCoordinate(0, 0, 1), new TileCoordinate(0, 1, 1)];
+
+        service.requestChannelMapTiles(tiles, frame as never, {x: 0, y: 0}, 11, [1, 2]);
+        expect(service.channelMapRemainingTiles).toBe(4);
+        service.handleChannelMapFlowControl(1, Complete(1));
+
+        for (const [requestId, channel] of [
+            [2, 1],
+            [3, 2]
+        ]) {
+            expect(service.backendService.setChannels).toHaveBeenNthCalledWith(requestId, 1, channel, 0, expect.objectContaining({tiles: tiles.map(tile => tile.encode())}), true, [1, 2]);
+            const sync = {fileId: 1, channel, stokes: 0, syncId: requestId + 10, animationId: 0, tileCount: 2};
+            service.handleStreamSync(sync, requestId);
+            service.handleStreamedTiles({
+                ...sync,
+                compressionType: CARTA.CompressionType.NONE,
+                tiles: tiles.map(({x, y, layer}) => ({x, y, layer, width: 1, height: 1, imageData: new Uint8Array(new Float32Array([channel]).buffer)}))
+            });
+            service.handleStreamSync({...sync, endSync: true}, requestId);
+            service.handleChannelMapFlowControl(requestId, Complete(channel));
+        }
+        service.handleChannelMapFlowControl(4, Complete(1));
+
+        expect(service.channelMapRemainingTiles).toBe(0);
+        expect(service.pendingRequests.size).toBe(0);
+        expect(service.rasterSyncStates.size).toBe(0);
+        expect(service.tileStream.next.mock.calls.filter(([event]) => event.tileCount).map(([event]) => event.channel)).toEqual([1, 1, 2, 2]);
+        expect(tiles.map(tile => service.getTile(1, 0, 2, tile.encode())?.textureCoordinate).sort()).toEqual([0, 1]);
+    });
+
+    test("waits for the matching ZFP worker reply after end-sync", () => {
+        const service = CreateService();
+        const postMessage = jest.fn();
+        Object.assign(service, {workers: [{postMessage}], compressionRequestCounter: 42});
+        service.textureCoordinateQueue = [0];
+        service.getCompressedCache = jest.fn(() => new Map());
+        const tile = new TileCoordinate(0, 0, 0);
+        service.requestTiles([tile], 1, 1, 0, {x: 0, y: 0}, 11, true);
+
+        const sync = {fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1};
+        service.handleStreamSync(sync, 1);
+        service.handleStreamedTiles({...sync, compressionType: CARTA.CompressionType.ZFP, compressionQuality: 11, tiles: [{...tile, width: 1, height: 1, imageData: new Uint8Array([1])}]});
+        service.handleStreamSync({...sync, endSync: true}, 1);
+        expect(postMessage).toHaveBeenCalledTimes(1);
+        expect(service.tileStream.next).not.toHaveBeenCalled();
+
+        const [, , args] = postMessage.mock.calls[0][0];
+        const result = {...sync, width: 1, height: 1, encodedCoordinate: args.tileCoordinate, data: new Float32Array([1])};
+        service.updateStream({...result, requestId: sync.syncId});
+        expect(service.getNormalViewRemainingTiles(1)).toBe(1);
+        service.updateStream({...result, syncId: args.syncId, requestId: args.requestId});
+
+        expect(service.getNormalViewRemainingTiles(1)).toBe(0);
+        expect(service.tileStream.next).toHaveBeenCalledTimes(1);
+    });
+
     test("treats GPU-cached tiles as satisfied", () => {
         const service = CreateService();
         service.cachedTiles = {has: jest.fn(() => true)};
         service.getCompressedCache = jest.fn(() => new Map());
         const tile = {layer: 0, encode: () => 4};
 
-        expect(service.getRequiredRequestTiles([tile], 1, 32768, 0, false)).toEqual([]);
+        expect(service.getRequiredRequestTiles([tile], 1, 32768, 0)).toEqual([]);
         expect(service.cachedTiles.has).toHaveBeenCalledWith("1_0_32768_4");
     });
 
@@ -327,11 +396,14 @@ describe("TileService channel map request queue", () => {
     test("does not reuse a compressed tile from another Stokes value", () => {
         const service = CreateService();
         service.cachedTiles = {has: jest.fn(() => false)};
-        service.getCompressedCache = jest.fn(() => new Map([["1_0_2_4", {}]]));
+        service.getCompressedCache = jest.fn(() => new Map([["1_0_2_4", {tile: {}, compressionQuality: 11}]]));
         const tile = {layer: 0, encode: () => 4};
 
-        expect(service.getRequiredRequestTiles([tile], 1, 2, 1, false)).toEqual([tile]);
-        expect(service.getCompressedCache).toHaveBeenCalledWith(1);
+        expect(service.getRequiredRequestTiles([tile], 1, 2, 1)).toEqual([tile]);
+        const decompress = jest.fn();
+        Object.assign(service, {asyncDecompressTile: decompress});
+        expect(service.getRequiredRequestTiles([tile], 1, 2, 0)).toEqual([]);
+        expect(decompress).toHaveBeenCalledWith(expect.objectContaining({channel: 2, stokes: 0, tileCoordinate: 4}));
     });
 
     test("updates the backend channel when all normal-view tiles are cached", () => {
@@ -378,13 +450,13 @@ describe("TileService channel map request queue", () => {
 
     test("carries pending tiles forward when a newer channel selection supersedes a queued request", () => {
         const service = CreateService();
-        const tiles = [4, 5].map(x => ({x, y: 0, layer: 0, encode: () => x}));
+        const tiles = [0, 1].map(x => new TileCoordinate(x, 0, 1));
         service.getCompressedCache = jest.fn(() => new Map());
 
         service.requestTiles([tiles[0]] as never, 1, 2, 0, {x: 0, y: 0}, 11, true);
         service.requestTiles(tiles as never, 1, 2, 0, {x: 0, y: 0}, 11, true);
 
-        expect(service.backendService.setChannels.mock.calls.map(call => call[3].tiles)).toEqual([[4], [4, 5]]);
+        expect(service.backendService.setChannels.mock.calls.map(call => call[3].tiles)).toEqual([[tiles[0].encode()], tiles.map(tile => tile.encode())]);
         expect(service.backendService.addRequiredTiles).not.toHaveBeenCalled();
         expect(service.getNormalViewRemainingTiles(1)).toBe(2);
         expect([...service.pendingRasterRequests.keys()]).toEqual([2]);
@@ -394,7 +466,7 @@ describe("TileService channel map request queue", () => {
         service.handleStreamedTiles({
             ...sync,
             compressionType: CARTA.CompressionType.NONE,
-            tiles: [4, 5].map(x => ({x, y: 0, layer: 0, width: 1, height: 1, imageData: new Uint8Array(new Float32Array([x]).buffer)}))
+            tiles: tiles.map(({x, y, layer}) => ({x, y, layer, width: 1, height: 1, imageData: new Uint8Array(new Float32Array([x]).buffer)}))
         });
         expect(service.getNormalViewRemainingTiles(1)).toBe(2);
         service.handleStreamSync({...sync, endSync: true}, 2);
@@ -475,12 +547,29 @@ describe("TileService channel map request queue", () => {
         service.pendingRasterRequests.set(7, MakeRasterRequest([4]));
         service.rasterSyncStates.set(7, MakeRasterSync([4]));
 
-        service.resetForSessionResume();
+        service.resetPendingRasterWork();
 
         expect(service.pendingRequests.size).toBe(0);
         expect(service.pendingDecompressions.size).toBe(0);
         expect(service.pendingRasterRequests.size).toBe(0);
         expect(service.rasterSyncStates.size).toBe(0);
+    });
+
+    test("accepts a reused request ID after connection loss", () => {
+        const service = CreateService();
+        service.getCompressedCache = jest.fn(() => new Map());
+        const tiles = [new TileCoordinate(0, 0, 0)];
+        const focus = {x: 0, y: 0};
+        service.requestTiles(tiles, 1, 1, 0, focus, 11, true);
+        expect(service.pendingRasterRequests.has(1)).toBe(true);
+
+        service.resetPendingRasterWork();
+        service.backendService.setChannels.mockReturnValueOnce(1);
+        service.requestTiles(tiles, 1, 2, 0, focus, 11, true);
+        service.handleStreamSync({fileId: 1, channel: 2, stokes: 0, syncId: 7, animationId: 0, tileCount: 1}, 1);
+
+        expect(service.rasterSyncStates.get(7)?.key).toBe("1_0_2");
+        expect(service.pendingDecompressions.has("1_0_1")).toBe(false);
     });
 
     test("retires an in-flight animation sync on stop", () => {
@@ -503,7 +592,7 @@ describe("TileService channel map request queue", () => {
         jest.advanceTimersByTime(39_999);
         expect(MockShowInteractiveAlert).not.toHaveBeenCalled();
         jest.advanceTimersByTime(1);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
 
         expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Updating channel map takes longer than 40 seconds"), "warning-sign");
         expect(GetChannelMapState(service)?.activeRequest).toBeDefined();
@@ -515,7 +604,7 @@ describe("TileService channel map request queue", () => {
         jest.advanceTimersByTime(29_999);
         expect(MockShowInteractiveAlert).toHaveBeenCalledTimes(1);
         jest.advanceTimersByTime(1);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
         expect(MockShowInteractiveAlert).toHaveBeenCalledTimes(2);
     });
 
@@ -530,7 +619,7 @@ describe("TileService channel map request queue", () => {
         expect(MockShowInteractiveAlert).not.toHaveBeenCalled();
 
         jest.advanceTimersByTime(1);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
 
         expect(MockShowInteractiveAlert).toHaveBeenCalledWith(expect.stringContaining("Updating channel map takes longer than 80 seconds"), "warning-sign");
     });
@@ -552,7 +641,7 @@ describe("TileService channel map request queue", () => {
         expect(MockDismissInteractiveAlert).toHaveBeenCalledWith(timeoutAlert);
 
         resolveDecision!(false);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
     });
 
     test("clears the stalled request and restores the selected backend channels when the user stops waiting", async () => {
@@ -562,7 +651,7 @@ describe("TileService channel map request queue", () => {
         service.queueChannelMapRequests(1, [MakeRequest(1, [4]), MakeRequest(2, [5])]);
 
         jest.advanceTimersByTime(40_000);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
 
         expect(GetChannelMapState(service)?.activeRequest).toBeUndefined();
         expect(GetChannelMapState(service)?.queue).toEqual([]);
@@ -579,7 +668,7 @@ describe("TileService channel map request queue", () => {
         jest.advanceTimersByTime(40_000);
         service.handleChannelMapFlowControl(1, Complete(1));
         resolveDecision!(false);
-        await Promise.resolve();
+        await jest.advanceTimersByTimeAsync(0);
 
         expect(service.backendService.setChannels).toHaveBeenCalledTimes(2);
         expect(GetChannelMapState(service)?.activeRequest).toBeUndefined();
@@ -658,6 +747,22 @@ describe("TileService channel map request queue", () => {
         expect(service.backendService.setChannels).toHaveBeenLastCalledWith(1, 1, 0, expect.objectContaining({tiles: [4]}), true, [1]);
     });
 
+    test("cancels the previous file when switching the channel map", () => {
+        const service = CreateService();
+        service.getCompressedCache = jest.fn(() => new Map());
+        const tiles = [new TileCoordinate(0, 0, 0)];
+        const focus = {x: 0, y: 0};
+        const frame = (fileId: number) => ({frameInfo: {fileId}, stokes: 0, channel: 1}) as never;
+        service.requestChannelMapTiles(tiles, frame(1), focus, 11, [1]);
+        service.requestChannelMapTiles(tiles, frame(2), focus, 11, [1]);
+
+        service.handleChannelMapFlowControl(1, Complete(1));
+
+        expect(service.channelMapStates.has(1)).toBe(false);
+        expect(service.backendService.setChannels.mock.calls.map(call => call[0])).toEqual([1, 2]);
+        expect(service.channelMapRemainingTiles).toBe(1);
+    });
+
     test("keeps channel-map progress when another file's queue is cleared", () => {
         const service = CreateService();
         service.setChannelMapTargetTiles([{layer: 0, encode: () => 4}], 1, 0, [1]);
@@ -665,6 +770,47 @@ describe("TileService channel map request queue", () => {
         service.clearRequestQueue(2);
 
         expect(service.channelMapRemainingTiles).toBe(1);
+    });
+
+    test("closes a file without evicting tiles belonging to a file with the same ID prefix", () => {
+        const service = CreateService();
+        const cache = new LRUCache(Array, Array, 2);
+        cache.set("1_0_1_0", {textureCoordinate: 0});
+        cache.set("10_0_1_0", {textureCoordinate: 1});
+        service.cachedTiles = cache as never;
+        service.textureCoordinateQueue = [];
+        service.clearGPUCache = TileService.prototype.clearGPUCache as never;
+        service.queueChannelMapRequests(1, [MakeRequest(1, [0])]);
+        const sync = {fileId: 1, channel: 1, stokes: 0, syncId: 7, animationId: 0, tileCount: 1};
+        service.handleStreamSync(sync, 1);
+
+        TileService.prototype.handleFileClosed.call(service as never, 1);
+        service.handleStreamedTiles({...sync, compressionType: CARTA.CompressionType.NONE, tiles: [{x: 0, y: 0, layer: 0}]});
+        service.handleChannelMapFlowControl(1, Complete(1));
+
+        expect(service.getTile(1, 0, 1, 0)).toBeUndefined();
+        expect(service.getTile(10, 0, 1, 0)?.textureCoordinate).toBe(1);
+        expect(service.textureCoordinateQueue).toEqual([0]);
+        expect(service.tileStream.next).not.toHaveBeenCalled();
+        expect(service.channelMapStates.size).toBe(0);
+    });
+
+    test("drops late tiles without completing a newer normal selection", () => {
+        const service = CreateService();
+        service.getCompressedCache = jest.fn(() => new Map());
+        const tiles = [new TileCoordinate(0, 0, 0)];
+        const focus = {x: 0, y: 0};
+        service.requestTiles(tiles, 1, 2, 0, focus, 11, true);
+        const sync = {fileId: 1, channel: 2, stokes: 0, syncId: 7, animationId: 0, tileCount: 1};
+        service.handleStreamSync(sync, 1);
+        service.requestTiles(tiles, 1, 3, 0, focus, 11, true);
+
+        service.handleStreamedTiles({...sync, compressionType: CARTA.CompressionType.NONE, tiles: [{x: 0, y: 0, layer: 0}]});
+        service.handleStreamSync({...sync, endSync: true}, 1);
+
+        expect(service.getNormalViewRemainingTiles(1)).toBe(1);
+        expect(service.cachedTiles.setpop).not.toHaveBeenCalled();
+        expect(service.tileStream.next).not.toHaveBeenCalled();
     });
 
     test("ignores late raster sync messages for cancelled requests", () => {

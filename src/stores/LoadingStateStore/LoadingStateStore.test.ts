@@ -1,7 +1,9 @@
+import {observable, runInAction, when} from "mobx";
+
 import {LoadingStateStore} from "./LoadingStateStore";
 
 describe("LoadingStateStore", () => {
-    const pendingTiles = new Map<number, number>();
+    const pendingTiles = observable.map<number, number>();
     const tileService = {channelMapRemainingTiles: 0, getNormalViewRemainingTiles: (fileId: number) => pendingTiles.get(fileId) ?? 0};
     const channelMapStore = {isChannelMapEnabled: false};
     const activeFrame = {
@@ -67,5 +69,20 @@ describe("LoadingStateStore", () => {
 
         expect(store.remainingTiles).toBe(0);
         expect(store.isLoading).toBe(false);
+    });
+
+    test("notifies waiters when the last visible tile finishes", async () => {
+        runInAction(() => pendingTiles.set(2, 1));
+        const onReady = jest.fn();
+        const dispose = when(
+            () => !store.isLoading,
+            () => onReady()
+        );
+        expect(onReady).not.toHaveBeenCalled();
+
+        runInAction(() => pendingTiles.delete(2));
+
+        expect(onReady).toHaveBeenCalledTimes(1);
+        dispose();
     });
 });

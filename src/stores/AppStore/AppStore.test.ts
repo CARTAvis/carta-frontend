@@ -393,7 +393,7 @@ describe("AppStore.updateHistogram", () => {
         };
         jest.spyOn(appStore, "getFrame").mockReturnValue(frame as any);
 
-        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
+        pendingChannelHistograms.set("1_0_1", {fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}});
         appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 2, stokes: 1, histograms: {}} as CARTA.RegionHistogramData);
         expect(frame.channel).toBe(0);
 
@@ -504,6 +504,16 @@ describe("AppStore channel-map data streams", () => {
         appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 1, stokes: 0, histograms: {}} as CARTA.RegionHistogramData);
 
         expect(appStore.regionHistograms.size).toBe(0);
+    });
+
+    test("accepts profiles, statistics and histograms for the active channel", () => {
+        appStore.handleSpatialProfileStream({fileId: 1, regionId: 0, channel: 0, stokes: 0, profiles: []});
+        appStore.handleRegionStatsStream({fileId: 1, regionId: -1, channel: 0, stokes: 0, statistics: []} as CARTA.RegionStatsData);
+        appStore.handleRegionHistogramStream({fileId: 1, regionId: -1, channel: 0, stokes: 0} as CARTA.RegionHistogramData);
+
+        expect(frame.setCursorValue).toHaveBeenCalled();
+        expect(appStore.regionStats.get(1)?.get(-1)?.has(0)).toBe(true);
+        expect(appStore.regionHistograms.get(1)?.get(-1)?.has(0)).toBe(true);
     });
 });
 
