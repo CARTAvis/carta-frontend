@@ -90,6 +90,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const centerWCSPoint = this.centerWCS;
         const xInput = (
             <CoordNumericInput
+                data-testid="region-dialog-point-center-x-input"
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
@@ -101,6 +102,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         );
         const yInput = (
             <CoordNumericInput
+                data-testid="region-dialog-point-center-y-input"
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
@@ -114,12 +116,12 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.toString(centerWCSPoint) : ""}` : `Image: ${Point2D.toString(centerPoint, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-point-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="region-dialog-point-name-input" placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-point-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
                     {xInput}

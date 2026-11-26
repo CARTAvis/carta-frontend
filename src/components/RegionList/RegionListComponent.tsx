@@ -13,6 +13,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type RegionSetStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, getNextRegionOpacity, length2D, toFixed} from "utilities";
+import {isAnnulusRegionType} from "utilities/region/region";
 
 import "./RegionListComponent.scss";
 
@@ -448,15 +449,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
-        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, regionSet.regions.length - 1);
-        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, regionSet.regions.length - 1);
+        const regions = this.validRegions;
+        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, Math.max(0, regions.length - 1));
+        const lastVisibleRegion = Math.min(this.lastVisibleRow, regions.length - 1);
         for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
-            const region = regionSet.regions[i];
+            const region = regions[i];
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const _isRegionLocked = region.isLocked;
             const _name = region.name;
             const _angle = region.rotation;
-            const _size = region.size.x + region.size.y;
+            const _size = region.size;
+            const _innerSize = region.innerSize;
             const _opacity = region.opacity;
             /* eslint-enable @typescript-eslint/no-unused-vars */
         }
@@ -486,6 +489,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
+        const shouldShowWcsCenter = frame.isValidWcs && !appStore.overlaySettings.isImgCoordinates;
+
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
             const className = classNames("row-header", {[Classes.DARK]: isDarkTheme});
             const isLockDisabled = !regionSet.visibleEditableRegionsList.length;
@@ -511,7 +516,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         Type
                     </div>
                     <div className="cell" style={{width: RegionListComponent.CenterColumnDefaultWidth}}>
-                        {frame.isValidWcs ? "Center" : "Pixel Center"}
+                        {shouldShowWcsCenter ? "Center" : "Pixel Center"}
                     </div>
                     {shouldShowSizeColumn && (
                         <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
@@ -538,7 +543,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
-                if (frame.isValidWcs) {
+                if (shouldShowWcsCenter) {
                     if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
                         centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
                     } else {
@@ -560,7 +565,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (shouldShowSizeColumn) {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
-                    if (frame.isValidWcs) {
+                    if (isAnnulusRegionType(region.regionType)) {
+                        const outerSize = frame.isValidWcs ? region.wcsSize : region.size;
+                        const innerSize = frame.isValidWcs ? region.wcsInnerSize : region.innerSize;
+                        const formatAxis = (axis: number) => (frame.isValidWcs ? formattedArcsec(axis, WCS_PRECISION) : toFixed(axis, 1));
+                        sizeContent = (
+                            <React.Fragment>
+                                {formatAxis(outerSize.x)} / {formatAxis(innerSize.x)}
+                                <br />
+                                {formatAxis(outerSize.y)} / {formatAxis(innerSize.y)}
+                            </React.Fragment>
+                        );
+                    } else if (frame.isValidWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
@@ -581,6 +597,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     case CARTA.RegionType.ANNELLIPSE:
                         tooltipContent = "Semi-major and semi-minor axes";
                         break;
+                    case CARTA.RegionType.ANNULUS:
+                    case CARTA.RegionType.ANNANNULUS:
+                        tooltipContent = "Outer / inner axes";
+                        break;
                     case CARTA.RegionType.LINE:
                     case CARTA.RegionType.ANNLINE:
                     case CARTA.RegionType.ANNVECTOR:
@@ -594,7 +614,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Width and height";
                 }
                 sizeEntry = (
-                    <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth}}>
+                    <div className="cell" style={{width: RegionListComponent.SizeColumnDefaultWidth, overflow: "hidden"}}>
                         {region.regionType !== CARTA.RegionType.POINT && (
                             <Tooltip content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}

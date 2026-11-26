@@ -87,6 +87,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <>
                 <CoordNumericInput
+                    data-testid={`region-dialog-compass-ruler-${isFinished ? "finish" : "start"}-x-input`}
                     coord={region.coordinate}
                     inputType={InputType.XCoord}
                     value={isFinished ? region?.controlPoints[1].x : region?.controlPoints[0].x}
@@ -96,6 +97,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     wcsDisabled={!this.props.wcsInfo || !(isFinished ? WCSFinish : WCSStart)}
                 />
                 <CoordNumericInput
+                    data-testid={`region-dialog-compass-ruler-${isFinished ? "finish" : "start"}-y-input`}
                     coord={region.coordinate}
                     inputType={InputType.YCoord}
                     value={isFinished ? region?.controlPoints[1].y : region?.controlPoints[0].y}
@@ -126,26 +128,36 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         const compassLength = (region as CompassAnnotationStore).length;
 
         return (
-            <div className="region-form">
+            <div className="region-form" data-testid="region-dialog-compass-ruler-form">
                 <FormGroup label="Annotation name" inline={true}>
-                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
+                    <InputGroup data-testid="region-dialog-compass-ruler-name-input" placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
                         <FormGroup label="North label" inline={true}>
-                            <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
+                            <InputGroup
+                                data-testid="region-dialog-compass-ruler-north-label-input"
+                                placeholder="Enter north label"
+                                value={(region as CompassAnnotationStore).northLabel}
+                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)}
+                            />
                         </FormGroup>
                         <FormGroup label="East label" inline={true}>
-                            <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
+                            <InputGroup
+                                data-testid="region-dialog-compass-ruler-east-label-input"
+                                placeholder="Enter east label"
+                                value={(region as CompassAnnotationStore).eastLabel}
+                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)}
+                            />
                         </FormGroup>
                     </>
                 )}
                 <FormGroup label="Coordinate" inline={true}>
-                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                    <CoordinateComponent data-testid="region-dialog-compass-ruler-coordinate" selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <FormGroup label="Length" labelInfo="(canvas px)" inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={compassLength} onBlur={this.handleLengthValueChange} onKeyDown={this.handleLengthValueChange} />
+                        <SafeNumericInput data-testid="region-dialog-compass-length-input" selectAllOnFocus buttonPosition="none" value={compassLength} onBlur={this.handleLengthValueChange} onKeyDown={this.handleLengthValueChange} />
                     </FormGroup>
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>

@@ -25,6 +25,7 @@ export declare type CustomIconName =
     | "lineFitting"
     | "vectorOverlay"
     | "popout"
+    | "annulus"
     | "zoomAxisX"
     | "zoomAxisY";
 
@@ -316,6 +317,13 @@ const POPOUT_SVG = (
     </>
 );
 
+const ANNULUS_SVG = (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="8" cy="8" r="6.5" />
+        <circle cx="8" cy="8" r="3" />
+    </g>
+);
+
 const ZOOM_AXIS_X_SVG = (
     <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="0.25" y="2.25" width="15.5" height="11.5" rx="0.5" />
@@ -350,6 +358,7 @@ const ICONS = {
     lineFitting: LINE_FITTING_SVG,
     vectorOverlay: VECTOR_OVERLAY_SVG,
     popout: POPOUT_SVG,
+    annulus: ANNULUS_SVG,
     zoomAxisX: ZOOM_AXIS_X_SVG,
     zoomAxisY: ZOOM_AXIS_Y_SVG
 };

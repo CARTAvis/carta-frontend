@@ -55,6 +55,7 @@ import {
     formattedFrequency,
     frequencyFromVelocity,
     getAngleInRad,
+    getAnnulusWcsAxisScale,
     getDefaultWcsFormats,
     getFormattedWCSPoint,
     getHeaderNumericValue,
@@ -2600,6 +2601,14 @@ export class FrameStore {
             return multiply2D(size, this.pixelUnitSizeArcsec);
         }
         return {x: NaN, y: NaN};
+    }
+
+    public getAnnulusWcsAxisScale(rotation: number): Point2D {
+        return getAnnulusWcsAxisScale(this.pixelUnitSizeArcsec, rotation);
+    }
+
+    public getAnnulusWcsSizeInArcsec(size: Point2D, rotation: number): Point2D {
+        return multiply2D(size, this.getAnnulusWcsAxisScale(rotation));
     }
 
     public getImageXValueFromArcsec(arcsecValue: number): number {

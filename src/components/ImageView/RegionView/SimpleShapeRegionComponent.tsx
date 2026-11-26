@@ -12,6 +12,7 @@ import {type FrameStore, type RegionStore, type TextAnnotationStore} from "store
 import {
     add2D,
     angle2D,
+    getAnnulusInnerSize,
     getResizedSimpleShapeFromCenter,
     getResizedSimpleShapeFromCorner,
     getSimpleShapeAnchorName,
@@ -26,9 +27,10 @@ import {
     transformPoint,
     usesSimpleShapeBoxSize
 } from "utilities";
+import {isAnnulusRegionType} from "utilities/region/region";
 
 import {Anchor} from "./InvariantShapes";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, getEffectiveZoomLevel, getZoomInvariantCanvasOffset, getZoomInvariantTransform, projectedRegionPointsToCanvasOffsets, transformedImageToCanvasPos} from "./shared";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -158,6 +160,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint,
             textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
         });
+        if (isAnnulusRegionType(region.regionType)) {
+            region.setAnnulusGeometry(edit.center, edit.size);
+            return;
+        }
         region.setControlPoints([edit.center, edit.size]);
     };
 
@@ -182,6 +188,40 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 textScale: {x: AppStore.Instance.imageRatio / zoom.x, y: AppStore.Instance.imageRatio / zoom.y}
             })
         );
+    };
+
+    private getInnerRadiusAnchorAxis = (region: RegionStore, canvasX: number, canvasY: number): number => {
+        const frame = this.props.frame;
+        let imagePosition = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+        if (frame.spatialReference && frame.spatialTransformAST) {
+            imagePosition = transformPoint(frame.spatialTransformAST, imagePosition, true);
+        }
+        const delta = subtract2D(imagePosition, region.center);
+        return rotate2D(delta, (-region.rotation * Math.PI) / 180.0).y;
+    };
+
+    private applyInnerRadiusScaling = (region: RegionStore, canvasX: number, canvasY: number) => {
+        region.setInnerSize({x: this.getInnerRadiusAnchorAxis(region, canvasX, canvasY), y: region.innerSize.y}, false, "x");
+    };
+
+    private getBoundedInnerRadiusAnchorPosition = (position: Point2D): Point2D => {
+        const region = this.props.region;
+        const boundedSize = getAnnulusInnerSize(region.size, {x: this.getInnerRadiusAnchorAxis(region, position.x, position.y), y: region.innerSize.y}, "x");
+        const boundedCanvasPosition = this.getAnchorCanvasPosition(region, {x: 0, y: boundedSize.x});
+        return adjustPosToUnityStage(boundedCanvasPosition, this.props.stageRef.current);
+    };
+
+    private getInnerRadiusAnchorPosition = (region: RegionStore): Point2D => {
+        return this.getAnchorCanvasPosition(region, {x: 0, y: region.innerSize.x});
+    };
+
+    private getAnchorCanvasPosition = (region: RegionStore, offset: Point2D): Point2D => {
+        const frame = this.props.frame;
+        let position = add2D(region.center, rotate2D(offset, (region.rotation * Math.PI) / 180.0));
+        if (frame.spatialReference && frame.spatialTransformAST) {
+            position = transformPoint(frame.spatialTransformAST, position, false);
+        }
+        return transformedImageToCanvasPos(position, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
     };
 
     private handleDragStart = () => {
@@ -212,6 +252,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 return "all-scroll";
             case "top":
             case "bottom":
+            case "inner-radius":
                 anchorAngle = 0;
                 break;
             case "left":
@@ -299,6 +340,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
+            if (isAnnulusRegionType(region.regionType)) {
+                return this.getAnchorCanvasPosition(region, {
+                    x: anchorName === "left" ? -region.size.y : anchorName === "right" ? region.size.y : 0,
+                    y: anchorName === "top" ? region.size.x : anchorName === "bottom" ? -region.size.x : 0
+                });
+            }
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
             const size = usesSimpleShapeBoxSize(region.regionType) ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
@@ -326,6 +373,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         const zoom = getEffectiveZoomLevel(frame);
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
+            if (isAnnulusRegionType(region.regionType)) {
+                return this.getAnchorCanvasPosition(region, {x: (anchorName.includes("left") ? -1 : 1) * region.size.y, y: (anchorName.includes("top") ? 1 : -1) * region.size.x});
+            }
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
             let offset = rotate2D(scale2D(size, getSimpleShapeAnchorSizeScale(region.regionType)), (region.rotation * Math.PI) / 180.0);
             if (isTextRegionType(region.regionType)) {
@@ -363,6 +413,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
                 const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
+            } else if (anchorName === "inner-radius") {
+                this.applyInnerRadiusScaling(region, offsetPoint.x, offsetPoint.y);
+                anchor.position(this.getInnerRadiusAnchorPosition(region));
             } else {
                 const isKeepAspectMode = evt.shiftKey;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
@@ -422,6 +475,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
 
+        if (isAnnulusRegionType(region.regionType)) {
+            anchorConfigs.push({anchor: "inner-radius", offset: {x: 0, y: region.innerSize.x}});
+        }
+
         return anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
             const transformedCenter = frame.spatialReference && isText && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
@@ -432,12 +489,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const canvasOffset = getZoomInvariantCanvasOffset({x: config.offset.x, y: -config.offset.y}, this.props.stageRef.current, textRotation);
                 posCanvas = add2D(centerCanvas, canvasOffset);
             } else {
-                let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
-
-                if (frame.spatialReference && frame.spatialTransformAST) {
-                    posImage = transformPoint(frame.spatialTransformAST, posImage, false);
-                }
-                posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                posCanvas = this.getAnchorCanvasPosition(region, config.offset);
             }
 
             const isSelectedSimpleShapeAnchor = region.hasSelectedPoint && config.anchor === getSimpleShapeAnchorName(region.selectedPointIndex);
@@ -460,6 +512,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     onDragEnd={this.handleAnchorDragEnd}
                     onDragMove={this.handleAnchorDrag}
                     onClick={this.handleAnchorClick}
+                    isInnerRadius={config.anchor === "inner-radius"}
+                    dragBoundFunc={config.anchor === "inner-radius" ? this.getBoundedInnerRadiusAnchorPosition : undefined}
                 />
             );
         });
@@ -564,19 +618,47 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame.spatialReference && frame.spatialTransformAST) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
-            const N = (pointsSecondaryImage as Point2D[]).length;
-            const pointArray = new Array<number>(N * 2);
-            for (let i = 0; i < N; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
-                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
-            }
+            if (region.regionType === CARTA.RegionType.ANNTEXT) {
+                shapeNode = <Text {...this.getTextProps(region, centerPixelSpace)} />;
+            } else if (isAnnulusRegionType(region.regionType)) {
+                const approx = region.getAnnulusApproximation(frame.spatialTransformAST);
+                const outerPoints = projectedRegionPointsToCanvasOffsets(approx.outer, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const innerPoints = projectedRegionPointsToCanvasOffsets(approx.inner, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                const lineProps = {
+                    x: 0,
+                    y: 0,
+                    stroke: region.color,
+                    strokeWidth: region.lineWidth,
+                    strokeScaleEnabled: false,
+                    opacity: region.visualOpacity,
+                    dash: [region.dashLength],
+                    closed: true,
+                    perfectDrawEnabled: false,
+                    lineJoin: "round" as const
+                };
+                shapeNode = (
+                    <Group
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        draggable={true}
+                        listening={this.props.listening && !region.isLocked}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        perfectDrawEnabled={false}
+                    >
+                        <Line {...lineProps} points={outerPoints} />
+                        <Line {...lineProps} points={innerPoints} />
+                    </Group>
+                );
+            } else {
+                const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
+                const pointArray = projectedRegionPointsToCanvasOffsets(pointsSecondaryImage, centerPixelSpace, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
 
-            shapeNode =
-                region.regionType === CARTA.RegionType.ANNTEXT ? (
-                    <Text {...this.getTextProps(region, centerPixelSpace)} />
-                ) : (
+                shapeNode = (
                     <Line
                         x={centerPixelSpace.x}
                         y={centerPixelSpace.y}
@@ -599,6 +681,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         points={pointArray}
                     />
                 );
+            }
         } else {
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
@@ -634,6 +717,52 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
                 shapeNode = <Text ref={this.textRef} {...this.getTextProps(region, centerPixelSpace)} />;
+            } else if (isAnnulusRegionType(region.regionType)) {
+                const innerWidth = region.innerSize.x / devicePixelRatio;
+                const innerHeight = region.innerSize.y / devicePixelRatio;
+                shapeNode = (
+                    <Group
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        scaleX={frame.aspectRatio}
+                        draggable={commonProps.draggable}
+                        listening={commonProps.listening}
+                        onDragStart={commonProps.onDragStart}
+                        onDragEnd={commonProps.onDragEnd}
+                        onDragMove={commonProps.onDragMove}
+                        onClick={commonProps.onClick}
+                        onDblClick={commonProps.onDblClick}
+                        onContextMenu={commonProps.onContextMenu}
+                        perfectDrawEnabled={commonProps.perfectDrawEnabled}
+                    >
+                        <Group rotation={-rotation}>
+                            <Ellipse
+                                x={0}
+                                y={0}
+                                radiusY={width}
+                                radiusX={height}
+                                stroke={region.color}
+                                strokeWidth={region.lineWidth}
+                                opacity={region.visualOpacity}
+                                dash={[region.dashLength]}
+                                strokeScaleEnabled={false}
+                                perfectDrawEnabled={false}
+                            />
+                            <Ellipse
+                                x={0}
+                                y={0}
+                                radiusY={innerWidth}
+                                radiusX={innerHeight}
+                                stroke={region.color}
+                                strokeWidth={region.lineWidth}
+                                opacity={region.visualOpacity}
+                                dash={[region.dashLength]}
+                                strokeScaleEnabled={false}
+                                perfectDrawEnabled={false}
+                            />
+                        </Group>
+                    </Group>
+                );
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }

@@ -30,6 +30,7 @@ import {
     getPasteShiftDelta,
     getRegionSelectionPoints,
     getRegionSelectionSegments,
+    getTransformedAnnulusProperties,
     getTransformedRegionProperties,
     offsetPointsToAvoidCollision,
     PASTE_OFFSET
@@ -64,6 +65,46 @@ beforeEach(() => {
 });
 
 describe("region transform utilities", () => {
+    test.each([
+        {x: 3, y: 7},
+        {x: 7, y: 3},
+        {x: 5, y: 5}
+    ])("annulus mappings preserve directed PA for axes %j", size => {
+        for (const regionType of [CARTA.RegionType.ANNULUS, CARTA.RegionType.ANNANNULUS]) {
+            for (const rotation of [0, 30, 90, 120, 210, 270, 300]) {
+                const region = MakeRegion({regionType, center: {x: 20, y: 20}, size, innerSize: {x: size.x / 2, y: size.y / 2}, rotation});
+                MockedTransformPoint.mockImplementation((_mapping, point) => ({...point}));
+                expect(getTransformedRegionProperties(region, {} as any).rotation).toBeCloseTo(rotation);
+                MockedTransformPoint.mockImplementation((_mapping, point) => ({x: 40 - point.x, y: point.y}));
+                const reflected = getTransformedRegionProperties(region, {} as any);
+                expect(reflected.rotation).toBeCloseTo((360 - rotation) % 360);
+            }
+        }
+    });
+
+    test("annulus properties preserve reflected axes and their shared inner ratio", () => {
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({x: 40 - point.x, y: point.y}));
+        const result = getTransformedRegionProperties(MakeRegion({regionType: CARTA.RegionType.ANNULUS, center: {x: 20, y: 20}, size: {x: 3, y: 7}, innerSize: {x: 1.5, y: 3.5}, rotation: 30}), {} as any);
+        expect(result.controlPoints[0]).toEqual({x: 20, y: 20});
+        expect(result.controlPoints[1].x).toBeCloseTo(3);
+        expect(result.controlPoints[1].y).toBeCloseTo(7);
+        expect(result.controlPoints[2].x).toBeCloseTo(1.5);
+        expect(result.controlPoints[2].y).toBeCloseTo(3.5);
+        expect(result.rotation % 180).toBeCloseTo(150);
+    });
+
+    test("annulus mappings retain a very thin ellipse and reject a collapsed mapping", () => {
+        const region = MakeRegion({regionType: CARTA.RegionType.ANNULUS, size: {x: 1e-9, y: 7}, innerSize: {x: 5e-10, y: 3.5}});
+        const mapping = {} as any;
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({...point}));
+        const result = getTransformedAnnulusProperties(region, mapping);
+        expect(result.controlPoints[1]).toEqual(region.size);
+        expect(result.controlPoints[2]).toEqual(region.innerSize);
+
+        MockedTransformPoint.mockImplementation((_mapping, point) => ({x: point.x, y: 0}));
+        expect(getTransformedAnnulusProperties(region, mapping)).toBeNull();
+    });
+
     test("treats ANNCOMPASS as a center-plus-size region when transforming", () => {
         const result = getTransformedRegionProperties(
             {
