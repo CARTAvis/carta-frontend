@@ -477,9 +477,8 @@ export class FileBrowserStore {
         const fileList = this.getfileListByMode;
         this.selectedFile = file.fileInfo;
 
-        if (file.hdu) {
-            this.selectedHDU = file.hdu;
-        }
+        // A Zarr store has no HDU until its file info arrives. Loading it before then opens its default image.
+        this.selectedHDU = file.hdu || null;
 
         if (this.browserMode === BrowserMode.File) {
             this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);

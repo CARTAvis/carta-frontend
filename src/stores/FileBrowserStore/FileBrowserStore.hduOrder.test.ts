@@ -80,3 +80,15 @@ describe("FileBrowserStore.getStokesFile", () => {
         expect(stokes?.polarizationType).toBe(CARTA.PolarizationType.Q);
     });
 });
+
+describe("FileBrowserStore.selectFile", () => {
+    test("forgets the HDU of the previous file when the new row names none", () => {
+        const fileBrowserStore = new FileBrowserStore();
+        BACKEND_MOCK.getFileInfo.mockReturnValue(new Promise(() => {}));
+        fileBrowserStore.selectedHDU = "SKY_ERROR";
+
+        fileBrowserStore.selectFile({fileInfo: {name: "other.zarr"}, hdu: ""});
+
+        expect(fileBrowserStore.selectedHDU).toBeNull();
+    });
+});
