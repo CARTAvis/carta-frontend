@@ -6,6 +6,10 @@ on:
   merge_group:
     branches: [dev]
     types: [checks_requested]
+
+permissions:
+  contents: read
+
 jobs:
 
   format-check:
