@@ -471,6 +471,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
         return layoutId === undefined ? undefined : AppStore.Instance.widgetsStore.floatingWidgets.find(config => config.type === "pv-preview" && config.parentId === layoutId);
     }
 
+    /** Returns whether the workspace saves the request of the preview that is shown. A restore then makes the preview again. */
+    public isPreviewSaved(ids: WorkspaceIdWriter): boolean {
+        return !!this.previewFrame && this.previewRequest !== undefined && ids.imageIdOf(this.previewRequest.fileId) !== undefined;
+    }
+
     /** Returns the preview that a workspace saves: the request that made it, how it is drawn and where its viewer is. */
     private workspacePreviewOf(ids: WorkspaceIdWriter): WorkspacePvPreview {
         const panel = this.previewPanel;

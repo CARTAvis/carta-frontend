@@ -54,6 +54,7 @@ export class SpatialProfileWidgetStore
     extends RegionWidgetStore
     implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceLayoutConfigurable<SpatialProfileWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig>
 {
+    protected override readonly canShowPvPreview = true;
     widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;

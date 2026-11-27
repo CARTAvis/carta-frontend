@@ -9,6 +9,15 @@ import {type FrameStore, type RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
 
+/**
+ * Returns whether a frame is the PV preview in front, and the workspace makes the preview again.
+ * The restore then puts the preview in front again.
+ */
+export function isSavedActivePvPreview(frame: FrameStore | null | undefined, ids: WorkspaceIdWriter): boolean {
+    const appStore = AppStore.Instance;
+    return !!frame && frame === appStore.activeFrame && [...(appStore.widgetsStore?.pvGeneratorWidgets?.values() ?? [])].some(generator => generator.previewFrame === frame && generator.isPreviewSaved(ids));
+}
+
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
     @observable fileId: number = ACTIVE_FILE_ID;
@@ -54,10 +63,20 @@ export class RegionWidgetStore {
         return {...(typeof imageId === "number" ? {imageId} : {}), ...(regions.length ? {regions} : {})};
     }
 
-    /** Returns whether the workspace saves the image that the widget shows. Only then can the workspace save what the widget shows of the image. */
+    /** Whether the widget can show a PV preview, when the preview is the active image. */
+    protected readonly canShowPvPreview: boolean = false;
+
+    /**
+     * Returns whether a restore shows the image that the widget shows again. Only then can the
+     * workspace save what the widget shows of the image. This is an image that the workspace saves,
+     * or a PV preview in front that the workspace makes again.
+     */
     protected isShowingSavedImage(ids: WorkspaceIdWriter): boolean {
-        const fileId = this.effectiveFrame?.frameInfo.fileId;
-        return fileId !== undefined && ids.imageIdOf(fileId) !== undefined;
+        const frame = this.effectiveFrame;
+        if (!frame) {
+            return false;
+        }
+        return ids.imageIdOf(frame.frameInfo.fileId) !== undefined || (this.canShowPvPreview && this.fileId === ACTIVE_FILE_ID && isSavedActivePvPreview(frame, ids));
     }
 
     /**
@@ -90,7 +109,9 @@ export class RegionWidgetStore {
                 problems.push(REGION_NOT_RESTORED);
             }
         }
-        this.isShowingWorkspaceData = problems.length === 0;
+        // The image in front was a PV preview, which the restore makes again later. Apply the saved view once the preview is in front.
+        const isWaitingForPvPreview = binding.imageId === undefined && this.canShowPvPreview && ids.isActivePvPreviewPending?.() === true;
+        this.isShowingWorkspaceData = problems.length === 0 && !isWaitingForPvPreview;
         return problems;
     }
 

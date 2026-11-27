@@ -52,6 +52,7 @@ import {
     type WorkspaceIdReader,
     type WorkspaceImageSource,
     type WorkspaceIssue,
+    type WorkspacePlotWidgetConfig,
     type WorkspacePvGeneratorWidgetConfig,
     type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
@@ -158,6 +159,9 @@ export interface WorkspaceLeftOutItems {
 
 /** The largest saved region ID that a restored region keeps. A larger one gets a new ID. */
 const MAX_SAVED_REGION_ID = 2 ** 30;
+
+/** The widgets that can show the PV preview in front. Each saves its view of the preview when it follows the image in front. */
+const PV_PREVIEW_WIDGET_TYPES: string[] = ["render-config", "histogram", "spatial-profiler"];
 
 /** Returns "1 region" or "3 regions". */
 function countOf(count: number, noun: string): string {
@@ -314,6 +318,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly awaitedImageIds = new Set<number>();
     /** The files that the user chose, for the images and catalogs that opened from them. */
     public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
+    /**
+     * Whether the image in front was a PV preview that the restore makes again: "pending" until the
+     * restore puts the preview in front, then "restored". "none" when the image in front was not
+     * such a preview, or the preview was not made again.
+     */
+    private activePvPreviewState: "none" | "pending" | "restored" = "none";
     /** The preferences that this restore applied for the session with a value other than the user's own. */
     public sessionPreferenceChanges: SessionPreferenceChange[] = [];
     /** The steps that the restore waits for at the same time, in the order that they started. */
@@ -467,6 +477,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.wasActiveImageRestored() && this.appStore.overlaySettings?.dropFormatsOfSavedFrontImage?.()) {
             this.report(WorkspaceItemKind.Layout, "WCS overlay", "The WCS overlay shows the number formats of the image in front, because the image that the workspace showed in front was not restored");
         }
+        this.activePvPreviewState = this.savesActivePvPreview() ? "pending" : "none";
         yield* this.restoreViews();
         if (!this.isCurrent) {
             return this.issues;
@@ -476,7 +487,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         this.checkWindowSize();
-        this.restorePvPreviews();
+        yield* this.restoreActivePvPreviewViews(this.restorePvPreviews());
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
@@ -758,8 +772,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * PV preview that was the active image active again. Call it after the previews are made again.
      * A viewer opens on top of the floating widgets when its preview arrives. A preview that arrives
      * after the restore stops waiting for it stays where it opens, and does not become active.
+     *
+     * @returns whether the PV preview that was the active image is the active image again.
      */
-    private restorePvPreviews(): void {
+    private restorePvPreviews(): boolean {
         const widgetsStore = this.appStore.widgetsStore;
         const zIndexManager = this.appStore.zIndexManager;
         const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
@@ -795,6 +811,48 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (activePreview) {
             this.appStore.updateActiveImageByFrame(activePreview);
+        }
+        return !!activePreview;
+    }
+
+    /** Returns whether the image in front was a PV preview whose request the workspace saved. The restore makes the preview again. */
+    private savesActivePvPreview(): boolean {
+        return Object.values(this.workspace.plotWidgets ?? {}).some(config => {
+            const preview = (config as WorkspacePvGeneratorWidgetConfig | undefined)?.preview;
+            return preview?.isActive === true && !!preview.request && typeof preview.request === "object";
+        });
+    }
+
+    public isActivePvPreviewPending(): boolean {
+        return this.activePvPreviewState === "pending";
+    }
+
+    /**
+     * Applies the saved view of each widget that follows the image in front, when the image in front
+     * was a PV preview. The widgets did not apply it before the preview was in front. A preview that
+     * was not made again leaves them on the image in front without their saved view.
+     *
+     * @param isPreviewActive - whether the preview is the active image again.
+     */
+    private *restoreActivePvPreviewViews(isPreviewActive: boolean): Generator<Promise<unknown>, void, any> {
+        if (this.activePvPreviewState !== "pending") {
+            return;
+        }
+        const plotWidgets = this.workspace.plotWidgets;
+        const followsActiveImage = (config: WorkspacePlotWidgetConfig) => PV_PREVIEW_WIDGET_TYPES.includes(config?.type) && (config as {imageId?: unknown}).imageId === undefined;
+        if (!isPreviewActive) {
+            this.activePvPreviewState = "none";
+            if (Object.values(plotWidgets ?? {}).some(followsActiveImage)) {
+                this.report(WorkspaceItemKind.PlotWidget, "", "The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
+            }
+            return;
+        }
+        this.activePvPreviewState = "restored";
+        // The widgets were bound before, so the problems were reported then.
+        this.appStore.widgetsStore.restorePlotWidgetBindings(plotWidgets, this, followsActiveImage);
+        yield* awaited(Promise.resolve());
+        if (this.isCurrent) {
+            this.appStore.widgetsStore.restorePlotWidgetViews(plotWidgets, this, followsActiveImage);
         }
     }
 

@@ -277,9 +277,9 @@ function createSession() {
             pvGeneratorWidgets: new Map<string, unknown>(),
             floatingWidgets: [] as unknown[],
             removeUnopenedLayoutDisplayStores: jest.fn(),
-            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown, _only?: (config: any) => boolean): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown, _only?: (config: any) => boolean): unknown[] => []),
             nameRestoredWidgetTabs: jest.fn((_plotWidgets?: unknown): void => {}),
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
@@ -682,6 +682,52 @@ describe("WorkspaceRestorer", () => {
         expect(zIndexManager.findIndex("viewer-1")).toBeGreaterThan(zIndexManager.findIndex("pv-generator-1")!);
         expect(appStore.updateActiveImageByFrame).not.toHaveBeenCalledWith(null);
         expect(appStore.updateActiveImageByFrame.mock.calls.every(([frame]) => frame === appStore.frames[0])).toBe(true);
+    });
+
+    describe("widgets that showed the PV preview in front", () => {
+        const request = {imageId: 0, regionId: 1, width: 3, reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1};
+        const plotWidgets = {
+            "pv-generator-0": {type: "pv-generator", preview: {isActive: true, request}},
+            "histogram-0": {type: "histogram"},
+            "histogram-1": {type: "histogram", imageId: 0},
+            "stats-0": {type: "stats"}
+        };
+
+        test("apply their saved view once the restore puts the preview in front again", async () => {
+            const {appStore} = createSession();
+            const preview = {name: "preview"};
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: preview}]]);
+            const pending: boolean[] = [];
+            appStore.widgetsStore.restorePlotWidgetBindings.mockImplementation((_plotWidgets, ids) => {
+                pending.push((ids as WorkspaceRestorer).isActivePvPreviewPending());
+                return [];
+            });
+
+            await restore(createWorkspace({plotWidgets: plotWidgets as never}));
+
+            expect(pending).toEqual([true, false]);
+            const [, rebind] = appStore.widgetsStore.restorePlotWidgetBindings.mock.calls;
+            const only = rebind[2]!;
+            expect(
+                Object.entries(plotWidgets)
+                    .filter(([, config]) => only(config))
+                    .map(([id]) => id)
+            ).toEqual(["histogram-0"]);
+            const views = appStore.widgetsStore.restorePlotWidgetViews.mock;
+            expect(views.calls).toHaveLength(2);
+            expect(views.calls[1][2]).toBe(only);
+            expect(appStore.updateActiveImageByFrame.mock.invocationCallOrder.at(-1)).toBeLessThan(views.invocationCallOrder[1]);
+        });
+
+        test("show the image in front without their saved view when the preview was not made again, and say so", async () => {
+            const {appStore} = createSession();
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: null}]]);
+
+            const problems = await restore(createWorkspace({plotWidgets: plotWidgets as never}));
+
+            expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledTimes(1);
+            expect(problems).toContain("The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
+        });
     });
 
     test("applies the saved fields of the online catalog query dialog", async () => {

@@ -40,6 +40,7 @@ export class HistogramWidgetStore
     implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceLayoutConfigurable<HistogramWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig>
 {
     widgetId: string = "";
+    protected override readonly canShowPvPreview = true;
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
