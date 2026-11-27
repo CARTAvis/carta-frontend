@@ -104,7 +104,7 @@ describe("AnimatorStore stop", () => {
 });
 
 describe("AnimatorStore reset", () => {
-    test("sets the frame rate, the step, the play mode, the animation mode and the setting beside the buttons back to the values of a new animator", () => {
+    test("sets the frame rate, the step, the play mode and the setting beside the buttons back to the values of a new animator, and keeps the animation mode", () => {
         const store = new AnimatorStore();
         const fresh = new AnimatorStore();
         store.setFrameRate(9);
@@ -115,6 +115,7 @@ describe("AnimatorStore reset", () => {
 
         store.resetSettings();
 
-        expect([store.frameRate, store.step, store.playMode, store.animationMode, store.numericInputType]).toEqual([fresh.frameRate, fresh.step, fresh.playMode, fresh.animationMode, fresh.numericInputType]);
+        expect([store.frameRate, store.step, store.playMode, store.numericInputType]).toEqual([fresh.frameRate, fresh.step, fresh.playMode, fresh.numericInputType]);
+        expect(store.animationMode).toBe(AnimationMode.STOKES);
     });
 });

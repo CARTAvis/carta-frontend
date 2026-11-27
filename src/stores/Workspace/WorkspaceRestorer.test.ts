@@ -32,6 +32,7 @@ import {BackendService, CatalogApiService} from "services";
 import {
     AppStore,
     CatalogOnlineQueryConfigStore,
+    HipsQueryStore,
     MirrorSiteStore,
     WorkspaceIdRegistry,
     type WorkspaceLeftOutItems,
@@ -392,6 +393,7 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.removeAllFrames).toHaveBeenCalled();
         // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
         expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
+        expect(appStore.overlaySettings.forgetRestoredSettings).toHaveBeenCalled();
     });
 
     describe("a workspace saved without the settings of the session, such as one of CARTA 6", () => {
@@ -427,6 +429,36 @@ describe("WorkspaceRestorer", () => {
             await restore(createWorkspace());
 
             expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["Default"]]);
+        });
+
+        test("uses the Default layout when the layout of the preferences cannot be applied", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "Broken"});
+            appStore.layoutStore.applyLayout.mockImplementation((name: string) => name !== "Broken");
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["Broken"], ["Default"]]);
+        });
+
+        test("removes the display stores that the layout made for catalogs that are not open, after it applies the layout", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace());
+
+            const removals = appStore.widgetsStore.removeUnopenedLayoutDisplayStores.mock.invocationCallOrder;
+            expect(removals[removals.length - 1]).toBeGreaterThan(appStore.layoutStore.applyLayout.mock.invocationCallOrder[0]);
+        });
+
+        test("sets the HiPS query dialog back to its defaults", async () => {
+            createSession();
+            const hipsQueryStore = HipsQueryStore.Instance;
+            hipsQueryStore.setHipsSurvey("CDS/P/DSS2/red");
+            hipsQueryStore.setObject("M51");
+
+            await restore(createWorkspace());
+
+            expect([hipsQueryStore.hipsSurvey, hipsQueryStore.object]).toEqual(["", ""]);
         });
 
         test("keeps the arrangement to the layout copy when the workspace saved one", async () => {
@@ -1831,6 +1863,18 @@ describe("WorkspaceRestorer", () => {
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
 
         expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
+    });
+
+    test("uses the layout of the preferences, with the default image view and WCS overlay, when the layout copy cannot be applied", async () => {
+        const {appStore} = createSession();
+        Object.assign(appStore.preferenceStore, {layout: "My layout"});
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
+
+        await restore(createWorkspace({layout: LAYOUT}));
+
+        expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["My layout"]]);
+        expect(appStore.imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+        expect(appStore.overlaySettings.applyConfig).toHaveBeenCalledWith(null);
     });
 
     test("names the saved image that a widget showed when the widget shows the active image instead", async () => {

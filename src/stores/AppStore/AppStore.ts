@@ -2244,10 +2244,11 @@ export class AppStore {
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
-                await this.loadDefaultFiles();
+                // Apply these preferences before the default files, so that a workspace given in the URL can restore its own values
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
-                this.updateASTColors();
                 this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
+                await this.loadDefaultFiles();
+                this.updateASTColors();
                 if (this.preferenceStore.shouldCheckNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -3105,9 +3106,10 @@ export class AppStore {
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            // The restore may have applied the preferences and the overlay of the workspace before it
-            // failed. Do not keep them.
+            // The restore may have applied the preferences, the code snippets and the overlay of the
+            // workspace before it failed. Do not keep them.
             this.preferenceStore.clearSessionPreferences();
+            this.preferenceStore.setCodeSnippetsEnabledForSession(false);
             this.overlaySettings.forgetRestoredSettings();
             const message = err instanceof NewerWorkspaceError ? `Could not load workspace "${name}". ${err.message}` : `Could not load workspace "${name}"`;
             AppToaster.show({icon: "warning-sign", message, intent: "danger", timeout: err instanceof NewerWorkspaceError ? 6000 : 3000});

@@ -167,6 +167,17 @@ describe("FrameStore", () => {
         jest.clearAllMocks();
     });
 
+    test("sets the WCS overlay settings that have a preference to the preferences when it is created", () => {
+        const overlay = AppStore.Instance.overlaySettings;
+        const isGridVisible = PreferenceStore.Instance.isAstGridVisible;
+        overlay.forgetRestoredSettings();
+        overlay.grid.setVisible(!isGridVisible);
+
+        new FrameStore(STOKES_CUBEFRAME_INFO);
+
+        expect(overlay.grid.isVisible).toBe(isGridVisible);
+    });
+
     describe("offset coordinates", () => {
         test("rebuilds the offset frameset with the selected sky reference mode", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);

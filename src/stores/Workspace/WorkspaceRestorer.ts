@@ -522,14 +522,20 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * this before the images and catalogs open, so that they open into the new widgets.
      */
     private useStartingLayout(): void {
-        if (this.workspace.layout) {
-            return;
+        if (!this.workspace.layout) {
+            this.applyStartingLayout();
         }
+    }
+
+    /** Applies the layout of the preferences, or the default layout, with the default image view settings and WCS overlay. */
+    private applyStartingLayout(): void {
         const layoutStore = this.appStore.layoutStore;
         const preferred = this.appStore.preferenceStore.layout;
         if (!layoutStore.layoutExists(preferred) || !layoutStore.applyLayout(preferred)) {
             layoutStore.applyLayout(PresetLayout.DEFAULT);
         }
+        // As in clearSession, a catalog of the workspace must not take the style of a catalog widget of this layout.
+        this.appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
         this.appStore.imageViewConfigStore.applyConfig(null);
         this.appStore.overlaySettings.applyConfig(null).forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
     }
@@ -3092,7 +3098,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Applied after the catalogs are loaded, so that each catalog widget that the layout creates
      * starts on a loaded catalog. Stage 8 then points each widget at the catalog it was saved with. A
-     * workspace saved before layouts were part of one leaves the session's arrangement alone.
+     * workspace saved without a layout copy started from the layout of the preferences in stage 1. If
+     * the layout copy cannot be applied, the workspace uses that layout too.
      */
     private restoreLayout(): void {
         const layout = this.workspace.layout;
@@ -3105,6 +3112,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const problems: string[] = [];
         if (!this.appStore.layoutStore.applyLayoutConfig(layout, "", "workspace", problems)) {
             this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
+            this.applyStartingLayout();
         }
         problems.forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
     }

@@ -1312,7 +1312,9 @@ export class OverlaySettings {
 
     /**
      * The preferences of the settings that a workspace restored, as they were at the restore, by
-     * preference key. These settings keep their restored values when an image opens.
+     * preference key. These settings keep their values when an image opens. The record stays until
+     * the next restore, or until the user changes the preference. So a setting that the user changes
+     * by hand after the restore also keeps its value when an image opens.
      */
     private restoredPreferences = new Map<PreferenceKeys, unknown>();
 
