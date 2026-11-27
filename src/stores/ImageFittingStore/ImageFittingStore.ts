@@ -285,6 +285,11 @@ export class ImageFittingStore {
         };
     };
 
+    /** Sets every setting back to its default, as for a workspace that saved none. */
+    @action resetSettings = (): void => {
+        this.applyWorkspaceConfig({} as WorkspaceImageFitting, ACTIVE_FILE_ID, FOV_REGION_ID);
+    };
+
     /**
      * Applies the settings that a workspace saved. Starts from the defaults, so a value that is
      * missing or not valid keeps its default.

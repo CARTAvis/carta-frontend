@@ -13,6 +13,7 @@ import {
     HipsCoord,
     HipsProjection,
     ImageType,
+    ImageViewLayer,
     RadiusUnits,
     RegionId,
     RegionOpacity,
@@ -176,8 +177,20 @@ function createSession() {
 
     const appStore = {
         logStore: {setLevel: jest.fn(), setHiddenTags: jest.fn()},
-        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn(), setNumericInputType: jest.fn()},
-        imageFittingStore: {applyWorkspaceConfig: jest.fn()},
+        animatorStore: {
+            stopAnimation: jest.fn(),
+            minFrameRate: 1,
+            maxFrameRate: 15,
+            minStep: 1,
+            maxStep: 50,
+            setFrameRate: jest.fn(),
+            setStep: jest.fn(),
+            setPlayMode: jest.fn(),
+            setAnimationMode: jest.fn(),
+            setNumericInputType: jest.fn(),
+            resetSettings: jest.fn()
+        },
+        imageFittingStore: {applyWorkspaceConfig: jest.fn(), resetSettings: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -253,9 +266,19 @@ function createSession() {
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
-        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0, applySessionPreferences: jest.fn((_values: unknown): {rejectedKeys: string[]} => ({rejectedKeys: []}))},
+        preferenceStore: {
+            regionColor: "#ffffff",
+            regionLineWidth: 2,
+            regionDashLength: 0,
+            layout: "Default",
+            spectralMatchingType: "VRAD",
+            isCursorFrozen: false,
+            setCodeSnippetsEnabledForSession: jest.fn(),
+            applySessionPreferences: jest.fn((_values: unknown): {rejectedKeys: string[]} => ({rejectedKeys: []}))
+        },
         imageViewConfigStore: {
             createColorBlending: jest.fn(),
+            applyConfig: jest.fn(),
             imageNum: 1,
             getImageListIndex: jest.fn((_type: ImageType, fileId: number) => appStore.frames.findIndex(frame => frame.frameInfo.fileId === fileId))
         },
@@ -285,6 +308,8 @@ function createSession() {
         },
         layoutStore: {
             isComponentHidden: jest.fn((_component: string) => false),
+            layoutExists: jest.fn((_name: string) => true),
+            applyLayout: jest.fn((_name: string) => true),
             /** What applying the layout copy reports, as the WCS overlay of its image view reports it. */
             layoutProblems: [] as string[],
             applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string, problems?: string[]) => {
@@ -293,7 +318,7 @@ function createSession() {
                 return true;
             })
         },
-        overlaySettings: {applyTextConfig: jest.fn(), forgetRestoredSettings: jest.fn(), global: {system: SystemType.Auto}}
+        overlaySettings: {applyTextConfig: jest.fn(), applyConfig: jest.fn((_config: unknown): string[] => []), forgetRestoredSettings: jest.fn(), global: {system: SystemType.Auto}}
     };
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
@@ -367,6 +392,85 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.removeAllFrames).toHaveBeenCalled();
         // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
         expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
+    });
+
+    describe("a workspace saved without the settings of the session, such as one of CARTA 6", () => {
+        test("starts from the layout of the preferences, with the default image view and WCS overlay, before the images open", async () => {
+            const {appStore, calls} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "My layout"});
+            appStore.layoutStore.applyLayout.mockImplementation((name: string) => {
+                calls.push(`applyLayout ${name}`);
+                return true;
+            });
+            appStore.appendFile.mockImplementationOnce(() => {
+                calls.push("appendFile");
+                const frame = createFrame(1);
+                appStore.frameMap.set(1, frame as never);
+                appStore.frames.push(frame as never);
+                return Promise.resolve(frame as never);
+            });
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["My layout"]]);
+            expect(calls.indexOf("applyLayout My layout")).toBeLessThan(calls.indexOf("appendFile"));
+            expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+            expect(appStore.imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+            expect(appStore.overlaySettings.applyConfig).toHaveBeenCalledWith(null);
+        });
+
+        test("uses the Default layout when the layout of the preferences is gone", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "Removed"});
+            appStore.layoutStore.layoutExists.mockImplementation((name: string) => name !== "Removed");
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["Default"]]);
+        });
+
+        test("keeps the arrangement to the layout copy when the workspace saved one", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({layout: {docked: {}, floating: []} as never}));
+
+            expect(appStore.layoutStore.applyLayout).not.toHaveBeenCalled();
+            expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalled();
+        });
+
+        test("sets the animator, the log, the cursor, the toolbar, the spectral matching and the Image Fitting dialog back as CARTA does when it starts", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore, {isCursorMirrored: true, spectralMatchingType: "FREQ"});
+            Object.assign(appStore.preferenceStore, {isCursorFrozen: true, spectralMatchingType: "VOPT"});
+
+            await restore(createWorkspace());
+
+            expect(appStore.animatorStore.resetSettings).toHaveBeenCalled();
+            expect(appStore.logStore.setLevel).toHaveBeenCalledWith(CARTA.ErrorSeverity.INFO);
+            expect(appStore.logStore.setHiddenTags).toHaveBeenCalledWith([]);
+            expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+            expect(appStore.toggleCursorMirror).toHaveBeenCalledTimes(1);
+            expect(appStore.setToolbarExpanded).toHaveBeenCalledWith(true);
+            expect(appStore.updateActiveLayer).toHaveBeenCalledWith(ImageViewLayer.RegionMoving);
+            expect(appStore.spectralMatchingType).toBe("VOPT");
+            expect(appStore.imageFittingStore.resetSettings).toHaveBeenCalled();
+        });
+
+        test("uses the mirrors of the preferences and sets the online query dialog back", async () => {
+            createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, second);
+            const configStore = CatalogOnlineQueryConfigStore.Instance;
+            configStore.setCatalogDB(CatalogDatabase.VIZIER);
+            configStore.setVizierKeyWords("galaxies");
+
+            await restore(createWorkspace());
+
+            expect(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)).toBe(first);
+            expect(configStore.catalogDB).toBe(CatalogDatabase.SIMBAD);
+            expect(configStore.vizierKeyWords).toBe("");
+        });
     });
 
     test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
@@ -467,10 +571,10 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
         expect(offProblems).toContain("Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
 
-        // A workspace without the Snippet dialog leaves code snippets as they are.
+        // A workspace without the Snippet dialog turns off code snippets for the session. The preference does not change.
         setCodeSnippetsEnabledForSession.mockClear();
         await restore(createWorkspace({}));
-        expect(setCodeSnippetsEnabledForSession).not.toHaveBeenCalled();
+        expect(setCodeSnippetsEnabledForSession.mock.calls).toEqual([[false]]);
     });
 
     test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
@@ -567,13 +671,17 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("leaves the dialogs as they are for a workspace saved without them", async () => {
+    test("closes the analysis dialogs and resets the unapplied dialog settings for a workspace saved without the open dialogs, such as one of CARTA 6", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({}));
 
-        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
         expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.applyUnappliedSettings.mock.calls).toEqual([
+            ["contour-dialog", undefined],
+            ["vector-dialog", undefined]
+        ]);
     });
 
     test("opens the saved settings panels where they were, closes the other floating settings panels, and reports a panel whose widget was not restored", async () => {
@@ -790,8 +898,10 @@ describe("WorkspaceRestorer", () => {
         const setRadius = jest.spyOn(configStore, "setSearchRadius");
         const updateCenter = jest.spyOn(configStore, "updateCenterPixelCoord");
         const load = jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockResolvedValue({fileId: 10, dataSize: 5});
+        // A workspace without the fields of the dialog sets them back to the defaults. Save empty fields, which change nothing, to check the query alone.
+        const onlineCatalogQuery = {} as Workspace["onlineCatalogQuery"];
 
-        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}))).toEqual([]);
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}], onlineCatalogQuery}))).toEqual([]);
 
         expect(load).toHaveBeenCalledWith(source, 1);
         expect(setDatabase).not.toHaveBeenCalled();
@@ -2498,7 +2608,7 @@ describe("WorkspaceRestorer", () => {
                 requestFitting: jest.fn((message: CARTA.FittingRequest.$Properties, _isStillWanted?: () => boolean) =>
                     Promise.resolve([...(message.createModelImage ? [addFrame({fittingImage: "model"})] : []), ...(message.createResidualImage ? [addFrame({fittingImage: "residual"})] : [])])
                 ),
-                imageFittingStore: {setIsFitting: jest.fn(), setIsCancelling: jest.fn(), progress: 0.3},
+                imageFittingStore: {setIsFitting: jest.fn(), setIsCancelling: jest.fn(), progress: 0.3, applyWorkspaceConfig: jest.fn(), resetSettings: jest.fn()},
                 backendService: {cancelRequestingFitting: jest.fn()}
             };
             Object.assign(appStore, generating);

@@ -34,6 +34,7 @@ import {
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
     type Point2D,
+    PresetLayout,
     SOME_IMAGES_NOT_RESTORED,
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
@@ -48,6 +49,7 @@ import {
     type WorkspaceGeneratedFile,
     type WorkspaceGeneratedImages,
     type WorkspaceGenerationRequest,
+    type WorkspaceHipsQuery,
     type WorkspaceHipsRequest,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
@@ -408,6 +410,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         WorkspaceRestorer.clearSession();
         this.restoreSessionPreferences();
+        this.useStartingLayout();
         this.restoreSpectralMatchingType();
         this.restoreImageCoordinates();
         yield* this.openImages();
@@ -502,14 +505,33 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (beamFrame) {
             this.appStore.overlaySettings.beam.setSelectedFrame(beamFrame.frameInfo.fileId);
         }
+        // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
         if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
-            // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
             CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
+        } else {
+            CatalogOnlineQueryConfigStore.Instance.resetWorkspaceConfig();
         }
-        if (this.workspace.hipsQuery && typeof this.workspace.hipsQuery === "object") {
-            HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery);
-        }
+        HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery && typeof this.workspace.hipsQuery === "object" ? this.workspace.hipsQuery : ({} as WorkspaceHipsQuery));
         return this.issues;
+    }
+
+    /**
+     * Starts a workspace saved without a layout copy, such as one of CARTA 6, from the layout of the
+     * preferences, with the default image view settings and WCS overlay, as CARTA does when it starts.
+     * Otherwise the widgets, the image view and the overlay of the previous session would stay. Do
+     * this before the images and catalogs open, so that they open into the new widgets.
+     */
+    private useStartingLayout(): void {
+        if (this.workspace.layout) {
+            return;
+        }
+        const layoutStore = this.appStore.layoutStore;
+        const preferred = this.appStore.preferenceStore.layout;
+        if (!layoutStore.layoutExists(preferred) || !layoutStore.applyLayout(preferred)) {
+            layoutStore.applyLayout(PresetLayout.DEFAULT);
+        }
+        this.appStore.imageViewConfigStore.applyConfig(null);
+        this.appStore.overlaySettings.applyConfig(null).forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
     }
 
     /**
@@ -557,6 +579,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private restoreCursor(): void {
         const cursor = this.workspace.cursor;
         if (!cursor || typeof cursor.frozen !== "boolean") {
+            // As CARTA does when it starts.
+            this.appStore.setCursorFrozen(this.appStore.preferenceStore.isCursorFrozen);
+            if (this.appStore.isCursorMirrored) {
+                this.appStore.toggleCursorMirror();
+            }
             return;
         }
         const position = cursor.position;
@@ -594,6 +621,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private restoreToolbar(): void {
         const toolbar = this.workspace.toolbar;
         if (!toolbar || typeof toolbar !== "object") {
+            this.appStore.setToolbarExpanded(true);
+            this.appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
             return;
         }
         if (typeof toolbar.expanded === "boolean") {
@@ -626,10 +655,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * show are back.
      */
     private restoreDialogs(): void {
-        const saved = this.workspace.openDialogs;
-        if (!Array.isArray(saved)) {
-            return;
-        }
+        // A workspace that saved no list, such as one of CARTA 6, had no analysis dialog open.
+        const saved = Array.isArray(this.workspace.openDialogs) ? this.workspace.openDialogs : [];
         const dialogStore = this.appStore.dialogStore;
         WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
         const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
@@ -936,10 +963,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
         }
         const saved = this.workspace.animator;
+        const animator = this.appStore.animatorStore;
         if (!saved || typeof saved !== "object") {
+            animator.resetSettings();
             return;
         }
-        const animator = this.appStore.animatorStore;
         if (isInteger(saved.frameRate) && saved.frameRate >= animator.minFrameRate && saved.frameRate <= animator.maxFrameRate) {
             animator.setFrameRate(saved.frameRate);
         }
@@ -964,10 +992,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Applies what the Log widget showed: the lowest level of the entries, and the hidden tags. A value that is not valid is not applied. */
     private restoreLog(): void {
         const saved = this.workspace.log;
+        const logStore = this.appStore.logStore;
         if (!saved || typeof saved !== "object") {
+            logStore.setLevel(CARTA.ErrorSeverity.INFO);
+            logStore.setHiddenTags([]);
             return;
         }
-        const logStore = this.appStore.logStore;
         if (Object.values(CARTA.ErrorSeverity).includes(saved.level)) {
             logStore.setLevel(saved.level);
         }
@@ -1020,6 +1050,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         appStore.tileService.clearRequestQueue();
         appStore.removeAllFrames();
         appStore.overlaySettings.forgetRestoredSettings();
+        appStore.preferenceStore.setCodeSnippetsEnabledForSession(false);
         // A regular layout, such as the one of the preferences, can have made the display store of a
         // catalog that never opened. A catalog of the workspace with that file ID would take its style.
         appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
@@ -1087,11 +1118,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
      * images are matched, as matching an image moves it to the channel of its reference in this
-     * coordinate. A workspace saved before it kept this setting keeps the setting of the session.
+     * coordinate. A workspace saved before it kept this setting, such as one of CARTA 6, uses the
+     * preference, as CARTA does when it starts.
      */
     private restoreSpectralMatchingType(): void {
         const type = this.workspace.spectralMatchingType;
         if (type === undefined) {
+            this.appStore.setSpectralMatchingType(this.appStore.preferenceStore.spectralMatchingType);
             return;
         }
         if (SPECTRAL_MATCHING_TYPES.includes(type)) {
@@ -2686,11 +2719,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Make the mirror that the workspace saved the active mirror of its database, when the mirror is
-     * available. Otherwise the session keeps its mirror.
+     * available. Otherwise the session keeps its mirror. A workspace that saved no mirrors, such as one
+     * of CARTA 6, uses the mirrors of the preferences, as CARTA does when it starts.
      */
     private useSavedMirrors(): void {
         const saved = this.workspace.catalogMirrors;
         if (!saved || typeof saved !== "object") {
+            MirrorSiteStore.Instance.clearActiveMirrors();
             return;
         }
         for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {
@@ -3201,6 +3236,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         const config = this.workspace.imageFitting;
         if (!config || typeof config !== "object") {
+            this.appStore.imageFittingStore.resetSettings();
             return;
         }
         const subject = "Image Fitting";

@@ -19,7 +19,8 @@ describe("WidgetsStore PV preview test ids", () => {
     const appStoreMock = {
         activeImage: null,
         isDarkTheme: false,
-        imageViewConfigStore: {visibleImages: []}
+        imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+        overlaySettings: {applyConfig: jest.fn(() => [])}
     };
     const layoutModelMock = {
         doAction: jest.fn(),
@@ -434,7 +435,12 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
     beforeEach(() => {
         // A new WidgetsStore titles the image view from the images on screen, of which there are none.
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
         catalogStore.catalogProfileStores.clear();
     });
 
@@ -462,7 +468,12 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
         catalogStore.catalogProfileStores.set(3, {} as any);
         // The active image still lists catalog 2, which has no profile store.
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame]}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: frame,
+            imageViewConfigStore: {visibleFrames: [frame], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
         [2, 3].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         widgetsStore.reloadFloatingCatalogWidget();
@@ -492,7 +503,12 @@ describe("WidgetConfig", () => {
 
 describe("WidgetsStore initWidgets", () => {
     beforeEach(() => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
     });
 
     afterEach(() => {
@@ -513,6 +529,18 @@ describe("WidgetsStore initWidgets", () => {
         expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
         expect(problems).toEqual(["The overlay problem"]);
         expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "workspace")).toEqual({...imageViewSettings, wcsOverlay});
+    });
+
+    test("sets the image view settings and the WCS overlay back to the defaults when the layout copy of a workspace has no image view", () => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "log", props: {id: "log-0", docked: true}}], [], "workspace");
+
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[null]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[null]]);
     });
 
     test.each([
@@ -561,7 +589,7 @@ describe("WidgetsStore initWidgets", () => {
 
     test("brings a floating histogram that the layout copy of a workspace restored to the front when selected", () => {
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: []}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()}, overlaySettings: {applyConfig: jest.fn(() => [])}, zIndexManager} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([], [{id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.Histogram}, defaultX: 40, defaultY: 60}], "workspace");
@@ -734,7 +762,12 @@ describe("WidgetsStore layout copy of a workspace", () => {
         // Required here: importing the models before the stores reaches a component before its config is set.
         const layoutConfig = require("models/Layout/LayoutConfig").LayoutConfig;
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], toConfig: () => ({})}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], toConfig: () => ({}), applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager
+        } as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
         widgetsStore.initWidgets(

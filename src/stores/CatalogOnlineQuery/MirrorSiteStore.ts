@@ -106,6 +106,11 @@ export class MirrorSiteStore {
         }
     };
 
+    /** Lets each database use the first mirror of the preferences again. The preferences do not change. */
+    @action public clearActiveMirrors = () => {
+        this.activeMirrors.clear();
+    };
+
     @action public resetMirrorSettings = (database: CatalogDatabase) => {
         PreferenceStore.Instance.clearPreferences([MIRROR_PREFERENCE_KEYS[database]]);
         this.activeMirrors.delete(database);

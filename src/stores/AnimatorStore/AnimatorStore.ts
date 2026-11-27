@@ -41,6 +41,15 @@ export class AnimatorStore {
         return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME_SERIES;
     }
 
+    /** Sets the frame rate, the step, the play mode, the animation mode and the setting beside the buttons back to their defaults. */
+    @action resetSettings = () => {
+        this.setFrameRate(5);
+        this.setStep(1);
+        this.setPlayMode(PlayMode.FORWARD);
+        this.setAnimationMode(AnimationMode.CHANNEL);
+        this.setNumericInputType(NumericInputType.FrameRate);
+    };
+
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
         if (this.isAnimationActive) {

@@ -16,7 +16,7 @@ jest.mock("stores", () => ({
     TimeSeriesStore: {Instance: MOCK_TIME_SERIES_STORE}
 }));
 
-import {AnimationMode, PlayMode} from "enums";
+import {AnimationMode, NumericInputType, PlayMode} from "enums";
 
 import {AnimatorStore} from "./AnimatorStore";
 
@@ -100,5 +100,21 @@ describe("AnimatorStore stop", () => {
         store.stopAnimation();
 
         expect(store.isAnimationActive).toBe(false);
+    });
+});
+
+describe("AnimatorStore reset", () => {
+    test("sets the frame rate, the step, the play mode, the animation mode and the setting beside the buttons back to the values of a new animator", () => {
+        const store = new AnimatorStore();
+        const fresh = new AnimatorStore();
+        store.setFrameRate(9);
+        store.setStep(4);
+        store.setPlayMode(PlayMode.BOUNCING);
+        store.setAnimationMode(AnimationMode.STOKES);
+        store.setNumericInputType(NumericInputType.Step);
+
+        store.resetSettings();
+
+        expect([store.frameRate, store.step, store.playMode, store.animationMode, store.numericInputType]).toEqual([fresh.frameRate, fresh.step, fresh.playMode, fresh.animationMode, fresh.numericInputType]);
     });
 });

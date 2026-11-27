@@ -950,9 +950,10 @@ export class WidgetsStore {
         this.layoutCatalogWidgetsOnFirstCatalog = [];
         this.removeUnopenedLayoutDisplayStores();
         // The image view settings and the WCS overlay belong to the session, not to one widget. Apply
-        // them once, from the first image view that saved its settings.
+        // them once, from the first image view that saved its settings. A layout copy without an image
+        // view sets them back to the defaults, so that they do not stay from the previous session.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
-        if (persistence === "workspace" && imageViews.length) {
+        if (persistence === "workspace") {
             const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
             AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
             problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
