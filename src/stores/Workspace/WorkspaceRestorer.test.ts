@@ -174,11 +174,20 @@ function createSession() {
         catalogSize: 5,
         catalogShape: "circle",
         thickness: 1,
+        sizeAxisTabId: "minor",
         applyConfig: jest.fn((): {success: boolean; errors: string[]} => {
             calls.push("applyDisplayConfig");
             return {success: true, errors: []};
         }),
-        applyLayoutStyle: jest.fn((style?: {catalogColor?: string} | null) => Object.assign(displayStore, style)),
+        /** As the store does, a layout style sets only a drawn size of 1 to 50 pixels, and not the size tab. */
+        applyLayoutStyle: jest.fn((style?: {catalogColor?: string; catalogSize?: number} | null) =>
+            Object.assign(displayStore, {catalogColor: style?.catalogColor ?? displayStore.catalogColor, ...(style?.catalogSize !== undefined && style.catalogSize <= 50 ? {catalogSize: style.catalogSize} : {})})
+        ),
+        drawnStyle: jest.fn(() => {
+            const {catalogColor, highlightColor, catalogSize, catalogShape, thickness, sizeAxisTabId} = displayStore;
+            return {catalogColor, highlightColor, catalogSize, catalogShape, thickness, sizeAxisTabId};
+        }),
+        restoreDrawnStyle: jest.fn((style: object) => Object.assign(displayStore, style)),
         setShowSelectedData: jest.fn()
     };
 
@@ -1621,13 +1630,15 @@ describe("WorkspaceRestorer", () => {
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
         // A catalog widget of the layout of the preferences styles the catalog with its file ID.
         appStore.layoutStore.applyLayout.mockImplementation(() => {
-            displayStore.applyLayoutStyle({catalogColor: "#ff0000"});
+            Object.assign(displayStore, {catalogColor: "#ff0000", catalogSize: 10, sizeAxisTabId: "major"});
             return true;
         });
+        // A size in arcsec can be drawn larger than a layout may set.
+        displayStore.catalogSize = 200;
 
         await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
 
-        expect(displayStore.catalogColor).toBe("#0000ff");
+        expect([displayStore.catalogColor, displayStore.catalogSize, displayStore.sizeAxisTabId]).toEqual(["#0000ff", 200, "minor"]);
     });
 
     describe("the field of view", () => {
@@ -2285,13 +2296,14 @@ describe("WorkspaceRestorer", () => {
         expect(problems).toContain("Could not apply 2 preferences (theme, newKey) for this session: this version does not know the preference or does not accept the saved value. Your own value is used");
     });
 
-    test("keeps the spectral matching type of the session when the saved one is not valid, and says so", async () => {
+    test("uses the spectral matching type of the preferences when the saved one is not valid, and says so", async () => {
         const {appStore} = createSession();
+        Object.assign(appStore.preferenceStore, {spectralMatchingType: "FREQ"});
 
         const problems = await restore(createWorkspace({spectralMatchingType: "SPEED" as never}));
 
-        expect(appStore.setSpectralMatchingType).not.toHaveBeenCalled();
-        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by VRAD"]);
+        expect(appStore.setSpectralMatchingType).toHaveBeenCalledWith("FREQ");
+        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by FREQ"]);
     });
 
     describe("the regions of an image", () => {

@@ -1,8 +1,8 @@
 import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {BrowserMode, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
-import {NewerWorkspaceError, type Workspace, type WorkspaceIssue} from "models";
+import {BrowserMode, PreferenceKeys, SpectralType, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
+import {CursorPosition, NewerWorkspaceError, type Workspace, type WorkspaceIssue} from "models";
 import {AppStore, WorkspaceRecoveryStore, WorkspaceRestorer} from "stores";
 
 function deferred<T>() {
@@ -507,5 +507,98 @@ describe("AppStore load error alerts", () => {
         await expect(appStore.loadFile("/data", "missing.fits", "", false)).rejects.toThrow("does not exist");
         expect(appStore.alertStore.isAlertVisible).toBe(true);
         expect(appStore.alertStore.alertText).toContain("Error loading file");
+    });
+});
+
+describe("AppStore.loadDefaultFiles", () => {
+    const appStore = AppStore.Instance;
+    const preferences = appStore.preferenceStore.preferences;
+    const workspace = {workspaceVersion: 2, frontendVersion: 0, name: "cubes", description: "cubes"} as Workspace;
+
+    /** Starts CARTA with `search` in the URL, and the cursor-frozen and spectral matching preferences set. */
+    function startWith(search: string) {
+        window.history.pushState({}, "", `/${search}`);
+        runInAction(() => {
+            preferences.set(PreferenceKeys.GLOBAL_CURSOR_POSITION, CursorPosition.FIXED);
+            preferences.set(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, SpectralType.FREQ);
+        });
+        appStore.setCursorFrozen(false);
+        appStore.setSpectralMatchingType(SpectralType.VRAD);
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+    }
+
+    const session = () => [appStore.isCursorFrozen, appStore.spectralMatchingType];
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        window.history.pushState({}, "", "/");
+        runInAction(() => {
+            preferences.delete(PreferenceKeys.GLOBAL_CURSOR_POSITION);
+            preferences.delete(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE);
+            appStore.activeWorkspace = undefined;
+            appStore.isLoadingWorkspace = false;
+            appStore.workspaceRestoreReport = undefined;
+        });
+    });
+
+    test("applies the preferences after the files of the URL open, without a workspace", async () => {
+        startWith("?file=cube.fits");
+        let isFrozenDuringLoad: boolean | undefined;
+        jest.spyOn(appStore.backendService, "loadFile").mockImplementation(() => {
+            isFrozenDuringLoad = appStore.isCursorFrozen;
+            return Promise.reject(new Error("no backend"));
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(isFrozenDuringLoad).toBe(false);
+        expect(session()).toEqual([true, SpectralType.FREQ]);
+    });
+
+    test("keeps the values that a workspace in the URL restored", async () => {
+        startWith("?workspace=cubes");
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(session()).toEqual([false, SpectralType.VOPT]);
+    });
+
+    test("applies the preferences when the workspace in the URL fails", async () => {
+        startWith("?workspace=cubes");
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            throw new Error("restore failed");
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(session()).toEqual([true, SpectralType.FREQ]);
+    });
+
+    test("leaves the values to a workspace that the user opens while the workspace in the URL is read", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockImplementation((name: string) => (name === "cubes" ? read.promise : Promise.resolve({...workspace, name})));
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        const start = appStore.loadDefaultFiles();
+        await appStore.loadWorkspace("other");
+        read.resolve(workspace);
+        await start;
+
+        expect(session()).toEqual([false, SpectralType.VOPT]);
     });
 });

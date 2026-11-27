@@ -405,10 +405,9 @@ export class AppStore {
         const hasWorkspaceParam = !!startingWorkspace;
 
         // Load workspace first if it exists
-        let isWorkspaceRestored = false;
         if (startingWorkspace) {
             try {
-                isWorkspaceRestored = yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey, undefined, {checkWindowSize: startingWorkspace.checkWindowSize});
+                yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey, undefined, {checkWindowSize: startingWorkspace.checkWindowSize});
             } catch (err) {
                 console.error(err);
             }
@@ -441,9 +440,10 @@ export class AppStore {
         } catch (err) {
             console.error(err);
         }
-        // A workspace given in the URL restores its own values. Without one, apply the preferences
-        // after the files open, so that freezing the cursor gives the online query its position.
-        if (!isWorkspaceRestored) {
+        // Apply the preferences after the files open, so that freezing the cursor gives the online
+        // query its position. A workspace that was restored, or that is being restored, sets its own
+        // values. So skip them then. A workspace in the URL that failed or was cancelled takes them.
+        if (!this.activeWorkspace && !this.isLoadingWorkspace) {
             this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
             this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
         }

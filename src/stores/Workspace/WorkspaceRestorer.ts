@@ -1126,7 +1126,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
      * images are matched, as matching an image moves it to the channel of its reference in this
      * coordinate. A workspace saved before it kept this setting, such as one of workspace version 1,
-     * uses the preference, as CARTA does when it starts.
+     * uses the preference, as CARTA does when it starts. So does a type that this version does not
+     * know.
      */
     private restoreSpectralMatchingType(): void {
         const type = this.workspace.spectralMatchingType;
@@ -1137,6 +1138,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (SPECTRAL_MATCHING_TYPES.includes(type)) {
             this.appStore.setSpectralMatchingType(type);
         } else {
+            this.appStore.setSpectralMatchingType(this.appStore.preferenceStore.spectralMatchingType);
             this.report(WorkspaceItemKind.Image, "spectral matching", `Could not restore the spectral matching type ${String(type)}: it is not one this version knows, so images are matched by ${this.appStore.spectralMatchingType}`);
         }
     }
@@ -3125,21 +3127,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private applyStartingLayoutKeepingCatalogStyles(): void {
         const catalogStore = this.appStore.catalogStore;
-        const styles = [...this.catalogIds.values()].map(fileId => {
-            const display = catalogStore.getCatalogDisplayStore(fileId);
-            return {
-                fileId,
-                style: display && {
-                    catalogColor: display.catalogColor,
-                    highlightColor: display.highlightColor,
-                    catalogSize: display.catalogSize,
-                    catalogShape: display.catalogShape,
-                    thickness: display.thickness
-                }
-            };
-        });
+        const styles = [...this.catalogIds.values()].map(fileId => ({fileId, style: catalogStore.getCatalogDisplayStore(fileId)?.drawnStyle()}));
         this.applyStartingLayout();
-        styles.forEach(({fileId, style}) => catalogStore.getCatalogDisplayStore(fileId)?.applyLayoutStyle(style));
+        styles.forEach(({fileId, style}) => style && catalogStore.getCatalogDisplayStore(fileId)?.restoreDrawnStyle(style));
     }
 
     /**
