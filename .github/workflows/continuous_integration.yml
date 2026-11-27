@@ -18,6 +18,7 @@ jobs:
 
   node:
     name: node-v${{ matrix.version }}
+    needs: format-check
     strategy:
       fail-fast: false
       matrix:

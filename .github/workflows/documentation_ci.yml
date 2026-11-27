@@ -27,6 +27,7 @@ jobs:
 
   test-doc:
     name: Test deployment of the documentation website
+    needs: format-check-doc
     if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     defaults:
