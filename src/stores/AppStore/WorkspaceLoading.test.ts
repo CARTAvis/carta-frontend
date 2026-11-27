@@ -601,4 +601,41 @@ describe("AppStore.loadDefaultFiles", () => {
 
         expect(session()).toEqual([false, SpectralType.VOPT]);
     });
+
+    test("leaves the values to a workspace that the user opened, while that workspace is still being read", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        const otherRead = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockImplementation((name: string) => (name === "cubes" ? read.promise : otherRead.promise));
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        const start = appStore.loadDefaultFiles();
+        const otherLoad = appStore.loadWorkspace("other");
+        read.resolve(workspace);
+        await start;
+        // The workspace in the URL was superseded, and the other one has not restored anything yet.
+        const valuesWhileOtherLoads = session();
+        otherRead.resolve({...workspace, name: "other"});
+        await otherLoad;
+
+        expect(valuesWhileOtherLoads).toEqual([false, SpectralType.VRAD]);
+        expect(session()).toEqual([false, SpectralType.VOPT]);
+    });
+
+    test("applies the preferences when the user cancels the workspace in the URL", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockReturnValue(read.promise);
+
+        const start = appStore.loadDefaultFiles();
+        appStore.cancelLoadingWorkspace();
+        read.resolve(workspace);
+        await start;
+
+        expect(session()).toEqual([true, SpectralType.FREQ]);
+    });
 });
