@@ -169,10 +169,16 @@ function createSession() {
         ensureColumnsRequested: jest.fn()
     };
     const displayStore = {
+        catalogColor: "#0000ff",
+        highlightColor: "#ffff00",
+        catalogSize: 5,
+        catalogShape: "circle",
+        thickness: 1,
         applyConfig: jest.fn((): {success: boolean; errors: string[]} => {
             calls.push("applyDisplayConfig");
             return {success: true, errors: []};
         }),
+        applyLayoutStyle: jest.fn((style?: {catalogColor?: string} | null) => Object.assign(displayStore, style)),
         setShowSelectedData: jest.fn()
     };
 
@@ -1610,6 +1616,20 @@ describe("WorkspaceRestorer", () => {
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
+    test("keeps the styles of the restored catalogs when it uses the layout of the preferences instead of a layout copy that cannot be applied", async () => {
+        const {appStore, displayStore} = createSession();
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
+        // A catalog widget of the layout of the preferences styles the catalog with its file ID.
+        appStore.layoutStore.applyLayout.mockImplementation(() => {
+            displayStore.applyLayoutStyle({catalogColor: "#ff0000"});
+            return true;
+        });
+
+        await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
+
+        expect(displayStore.catalogColor).toBe("#0000ff");
+    });
+
     describe("the field of view", () => {
         /** Restores a workspace saved with a view of `saved`, into a view of 640 by 400 pixels, or of `current`. */
         async function restoreIntoView(saved: Workspace["imageView"], current: {width: number; height: number; devicePixelRatio?: number} = {width: 640, height: 400}) {
@@ -1862,7 +1882,7 @@ describe("WorkspaceRestorer", () => {
         const {appStore} = createSession();
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
 
-        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in, so the layout of the preferences is used"]);
     });
 
     test("uses the layout of the preferences, with the default image view and WCS overlay, when the layout copy cannot be applied", async () => {
@@ -1914,7 +1934,7 @@ describe("WorkspaceRestorer", () => {
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
-        expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
+        expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in, so the layout of the preferences is used"]);
         expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace", []);
     });
 
@@ -2098,7 +2118,7 @@ describe("WorkspaceRestorer", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
             subject: "",
-            message: "Could not restore the layout the workspace was saved in"
+            message: "Could not restore the layout the workspace was saved in, so the layout of the preferences is used"
         });
     });
 

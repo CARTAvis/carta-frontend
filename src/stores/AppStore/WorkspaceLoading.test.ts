@@ -307,6 +307,20 @@ describe("AppStore workspace restore report", () => {
         expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("workspace version 3"), ["workspace"]);
     });
 
+    test("turns off the code snippets that a restore turned on for the session when the restore fails", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.preferenceStore.setCodeSnippetsEnabledForSession(true);
+            throw new Error("restore failed");
+        });
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(false);
+
+        expect(appStore.preferenceStore.isCodeSnippetsEnabledForSession).toBe(false);
+    });
+
     test("says why a workspace that a newer version of CARTA saved could not be read", async () => {
         jest.spyOn(appStore.apiService, "getWorkspace").mockRejectedValue(new NewerWorkspaceError(3));
         const restore = jest.spyOn(WorkspaceRestorer.prototype, "restore");

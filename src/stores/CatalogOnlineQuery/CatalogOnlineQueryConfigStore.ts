@@ -116,10 +116,9 @@ export class CatalogOnlineQueryConfigStore {
     /**
      * Applies the fields that a workspace saved. A value that is not valid keeps the value of the
      * session. Apply them after the image in front is chosen and the cursor is frozen. Both of these
-     * move the center of the dialog. Picking the center on the image is turned off.
+     * move the center of the dialog.
      */
     @action applyWorkspaceConfig = (config: WorkspaceOnlineCatalogQuery): void => {
-        this.isPointSelectionEnabled = false;
         const isNumberString = (value: unknown): value is string => typeof value === "string" && value.trim() !== "" && isFinite(Number(value));
         if (Object.values(CatalogDatabase).includes(config.database)) {
             this.setCatalogDB(config.database);
@@ -156,12 +155,10 @@ export class CatalogOnlineQueryConfigStore {
     };
 
     /**
-     * Sets the fields back to the defaults, as for a workspace that saved none, and turns off picking
-     * the center on the image. The center and the radius come from the image in front. Without an
-     * image in front, the center is empty.
+     * Sets the fields back to the defaults, as for a workspace that saved none. The center and the
+     * radius come from the image in front. Without an image in front, the center is empty.
      */
     @action resetWorkspaceConfig = (): void => {
-        this.isPointSelectionEnabled = false;
         this.centerPixelCoord = {x: undefined, y: undefined};
         this.setCatalogDB(CatalogDatabase.SIMBAD);
         this.setCoordsType(CatalogSystemType.ICRS);

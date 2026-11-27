@@ -534,7 +534,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!layoutStore.layoutExists(preferred) || !layoutStore.applyLayout(preferred)) {
             layoutStore.applyLayout(PresetLayout.DEFAULT);
         }
-        // As in clearSession, a catalog of the workspace must not take the style of a catalog widget of this layout.
+        // As in clearSession, a catalog of the workspace that opens later must not take the style of a
+        // catalog widget of this layout.
         this.appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
         this.appStore.imageViewConfigStore.applyConfig(null);
         this.appStore.overlaySettings.applyConfig(null).forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
@@ -3111,10 +3112,34 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         // validates the copy by the definition of the layout in the workspace schema.
         const problems: string[] = [];
         if (!this.appStore.layoutStore.applyLayoutConfig(layout, "", "workspace", problems)) {
-            this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
-            this.applyStartingLayout();
+            this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in, so the layout of the preferences is used");
+            this.applyStartingLayoutKeepingCatalogStyles();
         }
         problems.forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
+    }
+
+    /**
+     * Applies the starting layout after the catalogs opened. A catalog widget of that layout gives its
+     * style to the catalog with its file ID, even when the catalog is open. So keep the styles that the
+     * catalogs of the workspace were restored with.
+     */
+    private applyStartingLayoutKeepingCatalogStyles(): void {
+        const catalogStore = this.appStore.catalogStore;
+        const styles = [...this.catalogIds.values()].map(fileId => {
+            const display = catalogStore.getCatalogDisplayStore(fileId);
+            return {
+                fileId,
+                style: display && {
+                    catalogColor: display.catalogColor,
+                    highlightColor: display.highlightColor,
+                    catalogSize: display.catalogSize,
+                    catalogShape: display.catalogShape,
+                    thickness: display.thickness
+                }
+            };
+        });
+        this.applyStartingLayout();
+        styles.forEach(({fileId, style}) => catalogStore.getCatalogDisplayStore(fileId)?.applyLayoutStyle(style));
     }
 
     /**

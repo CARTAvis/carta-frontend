@@ -405,9 +405,10 @@ export class AppStore {
         const hasWorkspaceParam = !!startingWorkspace;
 
         // Load workspace first if it exists
+        let isWorkspaceRestored = false;
         if (startingWorkspace) {
             try {
-                yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey, undefined, {checkWindowSize: startingWorkspace.checkWindowSize});
+                isWorkspaceRestored = yield this.loadWorkspace(startingWorkspace.name, startingWorkspace.isKey, undefined, {checkWindowSize: startingWorkspace.checkWindowSize});
             } catch (err) {
                 console.error(err);
             }
@@ -439,6 +440,12 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
+        }
+        // A workspace given in the URL restores its own values. Without one, apply the preferences
+        // after the files open, so that freezing the cursor gives the online query its position.
+        if (!isWorkspaceRestored) {
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+            this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
         }
     }
 
@@ -2244,9 +2251,6 @@ export class AppStore {
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
-                // Apply these preferences before the default files, so that a workspace given in the URL can restore its own values
-                this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
-                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
                 await this.loadDefaultFiles();
                 this.updateASTColors();
                 if (this.preferenceStore.shouldCheckNewRelease) {
