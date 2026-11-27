@@ -110,6 +110,19 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
         MOCK_APP_STORE.widgetsStore.getSpectralWidgetStoreByID.mockReset();
     });
 
+    test("leaves out the height of the result table while the separator is where it starts, and keeps a restored height at least the smallest one", () => {
+        expect(store.toWorkspaceConfig()).not.toHaveProperty("resultTableHeight");
+
+        const config = store.toWorkspaceConfig();
+        store.applyWorkspaceConfig({...config, resultTableHeight: 2});
+        expect(store.restoredResultTableHeight).toBe(SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN);
+
+        const other = new SpectralLineQueryWidgetStore();
+        other.applyWorkspaceConfig({...config, resultTableHeight: Number.NaN});
+        expect(other.restoredResultTableHeight).toBeUndefined();
+        other.dispose();
+    });
+
     test("saves the query settings and the spectral profiler by its widget ID, and applies them again", () => {
         MOCK_APP_STORE.widgetsStore.spectralProfilerList = ["spectral-profiler-1"] as never;
         MOCK_APP_STORE.widgetsStore.getSpectralWidgetStoreByID.mockImplementation(((id: string) => (id === "spectral-profiler-1" ? {widgetId: "profiler-a"} : undefined)) as never);
@@ -120,6 +133,7 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
         store.setIntensityLimitValue(-3);
         store.setRedshiftType(RedshiftType.Z);
         store.setRedshiftInput(0.1);
+        store.resultTableHeight = 35.5;
 
         const config = store.toWorkspaceConfig();
 
@@ -133,12 +147,14 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
             redshiftType: RedshiftType.Z,
             redshift: 0.1,
             spectralProfilerId: "profiler-a",
-            headerTableColumnWidths: [150, 70, 300]
+            headerTableColumnWidths: [150, 70, 300],
+            resultTableHeight: 35.5
         });
 
         const restored = new SpectralLineQueryWidgetStore();
         expect(restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)))).toEqual([]);
         expect(restored.toWorkspaceConfig()).toEqual(config);
+        expect(restored.restoredResultTableHeight).toBe(35.5);
         expect(restored.selectedSpectralProfilerID).toBe("spectral-profiler-1");
         restored.dispose();
     });

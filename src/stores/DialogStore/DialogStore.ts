@@ -64,6 +64,14 @@ export class DialogStore {
      * forgets its tab.
      */
     @observable private dialogTabs: Map<string, TabId> = new Map();
+    /**
+     * The height of the fitting settings in the Image Fitting dialog, in percent of the area below the data source. The dialog
+     * records it when the user moves the separator. It is undefined while the separator is where it starts. Closing the dialog
+     * forgets it.
+     */
+    fittingSettingsHeight: number | undefined = undefined;
+    /** Changes when a workspace restore sets the height of the fitting settings, so that an open Image Fitting dialog takes it. */
+    @observable fittingSettingsRestoreCount: number = 0;
     private readonly settingsHandlers = new Map<string, DialogSettingsHandler>();
 
     constructor() {
@@ -143,16 +151,15 @@ export class DialogStore {
         if (id === DialogId.FileInfo) {
             this.fileInfoSearchString = undefined;
         }
+        if (id === DialogId.Fitting) {
+            this.fittingSettingsHeight = undefined;
+        }
         if (DIALOGS_WITH_TAB_RESET_ON_CLOSE.includes(id)) {
             this.dialogTabs.delete(id);
         }
         this.zIndexManager.updateIndexOnRemove(id);
     };
 
-    /**
-     * Puts a dialog back in the middle of the window, and shows its first tab. A workspace restore
-     * does this before it applies the place and the tab that the workspace saved.
-     */
     /**
      * Lets a dialog that is always mounted give and take the settings that it shows but that are not
      * applied, so that a workspace keeps them. Returns a function that removes the handler.
@@ -176,6 +183,10 @@ export class DialogStore {
         this.settingsHandlers.get(id)?.apply(settings);
     };
 
+    /**
+     * Puts a dialog back in the middle of the window, and shows its first tab. A workspace restore
+     * does this before it applies the place and the tab that the workspace saved.
+     */
     @action resetPlaceAndTab = (id: string) => {
         this.dialogGeometries.delete(id);
         if (id === DialogId.FileInfo) {
@@ -183,6 +194,12 @@ export class DialogStore {
         } else {
             this.dialogTabs.delete(id);
         }
+    };
+
+    /** Gives the fitting settings in the Image Fitting dialog the given height, or the height that they start with when `height` is undefined. */
+    @action restoreFittingSettingsHeight = (height: number | undefined) => {
+        this.fittingSettingsHeight = height;
+        this.fittingSettingsRestoreCount++;
     };
 
     @action setFileInfoSearchString = (searchString: string | undefined) => {

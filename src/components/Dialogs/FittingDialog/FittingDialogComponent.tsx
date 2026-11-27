@@ -19,6 +19,14 @@ import "./FittingDialogComponent.scss";
 export class FittingDialogComponent extends React.Component {
     @observable private isMouseEntered: boolean = false;
 
+    /** Records the height of the fitting settings in the dialog store, so that a workspace saves it. */
+    private onSplitResizeEnd = (sizes: number[]) => {
+        const total = (sizes[0] ?? 0) + (sizes[1] ?? 0);
+        if (total > 0) {
+            AppStore.Instance.dialogStore.fittingSettingsHeight = Math.round((sizes[0] / total) * 1000) / 10;
+        }
+    };
+
     private setFittingResultTabId = (tabId: FittingResultTabs) => {
         AppStore.Instance.dialogStore.selectTab(DialogId.Fitting, tabId);
     };
@@ -35,6 +43,8 @@ export class FittingDialogComponent extends React.Component {
     private static readonly DefaultHeight = 600;
     private static readonly MinWidth = 375;
     private static readonly MinHeight = 250;
+    /** The height of the fitting settings when the dialog opens, in percent of the area below the data source. */
+    private static readonly SettingsHeightDefault = 45;
 
     constructor(props: any) {
         super(props);
@@ -177,8 +187,9 @@ export class FittingDialogComponent extends React.Component {
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                 </div>
-                <SplitPane direction="vertical">
-                    <Pane defaultSize="45%">
+                {/* A restored height makes a new key, so that the split pane takes the height. */}
+                <SplitPane key={appStore.dialogStore.fittingSettingsRestoreCount} direction="vertical" onResizeEnd={this.onSplitResizeEnd}>
+                    <Pane defaultSize={`${appStore.dialogStore.fittingSettingsHeight ?? FittingDialogComponent.SettingsHeightDefault}%`}>
                         <div className="upper-pane">
                             <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
                                 <ScrollShadow>

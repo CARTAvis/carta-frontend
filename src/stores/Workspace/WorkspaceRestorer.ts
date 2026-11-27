@@ -627,6 +627,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (id === DialogId.FileInfo) {
                 dialogStore.setFileInfoSearchString(typeof dialog.search === "string" ? dialog.search : undefined);
             }
+            if (id === DialogId.Fitting) {
+                const height = dialog.settingsHeight;
+                dialogStore.restoreFittingSettingsHeight(typeof height === "number" && isFinite(height) && height > 0 ? Math.min(height, 100) : undefined);
+            }
             if (id === DialogId.Snippet) {
                 this.showSnippetDialog();
             } else {

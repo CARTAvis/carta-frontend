@@ -1027,6 +1027,9 @@ export class WorkspaceSnapshotter {
         if (id === DialogId.FileInfo && typeof dialogStore.fileInfoSearchString === "string") {
             dialog.search = dialogStore.fileInfoSearchString;
         }
+        if (id === DialogId.Fitting && typeof dialogStore.fittingSettingsHeight === "number") {
+            dialog.settingsHeight = dialogStore.fittingSettingsHeight;
+        }
         return dialog;
     }
 

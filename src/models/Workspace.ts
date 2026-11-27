@@ -839,6 +839,8 @@ export interface WorkspaceSpectralLineQueryWidgetConfig {
     spectralProfilerId?: string;
     /** The widths of the columns of the table that lists the columns of the result: name, display and description. */
     headerTableColumnWidths?: number[];
+    /** The height of the result table, in percent of the area below the query settings. Left out while the separator is where it starts. */
+    resultTableHeight?: number;
     /** The result table. Left out when the widget showed no result. A restore runs the query again. */
     result?: WorkspaceSpectralLineQueryResult;
 }
@@ -1156,6 +1158,8 @@ export interface WorkspaceDialog {
     tab?: string;
     /** The File Info dialog: the text of the header search. Left out when the search was closed. */
     search?: string;
+    /** The Image Fitting dialog: the height of the fitting settings, in percent of the area below the data source. Left out while the separator was where it starts. */
+    settingsHeight?: number;
     /**
      * How many floating widgets and settings panels were below the dialog. The dialogs and the
      * floating widgets share one stacking order, so a restore puts the dialog back between them.

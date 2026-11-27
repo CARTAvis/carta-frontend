@@ -487,6 +487,18 @@ describe("WorkspaceRestorer", () => {
         expect(calls).toEqual(["hide file-info-dialog", "search CRVAL", "show file-info-dialog"]);
     });
 
+    test("gives the Image Fitting dialog the saved height of its fitting settings, or the height that they start with", async () => {
+        const {appStore} = createSession();
+        const dialogStore = appStore.dialogStore as any;
+        dialogStore.restoreFittingSettingsHeight = jest.fn();
+
+        for (const settingsHeight of [30.5, 150, 0, "30"]) {
+            await restore(createWorkspace({openDialogs: ["fitting-dialog"], dialogs: {"fitting-dialog": {settingsHeight} as any}}));
+        }
+
+        expect(dialogStore.restoreFittingSettingsHeight.mock.calls).toEqual([[30.5], [100], [undefined], [undefined]]);
+    });
+
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
         const {appStore} = createSession();
         const zIndexManager = new FloatingObjzIndexManager();
