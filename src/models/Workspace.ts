@@ -385,7 +385,11 @@ export interface WorkspaceFile {
     unappliedContourConfig?: WorkspaceContourConfig;
     /** The vector overlay settings of an image whose vector overlay is off, as for `unappliedContourConfig`. */
     unappliedVectorOverlayConfig?: WorkspaceVectorOverlayConfig;
+    /** The regions of an image that is not matched to another image, and the region that the image toolbar creates for it. */
     regionsSet?: {
+        /** The type of a new region, and whether the mouse creates regions. */
+        newRegionType?: CARTA.RegionType;
+        regionMode?: RegionMode;
         selectedRegion?: number;
         /** The regions that were selected together, by their saved IDs. Left out when one region or none was selected. */
         selectedRegions?: number[];
@@ -975,7 +979,7 @@ export interface WorkspaceHipsQuery {
 export interface WorkspaceToolbar {
     expanded: boolean;
     activeLayer: ImageViewLayer;
-    /** The image in front: the type of a new region, and whether the mouse creates regions. */
+    /** The image in front: the type of a new region, and whether the mouse creates regions. Each image also saves its own in `regionsSet`. */
     newRegionType?: CARTA.RegionType;
     regionMode?: RegionMode;
 }

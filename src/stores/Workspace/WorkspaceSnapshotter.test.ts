@@ -229,6 +229,20 @@ describe("WorkspaceSnapshotter", () => {
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
+    test("captures the type of a new region and the region mode of each image that is not matched to another", () => {
+        const reference = createFrame(0, {regionSet: {regions: [], focusedRegion: undefined, newRegionType: CARTA.RegionType.ELLIPSE, mode: 1}});
+        const matched = createFrame(1, {spatialReference: reference, regionSet: reference.regionSet});
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+        createSession({frames: [reference, matched], activeFrame: reference, getFrame: (fileId: number) => [reference, matched][fileId]});
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet).toEqual({newRegionType: CARTA.RegionType.ELLIPSE, regionMode: 1});
+        expect(workspace.files?.[1]).not.toHaveProperty("regionsSet");
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
     test("leaves the offset coordinates of an image matched to another to that image", () => {
         const reference = createFrame(0);
         const matched = createFrame(1, {spatialReference: reference, isOffsetCoord: true, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});

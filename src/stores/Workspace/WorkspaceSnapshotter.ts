@@ -409,16 +409,17 @@ export class WorkspaceSnapshotter {
 
         if (frame.spatialReference) {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
-        } else if (frame.regionSet?.regions.length) {
+        } else if (frame.regionSet) {
             // Regions are only the image's own while it is not matched to another one.
             // A region without an ID from the backend is not saved, so it is not saved as selected either.
+            const regionSet = frame.regionSet;
             const isSaved = (regionId: number | undefined) => regionId !== undefined && regionId > CURSOR_REGION_ID;
-            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []).filter(isSaved);
-            const focusedRegionId = frame.regionSet.focusedRegion?.regionId;
+            const selectedRegions = Array.from(regionSet.selectedRegionIds ?? []).filter(isSaved);
+            const focusedRegionId = regionSet.focusedRegion?.regionId;
             workspaceFile.regionsSet = {
-                selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined,
-                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
-                regions: this.captureRegions(frame)
+                newRegionType: regionSet.newRegionType,
+                regionMode: regionSet.mode,
+                ...(regionSet.regions?.length ? {selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined, ...(selectedRegions.length > 1 ? {selectedRegions} : {}), regions: this.captureRegions(frame)} : {})
             };
         }
 

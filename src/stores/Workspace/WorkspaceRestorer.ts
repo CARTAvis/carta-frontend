@@ -2170,7 +2170,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
-        if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
+        if (frame.spatialReference || !fileInfo.regionsSet) {
+            return;
+        }
+        const {newRegionType, regionMode} = fileInfo.regionsSet;
+        if (Object.values(CARTA.RegionType).includes(newRegionType as CARTA.RegionType)) {
+            frame.regionSet.setNewRegionType(newRegionType as CARTA.RegionType);
+        }
+        if (regionMode === RegionMode.MOVING || regionMode === RegionMode.CREATING) {
+            frame.regionSet.setMode(regionMode);
+        }
+        if (!fileInfo.regionsSet.regions) {
             return;
         }
 

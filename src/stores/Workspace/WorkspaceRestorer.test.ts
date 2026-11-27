@@ -1113,6 +1113,19 @@ describe("WorkspaceRestorer", () => {
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
     });
 
+    test("gives each image the type of a new region and the region mode that it was saved with, keeping the values that are not valid", async () => {
+        const {appStore} = createSession();
+        const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}, regionsSet: {newRegionType: "point", regionMode: 2} as any};
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {newRegionType: 3, regionMode: 1}}, second]}));
+
+        const calls = appStore.frames.map((frame: any) => [frame.regionSet.setNewRegionType.mock.calls, frame.regionSet.setMode.mock.calls]);
+        expect(calls).toEqual([
+            [[[3]], [[1]]],
+            [[], []]
+        ]);
+    });
+
     test("mirrors the cursor again only when it was mirrored, and applies the image toolbar, keeping the values that are not valid", async () => {
         const {appStore} = createSession();
 
