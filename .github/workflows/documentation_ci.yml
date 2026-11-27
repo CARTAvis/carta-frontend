@@ -12,6 +12,19 @@ permissions:
   contents: read
 
 jobs:
+  format-check-doc:
+    name: Check formatting of the documentation website
+    if: github.event_name == 'merge_group'
+    runs-on: [self-hosted, Linux, X64, Docker]
+    container:
+      image: carta/frontend-format-check
+    defaults:
+      run:
+        working-directory: ./docs_website
+    steps:
+      - uses: actions/checkout@v6
+      - run: prettier --check ./api ./docs ./src sidebars.js ./versioned_docs
+
   test-doc:
     name: Test deployment of the documentation website
     if: github.event_name == 'merge_group'
