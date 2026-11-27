@@ -31,15 +31,6 @@ const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
 
 const PreferencesValidator = new Ajv({strictTypes: false}).compile(PREFERENCES_SCHEMA);
 
-/** A preference that a workspace restore applied for the session, with a value other than the user's own. */
-export interface SessionPreferenceChange {
-    key: PreferenceKeys;
-    /** The value that the workspace saved, which the session uses. */
-    value: unknown;
-    /** The value that the user's preferences give. */
-    ownValue: unknown;
-}
-
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
@@ -215,18 +206,18 @@ export class PreferenceStore {
 
     /**
      * Applies the preferences that a workspace saved, for this session only, in place of the session
-     * values that a previous workspace applied. A key that a workspace does not save, or a value that
-     * the preference does not accept, is left out.
+     * values that a previous workspace applied. Only a value that differs from the user's own value
+     * is kept. A key that a workspace does not save, or a value that the preference does not accept,
+     * is left out.
      *
      * @param values - the saved values by key. Undefined clears the session values, as for a workspace that saved none.
-     * @returns the preferences whose session value differs from the user's own value, and the keys that were left out.
+     * @returns the keys that were left out.
      */
-    @action applySessionPreferences = (values: unknown): {changes: SessionPreferenceChange[]; rejectedKeys: string[]} => {
+    @action applySessionPreferences = (values: unknown): {rejectedKeys: string[]} => {
         this.sessionPreferences.clear();
-        const changes: SessionPreferenceChange[] = [];
         const rejectedKeys: string[] = [];
         if (!values || typeof values !== "object" || Array.isArray(values)) {
-            return {changes, rejectedKeys};
+            return {rejectedKeys};
         }
         for (const [key, saved] of Object.entries(values)) {
             const preference = SESSION_PREFERENCES[key as PreferenceKeys];
@@ -235,13 +226,14 @@ export class PreferenceStore {
                 rejectedKeys.push(key);
                 continue;
             }
+            // Compare colors such as "#FFFFFF" and "#ffffff" without case.
             const ownValue = preference.valueOf(this);
-            this.sessionPreferences.set(key as PreferenceKeys, value);
-            if (!_.isEqual(ownValue, value)) {
-                changes.push({key: key as PreferenceKeys, value, ownValue});
+            const isSame = typeof ownValue === "string" && typeof value === "string" ? ownValue.toLowerCase() === value.toLowerCase() : _.isEqual(ownValue, value);
+            if (!isSame) {
+                this.sessionPreferences.set(key as PreferenceKeys, value);
             }
         }
-        return {changes, rejectedKeys};
+        return {rejectedKeys};
     };
 
     /** Returns the value that a session can use for a saved value, or undefined when the preference does not accept it. */

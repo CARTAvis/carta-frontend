@@ -68,7 +68,6 @@ import {
     MirrorSiteStore,
     restoreWorkspaceZoom,
     scaleFrameZoom,
-    type SessionPreferenceChange,
     StreamingRowSource,
     type WorkspaceLoadingStep
 } from "stores";
@@ -324,8 +323,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * such a preview, or the preview was not made again.
      */
     private activePvPreviewState: "none" | "pending" | "restored" = "none";
-    /** The preferences that this restore applied for the session with a value other than the user's own. */
-    public sessionPreferenceChanges: SessionPreferenceChange[] = [];
     /** The steps that the restore waits for at the same time, in the order that they started. */
     private readonly waitingSteps: {step?: WorkspaceLoadingStep}[] = [];
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
@@ -842,7 +839,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         const followsActiveImage = (config: WorkspacePlotWidgetConfig) => PV_PREVIEW_WIDGET_TYPES.includes(config?.type) && (config as {imageId?: unknown}).imageId === undefined;
         if (!isPreviewActive) {
             this.activePvPreviewState = "none";
-            if (Object.values(plotWidgets ?? {}).some(followsActiveImage)) {
+            // Report only a widget that saved a zoom of the preview.
+            const hasSavedZoom = (config: WorkspacePlotWidgetConfig) => ["minX", "minY", "pixelBounds"].some(field => (config as unknown as Record<string, unknown>)[field] !== undefined);
+            if (Object.values(plotWidgets ?? {}).some(config => followsActiveImage(config) && hasSavedZoom(config))) {
                 this.report(WorkspaceItemKind.PlotWidget, "", "The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
             }
             return;
@@ -1077,8 +1076,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!preferenceStore) {
             return;
         }
-        const {changes, rejectedKeys} = preferenceStore.applySessionPreferences(this.workspace.preferences);
-        this.sessionPreferenceChanges = changes;
+        const {rejectedKeys} = preferenceStore.applySessionPreferences(this.workspace.preferences);
         if (rejectedKeys.length) {
             const preferences = rejectedKeys.length === 1 ? `the preference ${rejectedKeys[0]}` : `${rejectedKeys.length} preferences (${rejectedKeys.join(", ")})`;
             this.report(WorkspaceItemKind.Layout, "preferences", `Could not apply ${preferences} for this session: this version does not know the preference or does not accept the saved value. Your own value is used`);

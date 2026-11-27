@@ -10,13 +10,16 @@ import {type PreferenceStore} from "./PreferenceStore";
 
 /** How a preference that a workspace saves is named, read and checked. */
 interface SessionPreference {
-    /** How the restore report names the preference, as the Preferences dialog shows it. */
+    /** How the Preferences dialog names the preference when the session uses the value of a workspace. */
     label: string;
     /** Returns the value in effect, as the getter of the preference gives it. */
     valueOf: (preferences: PreferenceStore) => unknown;
     /** Returns whether a saved value can be applied. A value must also pass the preferences schema when the schema has the key. */
     isValid?: (value: unknown) => boolean;
 }
+
+/** The name of the custom colormap, as RenderConfigStore.COLOR_MAPS_CUSTOM. That store imports the stores, which import this module. */
+const CUSTOM_COLORMAP = "custom";
 
 function isBoolean(value: unknown): boolean {
     return typeof value === "boolean";
@@ -68,7 +71,8 @@ export const SESSION_PREFERENCES: Partial<Record<PreferenceKeys, SessionPreferen
     },
 
     [PreferenceKeys.RENDER_CONFIG_SCALING]: {label: "Render: default scaling", valueOf: p => p.scaling, isValid: value => isSupportedFrameScaling(value as FrameScaling)},
-    [PreferenceKeys.RENDER_CONFIG_COLORMAP]: {label: "Render: default colormap", valueOf: p => p.colormap, isValid: isColormap},
+    // The Preferences dialog also offers the custom colormap of one color for new images.
+    [PreferenceKeys.RENDER_CONFIG_COLORMAP]: {label: "Render: default colormap", valueOf: p => p.colormap, isValid: value => isColormap(value) || value === CUSTOM_COLORMAP},
     [PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED]: {label: "Render: invert the colormap", valueOf: p => p.isColormapInverted, isValid: isBoolean},
     [PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX]: {label: "Render: color of a custom colormap", valueOf: p => p.colormapHex, isValid: isColor},
     [PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START]: {label: "Render: start color of a custom colormap", valueOf: p => p.colormapHexStart, isValid: isColor},

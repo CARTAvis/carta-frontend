@@ -2,14 +2,14 @@ import * as React from "react";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {type FrameStore, RenderConfigStore} from "stores/Frame";
+import {RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {getColorForTheme, getHistogramPlotData, type HistogramPlotData, scaleValue, toExponential, toFixed} from "utilities";
 
@@ -41,7 +41,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private cachedFrame: FrameStore;
     private cachedHistogram: CARTA.Histogram.$Properties | undefined;
     private widgetId: string;
     private readonly cachedWidgetStore: RenderConfigWidgetStore;
@@ -105,22 +104,21 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         );
     }
 
+    componentDidMount() {
+        // Reset the zoom range when the image in front changes. A reaction runs at the change, so a
+        // zoom range that is set right after it, such as one that a workspace restored, stays. A
+        // zoom range that the widget has when it mounts belongs to the image in front.
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame,
+                () => this.widgetStore.clearXYBounds()
+            )
+        );
+    }
+
     componentWillUnmount() {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
-    }
-
-    componentDidMount() {
-        this.cachedFrame = AppStore.Instance.activeFrame as FrameStore;
-    }
-
-    componentDidUpdate() {
-        const frame = AppStore.Instance.activeFrame;
-
-        if (frame !== this.cachedFrame) {
-            this.cachedFrame = frame as FrameStore;
-            this.widgetStore.clearXYBounds();
-        }
     }
 
     handleScaleMinChange = ev => {

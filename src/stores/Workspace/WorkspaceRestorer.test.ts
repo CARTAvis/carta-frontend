@@ -253,7 +253,7 @@ function createSession() {
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
-        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0, applySessionPreferences: jest.fn((_values: unknown): {changes: unknown[]; rejectedKeys: string[]} => ({changes: [], rejectedKeys: []}))},
+        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0, applySessionPreferences: jest.fn((_values: unknown): {rejectedKeys: string[]} => ({rejectedKeys: []}))},
         imageViewConfigStore: {
             createColorBlending: jest.fn(),
             imageNum: 1,
@@ -688,8 +688,9 @@ describe("WorkspaceRestorer", () => {
         const request = {imageId: 0, regionId: 1, width: 3, reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1};
         const plotWidgets = {
             "pv-generator-0": {type: "pv-generator", preview: {isActive: true, request}},
-            "histogram-0": {type: "histogram"},
+            "histogram-0": {type: "histogram", minX: 1, maxX: 2},
             "histogram-1": {type: "histogram", imageId: 0},
+            "spatial-profiler-0": {type: "spatial-profiler"},
             "stats-0": {type: "stats"}
         };
 
@@ -712,7 +713,7 @@ describe("WorkspaceRestorer", () => {
                 Object.entries(plotWidgets)
                     .filter(([, config]) => only(config))
                     .map(([id]) => id)
-            ).toEqual(["histogram-0"]);
+            ).toEqual(["histogram-0", "spatial-profiler-0"]);
             const views = appStore.widgetsStore.restorePlotWidgetViews.mock;
             expect(views.calls).toHaveLength(2);
             expect(views.calls[1][2]).toBe(only);
@@ -727,6 +728,16 @@ describe("WorkspaceRestorer", () => {
 
             expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledTimes(1);
             expect(problems).toContain("The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
+        });
+
+        test("say nothing when the preview was not made again and no widget saved a zoom of it", async () => {
+            const {appStore} = createSession();
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: null}]]);
+            const withoutZoom = {...plotWidgets, "histogram-0": {type: "histogram"}};
+
+            const problems = await restore(createWorkspace({plotWidgets: withoutZoom as never}));
+
+            expect(problems).toEqual([]);
         });
     });
 
@@ -2079,22 +2090,20 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.setSpectralMatchingType.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
     });
 
-    test("applies the saved preferences for the session before it opens the images, and gives the ones that differ for the report", async () => {
+    test("applies the saved preferences for the session before it opens the images, without a report", async () => {
         const {appStore} = createSession();
-        const changes = [{key: "regionColor", value: "#00ff00", ownValue: "#ffffff"}];
-        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({changes, rejectedKeys: []});
         const preferences = {regionColor: "#00ff00"} as never;
 
-        const restorer = await restored(createWorkspace({preferences}));
+        const problems = await restore(createWorkspace({preferences}));
 
         expect(appStore.preferenceStore.applySessionPreferences).toHaveBeenCalledWith(preferences);
         expect(appStore.preferenceStore.applySessionPreferences.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
-        expect(restorer.sessionPreferenceChanges).toEqual(changes);
+        expect(problems).toEqual([]);
     });
 
     test("clears the preferences of a previous workspace for a workspace that saved none, and reports the saved preferences that it cannot apply", async () => {
         const {appStore} = createSession();
-        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({changes: [], rejectedKeys: ["theme", "newKey"]});
+        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({rejectedKeys: ["theme", "newKey"]});
 
         const problems = await restore(createWorkspace());
 

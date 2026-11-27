@@ -33,16 +33,30 @@ describe("PreferenceStore", () => {
             await store.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG]);
         });
 
-        it("uses the saved values in place of the stored preferences, and gives the ones that differ from the user's own", async () => {
+        it("uses the saved values in place of the stored preferences, and keeps only the ones that differ from the user's own", async () => {
             await store.setPreference(PreferenceKeys.REGION_COLOR, "#ff0000");
 
-            const {changes, rejectedKeys} = store.applySessionPreferences({regionColor: "#00ff00", regionLineWidth: 2});
+            const {rejectedKeys} = store.applySessionPreferences({regionColor: "#00ff00", regionLineWidth: 2});
 
             expect([store.regionColor, store.regionLineWidth]).toEqual(["#00ff00", 2]);
             expect(store.preferences.get(PreferenceKeys.REGION_COLOR)).toBe("#ff0000");
-            expect(changes).toEqual([{key: PreferenceKeys.REGION_COLOR, value: "#00ff00", ownValue: "#ff0000"}]);
+            expect([...store.sessionPreferences.keys()]).toEqual([PreferenceKeys.REGION_COLOR]);
             expect(rejectedKeys).toEqual([]);
-            expect(store.hasSessionPreferences).toBe(true);
+        });
+
+        it("keeps no session value for a color that differs from the user's own only in case", async () => {
+            await store.setPreference(PreferenceKeys.REGION_COLOR, "#FF0000");
+
+            store.applySessionPreferences({regionColor: "#ff0000"});
+
+            expect(store.hasSessionPreferences).toBe(false);
+        });
+
+        it("accepts the custom colormap of one color as the default colormap", () => {
+            const {rejectedKeys} = store.applySessionPreferences({colormap: "custom", colormapHex: "#00ff00"});
+
+            expect(rejectedKeys).toEqual([]);
+            expect([store.colormap, store.colormapHex]).toEqual(["custom", "#00ff00"]);
         });
 
         it("leaves out a key that a workspace does not save, and a value that the preference does not accept", () => {

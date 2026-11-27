@@ -23,7 +23,7 @@ import {
 } from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PasteOffsetUnit, PreferenceDialogTabs, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, MirrorSiteStore, PreferenceStore} from "stores";
+import {AppStore, MirrorSiteStore, PreferenceStore, SESSION_PREFERENCES} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {clamp, getScalingParameterConfig, SWATCH_COLORS} from "utilities";
 
@@ -1036,7 +1036,18 @@ export class PreferenceDialogComponent extends React.Component {
                     {preference.hasSessionPreferences && (
                         <div className="session-preferences-note" data-testid="preference-dialog-session-note">
                             <Icon icon="info-sign" intent={Intent.PRIMARY} />
-                            <span>Some values come from the workspace, for this session only. Your stored preferences do not change.</span>
+                            <Tooltip
+                                content={
+                                    <div>
+                                        {[...preference.sessionPreferences.keys()].map(key => (
+                                            <div key={key}>{SESSION_PREFERENCES[key]?.label ?? key}</div>
+                                        ))}
+                                    </div>
+                                }
+                                position={Position.TOP}
+                            >
+                                <span>Some values come from the workspace, for this session only. Your stored preferences do not change.</span>
+                            </Tooltip>
                             <AnchorButton size="small" onClick={preference.clearSessionPreferences} data-testid="preference-dialog-use-own-button">
                                 Use my preferences
                             </AnchorButton>
