@@ -5,7 +5,17 @@ on:
     tags: ['**']
 jobs:
 
-  node-v24:
+  node:
+    name: node-v${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [22, 24]
+    env:
+      NODE_VERSION: ${{ matrix.version }}
+    outputs:
+      node-v22: ${{ steps.result.outputs.node-v22 }}
+      node-v24: ${{ steps.result.outputs.node-v24 }}
     runs-on: [self-hosted, Linux, X64, Docker]
     container:
       image: carta/frontend-builder
@@ -37,82 +47,35 @@ jobs:
           test -s ./wasm_libs/built/lib/libzfp.a
           test -s ./wasm_libs/zstd/build/standalone_zstd.a
 
-      - name: npm install with node 24
+      - name: npm install with Node.js ${{ matrix.version }}
         shell: bash
         run: |
-          n 24
-          n exec 24 node -v
-          n exec 24 npm install
+          n "$NODE_VERSION"
+          n exec "$NODE_VERSION" node -v
+          n exec "$NODE_VERSION" npm install
 
-      - name: Production build with node 24
+      - name: Production build with Node.js ${{ matrix.version }}
         shell: bash
         run: |
           source /emsdk/emsdk_env.sh
-          export PATH="$(dirname "$(find /usr/local/n/versions/node -path '*/24.*/bin/node' -print -quit)"):$PATH"
+          export PATH="$(dirname "$(find /usr/local/n/versions/node -path "*/$NODE_VERSION.*/bin/node" -print -quit)"):$PATH"
           node -v
           npm run build
 
       - name: Run unit tests
         shell: bash
         run: |
-          n exec 24 npm test
+          n exec "$NODE_VERSION" npm test
 
-  node-v22:
-    runs-on: [self-hosted, Linux, X64, Docker]
-    container:
-      image: carta/frontend-builder
-      options: --security-opt seccomp=unconfined
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-
-      - name: Fix ownership
-        run: |
-          chown -R $(id -u):$(id -g) $PWD
-
-      - name: Use precompiled WASM libraries
-        shell: bash
-        run: |
-          set -e
-
-          cp -a /opt/carta/wasm_libs/built ./wasm_libs/
-
-          mkdir -p ./wasm_libs/zstd/build
-          cp /opt/carta/wasm_libs/zstd/build/standalone_zstd.a \
-             ./wasm_libs/zstd/build/
-
-          test -s ./wasm_libs/built/lib/libast.a
-          test -s ./wasm_libs/built/lib/libgsl.a
-          test -s ./wasm_libs/built/lib/libgslcblas.a
-          test -s ./wasm_libs/built/lib/libzfp.a
-          test -s ./wasm_libs/zstd/build/standalone_zstd.a
-
-      - name: npm install with node 22
-        shell: bash
-        run: |
-          n 22
-          n exec 22 node -v
-          n exec 22 npm install
-
-      - name: Production build with node 22
-        shell: bash
-        run: |
-          source /emsdk/emsdk_env.sh
-          export PATH="$(dirname "$(find /usr/local/n/versions/node -path '*/22.*/bin/node' -print -quit)"):$PATH"
-          node -v
-          npm run build
-
-      - name: Run unit tests
-        shell: bash
-        run: |
-          n exec 22 npm test
+      - name: Record result
+        id: result
+        if: always()
+        run: printf 'node-v%s=%s\n' "$NODE_VERSION" "${{ job.status }}" >> "$GITHUB_OUTPUT"
 
   Notify:
     name: Send notifications
     runs-on: ubuntu-latest
-    needs: [node-v22, node-v24]
+    needs: node
     if: always()
     steps:
       - name: Summarize CI results
@@ -120,6 +83,6 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
           | Check | Result |
           | --- | --- |
-          | Node.js 22 | ${{ needs.node-v22.result }} |
-          | Node.js 24 | ${{ needs.node-v24.result }} |
+          | Node.js 22 | ${{ needs.node.outputs.node-v22 || 'unavailable' }} |
+          | Node.js 24 | ${{ needs.node.outputs.node-v24 || 'unavailable' }} |
           EOF
