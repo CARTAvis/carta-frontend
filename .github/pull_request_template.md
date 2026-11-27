@@ -1,23 +1,22 @@
+**Issues and related PRs or branches**
+
+Closed #xxxx. Stacked on none or #xxxx.
+
+| Backend | Protobuf | Schemas |
+|---|---|---|
+| dev | dev | dev |
+
 **Description**
 
-linked issues and companion PRs (if there are), what is implemented or fixed, how to test it, …
+**Suggested tests**
+None
 
 **Checklist**
 
-For linked issues (if there are):
-- [ ] assignee and label added
-- [ ] GitHub Project estimate added
-
-For the pull request:
-- [ ] reviewers and assignee added
-- [ ] GitHub Project estimate added
-- [ ] changelog updated / no changelog update needed
-- [ ] unit test added (for functions with no dependenies)
-- [ ] API documentation added (for public variables and methods in stores)
-
-For dependencies:
-- [ ] e2e test passing / corresponding fix added / new e2e test created
-- [ ] protobuf version bumped / no protobuf version bumped needed
-- [ ] protobuf updated to the latest dev commit / no protobuf update needed
-- [ ] corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged)
-- [ ] user manual prepared (for large new features)
+|For linked issues:| For the pull request: | For dependencies: |
+|---|---|---|
+|  <ul><li> - [ ] Assignee and label added </li></ul>  |  <ul><li> - [ ] Reviewers and assignee added </li></ul>  | <ul><li> - [ ] e2e test passing </li><li> - [ ] corresponding fix added </li><li>  - [ ] new e2e test created </li></ul> |
+| <ul><li> - [ ] GitHub Project estimate added </li></ul>  | <ul><li> - [ ] GitHub Project estimate added </li></ul>  |  <ul><li> - [ ] protobuf updated to the latest dev commit </li><li>  - [ ] no protobuf update needed </li></ul>  |
+| | <ul><li> - [ ] workspace support needed (snapshot/restore, related code, or e2e tests) </li><li>  - [ ] no workspace support needed </li></ul> | <ul><li> - [ ] schemas updated to the latest dev commit </li><li>  - [ ] no schemas update needed </li></ul>|
+| | <ul><li> - [ ] Changelog updated </li><li>  - [ ] no Changelog update needed </li></ul> | <ul><li> - [ ] corresponding ICD test fixed or added </li><li>  - [ ] no ICD test fix needed </li></ul>  |
+| | | <ul><li>- [ ] user manual prepared (for large new features)</li></ul>|
