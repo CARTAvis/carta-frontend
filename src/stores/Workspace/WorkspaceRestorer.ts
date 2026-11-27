@@ -429,8 +429,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         // The custom texts of the overlay describe the images of the workspace, so they come from the
-        // workspace only. A workspace that saved none, such as one of CARTA 6, sets them back to the
-        // defaults.
+        // workspace only. A workspace that saved none, such as one of workspace version 1, sets them
+        // back to the defaults.
         this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         // The backend registers the regions while the images are configured. Moment and PV images
         // wait for the regions. The cube histograms are computed while the catalogs open. The
@@ -516,8 +516,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Starts a workspace saved without a layout copy, such as one of CARTA 6, from the layout of the
-     * preferences, with the default image view settings and WCS overlay, as CARTA does when it starts.
+     * Starts a workspace saved without a layout copy, such as one of workspace version 1, from the
+     * layout of the preferences, with the default image view settings and WCS overlay, as CARTA does when it starts.
      * Otherwise the widgets, the image view and the overlay of the previous session would stay. Do
      * this before the images and catalogs open, so that they open into the new widgets.
      */
@@ -544,7 +544,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Shows the images in the coordinate system that the layout copy saved, before they open. Images
      * are matched in the coordinates that the session shows: image coordinates match pixel to pixel,
      * and world coordinates match by sky position. So the images are matched as they were saved. When
-     * the workspace saved no valid system, as a workspace of CARTA 6, the session leaves image
+     * the workspace saved no valid system, as a workspace of version 1, the session leaves image
      * coordinates for automatic coordinates, so that the images are matched by sky position. The
      * layout copy applies the other settings of the WCS overlay later.
      */
@@ -661,7 +661,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * show are back.
      */
     private restoreDialogs(): void {
-        // A workspace that saved no list, such as one of CARTA 6, had no analysis dialog open.
+        // A workspace that saved no list, such as one of workspace version 1, had no analysis dialog open.
         const saved = Array.isArray(this.workspace.openDialogs) ? this.workspace.openDialogs : [];
         const dialogStore = this.appStore.dialogStore;
         WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
@@ -1124,8 +1124,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
      * images are matched, as matching an image moves it to the channel of its reference in this
-     * coordinate. A workspace saved before it kept this setting, such as one of CARTA 6, uses the
-     * preference, as CARTA does when it starts.
+     * coordinate. A workspace saved before it kept this setting, such as one of workspace version 1,
+     * uses the preference, as CARTA does when it starts.
      */
     private restoreSpectralMatchingType(): void {
         const type = this.workspace.spectralMatchingType;
@@ -2726,7 +2726,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /**
      * Make the mirror that the workspace saved the active mirror of its database, when the mirror is
      * available. Otherwise the session keeps its mirror. A workspace that saved no mirrors, such as one
-     * of CARTA 6, uses the mirrors of the preferences, as CARTA does when it starts.
+     * of workspace version 1, uses the mirrors of the preferences, as CARTA does when it starts.
      */
     private useSavedMirrors(): void {
         const saved = this.workspace.catalogMirrors;

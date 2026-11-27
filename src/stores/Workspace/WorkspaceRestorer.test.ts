@@ -396,7 +396,7 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.overlaySettings.forgetRestoredSettings).toHaveBeenCalled();
     });
 
-    describe("a workspace saved without the settings of the session, such as one of CARTA 6", () => {
+    describe("a workspace saved without the settings of the session, such as one of workspace version 1", () => {
         test("starts from the layout of the preferences, with the default image view and WCS overlay, before the images open", async () => {
             const {appStore, calls} = createSession();
             Object.assign(appStore.preferenceStore, {layout: "My layout"});
@@ -703,7 +703,7 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("closes the analysis dialogs and resets the unapplied dialog settings for a workspace saved without the open dialogs, such as one of CARTA 6", async () => {
+    test("closes the analysis dialogs and resets the unapplied dialog settings for a workspace saved without the open dialogs, such as one of workspace version 1", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({}));
@@ -1955,7 +1955,7 @@ describe("WorkspaceRestorer", () => {
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 
-    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of CARTA 6", async () => {
+    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of version 1", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({files: [IMAGE]}));
@@ -3436,7 +3436,7 @@ describe("WorkspaceRestorer", () => {
 
         test.each([
             ["saved world coordinates", {wcsOverlay: {global: {system: SystemType.Galactic}}}, SystemType.Galactic],
-            ["saved no overlay, as a workspace of CARTA 6", undefined, SystemType.Auto]
+            ["saved no overlay, as a workspace of version 1", undefined, SystemType.Auto]
         ])("leaves image coordinates before the images open, when the session shows them and the workspace %s", async (_, widgetSettings, expected) => {
             const {appStore} = createSession();
             appStore.overlaySettings.global.system = SystemType.Image;
