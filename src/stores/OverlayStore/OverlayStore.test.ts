@@ -405,3 +405,89 @@ describe("the custom texts of the WCS overlay in a workspace", () => {
         expect(overlay.toConfig()).toEqual(CUSTOM_OVERLAY);
     });
 });
+
+describe("the settings of the WCS overlay that follow the preferences when an image opens", () => {
+    beforeEach(() => {
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({frames: [], activeFrame: null, imageRatio: 1, imageViewConfigStore: {visibleFrames: []}} as any);
+        runInAction(() => {
+            PREFERENCE_KEYS.forEach(key => PreferenceStore.Instance.preferences.delete(key));
+            PreferenceStore.Instance.sessionPreferences.clear();
+        });
+        setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, true);
+        setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, 15);
+    });
+
+    afterEach(() => {
+        runInAction(() => PreferenceStore.Instance.sessionPreferences.clear());
+        jest.restoreAllMocks();
+    });
+
+    test("take the preferences when no workspace restored the overlay", () => {
+        const overlay = createOverlay();
+        overlay.grid.setVisible(false);
+        overlay.colorbar.setWidth(30);
+
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.grid.isVisible).toBe(true);
+        expect(overlay.colorbar.width).toBe(15);
+    });
+
+    test("keep what a workspace restored", () => {
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.toConfig()).toEqual(CUSTOM_OVERLAY);
+    });
+
+    test("keep a value that the user set after the restore", () => {
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+        overlay.grid.setVisible(true);
+
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.grid.isVisible).toBe(true);
+        expect(overlay.colorbar.width).toBe(30);
+    });
+
+    test("take a preference that the user changed after the restore, and leave the others", () => {
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+        setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, 20);
+
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.colorbar.width).toBe(20);
+        expect(overlay.grid.isVisible).toBe(false);
+        // The setting follows the preference from then on, also when the preference changes back.
+        setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, 15);
+        overlay.followPreferencesForNewImage();
+        expect(overlay.colorbar.width).toBe(15);
+    });
+
+    test("take the user's preferences when the user drops the preferences of the workspace", () => {
+        runInAction(() => PreferenceStore.Instance.sessionPreferences.set(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, false));
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+        runInAction(() => PreferenceStore.Instance.sessionPreferences.clear());
+
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.grid.isVisible).toBe(true);
+        expect(overlay.colorbar.width).toBe(30);
+    });
+
+    test("take the preferences again after the restored settings are forgotten", () => {
+        const overlay = createOverlay();
+        overlay.applyConfig(CUSTOM_OVERLAY);
+
+        overlay.forgetRestoredSettings();
+        overlay.followPreferencesForNewImage();
+
+        expect(overlay.grid.isVisible).toBe(true);
+        expect(overlay.colorbar.width).toBe(15);
+    });
+});

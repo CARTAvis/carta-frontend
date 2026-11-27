@@ -3105,8 +3105,10 @@ export class AppStore {
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            // The restore may have applied the preferences of the workspace before it failed. Do not keep them.
+            // The restore may have applied the preferences and the overlay of the workspace before it
+            // failed. Do not keep them.
             this.preferenceStore.clearSessionPreferences();
+            this.overlaySettings.forgetRestoredSettings();
             const message = err instanceof NewerWorkspaceError ? `Could not load workspace "${name}". ${err.message}` : `Could not load workspace "${name}"`;
             AppToaster.show({icon: "warning-sign", message, intent: "danger", timeout: err instanceof NewerWorkspaceError ? 6000 : 3000});
             this.finishLoadingWorkspace();

@@ -1019,6 +1019,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         appStore.animatorStore.stopAnimation();
         appStore.tileService.clearRequestQueue();
         appStore.removeAllFrames();
+        appStore.overlaySettings.forgetRestoredSettings();
         // A regular layout, such as the one of the preferences, can have made the display store of a
         // catalog that never opened. A catalog of the workspace with that file ID would take its style.
         appStore.widgetsStore.removeUnopenedLayoutDisplayStores();

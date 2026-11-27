@@ -293,7 +293,7 @@ function createSession() {
                 return true;
             })
         },
-        overlaySettings: {applyTextConfig: jest.fn(), global: {system: SystemType.Auto}}
+        overlaySettings: {applyTextConfig: jest.fn(), forgetRestoredSettings: jest.fn(), global: {system: SystemType.Auto}}
     };
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
