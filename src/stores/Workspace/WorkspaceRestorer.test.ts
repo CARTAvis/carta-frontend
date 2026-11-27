@@ -1113,6 +1113,26 @@ describe("WorkspaceRestorer", () => {
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
     });
 
+    test("opens each file with the saved AIPS beam support for that file only, and reports the images that differ from the preference", async () => {
+        const {appStore} = createSession();
+        const preferenceStore = {...appStore.preferenceStore, hasAipsBeamSupport: false, hasAipsBeamSupportForRestore: undefined as boolean | undefined};
+        Object.assign(appStore, {preferenceStore});
+        const usedValues: (boolean | undefined)[] = [];
+        const appendFile = appStore.appendFile.getMockImplementation()!;
+        appStore.appendFile.mockImplementation((...args: unknown[]) => {
+            usedValues.push(preferenceStore.hasAipsBeamSupportForRestore);
+            return (appendFile as (...args: unknown[]) => ReturnType<typeof appendFile>)(...args);
+        });
+        const file = (id: number, hasAipsBeamSupport?: boolean) => ({id, source: {type: "file" as const, filename: `image${id}.fits`}, ...(hasAipsBeamSupport === undefined ? {} : {aipsBeamSupport: hasAipsBeamSupport})});
+
+        const problems = await restore(createWorkspace({files: [file(1, true), file(2, false), file(3), file(4, true)]}));
+
+        expect(usedValues).toEqual([true, false, undefined, true]);
+        expect(preferenceStore.hasAipsBeamSupportForRestore).toBeUndefined();
+        expect(problems).toContain("2 images are opened with AIPS beam support on, as the workspace saved them. The preference stays off");
+        expect(problems.filter(problem => problem.includes("AIPS"))).toHaveLength(1);
+    });
+
     test("gives each image the type of a new region and the region mode that it was saved with, keeping the values that are not valid", async () => {
         const {appStore} = createSession();
         const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}, regionsSet: {newRegionType: "point", regionMode: 2} as any};

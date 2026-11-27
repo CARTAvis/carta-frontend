@@ -278,6 +278,8 @@ export class FrameStore {
     @observable pvImages: FrameStore[] = [];
     /** How a moment, PV, HiPS or image fitting image was made, so that a workspace can make it again. */
     generation: ImageGeneration | undefined = undefined;
+    /** Whether the backend opened the image with AIPS beam support. It is undefined for an image that is not opened from a file. */
+    hasAipsBeamSupport: boolean | undefined = undefined;
     @observable generatedPVRegionId: number = 0;
     @observable fittingResult: string = "";
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];

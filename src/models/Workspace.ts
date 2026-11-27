@@ -367,6 +367,8 @@ export interface WorkspaceFile {
      * not save, so only their order matters. Left out by a workspace saved before it kept the place.
      */
     imageListIndex?: number;
+    /** Whether the backend opened the image with AIPS beam support. Left out for an image that is not opened from a file, and by an older workspace. */
+    aipsBeamSupport?: boolean;
     /** The result of the last image fitting of the image. Left out when the image has no result. */
     fitResult?: WorkspaceImageFitResult;
     /** The custom title of the image in the WCS overlay. Left out when it is the default title, the file name. */

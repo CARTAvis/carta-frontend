@@ -904,9 +904,15 @@ export class AppStore {
             // Taken before the request goes out: a second load started while this one is still in
             // flight would otherwise be handed the same ID and replace the image this one opens.
             const fileId = this.fileCounter++;
-            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic);
+            // Take the AIPS beam support of a restore only while a workspace loads. Then a value that a stopped restore left does not apply to later images.
+            const hasAipsBeamSupport = (isRestoring ? this.preferenceStore.hasAipsBeamSupportForRestore : undefined) ?? this.preferenceStore.hasAipsBeamSupport;
+            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic, hasAipsBeamSupport);
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, shouldSetAsActive, shouldUpdateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            }
+            const frame = this.getFrame(ack.fileId);
+            if (frame) {
+                frame.hasAipsBeamSupport = hasAipsBeamSupport;
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -2941,7 +2947,7 @@ export class AppStore {
                 regions: mapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
-                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport,
+                supportAipsBeam: frame.hasAipsBeamSupport ?? AppStore.Instance.preferenceStore.hasAipsBeamSupport,
                 vectorOverlaySettings
             };
         });

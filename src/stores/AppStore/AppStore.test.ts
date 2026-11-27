@@ -598,6 +598,21 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("opens an image with the AIPS beam support of a workspace restore in place of the preference, only while a workspace loads", async () => {
+        const loadFile = jest.spyOn(appStore.backendService, "loadFile").mockRejectedValue(new Error("unreadable image"));
+        const hasPreference = appStore.preferenceStore.hasAipsBeamSupport;
+        appStore.preferenceStore.hasAipsBeamSupportForRestore = !hasPreference;
+
+        runInAction(() => (appStore.isLoadingWorkspace = true));
+        await expect(appStore.loadFile("", "image.fits", "", false)).rejects.toThrow("unreadable image");
+        runInAction(() => (appStore.isLoadingWorkspace = false));
+        await expect(appStore.loadFile("", "image.fits", "", false)).rejects.toThrow("unreadable image");
+        appStore.preferenceStore.hasAipsBeamSupportForRestore = undefined;
+        appStore.alertStore.dismissAlert();
+
+        expect(loadFile.mock.calls.map(call => call[5])).toEqual([!hasPreference, hasPreference]);
+    });
+
     test("tells the Workspace dialog that an image is still being opened, and tells it again when the image is no longer on its way", async () => {
         let failOpening!: (error: Error) => void;
         jest.spyOn(appStore.backendService, "loadFile").mockReturnValue(new Promise((_resolve, reject) => (failOpening = reject)) as any);

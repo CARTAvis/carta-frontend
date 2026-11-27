@@ -719,6 +719,12 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
     }
 
+    /**
+     * The AIPS beam support that a workspace restore opens an image with, in place of the preference. It is undefined while no
+     * restore opens an image. The preference stays as it is.
+     */
+    hasAipsBeamSupportForRestore: boolean | undefined = undefined;
+
     // getters for showing new release
     @computed get shouldCheckNewRelease(): boolean {
         return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;

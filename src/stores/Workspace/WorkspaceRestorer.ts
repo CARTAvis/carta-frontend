@@ -289,6 +289,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
+    /** The number of images that opened with each AIPS beam support other than the preference. */
+    private readonly aipsBeamSupportOverrides = new Map<boolean, number>();
     /** The region IDs that this restore has asked the backend for, or that the session has. */
     private readonly takenRegionIds = new Set<number>();
     /** The region ID to ask for when a region cannot keep its saved ID. Set at the first use, above every saved ID. */
@@ -1017,6 +1019,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             (this.workspace.files ?? []).map(fileInfo => this.imageTask(fileInfo))
         );
         this.putImagesInSavedOrder();
+        this.reportAipsBeamSupport();
+    }
+
+    /** Reports the images that opened with an AIPS beam support other than the preference. */
+    private reportAipsBeamSupport(): void {
+        const preference = this.appStore.preferenceStore?.hasAipsBeamSupport ? "on" : "off";
+        for (const [isSupported, count] of this.aipsBeamSupportOverrides) {
+            const images = count === 1 ? "1 image is" : `${count} images are`;
+            this.report(WorkspaceItemKind.Layout, "AIPS beam support", `${images} opened with AIPS beam support ${isSupported ? "on" : "off"}, as the workspace saved ${count === 1 ? "it" : "them"}. The preference stays ${preference}`);
+        }
+        this.aipsBeamSupportOverrides.clear();
     }
 
     /**
@@ -1077,7 +1090,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         let frame: FrameStore | undefined;
         let reason: string | undefined;
         try {
-            frame = (yield* this.openImageSource(source)) ?? undefined;
+            frame = (yield* this.openImageSource(source, fileInfo.aipsBeamSupport)) ?? undefined;
         } catch (err) {
             console.error(err);
             reason = reasonOf(err);
@@ -1399,8 +1412,28 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Open one image the way the workspace says it was opened. */
-    private *openImageSource(source: WorkspaceImageSource | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
+    /**
+     * Open one image the way the workspace says it was opened. Open a file or an expression with the
+     * saved AIPS beam support, for this image only. The preference stays as it is.
+     */
+    private *openImageSource(source: WorkspaceImageSource | undefined, hasAipsBeamSupport: boolean | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
+        const preferenceStore = this.appStore.preferenceStore;
+        if (typeof hasAipsBeamSupport !== "boolean" || !preferenceStore || (source?.type !== "file" && source?.type !== "lel")) {
+            return yield* this.openImageSourceAsSaved(source);
+        }
+        preferenceStore.hasAipsBeamSupportForRestore = hasAipsBeamSupport;
+        try {
+            const frame = yield* this.openImageSourceAsSaved(source);
+            if (frame && hasAipsBeamSupport !== preferenceStore.hasAipsBeamSupport) {
+                this.aipsBeamSupportOverrides.set(hasAipsBeamSupport, (this.aipsBeamSupportOverrides.get(hasAipsBeamSupport) ?? 0) + 1);
+            }
+            return frame;
+        } finally {
+            preferenceStore.hasAipsBeamSupportForRestore = undefined;
+        }
+    }
+
+    private *openImageSourceAsSaved(source: WorkspaceImageSource | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
         switch (source?.type) {
             case "lel":
                 return yield* awaitedFlow<FrameStore | undefined>(this.appStore.appendFile(source.directory ?? "", source.expression, "", true, false));

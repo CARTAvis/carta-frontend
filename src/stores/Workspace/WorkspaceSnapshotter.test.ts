@@ -219,6 +219,16 @@ describe("WorkspaceSnapshotter", () => {
         }
     });
 
+    test("captures whether the backend opened an image with AIPS beam support", () => {
+        const frame = createFrame(0, {hasAipsBeamSupport: true});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].aipsBeamSupport).toBe(true);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
     test("captures the center of offset coordinates that are turned off", () => {
         const frame = createFrame(0, {isOffsetCoord: false, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});
         createSession({frames: [frame], activeFrame: frame});

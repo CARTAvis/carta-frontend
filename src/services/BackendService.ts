@@ -404,7 +404,7 @@ export class BackendService {
         }
     }
 
-    async loadFile(directory: string, file: string, hdu: string, fileId: number, isImageArithmetic: boolean): Promise<CARTA.OpenFileAck.$Properties> {
+    async loadFile(directory: string, file: string, hdu: string, fileId: number, isImageArithmetic: boolean, hasAipsBeamSupport: boolean = AppStore.Instance.preferenceStore.hasAipsBeamSupport): Promise<CARTA.OpenFileAck.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -415,7 +415,7 @@ export class BackendService {
                 fileId,
                 lelExpr: isImageArithmetic,
                 renderMode: CARTA.RenderMode.RASTER,
-                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport
+                supportAipsBeam: hasAipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
