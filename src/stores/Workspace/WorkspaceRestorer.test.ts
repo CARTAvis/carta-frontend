@@ -492,11 +492,11 @@ describe("WorkspaceRestorer", () => {
         const dialogStore = appStore.dialogStore as any;
         dialogStore.restoreFittingSettingsHeight = jest.fn();
 
-        for (const settingsHeight of [30.5, 150, 0, "30"]) {
+        for (const settingsHeight of [30.5, 0, 100, 150, -1, "30"]) {
             await restore(createWorkspace({openDialogs: ["fitting-dialog"], dialogs: {"fitting-dialog": {settingsHeight} as any}}));
         }
 
-        expect(dialogStore.restoreFittingSettingsHeight.mock.calls).toEqual([[30.5], [100], [undefined], [undefined]]);
+        expect(dialogStore.restoreFittingSettingsHeight.mock.calls).toEqual([[30.5], [0], [100], [100], [undefined], [undefined]]);
     });
 
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
@@ -1125,6 +1125,8 @@ describe("WorkspaceRestorer", () => {
         });
         const file = (id: number, hasAipsBeamSupport?: boolean) => ({id, source: {type: "file" as const, filename: `image${id}.fits`}, ...(hasAipsBeamSupport === undefined ? {} : {aipsBeamSupport: hasAipsBeamSupport})});
 
+        // A stopped restore left a value. A file without a saved value opens with the preference.
+        preferenceStore.hasAipsBeamSupportForRestore = true;
         const problems = await restore(createWorkspace({files: [file(1, true), file(2, false), file(3), file(4, true)]}));
 
         expect(usedValues).toEqual([true, false, undefined, true]);
@@ -1144,6 +1146,15 @@ describe("WorkspaceRestorer", () => {
             [[[3]], [[1]]],
             [[], []]
         ]);
+    });
+
+    test("does not give the image in front the toolbar's type of a new region when the image saved its own", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {newRegionType: 3, regionMode: 0}}], toolbar: {expanded: true, activeLayer: "region" as never, newRegionType: 4, regionMode: 1}}));
+
+        const regionSet = (appStore.activeFrame as any).regionSet;
+        expect([regionSet.setNewRegionType.mock.calls, regionSet.setMode.mock.calls]).toEqual([[[3]], [[0]]]);
     });
 
     test("mirrors the cursor again only when it was mirrored, and applies the image toolbar, keeping the values that are not valid", async () => {

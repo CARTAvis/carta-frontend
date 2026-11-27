@@ -115,12 +115,19 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
 
         const config = store.toWorkspaceConfig();
         store.applyWorkspaceConfig({...config, resultTableHeight: 2});
-        expect(store.restoredResultTableHeight).toBe(SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN);
+        expect(store.resultTableHeight).toBe(SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN);
 
-        const other = new SpectralLineQueryWidgetStore();
-        other.applyWorkspaceConfig({...config, resultTableHeight: Number.NaN});
-        expect(other.restoredResultTableHeight).toBeUndefined();
-        other.dispose();
+        // The same height again makes the widget take it again, after the user moved the separator.
+        store.resultTableHeight = 40;
+        store.applyWorkspaceConfig({...config, resultTableHeight: 2});
+        expect([store.resultTableHeight, store.resultTableRestoreCount]).toEqual([SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN, 2]);
+
+        // A height that is not valid, or none, gives the height that the table starts with.
+        store.applyWorkspaceConfig({...config, resultTableHeight: Number.NaN});
+        expect(store.resultTableHeight).toBeUndefined();
+        store.resultTableHeight = 40;
+        store.applyWorkspaceConfig(config);
+        expect(store.resultTableHeight).toBeUndefined();
     });
 
     test("saves the query settings and the spectral profiler by its widget ID, and applies them again", () => {
@@ -154,7 +161,7 @@ describe("SpectralLineQueryWidgetStore in a workspace", () => {
         const restored = new SpectralLineQueryWidgetStore();
         expect(restored.applyWorkspaceConfig(JSON.parse(JSON.stringify(config)))).toEqual([]);
         expect(restored.toWorkspaceConfig()).toEqual(config);
-        expect(restored.restoredResultTableHeight).toBe(35.5);
+        expect(restored.resultTableRestoreCount).toBe(1);
         expect(restored.selectedSpectralProfilerID).toBe("spectral-profiler-1");
         restored.dispose();
     });

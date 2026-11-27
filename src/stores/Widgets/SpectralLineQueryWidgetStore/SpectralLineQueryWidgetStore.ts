@@ -146,8 +146,8 @@ export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable
      * the separator. It is undefined while the separator is where it starts.
      */
     resultTableHeight: number | undefined = undefined;
-    /** The height that a workspace restore gives the result table. The widget shows the table at this height. */
-    @observable restoredResultTableHeight: number | undefined = undefined;
+    /** Changes when a workspace restore sets the height of the result table, so that the widget takes it. */
+    @observable resultTableRestoreCount: number = 0;
     /** The query that made the result that the widget shows. Nothing when the widget shows no result. */
     private shownQuery: ShownQuery | undefined;
     private readonly disposers: IReactionDisposer[] = [];
@@ -729,11 +729,10 @@ export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable
         if (isWidthList(config.headerTableColumnWidths, DEFAULT_HEADER_TABLE_COLUMN_WIDTHS.length)) {
             this.headerTableColumnWidths = [...config.headerTableColumnWidths];
         }
-        if (isFiniteNumber(config.resultTableHeight) && config.resultTableHeight > 0) {
-            // Keep the height also as the recorded one, so that the next save keeps it.
-            this.restoredResultTableHeight = Math.min(Math.max(config.resultTableHeight, SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN), 100);
-            this.resultTableHeight = this.restoredResultTableHeight;
-        }
+        // A workspace without a height gives the table the height that it starts with.
+        const height = config.resultTableHeight;
+        this.resultTableHeight = isFiniteNumber(height) && height > 0 ? Math.min(Math.max(height, SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN), 100) : undefined;
+        this.resultTableRestoreCount++;
         const problems: string[] = [];
         if (typeof config.spectralProfilerId === "string") {
             const widgetsStore = AppStore.Instance.widgetsStore;

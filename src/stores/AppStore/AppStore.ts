@@ -904,7 +904,7 @@ export class AppStore {
             // Taken before the request goes out: a second load started while this one is still in
             // flight would otherwise be handed the same ID and replace the image this one opens.
             const fileId = this.fileCounter++;
-            // Take the AIPS beam support of a restore only while a workspace loads. Then a value that a stopped restore left does not apply to later images.
+            // Take the AIPS beam support of a restore only while a workspace loads. Then a value that a stopped restore left does not apply to the images that the user opens.
             const hasAipsBeamSupport = (isRestoring ? this.preferenceStore.hasAipsBeamSupportForRestore : undefined) ?? this.preferenceStore.hasAipsBeamSupport;
             const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic, hasAipsBeamSupport);
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, shouldSetAsActive, shouldUpdateStartingDirectory)) {

@@ -356,8 +356,8 @@ export interface WorkspaceFile {
     /** The beam overlay settings of an image that has a beam. */
     beam?: {visible: boolean; color: string; type: BeamType; width: number; shiftX: number; shiftY: number};
     /**
-     * The offset coordinates, once they were turned on. Saves the center in image pixels, whether the center is the origin or the pole,
-     * and whether they are shown. A workspace that leaves out `shown` shows them.
+     * The offset coordinates, once the image has an offset center. Saves the center in image pixels, whether the center is the origin
+     * or the pole, and whether they are shown. A workspace that leaves out `shown` shows them.
      */
     offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs; shown?: boolean};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */

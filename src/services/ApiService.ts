@@ -604,6 +604,10 @@ export class ApiService {
                         const workspace = storedWorkspace ? WorkspaceConfig.upgradeForRuntime(storedWorkspace) : undefined;
                         if (workspace && ApiService.workspaceValidator(workspace)) {
                             validWorkspaces.push({name: workspaceName, date: workspace.date ?? Date.now() / 1000});
+                        } else if (newerWorkspaceVersion(storedWorkspace) !== undefined) {
+                            // List a workspace that a newer version of CARTA saved, so that opening it says why it cannot be read.
+                            const date = storedWorkspace.date;
+                            validWorkspaces.push({name: workspaceName, date: typeof date === "number" && isFinite(date) ? date : Date.now() / 1000});
                         } else {
                             console.error(`Workspace ${workspaceName} validation failed:`, ApiService.workspaceValidator.errors);
                         }

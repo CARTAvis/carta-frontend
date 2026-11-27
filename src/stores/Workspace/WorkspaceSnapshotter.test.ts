@@ -634,6 +634,15 @@ describe("WorkspaceSnapshotter", () => {
         });
     });
 
+    test.each([0, 100])("saves a height of %d for the fitting settings of the Image Fitting dialog, which the schema accepts", settingsHeight => {
+        createSession({dialogStore: {dialogVisible: new Map([["fitting-dialog", true]]), fittingSettingsHeight: settingsHeight}, zIndexManager: {findIndex: () => 0}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.dialogs).toEqual({"fitting-dialog": {settingsHeight}});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
     test("saves the settings that the Contour and Vector Overlay dialogs show but that are not applied, by the image that they are for", () => {
         const unappliedContourConfig = {levels: [], thickness: 3};
         const frame = createFrame(0, {contourConfig: {toConfig: jest.fn(() => undefined), toUnappliedConfig: jest.fn(() => unappliedContourConfig)}});

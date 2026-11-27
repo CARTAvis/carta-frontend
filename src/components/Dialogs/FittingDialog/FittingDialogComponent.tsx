@@ -23,7 +23,7 @@ export class FittingDialogComponent extends React.Component {
     private onSplitResizeEnd = (sizes: number[]) => {
         const total = (sizes[0] ?? 0) + (sizes[1] ?? 0);
         if (total > 0) {
-            AppStore.Instance.dialogStore.fittingSettingsHeight = Math.round((sizes[0] / total) * 1000) / 10;
+            AppStore.Instance.dialogStore.fittingSettingsHeight = Math.min(Math.max(Math.round((sizes[0] / total) * 1000) / 10, 0), 100);
         }
     };
 
@@ -187,7 +187,7 @@ export class FittingDialogComponent extends React.Component {
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                 </div>
-                {/* A restored height makes a new key, so that the split pane takes the height. */}
+                {/* A restore makes a new key, so that the split pane takes the restored height. */}
                 <SplitPane key={appStore.dialogStore.fittingSettingsRestoreCount} direction="vertical" onResizeEnd={this.onSplitResizeEnd}>
                     <Pane defaultSize={`${appStore.dialogStore.fittingSettingsHeight ?? FittingDialogComponent.SettingsHeightDefault}%`}>
                         <div className="upper-pane">

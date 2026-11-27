@@ -458,7 +458,8 @@ export class WorkspaceSnapshotter {
             workspaceFile.colorbarLabelCustomText = frame.colorbarLabelCustomText;
         }
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
-        // The offset center is set when the offset coordinates are first turned on. Save it when they are turned off too.
+        // The offset center is set when the offset coordinates are first turned on, or when the toolbar changes the coordinate system.
+        // Save it also while the offset coordinates are off.
         if (!frame.spatialReference && frame.offsetCenter) {
             workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs, shown: frame.isOffsetCoord};
         }

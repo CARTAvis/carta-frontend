@@ -436,8 +436,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <div className="spectral-line-query-widget">
                     <div className={Classes.DIALOG_BODY}>
                         {queryPanel}
-                        {/* A restored height makes a new key, so that the split pane takes the height. */}
-                        <SplitPane key={widgetStore.restoredResultTableHeight ?? "default"} className="body-split-pane" direction="vertical" onResize={this.onTableResize} onResizeEnd={this.onTableResizeEnd}>
+                        {/* A restore makes a new key, so that the split pane takes the restored height. */}
+                        <SplitPane key={widgetStore.resultTableRestoreCount} className="body-split-pane" direction="vertical" onResize={this.onTableResize} onResizeEnd={this.onTableResizeEnd}>
                             <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
                             <Pane
                                 className={"result-table-container"}

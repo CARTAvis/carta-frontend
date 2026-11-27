@@ -35,4 +35,15 @@ describe("ApiService.getWorkspace from the browser storage", () => {
         await expect(apiService.getWorkspace("saved")).resolves.toBeUndefined();
         await expect(apiService.getWorkspace("missing")).resolves.toBeUndefined();
     });
+
+    test("lists a workspace that is not valid only when a newer version of CARTA saved it", async () => {
+        localStorage.setItem(
+            "savedWorkspaces",
+            JSON.stringify({
+                newer: {workspaceVersion: WORKSPACE_VERSION + 1, frontendVersion: "6.2.0", files: "not a list", date: 1700000000},
+                broken: {workspaceVersion: WORKSPACE_VERSION, frontendVersion: "6.2.0", files: "not a list"}
+            })
+        );
+        await expect(apiService.getWorkspaceList()).resolves.toEqual([{name: "newer", date: 1700000000}]);
+    });
 });

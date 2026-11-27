@@ -572,8 +572,9 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Applies the image toolbar: whether it is expanded, the layer that the mouse works on, and the
-     * type of a new region of the image in front. A value that is not valid is not applied.
+     * Applies the image toolbar: whether it is expanded, the layer that the mouse works on, and, for
+     * an older workspace, the type of a new region of the image in front. A value that is not valid
+     * is not applied.
      */
     private restoreToolbar(): void {
         const toolbar = this.workspace.toolbar;
@@ -586,7 +587,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (Object.values(ImageViewLayer).includes(toolbar.activeLayer)) {
             this.appStore.updateActiveLayer(toolbar.activeLayer);
         }
-        const regionSet = this.appStore.activeFrame?.regionSet;
+        // Each image restores its own type of a new region and region mode. Only a workspace whose
+        // images do not save them needs the ones of the toolbar. Otherwise the toolbar values of an
+        // image that was not restored would replace those of the image in front.
+        const activeFrame = this.appStore.activeFrame;
+        const owner = activeFrame?.spatialReference ?? activeFrame;
+        const ownerInfo = owner ? this.allImages.find(fileInfo => this.frameIds.get(fileInfo.id) === owner.frameInfo.fileId) : undefined;
+        if (ownerInfo?.regionsSet && (ownerInfo.regionsSet.newRegionType !== undefined || ownerInfo.regionsSet.regionMode !== undefined)) {
+            return;
+        }
+        const regionSet = activeFrame?.regionSet;
         if (regionSet && Object.values(CARTA.RegionType).includes(toolbar.newRegionType as CARTA.RegionType)) {
             regionSet.setNewRegionType(toolbar.newRegionType as CARTA.RegionType);
         }
@@ -631,7 +641,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             if (id === DialogId.Fitting) {
                 const height = dialog.settingsHeight;
-                dialogStore.restoreFittingSettingsHeight(typeof height === "number" && isFinite(height) && height > 0 ? Math.min(height, 100) : undefined);
+                dialogStore.restoreFittingSettingsHeight(typeof height === "number" && isFinite(height) && height >= 0 ? Math.min(height, 100) : undefined);
             }
             if (id === DialogId.Snippet) {
                 this.showSnippetDialog();
@@ -1418,13 +1428,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private *openImageSource(source: WorkspaceImageSource | undefined, hasAipsBeamSupport: boolean | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
         const preferenceStore = this.appStore.preferenceStore;
-        if (typeof hasAipsBeamSupport !== "boolean" || !preferenceStore || (source?.type !== "file" && source?.type !== "lel")) {
+        if (!preferenceStore || (source?.type !== "file" && source?.type !== "lel")) {
             return yield* this.openImageSourceAsSaved(source);
         }
-        preferenceStore.hasAipsBeamSupportForRestore = hasAipsBeamSupport;
+        // Set the value also when the workspace saved none. Then a value that a stopped restore left
+        // does not apply to this image.
+        const hasSavedValue = typeof hasAipsBeamSupport === "boolean";
+        preferenceStore.hasAipsBeamSupportForRestore = hasSavedValue ? hasAipsBeamSupport : undefined;
         try {
             const frame = yield* this.openImageSourceAsSaved(source);
-            if (frame && hasAipsBeamSupport !== preferenceStore.hasAipsBeamSupport) {
+            if (frame && hasSavedValue && hasAipsBeamSupport !== preferenceStore.hasAipsBeamSupport) {
                 this.aipsBeamSupportOverrides.set(hasAipsBeamSupport, (this.aipsBeamSupportOverrides.get(hasAipsBeamSupport) ?? 0) + 1);
             }
             return frame;
@@ -2179,15 +2192,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Restores the regions of the image. An image that is matched to another image has no regions
-     * of its own.
-     *
-     * Each restored region asks the backend for the ID it was saved with, so that a name such as
-     * "Region 3" stays the same. Map the saved ID of each region to the ID that the backend gives.
-     * A region that the backend does not accept is left out and reported, so that no saved ID
-     * points at it.
-     */
-    /**
      * Returns the saved line width of a region, moved into the range that the Region dialog allows,
      * such as 0.5 for 0. Reports a width that is moved. Returns undefined when no width was saved.
      */
@@ -2202,6 +2206,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         return restored;
     }
 
+    /**
+     * Restores the regions of the image, and the type of a new region and the region mode of the
+     * image. An image that is matched to another image has no regions of its own.
+     *
+     * Each restored region asks the backend for the ID it was saved with, so that a name such as
+     * "Region 3" stays the same. Map the saved ID of each region to the ID that the backend gives.
+     * A region that the backend does not accept is left out and reported, so that no saved ID
+     * points at it.
+     */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
         if (frame.spatialReference || !fileInfo.regionsSet) {
             return;
