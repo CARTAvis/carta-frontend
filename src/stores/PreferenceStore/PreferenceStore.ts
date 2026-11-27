@@ -1,5 +1,7 @@
 import {Colors} from "@blueprintjs/core";
+import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {
@@ -23,7 +25,20 @@ import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, Pre
 import {ApiService} from "services";
 import {getScalingForParameterPreference, getScalingParameterConfig, isSupportedFrameScaling, sanitizeScalingParameter} from "utilities/scaling/scaling";
 
+import {SESSION_PREFERENCES} from "./SessionPreferences";
+
 const PREFERENCES_SCHEMA = require("carta-schemas/preferences_schema_2.json");
+
+const PreferencesValidator = new Ajv({strictTypes: false}).compile(PREFERENCES_SCHEMA);
+
+/** A preference that a workspace restore applied for the session, with a value other than the user's own. */
+export interface SessionPreferenceChange {
+    key: PreferenceKeys;
+    /** The value that the workspace saved, which the session uses. */
+    value: unknown;
+    /** The value that the user's preferences give. */
+    ownValue: unknown;
+}
 
 const DEFAULTS = {
     SILENT: {
@@ -182,6 +197,69 @@ export class PreferenceStore {
     @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
 
     /**
+     * The values that a workspace restore applied for this session only, by key. Each value wins over
+     * the stored preference, and the stored preferences do not change. When the user sets or resets a
+     * preference, its session value is removed.
+     */
+    @observable sessionPreferences: Map<PreferenceKeys, unknown> = new Map<PreferenceKeys, unknown>();
+
+    /** Returns the value in effect of a preference: the session value when there is one, otherwise the stored value. */
+    private valueInEffect(key: PreferenceKeys): any {
+        return this.sessionPreferences.has(key) ? this.sessionPreferences.get(key) : this.preferences.get(key);
+    }
+
+    /** Whether some preferences have a value for this session only. */
+    @computed get hasSessionPreferences(): boolean {
+        return this.sessionPreferences.size > 0;
+    }
+
+    /**
+     * Applies the preferences that a workspace saved, for this session only, in place of the session
+     * values that a previous workspace applied. A key that a workspace does not save, or a value that
+     * the preference does not accept, is left out.
+     *
+     * @param values - the saved values by key. Undefined clears the session values, as for a workspace that saved none.
+     * @returns the preferences whose session value differs from the user's own value, and the keys that were left out.
+     */
+    @action applySessionPreferences = (values: unknown): {changes: SessionPreferenceChange[]; rejectedKeys: string[]} => {
+        this.sessionPreferences.clear();
+        const changes: SessionPreferenceChange[] = [];
+        const rejectedKeys: string[] = [];
+        if (!values || typeof values !== "object" || Array.isArray(values)) {
+            return {changes, rejectedKeys};
+        }
+        for (const [key, saved] of Object.entries(values)) {
+            const preference = SESSION_PREFERENCES[key as PreferenceKeys];
+            const value = this.sessionValueOf(key as PreferenceKeys, saved);
+            if (!preference || value === undefined) {
+                rejectedKeys.push(key);
+                continue;
+            }
+            const ownValue = preference.valueOf(this);
+            this.sessionPreferences.set(key as PreferenceKeys, value);
+            if (!_.isEqual(ownValue, value)) {
+                changes.push({key: key as PreferenceKeys, value, ownValue});
+            }
+        }
+        return {changes, rejectedKeys};
+    };
+
+    /** Returns the value that a session can use for a saved value, or undefined when the preference does not accept it. */
+    private sessionValueOf(key: PreferenceKeys, value: unknown): unknown {
+        const preference = SESSION_PREFERENCES[key];
+        if (!preference || value === undefined || (key in PREFERENCES_SCHEMA.properties && !PreferencesValidator({version: 2, [key]: value})) || preference.isValid?.(value) === false) {
+            return undefined;
+        }
+        const scaling = getScalingForParameterPreference(key);
+        return scaling !== undefined ? sanitizeScalingParameter(scaling, value as number) : value;
+    }
+
+    /** Removes every session value, so that the user's own preferences are in effect again. */
+    @action clearSessionPreferences = () => {
+        this.sessionPreferences.clear();
+    };
+
+    /**
      * Get the minimum constraint from the schema for a preference key
      */
     public getMinConstraint(key: PreferenceKeys): number | undefined {
@@ -200,90 +278,84 @@ export class PreferenceStore {
      */
     @observable isPreferenceReady: boolean = false;
 
-    /**
-     * The keys of the last call that set or cleared preferences. Each call gives a new array. Then a
-     * reaction to it runs even when the call keeps the value of the preference.
-     */
-    @observable.ref lastWrittenKeys: readonly PreferenceKeys[] = [];
-
     // getters for global settings
     @computed get theme(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
     }
 
     @computed get shouldAutoLaunch(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
     }
 
     @computed get fileFilterMode(): FileFilterMode {
-        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
     }
 
     @computed get fileSortingString(): string {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
+        return this.valueInEffect(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
     }
 
     @computed get fileFilteringType(): FileFilteringType {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
+        return this.valueInEffect(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
     }
 
     @computed get cursorPosition(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
     }
 
     @computed get zoomMode(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
     }
 
     @computed get zoomPoint(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
     }
 
     @computed get isDragPanning(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
     }
 
     @computed get spectralMatchingType(): SpectralType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
     }
 
     @computed get autoWCSMatching(): WCSMatchingType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
     @computed get imageViewRestFrameShiftMode(): RestFrameShiftMode {
-        const mode = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
+        const mode = this.valueInEffect(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_SHIFT_MODE);
         return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.imageViewRestFrameShiftMode;
     }
 
     @computed get imageViewRestFrameVelocityConvention(): VelocityConvention {
-        const convention = this.preferences.get(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
+        const convention = this.valueInEffect(PreferenceKeys.SILENT_IMAGE_VIEW_REST_FRAME_VELOCITY_CONVENTION);
         return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.imageViewRestFrameVelocityConvention;
     }
 
     @computed get spectralProfilerRestFrameShiftMode(): RestFrameShiftMode {
-        const mode = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
+        const mode = this.valueInEffect(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_SHIFT_MODE);
         return Object.values(RestFrameShiftMode).includes(mode) ? mode : DEFAULTS.SILENT.spectralProfilerRestFrameShiftMode;
     }
 
     @computed get spectralProfilerRestFrameVelocityConvention(): VelocityConvention {
-        const convention = this.preferences.get(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
+        const convention = this.valueInEffect(PreferenceKeys.SILENT_SPECTRAL_PROFILER_REST_FRAME_VELOCITY_CONVENTION);
         return Object.values(VelocityConvention).includes(convention) ? convention : DEFAULTS.SILENT.spectralProfilerRestFrameVelocityConvention;
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
+        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.valueInEffect(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
             return true;
         }
         return false;
     };
 
     @computed get hasTransparentImageBackground(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
     }
 
     @computed get isCodeSnippetsEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
     }
 
     /**
@@ -303,37 +375,37 @@ export class PreferenceStore {
     }
 
     @computed get shouldKeepLastUsedFolder(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
     }
 
     @computed get lastUsedFolder(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
+        return this.valueInEffect(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
     }
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        const scaling = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING);
+        const scaling = this.valueInEffect(PreferenceKeys.RENDER_CONFIG_SCALING);
         return isSupportedFrameScaling(scaling) ? scaling : DEFAULTS.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
     }
 
     @computed get isColormapInverted(): boolean {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.RENDER_CONFIG.colormapInverted;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.RENDER_CONFIG.colormapInverted;
     }
 
     @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
 
     @computed get colormapHexStart(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
     }
 
     @computed get percentile(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
     }
 
     @computed get scalingAlphaLog(): number {
@@ -362,270 +434,270 @@ export class PreferenceStore {
             return 1;
         }
 
-        const storedValue = this.preferences.get(config.preferenceKey);
-        if (storedValue !== undefined) {
-            return storedValue;
+        const value = this.valueInEffect(config.preferenceKey);
+        if (value !== undefined) {
+            return value;
         }
 
-        const legacyAlpha = this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY);
+        const legacyAlpha = this.valueInEffect(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LEGACY);
         const isLegacyAlphaSupported = scaling === FrameScaling.LOG || scaling === FrameScaling.POWER;
         return isLegacyAlphaSupported && legacyAlpha !== undefined ? legacyAlpha : config.defaultValue;
     }
 
     @computed get nanColorHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
     }
 
     @computed get shouldUseSmoothedBiasContrast(): boolean {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
+        return this.valueInEffect(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
     }
 
     // getters for Contour Config
     @computed get contourGeneratorType(): ContourGeneratorType {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
     }
 
     @computed get isContourColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
     @computed get isContourColormapInverted(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapInverted;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_INVERTED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapInverted;
     }
 
     @computed get contourColormap(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
     }
 
     @computed get contourColor(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
     }
 
     @computed get contourSmoothingMode(): CARTA.SmoothingMode {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
     }
 
     @computed get contourSmoothingFactor(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
     }
 
     @computed get contourNumLevels(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
     }
 
     @computed get contourThickness(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
+        return this.valueInEffect(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
     }
 
     @computed get contourDecimation(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
     }
 
     @computed get contourCompressionLevel(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
     }
 
     @computed get contourChunkSize(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
     }
 
     // getters for vector overlay
     @computed get vectorOverlayPixelAveraging(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
     }
 
     @computed get isVectorOverlayFractionalIntensity(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
     }
 
     @computed get vectorOverlayThickness(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
     }
 
     @computed get isVectorOverlayColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
     }
 
     @computed get isVectorOverlayColormapInverted(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapInverted;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_INVERTED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapInverted;
     }
 
     @computed get vectorOverlayColor(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
     }
 
     @computed get vectorOverlayColormap(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
+        return this.valueInEffect(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
     }
 
     // getters for WCS overlay
     @computed get astColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
     }
 
     @computed get isAstGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
     }
 
     @computed get isAstLabelsVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
     }
 
     @computed get wcsType(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
     }
 
     @computed get isColorbarVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
     }
 
     @computed get isColorbarInteractive(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
     }
 
     @computed get colorbarPosition(): "right" | "top" | "bottom" {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
     }
 
     @computed get colorbarWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
     }
 
     @computed get colorbarTicksDensity(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
     }
 
     @computed get isColorbarLabelVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
     }
 
     @computed get isBeamVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
     }
 
     @computed get beamColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
     }
 
     @computed get beamType(): BeamType {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
     }
 
     @computed get beamWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
     }
 
     @computed get cursorInfoVisible(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
+        return this.valueInEffect(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
     }
 
     // getters for region
     @computed get regionColor(): string {
-        return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
+        return this.valueInEffect(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
     }
 
     @computed get regionLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
+        return this.valueInEffect(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
     }
 
     @computed get regionDashLength(): number {
-        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
+        return this.valueInEffect(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
     }
 
     @computed get regionType(): CARTA.RegionType {
-        return this.preferences.get(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
+        return this.valueInEffect(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
     }
 
     @computed get regionCreationMode(): string {
-        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
+        return this.valueInEffect(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
     }
 
     @computed get regionSize(): number {
-        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
+        return this.valueInEffect(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
     }
 
     @computed get regionPasteOffsetUnit(): PasteOffsetUnit {
-        return this.preferences.get(PreferenceKeys.REGION_PASTE_OFFSET_UNIT) ?? DEFAULTS.REGION.regionPasteOffsetUnit;
+        return this.valueInEffect(PreferenceKeys.REGION_PASTE_OFFSET_UNIT) ?? DEFAULTS.REGION.regionPasteOffsetUnit;
     }
 
     // getters for annotation
     @computed get annotationColor(): string {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
+        return this.valueInEffect(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
     }
 
     @computed get annotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
+        return this.valueInEffect(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
     }
 
     @computed get annotationDashLength(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
+        return this.valueInEffect(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
     }
 
     @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
+        return this.valueInEffect(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
     }
 
     @computed get pointAnnotationWidth(): number {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
+        return this.valueInEffect(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
     }
 
     @computed get textAnnotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
+        return this.valueInEffect(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
     }
 
     // getters for performance
     @computed get imageCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
     }
 
     @computed get animationCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
     }
 
     @computed get gpuTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
     }
 
     @computed get systemTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
     }
 
     @computed get contourControlMapWidth(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
     }
 
     @computed get shouldStreamContoursWhileZooming(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
     }
 
     @computed get isLowBandwidthMode(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
     }
 
     @computed get stopAnimationPlaybackMinutes(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
     @computed get pvPreviewCubeSizeLimit(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
     }
 
     @computed get isPVAxesOrderReverse(): boolean {
-        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
+        return this.valueInEffect(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
     }
 
     @computed get isSelectingAllLogEvents(): boolean {
-        return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
+        return this.valueInEffect(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
     }
 
     @computed get isSelectingIndeterminateLogEvents(): boolean {
-        const selected = this.preferences.get(PreferenceKeys.LOG_EVENT)?.length;
+        const selected = this.valueInEffect(PreferenceKeys.LOG_EVENT)?.length;
         return selected > 0 && selected < Event.EVENT_NUMBER;
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         if (Event.isTypeValid(eventType)) {
-            const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
+            const logEvents = this.valueInEffect(PreferenceKeys.LOG_EVENT);
             if (logEvents && Array.isArray(logEvents)) {
                 return logEvents.includes(eventType);
             }
@@ -646,77 +718,77 @@ export class PreferenceStore {
     }
 
     @computed get enabledLoggingEventNames(): string[] {
-        return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
+        return this.valueInEffect(PreferenceKeys.LOG_EVENT) ?? [];
     }
 
     @computed get catalogDisplayedColumnSize(): number {
-        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
+        return this.valueInEffect(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
     }
 
     @computed get catalogTableSeparatorPosition(): string {
-        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
+        return this.valueInEffect(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
     @computed get shouldAutoSelectImageOverlayCoordinateColumns(): boolean {
-        return this.preferences.get(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
+        return this.valueInEffect(PreferenceKeys.CATALOG_AUTO_SELECT_IMAGE_OVERLAY_COLUMNS) ?? DEFAULTS.CATALOG.catalogAutoSelectImageOverlayColumns;
     }
 
     @computed get isPixelGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
+        return this.valueInEffect(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
 
     @computed get pixelGridColor(): string {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
+        return this.valueInEffect(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
     }
 
     @computed get shouldLimitOverlayRedraw(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
+        return this.valueInEffect(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
     @computed get isImageMultiPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imageMultiPanelEnabled;
+        return this.valueInEffect(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imageMultiPanelEnabled;
     }
 
     @computed get imagePanelMode(): ImagePanelMode {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
+        return this.valueInEffect(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
     }
 
     @computed get imagePanelColumns(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
+        return this.valueInEffect(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
     }
 
     @computed get imagePanelRows(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
+        return this.valueInEffect(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
     }
 
     @computed get isStatsPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
+        return this.valueInEffect(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
     }
 
     @computed get statsPanelMode(): number {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
+        return this.valueInEffect(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
     }
 
     // getters for telemetry
     @computed get hasTelemetryConsentShown(): boolean {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
+        return this.valueInEffect(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
     }
 
     @computed get telemetryMode(): TelemetryMode {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
+        return this.valueInEffect(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
     }
 
     @computed get isTelemetryLogging(): boolean {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
+        return this.valueInEffect(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
     }
 
     @computed get telemetryUuid(): string {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_UUID);
+        return this.valueInEffect(PreferenceKeys.TELEMETRY_UUID);
     }
 
     // getters for compatibility
     @computed get hasAipsBeamSupport(): boolean {
-        return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
+        return this.valueInEffect(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
     }
 
     /**
@@ -727,30 +799,30 @@ export class PreferenceStore {
 
     // getters for showing new release
     @computed get shouldCheckNewRelease(): boolean {
-        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
+        return this.valueInEffect(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
     }
 
     @computed get latestRelease(): string {
-        return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
+        return this.valueInEffect(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
     @computed get layout(): string {
-        return this.preferences.get(PreferenceKeys.LAYOUT) ?? DEFAULTS.LAYOUT.layout;
+        return this.valueInEffect(PreferenceKeys.LAYOUT) ?? DEFAULTS.LAYOUT.layout;
     }
 
     // getter for dynamic layout setting
     @computed get isDynamicLayoutEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
+        return this.valueInEffect(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get isHighDimPriority(): boolean {
-        return this.preferences.get(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.LAYOUT.isHighDimPriority;
+        return this.valueInEffect(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.LAYOUT.isHighDimPriority;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get existLayoutMapping(): {[key: string]: string} {
-        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT) ?? DEFAULTS.LAYOUT.existLayoutMapping;
+        return this.valueInEffect(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT) ?? DEFAULTS.LAYOUT.existLayoutMapping;
     }
 
     /**
@@ -789,20 +861,20 @@ export class PreferenceStore {
             }
             const eventList = getEventList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
-            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
             if (!WCSMatching.isTypeValid(value)) {
                 return false;
             }
-            let binaryNumber = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            // Toggle the value in effect, so that the user sees the change that they asked for.
+            let binaryNumber = this.valueInEffect(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
             const binaryNumberNew = (binaryNumber ^= value);
+            this.sessionPreferences.delete(key);
             this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
-            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
         } else {
+            this.sessionPreferences.delete(key);
             this.preferences.set(key, value);
-            this.lastWrittenKeys = [key];
             return yield ApiService.Instance.setPreference(key, value);
         }
     }
@@ -815,11 +887,11 @@ export class PreferenceStore {
     @flow.bound *clearPreferences(keys: PreferenceKeys[]) {
         for (const key of keys) {
             this.preferences.delete(key);
+            this.sessionPreferences.delete(key);
         }
         if (keys.includes(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED)) {
             this.isCodeSnippetsEnabledForSession = false;
         }
-        this.lastWrittenKeys = [...keys];
         yield ApiService.Instance.clearPreferences(keys);
     }
 

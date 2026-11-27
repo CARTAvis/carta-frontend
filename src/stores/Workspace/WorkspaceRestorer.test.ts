@@ -253,7 +253,7 @@ function createSession() {
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
-        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
+        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0, applySessionPreferences: jest.fn((_values: unknown): {changes: unknown[]; rejectedKeys: string[]} => ({changes: [], rejectedKeys: []}))},
         imageViewConfigStore: {
             createColorBlending: jest.fn(),
             imageNum: 1,
@@ -1131,7 +1131,7 @@ describe("WorkspaceRestorer", () => {
 
         expect(usedValues).toEqual([true, false, undefined, true]);
         expect(preferenceStore.hasAipsBeamSupportForRestore).toBeUndefined();
-        expect(problems).toContain("2 images are opened with AIPS beam support on, as the workspace saved them. The preference stays off");
+        expect(problems).toContain("2 images are opened with AIPS beam support on, as the workspace saved them. Images that you open later use AIPS beam support off");
         expect(problems.filter(problem => problem.includes("AIPS"))).toHaveLength(1);
     });
 
@@ -2031,6 +2031,29 @@ describe("WorkspaceRestorer", () => {
 
         expect(appStore.setSpectralMatchingType).toHaveBeenCalledWith("FREQ");
         expect(appStore.setSpectralMatchingType.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
+    });
+
+    test("applies the saved preferences for the session before it opens the images, and gives the ones that differ for the report", async () => {
+        const {appStore} = createSession();
+        const changes = [{key: "regionColor", value: "#00ff00", ownValue: "#ffffff"}];
+        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({changes, rejectedKeys: []});
+        const preferences = {regionColor: "#00ff00"} as never;
+
+        const restorer = await restored(createWorkspace({preferences}));
+
+        expect(appStore.preferenceStore.applySessionPreferences).toHaveBeenCalledWith(preferences);
+        expect(appStore.preferenceStore.applySessionPreferences.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
+        expect(restorer.sessionPreferenceChanges).toEqual(changes);
+    });
+
+    test("clears the preferences of a previous workspace for a workspace that saved none, and reports the saved preferences that it cannot apply", async () => {
+        const {appStore} = createSession();
+        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({changes: [], rejectedKeys: ["theme", "newKey"]});
+
+        const problems = await restore(createWorkspace());
+
+        expect(appStore.preferenceStore.applySessionPreferences).toHaveBeenCalledWith(undefined);
+        expect(problems).toContain("Could not apply 2 preferences (theme, newKey) for this session: this version does not know the preference or does not accept the saved value. Your own value is used");
     });
 
     test("keeps the spectral matching type of the session when the saved one is not valid, and says so", async () => {

@@ -1,5 +1,4 @@
 import {PreferenceKeys} from "enums";
-import {ApiService} from "services";
 import {PreferenceStore} from "stores";
 
 jest.mock("services", () => ({
@@ -26,26 +25,73 @@ describe("PreferenceStore", () => {
         expect(store.isCodeSnippetsEnabledForSession).toBe(false);
     });
 
-    it("gives the keys of each write as a new array, also when the write keeps the value", async () => {
+    describe("values of a workspace for the session", () => {
         const store = PreferenceStore.Instance;
 
-        await store.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, true);
-        const firstWrite = store.lastWrittenKeys;
-        await store.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, true);
-        expect(store.lastWrittenKeys).toEqual([PreferenceKeys.PIXEL_GRID_VISIBLE]);
-        expect(store.lastWrittenKeys).not.toBe(firstWrite);
+        beforeEach(async () => {
+            store.clearSessionPreferences();
+            await store.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG]);
+        });
 
-        await store.clearPreferences([PreferenceKeys.PIXEL_GRID_VISIBLE, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX]);
-        expect(store.lastWrittenKeys).toEqual([PreferenceKeys.PIXEL_GRID_VISIBLE, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX]);
-        expect(ApiService.Instance.clearPreferences).toHaveBeenCalled();
-    });
+        it("uses the saved values in place of the stored preferences, and gives the ones that differ from the user's own", async () => {
+            await store.setPreference(PreferenceKeys.REGION_COLOR, "#ff0000");
 
-    it("gives no keys for a value that it refuses", async () => {
-        const store = PreferenceStore.Instance;
-        await store.clearPreferences([PreferenceKeys.GLOBAL_THEME]);
+            const {changes, rejectedKeys} = store.applySessionPreferences({regionColor: "#00ff00", regionLineWidth: 2});
 
-        await store.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, -1);
+            expect([store.regionColor, store.regionLineWidth]).toEqual(["#00ff00", 2]);
+            expect(store.preferences.get(PreferenceKeys.REGION_COLOR)).toBe("#ff0000");
+            expect(changes).toEqual([{key: PreferenceKeys.REGION_COLOR, value: "#00ff00", ownValue: "#ff0000"}]);
+            expect(rejectedKeys).toEqual([]);
+            expect(store.hasSessionPreferences).toBe(true);
+        });
 
-        expect(store.lastWrittenKeys).toEqual([PreferenceKeys.GLOBAL_THEME]);
+        it("leaves out a key that a workspace does not save, and a value that the preference does not accept", () => {
+            const {rejectedKeys} = store.applySessionPreferences({theme: "dark", regionColor: "not a color", regionLineWidth: 100, unknownKey: 1, colorbarPosition: "top"});
+
+            expect(rejectedKeys).toEqual(["theme", "regionColor", "regionLineWidth", "unknownKey"]);
+            expect([...store.sessionPreferences.keys()]).toEqual([PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION]);
+        });
+
+        it("keeps a scaling alpha within the range that the preference allows", () => {
+            store.applySessionPreferences({scalingAlphaLog: 1e12});
+
+            expect(store.scalingAlphaLog).toBeLessThan(1e12);
+        });
+
+        it("replaces the values of a previous workspace, and clears them for a workspace that saved none", () => {
+            store.applySessionPreferences({regionColor: "#00ff00"});
+            store.applySessionPreferences({regionLineWidth: 3});
+            expect([...store.sessionPreferences.keys()]).toEqual([PreferenceKeys.REGION_LINE_WIDTH]);
+
+            store.applySessionPreferences(undefined);
+            expect(store.hasSessionPreferences).toBe(false);
+        });
+
+        it("uses the user's value again for a preference that the user sets or resets", async () => {
+            store.applySessionPreferences({regionColor: "#00ff00", regionLineWidth: 3});
+
+            await store.setPreference(PreferenceKeys.REGION_COLOR, "#0000ff");
+            expect([store.regionColor, store.sessionPreferences.has(PreferenceKeys.REGION_COLOR)]).toEqual(["#0000ff", false]);
+
+            await store.clearPreferences([PreferenceKeys.REGION_LINE_WIDTH]);
+            expect([store.regionLineWidth, store.hasSessionPreferences]).toEqual([2, false]);
+        });
+
+        it("toggles a WCS matching type from the value in effect", async () => {
+            store.applySessionPreferences({autoWCSMatching: 3});
+
+            await store.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, 1);
+
+            expect(store.autoWCSMatching).toBe(2);
+            expect(store.sessionPreferences.has(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)).toBe(false);
+        });
+
+        it("uses every stored preference again when the session values are cleared", () => {
+            store.applySessionPreferences({regionColor: "#00ff00"});
+
+            store.clearSessionPreferences();
+
+            expect(store.regionColor).toBe("#2ee6d6");
+        });
     });
 });

@@ -2,8 +2,8 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogDatabase, CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
-import {AppStore, MirrorSiteStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
+import {CatalogDatabase, CatalogSystemType, ImageType, PreferenceKeys, RegionId, WorkspaceItemKind} from "enums";
+import {AppStore, MirrorSiteStore, PreferenceStore, SESSION_PREFERENCE_KEYS, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -703,6 +703,20 @@ describe("WorkspaceSnapshotter", () => {
         createSession({spectralMatchingType: "FREQ"});
 
         expect(new WorkspaceSnapshotter().capture().workspace.spectralMatchingType).toBe("FREQ");
+    });
+
+    test("saves the value in effect of each preference that changes what the user makes next, and no other preference", () => {
+        createSession();
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.applySessionPreferences({regionColor: "#00ff00"});
+
+        const {preferences} = new WorkspaceSnapshotter().capture().workspace;
+
+        expect(Object.keys(preferences ?? {}).sort()).toEqual([...SESSION_PREFERENCE_KEYS].sort());
+        expect(preferences?.[PreferenceKeys.REGION_COLOR]).toBe("#00ff00");
+        expect(preferences?.[PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG]).toBe(preferenceStore.scalingAlphaLog);
+        expect(preferences).not.toHaveProperty(PreferenceKeys.GLOBAL_THEME);
+        preferenceStore.clearSessionPreferences();
     });
 
     describe("generated images", () => {

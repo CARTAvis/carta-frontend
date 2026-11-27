@@ -25,6 +25,7 @@ const RESTORED_SETTINGS: {[Field in keyof Required<Workspace>]: ((workspace: Wor
     imageView: null,
     references: workspace => (workspace.references && Object.values(workspace.references).some(id => id !== undefined) ? "Image matching" : undefined),
     spectralMatchingType: null,
+    preferences: workspace => (workspace.preferences && Object.keys(workspace.preferences).length ? "Preferences for this session" : undefined),
     colorBlendingImages: workspace => (workspace.colorBlendingImages?.length ? "Color blending" : undefined),
     selectedColorBlending: null,
     animator: workspace => (workspace.animator ? "Animator" : undefined),

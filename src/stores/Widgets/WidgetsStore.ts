@@ -933,7 +933,7 @@ export class WidgetsStore {
      * Adds the stores of the widgets that a layout creates.
      *
      * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image
-     *                      view grid and the WCS overlay.
+     *                      view settings and the WCS overlay.
      * @returns what could not be applied as the layout saved it.
      */
     public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence): string[] => {
@@ -941,16 +941,13 @@ export class WidgetsStore {
         this.layoutTableSeparatorPositions.clear();
         this.layoutCatalogWidgetsOnFirstCatalog = [];
         this.removeUnopenedLayoutDisplayStores();
-        // The grid and the WCS overlay belong to the session, not to one widget. Apply them once, from
-        // the first image view that saved its settings.
+        // The image view settings and the WCS overlay belong to the session, not to one widget. Apply
+        // them once, from the first image view that saved its settings.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
         if (persistence === "workspace" && imageViews.length) {
             const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
             AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
             problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
-        } else if (persistence !== "workspace") {
-            // A regular layout shows the display settings of the preferences, as on a session without workspaces.
-            AppStore.Instance.imageViewConfigStore.followDisplayPreferences();
         }
 
         componentConfigs.forEach(componentConfig => {

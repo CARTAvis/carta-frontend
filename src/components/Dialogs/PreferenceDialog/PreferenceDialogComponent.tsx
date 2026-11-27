@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Icon, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import type {ColorResult} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
@@ -1032,6 +1032,16 @@ export class PreferenceDialogComponent extends React.Component {
                     </Tabs>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
+                    {/* The dialog shows the values in effect, so say when a workspace set some of them for this session. */}
+                    {preference.hasSessionPreferences && (
+                        <div className="session-preferences-note" data-testid="preference-dialog-session-note">
+                            <Icon icon="info-sign" intent={Intent.PRIMARY} />
+                            <span>Some values come from the workspace, for this session only. Your stored preferences do not change.</span>
+                            <AnchorButton size="small" onClick={preference.clearSessionPreferences} data-testid="preference-dialog-use-own-button">
+                                Use my preferences
+                            </AnchorButton>
+                        </div>
+                    )}
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />

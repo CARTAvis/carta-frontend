@@ -23,6 +23,15 @@
         margin-top: 20px;
     }
 
+    // Show the user's own value of a preference in a lighter color.
+    .preference-own-value {
+        color: $pt-text-color-muted;
+
+        .#{$ns}-dark & {
+            color: $pt-dark-text-color-muted;
+        }
+    }
+
     .report-newer-version {
         margin-bottom: 16px;
     }

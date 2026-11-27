@@ -67,6 +67,7 @@ import {
     MirrorSiteStore,
     restoreWorkspaceZoom,
     scaleFrameZoom,
+    type SessionPreferenceChange,
     StreamingRowSource,
     type WorkspaceLoadingStep
 } from "stores";
@@ -289,7 +290,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
-    /** The number of images that opened with each AIPS beam support other than the preference. */
+    /** The number of images that opened with each AIPS beam support other than the value in effect for the session. */
     private readonly aipsBeamSupportOverrides = new Map<boolean, number>();
     /** The region IDs that this restore has asked the backend for, or that the session has. */
     private readonly takenRegionIds = new Set<number>();
@@ -313,6 +314,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly awaitedImageIds = new Set<number>();
     /** The files that the user chose, for the images and catalogs that opened from them. */
     public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
+    /** The preferences that this restore applied for the session with a value other than the user's own. */
+    public sessionPreferenceChanges: SessionPreferenceChange[] = [];
     /** The steps that the restore waits for at the same time, in the order that they started. */
     private readonly waitingSteps: {step?: WorkspaceLoadingStep}[] = [];
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
@@ -397,6 +400,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         WorkspaceRestorer.clearSession();
+        this.restoreSessionPreferences();
         this.restoreSpectralMatchingType();
         this.restoreImageCoordinates();
         yield* this.openImages();
@@ -1006,6 +1010,24 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
+     * Applies the preferences that the workspace saved, for this session only, before any image
+     * opens. Then the images, contours and regions that the restore makes use them. A workspace that
+     * saved none removes the session values of a previous workspace.
+     */
+    private restoreSessionPreferences(): void {
+        const preferenceStore = this.appStore.preferenceStore;
+        if (!preferenceStore) {
+            return;
+        }
+        const {changes, rejectedKeys} = preferenceStore.applySessionPreferences(this.workspace.preferences);
+        this.sessionPreferenceChanges = changes;
+        if (rejectedKeys.length) {
+            const preferences = rejectedKeys.length === 1 ? `the preference ${rejectedKeys[0]}` : `${rejectedKeys.length} preferences (${rejectedKeys.join(", ")})`;
+            this.report(WorkspaceItemKind.Layout, "preferences", `Could not apply ${preferences} for this session: this version does not know the preference or does not accept the saved value. Your own value is used`);
+        }
+    }
+
+    /**
      * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
      * images are matched, as matching an image moves it to the channel of its reference in this
      * coordinate. A workspace saved before it kept this setting keeps the setting of the session.
@@ -1032,12 +1054,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         this.reportAipsBeamSupport();
     }
 
-    /** Reports the images that opened with an AIPS beam support other than the preference. */
+    /** Reports the images that opened with an AIPS beam support other than the value in effect for the session. */
     private reportAipsBeamSupport(): void {
-        const preference = this.appStore.preferenceStore?.hasAipsBeamSupport ? "on" : "off";
+        const valueInEffect = this.appStore.preferenceStore?.hasAipsBeamSupport ? "on" : "off";
         for (const [isSupported, count] of this.aipsBeamSupportOverrides) {
             const images = count === 1 ? "1 image is" : `${count} images are`;
-            this.report(WorkspaceItemKind.Layout, "AIPS beam support", `${images} opened with AIPS beam support ${isSupported ? "on" : "off"}, as the workspace saved ${count === 1 ? "it" : "them"}. The preference stays ${preference}`);
+            this.report(
+                WorkspaceItemKind.Layout,
+                "AIPS beam support",
+                `${images} opened with AIPS beam support ${isSupported ? "on" : "off"}, as the workspace saved ${count === 1 ? "it" : "them"}. Images that you open later use AIPS beam support ${valueInEffect}`
+            );
         }
         this.aipsBeamSupportOverrides.clear();
     }

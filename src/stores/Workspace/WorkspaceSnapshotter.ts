@@ -19,7 +19,7 @@ import {
     type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore, MirrorSiteStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore, MirrorSiteStore, PreferenceStore, SESSION_PREFERENCE_KEYS, SESSION_PREFERENCES} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -147,7 +147,17 @@ export class WorkspaceSnapshotter {
         this.captureViews();
         this.captureLayout();
         this.captureSelection();
+        this.capturePreferences();
         return {workspace: this.detach(), issues: this.issues};
+    }
+
+    /**
+     * Saves the value in effect of each preference that changes what the user makes next. Then the
+     * user who opens the workspace makes the same new regions, images and overlays.
+     */
+    private capturePreferences(): void {
+        const preferenceStore = PreferenceStore.Instance;
+        this.workspace.preferences = Object.fromEntries(SESSION_PREFERENCE_KEYS.map(key => [key, SESSION_PREFERENCES[key]?.valueOf(preferenceStore)]));
     }
 
     /** Stage 1: every image opened from a file or an expression, with how it was opened and how it is displayed. Stage 1a saves the generated images. */

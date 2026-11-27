@@ -25,6 +25,7 @@ export * from "./LayoutStore/LayoutStore";
 export * from "./LogStore/LogStore";
 export * from "./OverlayStore/OverlayStore";
 export * from "./PreferenceStore/PreferenceStore";
+export * from "./PreferenceStore/SessionPreferences";
 export * from "./ProfileFittingStore/ProfileFittingStore";
 export * from "./ProfileSmoothingStore/ProfileSmoothingStore";
 export * from "./Snippet/SnippetStore";

@@ -59,6 +59,7 @@ import {
     OverlaySettings,
     PreferenceStore,
     type RegionFileType,
+    type SessionPreferenceChange,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
@@ -175,6 +176,8 @@ export interface WorkspaceRestoreReport {
     storedName?: string;
     /** The version of the workspace, when a newer version of CARTA saved it. */
     newerVersion?: number;
+    /** The preferences that the restore applied for the session with a value other than the user's own. */
+    sessionPreferences?: SessionPreferenceChange[];
 }
 
 /** What a workspace load is waiting for. */
@@ -1265,6 +1268,10 @@ export class AppStore {
 
                 if (!this.frames?.length) {
                     this.activeWorkspace = undefined;
+                    // The preferences of a workspace belong to its images. A restore that closes an image keeps them.
+                    if (!this.isLoadingWorkspace) {
+                        this.preferenceStore.clearSessionPreferences();
+                    }
 
                     const colorBlendingImages = this.imageViewConfigStore?.colorBlendingImages.slice();
                     for (const colorBlendingImage of colorBlendingImages) {
@@ -1306,6 +1313,8 @@ export class AppStore {
         this.clearSpatialReference(false);
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
+        // The preferences of a workspace belong to its images. A restore applies its own after this.
+        this.preferenceStore.clearSessionPreferences();
         if (this.backendService.closeFile(-1)) {
             // Nothing this session opened is left to name, so give every workspace ID back. A close
             // that did not go through leaves everything loaded, still to be named by a later save.
@@ -3089,9 +3098,16 @@ export class AppStore {
             const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
-            const {repointed} = restorer;
-            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size || newerVersion !== undefined) {
-                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined, newerVersion});
+            const {repointed, sessionPreferenceChanges} = restorer;
+            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size || newerVersion !== undefined || sessionPreferenceChanges.length) {
+                this.showWorkspaceRestoreReport({
+                    name: workspaceName,
+                    issues: restoreIssues,
+                    repointed,
+                    storedName: !isKey && workspace.editable !== false ? name : undefined,
+                    newerVersion,
+                    sessionPreferences: sessionPreferenceChanges
+                });
             }
             return true;
         } catch (err) {

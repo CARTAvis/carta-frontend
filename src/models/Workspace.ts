@@ -24,6 +24,7 @@ import {
     type NumberFormatType,
     type NumericInputType,
     type PlayMode,
+    type PreferenceKeys,
     type RadiusUnits,
     type RedshiftType,
     type RegionMode,
@@ -1250,6 +1251,11 @@ export interface Workspace {
     };
     /** The spectral coordinate that spectrally matched images are matched by, such as "VRAD". */
     spectralMatchingType?: SpectralType;
+    /**
+     * The values in effect of the preferences that change what the user makes next, such as the
+     * style of a new region, by preference key. A restore applies them for the session only.
+     */
+    preferences?: Partial<Record<PreferenceKeys, unknown>>;
     selectedFile?: number;
     /** The settings of the animator. */
     animator?: WorkspaceAnimator;

@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {WorkspaceIssueOutcome} from "enums";
 import {describeCatalogSource, describeImageSource, describeNewerWorkspace, type WorkspaceIssue} from "models";
-import {AppStore} from "stores";
+import {AppStore, SESSION_PREFERENCES} from "stores";
 
 import {FileName, FileNameText, ItemIcon} from "./FileNameText";
 import {describeIssue, describeWidgetGroup, groupRestoreReport, type WidgetGroup} from "./restoreReportGroups";
@@ -15,6 +15,11 @@ import "./WorkspaceRestoreReportDialogComponent.scss";
 /** Returns the count of a thing, such as "1 item" or "2 items". */
 function countOf(count: number, singular: string, plural: string): string {
     return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/** Shows the value of a preference, such as "on" for true. */
+function preferenceValueText(value: unknown): string {
+    return typeof value === "boolean" ? (value ? "on" : "off") : String(value);
 }
 
 /** Shows the title of a section of the report, with an icon. */
@@ -79,13 +84,15 @@ const WidgetGroupLines = ({group, isUnderCause, titleOfWidget}: {group: WidgetGr
 );
 
 /**
- * Lists what the last workspace restore could not bring back as saved, in three groups:
+ * Lists what the last workspace restore could not bring back as saved, in four groups:
  * - items that are not in the session, each marked as failed or skipped. Under each item, the
  *   report lists what the restore left out or changed because of it, such as the widgets that
  *   showed a skipped image.
  * - items that are in the session, but not as saved.
  * - images and catalogs that opened from a file that the user chose. The user can write these new
  *   locations to the stored workspace, and change nothing else in it.
+ * - preferences that the session uses with the values of the workspace, not the user's own. The
+ *   user can use their own preferences again.
  */
 export const WorkspaceRestoreReportDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
@@ -108,6 +115,9 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
     // Count the items that the section lists. A widget listed under its cause is not counted again.
     const changedCount = groups.changed.reduce((count, item) => count + ("widgets" in item ? item.widgets.widgetIds.length : 1), 0);
     const writeBack = appStore.workspaceWriteBack;
+    const sessionPreferences = report?.sessionPreferences ?? [];
+    // The user can set a preference or use their own preferences after the restore. Then the session no longer uses the saved value.
+    const isUsingOwnPreferences = !sessionPreferences.some(change => appStore.preferenceStore.sessionPreferences.has(change.key));
 
     return (
         <Dialog
@@ -131,7 +141,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                     </Callout>
                 )}
                 {/* Sum up the sections only when there are two or more. One section says it by its title. */}
-                {[leftOutCount, changedCount, repointed.length].filter(count => count > 0).length > 1 && (
+                {[leftOutCount, changedCount, repointed.length, sessionPreferences.length].filter(count => count > 0).length > 1 && (
                     <div className="report-summary" data-testid="workspace-restore-report-summary">
                         {leftOutCount > 0 && (
                             <Tag minimal intent={Intent.WARNING}>
@@ -144,6 +154,7 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                 {countOf(repointed.length, "file", "files")} from a new location
                             </Tag>
                         )}
+                        {sessionPreferences.length > 0 && <Tag minimal>{countOf(sessionPreferences.length, "preference", "preferences")} for this session</Tag>}
                     </div>
                 )}
                 {groups.leftOut.length > 0 && (
@@ -240,6 +251,35 @@ export const WorkspaceRestoreReportDialogComponent = observer(() => {
                                         Folder: {to.directory ? <FileName text={to.directory} /> : "the top-level folder"}
                                         {to.directory ? " (from the top-level folder)" : ""}
                                     </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+                {sessionPreferences.length > 0 && (
+                    <section data-testid="workspace-restore-report-preferences">
+                        <div className="report-section-header">
+                            <SectionTitle icon="cog">Preferences for this session</SectionTitle>
+                            <AnchorButton
+                                size="small"
+                                icon={isUsingOwnPreferences ? "tick" : "reset"}
+                                disabled={isUsingOwnPreferences}
+                                onClick={appStore.preferenceStore.clearSessionPreferences}
+                                data-testid="workspace-restore-report-use-own-preferences-button"
+                            >
+                                {isUsingOwnPreferences ? "Using my preferences" : "Use my preferences"}
+                            </AnchorButton>
+                        </div>
+                        <p>
+                            {isUsingOwnPreferences
+                                ? "Your own preferences are in effect again. What the restore made does not change."
+                                : "The workspace saved these values, so what you make next in this session matches the workspace. Your stored preferences do not change. A preference that you change in Preferences uses your value."}
+                        </p>
+                        <ul role="list">
+                            {sessionPreferences.map(change => (
+                                <li key={change.key} className="preference-item">
+                                    {SESSION_PREFERENCES[change.key]?.label ?? change.key}: {preferenceValueText(change.value)}
+                                    <span className="preference-own-value"> (yours: {preferenceValueText(change.ownValue)})</span>
                                 </li>
                             ))}
                         </ul>
