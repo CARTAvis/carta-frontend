@@ -2,6 +2,7 @@ import {rs} from "@rstest/core";
 
 import {ZoomPoint} from "models/Zoom/ZoomPoint" with {rstest: "importActual"};
 
+// Loading the models barrel also initializes frame stores through a circular dependency.
 rs.mock("models", () => ({ZoomPoint}));
 
 rs.mock("stores", () => ({

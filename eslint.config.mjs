@@ -172,5 +172,9 @@ export default [
             "@blueprintjs/classes-constants": "error",
             "@blueprintjs/html-components": "error"
         }
+    },
+    {
+        files: ["**/*.{test,spec}.{js,jsx,ts,tsx}"],
+        rules: {"no-restricted-globals": ["error", {name: "jest", message: "Use rs from @rstest/core."}]}
     }
 ];

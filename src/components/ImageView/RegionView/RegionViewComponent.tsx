@@ -6,9 +6,10 @@ import type Konva from "konva";
 import * as _ from "lodash";
 import {action, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
+import type {CursorInfo, FrameView, Point2D} from "models";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
-import {type CursorInfo, type FrameView, type Point2D, ZoomPoint} from "models";
+import {ZoomPoint} from "models/Zoom/ZoomPoint";
 import {AppStore, PreferenceStore} from "stores";
 import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, getRectFromPoints, length2D, pointDistanceSquared, type Rect2D, subtract2D, transformPoint} from "utilities";

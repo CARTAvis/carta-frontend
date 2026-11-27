@@ -3,9 +3,13 @@ on:
   # The skipped job satisfies the required check before a pull request enters the queue.
   pull_request:
     branches: [dev]
+    types: [opened, synchronize, reopened, edited]
   merge_group:
     branches: [dev]
     types: [checks_requested]
+
+permissions:
+  contents: read
 
 jobs:
   test-doc:

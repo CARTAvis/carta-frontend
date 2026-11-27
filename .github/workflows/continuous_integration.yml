@@ -73,12 +73,12 @@ jobs:
         run: printf 'node-v%s=%s\n' "$NODE_VERSION" "${{ job.status }}" >> "$GITHUB_OUTPUT"
 
   Notify:
-    name: Send notifications
+    name: Summarize CI results
     runs-on: ubuntu-latest
     needs: node
     if: always()
     steps:
-      - name: Summarize CI results
+      - name: Write job summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
           | Check | Result |

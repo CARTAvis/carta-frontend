@@ -166,6 +166,7 @@ describe("ScatterPlotComponent interactions", () => {
 
             expect(graphZoomReset).not.toHaveBeenCalled();
             rs.runOnlyPendingTimers();
+            expect(graphZoomReset).not.toHaveBeenCalled();
         } finally {
             rs.clearAllTimers();
             rs.useRealTimers();
