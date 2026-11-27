@@ -510,7 +510,7 @@ export class WorkspaceSnapshotter {
             workspaceFile.unappliedContourConfig = unappliedContourConfig;
         }
 
-        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig(frame);
+        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig();
         if (unappliedVectorOverlayConfig) {
             workspaceFile.unappliedVectorOverlayConfig = unappliedVectorOverlayConfig;
         }

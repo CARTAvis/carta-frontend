@@ -87,8 +87,10 @@ describe("ContourConfigStore workspace round trip", () => {
 });
 
 describe("ContourConfigStore settings of contours that are off", () => {
-    test("gives nothing when the settings are the ones that a new image starts with", () => {
-        expect(createStore(false).toUnappliedConfig()).toBeUndefined();
+    test("gives the settings even when they are the ones that a new image starts with", () => {
+        const store = createStore(false);
+
+        expect(store.toUnappliedConfig()).toEqual(expect.objectContaining({thickness: store.thickness, levels: store.levels}));
     });
 
     test("gives the settings when the contours are off and a setting changed", () => {

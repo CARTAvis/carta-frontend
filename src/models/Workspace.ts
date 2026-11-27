@@ -381,8 +381,7 @@ export interface WorkspaceFile {
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     /**
      * The contour settings of an image whose contours are off, such as a color that the user chose
-     * before applying contours. Left out when they are the settings that a new image starts with.
-     * It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
+     * before applying contours. It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
      */
     unappliedContourConfig?: WorkspaceContourConfig;
     /** The vector overlay settings of an image whose vector overlay is off, as for `unappliedContourConfig`. */
