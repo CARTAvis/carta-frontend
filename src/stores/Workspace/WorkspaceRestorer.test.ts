@@ -1885,6 +1885,27 @@ describe("WorkspaceRestorer", () => {
             expect(frame.toggleOffsetCoord).toHaveBeenCalledTimes(1);
         });
 
+        test("sets the center of offset coordinates saved as turned off, and leaves them off", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: {...savedSettings.offsetCoordinates, shown: false}}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual([]);
+            expect(frame.setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(frame.setSkyRefIs).toHaveBeenCalledWith(1);
+            expect(frame.toggleOffsetCoord).not.toHaveBeenCalled();
+        });
+
+        test("does not report offset coordinates saved as turned off that the image no longer supports", async () => {
+            frameOverrides = {isPVImage: true};
+            createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: {...savedSettings.offsetCoordinates, shown: false}}]}));
+
+            expect(problems).toEqual([]);
+        });
+
         test("reports a rest frame, beam or offset coordinates the image no longer has or supports", async () => {
             frameOverrides = {isRestFrameSupported: false, isPVImage: true, beamProperties: undefined};
             const {appStore} = createSession();

@@ -2040,6 +2040,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * The workspace saves offset coordinates only on an image that is not matched to another image.
      * Pass them on to the images matched to it, as the controls do. Set them after every image is
      * matched. Matching an image moves the offset center of the image that it is matched to.
+     * Offset coordinates saved as not shown get their center, and stay off.
      */
     private restoreOffsetCoordinates(): void {
         for (const fileInfo of this.allImages) {
@@ -2049,15 +2050,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
             const center = offset.center;
+            const isShown = offset.shown !== false;
             const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
             if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
                 if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
                     frame.setSkyRefIs(offset.skyRefIs);
                 }
-                if (!frame.isOffsetCoord) {
+                if (isShown && !frame.isOffsetCoord) {
                     frame.toggleOffsetCoord();
                 }
-            } else {
+            } else if (isShown) {
                 const imageName = this.nameOf(fileInfo);
                 this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
             }

@@ -456,8 +456,9 @@ export class WorkspaceSnapshotter {
             workspaceFile.colorbarLabelCustomText = frame.colorbarLabelCustomText;
         }
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
-        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
-            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        // The offset center is set when the offset coordinates are first turned on. Save it when they are turned off too.
+        if (!frame.spatialReference && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs, shown: frame.isOffsetCoord};
         }
         if (frame.fittingResult) {
             // JSON cannot write NaN. A rotation that is not finite is saved as 0, as the ellipse is drawn with it.

@@ -195,7 +195,7 @@ describe("WorkspaceSnapshotter", () => {
             restFrequency: {value: 230.5, unit: "GHz"},
             restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
             beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
-            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1, shown: true}
         });
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
@@ -209,7 +209,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.files?.[0].restFrame).toEqual({enabled: false, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"});
     });
 
-    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and hidden offset coordinates", () => {
+    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and offset coordinates never turned on", () => {
         createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
@@ -217,6 +217,16 @@ describe("WorkspaceSnapshotter", () => {
         for (const field of ["restFrequency", "restFrame", "beam", "offsetCoordinates"]) {
             expect(workspace.files?.[0]).not.toHaveProperty(field);
         }
+    });
+
+    test("captures the center of offset coordinates that are turned off", () => {
+        const frame = createFrame(0, {isOffsetCoord: false, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].offsetCoordinates).toEqual({center: {x: 5, y: 6}, skyRefIs: 0, shown: false});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("leaves the offset coordinates of an image matched to another to that image", () => {

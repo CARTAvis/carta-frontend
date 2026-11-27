@@ -355,8 +355,11 @@ export interface WorkspaceFile {
     restFrequency?: {value: number; unit: string};
     /** The beam overlay settings of an image that has a beam. */
     beam?: {visible: boolean; color: string; type: BeamType; width: number; shiftX: number; shiftY: number};
-    /** The offset coordinates, when they are shown. Saves the center in image pixels, and whether the center is the origin or the pole. */
-    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
+    /**
+     * The offset coordinates, once they were turned on. Saves the center in image pixels, whether the center is the origin or the pole,
+     * and whether they are shown. A workspace that leaves out `shown` shows them.
+     */
+    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs; shown?: boolean};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */
     restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
     /**
