@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches-ignore: ['gh-readonly-queue/**']
+    branches-ignore: ['gh-readonly-queue/**', dev]
     tags: ['**']
   merge_group:
     branches: [dev]
