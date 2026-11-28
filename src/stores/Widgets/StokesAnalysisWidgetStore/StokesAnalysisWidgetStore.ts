@@ -119,6 +119,8 @@ export class StokesAnalysisWidgetStore
     referenceAxesThickness: number = 2;
     readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
     @observable settingsTabId: StokesAnalysisSettingsTabs = StokesAnalysisSettingsTabs.CONVERSION;
+    /** How much of the profiles has arrived, such as "[50% complete]". It is empty when they are complete. */
+    @observable progressString: string = "";
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static validStatsTypes = [CARTA.StatsType.Mean];
@@ -399,6 +401,10 @@ export class StokesAnalysisWidgetStore
         }
     };
 
+    @action setProgressString = (progressString: string) => {
+        this.progressString = progressString;
+    };
+
     @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
         this.settingsTabId = tabId;
     };
@@ -406,6 +412,17 @@ export class StokesAnalysisWidgetStore
     @action setShowReferenceAxes = (shouldShowReferenceAxes: boolean) => {
         this.shouldShowReferenceAxes = shouldShowReferenceAxes;
     };
+
+    /** Returns the title of the widget's tab. Returns undefined when no image is open. */
+    @computed get tabTitle(): string | undefined {
+        if (!this.effectiveFrame) {
+            return undefined;
+        }
+        const regionId = this.effectiveRegionId;
+        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+        const selectedString = this.isMatchingSelectedRegion ? "(Active)" : "";
+        return `Stokes Analysis : ${regionString} ${selectedString} ${this.progressString}`;
+    }
 
     @computed get isLinePlotsAutoScaledX() {
         return this.sharedMinX === undefined || this.sharedMaxX === undefined;

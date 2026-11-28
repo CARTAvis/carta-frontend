@@ -27,11 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added options to choose a new file for, retry or skip items that cannot be opened when opening a workspace ([#3039](https://github.com/CARTAvis/carta-frontend/issues/3039)).
 * Added support for restoring the spectral profiler's fitting settings, fit result and moment generator settings with its auto spatial matching switch, and the Image Fitting settings, results, selected component and coordinates, in workspaces ([#3042](https://github.com/CARTAvis/carta-frontend/issues/3042)).
 * Added support for saving the WCS overlay settings, with the number formats that the workspace showed, in workspaces ([#3043](https://github.com/CARTAvis/carta-frontend/issues/3043)).
+* Added support for saving the preferences that set up new regions, images, contours and overlays in workspaces. Opening a workspace uses them for that session only, and the Preferences dialog offers to use your own preferences instead ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
+* Added support for making moment and PV images from scripts, with their status, progress and cancel ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
 ### Fixed
 * Fixed the Contour dialog staying unlocked from the active image after opening a workspace in which it followed the active image ([#3035](https://github.com/CARTAvis/carta-frontend/issues/3035)).
 * Fixed an image opened after all images were closed with a PV preview in front having no world coordinates, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed the backend sometimes crashing when all images are closed while an image is spatially matched, such as when a workspace is opened ([#3037](https://github.com/CARTAvis/carta-frontend/issues/3037)).
 * Fixed opening a workspace whose contour, vector overlay or color blending settings leave out a value stopping partway, and a refused layer of a color-blended image giving its alpha to another layer ([#3038](https://github.com/CARTAvis/carta-frontend/issues/3038)).
+* Fixed a workspace being saved without a moment, PV or fitting image that was still being made ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
+* Fixed regions and annotations without a name getting other numbers, such as "Region 3" becoming "Region 2", when a workspace is opened ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
+* Fixed a ruler made by a click having a P.A. of NaN, which kept the workspace from being saved ([#3073](https://github.com/CARTAvis/carta-frontend/issues/3073)).
+* Fixed workspace saving and deleting, and region exports from the region list and the region dialog, being offered in read-only mode and then failing ([#3084](https://github.com/CARTAvis/carta-frontend/issues/3084)).
+* Fixed the streaming indicator staying on after a workspace with images on other channels is opened ([#3086](https://github.com/CARTAvis/carta-frontend/issues/3086)).
 * Fixed an image opened after closing an image with a ruler annotation being shown without world coordinates ([#3081](https://github.com/CARTAvis/carta-frontend/issues/3081)).
 * Fixed SIMBAD object links ignoring the selected SIMBAD mirror and breaking on names with "+" ([#3078](https://github.com/CARTAvis/carta-frontend/issues/3078)).
 * Fixed the catalog overlay colormap preview not reflecting the selected inversion direction ([#2030](https://github.com/CARTAvis/carta-frontend/issues/2030)).

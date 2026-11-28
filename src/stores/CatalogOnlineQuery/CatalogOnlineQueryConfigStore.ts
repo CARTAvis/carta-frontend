@@ -154,6 +154,25 @@ export class CatalogOnlineQueryConfigStore {
         CatalogOnlineQueryStore.Instance.resetResultSize();
     };
 
+    /**
+     * Sets the fields back to the defaults, as for a workspace that saved none. The center and the
+     * radius come from the image in front. Without an image in front, the center is empty.
+     */
+    @action resetWorkspaceConfig = (): void => {
+        this.centerPixelCoord = {x: undefined, y: undefined};
+        this.setCatalogDB(CatalogDatabase.SIMBAD);
+        this.setCoordsType(CatalogSystemType.ICRS);
+        this.setCoordsFormat(NumberFormatType.Degrees);
+        this.radiusUnits = RadiusUnits.DEGREES;
+        this.resetSearchRadius();
+        this.setFrameCenter();
+        this.setMaxObjects(CatalogOnlineQueryConfigStore.OBJECT_SIZE);
+        this.setObjectName("");
+        this.setVizierKeyWords("");
+        this.resetVizier();
+        CatalogOnlineQueryStore.Instance.resetResultSize();
+    };
+
     public setFrameCenter() {
         const frame = this.activeFrame;
         if (frame?.center) {

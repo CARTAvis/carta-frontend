@@ -260,3 +260,54 @@ describe("the range a widget was zoomed to, in a workspace", () => {
         expect(restored.isBiasContrastOpen).toBe(false);
     });
 });
+
+describe("the range of a widget that shows the PV preview in front, in a workspace", () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    /** A session whose image in front is the PV preview of a generator. The workspace saves the preview when `isSaved` is true. */
+    function createPreviewSession(isSaved: boolean) {
+        const preview = {frameInfo: {fileId: -2}, hasStokes: false, coordinateOptions: [], regionSet: {focusedRegion: undefined}, getRegion: () => undefined, renderConfig: {histogramMin: 0, histogramMax: 1}};
+        const generator = {previewFrame: preview, isPreviewSaved: () => isSaved};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: preview, frames: [preview], getFrame: () => undefined, widgetsStore: {pvGeneratorWidgets: new Map([["pv-generator-0", generator]])}} as any);
+    }
+
+    test.each([
+        ["histogram", () => new HistogramWidgetStore()],
+        ["spatial profiler", () => new SpatialProfileWidgetStore()],
+        ["render config widget", () => new RenderConfigWidgetStore()]
+    ])("a %s that follows the image in front saves its range when the workspace makes the preview again", (_, create) => {
+        createPreviewSession(true);
+        const store = create();
+        store.setXBounds(1, 2);
+
+        expect(store.toWorkspaceConfig(WRITER)).toEqual(expect.objectContaining({minX: 1, maxX: 2}));
+    });
+
+    test("leaves out the range when the workspace does not make the preview again, and for a widget that cannot show a preview", () => {
+        createPreviewSession(false);
+        const histogram = new HistogramWidgetStore();
+        histogram.setXBounds(1, 2);
+        expect(histogram.toWorkspaceConfig(WRITER)).not.toHaveProperty("minX");
+
+        createPreviewSession(true);
+        const stokes = new StokesAnalysisWidgetStore();
+        stokes.setSharedXBounds(1, 2);
+        expect(stokes.toWorkspaceConfig(WRITER)).not.toHaveProperty("ranges");
+    });
+
+    test("applies the saved range only after the restore puts the preview in front again", () => {
+        createSession();
+        const store = new HistogramWidgetStore();
+        const config = {minX: 1, maxX: 2};
+
+        expect(store.applyWorkspaceBinding(config, {...READER, isActivePvPreviewPending: () => true})).toEqual([]);
+        store.applyWorkspaceView(config);
+        expect(store.minX).toBeUndefined();
+
+        store.applyWorkspaceBinding(config, {...READER, isActivePvPreviewPending: () => false});
+        store.applyWorkspaceView(config);
+        expect([store.minX, store.maxX]).toEqual([1, 2]);
+    });
+});

@@ -16,9 +16,10 @@ import {
     type WorkspaceGenerationRequest,
     type WorkspaceImageSource,
     type WorkspaceIssue,
+    type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore, MirrorSiteStore} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, type DialogSettings, HipsQueryStore, MirrorSiteStore, PreferenceStore, SESSION_PREFERENCE_KEYS, SESSION_PREFERENCES} from "stores";
 import {CURSOR_REGION_ID, type FrameStore, type ImageGenerationRequest} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -146,7 +147,17 @@ export class WorkspaceSnapshotter {
         this.captureViews();
         this.captureLayout();
         this.captureSelection();
+        this.capturePreferences();
         return {workspace: this.detach(), issues: this.issues};
+    }
+
+    /**
+     * Saves the value in effect of each preference that changes what the user makes next. Then the
+     * user who opens the workspace makes the same new regions, images and overlays.
+     */
+    private capturePreferences(): void {
+        const preferenceStore = PreferenceStore.Instance;
+        this.workspace.preferences = Object.fromEntries(SESSION_PREFERENCE_KEYS.map(key => [key, SESSION_PREFERENCES[key]?.valueOf(preferenceStore)]));
     }
 
     /** Stage 1: every image opened from a file or an expression, with how it was opened and how it is displayed. Stage 1a saves the generated images. */
@@ -256,7 +267,10 @@ export class WorkspaceSnapshotter {
         // Use the region of the image that the source is shown with. When the source is matched to
         // another image, the region belongs to that image.
         const regionOwner = source.spatialReference ?? source;
-        for (const image of [source, regionOwner]) {
+        // The image that the shape of the region is in. It is saved before the request, so that a
+        // restore can make the region on it again.
+        const shapeOwner = "regionShapeOwner" in request ? request.regionShapeOwner : undefined;
+        for (const image of [source, regionOwner, ...(shapeOwner ? [shapeOwner] : [])]) {
             if (image.frameInfo.generated && !this.savedGeneratedImages.has(image)) {
                 return {reason: image === source ? "sourceNotSaved" : "referenceNotSaved", isWaiting: !!image.generation};
             }
@@ -267,7 +281,10 @@ export class WorkspaceSnapshotter {
         if (this.imageIdOf(regionOwner) === undefined) {
             return {reason: "referenceNotSaved"};
         }
-        if (request.regionId > RegionId.CURSOR && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
+        // A request that kept the shape of its region is made again over that shape, also when the
+        // region was deleted.
+        const hasShape = "regionShape" in request && !!request.regionShape && !!shapeOwner && this.imageIdOf(shapeOwner) !== undefined;
+        if (request.regionId > RegionId.CURSOR && !hasShape && !source.regionSet?.regions.some(region => region.regionId === request.regionId && !region.isTemporary)) {
             return {reason: "regionDeleted"};
         }
         return undefined;
@@ -390,7 +407,8 @@ export class WorkspaceSnapshotter {
             id: workspaceImageId,
             source,
             timeSeriesMember: this.appStore.timeSeriesStore.isMember(frame) || undefined,
-            imageListIndex: this.appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.frameInfo.fileId)
+            imageListIndex: this.appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.frameInfo.fileId),
+            aipsBeamSupport: frame.hasAipsBeamSupport
         };
         // Save the range of the animator only when it is not every channel.
         const [firstChannel, lastChannel] = frame.animationChannelRange ?? [];
@@ -402,16 +420,17 @@ export class WorkspaceSnapshotter {
 
         if (frame.spatialReference) {
             workspaceFile.references.spatial = this.imageIdOf(frame.spatialReference);
-        } else if (frame.regionSet?.regions.length) {
+        } else if (frame.regionSet) {
             // Regions are only the image's own while it is not matched to another one.
             // A region without an ID from the backend is not saved, so it is not saved as selected either.
+            const regionSet = frame.regionSet;
             const isSaved = (regionId: number | undefined) => regionId !== undefined && regionId > CURSOR_REGION_ID;
-            const selectedRegions = Array.from(frame.regionSet.selectedRegionIds ?? []).filter(isSaved);
-            const focusedRegionId = frame.regionSet.focusedRegion?.regionId;
+            const selectedRegions = Array.from(regionSet.selectedRegionIds ?? []).filter(isSaved);
+            const focusedRegionId = regionSet.focusedRegion?.regionId;
             workspaceFile.regionsSet = {
-                selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined,
-                ...(selectedRegions.length > 1 ? {selectedRegions} : {}),
-                regions: this.captureRegions(frame)
+                newRegionType: regionSet.newRegionType,
+                regionMode: regionSet.mode,
+                ...(regionSet.regions?.length ? {selectedRegion: isSaved(focusedRegionId) ? focusedRegionId : undefined, ...(selectedRegions.length > 1 ? {selectedRegions} : {}), regions: this.captureRegions(frame)} : {})
             };
         }
 
@@ -449,8 +468,10 @@ export class WorkspaceSnapshotter {
             workspaceFile.colorbarLabelCustomText = frame.colorbarLabelCustomText;
         }
         // Save offset coordinates only on an image that is not matched to another image, as for regions. A matched image uses the offset coordinates of its reference image.
-        if (!frame.spatialReference && frame.isOffsetCoord && frame.offsetCenter) {
-            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs};
+        // The offset center is set when the offset coordinates are first turned on, or when the toolbar changes the coordinate system.
+        // Save it also while the offset coordinates are off.
+        if (!frame.spatialReference && frame.offsetCenter) {
+            workspaceFile.offsetCoordinates = {center: {...frame.offsetCenter}, skyRefIs: frame.skyRefIs, shown: frame.isOffsetCoord};
         }
         if (frame.fittingResult) {
             // JSON cannot write NaN. A rotation that is not finite is saved as 0, as the ellipse is drawn with it.
@@ -499,7 +520,7 @@ export class WorkspaceSnapshotter {
             workspaceFile.unappliedContourConfig = unappliedContourConfig;
         }
 
-        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig(frame);
+        const unappliedVectorOverlayConfig = frame.vectorOverlayConfig.toUnappliedConfig();
         if (unappliedVectorOverlayConfig) {
             workspaceFile.unappliedVectorOverlayConfig = unappliedVectorOverlayConfig;
         }
@@ -534,7 +555,8 @@ export class WorkspaceSnapshotter {
             .map(region => ({
                 id: region.regionId,
                 type: region.regionType,
-                rotation: region.rotation,
+                // JSON cannot write NaN, and the schema needs a number.
+                rotation: isFinite(region.rotation) ? region.rotation : 0,
                 points: region.controlPoints,
                 name: region.name,
                 color: region.color,
@@ -604,10 +626,18 @@ export class WorkspaceSnapshotter {
             return undefined;
         }
         if (request.type === "pv") {
-            return {type: "pv", sourceImageId, regionId: request.regionId, width: request.width, channelRange: request.channelRange && {...request.channelRange}, reverse: request.reverse};
+            return {
+                type: "pv",
+                sourceImageId,
+                regionId: request.regionId,
+                width: request.width,
+                channelRange: request.channelRange && {...request.channelRange},
+                reverse: request.reverse,
+                ...this.regionShapeFieldOf(request)
+            };
         }
         if (request.type === "fitting") {
-            return WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId);
+            return {...WorkspaceSnapshotter.workspaceFittingRequestOf(request, sourceImageId), ...this.regionShapeFieldOf(request)};
         }
         // Save only the moments whose images are still shown. The other images were closed.
         const moments = frames.map(frame => frame.generation?.moment);
@@ -618,8 +648,19 @@ export class WorkspaceSnapshotter {
             moments: moments.every(moment => moment !== undefined) ? (moments as CARTA.Moment[]) : [...request.moments],
             channelRange: {...request.channelRange},
             mask: request.mask,
-            pixelRange: {...request.pixelRange}
+            pixelRange: {...request.pixelRange},
+            ...this.regionShapeFieldOf(request)
         };
+    }
+
+    /**
+     * Returns the shape of the region of a request as the workspace saves it, with the image that the
+     * region belonged to. Returns no field when the request has no shape, or when that image is not saved.
+     */
+    private regionShapeFieldOf(request: {regionShape?: WorkspaceRegionShape; regionShapeOwner?: FrameStore}): {regionShape?: WorkspaceRegionShape} {
+        const shape = request.regionShape;
+        const imageId = request.regionShapeOwner ? this.imageIdOf(request.regionShapeOwner) : undefined;
+        return shape && imageId !== undefined ? {regionShape: {regionType: shape.regionType, controlPoints: shape.controlPoints.map(({x, y}) => ({x, y})), rotation: shape.rotation, imageId}} : {};
     }
 
     /**
@@ -688,6 +729,7 @@ export class WorkspaceSnapshotter {
                 continue;
             }
             const workspaceColorBlending: WorkspaceColorBlending = {
+                name: colorBlending.filename,
                 imageListIndex: index,
                 selectedFrameId: selectedFrameId as number[],
                 alpha: colorBlending.alpha,
@@ -997,6 +1039,9 @@ export class WorkspaceSnapshotter {
         }
         if (id === DialogId.FileInfo && typeof dialogStore.fileInfoSearchString === "string") {
             dialog.search = dialogStore.fileInfoSearchString;
+        }
+        if (id === DialogId.Fitting && typeof dialogStore.fittingSettingsHeight === "number") {
+            dialog.settingsHeight = dialogStore.fittingSettingsHeight;
         }
         return dialog;
     }

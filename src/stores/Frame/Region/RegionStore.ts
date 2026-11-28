@@ -473,6 +473,10 @@ export class RegionStore {
     }
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
+        // A line whose ends are at one point, such as a ruler made by a click, has no direction.
+        if (start.x === end.x && start.y === end.y) {
+            return 0;
+        }
         let angle = (Math.atan((end.x - start.x) / (start.y - end.y)) * 180.0) / Math.PI;
         if (end.y > start.y) {
             angle += 180;

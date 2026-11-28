@@ -2,7 +2,7 @@ import * as React from "react";
 import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
 import {PopoutKeyboardForwarder} from "HotkeyWrapper";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {Observer} from "mobx-react";
 
 import {
@@ -190,6 +190,8 @@ export class WidgetsStore {
     private layoutCatalogWidgetsOnFirstCatalog: CatalogWidgetStore[] = [];
     /** The file IDs of the display stores that a regular layout made for catalogs that were not open. */
     private readonly layoutDisplayStoreFileIds = new Set<number>();
+    /** The reactions that keep the tabs of restored widgets named, by the component ID. */
+    private readonly tabTitleDisposers = new Map<string, IReactionDisposer>();
     private beingUnpinned: Set<string> = new Set();
     private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
     private floatingOriginPopouts: Map<string, WidgetConfig> = new Map();
@@ -506,8 +508,8 @@ export class WidgetsStore {
      * Points each profile, analysis and statistics widget at the image and region that the
      * workspace saved. {@link restorePlotWidgets} applies what the widgets show after they settle.
      */
-    @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
-        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids));
+    @action public restorePlotWidgetBindings(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader, only?: (config: WorkspacePlotWidgetConfig) => boolean): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => widgetStore.applyWorkspaceBinding(config, ids), only);
     }
 
     /** Applies what the workspace saved of what each profile, analysis and statistics widget shows. The last step applies the zoom, and the settings that this step would reset. */
@@ -520,10 +522,38 @@ export class WidgetsStore {
      * shows has settled. Also applies the settings that the earlier steps would reset, such as the
      * fitting settings of a spectral profiler.
      */
-    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader): WorkspaceIssue[] {
-        return this.restorePlotWidgetsBy(plotWidgets, (widgetStore, config) => {
-            const problems = widgetStore.applyWorkspaceView(config, ids);
-            return Array.isArray(problems) ? problems : [];
+    @action public restorePlotWidgetViews(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined, ids: WorkspaceIdReader, only?: (config: WorkspacePlotWidgetConfig) => boolean): WorkspaceIssue[] {
+        return this.restorePlotWidgetsBy(
+            plotWidgets,
+            (widgetStore, config) => {
+                const problems = widgetStore.applyWorkspaceView(config, ids);
+                return Array.isArray(problems) ? problems : [];
+            },
+            only
+        );
+    }
+
+    /**
+     * Keeps the tab of each restored profile, analysis and statistics widget named after the image
+     * and region that it shows, until the widget is removed. A tab that is not shown is not mounted,
+     * so its widget cannot name it. The widget, once mounted, sets the same title.
+     */
+    @action public nameRestoredWidgetTabs(plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined): void {
+        Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
+            this.widgetsMap.get(config.type)?.forEach((widgetStore, id) => {
+                if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId && "tabTitle" in widgetStore) {
+                    this.tabTitleDisposers.get(id)?.();
+                    this.tabTitleDisposers.set(
+                        id,
+                        autorun(() => {
+                            const title = widgetStore.tabTitle;
+                            if (typeof title === "string") {
+                                this.setWidgetTitle(id, title);
+                            }
+                        })
+                    );
+                }
+            });
         });
     }
 
@@ -546,10 +576,14 @@ export class WidgetsStore {
 
     private restorePlotWidgetsBy(
         plotWidgets: Record<string, WorkspacePlotWidgetConfig> | undefined,
-        apply: (widgetStore: WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig>, config: WorkspacePlotWidgetConfig) => string[]
+        apply: (widgetStore: WorkspaceConfigurableWidget<WorkspacePlotWidgetConfig>, config: WorkspacePlotWidgetConfig) => string[],
+        only: (config: WorkspacePlotWidgetConfig) => boolean = () => true
     ): WorkspaceIssue[] {
         const issues: WorkspaceIssue[] = [];
         Object.entries(plotWidgets ?? {}).forEach(([widgetId, config]) => {
+            if (!only(config)) {
+                return;
+            }
             this.widgetsMap.get(config.type)?.forEach(widgetStore => {
                 if (WidgetsStore.isWorkspaceConfigurable(widgetStore) && widgetStore.widgetId === widgetId) {
                     apply(widgetStore, config).forEach(problem =>
@@ -620,6 +654,8 @@ export class WidgetsStore {
     }
 
     public removeWidget = (widgetId: string, widgetType: string) => {
+        this.tabTitleDisposers.get(widgetId)?.();
+        this.tabTitleDisposers.delete(widgetId);
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             // remove associated floating settings according current widgetId
@@ -879,7 +915,10 @@ export class WidgetsStore {
             }
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
-                config.componentId = config.id;
+                // A catalog plot of a workspace keeps the component ID that its binding was registered with,
+                // so that closing the plot removes that binding.
+                const boundComponentId = isWorkspace && catalogPlotWidgetStore ? CatalogStore.Instance.widgetBindings.displayedForWidget(id).componentId : undefined;
+                config.componentId = boundComponentId ?? config.id;
             }
             const hasPosition = isWorkspace
                 ? typeof savedConfig.defaultX === "number" && typeof savedConfig.defaultY === "number" && savedConfig.defaultX >= 0 && savedConfig.defaultY >= 0
@@ -902,7 +941,7 @@ export class WidgetsStore {
      * Adds the stores of the widgets that a layout creates.
      *
      * @param persistence - the kind of layout. Only the layout copy of a workspace applies the image
-     *                      view grid and the WCS overlay.
+     *                      view settings and the WCS overlay.
      * @returns what could not be applied as the layout saved it.
      */
     public initWidgets = (componentConfigs: any[], floating: any[], persistence: LayoutPersistence): string[] => {
@@ -910,16 +949,14 @@ export class WidgetsStore {
         this.layoutTableSeparatorPositions.clear();
         this.layoutCatalogWidgetsOnFirstCatalog = [];
         this.removeUnopenedLayoutDisplayStores();
-        // The grid and the WCS overlay belong to the session, not to one widget. Apply them once, from
-        // the first image view that saved its settings.
+        // The image view settings and the WCS overlay belong to the session, not to one widget. Apply
+        // them once, from the first image view that saved its settings. A layout copy without an image
+        // view sets them back to the defaults, so that they do not stay from the previous session.
         const imageViews = [...componentConfigs, ...floating].filter(config => config?.id === ImageViewComponent.WidgetConfig.type);
-        if (persistence === "workspace" && imageViews.length) {
+        if (persistence === "workspace") {
             const widgetSettings = imageViews.find(config => config.widgetSettings)?.widgetSettings ?? null;
             AppStore.Instance.imageViewConfigStore.applyConfig(widgetSettings);
             problems.push(...AppStore.Instance.overlaySettings.applyConfig(widgetSettings?.wcsOverlay ?? null));
-        } else if (persistence !== "workspace") {
-            // A regular layout shows the display settings of the preferences, as on a session without workspaces.
-            AppStore.Instance.imageViewConfigStore.followDisplayPreferences();
         }
 
         componentConfigs.forEach(componentConfig => {
@@ -1640,7 +1677,9 @@ export class WidgetsStore {
     @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
-        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && activeImage && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
+        // The Image List keeps its own copy of each item, so the active image is found by its type and store.
+        const isActiveVisible = activeImage?.type !== ImageType.PV_PREVIEW && visibleImages.some(image => AppStore.Instance.isActiveImage(image));
+        const titleImage = isActiveVisible ? activeImage : visibleImages[0];
         return titleImage ? (titleImage?.store?.filename ?? "") : "No image loaded";
     }
 
@@ -2040,7 +2079,8 @@ export class WidgetsStore {
         const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
-            zIndexManager.updateIndexOnRemove(id);
+            // The stack holds a widget by its component ID when it has one, such as a catalog plot.
+            zIndexManager.updateIndexOnRemove(widget.componentId || id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (shouldPreserveStore) {
                 return;

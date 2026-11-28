@@ -4,11 +4,11 @@ import {AnchorButton, Classes, type DialogProps, Icon, InputGroup, Intent, NonId
 import classNames from "classnames";
 import {comparer, reaction} from "mobx";
 import {observer} from "mobx-react";
-import type {WorkspaceIssue, WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
+import {NewerWorkspaceError, type Workspace, type WorkspaceIssue, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 import {WorkspacePreflightStore} from "stores/Workspace/WorkspacePreflightStore";
 import {WorkspaceSnapshotter} from "stores/Workspace/WorkspaceSnapshotter";
@@ -118,16 +118,24 @@ export const WorkspaceDialogComponent = observer(() => {
             setPreflight(undefined);
             setReadErrorMessage("");
             setIsReadingWorkspace(true);
-            const workspace = await appStore.apiService.getWorkspace(entry.name);
+            let workspace: Workspace | undefined;
+            let errorMessage = "Could not read the workspace";
+            try {
+                workspace = await appStore.apiService.getWorkspace(entry.name);
+            } catch (err) {
+                if (err instanceof NewerWorkspaceError) {
+                    errorMessage = err.message;
+                }
+            }
             if (selection.current !== entry.name) {
                 return;
             }
             setIsReadingWorkspace(false);
             if (!workspace) {
-                setReadErrorMessage("Could not read the workspace");
+                setReadErrorMessage(errorMessage);
                 return;
             }
-            const store = new WorkspacePreflightStore(entry.name, workspace, workspace.editable !== false);
+            const store = new WorkspacePreflightStore(entry.name, workspace, workspace.editable !== false && !appStore.isReadOnly);
             setPreflight(store);
             if (appStore.dialogStore.workspaceDialogMode === WorkspaceDialogMode.Open) {
                 store.check();
@@ -431,7 +439,7 @@ export const WorkspaceDialogComponent = observer(() => {
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                     {isOpenMode && checkedPreflight && <WorkspaceSaveChanges preflight={checkedPreflight} onSaved={fetchWorkspaces} />}
-                    <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection} />
+                    <AnchorButton intent={Intent.DANGER} icon="trash" onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !hasSelection || appStore.isReadOnly} />
                     {isOpenMode && checkedPreflight && hasSelection && <WorkspaceOpenInWindow preflight={checkedPreflight} isDisabled={isFetching} onOpened={handleCloseClicked} />}
                     {mode === WorkspaceDialogMode.Save ? (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text={saveText} disabled={isFetching || !workspaceName.trim() || !isSaveCheckDone} data-testid="workspace-save-button" />

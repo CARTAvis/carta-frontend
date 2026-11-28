@@ -19,6 +19,23 @@ type AdjacentRegionOptions = {
     preserveSelection?: boolean;
 };
 
+/** The settings of a region that {@link RegionSetStore.addExistingRegionsAsync} adds. */
+export interface ExistingRegionSettings {
+    points: Point2D[];
+    rotation: number;
+    regionType: CARTA.RegionType;
+    name: string;
+    /** Undefined gives the default of the region type. */
+    color: string | undefined;
+    /** Undefined gives the default of the region type. */
+    lineWidth: number | undefined;
+    /** Undefined or an empty list gives the default of the region type. */
+    dashes: number[] | undefined;
+    annotationStyles?: any;
+    /** A positive ID to ask the backend for, or -1 for a new ID. */
+    requestedId?: number;
+}
+
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
     @observable focusedRegion: RegionStore | null;
@@ -529,7 +546,18 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, isTemporary);
     };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], isTemporary = true, annotationStyles?: any) => {
+    @action addExistingRegion = (
+        points: Point2D[],
+        rotation: number,
+        regionType: CARTA.RegionType,
+        regionId: number,
+        name: string,
+        color: string | undefined,
+        lineWidth: number | undefined,
+        dashes: number[] | undefined,
+        isTemporary = true,
+        annotationStyles?: any
+    ) => {
         const region = this.addRegion(points, rotation, regionType, isTemporary, regionId, name);
         // additional imported style properties;
         if (color) {
@@ -568,22 +596,73 @@ export class RegionSetStore {
     };
 
     /**
-     * Adds a region like {@link addExistingRegion}, and resolves when the backend answers. The region
-     * has a temporary ID until the backend gives it one. Then it cannot share an ID with another
-     * region, even while the backend has not answered yet. The temporary ID is below every ID in
-     * {@link RegionId}. An ID such as -1 would be taken for the whole image. When the backend does
-     * not give the region an ID, the region is removed again, and the promise resolves to undefined.
+     * Adds a region like {@link addExistingRegion}, and resolves when the backend answers. See
+     * {@link addExistingRegionsAsync}.
+     *
+     * @param requestedId - a positive ID to ask the backend for, or -1 (the default) for a new ID.
      */
-    addExistingRegionAsync = async (points: Point2D[], rotation: number, regionType: CARTA.RegionType, name: string, color: string, lineWidth: number, dashes: number[], annotationStyles?: any): Promise<RegionStore | undefined> => {
-        const temporaryId = Math.min(RegionId.NONE, ...this.regions.map(r => r.regionId)) - 1;
-        const region = this.addExistingRegion(points, rotation, regionType, temporaryId, name, color, lineWidth, dashes, true, annotationStyles);
-        await this.requestSetRegion(this.frame.frameInfo.fileId, region);
-        if (region.isTemporary) {
-            // The region has no ID on the backend, so only remove it here.
-            this.deleteRegion(region);
-            return undefined;
-        }
+    addExistingRegionAsync = async (
+        points: Point2D[],
+        rotation: number,
+        regionType: CARTA.RegionType,
+        name: string,
+        color: string,
+        lineWidth: number,
+        dashes: number[],
+        annotationStyles?: any,
+        requestedId: number = -1
+    ): Promise<RegionStore | undefined> => {
+        const [region] = await this.addExistingRegionsAsync([{points, rotation, regionType, name, color, lineWidth, dashes, annotationStyles, requestedId}]);
         return region;
+    };
+
+    /**
+     * Adds regions like {@link addExistingRegion}, and resolves when the backend has answered for
+     * all of them. The regions are added at once and get their IDs at once, so that the views draw
+     * them once instead of once for each region.
+     *
+     * Each region has a temporary ID until the backend gives it one. Then it cannot share an ID with
+     * another region, even while the backend has not answered yet. The temporary ID is below every
+     * ID in {@link RegionId}. An ID such as -1 would be taken for the whole image. A region that the
+     * backend does not give an ID is removed again.
+     *
+     * A positive `requestedId` asks the backend for that ID. When no region has it, the backend uses
+     * it for the new region. Otherwise the backend updates that region instead, so the caller must
+     * make sure that the ID is free. Leave it out, or give -1, for a new ID.
+     *
+     * @returns the regions in the given order, with undefined for each region the backend refused.
+     */
+    addExistingRegionsAsync = async (regions: ExistingRegionSettings[]): Promise<(RegionStore | undefined)[]> => {
+        const added = runInAction(() => {
+            let temporaryId = Math.min(RegionId.NONE, ...this.regions.map(r => r.regionId)) - 1;
+            return regions.map(({points, rotation, regionType, name, color, lineWidth, dashes, annotationStyles}) =>
+                this.addExistingRegion(points, rotation, regionType, temporaryId--, name, color, lineWidth, dashes, true, annotationStyles)
+            );
+        });
+        const fileId = this.frame.frameInfo.fileId;
+        const ids = await Promise.all(
+            added.map((region, index) =>
+                this.backendService.setRegion(fileId, regions[index].requestedId ?? -1, region).then(
+                    ack => ack.regionId ?? undefined,
+                    err => {
+                        console.error(err);
+                        return undefined;
+                    }
+                )
+            )
+        );
+        return runInAction(() =>
+            added.map((region, index) => {
+                const regionId = ids[index];
+                if (regionId === undefined) {
+                    // The region has no ID on the backend, so only remove it here.
+                    this.deleteRegion(region);
+                    return undefined;
+                }
+                region.setRegionId(regionId);
+                return region;
+            })
+        );
     };
 
     /**

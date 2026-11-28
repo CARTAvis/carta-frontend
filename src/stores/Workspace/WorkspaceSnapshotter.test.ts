@@ -2,8 +2,8 @@ import {afterEach, describe, expect, jest, test} from "@jest/globals";
 import Ajv from "ajv";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogDatabase, CatalogSystemType, ImageType, RegionId, WorkspaceItemKind} from "enums";
-import {AppStore, MirrorSiteStore, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
+import {CatalogDatabase, CatalogSystemType, ImageType, PreferenceKeys, RegionId, WorkspaceItemKind} from "enums";
+import {AppStore, MirrorSiteStore, PreferenceStore, SESSION_PREFERENCE_KEYS, WorkspaceIdRegistry, WorkspaceSnapshotter} from "stores";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 const WORKSPACE_SCHEMA = require("carta-schemas/workspace_schema_2.json");
@@ -195,7 +195,7 @@ describe("WorkspaceSnapshotter", () => {
             restFrequency: {value: 230.5, unit: "GHz"},
             restFrame: {enabled: true, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"},
             beam: {visible: false, color: "#00ff00", type: "solid", width: 2, shiftX: 3, shiftY: -4},
-            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1}
+            offsetCoordinates: {center: {x: 5, y: 6}, skyRefIs: 1, shown: true}
         });
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
@@ -209,7 +209,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.files?.[0].restFrame).toEqual({enabled: false, redshift: 0.01, shiftMode: "redshift", velocityConvention: "optical"});
     });
 
-    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and hidden offset coordinates", () => {
+    test("leaves out the header's rest frequency, an unsupported rest frame, a beam the image lacks and offset coordinates never turned on", () => {
         createSession();
 
         const {workspace} = new WorkspaceSnapshotter().capture();
@@ -217,6 +217,40 @@ describe("WorkspaceSnapshotter", () => {
         for (const field of ["restFrequency", "restFrame", "beam", "offsetCoordinates"]) {
             expect(workspace.files?.[0]).not.toHaveProperty(field);
         }
+    });
+
+    test("captures whether the backend opened an image with AIPS beam support", () => {
+        const frame = createFrame(0, {hasAipsBeamSupport: true});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].aipsBeamSupport).toBe(true);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("captures the center of offset coordinates that are turned off", () => {
+        const frame = createFrame(0, {isOffsetCoord: false, offsetCenter: {x: 5, y: 6}, skyRefIs: 0});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].offsetCoordinates).toEqual({center: {x: 5, y: 6}, skyRefIs: 0, shown: false});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("captures the type of a new region and the region mode of each image that is not matched to another", () => {
+        const reference = createFrame(0, {regionSet: {regions: [], focusedRegion: undefined, newRegionType: CARTA.RegionType.ELLIPSE, mode: 1}});
+        const matched = createFrame(1, {spatialReference: reference, regionSet: reference.regionSet});
+        WorkspaceIdRegistry.Instance.clear(WorkspaceItemKind.Image);
+        createSession({frames: [reference, matched], activeFrame: reference, getFrame: (fileId: number) => [reference, matched][fileId]});
+        WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 1);
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet).toEqual({newRegionType: CARTA.RegionType.ELLIPSE, regionMode: 1});
+        expect(workspace.files?.[1]).not.toHaveProperty("regionsSet");
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("leaves the offset coordinates of an image matched to another to that image", () => {
@@ -253,6 +287,30 @@ describe("WorkspaceSnapshotter", () => {
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.lineRegionSampleWidth)).toEqual([5, undefined]);
         // The Region dialog shows each region in the coordinates that the user chose.
         expect(workspace.files?.[0].regionsSet?.regions?.map(saved => saved.coordinate)).toEqual(["World", "World"]);
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
+    });
+
+    test("saves a rotation that is not a number as 0, so that the workspace is valid", () => {
+        const ruler = {
+            regionId: 1,
+            regionType: CARTA.RegionType.ANNRULER,
+            rotation: NaN,
+            controlPoints: [
+                {x: 5, y: 5},
+                {x: 5, y: 5}
+            ],
+            name: "",
+            color: "#ffffff",
+            lineWidth: 2,
+            isLocked: false,
+            dashLength: 0
+        };
+        const frame = createFrame(0, {regionSet: {regions: [ruler], focusedRegion: undefined}});
+        createSession({frames: [frame], activeFrame: frame});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.files?.[0].regionsSet?.regions?.[0].rotation).toBe(0);
         expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
@@ -557,11 +615,13 @@ describe("WorkspaceSnapshotter", () => {
                 dialogVisible: new Map([
                     ["contour-dialog", true],
                     ["file-info-dialog", true],
-                    ["preference-dialog", true]
+                    ["preference-dialog", true],
+                    ["fitting-dialog", true]
                 ]),
                 dialogGeometries: new Map([["contour-dialog", {x: 100, y: 50, width: 600, height: 700}]]),
                 selectedTabOf: (id: string) => ({"contour-dialog": 2, "file-info-dialog": "image-header", "preference-dialog": 1})[id],
-                fileInfoSearchString: "CRVAL"
+                fileInfoSearchString: "CRVAL",
+                fittingSettingsHeight: 30.5
             },
             zIndexManager: {findIndex: () => 0}
         });
@@ -569,8 +629,18 @@ describe("WorkspaceSnapshotter", () => {
         expect(new WorkspaceSnapshotter().capture().workspace.dialogs).toEqual({
             "contour-dialog": {x: 100, y: 50, width: 600, height: 700, tab: "Styling"},
             "file-info-dialog": {tab: "image-header", search: "CRVAL"},
-            "preference-dialog": {tab: "RENDER_CONFIG"}
+            "preference-dialog": {tab: "RENDER_CONFIG"},
+            "fitting-dialog": {settingsHeight: 30.5}
         });
+    });
+
+    test.each([0, 100])("saves a height of %d for the fitting settings of the Image Fitting dialog, which the schema accepts", settingsHeight => {
+        createSession({dialogStore: {dialogVisible: new Map([["fitting-dialog", true]]), fittingSettingsHeight: settingsHeight}, zIndexManager: {findIndex: () => 0}});
+
+        const {workspace} = new WorkspaceSnapshotter().capture();
+
+        expect(workspace.dialogs).toEqual({"fitting-dialog": {settingsHeight}});
+        expect(new Ajv().compile(WORKSPACE_SCHEMA)(JSON.parse(JSON.stringify(workspace)))).toBe(true);
     });
 
     test("saves the settings that the Contour and Vector Overlay dialogs show but that are not applied, by the image that they are for", () => {
@@ -633,6 +703,20 @@ describe("WorkspaceSnapshotter", () => {
         createSession({spectralMatchingType: "FREQ"});
 
         expect(new WorkspaceSnapshotter().capture().workspace.spectralMatchingType).toBe("FREQ");
+    });
+
+    test("saves the value in effect of each preference that changes what the user makes next, and no other preference", () => {
+        createSession();
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.applySessionPreferences({regionColor: "#00ff00"});
+
+        const {preferences} = new WorkspaceSnapshotter().capture().workspace;
+
+        expect(Object.keys(preferences ?? {}).sort()).toEqual([...SESSION_PREFERENCE_KEYS].sort());
+        expect(preferences?.[PreferenceKeys.REGION_COLOR]).toBe("#00ff00");
+        expect(preferences?.[PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG]).toBe(preferenceStore.scalingAlphaLog);
+        expect(preferences).not.toHaveProperty(PreferenceKeys.GLOBAL_THEME);
+        preferenceStore.clearSessionPreferences();
     });
 
     describe("generated images", () => {
@@ -720,6 +804,45 @@ describe("WorkspaceSnapshotter", () => {
             expect(workspace.selectedFile).toBeUndefined();
         });
 
+        test("saves a request whose region has been deleted when the request kept the shape of the region", () => {
+            const {appStore, frame} = createSession();
+            const regionShape = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape, regionShapeOwner: frame}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            appStore.frames.push(momentImage as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues).toEqual([]);
+            expect(workspace.generatedImages?.[0].request).toEqual(expect.objectContaining({type: "moment", regionShape: {...regionShape, imageId: 1}}));
+        });
+
+        test("reports a request whose region has been deleted when the image that the shape of the region is in is closed", () => {
+            const {appStore, frame} = createSession();
+            const regionShape = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            const closedImage = createFrame(8);
+            const momentImage = createMomentImage(3, {...momentRequestOf(frame), regionShape, regionShapeOwner: closedImage}, CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+            appStore.frames.push(momentImage as never);
+
+            const {workspace, issues} = new WorkspaceSnapshotter().capture();
+
+            expect(issues.map(issue => issue.message)).toEqual(["Could not save the moment images of image0.fits: the region it was made over has been deleted"]);
+            expect(workspace.generatedImages).toBeUndefined();
+        });
+
         test("saves a request made of an image another request made after that one, whatever order the session lists them in", () => {
             const {appStore} = createSession();
             const hips = createFrame(6, {frameInfo: {fileId: 6, directory: "", hdu: "", fileInfo: {name: "DSS2.fits"}, generated: true}});
@@ -800,6 +923,31 @@ describe("WorkspaceSnapshotter", () => {
                 request: {type: "pv", sourceImageId: 1, regionId: 4, width: 3, channelRange: undefined, reverse: true},
                 images: [expect.objectContaining({id: 2, name: "image0_pv.fits"})]
             });
+        });
+
+        test("saves the shape that the cut had when the PV image was made, as a copy", () => {
+            const {appStore, frame} = createSession();
+            frame.regionSet = {regions: [{regionId: 4, regionType: CARTA.RegionType.LINE, controlPoints: [], isTemporary: false}], focusedRegion: undefined} as never;
+            WorkspaceIdRegistry.Instance.register(WorkspaceItemKind.Image, 3);
+            const regionShape = {
+                regionType: CARTA.RegionType.LINE,
+                controlPoints: [
+                    {x: 10, y: 10},
+                    {x: 90, y: 90}
+                ],
+                rotation: 45
+            };
+            const pvImage = createFrame(3, {
+                frameInfo: {fileId: 3, directory: "", hdu: "", fileInfo: {name: "image0_pv.fits"}, generated: true},
+                generation: {request: {type: "pv", source: frame, regionId: 4, width: 3, channelRange: undefined, reverse: true, regionShape, regionShapeOwner: frame}}
+            });
+            appStore.frames.push(pvImage as never);
+
+            const saved = new WorkspaceSnapshotter().capture().workspace.generatedImages?.[0].request;
+
+            // The shape names the image whose pixels it is in.
+            expect(saved).toEqual(expect.objectContaining({regionId: 4, regionShape: {...regionShape, imageId: 1}}));
+            expect((saved as {regionShape: typeof regionShape}).regionShape.controlPoints).not.toBe(regionShape.controlPoints);
         });
     });
 
@@ -1145,7 +1293,7 @@ describe("WorkspaceSnapshotter", () => {
         expect(saved?.colorbarLabelCustomText).toBe("flux");
     });
 
-    test("saves the custom title of a color-blended image, but not the default one", () => {
+    test("saves the name of each color-blended image, and its custom title but not the default one", () => {
         const custom = {selectedFrames: [], alpha: [1], filename: "Color Blending 1", titleCustomText: "RGB of M51"};
         const plain = {selectedFrames: [], alpha: [1], filename: "Color Blending 2", titleCustomText: "Color Blending 2"};
         createSession({
@@ -1161,8 +1309,8 @@ describe("WorkspaceSnapshotter", () => {
         const {workspace} = new WorkspaceSnapshotter().capture();
 
         expect(workspace.colorBlendingImages).toEqual([
-            {imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
-            {imageListIndex: 2, selectedFrameId: [], alpha: [1]}
+            {name: "Color Blending 1", imageListIndex: 1, selectedFrameId: [], alpha: [1], titleCustomText: "RGB of M51"},
+            {name: "Color Blending 2", imageListIndex: 2, selectedFrameId: [], alpha: [1]}
         ]);
     });
 

@@ -113,6 +113,11 @@ interface ShownQuery {
 }
 
 export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable<SpectralLineQueryWidgetConfig>, WorkspaceConfigurableWidget<WorkspaceSpectralLineQueryWidgetConfig> {
+    /** The smallest height of the result table, in percent of the area below the query settings. */
+    static readonly RESULT_TABLE_HEIGHT_MIN = 5;
+    /** The height of the result table when the widget opens, in percent of the area below the query settings. */
+    static readonly RESULT_TABLE_HEIGHT_DEFAULT = 60;
+
     widgetId: string = "";
     @observable queryRangeType: SpectralLineQueryRangeType = SpectralLineQueryRangeType.Range;
     @observable queryRange: NumberRange = [0, 0];
@@ -136,6 +141,13 @@ export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
     @observable sortedIndexMap: Array<number> = [];
     @observable headerTableColumnWidths: number[] = [...DEFAULT_HEADER_TABLE_COLUMN_WIDTHS];
+    /**
+     * The height of the result table, in percent of the area below the query settings. The widget records it when the user moves
+     * the separator. It is undefined while the separator is where it starts.
+     */
+    resultTableHeight: number | undefined = undefined;
+    /** Changes when a workspace restore sets the height of the result table, so that the widget takes it. */
+    @observable resultTableRestoreCount: number = 0;
     /** The query that made the result that the widget shows. Nothing when the widget shows no result. */
     private shownQuery: ShownQuery | undefined;
     private readonly disposers: IReactionDisposer[] = [];
@@ -689,6 +701,7 @@ export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable
             redshift: this.redshiftInput,
             ...(profiler?.widgetId ? {spectralProfilerId: profiler.widgetId} : {}),
             headerTableColumnWidths: [...this.headerTableColumnWidths],
+            ...(this.resultTableHeight !== undefined ? {resultTableHeight: this.resultTableHeight} : {}),
             ...(result ? {result} : {})
         };
     };
@@ -716,6 +729,10 @@ export class SpectralLineQueryWidgetStore implements WorkspaceLayoutConfigurable
         if (isWidthList(config.headerTableColumnWidths, DEFAULT_HEADER_TABLE_COLUMN_WIDTHS.length)) {
             this.headerTableColumnWidths = [...config.headerTableColumnWidths];
         }
+        // A workspace without a height gives the table the height that it starts with.
+        const height = config.resultTableHeight;
+        this.resultTableHeight = isFiniteNumber(height) && height > 0 ? Math.min(Math.max(height, SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN), 100) : undefined;
+        this.resultTableRestoreCount++;
         const problems: string[] = [];
         if (typeof config.spectralProfilerId === "string") {
             const widgetsStore = AppStore.Instance.widgetsStore;

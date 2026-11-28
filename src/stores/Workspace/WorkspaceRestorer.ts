@@ -33,8 +33,8 @@ import {
     describeImageSource,
     GetIntensityOptions,
     isWidgetWorkspaceConfigOf,
-    MOMENT_TEXT,
     type Point2D,
+    PresetLayout,
     SOME_IMAGES_NOT_RESTORED,
     SPECTRAL_MATCHING_TYPES,
     type Workspace,
@@ -49,16 +49,17 @@ import {
     type WorkspaceGeneratedFile,
     type WorkspaceGeneratedImages,
     type WorkspaceGenerationRequest,
+    type WorkspaceHipsQuery,
     type WorkspaceHipsRequest,
     type WorkspaceIdReader,
     type WorkspaceImageSource,
     type WorkspaceIssue,
-    type WorkspaceMomentRequest,
+    type WorkspacePlotWidgetConfig,
     type WorkspacePvGeneratorWidgetConfig,
-    type WorkspacePvRequest,
+    type WorkspaceRegionShape,
     type WorkspaceVectorOverlayDialogSettings
 } from "models";
-import {BackendService, CatalogApiService, MirrorTimeoutError} from "services";
+import {CatalogApiService, MirrorTimeoutError} from "services";
 import {
     AppStore,
     CatalogOnlineQueryConfigStore,
@@ -72,12 +73,13 @@ import {
     StreamingRowSource,
     type WorkspaceLoadingStep
 } from "stores";
-import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN} from "stores/Frame";
+import {type FrameStore, LINE_REGION_SAMPLE_WIDTH_MAX, LINE_REGION_SAMPLE_WIDTH_MIN, RegionStore} from "stores/Frame";
+import {isRegionShape, isSameRegionShape, momentMessageOf, momentProblemOf, pvMessageOf, pvProblemOf, waitForRegionData} from "stores/ImageGeneration/ImageGenerationRequests";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {formatSize, getFieldOfViewScale, isSameSize, isValidImageViewSize, waitForStableSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
 import {type WorkspaceFileLocation, WorkspaceRecoveryAction, type WorkspaceRecoveryChoice, type WorkspaceRecoveryItem, WorkspaceRecoveryStore} from "stores/Workspace/WorkspaceRecoveryStore";
-import {awaited, awaitedFlow, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
+import {awaited, awaitedFlow, clamp, hashCatalogContent, isValidRedshift, resolveCatalogSelection} from "utilities";
 
 /** Returns the host of a URL, such as "simbad.u-strasbg.fr", or the whole URL when it cannot be parsed. */
 function hostOf(url: string): string {
@@ -155,6 +157,12 @@ export interface WorkspaceLeftOutItems {
     imageIds: number[];
     catalogIds: number[];
 }
+
+/** The largest saved region ID that a restored region keeps. A larger one gets a new ID. */
+const MAX_SAVED_REGION_ID = 2 ** 30;
+
+/** The widgets that can show the PV preview in front. Each saves its view of the preview when it follows the image in front. */
+const PV_PREVIEW_WIDGET_TYPES: string[] = ["render-config", "histogram", "spatial-profiler"];
 
 /** Returns "1 region" or "3 regions". */
 function countOf(count: number, noun: string): string {
@@ -287,6 +295,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private catalogRound = 0;
     /** For each Workspace image ID, maps the saved ID of each region to the ID that the backend gave the restored region. */
     private readonly regionIds = new Map<number, Map<number, number>>();
+    /** The number of images that opened with each AIPS beam support other than the value in effect for the session. */
+    private readonly aipsBeamSupportOverrides = new Map<boolean, number>();
+    /** The region IDs that this restore has asked the backend for, or that the session has. */
+    private readonly takenRegionIds = new Set<number>();
+    /** The region ID to ask for when a region cannot keep its saved ID. Set at the first use, above every saved ID. */
+    private nextRegionId: number | undefined;
     /** The image the session is left with in front once the restore is done. */
     private frontFrame: FrameStore | undefined;
     /** The color-blended images rebuilt, by the image list index each was saved at. */
@@ -305,6 +319,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private readonly awaitedImageIds = new Set<number>();
     /** The files that the user chose, for the images and catalogs that opened from them. */
     public readonly repointed: WorkspaceRepointedSources = {images: new Map(), catalogs: new Map()};
+    /**
+     * Whether the image in front was a PV preview that the restore makes again: "pending" until the
+     * restore puts the preview in front, then "restored". "none" when the image in front was not
+     * such a preview, or the preview was not made again.
+     */
+    private activePvPreviewState: "none" | "pending" | "restored" = "none";
     /** The steps that the restore waits for at the same time, in the order that they started. */
     private readonly waitingSteps: {step?: WorkspaceLoadingStep}[] = [];
     /** Images whose reference is a generated image that is not made yet. They are matched when the reference is made. */
@@ -389,6 +409,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     public *restore(): Generator<Promise<unknown>, WorkspaceIssue[], any> {
         WorkspaceRestorer.clearSession();
+        this.restoreSessionPreferences();
+        this.useStartingLayout();
         this.restoreSpectralMatchingType();
         this.restoreImageCoordinates();
         yield* this.openImages();
@@ -407,8 +429,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         // The custom texts of the overlay describe the images of the workspace, so they come from the
-        // workspace only. A workspace that saved none, such as one of CARTA 6, sets them back to the
-        // defaults.
+        // workspace only. A workspace that saved none, such as one of workspace version 1, sets them
+        // back to the defaults.
         this.appStore.overlaySettings.applyTextConfig(this.workspace.wcsOverlay);
         // The backend registers the regions while the images are configured. Moment and PV images
         // wait for the regions. The cube histograms are computed while the catalogs open. The
@@ -455,6 +477,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (!this.wasActiveImageRestored() && this.appStore.overlaySettings?.dropFormatsOfSavedFrontImage?.()) {
             this.report(WorkspaceItemKind.Layout, "WCS overlay", "The WCS overlay shows the number formats of the image in front, because the image that the workspace showed in front was not restored");
         }
+        this.activePvPreviewState = this.savesActivePvPreview() ? "pending" : "none";
         yield* this.restoreViews();
         if (!this.isCurrent) {
             return this.issues;
@@ -464,7 +487,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return this.issues;
         }
         this.checkWindowSize();
-        this.restorePvPreviews();
+        yield* this.restoreActivePvPreviewViews(this.restorePvPreviews());
+        if (!this.isCurrent) {
+            return this.issues;
+        }
         this.settle();
         this.restoreDialogs();
         this.restoreWidgetSettings();
@@ -479,21 +505,47 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (beamFrame) {
             this.appStore.overlaySettings.beam.setSelectedFrame(beamFrame.frameInfo.fileId);
         }
+        // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
         if (this.workspace.onlineCatalogQuery && typeof this.workspace.onlineCatalogQuery === "object") {
-            // Apply the fields last. Choosing the image in front and freezing the cursor move the center of the dialog.
             CatalogOnlineQueryConfigStore.Instance.applyWorkspaceConfig(this.workspace.onlineCatalogQuery);
+        } else {
+            CatalogOnlineQueryConfigStore.Instance.resetWorkspaceConfig();
         }
-        if (this.workspace.hipsQuery && typeof this.workspace.hipsQuery === "object") {
-            HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery);
-        }
+        HipsQueryStore.Instance.applyWorkspaceConfig(this.workspace.hipsQuery && typeof this.workspace.hipsQuery === "object" ? this.workspace.hipsQuery : ({} as WorkspaceHipsQuery));
         return this.issues;
+    }
+
+    /**
+     * Starts a workspace saved without a layout copy, such as one of workspace version 1, from the
+     * layout of the preferences, with the default image view settings and WCS overlay, as CARTA does when it starts.
+     * Otherwise the widgets, the image view and the overlay of the previous session would stay. Do
+     * this before the images and catalogs open, so that they open into the new widgets.
+     */
+    private useStartingLayout(): void {
+        if (!this.workspace.layout) {
+            this.applyStartingLayout();
+        }
+    }
+
+    /** Applies the layout of the preferences, or the default layout, with the default image view settings and WCS overlay. */
+    private applyStartingLayout(): void {
+        const layoutStore = this.appStore.layoutStore;
+        const preferred = this.appStore.preferenceStore.layout;
+        if (!layoutStore.layoutExists(preferred) || !layoutStore.applyLayout(preferred)) {
+            layoutStore.applyLayout(PresetLayout.DEFAULT);
+        }
+        // As in clearSession, a catalog of the workspace that opens later must not take the style of a
+        // catalog widget of this layout.
+        this.appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
+        this.appStore.imageViewConfigStore.applyConfig(null);
+        this.appStore.overlaySettings.applyConfig(null).forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
     }
 
     /**
      * Shows the images in the coordinate system that the layout copy saved, before they open. Images
      * are matched in the coordinates that the session shows: image coordinates match pixel to pixel,
      * and world coordinates match by sky position. So the images are matched as they were saved. When
-     * the workspace saved no valid system, as a workspace of CARTA 6, the session leaves image
+     * the workspace saved no valid system, as a workspace of version 1, the session leaves image
      * coordinates for automatic coordinates, so that the images are matched by sky position. The
      * layout copy applies the other settings of the WCS overlay later.
      */
@@ -534,6 +586,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     private restoreCursor(): void {
         const cursor = this.workspace.cursor;
         if (!cursor || typeof cursor.frozen !== "boolean") {
+            // As CARTA does when it starts.
+            this.appStore.setCursorFrozen(this.appStore.preferenceStore.isCursorFrozen);
+            if (this.appStore.isCursorMirrored) {
+                this.appStore.toggleCursorMirror();
+            }
             return;
         }
         const position = cursor.position;
@@ -564,12 +621,15 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Applies the image toolbar: whether it is expanded, the layer that the mouse works on, and the
-     * type of a new region of the image in front. A value that is not valid is not applied.
+     * Applies the image toolbar: whether it is expanded, the layer that the mouse works on, and, for
+     * an older workspace, the type of a new region of the image in front. A value that is not valid
+     * is not applied.
      */
     private restoreToolbar(): void {
         const toolbar = this.workspace.toolbar;
         if (!toolbar || typeof toolbar !== "object") {
+            this.appStore.setToolbarExpanded(true);
+            this.appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
             return;
         }
         if (typeof toolbar.expanded === "boolean") {
@@ -578,7 +638,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         if (Object.values(ImageViewLayer).includes(toolbar.activeLayer)) {
             this.appStore.updateActiveLayer(toolbar.activeLayer);
         }
-        const regionSet = this.appStore.activeFrame?.regionSet;
+        // Each image restores its own type of a new region and region mode. Only a workspace whose
+        // images do not save them needs the ones of the toolbar. Otherwise the toolbar values of an
+        // image that was not restored would replace those of the image in front.
+        const activeFrame = this.appStore.activeFrame;
+        const owner = activeFrame?.spatialReference ?? activeFrame;
+        const ownerInfo = owner ? this.allImages.find(fileInfo => this.frameIds.get(fileInfo.id) === owner.frameInfo.fileId) : undefined;
+        if (ownerInfo?.regionsSet && (ownerInfo.regionsSet.newRegionType !== undefined || ownerInfo.regionsSet.regionMode !== undefined)) {
+            return;
+        }
+        const regionSet = activeFrame?.regionSet;
         if (regionSet && Object.values(CARTA.RegionType).includes(toolbar.newRegionType as CARTA.RegionType)) {
             regionSet.setNewRegionType(toolbar.newRegionType as CARTA.RegionType);
         }
@@ -593,10 +662,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * show are back.
      */
     private restoreDialogs(): void {
-        const saved = this.workspace.openDialogs;
-        if (!Array.isArray(saved)) {
-            return;
-        }
+        // A workspace that saved no list, such as one of workspace version 1, had no analysis dialog open.
+        const saved = Array.isArray(this.workspace.openDialogs) ? this.workspace.openDialogs : [];
         const dialogStore = this.appStore.dialogStore;
         WORKSPACE_DIALOGS.filter(id => !saved.includes(id) && dialogStore.dialogVisible.get(id)).forEach(id => dialogStore.hideDialog(id));
         const places = this.workspace.dialogs && typeof this.workspace.dialogs === "object" ? this.workspace.dialogs : {};
@@ -620,6 +687,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             if (id === DialogId.FileInfo) {
                 dialogStore.setFileInfoSearchString(typeof dialog.search === "string" ? dialog.search : undefined);
+            }
+            if (id === DialogId.Fitting) {
+                const height = dialog.settingsHeight;
+                dialogStore.restoreFittingSettingsHeight(typeof height === "number" && isFinite(height) && height >= 0 ? Math.min(height, 100) : undefined);
             }
             if (id === DialogId.Snippet) {
                 this.showSnippetDialog();
@@ -732,8 +803,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * PV preview that was the active image active again. Call it after the previews are made again.
      * A viewer opens on top of the floating widgets when its preview arrives. A preview that arrives
      * after the restore stops waiting for it stays where it opens, and does not become active.
+     *
+     * @returns whether the PV preview that was the active image is the active image again.
      */
-    private restorePvPreviews(): void {
+    private restorePvPreviews(): boolean {
         const widgetsStore = this.appStore.widgetsStore;
         const zIndexManager = this.appStore.zIndexManager;
         const isCount = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
@@ -769,6 +842,50 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (activePreview) {
             this.appStore.updateActiveImageByFrame(activePreview);
+        }
+        return !!activePreview;
+    }
+
+    /** Returns whether the image in front was a PV preview whose request the workspace saved. The restore makes the preview again. */
+    private savesActivePvPreview(): boolean {
+        return Object.values(this.workspace.plotWidgets ?? {}).some(config => {
+            const preview = (config as WorkspacePvGeneratorWidgetConfig | undefined)?.preview;
+            return preview?.isActive === true && !!preview.request && typeof preview.request === "object";
+        });
+    }
+
+    public isActivePvPreviewPending(): boolean {
+        return this.activePvPreviewState === "pending";
+    }
+
+    /**
+     * Applies the saved view of each widget that follows the image in front, when the image in front
+     * was a PV preview. The widgets did not apply it before the preview was in front. A preview that
+     * was not made again leaves them on the image in front without their saved view.
+     *
+     * @param isPreviewActive - whether the preview is the active image again.
+     */
+    private *restoreActivePvPreviewViews(isPreviewActive: boolean): Generator<Promise<unknown>, void, any> {
+        if (this.activePvPreviewState !== "pending") {
+            return;
+        }
+        const plotWidgets = this.workspace.plotWidgets;
+        const followsActiveImage = (config: WorkspacePlotWidgetConfig) => PV_PREVIEW_WIDGET_TYPES.includes(config?.type) && (config as {imageId?: unknown}).imageId === undefined;
+        if (!isPreviewActive) {
+            this.activePvPreviewState = "none";
+            // Report only a widget that saved a zoom of the preview.
+            const hasSavedZoom = (config: WorkspacePlotWidgetConfig) => ["minX", "minY", "pixelBounds"].some(field => (config as unknown as Record<string, unknown>)[field] !== undefined);
+            if (Object.values(plotWidgets ?? {}).some(config => followsActiveImage(config) && hasSavedZoom(config))) {
+                this.report(WorkspaceItemKind.PlotWidget, "", "The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
+            }
+            return;
+        }
+        this.activePvPreviewState = "restored";
+        // The widgets were bound before, so the problems were reported then.
+        this.appStore.widgetsStore.restorePlotWidgetBindings(plotWidgets, this, followsActiveImage);
+        yield* awaited(Promise.resolve());
+        if (this.isCurrent) {
+            this.appStore.widgetsStore.restorePlotWidgetViews(plotWidgets, this, followsActiveImage);
         }
     }
 
@@ -844,7 +961,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      */
     private restoreAnimator(): void {
         const isInteger = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value);
-        for (const fileInfo of this.workspace.files ?? []) {
+        for (const fileInfo of this.allImages) {
             const frame = this.frameOf(fileInfo.id);
             const range = fileInfo.animationChannelRange;
             const depth = frame?.frameInfo.fileInfoExtended?.depth ?? 1;
@@ -853,10 +970,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
         }
         const saved = this.workspace.animator;
+        const animator = this.appStore.animatorStore;
         if (!saved || typeof saved !== "object") {
+            animator.resetSettings();
             return;
         }
-        const animator = this.appStore.animatorStore;
         if (isInteger(saved.frameRate) && saved.frameRate >= animator.minFrameRate && saved.frameRate <= animator.maxFrameRate) {
             animator.setFrameRate(saved.frameRate);
         }
@@ -868,6 +986,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (Object.values(AnimationMode).includes(saved.mode) && saved.mode !== AnimationMode.NONE) {
             animator.setAnimationMode(saved.mode);
+            // The animator refuses the time series mode when the time series has fewer than 2 images.
+            if (saved.mode === AnimationMode.TIME_SERIES && animator.animationMode !== saved.mode) {
+                this.report(WorkspaceItemKind.Layout, "Animator", "The animator does not play the time series, because fewer than 2 images of the time series were restored");
+            }
         }
         if (Object.values(NumericInputType).includes(saved.numericInputType as NumericInputType)) {
             animator.setNumericInputType(saved.numericInputType as NumericInputType);
@@ -877,10 +999,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     /** Applies what the Log widget showed: the lowest level of the entries, and the hidden tags. A value that is not valid is not applied. */
     private restoreLog(): void {
         const saved = this.workspace.log;
+        const logStore = this.appStore.logStore;
         if (!saved || typeof saved !== "object") {
+            logStore.setLevel(CARTA.ErrorSeverity.INFO);
+            logStore.setHiddenTags([]);
             return;
         }
-        const logStore = this.appStore.logStore;
         if (Object.values(CARTA.ErrorSeverity).includes(saved.level)) {
             logStore.setLevel(saved.level);
         }
@@ -932,6 +1056,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         appStore.animatorStore.stopAnimation();
         appStore.tileService.clearRequestQueue();
         appStore.removeAllFrames();
+        appStore.overlaySettings.forgetRestoredSettings();
+        appStore.preferenceStore.setCodeSnippetsEnabledForSession(false);
         // A regular layout, such as the one of the preferences, can have made the display store of a
         // catalog that never opened. A catalog of the workspace with that file ID would take its style.
         appStore.widgetsStore.removeUnopenedLayoutDisplayStores();
@@ -980,18 +1106,39 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
+     * Applies the preferences that the workspace saved, for this session only, before any image
+     * opens. Then the images, contours and regions that the restore makes use them. A workspace that
+     * saved none removes the session values of a previous workspace.
+     */
+    private restoreSessionPreferences(): void {
+        const preferenceStore = this.appStore.preferenceStore;
+        if (!preferenceStore) {
+            return;
+        }
+        const {rejectedKeys} = preferenceStore.applySessionPreferences(this.workspace.preferences);
+        if (rejectedKeys.length) {
+            const preferences = rejectedKeys.length === 1 ? `the preference ${rejectedKeys[0]}` : `${rejectedKeys.length} preferences (${rejectedKeys.join(", ")})`;
+            this.report(WorkspaceItemKind.Layout, "preferences", `Could not apply ${preferences} for this session: this version does not know the preference or does not accept the saved value. Your own value is used`);
+        }
+    }
+
+    /**
      * Sets the spectral coordinate that spectrally matched images are matched by. Set it before the
      * images are matched, as matching an image moves it to the channel of its reference in this
-     * coordinate. A workspace saved before it kept this setting keeps the setting of the session.
+     * coordinate. A workspace saved before it kept this setting, such as one of workspace version 1,
+     * uses the preference, as CARTA does when it starts. So does a type that this version does not
+     * know.
      */
     private restoreSpectralMatchingType(): void {
         const type = this.workspace.spectralMatchingType;
         if (type === undefined) {
+            this.appStore.setSpectralMatchingType(this.appStore.preferenceStore.spectralMatchingType);
             return;
         }
         if (SPECTRAL_MATCHING_TYPES.includes(type)) {
             this.appStore.setSpectralMatchingType(type);
         } else {
+            this.appStore.setSpectralMatchingType(this.appStore.preferenceStore.spectralMatchingType);
             this.report(WorkspaceItemKind.Image, "spectral matching", `Could not restore the spectral matching type ${String(type)}: it is not one this version knows, so images are matched by ${this.appStore.spectralMatchingType}`);
         }
     }
@@ -1003,6 +1150,21 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             (this.workspace.files ?? []).map(fileInfo => this.imageTask(fileInfo))
         );
         this.putImagesInSavedOrder();
+        this.reportAipsBeamSupport();
+    }
+
+    /** Reports the images that opened with an AIPS beam support other than the value in effect for the session. */
+    private reportAipsBeamSupport(): void {
+        const valueInEffect = this.appStore.preferenceStore?.hasAipsBeamSupport ? "on" : "off";
+        for (const [isSupported, count] of this.aipsBeamSupportOverrides) {
+            const images = count === 1 ? "1 image is" : `${count} images are`;
+            this.report(
+                WorkspaceItemKind.Layout,
+                "AIPS beam support",
+                `${images} opened with AIPS beam support ${isSupported ? "on" : "off"}, as the workspace saved ${count === 1 ? "it" : "them"}. Images that you open later use AIPS beam support ${valueInEffect}`
+            );
+        }
+        this.aipsBeamSupportOverrides.clear();
     }
 
     /**
@@ -1063,7 +1225,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         let frame: FrameStore | undefined;
         let reason: string | undefined;
         try {
-            frame = (yield* this.openImageSource(source)) ?? undefined;
+            frame = (yield* this.openImageSource(source, fileInfo.aipsBeamSupport)) ?? undefined;
         } catch (err) {
             console.error(err);
             reason = reasonOf(err);
@@ -1282,6 +1444,10 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
         if (fileInfo.timeSeriesMember) {
             this.appStore.setTimeSeriesMember(frame, true);
+            if (!this.appStore.timeSeriesStore.isMember(frame)) {
+                const imageName = this.nameOf(fileInfo);
+                this.report(WorkspaceItemKind.Image, imageName, `${imageName} is not in the time series, because it has no observation time`);
+            }
         }
     }
 
@@ -1381,8 +1547,31 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** Open one image the way the workspace says it was opened. */
-    private *openImageSource(source: WorkspaceImageSource | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
+    /**
+     * Open one image the way the workspace says it was opened. Open a file or an expression with the
+     * saved AIPS beam support, for this image only. The preference stays as it is.
+     */
+    private *openImageSource(source: WorkspaceImageSource | undefined, hasAipsBeamSupport: boolean | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
+        const preferenceStore = this.appStore.preferenceStore;
+        if (!preferenceStore || (source?.type !== "file" && source?.type !== "lel")) {
+            return yield* this.openImageSourceAsSaved(source);
+        }
+        // Set the value also when the workspace saved none. Then a value that a stopped restore left
+        // does not apply to this image.
+        const hasSavedValue = typeof hasAipsBeamSupport === "boolean";
+        preferenceStore.hasAipsBeamSupportForRestore = hasSavedValue ? hasAipsBeamSupport : undefined;
+        try {
+            const frame = yield* this.openImageSourceAsSaved(source);
+            if (frame && hasSavedValue && hasAipsBeamSupport !== preferenceStore.hasAipsBeamSupport) {
+                this.aipsBeamSupportOverrides.set(hasAipsBeamSupport, (this.aipsBeamSupportOverrides.get(hasAipsBeamSupport) ?? 0) + 1);
+            }
+            return frame;
+        } finally {
+            preferenceStore.hasAipsBeamSupportForRestore = undefined;
+        }
+    }
+
+    private *openImageSourceAsSaved(source: WorkspaceImageSource | undefined): Generator<Promise<unknown>, FrameStore | undefined, any> {
         switch (source?.type) {
             case "lel":
                 return yield* awaitedFlow<FrameStore | undefined>(this.appStore.appendFile(source.directory ?? "", source.expression, "", true, false));
@@ -1568,7 +1757,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * Returns the failure when the backend could not make the images. The user can retry them.
      */
     private *makeImagesAgain(generated: WorkspaceGeneratedImages): Generator<Promise<unknown>, FrameStore[] | "deferred" | {reason: string | undefined}, any> {
-        const {request, images} = generated;
+        const {request} = generated;
         if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
             return [];
         }
@@ -1590,12 +1779,87 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             }
             return [];
         }
-        const regionId = typeof request.regionId === "number" ? this.regionIdOf(request.sourceImageId, request.regionId) : undefined;
-        if (regionId === undefined) {
+        const savedRegionId = typeof request.regionId === "number" ? request.regionId : undefined;
+        const restoredRegionId = savedRegionId !== undefined ? this.regionIdOf(request.sourceImageId, savedRegionId) : undefined;
+        // A region of an image that is matched to another image belongs to that other image. The saved
+        // shape names the image that the region belonged to when the images were made, and is in the
+        // pixels of that image. The images may have been made before the source was matched, or after.
+        const ownerImageId = this.images.get(request.sourceImageId)?.references?.spatial ?? request.sourceImageId;
+        const validShape = isRegionShape(request.regionShape) ? request.regionShape : undefined;
+        const shapeOwnerImageId = validShape?.imageId ?? ownerImageId;
+        const shapeOwner = this.frameOf(shapeOwnerImageId);
+        if (validShape && !shapeOwner && this.awaitedImageIds.has(shapeOwnerImageId)) {
+            return "deferred";
+        }
+        // When the region was changed or deleted after the images were made, or it belongs to another
+        // image now, make them over the shape that the region had then. A region that only the
+        // backend knows has this shape.
+        const savedShape = shapeOwner ? validShape : undefined;
+        const isSameRegion = shapeOwnerImageId === ownerImageId && restoredRegionId !== undefined && !!savedShape && isSameRegionShape(shapeOwner?.getRegion(restoredRegionId), savedShape);
+        const isShapeChanged = !!savedShape && !isSameRegion;
+        if (restoredRegionId === undefined && !isShapeChanged) {
             const reason = "the region it is made over was not restored";
             this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${reason}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason, imageIds: details.imageIds});
             return [];
         }
+        let shapeRegionId: number | undefined;
+        if (isShapeChanged && savedShape && shapeOwner) {
+            try {
+                const ack = yield* awaited(this.appStore.backendService.setRegion(shapeOwner.frameInfo.fileId, -1, savedShape as unknown as RegionStore));
+                if (!ack.success || typeof ack.regionId !== "number") {
+                    throw new Error(ack.message || "the backend did not add the region");
+                }
+                shapeRegionId = ack.regionId;
+            } catch (err) {
+                // The user can retry it in Recovery, as other errors of the backend.
+                return {reason: `the shape of the region it was made over could not be set up (${reasonOf(err) ?? "unknown error"})`};
+            }
+            if (!this.isCurrent) {
+                this.appStore.backendService.removeRegion(shapeRegionId);
+                return [];
+            }
+        }
+        try {
+            const made = yield* this.makeImagesOver(generated, source, shapeRegionId ?? (restoredRegionId as number), isShapeChanged && shapeOwner ? {shape: savedShape, owner: shapeOwner} : undefined);
+            if (shapeRegionId !== undefined && Array.isArray(made)) {
+                // The images were made over a region that is removed below. They name the region of
+                // the workspace, and keep the shape, so that a later save makes them the same way.
+                made.forEach(frame => {
+                    const madeRequest = frame.generation?.request;
+                    if (madeRequest && madeRequest.type !== "hips") {
+                        madeRequest.regionId = restoredRegionId ?? savedRegionId ?? madeRequest.regionId;
+                        madeRequest.regionShape = savedShape;
+                        madeRequest.regionShapeOwner = shapeOwner;
+                    }
+                });
+            }
+            return made;
+        } finally {
+            if (shapeRegionId !== undefined) {
+                this.appStore.backendService.removeRegion(shapeRegionId);
+            }
+        }
+    }
+
+    /**
+     * Makes the images of a saved moment, PV or image fitting request over the region `regionId` of
+     * the image `source`.
+     *
+     * @param regionShape - the shape of the region and the image that it belongs to, when the session
+     *                      does not know the region.
+     */
+    private *makeImagesOver(
+        generated: WorkspaceGeneratedImages,
+        source: FrameStore,
+        regionId: number,
+        regionShape: {shape: WorkspaceRegionShape | undefined; owner: FrameStore} | undefined
+    ): Generator<Promise<unknown>, FrameStore[] | {reason: string | undefined}, any> {
+        const {request, images} = generated;
+        if (request.type !== "moment" && request.type !== "pv" && request.type !== "fitting") {
+            return [];
+        }
+        const subject = this.subjectOf(request);
+        const details = {label: capitalized(subject), imageIds: generated.images.map(image => image.id), causeImageId: request.sourceImageId};
 
         let outcome: FrameStore[] | "skipped" | undefined;
         let reason: string | undefined;
@@ -1604,7 +1868,12 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             // request keeps the images that earlier requests made. This includes a request that the
             // user retries after a later request made its images. The backend numbers the names of
             // kept images, as it did when the images were first made.
-            const message = WorkspaceRestorer.momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const message = momentMessageOf(request, source, regionId, this.momentSources.has(source));
+            const problem = message && momentProblemOf(source, message.moments);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message && regionId > RegionId.CURSOR) {
                 const handshake = yield* awaited(this.introduceRegionToBackend(source, regionId, `Preparing ${subject}`));
                 if (!this.isCurrent) {
@@ -1619,7 +1888,11 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             if (message && outcome === undefined) {
                 source.resetMomentRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestMoment(message, source, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore[] | undefined>).then(frames => frames ?? []);
+                const made = (
+                    this.appStore.requestMoment(message, source, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape: regionShape?.shape, regionShapeOwner: regionShape?.owner}) as unknown as Promise<
+                        FrameStore[] | undefined
+                    >
+                ).then(frames => frames ?? []);
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1660,11 +1933,21 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 }
             }
         } else {
-            const message = WorkspaceRestorer.pvMessageOf(request, source, regionId);
+            const message = pvMessageOf(request, source, regionId, true);
+            const spectralRange = message?.spectralRange;
+            const problem = message && pvProblemOf(source, regionId, spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined, regionShape?.shape);
+            if (problem) {
+                this.reportProblem(subject, problem, details);
+                return [];
+            }
             if (message) {
                 source.resetPvRequestState();
                 const waiting = {isSkipped: false};
-                const made = (this.appStore.requestPV(message, source, true, () => !waiting.isSkipped && this.isCurrent) as unknown as Promise<FrameStore | undefined>).then(frame => (frame ? [frame] : []));
+                const made = (
+                    this.appStore.requestPV(message, source, true, {isStillWanted: () => !waiting.isSkipped && this.isCurrent, regionShape: regionShape?.shape, regionShapeOwner: regionShape?.owner}) as unknown as Promise<
+                        FrameStore | undefined
+                    >
+                ).then(frame => (frame ? [frame] : []));
                 try {
                     outcome = yield* awaited(
                         this.waitForRequest(
@@ -1703,87 +1986,42 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Gets the backend ready to make moments over a region of an image.
-     *
-     * The backend makes moments over a region only when it already keeps the region data of the
-     * image. It starts to keep this data the first time that a widget asks for statistics, a
-     * histogram or a profile of the region. In a normal session, a widget has always asked by then.
-     * During a restore, no widget has asked yet, so the moment request fails. So ask for one
-     * statistic of the region, wait for the answer, and then cancel that request. Sending the
-     * request alone is not enough, because the backend handles requests out of order, and the
-     * moment request could arrive first.
+     * Reports a saved moment or PV request that the rules of `momentProblemOf` and `pvProblemOf`
+     * do not allow. A retry would fail the same way, so the request is not offered in Recovery.
+     */
+    private reportProblem(subject: string, problem: string, details: {label: string; imageIds: number[]}) {
+        this.report(WorkspaceItemKind.GeneratedImage, subject, `Could not make ${subject}: ${problem}`, WorkspaceIssueOutcome.Failed, {label: details.label, reason: problem, imageIds: details.imageIds});
+    }
+
+    /**
+     * Gets the backend ready to make moments over a region of an image, and shows the wait as a
+     * step of the restore. See `waitForRegionData` for why the wait is needed.
      *
      * The wait has no time limit. It ends when the backend answers, when the image is closed or a
      * later workspace load starts, or when the user skips it. Skipping it also skips the moment
      * request.
      */
     private introduceRegionToBackend(frame: FrameStore, regionId: number, description: string): Promise<"ready" | "closed" | "superseded" | "skipped"> {
-        const backendService = BackendService.Instance;
-        const fileId = frame.frameInfo.fileId;
-        return new Promise(resolve => {
-            let isSettled = false;
-            const step = this.startStep();
-            const finish = (outcome: "ready" | "closed" | "superseded" | "skipped") => {
-                if (isSettled) {
-                    return;
-                }
-                isSettled = true;
-                subscription.unsubscribe();
-                disposeReaction();
-                if (outcome !== "closed") {
-                    backendService.setStatsRequirements({fileId, regionId, statsConfigs: []});
-                }
-                step.end();
-                resolve(outcome);
-            };
-            const subscription = backendService.statsStream.subscribe(stats => {
-                if (stats?.fileId === fileId && stats.regionId === regionId) {
-                    finish("ready");
-                }
-            });
-            const disposeReaction = reaction(
-                () => ({isOpen: this.appStore.frames.includes(frame), isCurrent: this.isCurrent}),
-                ({isOpen, isCurrent}) => {
-                    if (!isOpen) {
-                        finish("closed");
-                    } else if (!isCurrent) {
-                        finish("superseded");
-                    }
-                },
-                {equals: comparer.structural}
-            );
-            step.show({description, progress: 0, onSkip: () => finish("skipped")});
-            backendService.setStatsRequirements({fileId, regionId, statsConfigs: [{coordinate: "z", statsTypes: [CARTA.StatsType.NumPixels]}]});
-        });
-    }
-
-    /** Returns the request that a saved moment request makes, or nothing when this version cannot make it. */
-    private static momentMessageOf(request: WorkspaceMomentRequest, source: FrameStore, regionId: number, shouldKeep: boolean): CARTA.MomentRequest.$Properties | undefined {
-        const {moments, channelRange, mask, pixelRange} = request;
-        const isNumber = (value: unknown): value is number => typeof value === "number" && isFinite(value);
-        if (
-            !Array.isArray(moments) ||
-            !moments.length ||
-            !moments.every(moment => MOMENT_TEXT.has(moment)) ||
-            !Number.isInteger(channelRange?.min) ||
-            !Number.isInteger(channelRange?.max) ||
-            !Object.values(CARTA.MomentMask).includes(mask) ||
-            !isNumber(pixelRange?.min) ||
-            !isNumber(pixelRange?.max)
-        ) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            moments,
-            axis: CARTA.MomentAxis.SPECTRAL,
+        const step = this.startStep();
+        const wait = waitForRegionData<"superseded" | "skipped">(
+            frame,
             regionId,
-            spectralRange: {min: channelRange.min, max: channelRange.max},
-            mask,
-            pixelRange: new CARTA.FloatBounds({min: pixelRange.min, max: pixelRange.max}),
-            keep: shouldKeep,
-            restFreq: source.restFreqStore?.restFreqInHz
-        };
+            () => this.appStore.frames.includes(frame),
+            () => this.appStore.statsRequirementsOf(frame.frameInfo.fileId, regionId)
+        );
+        const disposeReaction = reaction(
+            () => this.isCurrent,
+            isCurrent => {
+                if (!isCurrent) {
+                    wait.stop("superseded");
+                }
+            }
+        );
+        step.show({description, progress: 0, onSkip: () => wait.stop("skipped")});
+        return wait.ready.finally(() => {
+            disposeReaction();
+            step.end();
+        });
     }
 
     /**
@@ -1822,22 +2060,6 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             createResidualImage: images.some(image => image.fittingImage === "residual"),
             offset: isNumber(request.offset) ? request.offset : 0,
             solver: request.solver
-        };
-    }
-
-    /** Returns the request that a saved PV request makes, or nothing when this version cannot make it. */
-    private static pvMessageOf(request: WorkspacePvRequest, source: FrameStore, regionId: number): CARTA.PvRequest.$Properties | undefined {
-        const {width, channelRange} = request;
-        if (!Number.isInteger(width) || width < 1 || (channelRange !== undefined && (!Number.isInteger(channelRange?.min) || !Number.isInteger(channelRange?.max)))) {
-            return undefined;
-        }
-        return {
-            fileId: source.frameInfo.fileId,
-            regionId,
-            width,
-            spectralRange: channelRange ? {min: channelRange.min, max: channelRange.max} : null,
-            reverse: request.reverse === true,
-            keep: true
         };
     }
 
@@ -1993,6 +2215,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      * The workspace saves offset coordinates only on an image that is not matched to another image.
      * Pass them on to the images matched to it, as the controls do. Set them after every image is
      * matched. Matching an image moves the offset center of the image that it is matched to.
+     * Offset coordinates saved as not shown get their center, and stay off.
      */
     private restoreOffsetCoordinates(): void {
         for (const fileInfo of this.allImages) {
@@ -2002,15 +2225,16 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 continue;
             }
             const center = offset.center;
+            const isShown = offset.shown !== false;
             const isSupported = !frame.isPVImage && !frame.isSwappedZ && !frame.isUVImage;
             if (isSupported && center && frame.setOffsetCenter(center.x, center.y)) {
                 if (offset.skyRefIs === SkyRefIs.Origin || offset.skyRefIs === SkyRefIs.Pole) {
                     frame.setSkyRefIs(offset.skyRefIs);
                 }
-                if (!frame.isOffsetCoord) {
+                if (isShown && !frame.isOffsetCoord) {
                     frame.toggleOffsetCoord();
                 }
-            } else {
+            } else if (isShown) {
                 const imageName = this.nameOf(fileInfo);
                 this.report(WorkspaceItemKind.Image, imageName, `Could not show ${imageName} with offset coordinates`);
             }
@@ -2093,37 +2317,73 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
     }
 
     /**
-     * Restores the regions of the image. An image that is matched to another image has no regions
-     * of its own.
+     * Returns the saved line width of a region, moved into the range that the Region dialog allows,
+     * such as 0.5 for 0. Reports a width that is moved. Returns undefined when no width was saved.
+     */
+    private restoredLineWidth(lineWidth: number | undefined, regionName: string, imageName: string): number | undefined {
+        if (typeof lineWidth !== "number" || !Number.isFinite(lineWidth)) {
+            return undefined;
+        }
+        const restored = clamp(lineWidth, RegionStore.MIN_LINE_WIDTH, RegionStore.MAX_LINE_WIDTH);
+        if (restored !== lineWidth) {
+            this.report(WorkspaceItemKind.Image, imageName, `The line width of ${regionName} is ${restored}, because the saved width ${lineWidth} is not between ${RegionStore.MIN_LINE_WIDTH} and ${RegionStore.MAX_LINE_WIDTH}`);
+        }
+        return restored;
+    }
+
+    /**
+     * Restores the regions of the image, and the type of a new region and the region mode of the
+     * image. An image that is matched to another image has no regions of its own.
      *
-     * The backend gives each restored region a new ID. Map the saved ID of each region to the new
-     * ID after the backend answers. A region that the backend does not accept is left out and
-     * reported, so that no saved ID points at it.
+     * Each restored region asks the backend for the ID it was saved with, so that a name such as
+     * "Region 3" stays the same. Map the saved ID of each region to the ID that the backend gives.
+     * A region that the backend does not accept is left out and reported, so that no saved ID
+     * points at it.
      */
     private async restoreRegions(frame: FrameStore, fileInfo: WorkspaceFile): Promise<void> {
-        if (frame.spatialReference || !fileInfo.regionsSet?.regions) {
+        if (frame.spatialReference || !fileInfo.regionsSet) {
+            return;
+        }
+        const {newRegionType, regionMode} = fileInfo.regionsSet;
+        if (Object.values(CARTA.RegionType).includes(newRegionType as CARTA.RegionType)) {
+            frame.regionSet.setNewRegionType(newRegionType as CARTA.RegionType);
+        }
+        if (regionMode === RegionMode.MOVING || regionMode === RegionMode.CREATING) {
+            frame.regionSet.setMode(regionMode);
+        }
+        if (!fileInfo.regionsSet.regions) {
             return;
         }
 
-        const preferenceStore = this.appStore.preferenceStore;
         const regionIds = new Map<number, number>();
         this.regionIds.set(fileInfo.id, regionIds);
         const selectedRegion = fileInfo.regionsSet.selectedRegion;
-        await Promise.all(
-            fileInfo.regionsSet.regions.map(async regionInfo => {
-                const region = await frame.regionSet.addExistingRegionAsync(
-                    regionInfo.points,
-                    regionInfo.rotation,
-                    regionInfo.type,
-                    regionInfo.name ?? "",
-                    regionInfo.color ?? preferenceStore.regionColor,
-                    regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
-                    regionInfo.dashes ?? [preferenceStore.regionDashLength],
-                    regionInfo.annotationStyles
-                );
+        const regionInfos = fileInfo.regionsSet.regions;
+        this.takeSessionRegionIds();
+        // Add the regions at once. Added one at a time, a few thousand regions take minutes, because
+        // the views draw every region again for each one.
+        const imageName = this.nameOf(fileInfo);
+        const nameOf = (regionInfo: (typeof regionInfos)[number]) => (regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`);
+        // A style that the workspace did not save is left out. Then the region gets the default of its
+        // type from the preferences, such as the annotation color for an annotation.
+        const regions = await frame.regionSet.addExistingRegionsAsync(
+            regionInfos.map(regionInfo => ({
+                points: regionInfo.points,
+                rotation: regionInfo.rotation,
+                regionType: regionInfo.type,
+                name: regionInfo.name ?? "",
+                color: regionInfo.color,
+                lineWidth: this.restoredLineWidth(regionInfo.lineWidth, `${nameOf(regionInfo)} of ${imageName}`, imageName),
+                dashes: regionInfo.dashes,
+                annotationStyles: regionInfo.annotationStyles,
+                requestedId: this.regionIdToRequest(regionInfo.id)
+            }))
+        );
+        runInAction(() => {
+            regionInfos.forEach((regionInfo, index) => {
+                const region = regions[index];
                 if (!region) {
-                    const imageName = describeImageSource(fileInfo.source);
-                    const regionName = regionInfo.name ? `the region ${regionInfo.name}` : `region ${regionInfo.id}`;
+                    const regionName = nameOf(regionInfo);
                     this.report(WorkspaceItemKind.Image, imageName, `Could not restore ${regionName} of ${imageName}: the backend did not accept it`);
                     return;
                 }
@@ -2148,14 +2408,52 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 if (selectedRegion === regionInfo.id) {
                     frame.regionSet.selectSingleRegion(region);
                 }
-            })
-        );
+            });
+        });
         // Select again the regions that were selected together, with the focused region in focus.
         const selectedRegions = fileInfo.regionsSet.selectedRegions;
         if (Array.isArray(selectedRegions) && selectedRegions.length > 1) {
             const ids = selectedRegions.flatMap(savedId => (typeof savedId === "number" && regionIds.has(savedId) ? [regionIds.get(savedId) as number] : []));
             frame.regionSet.setSelectionByIds(ids, selectedRegion === undefined ? undefined : regionIds.get(selectedRegion));
         }
+    }
+
+    /**
+     * Marks the IDs of the regions in the session as taken. A region that a script adds during the
+     * restore is not seen until the backend has given it an ID.
+     */
+    private takeSessionRegionIds() {
+        for (const frame of this.appStore.frames) {
+            for (const region of frame.regionSet?.regions ?? []) {
+                if (region.regionId > RegionId.CURSOR) {
+                    this.takenRegionIds.add(region.regionId);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the region ID to ask the backend for. It is the saved ID when no region has it yet.
+     * Otherwise it is a new ID above every saved ID, so that it cannot take the saved ID of a region
+     * restored later. Each ID is given once, because the backend updates the region that already
+     * has an ID instead of adding one. Call {@link takeSessionRegionIds} first.
+     */
+    private regionIdToRequest(savedId: unknown): number {
+        // A larger ID would leave the backend no room for the 32-bit IDs of new regions.
+        const isRegionId = (id: unknown): id is number => Number.isInteger(id) && (id as number) > RegionId.CURSOR && (id as number) <= MAX_SAVED_REGION_ID;
+        if (this.nextRegionId === undefined) {
+            const savedIds = this.allImages.flatMap(image => (image.regionsSet?.regions ?? []).map(regionInfo => regionInfo.id)).filter(isRegionId);
+            this.nextRegionId = Math.max(0, ...savedIds, ...this.takenRegionIds) + 1;
+        }
+        let id = isRegionId(savedId) && !this.takenRegionIds.has(savedId) ? savedId : this.nextRegionId;
+        while (this.takenRegionIds.has(id)) {
+            id++;
+        }
+        if (id >= this.nextRegionId) {
+            this.nextRegionId = id + 1;
+        }
+        this.takenRegionIds.add(id);
+        return id;
     }
 
     /**
@@ -2274,11 +2572,24 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
 
-        this.workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
-        for (const {imageListIndex, selectedFrameId, alpha, titleCustomText} of this.workspace.colorBlendingImages) {
+        // A hand-edited workspace can leave out where a color-blended image is in the Image List.
+        // Such an image cannot be put back in its place, so it is not made.
+        const colorBlendingImages = this.workspace.colorBlendingImages.filter(blend => {
+            const isPlaced = Number.isInteger(blend.imageListIndex) && blend.imageListIndex >= 0;
+            if (!isPlaced) {
+                this.report(WorkspaceItemKind.Image, "a color-blended image", "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", WorkspaceIssueOutcome.Failed);
+            }
+            return isPlaced;
+        });
+        colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
+        for (const {name, imageListIndex, selectedFrameId, alpha, titleCustomText} of colorBlendingImages) {
             const colorBlending = this.appStore.imageViewConfigStore.createColorBlending();
             if (colorBlending) {
                 this.colorBlendings.set(imageListIndex, colorBlending);
+                // A new color-blended image takes the next number of this session, so it gets the saved name instead.
+                if (typeof name === "string" && name) {
+                    colorBlending.setName(name);
+                }
                 if (typeof titleCustomText === "string") {
                     colorBlending.setTitleCustomText(titleCustomText);
                 }
@@ -2305,7 +2616,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
                 colorBlending?.setAlpha(0, alphas[0]);
             }
             // Hide the layers that were hidden. A new color-blended image shows all of them.
-            const saved = this.workspace.colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
+            const saved = colorBlendingImages.find(blend => blend.imageListIndex === imageListIndex);
             if (saved?.rasterVisible === false && colorBlending?.isRasterVisible) {
                 colorBlending.toggleRasterVisible();
             }
@@ -2417,11 +2728,13 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
     /**
      * Make the mirror that the workspace saved the active mirror of its database, when the mirror is
-     * available. Otherwise the session keeps its mirror.
+     * available. Otherwise the session keeps its mirror. A workspace that saved no mirrors, such as one
+     * of workspace version 1, uses the mirrors of the preferences, as CARTA does when it starts.
      */
     private useSavedMirrors(): void {
         const saved = this.workspace.catalogMirrors;
         if (!saved || typeof saved !== "object") {
+            MirrorSiteStore.Instance.clearActiveMirrors();
             return;
         }
         for (const database of [CatalogDatabase.SIMBAD, CatalogDatabase.VIZIER]) {
@@ -2650,10 +2963,17 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         }
     }
 
-    /** The columns the saved plots of one catalog are drawn from. */
+    /** The columns the saved plots of one catalog are drawn from, including the plots that a tab keeps for a catalog it does not show. */
     private plotColumnsOf(workspaceCatalogId: number): string[] {
         return Object.values(this.workspace.catalogWidgets ?? {})
-            .flatMap(config => (isWidgetWorkspaceConfigOf(config, "catalog-plot") && config.catalogId === workspaceCatalogId ? [config.xColumnName, config.yColumnName, config.statisticColumnName] : []))
+            .flatMap(config => {
+                if (!isWidgetWorkspaceConfigOf(config, "catalog-plot")) {
+                    return [];
+                }
+                const other = config.otherPlots?.[workspaceCatalogId];
+                const plots = [...(config.catalogId === workspaceCatalogId ? [config] : []), ...(other && typeof other === "object" ? [other] : [])];
+                return plots.flatMap(plot => [plot.xColumnName, plot.yColumnName, plot.statisticColumnName]);
+            })
             .filter((columnName): columnName is string => typeof columnName === "string");
     }
 
@@ -2781,7 +3101,8 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
      *
      * Applied after the catalogs are loaded, so that each catalog widget that the layout creates
      * starts on a loaded catalog. Stage 8 then points each widget at the catalog it was saved with. A
-     * workspace saved before layouts were part of one leaves the session's arrangement alone.
+     * workspace saved without a layout copy started from the layout of the preferences in stage 1. If
+     * the layout copy cannot be applied, the workspace uses that layout too.
      */
     private restoreLayout(): void {
         const layout = this.workspace.layout;
@@ -2793,9 +3114,22 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
         // validates the copy by the definition of the layout in the workspace schema.
         const problems: string[] = [];
         if (!this.appStore.layoutStore.applyLayoutConfig(layout, "", "workspace", problems)) {
-            this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in");
+            this.report(WorkspaceItemKind.Layout, "", "Could not restore the layout the workspace was saved in, so the layout of the preferences is used");
+            this.applyStartingLayoutKeepingCatalogStyles();
         }
         problems.forEach(problem => this.report(WorkspaceItemKind.Layout, "", problem));
+    }
+
+    /**
+     * Applies the starting layout after the catalogs opened. A catalog widget of that layout gives its
+     * style to the catalog with its file ID, even when the catalog is open. So keep the styles that the
+     * catalogs of the workspace were restored with.
+     */
+    private applyStartingLayoutKeepingCatalogStyles(): void {
+        const catalogStore = this.appStore.catalogStore;
+        const styles = [...this.catalogIds.values()].map(fileId => ({fileId, style: catalogStore.getCatalogDisplayStore(fileId)?.drawnStyle()}));
+        this.applyStartingLayout();
+        styles.forEach(({fileId, style}) => style && catalogStore.getCatalogDisplayStore(fileId)?.restoreDrawnStyle(style));
     }
 
     /**
@@ -2821,6 +3155,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
             return;
         }
         this.issues.push(...this.withImageCauses(this.appStore.widgetsStore.restorePlotWidgetViews(this.workspace.plotWidgets, this)));
+        this.appStore.widgetsStore.nameRestoredWidgetTabs(this.workspace.plotWidgets);
         this.restoreImageFitting();
         const waiting = {isSkipped: false};
         const results = this.appStore.widgetsStore.restorePlotWidgetResults(this.workspace.plotWidgets, () => this.isCurrent && !waiting.isSkipped);
@@ -2924,6 +3259,7 @@ export class WorkspaceRestorer implements WorkspaceIdReader {
 
         const config = this.workspace.imageFitting;
         if (!config || typeof config !== "object") {
+            this.appStore.imageFittingStore.resetSettings();
             return;
         }
         const subject = "Image Fitting";

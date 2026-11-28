@@ -94,6 +94,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    /** Records the height of the result table in the widget store, so that a workspace saves it. */
+    private onTableResizeEnd = (sizes: number[]) => {
+        const total = (sizes[0] ?? 0) + (sizes[1] ?? 0);
+        if (total > 0) {
+            this.widgetStore.resultTableHeight = Math.round((sizes[1] / total) * 1000) / 10;
+        }
+    };
+
     private handleRedshiftChange = ev => {
         if (ev.type === "keydown" && ev.key !== "Enter") {
             return;
@@ -428,9 +436,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <div className="spectral-line-query-widget">
                     <div className={Classes.DIALOG_BODY}>
                         {queryPanel}
-                        <SplitPane className="body-split-pane" direction="vertical" onResize={this.onTableResize}>
+                        {/* A restore makes a new key, so that the split pane takes the restored height. */}
+                        <SplitPane key={widgetStore.resultTableRestoreCount} className="body-split-pane" direction="vertical" onResize={this.onTableResize} onResizeEnd={this.onTableResizeEnd}>
                             <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
-                            <Pane className={"result-table-container"} defaultSize={"60%"} minSize={"5%"}>
+                            <Pane
+                                className={"result-table-container"}
+                                defaultSize={`${widgetStore.resultTableHeight ?? SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_DEFAULT}%`}
+                                minSize={`${SpectralLineQueryWidgetStore.RESULT_TABLE_HEIGHT_MIN}%`}
+                            >
                                 {redshiftPanel}
                                 <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
                             </Pane>

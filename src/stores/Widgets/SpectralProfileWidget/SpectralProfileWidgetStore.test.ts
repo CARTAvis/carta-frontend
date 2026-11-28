@@ -671,6 +671,17 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         expect(widgetStore.toConfig()).not.toHaveProperty("restFrameRadialVelocity");
     });
 
+    test("shows and exports a typed relativistic radial velocity as it was typed", () => {
+        const {widgetStore} = createWidgetStore(SpectralType.FREQ);
+        widgetStore.setXAxisRestFrameEnabled(true);
+        widgetStore.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+        widgetStore.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
+        widgetStore.setRestFrameShift(-500);
+
+        expect(widgetStore.restFrameRadialVelocity).toBe(-500);
+        expect(widgetStore.restFrameCorrectionExportComments).toContain("radial velocity (relativistic, km/s): -500");
+    });
+
     test.each([
         [VelocityConvention.RADIO, 300, 300 / (299792.458 - 300)],
         [VelocityConvention.OPTICAL, 300, 300 / 299792.458]
@@ -768,6 +779,37 @@ describe("SpectralProfileWidgetStore rest-frame coordinates", () => {
         const restored = createWidgetStore().widgetStore;
         runInAction(() => restored.applyWorkspaceConfig({spectralLines: [...(config.spectralLines ?? []), {species: "HCN", value: "x", qn: "1-0"}]} as never, WORKSPACE_IDS));
         expect(restored.toWorkspaceConfig(WORKSPACE_IDS).spectralLines).toEqual(config.spectralLines);
+    });
+
+    test("saves the height of the area below the plot, and gives it back on restore", () => {
+        const {widgetStore} = createWidgetStore();
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS)).not.toHaveProperty("infoHeight");
+
+        widgetStore.infoHeight = 64;
+        const config = widgetStore.toWorkspaceConfig(WORKSPACE_IDS);
+        expect(config.infoHeight).toBe(64);
+
+        const restored = createWidgetStore().widgetStore;
+        runInAction(() => restored.applyWorkspaceView(config, WORKSPACE_IDS));
+        expect(restored.restoredInfoHeight).toBe(64);
+    });
+
+    test("saves a restored height again when the widget was not shown, such as in a tab that is not selected", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight: 64}, WORKSPACE_IDS));
+        expect(widgetStore.toWorkspaceConfig(WORKSPACE_IDS).infoHeight).toBe(64);
+    });
+
+    test("restores a saved height below the smallest height of the area as the smallest height", () => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight: 5}, WORKSPACE_IDS));
+        expect(widgetStore.restoredInfoHeight).toBe(SpectralProfileWidgetStore.INFO_HEIGHT_MIN);
+    });
+
+    test.each([0, -10, Infinity, NaN, "64"])("ignores a saved height of %p for the area below the plot", infoHeight => {
+        const {widgetStore} = createWidgetStore();
+        runInAction(() => widgetStore.applyWorkspaceView({infoHeight} as never, WORKSPACE_IDS));
+        expect(widgetStore.restoredInfoHeight).toBeUndefined();
     });
 
     test("names the images whose profiles it shows together, and their colours, by workspace image ID", () => {

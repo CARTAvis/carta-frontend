@@ -233,6 +233,7 @@ export class ImageSaveComponent extends React.Component {
                                             value={fileBrowser.saveStokesOption || ""}
                                             options={this.stokesOptions}
                                             onChange={(event: React.ChangeEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))}
+                                            data-testid="save-image-polarization-dropdown"
                                         />
                                     </FormGroup>
                                 </div>

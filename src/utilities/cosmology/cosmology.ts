@@ -168,8 +168,8 @@ export function redshiftFromRelativisticVelocity(velocityKms: number): number {
         return NaN;
     }
 
-    const beta = velocityKms / SPEED_OF_LIGHT_KMS;
-    return Math.sqrt((1 + beta) / (1 - beta)) - 1;
+    // The same as sqrt((1 + beta) / (1 - beta)) - 1. This form keeps its precision for small velocities.
+    return Math.expm1(Math.atanh(velocityKms / SPEED_OF_LIGHT_KMS));
 }
 
 /** Convert redshift to a relativistic radial velocity in km/s. */
@@ -178,9 +178,17 @@ export function relativisticVelocityFromRedshift(redshift: number): number {
         return NaN;
     }
 
-    const redshiftFactor = 1 + redshift;
-    const inverseRedshiftFactor = 1 / redshiftFactor;
-    return SPEED_OF_LIGHT_KMS * ((redshiftFactor - inverseRedshiftFactor) / (redshiftFactor + inverseRedshiftFactor));
+    // The same as c * ((1 + z)^2 - 1) / ((1 + z)^2 + 1). This form keeps its precision for small redshifts.
+    return SPEED_OF_LIGHT_KMS * Math.tanh(Math.log1p(redshift));
+}
+
+/**
+ * Returns the radial velocity of a redshift, rounded to 12 significant digits for display. A velocity
+ * that was typed in comes back with errors in the last digits, such as -500.0000000000037 for -500.
+ */
+export function displayVelocityFromRedshift(redshift: number, convention: VelocityConvention): number {
+    const velocityKms = velocityFromRedshift(redshift, convention);
+    return isFinite(velocityKms) ? Number(velocityKms.toPrecision(12)) : velocityKms;
 }
 
 /**

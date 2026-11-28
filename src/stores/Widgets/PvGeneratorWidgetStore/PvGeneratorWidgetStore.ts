@@ -14,8 +14,10 @@ import {
     type WorkspacePvPreviewRequest
 } from "models";
 import {TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore, restoreWorkspaceZoom, scaleFrameZoom} from "stores";
 import {type FrameStore} from "stores/Frame";
+import {PV_DEFAULT_WIDTH} from "stores/ImageGeneration/ImageGenerationRequests";
+import {getFieldOfViewScale, isValidImageViewSize} from "stores/Workspace/WorkspaceFieldOfView";
 import {length2D, toFixed} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -41,6 +43,11 @@ export interface PvGeneratorWidgetConfig {
 
 /** The largest rebin factor that a restore reads. */
 const MAX_WORKSPACE_REBIN = 1000;
+/**
+ * How long, in milliseconds, the viewer of a restored preview keeps one size before the saved view
+ * stops waiting. A later resize fits the zoom again, as it does for a preview that was not restored.
+ */
+const PREVIEW_VIEW_SETTLE_MS = 1000;
 
 function isPositiveInteger(value: unknown, max: number): value is number {
     return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= max;
@@ -48,7 +55,7 @@ function isPositiveInteger(value: unknown, max: number): value is number {
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore implements WorkspaceLayoutConfigurable<PvGeneratorWidgetConfig>, WorkspaceConfigurableWidget<WorkspacePvGeneratorWidgetConfig> {
     widgetId: string = "";
-    @observable width: number = 3;
+    @observable width: number = PV_DEFAULT_WIDTH;
     @observable isReverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
     @observable shouldKeep: boolean = false;
     @observable range: CARTA.IntBounds.$Properties = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
@@ -187,7 +194,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
     /** @returns the request of a preview, which ends when the preview is shown or the request fails. */
     @action requestPV = (isPreview: boolean = false, pvGeneratorId?: string): Promise<void> | undefined => {
         const frame = this.effectiveFrame;
-        if (!frame || frame.isSpectralAxisNonlinear) {
+        // An image with one channel has no spectral range to cut, as an image without a spectral axis.
+        if (!frame || frame.isSpectralAxisNonlinear || frame.numChannels <= 1) {
             return undefined;
         }
 
@@ -229,6 +237,9 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
     @observable.ref private previewRequest: PvRequestSettings | undefined = undefined;
     /** The saved preview request by the IDs of this session, or why it cannot be made. A restore makes the preview with it. */
     private restoredPreviewRequest: PvRequestSettings | string | undefined = undefined;
+    /** The saved view that a restore puts back on the preview, with the preview and its size in pixels when the restore made it. */
+    private pendingPreviewView: {frame: FrameStore; view: NonNullable<WorkspacePvPreview["view"]>; width: number; height: number} | undefined = undefined;
+    private pendingPreviewViewTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
     /** Returns the saved preview request by the IDs of this session, or why it cannot be made. */
     private static restoredRequestOf(saved: Persisted<WorkspacePvPreviewRequest> | undefined, ids: WorkspaceIdReader): PvRequestSettings | string | undefined {
@@ -251,7 +262,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
         return {
             fileId,
             regionId,
-            width: isPositiveInteger(saved.width, Number.MAX_SAFE_INTEGER) ? saved.width : 3,
+            width: isPositiveInteger(saved.width, Number.MAX_SAFE_INTEGER) ? saved.width : PV_DEFAULT_WIDTH,
             spectralRange: hasChannels ? {min: channels[0], max: channels[1]} : null,
             reverse: saved.reverse === true,
             previewRegionId,
@@ -374,7 +385,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
         if (width > 0 && height > 0) {
             this.previewFullViewWidth = width;
             this.previewFullViewHeight = height;
-            this.previewFrame?.fitZoom();
+            if (this.applyPendingPreviewView()) {
+                this.settlePendingPreviewView();
+            } else {
+                this.previewFrame?.fitZoom();
+            }
         }
     };
 
@@ -456,6 +471,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
         return layoutId === undefined ? undefined : AppStore.Instance.widgetsStore.floatingWidgets.find(config => config.type === "pv-preview" && config.parentId === layoutId);
     }
 
+    /** Returns whether the workspace saves the request of the preview that is shown. A restore then makes the preview again. */
+    public isPreviewSaved(ids: WorkspaceIdWriter): boolean {
+        return !!this.previewFrame && this.previewRequest !== undefined && ids.imageIdOf(this.previewRequest.fileId) !== undefined;
+    }
+
     /** Returns the preview that a workspace saves: the request that made it, how it is drawn and where its viewer is. */
     private workspacePreviewOf(ids: WorkspaceIdWriter): WorkspacePvPreview {
         const panel = this.previewPanel;
@@ -479,9 +499,20 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
                 : {}),
             ...(this.previewFrame ? {renderConfig: this.previewFrame.renderConfig.toConfig()} : {}),
             ...(this.previewFrame && AppStore.Instance.activeFrame === this.previewFrame ? {isActive: true} : {}),
+            ...(this.previewFrame && this.previewFrame.renderWidth > 1 && this.previewFrame.renderHeight > 1 ? {view: PvGeneratorWidgetStore.workspaceViewOf(this.previewFrame)} : {}),
             // The size of the preview that is shown, which the widget settings can differ from.
             ...(typeof (this.previewCubeSize ?? this.estimatedCubeSize) === "number" ? {cubeSize: this.previewCubeSize ?? this.estimatedCubeSize} : {}),
             ...(panel && isPlaced ? {panel: {x: panel.defaultX as number, y: panel.defaultY as number, width: panel.defaultWidth as number, height: panel.defaultHeight as number, ...PvGeneratorWidgetStore.widgetsBelowOf(panel)}} : {})
+        };
+    }
+
+    /** Returns the zoom and the center of a preview, and the size of the area that it is drawn in. Call it only for a preview that is shown. */
+    private static workspaceViewOf(frame: FrameStore): NonNullable<WorkspacePvPreview["view"]> {
+        return {
+            center: {x: frame.center.x, y: frame.center.y},
+            zoomLevel: frame.zoomLevel,
+            ...(frame.isAxisZoomable ? {axisZoomLevel: {...frame.effectiveZoomLevel}, zoomAxis: frame.zoomAxis} : {}),
+            viewSize: {width: frame.renderWidth, height: frame.renderHeight, devicePixelRatio: AppStore.Instance.devicePixelRatio}
         };
     }
 
@@ -565,7 +596,84 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
             panel.setDefaultPosition(saved.x, saved.y);
             panel.setDefaultSize(saved.width, saved.height);
         }
+        this.restorePreviewView(preview.view);
         return [];
+    };
+
+    /**
+     * Puts back the zoom and the center of the preview. The viewer fits the zoom to its size each
+     * time it is resized, and a restore resizes it. So the saved view waits on the store, and each
+     * resize applies it instead of the fitted zoom. The view stops waiting once the viewer keeps one
+     * size for `PREVIEW_VIEW_SETTLE_MS` in a tab that is shown.
+     */
+    private restorePreviewView = (view: WorkspacePvPreview["view"]): void => {
+        const frame = this.previewFrame;
+        this.pendingPreviewView = undefined;
+        if (!frame || !view || typeof view !== "object" || !isValidImageViewSize(view.viewSize)) {
+            return;
+        }
+        const {width, height} = frame.frameInfo.fileInfoExtended;
+        this.pendingPreviewView = {frame, view, width, height};
+        this.applyPendingPreviewView();
+        this.settlePendingPreviewView();
+    };
+
+    /**
+     * Applies the saved view of the preview, scaled by how the size of the viewer changed, as for an
+     * image. A new preview of another size, such as one from a moved cut, drops the saved view.
+     *
+     * @returns whether the view was applied.
+     */
+    private applyPendingPreviewView(): boolean {
+        const pending = this.pendingPreviewView;
+        if (!pending) {
+            return false;
+        }
+        const {frame, view} = pending;
+        const size = frame.frameInfo.fileInfoExtended;
+        if (this.previewFrame !== frame || size.width !== pending.width || size.height !== pending.height) {
+            this.pendingPreviewView = undefined;
+            return false;
+        }
+        // A size of 1 or less means that the viewer is not shown yet.
+        if (!(frame.renderWidth > 1 && frame.renderHeight > 1)) {
+            return false;
+        }
+        restoreWorkspaceZoom(frame, view);
+        const scale = getFieldOfViewScale(view.viewSize, {width: frame.renderWidth, height: frame.renderHeight}, AppStore.Instance.devicePixelRatio, frame.isStretchedToView);
+        if (isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 1e-6) {
+            scaleFrameZoom(frame, scale);
+        }
+        const center = view.center;
+        if (center && Number.isFinite(center.x) && Number.isFinite(center.y)) {
+            frame.setCenter(center.x, center.y);
+        }
+        return true;
+    }
+
+    /**
+     * Stops the saved view from waiting after the viewer keeps one size for `PREVIEW_VIEW_SETTLE_MS`.
+     * A tab in the background reports no sizes, so the time starts when the tab is shown.
+     */
+    private settlePendingPreviewView(): void {
+        clearTimeout(this.pendingPreviewViewTimer);
+        document.removeEventListener("visibilitychange", this.onPreviewTabShown);
+        if (!this.pendingPreviewView) {
+            return;
+        }
+        if (document.hidden) {
+            document.addEventListener("visibilitychange", this.onPreviewTabShown);
+            return;
+        }
+        this.pendingPreviewViewTimer = setTimeout(() => {
+            this.pendingPreviewView = undefined;
+        }, PREVIEW_VIEW_SETTLE_MS);
+    }
+
+    private onPreviewTabShown = () => {
+        if (!document.hidden) {
+            this.settlePendingPreviewView();
+        }
     };
 
     public applyWorkspaceBinding = (config: WorkspacePvGeneratorWidgetConfig, ids: WorkspaceIdReader): string[] => this.applyWorkspaceBindingOf(config, ids);
@@ -626,6 +734,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore implements Workspa
     };
 
     public dispose = () => {
+        this.pendingPreviewView = undefined;
+        this.settlePendingPreviewView();
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
     };

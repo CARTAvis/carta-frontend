@@ -167,6 +167,17 @@ describe("FrameStore", () => {
         jest.clearAllMocks();
     });
 
+    test("sets the WCS overlay settings that have a preference to the preferences when it is created", () => {
+        const overlay = AppStore.Instance.overlaySettings;
+        const isGridVisible = PreferenceStore.Instance.isAstGridVisible;
+        overlay.forgetRestoredSettings();
+        overlay.grid.setVisible(!isGridVisible);
+
+        new FrameStore(STOKES_CUBEFRAME_INFO);
+
+        expect(overlay.grid.isVisible).toBe(isGridVisible);
+    });
+
     describe("offset coordinates", () => {
         test("rebuilds the offset frameset with the selected sky reference mode", () => {
             const frame = new FrameStore(STOKES_CUBEFRAME_INFO);
@@ -850,6 +861,16 @@ describe("FrameStore", () => {
 
             expect(frame.restFrameRedshift).toBe(1);
             expect(frame.restFrameRadialVelocity).toBeCloseTo(299792.458, 3);
+        });
+
+        test("shows a typed relativistic radial velocity as it was typed", () => {
+            const frame = new FrameStore(pvFrameInfo) as Record<string, any>;
+            frame["spectralType"] = SpectralType.FREQ;
+            frame.setRestFrameShiftMode(RestFrameShiftMode.RADIAL_VELOCITY);
+            frame.setRestFrameVelocityConvention(VelocityConvention.RELATIVISTIC);
+            frame.setRestFrameShift(-500);
+
+            expect(frame.restFrameRadialVelocity).toBe(-500);
         });
 
         test("disables rest-frame conversion for channel coordinates", () => {

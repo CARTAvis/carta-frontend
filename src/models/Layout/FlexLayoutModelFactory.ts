@@ -245,8 +245,8 @@ function convertComponent(node: any, persistence: LayoutPersistence): IJsonTabNo
 
     if (widgetType === "spatial-profiler") {
         // A tab not shown in its tabset is not mounted, so its widget cannot name it. The layout copy
-        // of a workspace names it as the widget would. A regular layout leaves the tab without a
-        // name until the widget mounts.
+        // of a workspace names it by its coordinate, until the restore names it after its region. A
+        // regular layout leaves the tab without a name until the widget mounts.
         const coordinate = node.widgetSettings?.coordinate;
         if (persistence !== "workspace") {
             delete tabNode.name;

@@ -34,6 +34,7 @@ import {
     type TileCoordinate,
     Transform2D,
     type WCSPoint2D,
+    type WorkspaceRegionShape,
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
@@ -51,6 +52,7 @@ import {
     convertSettingWCSToFreqMHz as convertSettingWCSToFreqMHzUtility,
     convertSettingWCSToFreqMHzArray as convertSettingWCSToFreqMHzArrayUtility,
     convertToNativeWCS as convertToNativeWCSUtility,
+    displayVelocityFromRedshift,
     formattedArcsec,
     formattedFrequency,
     frequencyFromVelocity,
@@ -87,8 +89,7 @@ import {
     subtract2D,
     toFixed,
     transformPoint,
-    trimFitsComment,
-    velocityFromRedshift
+    trimFitsComment
 } from "utilities";
 
 import {OverlayBeamStore} from "./OverlayBeamStore/OverlayBeamStore";
@@ -122,8 +123,12 @@ export type ImageGenerationRequest =
           channelRange: {min: number; max: number};
           mask: CARTA.MomentMask;
           pixelRange: {min: number; max: number};
+          /** The shape of the region when the images were made. Left out for the whole image. */
+          regionShape?: WorkspaceRegionShape;
+          /** The image that the region belonged to then, in whose pixels `regionShape` is. */
+          regionShapeOwner?: FrameStore;
       }
-    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean}
+    | {type: "pv"; source: FrameStore; regionId: number; width: number; channelRange?: {min: number; max: number}; reverse: boolean; regionShape?: WorkspaceRegionShape; regionShapeOwner?: FrameStore}
     | {type: "hips"; query: CARTA.RemoteFileRequest.$Properties}
     | {
           type: "fitting";
@@ -136,6 +141,10 @@ export type ImageGenerationRequest =
           fixedParams: boolean[];
           offset: number;
           solver: CARTA.FittingSolverType;
+          /** The shape of the region when it was fitted. Left out for the field of view and the whole image. */
+          regionShape?: WorkspaceRegionShape;
+          /** The image that the region belonged to then, in whose pixels `regionShape` is. */
+          regionShapeOwner?: FrameStore;
       };
 
 /**
@@ -269,6 +278,8 @@ export class FrameStore {
     @observable pvImages: FrameStore[] = [];
     /** How a moment, PV, HiPS or image fitting image was made, so that a workspace can make it again. */
     generation: ImageGeneration | undefined = undefined;
+    /** Whether the backend opened the image with AIPS beam support. It is undefined for an image that is not opened from a file. */
+    hasAipsBeamSupport: boolean | undefined = undefined;
     @observable generatedPVRegionId: number = 0;
     @observable fittingResult: string = "";
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];
@@ -1162,7 +1173,7 @@ export class FrameStore {
     }
 
     @computed get restFrameRadialVelocity(): number {
-        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
+        return displayVelocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isSpectralPropsEqual(): boolean {
@@ -1510,47 +1521,8 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        // A workspace restore makes a PV preview again after it has applied the overlay that the
-        // workspace saved. Leave the overlay as it is then.
         const overlaySettings = AppStore.Instance.overlaySettings;
-        if (!(frameInfo.preview && AppStore.Instance.isLoadingWorkspace)) {
-            const astColor = preferenceStore.astColor;
-            if (astColor !== overlaySettings.global.color) {
-                overlaySettings.global.setColor(astColor);
-            }
-            const isAstGridVisible = preferenceStore.isAstGridVisible;
-            if (isAstGridVisible !== overlaySettings.grid.isVisible) {
-                overlaySettings.grid.setVisible(isAstGridVisible);
-            }
-            const isAstLabelsVisible = preferenceStore.isAstLabelsVisible;
-            if (isAstLabelsVisible !== overlaySettings.labels.isVisible) {
-                overlaySettings.labels.setVisible(isAstLabelsVisible);
-            }
-            const isColorbarVisible = preferenceStore.isColorbarVisible;
-            if (isColorbarVisible !== overlaySettings.colorbar.isVisible) {
-                overlaySettings.colorbar.setVisible(isColorbarVisible);
-            }
-            const isColorbarInteractive = preferenceStore.isColorbarInteractive;
-            if (isColorbarInteractive !== overlaySettings.colorbar.isInteractive) {
-                overlaySettings.colorbar.setInteractive(isColorbarInteractive);
-            }
-            const colorbarPosition = preferenceStore.colorbarPosition;
-            if (colorbarPosition !== overlaySettings.colorbar.position) {
-                overlaySettings.colorbar.setPosition(colorbarPosition);
-            }
-            const colorbarWidth = preferenceStore.colorbarWidth;
-            if (colorbarWidth !== overlaySettings.colorbar.width) {
-                overlaySettings.colorbar.setWidth(colorbarWidth);
-            }
-            const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
-            if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
-                overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
-            }
-            const isColorbarLabelVisible = preferenceStore.isColorbarLabelVisible;
-            if (isColorbarLabelVisible !== overlaySettings.colorbar.isLabelVisible) {
-                overlaySettings.colorbar.setLabelVisible(isColorbarLabelVisible);
-            }
-        }
+        overlaySettings.followPreferencesForNewImage();
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
         this.currentFrameView = {
@@ -2675,25 +2647,63 @@ export class FrameStore {
     }
 
     public findChannelIndexByValue = (x: number | null | undefined): number | undefined => {
+        return this.findChannelIndexInCoordinate(x, this.spectralType, this.spectralUnit, this.spectralSystem);
+    };
+
+    /**
+     * Returns the index of the channel nearest to a spectral value in the given spectral type, unit
+     * and system. A value outside the channels gives the first or last channel. Returns nothing
+     * when the value is not a number or the image has no channel information. The spectral
+     * coordinate that the image shows does not change.
+     */
+    public findChannelIndexInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }
 
         if (this.channelInfo) {
-            if (this.isCoordChannel) {
+            if (this.isSpectralChannel && type === SpectralType.CHANNEL) {
                 return this.channelInfo.getChannelIndexSimple(x);
-            } else {
-                if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
-                    return this.channelInfo.getChannelIndexWCS(x);
-                } else {
-                    // invert x in selected widget wcs to frame's default wcs
-                    const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
-                    return this.channelInfo.getChannelIndexWCS(tx);
-                }
             }
+            if (this.isNativeSpectralValue(type, unit, system)) {
+                return this.channelInfo.getChannelIndexWCS(x);
+            }
+            // Convert the value to the native spectral coordinate of the image.
+            const tx = AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
+            return this.channelInfo.getChannelIndexWCS(tx);
         }
         return undefined;
     };
+
+    /**
+     * Returns the channel position of a spectral value in the given spectral type, unit and system,
+     * such as 2.5 between channels 2 and 3. A value outside the channels gives a position below 0
+     * or above the last channel. Returns nothing when the value cannot be converted to a channel.
+     * For example, a script can give a velocity range for an image that shows frequencies.
+     */
+    public findChannelPositionInCoordinate = (x: number | null | undefined, type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): number | undefined => {
+        if (x === null || x === undefined || !isFinite(x) || !this.channelInfo) {
+            return undefined;
+        }
+        if (this.isSpectralChannel && type === SpectralType.CHANNEL) {
+            return x;
+        }
+        if (!this.channelInfo.fromWCS) {
+            return undefined;
+        }
+        const native = this.isNativeSpectralValue(type, unit, system) ? x : AST.transformSpectralPoint(this.spectralFrame, type, unit, system, x, false);
+        const position = isFinite(native) ? this.getSpectralIndexFromNativeWcs(native) : NaN;
+        return isFinite(position) ? position : undefined;
+    };
+
+    /** Returns whether a spectral value in the given type, unit and system needs no conversion to the native coordinate of the image. */
+    private isNativeSpectralValue(type: SpectralType | null, unit: SpectralUnit | null, system: SpectralSystem | null): boolean {
+        const axis = this.spectralAxis;
+        if (axis && !axis.valid) {
+            return true;
+        }
+        return !!axis?.type && !!axis?.specsys && axis.type.code === (type as string) && axis.type.unit === (unit as string) && axis.specsys === (system as string);
+    }
 
     public getRegionProperties(regionId: number): string[] {
         const propertyString: string[] = [];

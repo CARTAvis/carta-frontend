@@ -54,6 +54,7 @@ export class SpatialProfileWidgetStore
     extends RegionWidgetStore
     implements ConfigurableStore<SpatialProfileWidgetConfig, Persisted<SpatialProfileWidgetConfig>>, WorkspaceLayoutConfigurable<SpatialProfileWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceSpatialProfileWidgetConfig>
 {
+    protected override readonly canShowPvPreview = true;
     widgetId: string = "";
     @observable coordinate: string = "x";
     @observable selectedStokes: string = DEFAULT_STOKES;
@@ -207,6 +208,12 @@ export class SpatialProfileWidgetStore
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredPolarizationInfo : this.selectedStokes;
         }
         return `${stokes?.replace("Stokes ", "") ?? ""}${this.isLineOrPolyline ? "" : this.coordinate}`;
+    }
+
+    @computed get tabTitle(): string {
+        const coordinateString = this.isLineOrPolyline ? "" : this.coordinate.toUpperCase();
+        const regionString = this.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.effectiveRegionId}`;
+        return `${coordinateString} Profile: ${regionString}`;
     }
 
     @computed get isLineOrPolyline(): boolean {

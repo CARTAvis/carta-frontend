@@ -1,6 +1,5 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
-import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import type {ConfigurableStore, WorkspaceVectorOverlayConfig} from "models";
 import tinycolor from "tinycolor2";
@@ -229,16 +228,9 @@ export class VectorOverlayConfigStore implements ConfigurableStore<WorkspaceVect
         return this.isEnabled ? this.settings() : undefined;
     };
 
-    /**
-     * Returns the settings when the vector overlay is off and the settings differ from the settings
-     * that a new image starts with. Otherwise returns undefined.
-     */
-    public toUnappliedConfig = (frame: FrameStore): WorkspaceVectorOverlayConfig | undefined => {
-        if (this.isEnabled) {
-            return undefined;
-        }
-        const settings = this.settings();
-        return _.isEqual(settings, new VectorOverlayConfigStore(this.preferenceStore, frame).settings()) ? undefined : settings;
+    /** Returns the settings when the vector overlay is off, as {@link ContourConfigStore.toUnappliedConfig} does. Otherwise returns undefined. */
+    public toUnappliedConfig = (): WorkspaceVectorOverlayConfig | undefined => {
+        return this.isEnabled ? undefined : this.settings();
     };
 
     private settings(): WorkspaceVectorOverlayConfig {

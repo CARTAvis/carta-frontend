@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, CoordinateMode, NumberFormatType} from "enums";
-import {AngularSize, IsValidWcsPoint, type Point2D, type WCSPoint2D, type WorkspaceImageFitting} from "models";
+import {AngularSize, IsValidWcsPoint, MAX_WORKSPACE_FITTING_COMPONENTS, type Point2D, type WCSPoint2D, type WorkspaceImageFitting} from "models";
 import {AppStore} from "stores";
 import {type FrameStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
@@ -11,8 +11,6 @@ import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, ge
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
-/** The largest number of components that a workspace restore reads. Then a damaged workspace cannot create very many components. */
-const MAX_WORKSPACE_COMPONENTS = 100;
 
 /** Manages the state and logic for multiple Gaussian image fitting. */
 export class ImageFittingStore {
@@ -287,6 +285,11 @@ export class ImageFittingStore {
         };
     };
 
+    /** Sets every setting back to its default, as for a workspace that saved none. */
+    @action resetSettings = (): void => {
+        this.applyWorkspaceConfig({} as WorkspaceImageFitting, ACTIVE_FILE_ID, FOV_REGION_ID);
+    };
+
     /**
      * Applies the settings that a workspace saved. Starts from the defaults, so a value that is
      * missing or not valid keeps its default.
@@ -300,7 +303,7 @@ export class ImageFittingStore {
         this.clearComponents();
         this.setSelectedFileId(fileId);
         this.setSelectedRegionId(regionId);
-        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, MAX_WORKSPACE_COMPONENTS) : [];
+        const components = Array.isArray(config.components) ? config.components.filter(component => component && typeof component === "object").slice(0, MAX_WORKSPACE_FITTING_COMPONENTS) : [];
         if (components.length) {
             this.setComponents(components.length);
             components.forEach((saved, index) => {

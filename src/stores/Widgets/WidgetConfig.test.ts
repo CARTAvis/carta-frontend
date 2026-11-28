@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 
-import {HistogramSettingsTabs, PlotType, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs} from "enums";
+import {HistogramSettingsTabs, ImageViewSettingsPanelTabs, PlotType, SmoothingType, SpatialProfilerSettingsTabs, SpectralProfilerSettingsTabs, StokesAnalysisSettingsTabs} from "enums";
 import {type ConfigurableStore, type Persisted, type WorkspaceLayoutConfigurable} from "models";
 import {REGULAR_WIDGET_SETTINGS} from "models/Layout/RegularLayout.fixture";
 // Import the stores before the widget stores. If a widget store is imported alone, a circular import reaches ColormapComponent before "utilities" is initialized.
@@ -183,7 +183,7 @@ function undeclaredFieldsDeep(schema: {$ref?: string; properties?: Record<string
     });
 }
 
-describe("image view grid and WCS overlay in a layout", () => {
+describe("image view settings and WCS overlay in a layout", () => {
     const overlaySettings = () => AppStore.Instance.overlaySettings;
 
     afterEach(() => {
@@ -194,7 +194,7 @@ describe("image view grid and WCS overlay in a layout", () => {
         ImageViewConfigStore.Instance.applyConfig(null);
     });
 
-    test("saves the WCS overlay with the grid in the layout copy of a workspace, with the settings that have a preference as they are shown", () => {
+    test("saves the WCS overlay with the image view settings in the layout copy of a workspace, with the settings that have a preference as they are shown", () => {
         overlaySettings().global.setColor("auto-red");
         overlaySettings().grid.setVisible(false);
 
@@ -211,14 +211,14 @@ describe("image view grid and WCS overlay in a layout", () => {
     });
 
     test("applies the WCS overlay that the layout copy of a workspace saved, and leaves it alone for a regular layout", () => {
-        const widgetSettings = {panelColumns: 3, wcsOverlay: {global: {color: "auto-red"}, grid: {isVisible: false}, title: {isVisible: true}}};
+        const widgetSettings = {settingsTab: ImageViewSettingsPanelTabs.BEAM, wcsOverlay: {global: {color: "auto-red"}, grid: {isVisible: false}, title: {isVisible: true}}};
 
         expect(WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings}], [], "regular")).toEqual([]);
         expect(overlaySettings().global.color).toBe(PreferenceStore.Instance.astColor);
         expect(overlaySettings().title.isVisible).toBe(false);
 
         expect(WidgetsStore.Instance.initWidgets([{id: "image-view", props: {id: "image-view-0"}, widgetSettings}], [], "workspace")).toEqual([]);
-        expect(ImageViewConfigStore.Instance.panelColumns).toBe(3);
+        expect(ImageViewConfigStore.Instance.settingsTab).toBe(ImageViewSettingsPanelTabs.BEAM);
         expect(overlaySettings().global.color).toBe("auto-red");
         expect(overlaySettings().grid.isVisible).toBe(false);
         expect(overlaySettings().title.isVisible).toBe(true);

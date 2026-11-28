@@ -347,7 +347,7 @@ describe("Catalog plot workspace binding", () => {
     /** An active image showing one catalog, which is what a plot can be bound to. */
     function showCatalog(catalogFileId: number) {
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], followDisplayPreferences: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], applyConfig: jest.fn()}, overlaySettings: {applyConfig: jest.fn(() => [])}} as any);
         [catalogFileId].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
         catalogStore.catalogProfileStores.set(catalogFileId, CreateEmptyProfileStore());
     }
@@ -483,7 +483,7 @@ describe("Catalog plot workspace binding", () => {
     test("saves and restores the plot store the tab shows after switching from catalog A to catalog B", () => {
         // Catalog A (fileId 1, workspaceId 10) and Catalog B (fileId 2, workspaceId 20)
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], followDisplayPreferences: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], applyConfig: jest.fn()}, overlaySettings: {applyConfig: jest.fn(() => [])}} as any);
         [1, 2].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
         catalogStore.catalogProfileStores.set(2, CreateEmptyProfileStore());
@@ -617,7 +617,7 @@ describe("Catalog table widget selection", () => {
         catalogStore.catalogProfileStores.set(1, CreateEmptyProfileStore());
         // Catalog 1 is on the active image, which is what a widget can show.
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], followDisplayPreferences: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], applyConfig: jest.fn()}, overlaySettings: {applyConfig: jest.fn(() => [])}} as any);
         catalogStore.catalogImageIds.set(1, 7);
         catalogStore.catalogGLData.set(1, {x: new Float32Array(0), y: new Float32Array(0)});
 

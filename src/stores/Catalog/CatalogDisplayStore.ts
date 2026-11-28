@@ -1957,6 +1957,24 @@ export class CatalogDisplayStore implements ConfigurableStore<WorkspaceCatalogCo
         thickness: this.thickness
     });
 
+    /** Returns the settings that {@link applyLayoutStyle} can change, to be put back with {@link restoreDrawnStyle}. */
+    public drawnStyle = () => ({
+        catalogColor: this.catalogColor,
+        highlightColor: this.highlightColor,
+        catalogSize: this.catalogSize,
+        catalogShape: this.catalogShape,
+        thickness: this.thickness,
+        sizeAxisTabId: this.sizeAxisTabId
+    });
+
+    /**
+     * Puts back the settings that {@link drawnStyle} returned. The values are set as they are,
+     * without the checks of the setters. For example, a drawn size of 200 pixels is kept.
+     */
+    @action restoreDrawnStyle = (style: ReturnType<CatalogDisplayStore["drawnStyle"]>) => {
+        Object.assign(this, style);
+    };
+
     /**
      * Applies how the sources are drawn, as a regular layout keeps it. Only the settings that the
      * layout has and that are valid are applied. The other settings of the catalog stay as they are.

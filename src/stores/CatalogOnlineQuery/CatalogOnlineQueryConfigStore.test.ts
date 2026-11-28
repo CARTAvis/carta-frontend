@@ -152,3 +152,14 @@ describe("CatalogOnlineQueryConfigStore in a workspace", () => {
         expect(store.toWorkspaceConfig()).toEqual(before);
     });
 });
+
+describe("CatalogOnlineQueryConfigStore reset for a workspace", () => {
+    test("clears the center when no image is in front", () => {
+        const store = new CatalogOnlineQueryConfigStore();
+        store.updateCenterPixelCoord({x: 10, y: 20});
+
+        store.resetWorkspaceConfig();
+
+        expect(store.centerPixelCoord).toEqual({x: undefined, y: undefined});
+    });
+});

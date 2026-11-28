@@ -24,6 +24,7 @@ import {
     type NumberFormatType,
     type NumericInputType,
     type PlayMode,
+    type PreferenceKeys,
     type RadiusUnits,
     type RedshiftType,
     type RegionMode,
@@ -47,6 +48,31 @@ import {type WidgetWorkspaceConfig} from "./Widget/WidgetWorkspaceConfig";
 
 /** The version written by this frontend, matching `workspace_schema_2.json`. */
 export const WORKSPACE_VERSION = 2;
+
+/**
+ * Returns the version of a workspace that a newer version of CARTA saved, such as 3. Returns
+ * undefined for a workspace of this version or an older one.
+ */
+export function newerWorkspaceVersion(workspace: unknown): number | undefined {
+    const version = workspace && typeof workspace === "object" ? (workspace as {workspaceVersion?: unknown}).workspaceVersion : undefined;
+    return typeof version === "number" && Number.isFinite(version) && version > WORKSPACE_VERSION ? version : undefined;
+}
+
+/** Says that a newer version of CARTA saved a workspace that this version can still read. */
+export function describeNewerWorkspace(version: number): string {
+    return `A newer version of CARTA saved this workspace, with workspace version ${version}. This version of CARTA reads workspace version ${WORKSPACE_VERSION}, so it may not restore every setting.`;
+}
+
+/** Thrown when a newer version of CARTA saved a workspace that this version cannot read. */
+export class NewerWorkspaceError extends Error {
+    constructor(public readonly version: number) {
+        super(`A newer version of CARTA saved this workspace, with workspace version ${version}. This version of CARTA cannot read it.`);
+        this.name = "NewerWorkspaceError";
+    }
+}
+
+/** The largest number of components of a profile fitting or an image fitting that a restore reads. Then a damaged workspace cannot create very many components. The profile fitting panel offers up to 20 components, and auto detect can find more. */
+export const MAX_WORKSPACE_FITTING_COMPONENTS = 100;
 
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
@@ -242,6 +268,8 @@ export interface WorkspaceRegion {
 }
 
 export interface WorkspaceColorBlending {
+    /** The name of the color-blended image in the Image List. */
+    name?: string;
     imageListIndex: number;
     selectedFrameId: number[];
     alpha: number[];
@@ -328,8 +356,11 @@ export interface WorkspaceFile {
     restFrequency?: {value: number; unit: string};
     /** The beam overlay settings of an image that has a beam. */
     beam?: {visible: boolean; color: string; type: BeamType; width: number; shiftX: number; shiftY: number};
-    /** The offset coordinates, when they are shown. Saves the center in image pixels, and whether the center is the origin or the pole. */
-    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs};
+    /**
+     * The offset coordinates, once the image has an offset center. Saves the center in image pixels, whether the center is the origin
+     * or the pole, and whether they are shown. A workspace that leaves out `shown` shows them.
+     */
+    offsetCoordinates?: {center: Point2D; skyRefIs: SkyRefIs; shown?: boolean};
     /** The rest frame of the spectral axis, for an image that supports a rest frame. */
     restFrame?: {enabled: boolean; redshift: number; shiftMode: RestFrameShiftMode; velocityConvention: VelocityConvention};
     /**
@@ -337,6 +368,8 @@ export interface WorkspaceFile {
      * not save, so only their order matters. Left out by a workspace saved before it kept the place.
      */
     imageListIndex?: number;
+    /** Whether the backend opened the image with AIPS beam support. Left out for an image that is not opened from a file, and by an older workspace. */
+    aipsBeamSupport?: boolean;
     /** The result of the last image fitting of the image. Left out when the image has no result. */
     fitResult?: WorkspaceImageFitResult;
     /** The custom title of the image in the WCS overlay. Left out when it is the default title, the file name. */
@@ -349,18 +382,35 @@ export interface WorkspaceFile {
     vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     /**
      * The contour settings of an image whose contours are off, such as a color that the user chose
-     * before applying contours. Left out when they are the settings that a new image starts with.
-     * It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
+     * before applying contours. It is not in `contourConfig`, because a workspace with `contourConfig` shows the contours.
      */
     unappliedContourConfig?: WorkspaceContourConfig;
     /** The vector overlay settings of an image whose vector overlay is off, as for `unappliedContourConfig`. */
     unappliedVectorOverlayConfig?: WorkspaceVectorOverlayConfig;
+    /** The regions of an image that is not matched to another image, and the region that the image toolbar creates for it. */
     regionsSet?: {
+        /** The type of a new region, and whether the mouse creates regions. */
+        newRegionType?: CARTA.RegionType;
+        regionMode?: RegionMode;
         selectedRegion?: number;
         /** The regions that were selected together, by their saved IDs. Left out when one region or none was selected. */
         selectedRegions?: number[];
         regions?: WorkspaceRegion[];
     };
+}
+
+/**
+ * The shape that a region had when an image was made over it, in the pixels of the image that the
+ * region belonged to then. That is the image that the source image was matched to, when it was
+ * matched. A restore makes the image over this shape when the region was changed or deleted after
+ * the image was made.
+ */
+export interface WorkspaceRegionShape {
+    regionType: CARTA.RegionType;
+    controlPoints: Point2D[];
+    rotation: number;
+    /** The image that the region belonged to, by its workspace ID. Left out in the session, which keeps the image itself. */
+    imageId?: number;
 }
 
 /** A request for moment images. The request names its image and region by their workspace IDs. */
@@ -377,6 +427,8 @@ export interface WorkspaceMomentRequest {
     /** How the pixel range masks the cube. */
     mask: CARTA.MomentMask;
     pixelRange: {min: number; max: number};
+    /** The shape of the region when the moments were made. Left out for the whole image. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 /** A request for a PV image. The request names its image and cut by their workspace IDs. */
@@ -391,6 +443,8 @@ export interface WorkspacePvRequest {
     channelRange?: {min: number; max: number};
     /** Whether the position axis is drawn vertically. */
     reverse: boolean;
+    /** The shape of the line or polyline when the PV image was made. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 /** A HiPS query. It does not depend on any other data in the session. */
@@ -431,6 +485,8 @@ export interface WorkspaceFittingRequest {
     /** The initial background offset. */
     offset: number;
     solver: CARTA.FittingSolverType;
+    /** The shape of the region when it was fitted. Left out for the field of view and the whole image. */
+    regionShape?: WorkspaceRegionShape;
 }
 
 export type WorkspaceGenerationRequest = WorkspaceMomentRequest | WorkspacePvRequest | WorkspaceHipsRequest | WorkspaceFittingRequest;
@@ -676,6 +732,8 @@ export interface WorkspaceCatalogPlotConfig {
     isFittingEnabled?: boolean;
     /** The values the cursor last read off the plot: a scatter point, or a histogram bin's center and count. */
     cursor?: Point2D;
+    /** The plot that the tab keeps for each other catalog it has shown, by the Workspace ID of that catalog. */
+    otherPlots?: Record<string, Omit<WorkspaceCatalogPlotConfig, "catalogId" | "otherPlots">>;
 }
 
 /** The image and region that a widget shows, by their IDs in the workspace. When the image is left out, the widget shows the active image. */
@@ -760,6 +818,8 @@ export interface WorkspaceSpectralProfileWidgetConfig extends WorkspaceWidgetBin
     yAxisRestFrameEnabled?: boolean;
     /** The spectral lines that a spectral line query plotted on the widget, at the frequencies they were plotted at, in MHz. The query shifted them by its redshift. */
     spectralLines?: {species: string; value: number; qn: string}[];
+    /** The height of the area below the plot that shows the values at the cursor, in pixels. */
+    infoHeight?: number;
     /** The fitting settings. Left out when the widget does not show an image that the workspace saves. */
     fitting?: WorkspaceSpectralFitting;
     /** The moment generator settings. Left out when the widget does not show an image that the workspace saves. */
@@ -785,6 +845,8 @@ export interface WorkspaceSpectralLineQueryWidgetConfig {
     spectralProfilerId?: string;
     /** The widths of the columns of the table that lists the columns of the result: name, display and description. */
     headerTableColumnWidths?: number[];
+    /** The height of the result table, in percent of the area below the query settings. Left out while the separator is where it starts. */
+    resultTableHeight?: number;
     /** The result table. Left out when the widget showed no result. A restore runs the query again. */
     result?: WorkspaceSpectralLineQueryResult;
 }
@@ -835,6 +897,11 @@ export interface WorkspacePvPreview {
     renderConfig?: WorkspaceRenderConfig;
     /** Whether the preview was the active image. Left out when it was not. */
     isActive?: boolean;
+    /**
+     * The zoom and the center of the preview, and the size of the area that it was drawn in, in CSS
+     * pixels. A restore scales the zoom by how that size changed, as for an image.
+     */
+    view?: {center: Point2D; zoomLevel: number; axisZoomLevel?: Point2D; zoomAxis?: WorkspaceFile["zoomAxis"]; viewSize: {width: number; height: number; devicePixelRatio: number}};
     /** The estimated size of the cube that the preview reads, in GB. The Workspace dialog compares it with the PV preview cube size limit of the user. */
     cubeSize?: number;
     /**
@@ -914,7 +981,7 @@ export interface WorkspaceHipsQuery {
 export interface WorkspaceToolbar {
     expanded: boolean;
     activeLayer: ImageViewLayer;
-    /** The image in front: the type of a new region, and whether the mouse creates regions. */
+    /** The image in front: the type of a new region, and whether the mouse creates regions. Each image also saves its own in `regionsSet`. */
     newRegionType?: CARTA.RegionType;
     regionMode?: RegionMode;
 }
@@ -1097,6 +1164,8 @@ export interface WorkspaceDialog {
     tab?: string;
     /** The File Info dialog: the text of the header search. Left out when the search was closed. */
     search?: string;
+    /** The Image Fitting dialog: the height of the fitting settings, in percent of the area below the data source. Left out while the separator was where it starts. */
+    settingsHeight?: number;
     /**
      * How many floating widgets and settings panels were below the dialog. The dialogs and the
      * floating widgets share one stacking order, so a restore puts the dialog back between them.
@@ -1182,6 +1251,11 @@ export interface Workspace {
     };
     /** The spectral coordinate that spectrally matched images are matched by, such as "VRAD". */
     spectralMatchingType?: SpectralType;
+    /**
+     * The values in effect of the preferences that change what the user makes next, such as the
+     * style of a new region, by preference key. A restore applies them for the session only.
+     */
+    preferences?: Partial<Record<PreferenceKeys, unknown>>;
     selectedFile?: number;
     /** The settings of the animator. */
     animator?: WorkspaceAnimator;

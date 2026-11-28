@@ -1,6 +1,5 @@
 import type {RgbaColor} from "@uiw/react-color";
 import {CARTA} from "carta-protobuf";
-import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
 import type {ConfigurableStore, WorkspaceContourConfig} from "models";
 import tinycolor from "tinycolor2";
@@ -142,15 +141,12 @@ export class ContourConfigStore implements ConfigurableStore<WorkspaceContourCon
     };
 
     /**
-     * Returns the settings when the contours are off and the settings differ from the settings that a
-     * new image starts with. Otherwise returns undefined.
+     * Returns the settings when the contours are off. Otherwise returns undefined. The settings are
+     * returned even when they are the ones that a new image starts with, because another user's
+     * preferences can give a new image other settings.
      */
     public toUnappliedConfig = (): WorkspaceContourConfig | undefined => {
-        if (this.isEnabled) {
-            return undefined;
-        }
-        const settings = this.settings();
-        return _.isEqual(settings, new ContourConfigStore(this.preferenceStore).settings()) ? undefined : settings;
+        return this.isEnabled ? undefined : this.settings();
     };
 
     private settings(): WorkspaceContourConfig {

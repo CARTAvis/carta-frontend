@@ -137,7 +137,7 @@ export class HipsQueryStore {
         };
     };
 
-    /** Applies the fields that a workspace saved. A value that is not valid, or that is left out, is not set. */
+    /** Applies the fields that a workspace saved. A field that is not valid, or that is left out, is set to its default. */
     @action public applyWorkspaceConfig = (config: WorkspaceHipsQuery): void => {
         const numberOr = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : NaN);
         this.hipsSurvey = typeof config.survey === "string" ? config.survey : "";

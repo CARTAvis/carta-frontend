@@ -1,0 +1,144 @@
+import {CARTA} from "carta-protobuf";
+import {configure} from "mobx";
+
+import {AppToaster} from "components/Shared";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {ImageRequestCancelledError} from "stores/ImageGeneration/ImageGenerationRequests";
+
+configure({safeDescriptors: false});
+
+describe("AppStore requests that make moment and PV images", () => {
+    const appStore = AppStore.Instance;
+    const frame = {
+        isSpectralAxisNonlinear: false,
+        numChannels: 10,
+        frameInfo: {fileId: 5, fileInfoExtended: {width: 10, height: 10}},
+        getRegion: (regionId: number) =>
+            regionId === 1
+                ? {
+                      regionType: CARTA.RegionType.LINE,
+                      controlPoints: [
+                          {x: 1, y: 1},
+                          {x: 8, y: 8}
+                      ]
+                  }
+                : undefined,
+        momentImages: [],
+        pvImages: [],
+        removeMomentImage: jest.fn(),
+        removePvImage: jest.fn(),
+        resetMomentRequestState: jest.fn(),
+        resetPvRequestState: jest.fn(),
+        setIsRequestPVCancelling: jest.fn()
+    } as unknown as FrameStore;
+    const momentMessage = {fileId: 5, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM], keep: true};
+    const pvMessage = {fileId: 5, regionId: 1};
+
+    beforeEach(() => {
+        jest.spyOn(AppToaster, "show").mockImplementation(() => Promise.resolve());
+        jest.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test("return no images for an error of the backend, unless they are asked to throw it", async () => {
+        jest.spyOn(appStore.backendService, "requestMoment").mockRejectedValue("Moment generation failed");
+        jest.spyOn(appStore.backendService, "requestPV").mockRejectedValue("PV generation failed");
+
+        await expect(appStore.requestMoment(momentMessage, frame)).resolves.toEqual([]);
+        await expect(appStore.requestMoment(momentMessage, frame, {shouldThrow: true})).rejects.toBe("Moment generation failed");
+
+        await expect(appStore.requestPV(pvMessage, frame, true)).resolves.toBeUndefined();
+        expect(AppToaster.show).toHaveBeenCalledTimes(1);
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBe("PV generation failed");
+        // A thrown error shows no toast.
+        expect(AppToaster.show).toHaveBeenCalledTimes(1);
+    });
+
+    test("throw an ImageRequestCancelledError for a cancelled request, only when they are asked to throw", async () => {
+        jest.spyOn(appStore.backendService, "requestMoment").mockResolvedValue({success: true, cancel: true} as CARTA.MomentResponse.$Properties);
+        jest.spyOn(appStore.backendService, "requestPV").mockResolvedValue({success: true, cancel: true} as CARTA.PvResponse.$Properties);
+
+        await expect(appStore.requestMoment(momentMessage, frame)).resolves.toEqual([]);
+        await expect(appStore.requestMoment(momentMessage, frame, {shouldThrow: true})).rejects.toBeInstanceOf(ImageRequestCancelledError);
+
+        await expect(appStore.requestPV(pvMessage, frame, true)).resolves.toBeUndefined();
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBeInstanceOf(ImageRequestCancelledError);
+        expect(AppToaster.show).not.toHaveBeenCalled();
+        expect(frame.resetPvRequestState).toHaveBeenCalled();
+    });
+
+    test("check the cut of a PV request by the shape that they are given, for a region that only the backend knows", async () => {
+        const requestPV = jest.spyOn(appStore.backendService, "requestPV").mockRejectedValue("PV generation failed");
+        const regionShape = {
+            regionType: CARTA.RegionType.LINE,
+            controlPoints: [
+                {x: 1, y: 8},
+                {x: 8, y: 1}
+            ],
+            rotation: 90
+        };
+
+        await expect(appStore.requestPV({fileId: 5, regionId: 2}, frame, true)).rejects.toThrow("The image has no region 2");
+        expect(requestPV).not.toHaveBeenCalled();
+
+        await expect(appStore.requestPV({fileId: 5, regionId: 2}, frame, true, {regionShape})).resolves.toBeUndefined();
+        expect(requestPV).toHaveBeenCalledWith(expect.objectContaining({regionId: 2}));
+    });
+
+    test("record the shape that the cut had when the PV image was asked for, also when the cut changes before the image comes", async () => {
+        const cut = {
+            regionType: CARTA.RegionType.LINE,
+            controlPoints: [
+                {x: 1, y: 1},
+                {x: 8, y: 8}
+            ],
+            rotation: 45
+        };
+        const movingFrame = {...frame, getRegion: (regionId: number) => (regionId === 1 ? cut : undefined), addPvImage: jest.fn()} as unknown as FrameStore;
+        jest.spyOn(appStore.backendService, "requestPV").mockImplementation(() => {
+            // The user rotates the cut while the backend makes the PV image.
+            cut.controlPoints = [
+                {x: 1, y: 8},
+                {x: 8, y: 1}
+            ];
+            cut.rotation = 135;
+            return Promise.resolve({success: true, openFileAck: {fileId: 9}} as CARTA.PvResponse.$Properties);
+        });
+        const pvImage = {frameInfo: {fileId: 9}} as unknown as FrameStore;
+        jest.spyOn(appStore, "addFrame").mockReturnValue(true);
+        jest.spyOn(appStore, "frames", "get").mockReturnValue([pvImage]);
+
+        await appStore.requestPV(pvMessage, movingFrame, true);
+
+        expect(pvImage.generation?.request).toEqual(
+            expect.objectContaining({
+                regionShape: {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 1, y: 1},
+                        {x: 8, y: 8}
+                    ],
+                    rotation: 45
+                }
+            })
+        );
+    });
+
+    test("throw an ImageRequestCancelledError when the user cancels a PV request that is asked to throw", async () => {
+        // The backend answers a cancelled PV request with success false, so the request is rejected with the message.
+        const cancellingFrame = frame as unknown as {isRequestPVCancelling: boolean};
+        jest.spyOn(appStore.backendService, "requestPV").mockImplementation(() => {
+            cancellingFrame.isRequestPVCancelling = true;
+            return Promise.reject("PV image generator cancelled.");
+        });
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBeInstanceOf(ImageRequestCancelledError);
+
+        cancellingFrame.isRequestPVCancelling = false;
+        jest.spyOn(appStore.backendService, "requestPV").mockRejectedValue("PV generation failed");
+        await expect(appStore.requestPV(pvMessage, frame, true, {shouldThrow: true})).rejects.toBe("PV generation failed");
+    });
+});

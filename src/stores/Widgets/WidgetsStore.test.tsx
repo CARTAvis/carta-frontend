@@ -19,7 +19,8 @@ describe("WidgetsStore PV preview test ids", () => {
     const appStoreMock = {
         activeImage: null,
         isDarkTheme: false,
-        imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}
+        imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+        overlaySettings: {applyConfig: jest.fn(() => [])}
     };
     const layoutModelMock = {
         doAction: jest.fn(),
@@ -355,6 +356,32 @@ describe("WidgetsStore PV preview test ids", () => {
         ]);
     });
 
+    test("keeps the tab of each restored widget named after what it shows, until the widget is removed", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+        widgetsStore.addWidget("spatial-profiler", "spatial-profiler-2", {widgetId: "spatial-profiler-0"}, "workspace");
+        widgetsStore.addWidget("stats", "stats-3", {widgetId: "stats-1"}, "workspace");
+        widgetsStore.addWidget("stokes", "stokes-4", {widgetId: "stokes-0"}, "workspace");
+        widgetsStore.addWidget("histogram", "histogram-5", {widgetId: "histogram-0"}, "workspace");
+        const setWidgetTitle = jest.spyOn(widgetsStore, "setWidgetTitle").mockImplementation(() => {});
+
+        // The histogram is not in the workspace, so its tab keeps its name. With no image open, the Stokes analysis widget has no title to set.
+        widgetsStore.nameRestoredWidgetTabs({"spatial-profiler-0": {type: "spatial-profiler"}, "stats-1": {type: "stats"}, "stokes-0": {type: "stokes"}, "histogram-9": {type: "histogram"}});
+        expect(setWidgetTitle.mock.calls).toEqual([
+            ["spatial-profiler-2", "X Profile: Cursor"],
+            ["stats-3", "Statistics"]
+        ]);
+
+        setWidgetTitle.mockClear();
+        widgetsStore.spatialProfileWidgets.get("spatial-profiler-2")!.setCoordinate("y");
+        expect(setWidgetTitle.mock.calls).toEqual([["spatial-profiler-2", "Y Profile: Cursor"]]);
+
+        setWidgetTitle.mockClear();
+        const store = widgetsStore.spatialProfileWidgets.get("spatial-profiler-2")!;
+        widgetsStore.removeWidget("spatial-profiler-2", "spatial-profiler");
+        store.setCoordinate("x");
+        expect(setWidgetTitle).not.toHaveBeenCalled();
+    });
+
     test("does not reuse a catalog plot ID retained by an existing layout tab", () => {
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
@@ -408,7 +435,12 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
 
     beforeEach(() => {
         // A new WidgetsStore titles the image view from the images on screen, of which there are none.
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
         catalogStore.catalogProfileStores.clear();
     });
 
@@ -436,7 +468,12 @@ describe("WidgetsStore reloadFloatingCatalogWidget", () => {
         catalogStore.catalogProfileStores.set(3, {} as any);
         // The active image still lists catalog 2, which has no profile store.
         const frame = {frameInfo: {fileId: 7}, spatialSiblings: []};
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: frame, imageViewConfigStore: {visibleFrames: [frame], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: frame,
+            imageViewConfigStore: {visibleFrames: [frame], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
         [2, 3].forEach(catalogFileId => catalogStore.catalogImageIds.set(catalogFileId, 7));
 
         widgetsStore.reloadFloatingCatalogWidget();
@@ -466,64 +503,80 @@ describe("WidgetConfig", () => {
 
 describe("WidgetsStore initWidgets", () => {
     beforeEach(() => {
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager: {assignIndex: jest.fn()}} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager: {assignIndex: jest.fn()}
+        } as any);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    test("applies the image view grid and the WCS overlay that the layout copy of a workspace saved, and saves the session's grid and overlay in it", () => {
-        const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+    test("applies the image view settings and the WCS overlay that the layout copy of a workspace saved, and saves the session's settings and overlay in it", () => {
+        const imageViewSettings = {settingsTab: "Beam", panAndZoomCoordinate: "Image"};
         const wcsOverlay = {isVisible: true, grid: {isVisible: false}};
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn(), toConfig: jest.fn(() => grid)};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => imageViewSettings)};
         const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => ["The overlay problem"]), toConfig: jest.fn(() => wcsOverlay)};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], [], "workspace");
+        const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...imageViewSettings, wcsOverlay}}], [], "workspace");
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...imageViewSettings, wcsOverlay}]]);
         expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
         expect(problems).toEqual(["The overlay problem"]);
-        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "workspace")).toEqual({...grid, wcsOverlay});
+        expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "workspace")).toEqual({...imageViewSettings, wcsOverlay});
+    });
+
+    test("sets the image view settings and the WCS overlay back to the defaults when the layout copy of a workspace has no image view", () => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
+        const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([{id: "log", props: {id: "log-0", docked: true}}], [], "workspace");
+
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[null]]);
+        expect(overlaySettings.applyConfig.mock.calls).toEqual([[null]]);
     });
 
     test.each([
-        ["saved a grid", {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1}],
+        ["saved image view settings", {settingsTab: "Beam", panAndZoomCoordinate: "Image"}],
         ["saved none", undefined]
-    ])("leaves the image view grid and the WCS overlay alone when a regular layout %s, shows the display settings of the preferences, and saves neither in it", (_, grid) => {
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn(), toConfig: jest.fn(() => ({multiPanelEnabled: true}))};
+    ])("leaves the image view settings and the WCS overlay alone when a regular layout %s, and saves neither in it", (_, imageViewSettings) => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), toConfig: jest.fn(() => ({settingsTab: "Beam"}))};
         const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => []), toConfig: jest.fn(() => ({isVisible: true}))};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
-        const widgetSettings = grid ? {...grid, wcsOverlay: {grid: {isVisible: false}}} : undefined;
+        const widgetSettings = imageViewSettings ? {...imageViewSettings, wcsOverlay: {grid: {isVisible: false}}} : undefined;
 
         const problems = widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, ...(widgetSettings ? {widgetSettings} : {})}], [{type: "component", id: "image-view", widgetSettings}], "regular");
 
         expect(problems).toEqual([]);
-        expect(imageViewConfigStore.followDisplayPreferences).toHaveBeenCalled();
         expect(imageViewConfigStore.applyConfig).not.toHaveBeenCalled();
         expect(overlaySettings.applyConfig).not.toHaveBeenCalled();
         expect(widgetsStore.toWidgetSettingsConfig("image-view", "image-view", "regular")).toBeUndefined();
     });
 
-    test("keeps the image view grid and the WCS overlay that the layout copy of a workspace saved when another image view in it saved none", () => {
-        const grid = {multiPanelEnabled: true, panelMode: "fixed", panelColumns: 3, panelRows: 1};
+    test("keeps the image view settings and the WCS overlay that the layout copy of a workspace saved when another image view in it saved none", () => {
+        const imageViewSettings = {settingsTab: "Beam", panAndZoomCoordinate: "Image"};
         const wcsOverlay = {grid: {isVisible: false}};
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn()};
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
         const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
-        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...grid, wcsOverlay}}], [{type: "component", id: "image-view"}], "workspace");
+        widgetsStore.initWidgets([{id: "image-view", props: {id: "image-view", docked: true}, widgetSettings: {...imageViewSettings, wcsOverlay}}], [{type: "component", id: "image-view"}], "workspace");
 
-        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...grid, wcsOverlay}]]);
+        expect(imageViewConfigStore.applyConfig.mock.calls).toEqual([[{...imageViewSettings, wcsOverlay}]]);
         expect(overlaySettings.applyConfig.mock.calls).toEqual([[wcsOverlay]]);
     });
 
-    test("returns the image view grid to the user's preferences, and leaves the WCS overlay as it is, when the layout copy of a workspace saved none", () => {
-        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn(), followDisplayPreferences: jest.fn()};
+    test("returns the image view settings to their defaults, and leaves the WCS overlay as it is, when the layout copy of a workspace saved none", () => {
+        const imageViewConfigStore = {visibleImages: [], applyConfig: jest.fn()};
         const overlaySettings = {applyConfig: jest.fn((_config: unknown): string[] => [])};
         jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore, overlaySettings, zIndexManager: {assignIndex: jest.fn()}} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
@@ -536,7 +589,7 @@ describe("WidgetsStore initWidgets", () => {
 
     test("brings a floating histogram that the layout copy of a workspace restored to the front when selected", () => {
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], followDisplayPreferences: jest.fn()}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], applyConfig: jest.fn()}, overlaySettings: {applyConfig: jest.fn(() => [])}, zIndexManager} as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
 
         widgetsStore.initWidgets([], [{id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.Histogram}, defaultX: 40, defaultY: 60}], "workspace");
@@ -601,6 +654,16 @@ describe("WidgetsStore initWidgets", () => {
         widgetsStore.initWidgets([{id: "catalog-plot", props: {id: "catalog-plot-0", docked: true}, widgetSettings: {plotType: CatalogPlotType.Histogram}}], [], "workspace");
 
         expect(widgetsStore.catalogPlotWidgets.get("catalog-plot-0")?.plotType).toBe(CatalogPlotType.Histogram);
+    });
+
+    test("gives a floating catalog plot of a workspace the component ID that its binding was registered with", () => {
+        const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
+
+        widgetsStore.initWidgets([], [{type: "component", id: "catalog-plot", widgetSettings: {plotType: CatalogPlotType.D2Scatter}}], "workspace");
+
+        const [plot] = widgetsStore.floatingWidgets;
+        expect(plot.componentId).toMatch(/^catalog-plot-component-\d+$/);
+        expect(CatalogStore.Instance.widgetBindings.componentIds()).toContain(plot.componentId);
     });
 
     test("ignores the plot type in the settings of a catalog plot of a regular layout", () => {
@@ -699,7 +762,12 @@ describe("WidgetsStore layout copy of a workspace", () => {
         // Required here: importing the models before the stores reaches a component before its config is set.
         const layoutConfig = require("models/Layout/LayoutConfig").LayoutConfig;
         const zIndexManager = new FloatingObjzIndexManager();
-        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({activeFrame: null, imageViewConfigStore: {visibleImages: [], toConfig: () => ({}), followDisplayPreferences: jest.fn()}, zIndexManager} as any);
+        jest.spyOn(AppStore, "Instance", "get").mockReturnValue({
+            activeFrame: null,
+            imageViewConfigStore: {visibleImages: [], toConfig: () => ({}), applyConfig: jest.fn()},
+            overlaySettings: {applyConfig: jest.fn(() => [])},
+            zIndexManager
+        } as any);
         const widgetsStore = new (WidgetsStore as any)() as WidgetsStore;
         jest.spyOn(WidgetsStore, "Instance", "get").mockReturnValue(widgetsStore);
         widgetsStore.initWidgets(

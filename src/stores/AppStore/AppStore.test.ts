@@ -497,6 +497,45 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("refuses to save, delete or change a workspace in read-only mode", async () => {
+        const flags = appStore.backendService.serverFeatureFlags;
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY | CARTA.ServerFeatureFlags.SCRIPTING));
+        try {
+            const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+            const clearSpy = jest.spyOn(appStore.apiService, "clearWorkspace").mockResolvedValue(true);
+            const readSpy = jest.spyOn(appStore.apiService, "getStoredWorkspace").mockResolvedValue(undefined);
+
+            await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+            expect(appStore.alertStore.alertText).toContain("read-only mode");
+            await appStore.deleteWorkspaces(["test-workspace"]);
+            await expect(appStore.writeWorkspaceSourceChanges("test-workspace", {} as any)).resolves.toEqual({state: "failed"});
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(clearSpy).not.toHaveBeenCalled();
+            expect(readSpy).not.toHaveBeenCalled();
+        } finally {
+            appStore.alertStore.dismissAlert();
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
+    });
+
+    test("keeps the stored workspaces unchanged in read-only mode", async () => {
+        // Without a backend address, the workspaces are kept in the browser storage. Then the
+        // backend cannot refuse a write.
+        const {workspace} = new WorkspaceSnapshotter().capture();
+        const flags = appStore.backendService.serverFeatureFlags;
+        localStorage.setItem("savedWorkspaces", JSON.stringify({stored: workspace}));
+        runInAction(() => (appStore.backendService.serverFeatureFlags = CARTA.ServerFeatureFlags.READ_ONLY));
+        try {
+            await expect(appStore.apiService.setWorkspace("new", workspace)).resolves.toBeUndefined();
+            await expect(appStore.apiService.clearWorkspace("stored")).resolves.toBe(false);
+            expect(Object.keys(JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}"))).toEqual(["stored"]);
+        } finally {
+            localStorage.removeItem("savedWorkspaces");
+            runInAction(() => (appStore.backendService.serverFeatureFlags = flags));
+        }
+    });
+
     test("refuses to save while a workspace is still being restored", async () => {
         // A restore opens its images and catalogs one after another, so part of it may already be
         // in the session while the rest is still on its way.
@@ -559,6 +598,21 @@ describe("AppStore.saveWorkspace", () => {
         appStore.alertStore.dismissAlert();
     });
 
+    test("opens an image with the AIPS beam support of a workspace restore in place of the preference, only while a workspace loads", async () => {
+        const loadFile = jest.spyOn(appStore.backendService, "loadFile").mockRejectedValue(new Error("unreadable image"));
+        const hasPreference = appStore.preferenceStore.hasAipsBeamSupport;
+        appStore.preferenceStore.hasAipsBeamSupportForRestore = !hasPreference;
+
+        runInAction(() => (appStore.isLoadingWorkspace = true));
+        await expect(appStore.loadFile("", "image.fits", "", false)).rejects.toThrow("unreadable image");
+        runInAction(() => (appStore.isLoadingWorkspace = false));
+        await expect(appStore.loadFile("", "image.fits", "", false)).rejects.toThrow("unreadable image");
+        appStore.preferenceStore.hasAipsBeamSupportForRestore = undefined;
+        appStore.alertStore.dismissAlert();
+
+        expect(loadFile.mock.calls.map(call => call[5])).toEqual([!hasPreference, hasPreference]);
+    });
+
     test("tells the Workspace dialog that an image is still being opened, and tells it again when the image is no longer on its way", async () => {
         let failOpening!: (error: Error) => void;
         jest.spyOn(appStore.backendService, "loadFile").mockReturnValue(new Promise((_resolve, reject) => (failOpening = reject)) as any);
@@ -578,6 +632,116 @@ describe("AppStore.saveWorkspace", () => {
         dispose();
 
         expect(blockers).toStrictEqual([undefined, expect.stringContaining("still loading"), undefined]);
+    });
+
+    test.each([
+        ["a moment image", {isRequestingMoments: true, isRequestingPV: false}, false],
+        ["a PV image", {isRequestingMoments: false, isRequestingPV: true}, false],
+        ["a fitting", {isRequestingMoments: false, isRequestingPV: false}, true]
+    ])("refuses to save while %s is still being made from the GUI, after another load has cleared the shared loading flag", async (_, frame, isFitting) => {
+        // An object with the prototype of a frame counts as an image of the image list.
+        const job = Object.assign(Object.create(FrameStore.prototype), frame);
+        appStore.imageViewConfigStore.addFrame(job);
+        runInAction(() => (appStore.imageFittingStore.isFitting = isFitting));
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.alertStore.dismissAlert();
+        runInAction(() => (appStore.imageFittingStore.isFitting = false));
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("refuses to save while an animation is playing, and saves again when it stops", async () => {
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+        runInAction(() => (appStore.animatorStore.isAnimationActive = true));
+        try {
+            await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(appStore.alertStore.alertText).toBe("Cannot save workspace while an animation is playing. Please stop it first.");
+            appStore.alertStore.dismissAlert();
+        } finally {
+            runInAction(() => (appStore.animatorStore.isAnimationActive = false));
+            saveSpy.mockRestore();
+        }
+        expect(appStore.workspaceSaveBlocker).toBeUndefined();
+    });
+
+    test("asks to turn off the channel map mode first, because its Stop button is disabled there", () => {
+        runInAction(() => {
+            appStore.animatorStore.isAnimationActive = true;
+            appStore.channelMapStore.isChannelMapEnabled = true;
+        });
+        try {
+            expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while an animation is playing. Please turn off the channel map mode and stop the animation first.");
+        } finally {
+            runInAction(() => {
+                appStore.animatorStore.isAnimationActive = false;
+                appStore.channelMapStore.isChannelMapEnabled = false;
+            });
+        }
+    });
+
+    test("names the animation before a workspace that is still loading", () => {
+        runInAction(() => {
+            appStore.animatorStore.isAnimationActive = true;
+            appStore.isLoadingWorkspace = true;
+        });
+        try {
+            expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while an animation is playing. Please stop it first.");
+        } finally {
+            runInAction(() => {
+                appStore.animatorStore.isAnimationActive = false;
+                appStore.isLoadingWorkspace = false;
+            });
+        }
+    });
+
+    test("names the image that is still being made, while the shared loading flag is also set", () => {
+        const job = Object.assign(Object.create(FrameStore.prototype), {isRequestingMoments: false, isRequestingPV: true});
+        appStore.imageViewConfigStore.addFrame(job);
+        appStore.startFileLoading();
+
+        expect(appStore.workspaceSaveBlocker).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.endFileLoading();
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("resets the PV and moment requests of every image when the session resumes, so that a request of an image that is not active does not refuse saves", () => {
+        const image = (isActive: boolean) =>
+            Object.assign(Object.create(FrameStore.prototype), {
+                isRequestingMoments: true,
+                isRequestingPV: true,
+                isActive,
+                resetPvRequestState: jest.fn(),
+                setIsRequestPVCancelling: jest.fn(),
+                resetMomentRequestState: jest.fn()
+            });
+        const images = [image(true), image(false)];
+        images.forEach(frame => appStore.imageViewConfigStore.addFrame(frame));
+
+        (appStore as any).onSessionResumed();
+
+        images.forEach(frame => {
+            expect(frame.resetPvRequestState).toHaveBeenCalledTimes(1);
+            expect(frame.resetMomentRequestState).toHaveBeenCalledTimes(1);
+        });
+        appStore.imageViewConfigStore.removeAllImages();
+    });
+
+    test("refuses to save while a script job still makes images, after another load has cleared the shared loading flag", async () => {
+        // A job that waits for the region data has not started to load a file yet.
+        jest.spyOn(appStore.imageGenerationJobs, "hasRunningJobs").mockReturnValue(true);
+        const saveSpy = jest.spyOn(appStore.apiService, "setWorkspace").mockResolvedValue(undefined as any);
+
+        await expect(appStore.saveWorkspace("test-workspace")).resolves.toBe(false);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(appStore.alertStore.alertText).toBe("Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.");
+        appStore.alertStore.dismissAlert();
     });
 
     test("refuses to save while an online catalog query is still running", async () => {
@@ -683,6 +847,73 @@ describe("AppStore channel histogram of an image that no view shows", () => {
         expect(frame.channel).toBe(2);
     });
 
+    describe("when the tiles of a channel arrive after the image was set to another channel", () => {
+        // The image shows channel 3 and is set to channel 32. The histogram waits for the tiles of its channel.
+        const arrive = (histogram: CARTA.RegionHistogramData, channel: number, stokes = 0) => {
+            const frame = {...makeFrame(), channel: 3, stokes: 0, requiredChannel: 32, requiredStokes: 0};
+            jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+            appStore.handleRegionHistogramStream(histogram);
+            appStore.updateHistogram(7, stokes, channel);
+            return frame;
+        };
+        const histogramAt = (channel: number, stokes: number) => ({...histogramOf(channel), stokes}) as unknown as CARTA.RegionHistogramData;
+
+        test.each([
+            ["a channel", 0, 0],
+            ["a Stokes", 32, 1],
+            ["the shown channel with the Stokes it is set to", 3, 1]
+        ])("skips the histogram of %s that the image has left, and keeps its channel", (_name, channel, stokes) => {
+            const frame = arrive(histogramAt(channel, stokes), channel, stokes);
+            expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+            expect(frame.renderConfig.setHistChannel).not.toHaveBeenCalled();
+            expect([frame.channel, frame.stokes]).toEqual([3, 0]);
+        });
+
+        test("drops a skipped histogram, so that it is not applied when the image returns to its channel", () => {
+            const frame = arrive(histogramOf(0), 0);
+            Object.assign(frame, {channel: 0, requiredChannel: 0});
+            appStore.updateHistogram(7, 0, 0);
+            expect(frame.renderConfig.updateChannelHistogram).not.toHaveBeenCalled();
+        });
+
+        test("applies the histogram of the channel that the image shows, such as a channel passed while dragging the slider", () => {
+            expect(arrive(histogramOf(3), 3).renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        });
+
+        test("applies the histogram of the channel that the image is set to", () => {
+            const frame = arrive(histogramOf(32), 32);
+            expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+            expect(frame.channel).toBe(32);
+        });
+
+        test("applies the histogram of a computed polarization that the image is set to", () => {
+            const frame = {...makeFrame(), channel: 3, stokes: 0, requiredChannel: 32, requiredStokes: 17, polarizations: [17]};
+            jest.spyOn(appStore, "getFrame").mockReturnValue(frame);
+            appStore.handleRegionHistogramStream(histogramAt(32, 17));
+            appStore.updateHistogram(7, 17, 32);
+            expect(frame.renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+        });
+
+        test("applies every histogram during an animation, so that a matched image follows the active image", () => {
+            runInAction(() => (appStore.animatorStore.isAnimationActive = true));
+            try {
+                expect(appStore.animatorStore.isServerAnimationActive).toBe(true);
+                expect(arrive(histogramOf(40), 40).channel).toBe(40);
+            } finally {
+                runInAction(() => (appStore.animatorStore.isAnimationActive = false));
+            }
+        });
+
+        test("applies every histogram in the channel map", () => {
+            runInAction(() => (appStore.channelMapStore.isChannelMapEnabled = true));
+            try {
+                expect(arrive(histogramOf(40), 40).renderConfig.updateChannelHistogram).toHaveBeenCalledWith(histograms);
+            } finally {
+                runInAction(() => (appStore.channelMapStore.isChannelMapEnabled = false));
+            }
+        });
+    });
+
     test("applies a waiting histogram when the Contour dialog is set to the image", () => {
         const frame = makeFrame();
         // The image is not known yet when its histogram arrives, so the histogram waits.
@@ -729,6 +960,88 @@ describe("AppStore.removeAllFrames", () => {
         // Closing the preview makes the first image of the image view active. This test has no such image.
         expect(appStore.previewFrames.size).toBe(0);
         expect(appStore.activeImage).toBeNull();
+        jest.restoreAllMocks();
+    });
+
+    test("forgets the image under the mouse, so that Cursor Info shows the next active image and not a closed one", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(true);
+        const closed = {frameInfo: {fileId: 3}} as FrameStore;
+        runInAction(() => (appStore.hoveredFrame = closed));
+
+        appStore.removeAllFrames();
+
+        expect(appStore.hoveredFrame).toBeNull();
+        jest.restoreAllMocks();
+    });
+
+    test("keeps the image under the mouse when the backend does not close the images", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(false);
+        const open = {frameInfo: {fileId: 3}} as FrameStore;
+        runInAction(() => (appStore.hoveredFrame = open));
+
+        appStore.removeAllFrames();
+
+        expect(appStore.hoveredFrame?.frameInfo.fileId).toBe(3);
+        runInAction(() => (appStore.hoveredFrame = null));
+        jest.restoreAllMocks();
+    });
+});
+
+describe("AppStore closing one image", () => {
+    const frameOf = (fileId: number) =>
+        Object.assign(Object.create(FrameStore.prototype), {
+            frameInfo: {fileId, fileInfoExtended: {depth: 1}},
+            secondarySpatialImages: [],
+            secondarySpectralImages: [],
+            clearSpatialReference: jest.fn(),
+            clearSpectralReference: jest.fn(),
+            clearContours: jest.fn()
+        }) as FrameStore;
+
+    const closeWith = (closed: FrameStore, hovered: FrameStore, isClosedByBackend: boolean) => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closeFile").mockReturnValue(isClosedByBackend);
+        jest.spyOn(appStore.tileService, "handleFileClosed").mockImplementation(jest.fn());
+        const imageList = (appStore.imageViewConfigStore as any).imageList;
+        runInAction(() => {
+            new Set([closed, hovered]).forEach(frame => imageList.push({type: ImageType.FRAME, store: frame}));
+            appStore.hoveredFrame = hovered;
+        });
+        (appStore as any).removeFrame(closed);
+        const hoveredFileId = appStore.hoveredFrame?.frameInfo.fileId;
+        runInAction(() => {
+            appStore.hoveredFrame = null;
+            imageList.replace(imageList.filter((image: {store: FrameStore}) => image.store !== closed && image.store !== hovered));
+        });
+        jest.restoreAllMocks();
+        return hoveredFileId;
+    };
+
+    test("forgets the image under the mouse when that image closes", () => {
+        const frame = frameOf(4);
+        expect(closeWith(frame, frame, true)).toBeUndefined();
+    });
+
+    test("keeps the image under the mouse when another image closes, or when the backend does not close the image", () => {
+        expect(closeWith(frameOf(4), frameOf(5), true)).toBe(5);
+        const frame = frameOf(4);
+        expect(closeWith(frame, frame, false)).toBe(4);
+    });
+
+    test("forgets a PV preview under the mouse when the preview closes", () => {
+        const appStore = AppStore.Instance;
+        jest.spyOn(appStore.backendService, "closePvPreview").mockReturnValue(true);
+        const preview = {dispose: jest.fn()} as unknown as FrameStore;
+        runInAction(() => {
+            appStore.previewFrames.set(6, preview as never);
+            appStore.hoveredFrame = appStore.previewFrames.get(6) as never;
+        });
+
+        appStore.removePreviewFrame(6);
+
+        expect(appStore.hoveredFrame).toBeNull();
         jest.restoreAllMocks();
     });
 });

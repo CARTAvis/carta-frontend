@@ -6,12 +6,14 @@ import {Subject} from "rxjs";
 
 import {AppToaster} from "components/Shared";
 import {
+    AnimationMode,
     BeamType,
     CatalogDatabase,
     CatalogSystemType,
     HipsCoord,
     HipsProjection,
     ImageType,
+    ImageViewLayer,
     RadiusUnits,
     RegionId,
     RegionOpacity,
@@ -30,6 +32,7 @@ import {BackendService, CatalogApiService} from "services";
 import {
     AppStore,
     CatalogOnlineQueryConfigStore,
+    HipsQueryStore,
     MirrorSiteStore,
     WorkspaceIdRegistry,
     type WorkspaceLeftOutItems,
@@ -122,6 +125,11 @@ function createFrame(fileId: number) {
                 const regionId = await RegisterRegion(savedRegionIdOf(points));
                 return regionId === undefined ? undefined : {regionId, setLocked: jest.fn(), setLineRegionSampleWidth: jest.fn(), setCoordinate: jest.fn(), setOpacity: jest.fn(), setDashLength: jest.fn()};
             }),
+            // Adds each region through addExistingRegionAsync, so that the tests can check each one.
+            addExistingRegionsAsync: jest.fn((regions: {points: unknown; rotation: unknown; regionType: unknown; name: unknown; color: unknown; lineWidth: unknown; dashes: unknown; annotationStyles?: unknown; requestedId?: number}[]) => {
+                const addOne = frame.regionSet.addExistingRegionAsync as (...args: unknown[]) => Promise<unknown>;
+                return Promise.all(regions.map(r => addOne(r.points, r.rotation, r.regionType, r.name, r.color, r.lineWidth, r.dashes, r.annotationStyles, r.requestedId)));
+            }),
             selectSingleRegion: jest.fn(),
             setSelectionByIds: jest.fn()
         },
@@ -161,17 +169,44 @@ function createSession() {
         ensureColumnsRequested: jest.fn()
     };
     const displayStore = {
+        catalogColor: "#0000ff",
+        highlightColor: "#ffff00",
+        catalogSize: 5,
+        catalogShape: "circle",
+        thickness: 1,
+        sizeAxisTabId: "minor",
         applyConfig: jest.fn((): {success: boolean; errors: string[]} => {
             calls.push("applyDisplayConfig");
             return {success: true, errors: []};
         }),
+        /** As the store does, a layout style sets only a drawn size of 1 to 50 pixels, and not the size tab. */
+        applyLayoutStyle: jest.fn((style?: {catalogColor?: string; catalogSize?: number} | null) =>
+            Object.assign(displayStore, {catalogColor: style?.catalogColor ?? displayStore.catalogColor, ...(style?.catalogSize !== undefined && style.catalogSize <= 50 ? {catalogSize: style.catalogSize} : {})})
+        ),
+        drawnStyle: jest.fn(() => {
+            const {catalogColor, highlightColor, catalogSize, catalogShape, thickness, sizeAxisTabId} = displayStore;
+            return {catalogColor, highlightColor, catalogSize, catalogShape, thickness, sizeAxisTabId};
+        }),
+        restoreDrawnStyle: jest.fn((style: object) => Object.assign(displayStore, style)),
         setShowSelectedData: jest.fn()
     };
 
     const appStore = {
         logStore: {setLevel: jest.fn(), setHiddenTags: jest.fn()},
-        animatorStore: {stopAnimation: jest.fn(), minFrameRate: 1, maxFrameRate: 15, minStep: 1, maxStep: 50, setFrameRate: jest.fn(), setStep: jest.fn(), setPlayMode: jest.fn(), setAnimationMode: jest.fn(), setNumericInputType: jest.fn()},
-        imageFittingStore: {applyWorkspaceConfig: jest.fn()},
+        animatorStore: {
+            stopAnimation: jest.fn(),
+            minFrameRate: 1,
+            maxFrameRate: 15,
+            minStep: 1,
+            maxStep: 50,
+            setFrameRate: jest.fn(),
+            setStep: jest.fn(),
+            setPlayMode: jest.fn(),
+            setAnimationMode: jest.fn(),
+            setNumericInputType: jest.fn(),
+            resetSettings: jest.fn()
+        },
+        imageFittingStore: {applyWorkspaceConfig: jest.fn(), resetSettings: jest.fn()},
         tileService: {clearRequestQueue: jest.fn()},
         removeAllFrames: jest.fn(),
         /** The images the session currently holds, in the order they were opened. */
@@ -224,6 +259,7 @@ function createSession() {
         setSpectralMatchingEnabled: jest.fn(),
         setRasterScalingMatchingEnabled: jest.fn(),
         setTimeSeriesMember: jest.fn(),
+        timeSeriesStore: {isMember: jest.fn((_frame: unknown) => true)},
         activeFrame: undefined as ReturnType<typeof createFrame> | undefined,
         activeImage: undefined as unknown,
         setContourDataSourceUnlocked: jest.fn(),
@@ -246,9 +282,19 @@ function createSession() {
         spatialReference: undefined,
         spectralReference: undefined,
         rasterScalingReference: undefined,
-        preferenceStore: {regionColor: "#ffffff", regionLineWidth: 2, regionDashLength: 0},
+        preferenceStore: {
+            regionColor: "#ffffff",
+            regionLineWidth: 2,
+            regionDashLength: 0,
+            layout: "Default",
+            spectralMatchingType: "VRAD",
+            isCursorFrozen: false,
+            setCodeSnippetsEnabledForSession: jest.fn(),
+            applySessionPreferences: jest.fn((_values: unknown): {rejectedKeys: string[]} => ({rejectedKeys: []}))
+        },
         imageViewConfigStore: {
             createColorBlending: jest.fn(),
+            applyConfig: jest.fn(),
             imageNum: 1,
             getImageListIndex: jest.fn((_type: ImageType, fileId: number) => appStore.frames.findIndex(frame => frame.frameInfo.fileId === fileId))
         },
@@ -270,13 +316,16 @@ function createSession() {
             pvGeneratorWidgets: new Map<string, unknown>(),
             floatingWidgets: [] as unknown[],
             removeUnopenedLayoutDisplayStores: jest.fn(),
-            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetBindings: jest.fn((_plotWidgets?: unknown, _ids?: unknown, _only?: (config: any) => boolean): unknown[] => []),
             restorePlotWidgets: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
-            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown): unknown[] => []),
+            restorePlotWidgetViews: jest.fn((_plotWidgets?: unknown, _ids?: unknown, _only?: (config: any) => boolean): unknown[] => []),
+            nameRestoredWidgetTabs: jest.fn((_plotWidgets?: unknown): void => {}),
             restorePlotWidgetResults: jest.fn((_plotWidgets?: unknown, _isWanted?: () => boolean): Promise<unknown[]> => Promise.resolve([]))
         },
         layoutStore: {
             isComponentHidden: jest.fn((_component: string) => false),
+            layoutExists: jest.fn((_name: string) => true),
+            applyLayout: jest.fn((_name: string) => true),
             /** What applying the layout copy reports, as the WCS overlay of its image view reports it. */
             layoutProblems: [] as string[],
             applyLayoutConfig: jest.fn((_layout?: unknown, _layoutName?: string, _persistence?: string, problems?: string[]) => {
@@ -285,7 +334,7 @@ function createSession() {
                 return true;
             })
         },
-        overlaySettings: {applyTextConfig: jest.fn(), global: {system: SystemType.Auto}}
+        overlaySettings: {applyTextConfig: jest.fn(), applyConfig: jest.fn((_config: unknown): string[] => []), forgetRestoredSettings: jest.fn(), global: {system: SystemType.Auto}}
     };
 
     jest.spyOn(AppStore, "Instance", "get").mockReturnValue(appStore as any);
@@ -359,6 +408,116 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.removeAllFrames).toHaveBeenCalled();
         // A display store that a regular layout made for a catalog that never opened is not taken over by a catalog of the workspace.
         expect(appStore.widgetsStore.removeUnopenedLayoutDisplayStores).toHaveBeenCalled();
+        expect(appStore.overlaySettings.forgetRestoredSettings).toHaveBeenCalled();
+    });
+
+    describe("a workspace saved without the settings of the session, such as one of workspace version 1", () => {
+        test("starts from the layout of the preferences, with the default image view and WCS overlay, before the images open", async () => {
+            const {appStore, calls} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "My layout"});
+            appStore.layoutStore.applyLayout.mockImplementation((name: string) => {
+                calls.push(`applyLayout ${name}`);
+                return true;
+            });
+            appStore.appendFile.mockImplementationOnce(() => {
+                calls.push("appendFile");
+                const frame = createFrame(1);
+                appStore.frameMap.set(1, frame as never);
+                appStore.frames.push(frame as never);
+                return Promise.resolve(frame as never);
+            });
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["My layout"]]);
+            expect(calls.indexOf("applyLayout My layout")).toBeLessThan(calls.indexOf("appendFile"));
+            expect(appStore.layoutStore.applyLayoutConfig).not.toHaveBeenCalled();
+            expect(appStore.imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+            expect(appStore.overlaySettings.applyConfig).toHaveBeenCalledWith(null);
+        });
+
+        test("uses the Default layout when the layout of the preferences is gone", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "Removed"});
+            appStore.layoutStore.layoutExists.mockImplementation((name: string) => name !== "Removed");
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["Default"]]);
+        });
+
+        test("uses the Default layout when the layout of the preferences cannot be applied", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore.preferenceStore, {layout: "Broken"});
+            appStore.layoutStore.applyLayout.mockImplementation((name: string) => name !== "Broken");
+
+            await restore(createWorkspace());
+
+            expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["Broken"], ["Default"]]);
+        });
+
+        test("removes the display stores that the layout made for catalogs that are not open, after it applies the layout", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace());
+
+            const removals = appStore.widgetsStore.removeUnopenedLayoutDisplayStores.mock.invocationCallOrder;
+            expect(removals[removals.length - 1]).toBeGreaterThan(appStore.layoutStore.applyLayout.mock.invocationCallOrder[0]);
+        });
+
+        test("sets the HiPS query dialog back to its defaults", async () => {
+            createSession();
+            const hipsQueryStore = HipsQueryStore.Instance;
+            hipsQueryStore.setHipsSurvey("CDS/P/DSS2/red");
+            hipsQueryStore.setObject("M51");
+
+            await restore(createWorkspace());
+
+            expect([hipsQueryStore.hipsSurvey, hipsQueryStore.object]).toEqual(["", ""]);
+        });
+
+        test("keeps the arrangement to the layout copy when the workspace saved one", async () => {
+            const {appStore} = createSession();
+
+            await restore(createWorkspace({layout: {docked: {}, floating: []} as never}));
+
+            expect(appStore.layoutStore.applyLayout).not.toHaveBeenCalled();
+            expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalled();
+        });
+
+        test("sets the animator, the log, the cursor, the toolbar, the spectral matching and the Image Fitting dialog back as CARTA does when it starts", async () => {
+            const {appStore} = createSession();
+            Object.assign(appStore, {isCursorMirrored: true, spectralMatchingType: "FREQ"});
+            Object.assign(appStore.preferenceStore, {isCursorFrozen: true, spectralMatchingType: "VOPT"});
+
+            await restore(createWorkspace());
+
+            expect(appStore.animatorStore.resetSettings).toHaveBeenCalled();
+            expect(appStore.logStore.setLevel).toHaveBeenCalledWith(CARTA.ErrorSeverity.INFO);
+            expect(appStore.logStore.setHiddenTags).toHaveBeenCalledWith([]);
+            expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
+            expect(appStore.toggleCursorMirror).toHaveBeenCalledTimes(1);
+            expect(appStore.setToolbarExpanded).toHaveBeenCalledWith(true);
+            expect(appStore.updateActiveLayer).toHaveBeenCalledWith(ImageViewLayer.RegionMoving);
+            expect(appStore.spectralMatchingType).toBe("VOPT");
+            expect(appStore.imageFittingStore.resetSettings).toHaveBeenCalled();
+        });
+
+        test("uses the mirrors of the preferences and sets the online query dialog back", async () => {
+            createSession();
+            const mirrorSiteStore = MirrorSiteStore.Instance;
+            const [first, second] = mirrorSiteStore.getMirrorSites(CatalogDatabase.SIMBAD);
+            mirrorSiteStore.setActiveMirror(CatalogDatabase.SIMBAD, second);
+            const configStore = CatalogOnlineQueryConfigStore.Instance;
+            configStore.setCatalogDB(CatalogDatabase.VIZIER);
+            configStore.setVizierKeyWords("galaxies");
+
+            await restore(createWorkspace());
+
+            expect(mirrorSiteStore.getActiveMirror(CatalogDatabase.SIMBAD)).toBe(first);
+            expect(configStore.catalogDB).toBe(CatalogDatabase.SIMBAD);
+            expect(configStore.vizierKeyWords).toBe("");
+        });
     });
 
     test("applies the animator settings, and the channels that it plays of an image, keeping the defaults of values that are not valid", async () => {
@@ -378,6 +537,25 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.animatorStore.setPlayMode).toHaveBeenCalledWith(2);
         expect(appStore.animatorStore.setNumericInputType).toHaveBeenCalledWith("Step");
         expect(appStore.animatorStore.setAnimationMode).toHaveBeenCalledWith(1);
+    });
+
+    test("reports an image that is not in the time series, and the animator when it cannot play the time series", async () => {
+        const {appStore} = createSession();
+        appStore.timeSeriesStore.isMember.mockReturnValue(false);
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, timeSeriesMember: true}], animator: {mode: AnimationMode.TIME_SERIES} as never}));
+
+        expect(appStore.setTimeSeriesMember).toHaveBeenCalledWith(appStore.frames[0], true);
+        expect(problems).toEqual(["image.fits is not in the time series, because it has no observation time", "The animator does not play the time series, because fewer than 2 images of the time series were restored"]);
+    });
+
+    test("reports nothing when the images are in the time series and the animator plays it", async () => {
+        const {appStore} = createSession();
+        appStore.animatorStore.setAnimationMode.mockImplementation((mode: AnimationMode) => Object.assign(appStore.animatorStore, {animationMode: mode}));
+
+        const problems = await restore(createWorkspace({files: [{...IMAGE, timeSeriesMember: true}], animator: {mode: AnimationMode.TIME_SERIES} as never}));
+
+        expect(problems).toEqual([]);
     });
 
     test("applies the level and the hidden tags of the Log widget, and keeps the current ones when they are not valid", async () => {
@@ -440,10 +618,10 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.dialogStore.showDialog.mock.calls).toEqual([["snippet-dialog", {snippet, name: "Open a file"}]]);
         expect(offProblems).toContain("Code snippets are turned on for this session only, because the workspace has the Snippet dialog open. The preference stays off");
 
-        // A workspace without the Snippet dialog leaves code snippets as they are.
+        // A workspace without the Snippet dialog turns off code snippets for the session. The preference does not change.
         setCodeSnippetsEnabledForSession.mockClear();
         await restore(createWorkspace({}));
-        expect(setCodeSnippetsEnabledForSession).not.toHaveBeenCalled();
+        expect(setCodeSnippetsEnabledForSession.mock.calls).toEqual([[false]]);
     });
 
     test("opens the File Info dialog with the text of its header search, closing it first when it is open", async () => {
@@ -458,6 +636,18 @@ describe("WorkspaceRestorer", () => {
         await restore(createWorkspace({openDialogs: ["file-info-dialog"], dialogs: {"file-info-dialog": {tab: "image-header", search: "CRVAL"}}}));
 
         expect(calls).toEqual(["hide file-info-dialog", "search CRVAL", "show file-info-dialog"]);
+    });
+
+    test("gives the Image Fitting dialog the saved height of its fitting settings, or the height that they start with", async () => {
+        const {appStore} = createSession();
+        const dialogStore = appStore.dialogStore as any;
+        dialogStore.restoreFittingSettingsHeight = jest.fn();
+
+        for (const settingsHeight of [30.5, 0, 100, 150, -1, "30"]) {
+            await restore(createWorkspace({openDialogs: ["fitting-dialog"], dialogs: {"fitting-dialog": {settingsHeight} as any}}));
+        }
+
+        expect(dialogStore.restoreFittingSettingsHeight.mock.calls).toEqual([[30.5], [0], [100], [100], [undefined], [undefined]]);
     });
 
     test("puts each dialog back between the floating widgets as it was stacked", async () => {
@@ -528,13 +718,17 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("leaves the dialogs as they are for a workspace saved without them", async () => {
+    test("closes the analysis dialogs and resets the unapplied dialog settings for a workspace saved without the open dialogs, such as one of workspace version 1", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({}));
 
-        expect(appStore.dialogStore.hideDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.hideDialog.mock.calls).toEqual([["vector-dialog"]]);
         expect(appStore.dialogStore.showDialog).not.toHaveBeenCalled();
+        expect(appStore.dialogStore.applyUnappliedSettings.mock.calls).toEqual([
+            ["contour-dialog", undefined],
+            ["vector-dialog", undefined]
+        ]);
     });
 
     test("opens the saved settings panels where they were, closes the other floating settings panels, and reports a panel whose widget was not restored", async () => {
@@ -645,6 +839,63 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.updateActiveImageByFrame.mock.calls.every(([frame]) => frame === appStore.frames[0])).toBe(true);
     });
 
+    describe("widgets that showed the PV preview in front", () => {
+        const request = {imageId: 0, regionId: 1, width: 3, reverse: false, previewRegionId: -1, xyRebin: 1, zRebin: 1};
+        const plotWidgets = {
+            "pv-generator-0": {type: "pv-generator", preview: {isActive: true, request}},
+            "histogram-0": {type: "histogram", minX: 1, maxX: 2},
+            "histogram-1": {type: "histogram", imageId: 0},
+            "spatial-profiler-0": {type: "spatial-profiler"},
+            "stats-0": {type: "stats"}
+        };
+
+        test("apply their saved view once the restore puts the preview in front again", async () => {
+            const {appStore} = createSession();
+            const preview = {name: "preview"};
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: preview}]]);
+            const pending: boolean[] = [];
+            appStore.widgetsStore.restorePlotWidgetBindings.mockImplementation((_plotWidgets, ids) => {
+                pending.push((ids as WorkspaceRestorer).isActivePvPreviewPending());
+                return [];
+            });
+
+            await restore(createWorkspace({plotWidgets: plotWidgets as never}));
+
+            expect(pending).toEqual([true, false]);
+            const [, rebind] = appStore.widgetsStore.restorePlotWidgetBindings.mock.calls;
+            const only = rebind[2]!;
+            expect(
+                Object.entries(plotWidgets)
+                    .filter(([, config]) => only(config))
+                    .map(([id]) => id)
+            ).toEqual(["histogram-0", "spatial-profiler-0"]);
+            const views = appStore.widgetsStore.restorePlotWidgetViews.mock;
+            expect(views.calls).toHaveLength(2);
+            expect(views.calls[1][2]).toBe(only);
+            expect(appStore.updateActiveImageByFrame.mock.invocationCallOrder.at(-1)).toBeLessThan(views.invocationCallOrder[1]);
+        });
+
+        test("show the image in front without their saved view when the preview was not made again, and say so", async () => {
+            const {appStore} = createSession();
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: null}]]);
+
+            const problems = await restore(createWorkspace({plotWidgets: plotWidgets as never}));
+
+            expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledTimes(1);
+            expect(problems).toContain("The widgets that follow the image in front show it without their saved zoom, because the PV preview that was in front was not made again");
+        });
+
+        test("say nothing when the preview was not made again and no widget saved a zoom of it", async () => {
+            const {appStore} = createSession();
+            (appStore.widgetsStore as any).pvGeneratorWidgets = new Map([["pv-generator-0", {widgetId: "pv-generator-0", previewFrame: null}]]);
+            const withoutZoom = {...plotWidgets, "histogram-0": {type: "histogram"}};
+
+            const problems = await restore(createWorkspace({plotWidgets: withoutZoom as never}));
+
+            expect(problems).toEqual([]);
+        });
+    });
+
     test("applies the saved fields of the online catalog query dialog", async () => {
         createSession();
         const configStore = CatalogOnlineQueryConfigStore.Instance;
@@ -694,8 +945,10 @@ describe("WorkspaceRestorer", () => {
         const setRadius = jest.spyOn(configStore, "setSearchRadius");
         const updateCenter = jest.spyOn(configStore, "updateCenterPixelCoord");
         const load = jest.spyOn(CatalogApiService.Instance, "loadSimbadCatalog").mockResolvedValue({fileId: 10, dataSize: 5});
+        // A workspace without the fields of the dialog sets them back to the defaults. Save empty fields, which change nothing, to check the query alone.
+        const onlineCatalogQuery = {} as Workspace["onlineCatalogQuery"];
 
-        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}]}))).toEqual([]);
+        expect(await restore(createWorkspace({catalogs: [{id: 1, source, associatedImageId: 1}], onlineCatalogQuery}))).toEqual([]);
 
         expect(load).toHaveBeenCalledWith(source, 1);
         expect(setDatabase).not.toHaveBeenCalled();
@@ -1030,6 +1283,27 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.reorderFrame).not.toHaveBeenCalled();
     });
 
+    test("reports a color-blended image that does not say where it is in the Image List, and makes the others", async () => {
+        const {appStore} = createSession();
+        const colorBlending = {selectedFrames: [] as unknown[], frames: [] as unknown[], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn()};
+        appStore.imageViewConfigStore.createColorBlending.mockImplementation(() => colorBlending);
+
+        const issues = await restoreIssues(
+            createWorkspace({
+                files: [IMAGE],
+                colorBlendingImages: [{selectedFrameId: [1], alpha: [1, 1]} as never, {imageListIndex: 1.5, selectedFrameId: [1], alpha: [1, 1]}, {imageListIndex: 1, selectedFrameId: [1], alpha: [1, 1]}]
+            })
+        );
+
+        expect(issues.filter(issue => issue.subject === "a color-blended image")).toEqual([
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed}),
+            expect.objectContaining({message: "Could not restore a color-blended image, because the workspace does not say where it is in the Image List", outcome: WorkspaceIssueOutcome.Failed})
+        ]);
+        expect(appStore.imageViewConfigStore.createColorBlending).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledTimes(1);
+        expect(appStore.reorderFrame).toHaveBeenCalledWith(expect.any(Number), 1, 1);
+    });
+
     test("keeps contours saved without valid levels off, and says so", async () => {
         const {appStore} = createSession();
 
@@ -1051,6 +1325,50 @@ describe("WorkspaceRestorer", () => {
         expect(frame.regionSet.setSelectionByIds).toHaveBeenCalledWith([101, 102], 102);
         expect(appStore.setCursorFrozen).toHaveBeenCalledWith(true);
         expect((appStore.activeFrame as any).updateCursorRegion).toHaveBeenCalledWith({x: 3, y: 4});
+    });
+
+    test("opens each file with the saved AIPS beam support for that file only, and reports the images that differ from the preference", async () => {
+        const {appStore} = createSession();
+        const preferenceStore = {...appStore.preferenceStore, hasAipsBeamSupport: false, hasAipsBeamSupportForRestore: undefined as boolean | undefined};
+        Object.assign(appStore, {preferenceStore});
+        const usedValues: (boolean | undefined)[] = [];
+        const appendFile = appStore.appendFile.getMockImplementation()!;
+        appStore.appendFile.mockImplementation((...args: unknown[]) => {
+            usedValues.push(preferenceStore.hasAipsBeamSupportForRestore);
+            return (appendFile as (...args: unknown[]) => ReturnType<typeof appendFile>)(...args);
+        });
+        const file = (id: number, hasAipsBeamSupport?: boolean) => ({id, source: {type: "file" as const, filename: `image${id}.fits`}, ...(hasAipsBeamSupport === undefined ? {} : {aipsBeamSupport: hasAipsBeamSupport})});
+
+        // A stopped restore left a value. A file without a saved value opens with the preference.
+        preferenceStore.hasAipsBeamSupportForRestore = true;
+        const problems = await restore(createWorkspace({files: [file(1, true), file(2, false), file(3), file(4, true)]}));
+
+        expect(usedValues).toEqual([true, false, undefined, true]);
+        expect(preferenceStore.hasAipsBeamSupportForRestore).toBeUndefined();
+        expect(problems).toContain("2 images are opened with AIPS beam support on, as the workspace saved them. Images that you open later use AIPS beam support off");
+        expect(problems.filter(problem => problem.includes("AIPS"))).toHaveLength(1);
+    });
+
+    test("gives each image the type of a new region and the region mode that it was saved with, keeping the values that are not valid", async () => {
+        const {appStore} = createSession();
+        const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}, regionsSet: {newRegionType: "point", regionMode: 2} as any};
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {newRegionType: 3, regionMode: 1}}, second]}));
+
+        const calls = appStore.frames.map((frame: any) => [frame.regionSet.setNewRegionType.mock.calls, frame.regionSet.setMode.mock.calls]);
+        expect(calls).toEqual([
+            [[[3]], [[1]]],
+            [[], []]
+        ]);
+    });
+
+    test("does not give the image in front the toolbar's type of a new region when the image saved its own", async () => {
+        const {appStore} = createSession();
+
+        await restore(createWorkspace({files: [{...IMAGE, regionsSet: {newRegionType: 3, regionMode: 0}}], toolbar: {expanded: true, activeLayer: "region" as never, newRegionType: 4, regionMode: 1}}));
+
+        const regionSet = (appStore.activeFrame as any).regionSet;
+        expect([regionSet.setNewRegionType.mock.calls, regionSet.setMode.mock.calls]).toEqual([[[3]], [[0]]]);
     });
 
     test("mirrors the cursor again only when it was mirrored, and applies the image toolbar, keeping the values that are not valid", async () => {
@@ -1307,6 +1625,22 @@ describe("WorkspaceRestorer", () => {
         expect(calls.indexOf("applyLayout")).toBeGreaterThan(calls.indexOf("restoreCatalogRows"));
     });
 
+    test("keeps the styles of the restored catalogs when it uses the layout of the preferences instead of a layout copy that cannot be applied", async () => {
+        const {appStore, displayStore} = createSession();
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
+        // A catalog widget of the layout of the preferences styles the catalog with its file ID.
+        appStore.layoutStore.applyLayout.mockImplementation(() => {
+            Object.assign(displayStore, {catalogColor: "#ff0000", catalogSize: 10, sizeAxisTabId: "major"});
+            return true;
+        });
+        // A size in arcsec can be drawn larger than a layout may set.
+        displayStore.catalogSize = 200;
+
+        await restore(createWorkspace({catalogs: [CATALOG], layout: LAYOUT}));
+
+        expect([displayStore.catalogColor, displayStore.catalogSize, displayStore.sizeAxisTabId]).toEqual(["#0000ff", 200, "minor"]);
+    });
+
     describe("the field of view", () => {
         /** Restores a workspace saved with a view of `saved`, into a view of 640 by 400 pixels, or of `current`. */
         async function restoreIntoView(saved: Workspace["imageView"], current: {width: number; height: number; devicePixelRatio?: number} = {width: 640, height: 400}) {
@@ -1559,7 +1893,19 @@ describe("WorkspaceRestorer", () => {
         const {appStore} = createSession();
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
 
-        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in"]);
+        expect(await restore(createWorkspace({layout: LAYOUT}))).toEqual(["Could not restore the layout the workspace was saved in, so the layout of the preferences is used"]);
+    });
+
+    test("uses the layout of the preferences, with the default image view and WCS overlay, when the layout copy cannot be applied", async () => {
+        const {appStore} = createSession();
+        Object.assign(appStore.preferenceStore, {layout: "My layout"});
+        appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
+
+        await restore(createWorkspace({layout: LAYOUT}));
+
+        expect(appStore.layoutStore.applyLayout.mock.calls).toEqual([["My layout"]]);
+        expect(appStore.imageViewConfigStore.applyConfig).toHaveBeenCalledWith(null);
+        expect(appStore.overlaySettings.applyConfig).toHaveBeenCalledWith(null);
     });
 
     test("names the saved image that a widget showed when the widget shows the active image instead", async () => {
@@ -1599,7 +1945,7 @@ describe("WorkspaceRestorer", () => {
         appStore.layoutStore.applyLayoutConfig.mockReturnValue(false);
         const invalidLayout = {...LAYOUT, docked: {type: "row", content: []}};
 
-        expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in"]);
+        expect(await restore(createWorkspace({layout: invalidLayout}))).toEqual(["Could not restore the layout the workspace was saved in, so the layout of the preferences is used"]);
         expect(appStore.layoutStore.applyLayoutConfig).toHaveBeenCalledWith(invalidLayout, "", "workspace", []);
     });
 
@@ -1612,12 +1958,12 @@ describe("WorkspaceRestorer", () => {
         ]);
     });
 
-    test("applies the custom texts of the WCS overlay, and the custom title and colorbar label of each image and color-blended image", async () => {
+    test("applies the custom texts of the WCS overlay, the custom title and colorbar label of each image, and the name and custom title of each color-blended image", async () => {
         const setTitleCustomText = jest.fn();
         const setColorbarLabelCustomText = jest.fn();
         frameOverrides = {setTitleCustomText, setColorbarLabelCustomText};
         const {appStore} = createSession();
-        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn()};
+        const colorBlending = {selectedFrames: [], frames: [], deleteSelectedFrame: jest.fn(), setAlpha: jest.fn(), addSelectedFrame: jest.fn(), setTitleCustomText: jest.fn(), setName: jest.fn()};
         appStore.imageViewConfigStore.createColorBlending.mockReturnValue(colorBlending);
         const wcsOverlay = {labels: {hasCustomText: true, customLabelX: "RA", customLabelY: "Dec"}, title: {hasCustomText: true}, colorbar: {hasLabelCustomText: true}};
 
@@ -1627,7 +1973,7 @@ describe("WorkspaceRestorer", () => {
                     {...IMAGE, titleCustomText: "M51", colorbarLabelCustomText: "flux"},
                     {...IMAGE, id: 2, source: {type: "file", filename: "second.fits"}}
                 ],
-                colorBlendingImages: [{imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
+                colorBlendingImages: [{name: "Color Blending 1", imageListIndex: 2, selectedFrameId: [2], alpha: [1, 1], titleCustomText: "RGB"}],
                 wcsOverlay
             })
         );
@@ -1636,10 +1982,11 @@ describe("WorkspaceRestorer", () => {
         // Both images share the mocks, so only the first image sets a text.
         expect(setTitleCustomText.mock.calls).toEqual([["M51"]]);
         expect(setColorbarLabelCustomText.mock.calls).toEqual([["flux"]]);
+        expect(colorBlending.setName).toHaveBeenCalledWith("Color Blending 1");
         expect(colorBlending.setTitleCustomText).toHaveBeenCalledWith("RGB");
     });
 
-    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of CARTA 6", async () => {
+    test("applies no layout, and sets the custom texts of the WCS overlay back to the defaults, when the workspace saved neither, as a workspace of version 1", async () => {
         const {appStore} = createSession();
 
         await restore(createWorkspace({files: [IMAGE]}));
@@ -1675,6 +2022,9 @@ describe("WorkspaceRestorer", () => {
             calls.push("restorePlotWidgetViews");
             return [viewIssue];
         });
+        appStore.widgetsStore.nameRestoredWidgetTabs.mockImplementationOnce(() => {
+            calls.push("nameRestoredWidgetTabs");
+        });
         const queryIssue = {kind: WorkspaceItemKind.PlotWidget, subject: "spectral-line-query-0", message: "Could not fully restore the widget spectral-line-query-0: the spectral line query returned no result"};
         appStore.widgetsStore.restorePlotWidgetResults.mockImplementationOnce(() => {
             calls.push("restorePlotWidgetResults");
@@ -1692,7 +2042,15 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.widgetsStore.restorePlotWidgetViews).toHaveBeenCalledWith(plotWidgets, restorer);
 
         // The results of online queries are fetched again last, and their problems are reported.
-        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot"))).toEqual(["applyLayout", "restorePlotWidgetBindings", "restorePlotWidgets", "restorePlotWidgetViews", "restorePlotWidgetResults"]);
+        // The tabs are named after what the widgets show, also the tabs that are not mounted.
+        expect(calls.filter(call => call.startsWith("applyLayout") || call.startsWith("restorePlot") || call === "nameRestoredWidgetTabs")).toEqual([
+            "applyLayout",
+            "restorePlotWidgetBindings",
+            "restorePlotWidgets",
+            "restorePlotWidgetViews",
+            "nameRestoredWidgetTabs",
+            "restorePlotWidgetResults"
+        ]);
         expect(step.value).toContainEqual(queryIssue);
         expect(didSettleBeforeTheRest).toBe(true);
         expect(appStore.widgetsStore.restorePlotWidgets).toHaveBeenCalledWith(plotWidgets, restorer);
@@ -1771,7 +2129,7 @@ describe("WorkspaceRestorer", () => {
         expect(issues).toContainEqual({
             kind: WorkspaceItemKind.Layout,
             subject: "",
-            message: "Could not restore the layout the workspace was saved in"
+            message: "Could not restore the layout the workspace was saved in, so the layout of the preferences is used"
         });
     });
 
@@ -1823,6 +2181,27 @@ describe("WorkspaceRestorer", () => {
             expect(frame.setOffsetCenter).toHaveBeenCalledWith(5, 6);
             expect(frame.setSkyRefIs).toHaveBeenCalledWith(1);
             expect(frame.toggleOffsetCoord).toHaveBeenCalledTimes(1);
+        });
+
+        test("sets the center of offset coordinates saved as turned off, and leaves them off", async () => {
+            const {appStore} = createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: {...savedSettings.offsetCoordinates, shown: false}}]}));
+
+            const frame = appStore.frames[0];
+            expect(problems).toEqual([]);
+            expect(frame.setOffsetCenter).toHaveBeenCalledWith(5, 6);
+            expect(frame.setSkyRefIs).toHaveBeenCalledWith(1);
+            expect(frame.toggleOffsetCoord).not.toHaveBeenCalled();
+        });
+
+        test("does not report offset coordinates saved as turned off that the image no longer supports", async () => {
+            frameOverrides = {isPVImage: true};
+            createSession();
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, offsetCoordinates: {...savedSettings.offsetCoordinates, shown: false}}]}));
+
+            expect(problems).toEqual([]);
         });
 
         test("reports a rest frame, beam or offset coordinates the image no longer has or supports", async () => {
@@ -1896,13 +2275,35 @@ describe("WorkspaceRestorer", () => {
         expect(appStore.setSpectralMatchingType.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
     });
 
-    test("keeps the spectral matching type of the session when the saved one is not valid, and says so", async () => {
+    test("applies the saved preferences for the session before it opens the images, without a report", async () => {
         const {appStore} = createSession();
+        const preferences = {regionColor: "#00ff00"} as never;
+
+        const problems = await restore(createWorkspace({preferences}));
+
+        expect(appStore.preferenceStore.applySessionPreferences).toHaveBeenCalledWith(preferences);
+        expect(appStore.preferenceStore.applySessionPreferences.mock.invocationCallOrder[0]).toBeLessThan(appStore.appendFile.mock.invocationCallOrder[0]);
+        expect(problems).toEqual([]);
+    });
+
+    test("clears the preferences of a previous workspace for a workspace that saved none, and reports the saved preferences that it cannot apply", async () => {
+        const {appStore} = createSession();
+        appStore.preferenceStore.applySessionPreferences.mockReturnValueOnce({rejectedKeys: ["theme", "newKey"]});
+
+        const problems = await restore(createWorkspace());
+
+        expect(appStore.preferenceStore.applySessionPreferences).toHaveBeenCalledWith(undefined);
+        expect(problems).toContain("Could not apply 2 preferences (theme, newKey) for this session: this version does not know the preference or does not accept the saved value. Your own value is used");
+    });
+
+    test("uses the spectral matching type of the preferences when the saved one is not valid, and says so", async () => {
+        const {appStore} = createSession();
+        Object.assign(appStore.preferenceStore, {spectralMatchingType: "FREQ"});
 
         const problems = await restore(createWorkspace({spectralMatchingType: "SPEED" as never}));
 
-        expect(appStore.setSpectralMatchingType).not.toHaveBeenCalled();
-        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by VRAD"]);
+        expect(appStore.setSpectralMatchingType).toHaveBeenCalledWith("FREQ");
+        expect(problems).toEqual(["Could not restore the spectral matching type SPEED: it is not one this version knows, so images are matched by FREQ"]);
     });
 
     describe("the regions of an image", () => {
@@ -1915,6 +2316,52 @@ describe("WorkspaceRestorer", () => {
 
             expect(restorer.regionIdOf(1, 1)).toBe(101);
             expect(restorer.regionIdOf(1, 2)).toBe(102);
+        });
+
+        test("leaves out the styles that the workspace did not save, so that each region gets the default of its type", async () => {
+            const {appStore} = createSession();
+            const styled = {...region(2), color: "#ff0000", lineWidth: 3, dashes: [4]};
+
+            await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [region(1), styled]}}]}));
+
+            const styles = appStore.frames[0].regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[]).slice(4, 7));
+            expect(styles).toEqual([
+                [undefined, undefined, undefined],
+                ["#ff0000", 3, [4]]
+            ]);
+        });
+
+        test("moves a saved line width into the range of the Region dialog, and reports it", async () => {
+            const {appStore} = createSession();
+            const widths = [0, 0.5, 10, 50];
+
+            const problems = await restore(createWorkspace({files: [{...IMAGE, regionsSet: {regions: widths.map((lineWidth, index) => ({...region(index + 1), lineWidth}))}}]}));
+
+            expect(appStore.frames[0].regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[])[5])).toEqual([0.5, 0.5, 10, 10]);
+            expect(problems).toEqual([
+                "The line width of the region Region 1 of image.fits is 0.5, because the saved width 0 is not between 0.5 and 10",
+                "The line width of the region Region 4 of image.fits is 10, because the saved width 50 is not between 0.5 and 10"
+            ]);
+        });
+
+        test("asks the backend for each region's saved ID, so that its name stays the same", async () => {
+            const {appStore} = createSession();
+            const second = {id: 2, source: {type: "file" as const, filename: "second.fits"}};
+            const generated = {request: {type: "other"} as never, images: [{id: 3, regionsSet: {regions: [region(9)]}}]};
+
+            await restore(
+                createWorkspace({
+                    files: [
+                        {...IMAGE, regionsSet: {regions: [region(2), region(2), region(0), region(2 ** 31)]}},
+                        {...second, regionsSet: {regions: [region(3)]}}
+                    ],
+                    generatedImages: [generated]
+                })
+            );
+
+            const requestedIds = appStore.frames.map(frame => frame.regionSet.addExistingRegionAsync.mock.calls.map(call => (call as unknown[])[8]));
+            // A repeated or invalid ID gets a new ID above every saved ID, also those of generated images.
+            expect(requestedIds.slice(0, 2)).toEqual([[2, 10, 11, 12], [3]]);
         });
 
         test("waits for the backend to give the regions their IDs before restoring the layout", async () => {
@@ -2228,15 +2675,16 @@ describe("WorkspaceRestorer", () => {
                 return frame;
             };
             const generating = {
-                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _isStillWanted?: () => boolean) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
+                requestMoment: jest.fn((message: CARTA.MomentRequest.$Properties, _frame?: unknown, _options?: {isStillWanted?: () => boolean}) => momentsMade ?? Promise.resolve((message.moments ?? []).map(moment => addFrame({moment})))),
                 cancelRequestingMoment: jest.fn(),
+                statsRequirementsOf: jest.fn((_fileId: number, _regionId: number) => undefined),
                 requestPV: jest.fn((_message: CARTA.PvRequest.$Properties, _frame: unknown, _shouldKeep: boolean) => Promise.resolve(addFrame({}))),
                 cancelRequestingPV: jest.fn(),
                 loadRemoteFile: jest.fn((_query: CARTA.RemoteFileRequest.$Properties) => Promise.resolve(addFrame({}))),
                 requestFitting: jest.fn((message: CARTA.FittingRequest.$Properties, _isStillWanted?: () => boolean) =>
                     Promise.resolve([...(message.createModelImage ? [addFrame({fittingImage: "model"})] : []), ...(message.createResidualImage ? [addFrame({fittingImage: "residual"})] : [])])
                 ),
-                imageFittingStore: {setIsFitting: jest.fn(), setIsCancelling: jest.fn(), progress: 0.3},
+                imageFittingStore: {setIsFitting: jest.fn(), setIsCancelling: jest.fn(), progress: 0.3, applyWorkspaceConfig: jest.fn(), resetSettings: jest.fn()},
                 backendService: {cancelRequestingFitting: jest.fn()}
             };
             Object.assign(appStore, generating);
@@ -2272,7 +2720,9 @@ describe("WorkspaceRestorer", () => {
 
             const restorer = await restored(workspace);
 
-            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], expect.any(Function));
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({fileId: 1, regionId: 105, moments: momentRequest.moments, spectralRange: {min: 2, max: 8}, keep: false}), appStore.frames[0], {
+                isStillWanted: expect.any(Function)
+            });
             // The backend is asked for a statistic of the region, and answers it, before the
             // moments are asked for.
             expect(backend.setStatsRequirements.mock.calls.map(([message]) => message)).toEqual([
@@ -2286,6 +2736,26 @@ describe("WorkspaceRestorer", () => {
             expect(maximum.generation.moment).toBe(CARTA.Moment.MAX_OF_THE_SPECTRUM);
             expect(maximum.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
             expect((appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(3)) as any).generation.moment).toBe(CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM);
+        });
+
+        test("applies the channels that the animator plays of a generated image", async () => {
+            const {appStore, requestMoment} = createGeneratingSession();
+            requestMoment.mockImplementationOnce(() => {
+                const frame = {...createFrame(201), frameInfo: {fileId: 201, fileInfoExtended: {depth: 10}}, generation: {moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}, setAnimationRange: jest.fn()};
+                (appStore.frameMap as Map<number, unknown>).set(201, frame);
+                appStore.frames.push(frame as never);
+                return Promise.resolve([frame]);
+            });
+
+            const restorer = await restored(
+                createWorkspace({
+                    files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                    generatedImages: [{request: {...momentRequest, moments: [CARTA.Moment.MAX_OF_THE_SPECTRUM]}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM, animationChannelRange: [1, 3]}]}]
+                })
+            );
+
+            const generated = appStore.frames.find(frame => frame.frameInfo.fileId === restorer.fileIdOf(2)) as any;
+            expect(generated.setAnimationRange).toHaveBeenCalledWith([1, 3]);
         });
 
         describe("an image fitting", () => {
@@ -2341,6 +2811,43 @@ describe("WorkspaceRestorer", () => {
                 });
             });
 
+            test("is made again over the shape that its region had when it was fitted, when the region was changed after", async () => {
+                const {appStore, requestFitting} = createGeneratingSession();
+                const fittedOver = {
+                    regionType: CARTA.RegionType.RECTANGLE,
+                    controlPoints: [
+                        {x: 50, y: 50},
+                        {x: 20, y: 20}
+                    ],
+                    rotation: 0
+                };
+                frameOverrides = {...frameOverrides, getRegion: (regionId: number) => (regionId === 105 ? {...fittedOver, rotation: 30} : undefined)};
+                const backendService = {
+                    ...(appStore as unknown as {backendService: object}).backendService,
+                    setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                    removeRegion: jest.fn((_regionId: number) => true)
+                };
+                Object.assign(appStore, {backendService});
+                requestFitting.mockImplementation(() => {
+                    const frame = {...createFrame(300), generation: {request: {type: "fitting", regionId: 500}, fittingImage: "residual"}};
+                    (appStore.frameMap as Map<number, unknown>).set(300, frame);
+                    appStore.frames.push(frame as never);
+                    return Promise.resolve([frame] as never);
+                });
+
+                await restored(
+                    createWorkspace({
+                        files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}],
+                        generatedImages: [{request: {...fittingRequest, regionShape: fittedOver}, images: [{id: 2, name: "image_residual.fits", fittingImage: "residual"}]}]
+                    })
+                );
+
+                expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, fittedOver);
+                expect(requestFitting).toHaveBeenCalledWith(expect.objectContaining({regionId: 500}), expect.any(Function));
+                expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                expect((appStore.frames.find(frame => frame.frameInfo.fileId === 300) as any).generation.request).toEqual(expect.objectContaining({regionId: 105, regionShape: fittedOver}));
+            });
+
             test("says why the fit failed", async () => {
                 const {requestFitting} = createGeneratingSession();
                 requestFitting.mockImplementation(() => Promise.reject(new Error("fit did not converge")));
@@ -2357,6 +2864,216 @@ describe("WorkspaceRestorer", () => {
 
                 expect(requestFitting).not.toHaveBeenCalled();
                 expect(problems).toEqual(["Could not make the image fitting images of image.fits: the request is not one this version can make"]);
+            });
+        });
+
+        test("makes moment images over the shape that their region had when they were made, when the region was changed after", async () => {
+            const {requestMoment, backend} = createGeneratingSession();
+            const madeOver = {
+                regionType: CARTA.RegionType.RECTANGLE,
+                controlPoints: [
+                    {x: 50, y: 50},
+                    {x: 20, y: 20}
+                ],
+                rotation: 0
+            };
+            frameOverrides = {...frameOverrides, getRegion: (regionId: number) => (regionId === 105 ? {...madeOver, rotation: 30} : undefined)};
+            const appStore = AppStore.Instance as unknown as {backendService: object};
+            const backendService = {
+                ...appStore.backendService,
+                setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                removeRegion: jest.fn((_regionId: number) => true)
+            };
+            Object.assign(appStore, {backendService});
+
+            await restored(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedRegion]}}], generatedImages: [{request: {...momentRequest, regionShape: madeOver}, images: [{id: 2, moment: CARTA.Moment.MAX_OF_THE_SPECTRUM}]}]}));
+
+            expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, madeOver);
+            // The backend keeps the data of the region before the moments are asked for over it.
+            expect(backend.setStatsRequirements.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: 1, regionId: 500}));
+            expect(requestMoment).toHaveBeenCalledWith(expect.objectContaining({regionId: 500}), expect.anything(), expect.anything());
+            expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+        });
+
+        describe("a PV image", () => {
+            const savedLine = {id: 6, type: CARTA.RegionType.LINE, rotation: 0, points: []};
+            const pvRequest = {type: "pv" as const, sourceImageId: 1, regionId: 6, width: 3, channelRange: {min: 2, max: 8}, reverse: false};
+
+            /** Restores a PV image along a line that the session has at these points, on an image of 100 x 100 pixels. */
+            async function restorePvAlong(controlPoints: {x: number; y: number}[]) {
+                const session = createGeneratingSession();
+                frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? {regionType: CARTA.RegionType.LINE, controlPoints} : undefined)};
+                session.appStore.onRecovery = jest.fn((recovery: WorkspaceRecoveryStore) => recovery.skipAll());
+                const issues = await restoreIssues(createWorkspace({files: [{...IMAGE, regionsSet: {regions: [savedLine]}}], generatedImages: [{request: pvRequest, images: [{id: 2, name: "image_pv.fits"}]}]}));
+                return {...session, issues};
+            }
+
+            test("is made again along a line that crosses the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 10, y: 10},
+                    {x: 90, y: 90}
+                ]);
+
+                expect(issues).toEqual([]);
+                expect(requestPV).toHaveBeenCalledTimes(1);
+                expect(requestPV.mock.calls[0].slice(0, 3)).toEqual([expect.objectContaining({fileId: 1, regionId: 106, width: 3, spectralRange: {min: 2, max: 8}}), appStore.frames[0], true]);
+            });
+
+            describe("whose line was changed or deleted after the PV image was made", () => {
+                const madeAlong = {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 10, y: 10},
+                        {x: 90, y: 90}
+                    ],
+                    rotation: 45
+                };
+                const movedLine = {
+                    regionType: CARTA.RegionType.LINE,
+                    controlPoints: [
+                        {x: 10, y: 90},
+                        {x: 90, y: 10}
+                    ],
+                    rotation: 135
+                };
+
+                /** Restores a PV image made along `madeAlong`, when the session has the line `sessionLine` as region 106. */
+                async function restorePvMadeAlong(sessionLine: typeof madeAlong | undefined, setRegionAcks: unknown[] = [{success: true, regionId: 500}], onRecovery?: (recovery: WorkspaceRecoveryStore) => void) {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve(setRegionAcks.length > 1 ? setRegionAcks.shift() : setRegionAcks[0])),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService, ...(onRecovery ? {onRecovery} : {})});
+                    const made: {generation?: {request: {type: string; regionId: number; regionShape?: unknown}}}[] = [];
+                    session.requestPV.mockImplementation((message: CARTA.PvRequest.$Properties) => {
+                        const frame = {...createFrame(200), generation: {request: {type: "pv", regionId: message.regionId ?? NaN}}};
+                        made.push(frame);
+                        (session.appStore.frameMap as Map<number, unknown>).set(200, frame);
+                        session.appStore.frames.push(frame as never);
+                        return Promise.resolve(frame as never);
+                    });
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? sessionLine : undefined)};
+                    const files = sessionLine ? [{...IMAGE, regionsSet: {regions: [savedLine]}}] : [IMAGE];
+                    const issues = await restoreIssues(createWorkspace({files, generatedImages: [{request: {...pvRequest, regionShape: madeAlong}, images: [{id: 2, name: "image_pv.fits"}]}]}));
+                    return {...session, backendService, made, issues};
+                }
+
+                test("is made along the line it was made along when the line has not changed", async () => {
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(madeAlong);
+
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).not.toHaveBeenCalled();
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 106}));
+                });
+
+                test("is made along the line it was made along, over a region that only the backend knows and that is removed after", async () => {
+                    const {requestPV, backendService, made, issues} = await restorePvMadeAlong(movedLine);
+
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).toHaveBeenCalledWith(1, -1, madeAlong);
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 500}));
+                    expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                    // A later save names the line of the workspace, and keeps the line it was made along.
+                    expect(made[0].generation?.request).toEqual(expect.objectContaining({regionId: 106, regionShape: madeAlong}));
+                });
+
+                test("is made along the line it was made along when the line was deleted", async () => {
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(undefined);
+
+                    expect(issues).toEqual([]);
+                    expect(requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({regionId: 500}));
+                    expect(backendService.removeRegion).toHaveBeenCalledWith(500);
+                });
+
+                test("is made along a line of the image that its image is matched to, when the shape does not name the image it is in", async () => {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService});
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? movedLine : undefined)};
+                    const matched = {id: 3, source: {type: "file" as const, filename: "matched.fits"}, references: {spatial: 1}};
+
+                    const issues = await restoreIssues(
+                        createWorkspace({
+                            files: [{...IMAGE, regionsSet: {regions: [savedLine]}}, matched],
+                            generatedImages: [{request: {...pvRequest, sourceImageId: 3, regionShape: madeAlong}, images: [{id: 2, name: "matched_pv.fits"}]}]
+                        })
+                    );
+
+                    expect(issues).toEqual([]);
+                    // The line belongs to image 1, so the backend gets it on image 1, and the PV image is made of image 3.
+                    const [imageOne, imageThree] = session.appStore.frames;
+                    expect(backendService.setRegion).toHaveBeenCalledWith(imageOne.frameInfo.fileId, -1, madeAlong);
+                    expect(session.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: imageThree.frameInfo.fileId, regionId: 500}));
+                    expect(imageThree.frameInfo.fileId).not.toBe(imageOne.frameInfo.fileId);
+                });
+
+                test.each([
+                    ["made before its image was matched", {references: {spatial: 1}}, 3],
+                    ["made while its image was matched, and saved after the matching ended", {}, 1]
+                ])("is made along the line it was made along, on the image the line belonged to then, when it was %s", async (_name, matching, shapeImageId) => {
+                    const session = createGeneratingSession();
+                    const backendService = {
+                        ...(session.appStore as unknown as {backendService: object}).backendService,
+                        setRegion: jest.fn((_fileId: number, _regionId: number, _region: unknown) => Promise.resolve({success: true, regionId: 500})),
+                        removeRegion: jest.fn((_regionId: number) => true)
+                    };
+                    Object.assign(session.appStore, {backendService});
+                    // The line of the workspace has the same shape. It belongs to another image, so it is another line.
+                    frameOverrides = {...frameOverrides, numChannels: 10, getRegion: (regionId: number) => (regionId === 106 ? madeAlong : undefined)};
+                    const source = {id: 3, source: {type: "file" as const, filename: "source.fits"}, regionsSet: {regions: [savedLine]}, ...matching};
+
+                    const issues = await restoreIssues(
+                        createWorkspace({
+                            files: [{...IMAGE, regionsSet: {regions: [savedLine]}}, source],
+                            generatedImages: [{request: {...pvRequest, sourceImageId: 3, regionShape: {...madeAlong, imageId: shapeImageId}}, images: [{id: 2, name: "source_pv.fits"}]}]
+                        })
+                    );
+
+                    expect(issues).toEqual([]);
+                    const [imageOne, imageThree] = session.appStore.frames;
+                    expect(backendService.setRegion).toHaveBeenCalledWith((shapeImageId === 1 ? imageOne : imageThree).frameInfo.fileId, -1, {...madeAlong, imageId: shapeImageId});
+                    expect(session.requestPV.mock.calls[0][0]).toEqual(expect.objectContaining({fileId: imageThree.frameInfo.fileId, regionId: 500}));
+                });
+
+                test("is offered again in Recovery when the backend does not add the line it was made along, and is made when the user retries", async () => {
+                    const items: unknown[] = [];
+                    const onRecovery = (recovery: WorkspaceRecoveryStore) => {
+                        items.push(...recovery.items);
+                        recovery.setChoice(0, {action: WorkspaceRecoveryAction.Retry});
+                        recovery.continue();
+                    };
+                    const {requestPV, backendService, issues} = await restorePvMadeAlong(
+                        movedLine,
+                        [
+                            {success: false, message: "no region"},
+                            {success: true, regionId: 500}
+                        ],
+                        onRecovery
+                    );
+
+                    expect(items).toEqual([expect.objectContaining({message: "Could not make the PV image of image.fits: the shape of the region it was made over could not be set up (no region)", canRetry: true})]);
+                    expect(issues).toEqual([]);
+                    expect(backendService.setRegion).toHaveBeenCalledTimes(2);
+                    expect(requestPV).toHaveBeenCalledTimes(1);
+                    expect(backendService.removeRegion).toHaveBeenCalledTimes(1);
+                });
+            });
+
+            test("is reported as failed, and not offered in Recovery, when its line does not cross the image", async () => {
+                const {appStore, requestPV, issues} = await restorePvAlong([
+                    {x: 110, y: 10},
+                    {x: 150, y: 90}
+                ]);
+
+                expect(requestPV).not.toHaveBeenCalled();
+                expect(appStore.onRecovery).not.toHaveBeenCalled();
+                expect(issues).toEqual([expect.objectContaining({kind: WorkspaceItemKind.GeneratedImage, message: "Could not make the PV image of image.fits: The line does not cross the image", outcome: WorkspaceIssueOutcome.Failed})]);
             });
         });
 
@@ -2535,7 +3252,7 @@ describe("WorkspaceRestorer", () => {
             expect(issues.map(issue => issue.outcome)).toEqual([WorkspaceIssueOutcome.Skipped, WorkspaceIssueOutcome.Skipped]);
             expect(cancelRequestingMoment).toHaveBeenCalledWith(1);
             // The images that the backend still makes for the skipped request are not wanted.
-            const isStillWanted = requestMoment.mock.calls[0][2] as () => boolean;
+            const {isStillWanted} = requestMoment.mock.calls[0][2] as {isStillWanted: () => boolean};
             expect(isStillWanted()).toBe(false);
             expect(requestPV).not.toHaveBeenCalled();
             expect(problems).toEqual(["Skipped making the moment images of image.fits", "Skipped making the PV image of image.fits.moment.maximum: the image it is made from was skipped"]);
@@ -2751,7 +3468,7 @@ describe("WorkspaceRestorer", () => {
 
         test.each([
             ["saved world coordinates", {wcsOverlay: {global: {system: SystemType.Galactic}}}, SystemType.Galactic],
-            ["saved no overlay, as a workspace of CARTA 6", undefined, SystemType.Auto]
+            ["saved no overlay, as a workspace of version 1", undefined, SystemType.Auto]
         ])("leaves image coordinates before the images open, when the session shows them and the workspace %s", async (_, widgetSettings, expected) => {
             const {appStore} = createSession();
             appStore.overlaySettings.global.system = SystemType.Image;

@@ -7,6 +7,7 @@ import {AppStore} from "stores";
 import {isAutoColor} from "utilities";
 
 import {applyLinePlotDataRange, type LinePlotDataRangeField} from "../LinePlotDataRange";
+import {isSavedActivePvPreview} from "../RegionWidgetStore/RegionWidgetStore";
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
 
 /** What a render config widget saves of its histogram plot in a regular layout. */
@@ -143,11 +144,16 @@ export class RenderConfigWidgetStore
         this.isBiasContrastOpen = isOpen;
     };
 
-    /** Returns whether the Bias / Contrast section is open, and the zoom range of the histogram of the image in front. */
+    /**
+     * Returns whether the Bias / Contrast section is open, and the zoom range of the histogram of the
+     * image in front. The range is saved when a restore shows the image in front again: an image that
+     * the workspace saves, or a PV preview that it makes again.
+     */
     public toWorkspaceConfig = (ids: WorkspaceIdWriter): WorkspaceRenderConfigWidgetConfig => {
-        const fileId = AppStore.Instance.activeFrame?.frameInfo.fileId;
+        const frame = AppStore.Instance.activeFrame;
+        const isShowingSavedImage = !!frame && (ids.imageIdOf(frame.frameInfo.fileId) !== undefined || isSavedActivePvPreview(frame, ids));
         return {
-            ...(fileId !== undefined && ids.imageIdOf(fileId) !== undefined ? toWorkspacePlotRange(this) : {}),
+            ...(isShowingSavedImage ? toWorkspacePlotRange(this) : {}),
             ...(this.isBiasContrastOpen ? {biasContrastOpen: true} : {})
         };
     };
@@ -156,8 +162,10 @@ export class RenderConfigWidgetStore
     private isShowingWorkspaceData = true;
 
     public applyWorkspaceBinding = (_config: WorkspaceRenderConfigWidgetConfig, ids: WorkspaceIdReader): string[] => {
-        this.isShowingWorkspaceData = ids.wasActiveImageRestored();
-        return this.isShowingWorkspaceData ? [] : [IMAGE_NOT_RESTORED];
+        const isRestored = ids.wasActiveImageRestored();
+        // The image in front was a PV preview, which the restore makes again later. Apply the saved range once the preview is in front.
+        this.isShowingWorkspaceData = isRestored && ids.isActivePvPreviewPending?.() !== true;
+        return isRestored ? [] : [IMAGE_NOT_RESTORED];
     };
 
     public applyWorkspaceConfig = (config: WorkspaceRenderConfigWidgetConfig): string[] => {

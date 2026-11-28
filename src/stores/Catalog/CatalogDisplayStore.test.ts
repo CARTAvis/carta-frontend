@@ -12,7 +12,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 
-import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogSizeUnits, CatalogTextureType, PreferenceKeys} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, PreferenceKeys} from "enums";
 import {CatalogWebGLService} from "services";
 import {CatalogDisplayStore, type CatalogProfileStore, CatalogStore, PreferenceStore} from "stores";
 
@@ -310,5 +310,21 @@ describe("CatalogDisplayStore data-derived range cache", () => {
             fround.mockRestore();
             displayStore.dispose();
         }
+    });
+});
+
+describe("CatalogDisplayStore drawn style", () => {
+    test("puts back the style that a layout changed, with a drawn size outside the range of a layout and the minor size tab", () => {
+        const displayStore = new CatalogDisplayStore(0);
+        displayStore.setCatalogShape(CatalogOverlayShape.ELLIPSE_LINED);
+        displayStore.setSizeAxisTab(CatalogSettingsTabs.SIZE_MINOR);
+        runInAction(() => (displayStore.catalogSize = 200));
+        const style = displayStore.drawnStyle();
+
+        displayStore.applyLayoutStyle({catalogColor: "#ff0000", catalogSize: 10, catalogShape: CatalogOverlayShape.CIRCLE_LINED, thickness: 4});
+        displayStore.restoreDrawnStyle(style);
+
+        expect(displayStore.drawnStyle()).toEqual(style);
+        expect([displayStore.catalogSize, displayStore.sizeAxisTabId]).toEqual([200, CatalogSettingsTabs.SIZE_MINOR]);
     });
 });

@@ -76,7 +76,7 @@ export class BackendService {
 
     public animationId: number;
     public sessionId: number;
-    public serverFeatureFlags: number;
+    @observable serverFeatureFlags: number = CARTA.ServerFeatureFlags.SERVER_FEATURE_NONE;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -404,7 +404,7 @@ export class BackendService {
         }
     }
 
-    async loadFile(directory: string, file: string, hdu: string, fileId: number, isImageArithmetic: boolean): Promise<CARTA.OpenFileAck.$Properties> {
+    async loadFile(directory: string, file: string, hdu: string, fileId: number, isImageArithmetic: boolean, hasAipsBeamSupport: boolean = AppStore.Instance.preferenceStore.hasAipsBeamSupport): Promise<CARTA.OpenFileAck.$Properties> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -415,7 +415,7 @@ export class BackendService {
                 fileId,
                 lelExpr: isImageArithmetic,
                 renderMode: CARTA.RenderMode.RASTER,
-                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport
+                supportAipsBeam: hasAipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
@@ -998,7 +998,7 @@ export class BackendService {
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
-        this.serverFeatureFlags = ack.serverFeatureFlags;
+        runInAction(() => (this.serverFeatureFlags = ack.serverFeatureFlags));
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);

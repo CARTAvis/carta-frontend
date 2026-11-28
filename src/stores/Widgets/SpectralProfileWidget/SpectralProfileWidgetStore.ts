@@ -48,14 +48,14 @@ import {applyLinePlotDataRange, type LinePlotDataRangeField} from "stores/Widget
 import {
     clamp,
     convertRestFrameSpectralValue,
+    displayVelocityFromRedshift,
     getColorForTheme,
     isAutoColor,
     isRestFrameSpectralType,
     isValidRedshift,
     pixelToFluxDensityUnit,
     redshiftFromRestFrameShift,
-    restFrequencyFactorFromRedshift,
-    velocityFromRedshift
+    restFrequencyFactorFromRedshift
 } from "utilities";
 
 import {applyWorkspacePlotRange, toWorkspacePlotRange} from "../WorkspacePlotRange";
@@ -161,7 +161,15 @@ export class SpectralProfileWidgetStore
 
     @observable isSecondaryAxisCursorInfoVisible: boolean = false;
 
+    /** The height of the area below the plot that shows the values at the cursor, in pixels. The widget records it when the area is shown or resized. */
+    infoHeight: number | undefined = undefined;
+    /** The height that a workspace restore gives the area below the plot. The widget shows the area at this height. */
+    @observable restoredInfoHeight: number | undefined = undefined;
+
     @observable shouldKeep: boolean = false;
+
+    /** The smallest height of the area below the plot, in pixels. */
+    public static readonly INFO_HEIGHT_MIN = 28;
 
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
@@ -764,7 +772,7 @@ export class SpectralProfileWidgetStore
     }
 
     @computed get restFrameRadialVelocity(): number {
-        return velocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
+        return displayVelocityFromRedshift(this.restFrameRedshift, this.restFrameVelocityConvention);
     }
 
     @computed get isYAxisRestFrameSupported(): boolean {
@@ -1433,6 +1441,7 @@ export class SpectralProfileWidgetStore
             xAxisRestFrameEnabled: this.isXAxisRestFrameEnabled,
             yAxisRestFrameEnabled: this.isYAxisRestFrameEnabled,
             ...(this.spectralLinesMHz.length ? {spectralLines: this.spectralLinesMHz.map(({species, value, qn}) => ({species, value, qn}))} : {}),
+            ...(this.infoHeight !== undefined ? {infoHeight: this.infoHeight} : {}),
             ...(this.isShowingSavedImage(ids)
                 ? {
                       ...toWorkspacePlotRange(this),
@@ -1557,6 +1566,12 @@ export class SpectralProfileWidgetStore
      * the rest frame. Those changes reset the fitting and the moment settings.
      */
     @action public applyWorkspaceView = (config: WorkspaceSpectralProfileWidgetConfig, ids: WorkspaceIdReader): string[] => {
+        if (typeof config.infoHeight === "number" && isFinite(config.infoHeight) && config.infoHeight > 0) {
+            // Keep the height also as the recorded one. A widget in a tab that is not shown records
+            // nothing, and the next save still keeps the height.
+            this.restoredInfoHeight = Math.max(config.infoHeight, SpectralProfileWidgetStore.INFO_HEIGHT_MIN);
+            this.infoHeight = this.restoredInfoHeight;
+        }
         if (this.isShowingWorkspaceData) {
             applyWorkspacePlotRange(this, config);
         }

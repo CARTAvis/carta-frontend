@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {AstColorsIndex, LabelType, NumberFormatType, SystemType} from "enums";
+import {AstColorsIndex, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
 import {type Persisted, type WorkspaceWcsOverlayText} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {ColorbarStore, type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
@@ -1310,6 +1310,15 @@ export class OverlaySettings {
     private base = 5;
     defaultGap = 5;
 
+    /**
+     * The preferences of the settings that a workspace restored, as they were at the restore, by
+     * preference key. These settings keep their values when an image opens. A restore that starts,
+     * fails or is cancelled clears the record. A setting leaves the record when an image opens after
+     * the user changed its preference. So a setting that the user changes by hand after the restore
+     * also keeps its value when an image opens.
+     */
+    private restoredPreferences = new Map<PreferenceKeys, unknown>();
+
     private constructor() {
         makeObservable(this);
 
@@ -1340,6 +1349,47 @@ export class OverlaySettings {
                 }
             });
         });
+    }
+
+    /** The settings that follow the preferences when an image opens. */
+    private get settingsWithPreference(): {key: PreferenceKeys; preference: () => unknown; value: () => unknown; set: (value: any) => void}[] {
+        const preference = PreferenceStore.Instance;
+        const {global, grid, labels, colorbar} = this;
+        return [
+            {key: PreferenceKeys.WCS_OVERLAY_AST_COLOR, preference: () => preference.astColor, value: () => global.color, set: value => global.setColor(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, preference: () => preference.isAstGridVisible, value: () => grid.isVisible, set: value => grid.setVisible(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, preference: () => preference.isAstLabelsVisible, value: () => labels.isVisible, set: value => labels.setVisible(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, preference: () => preference.isColorbarVisible, value: () => colorbar.isVisible, set: value => colorbar.setVisible(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, preference: () => preference.isColorbarInteractive, value: () => colorbar.isInteractive, set: value => colorbar.setInteractive(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION, preference: () => preference.colorbarPosition, value: () => colorbar.position, set: value => colorbar.setPosition(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, preference: () => preference.colorbarWidth, value: () => colorbar.width, set: value => colorbar.setWidth(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY, preference: () => preference.colorbarTicksDensity, value: () => colorbar.tickDensity, set: value => colorbar.setTickDensity(value)},
+            {key: PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, preference: () => preference.isColorbarLabelVisible, value: () => colorbar.isLabelVisible, set: value => colorbar.setLabelVisible(value)}
+        ];
+    }
+
+    /**
+     * Sets the settings that have a preference to the preferences, when an image opens. A setting
+     * that a workspace restored keeps its value, until the user changes its preference.
+     */
+    @action followPreferencesForNewImage() {
+        for (const setting of this.settingsWithPreference) {
+            const preference = setting.preference();
+            if (this.restoredPreferences.has(setting.key)) {
+                if (this.restoredPreferences.get(setting.key) === preference) {
+                    continue;
+                }
+                this.restoredPreferences.delete(setting.key);
+            }
+            if (preference !== setting.value()) {
+                setting.set(preference);
+            }
+        }
+    }
+
+    /** Lets the settings that a workspace restored follow the preferences again when an image opens. */
+    forgetRestoredSettings() {
+        this.restoredPreferences.clear();
     }
 
     /**
@@ -1380,6 +1430,9 @@ export class OverlaySettings {
      * Without a config, as for a workspace saved without the overlay, every setting goes back in the
      * same way.
      *
+     * The settings that have a preference then keep their values when an image opens. See
+     * {@link OverlaySettings.followPreferencesForNewImage}.
+     *
      * @returns what could not be applied as it was saved.
      */
     @action applyConfig(config: Persisted<WcsOverlayConfig> | null | undefined): string[] {
@@ -1419,6 +1472,7 @@ export class OverlaySettings {
         // Set the formats from the system again. Without a custom format, the formats follow the system.
         this.setFormatsFromSystem();
         this.keepSavedFormats(sectionOf<OverlayNumberConfig>(config?.numbers), system === SystemType.Auto);
+        this.restoredPreferences = new Map(this.settingsWithPreference.map(setting => [setting.key, setting.preference()]));
         return problems;
     }
 

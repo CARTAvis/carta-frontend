@@ -1,8 +1,8 @@
 import {runInAction} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {BrowserMode, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
-import {type Workspace, type WorkspaceIssue} from "models";
+import {BrowserMode, PreferenceKeys, SpectralType, WorkspaceIssueOutcome, WorkspaceItemKind} from "enums";
+import {CursorPosition, NewerWorkspaceError, type Workspace, type WorkspaceIssue} from "models";
 import {AppStore, WorkspaceRecoveryStore, WorkspaceRestorer} from "stores";
 
 function deferred<T>() {
@@ -294,6 +294,46 @@ describe("AppStore workspace restore report", () => {
         expect(appStore.workspaceRestoreReport).toBeUndefined();
     });
 
+    test("shows the report for a workspace that a newer version of CARTA saved, even when everything was restored", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue({...workspace, workspaceVersion: 3});
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            return [];
+        });
+        const addWarning = jest.spyOn(appStore.logStore, "addWarning");
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(true);
+
+        expect(appStore.workspaceRestoreReport).toMatchObject({name: "cubes", issues: [], newerVersion: 3});
+        expect(addWarning).toHaveBeenCalledWith(expect.stringContaining("workspace version 3"), ["workspace"]);
+    });
+
+    test("turns off the code snippets that a restore turned on for the session when the restore fails", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.preferenceStore.setCodeSnippetsEnabledForSession(true);
+            throw new Error("restore failed");
+        });
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(false);
+
+        expect(appStore.preferenceStore.isCodeSnippetsEnabledForSession).toBe(false);
+    });
+
+    test("says why a workspace that a newer version of CARTA saved could not be read", async () => {
+        jest.spyOn(appStore.apiService, "getWorkspace").mockRejectedValue(new NewerWorkspaceError(3));
+        const restore = jest.spyOn(WorkspaceRestorer.prototype, "restore");
+        const toaster = jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+
+        await expect(appStore.loadWorkspace("cubes")).resolves.toBe(false);
+
+        expect(restore).not.toHaveBeenCalled();
+        expect(toaster).toHaveBeenCalledWith(expect.objectContaining({message: expect.stringMatching(/^Could not load workspace "cubes"\. A newer version of CARTA saved this workspace, with workspace version 3\./)}));
+        expect(appStore.isLoadingWorkspace).toBe(false);
+    });
+
     describe("new file locations", () => {
         const stored = {...workspace, files: [{id: 1, source: {type: "file" as const, directory: "/old", filename: "cube.fits"}, channel: 2}]} as Workspace;
         const repointed = {images: new Map([[1, {from: stored.files![0].source, to: {type: "file" as const, directory: "/new", filename: "cube.fits"}}]]), catalogs: new Map()};
@@ -467,5 +507,135 @@ describe("AppStore load error alerts", () => {
         await expect(appStore.loadFile("/data", "missing.fits", "", false)).rejects.toThrow("does not exist");
         expect(appStore.alertStore.isAlertVisible).toBe(true);
         expect(appStore.alertStore.alertText).toContain("Error loading file");
+    });
+});
+
+describe("AppStore.loadDefaultFiles", () => {
+    const appStore = AppStore.Instance;
+    const preferences = appStore.preferenceStore.preferences;
+    const workspace = {workspaceVersion: 2, frontendVersion: 0, name: "cubes", description: "cubes"} as Workspace;
+
+    /** Starts CARTA with `search` in the URL, and the cursor-frozen and spectral matching preferences set. */
+    function startWith(search: string) {
+        window.history.pushState({}, "", `/${search}`);
+        runInAction(() => {
+            preferences.set(PreferenceKeys.GLOBAL_CURSOR_POSITION, CursorPosition.FIXED);
+            preferences.set(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, SpectralType.FREQ);
+        });
+        appStore.setCursorFrozen(false);
+        appStore.setSpectralMatchingType(SpectralType.VRAD);
+        jest.spyOn(AppToaster, "show").mockImplementation(jest.fn());
+        jest.spyOn(console, "error").mockImplementation(jest.fn());
+    }
+
+    const session = () => [appStore.isCursorFrozen, appStore.spectralMatchingType];
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        window.history.pushState({}, "", "/");
+        runInAction(() => {
+            preferences.delete(PreferenceKeys.GLOBAL_CURSOR_POSITION);
+            preferences.delete(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE);
+            appStore.activeWorkspace = undefined;
+            appStore.isLoadingWorkspace = false;
+            appStore.workspaceRestoreReport = undefined;
+        });
+    });
+
+    test("applies the preferences after the files of the URL open, without a workspace", async () => {
+        startWith("?file=cube.fits");
+        let isFrozenDuringLoad: boolean | undefined;
+        jest.spyOn(appStore.backendService, "loadFile").mockImplementation(() => {
+            isFrozenDuringLoad = appStore.isCursorFrozen;
+            return Promise.reject(new Error("no backend"));
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(isFrozenDuringLoad).toBe(false);
+        expect(session()).toEqual([true, SpectralType.FREQ]);
+    });
+
+    test("keeps the values that a workspace in the URL restored", async () => {
+        startWith("?workspace=cubes");
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(session()).toEqual([false, SpectralType.VOPT]);
+    });
+
+    test("applies the preferences when the workspace in the URL fails", async () => {
+        startWith("?workspace=cubes");
+        jest.spyOn(appStore.apiService, "getWorkspace").mockResolvedValue(workspace);
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            throw new Error("restore failed");
+        });
+
+        await appStore.loadDefaultFiles();
+
+        expect(session()).toEqual([true, SpectralType.FREQ]);
+    });
+
+    test("leaves the values to a workspace that the user opens while the workspace in the URL is read", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockImplementation((name: string) => (name === "cubes" ? read.promise : Promise.resolve({...workspace, name})));
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        const start = appStore.loadDefaultFiles();
+        await appStore.loadWorkspace("other");
+        read.resolve(workspace);
+        await start;
+
+        expect(session()).toEqual([false, SpectralType.VOPT]);
+    });
+
+    test("leaves the values to a workspace that the user opened, while that workspace is still being read", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        const otherRead = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockImplementation((name: string) => (name === "cubes" ? read.promise : otherRead.promise));
+        jest.spyOn(WorkspaceRestorer.prototype, "restore").mockImplementation(function* () {
+            appStore.setCursorFrozen(false);
+            appStore.setSpectralMatchingType(SpectralType.VOPT);
+            return [];
+        });
+
+        const start = appStore.loadDefaultFiles();
+        const otherLoad = appStore.loadWorkspace("other");
+        read.resolve(workspace);
+        await start;
+        // The workspace in the URL was superseded, and the other one has not restored anything yet.
+        const valuesWhileOtherLoads = session();
+        otherRead.resolve({...workspace, name: "other"});
+        await otherLoad;
+
+        expect(valuesWhileOtherLoads).toEqual([false, SpectralType.VRAD]);
+        expect(session()).toEqual([false, SpectralType.VOPT]);
+    });
+
+    test("applies the preferences when the user cancels the workspace in the URL", async () => {
+        startWith("?workspace=cubes");
+        const read = deferred<Workspace>();
+        jest.spyOn(appStore.apiService, "getWorkspace").mockReturnValue(read.promise);
+
+        const start = appStore.loadDefaultFiles();
+        appStore.cancelLoadingWorkspace();
+        read.resolve(workspace);
+        await start;
+
+        expect(session()).toEqual([true, SpectralType.FREQ]);
     });
 });

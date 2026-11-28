@@ -57,10 +57,9 @@ jest.mock("stores", () => {
             nanColorHex: "#137CBD",
             shouldUseSmoothedBiasContrast: true,
             cursorInfoVisible: "activeImage",
-            lastWrittenKeys: [] as PreferenceKeys[],
             setPreference: jest.fn()
         },
-        {setPreference: false, lastWrittenKeys: observable.ref}
+        {setPreference: false}
     );
 
     return {
@@ -339,9 +338,7 @@ describe("ImageViewConfigStore", () => {
         });
     });
 
-    describe("the grid of a session", () => {
-        const grid = {multiPanelEnabled: true, panelMode: ImagePanelMode.Fixed, panelColumns: 3, panelRows: 1};
-
+    describe("the grid and the display settings", () => {
         beforeEach(() => {
             imageViewConfigStore.removeAllImages();
             imageViewConfigStore.applyConfig(null);
@@ -353,28 +350,23 @@ describe("ImageViewConfigStore", () => {
             mockPreferenceStore.setPreference.mockClear();
         });
 
-        it("follows the user's preferences until a grid is applied or set", () => {
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 2}));
-            expect(imageViewConfigStore.imagePanelMode).toBe(ImagePanelMode.None);
-        });
+        it("shows the values of the preferences, which a workspace can set for the session", () => {
+            runInAction(() =>
+                Object.assign(mockPreferenceStore, {isImageMultiPanelEnabled: true, imagePanelMode: ImagePanelMode.Fixed, imagePanelColumns: 3, imagePanelRows: 1, nanColorHex: "#000000", cursorInfoVisible: CursorInfoVisibility.Never})
+            );
 
-        it("applies a saved grid to the session without changing the user's preferences", () => {
-            imageViewConfigStore.applyConfig(grid);
-
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining(grid));
             expect(imageViewConfigStore.imagePanelMode).toBe(ImagePanelMode.Fixed);
-            expect(imageViewConfigStore.numImageColumns).toBe(3);
-            expect(imageViewConfigStore.numImageRows).toBe(1);
-            expect(mockPreferenceStore.setPreference).not.toHaveBeenCalled();
+            expect([imageViewConfigStore.numImageColumns, imageViewConfigStore.numImageRows]).toEqual([3, 1]);
+            expect([imageViewConfigStore.nanColor, imageViewConfigStore.cursorInfoVisible]).toEqual(["#000000", CursorInfoVisibility.Never]);
+            runInAction(() => Object.assign(mockPreferenceStore, {nanColorHex: "#137CBD", cursorInfoVisible: CursorInfoVisibility.ActiveImage}));
         });
 
-        it("keeps each setting a control sets as the user's default", () => {
+        it("keeps each setting a control sets as the user's preference", () => {
             imageViewConfigStore.setMultiPanelEnabled(true);
             imageViewConfigStore.setMultiPanelMode(ImagePanelMode.Fixed);
             imageViewConfigStore.setPanelColumns(3);
             imageViewConfigStore.setPanelRows(1);
 
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining(grid));
             expect(mockPreferenceStore.setPreference.mock.calls).toEqual([
                 [PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, true],
                 [PreferenceKeys.IMAGE_PANEL_MODE, ImagePanelMode.Fixed],
@@ -387,109 +379,23 @@ describe("ImageViewConfigStore", () => {
             imageViewConfigStore.setPanelColumns(0);
             imageViewConfigStore.setPanelRows(1.5);
 
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining({panelColumns: 2, panelRows: 2}));
             expect(mockPreferenceStore.setPreference).not.toHaveBeenCalled();
         });
 
-        it("follows the user's preference for each saved setting it cannot take", () => {
-            imageViewConfigStore.applyConfig({multiPanelEnabled: "yes", panelMode: ImagePanelMode.None, panelColumns: 0, panelRows: 4});
-
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 4}));
-        });
-
-        it("returns to the user's preferences when a layout without a grid is applied", () => {
-            imageViewConfigStore.applyConfig(grid);
-            imageViewConfigStore.applyConfig(null);
-
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining({multiPanelEnabled: false, panelMode: ImagePanelMode.Dynamic, panelColumns: 2, panelRows: 2}));
-        });
-
-        it("saves the tab of the Image View settings panel and the coordinates of its Pan and Zoom tab, only when they are not the defaults", () => {
-            imageViewConfigStore.applyConfig(null);
+        it("saves only the tab of the Image View settings panel and the coordinates of its Pan and Zoom tab, when they are not the defaults", () => {
+            expect(imageViewConfigStore.toConfig()).toEqual({});
             imageViewConfigStore.setSettingsTab(ImageViewSettingsPanelTabs.BEAM);
             imageViewConfigStore.setPanAndZoomCoordinate(CoordinateMode.Image);
 
             const config = imageViewConfigStore.toConfig();
-            expect(config).toEqual(expect.objectContaining({settingsTab: ImageViewSettingsPanelTabs.BEAM, panAndZoomCoordinate: CoordinateMode.Image}));
+            expect(config).toEqual({settingsTab: ImageViewSettingsPanelTabs.BEAM, panAndZoomCoordinate: CoordinateMode.Image});
 
             imageViewConfigStore.applyConfig(null);
             expect([imageViewConfigStore.settingsTab, imageViewConfigStore.panAndZoomCoordinate]).toEqual([ImageViewSettingsPanelTabs.PAN_AND_ZOOM, CoordinateMode.World]);
-            expect(imageViewConfigStore.toConfig()).not.toHaveProperty("settingsTab");
 
             imageViewConfigStore.applyConfig(JSON.parse(JSON.stringify(config)));
             expect([imageViewConfigStore.settingsTab, imageViewConfigStore.panAndZoomCoordinate]).toEqual([ImageViewSettingsPanelTabs.BEAM, CoordinateMode.Image]);
             imageViewConfigStore.applyConfig(null);
-        });
-    });
-
-    describe("the display settings of a session", () => {
-        const preferred = {pixelGridVisible: false, pixelGridColor: "#ffffff", nanColor: "#137CBD", smoothedBiasContrast: true, cursorInfoVisible: CursorInfoVisibility.ActiveImage};
-        const saved = {pixelGridVisible: true, pixelGridColor: "auto-red", nanColor: "rgba(255, 0, 0, 0.5)", smoothedBiasContrast: false, cursorInfoVisible: CursorInfoVisibility.Never};
-        const displayOf = (store: ImageViewConfigStore) => ({
-            pixelGridVisible: store.isPixelGridVisible,
-            pixelGridColor: store.pixelGridColor,
-            nanColor: store.nanColor,
-            smoothedBiasContrast: store.shouldUseSmoothedBiasContrast,
-            cursorInfoVisible: store.cursorInfoVisible
-        });
-
-        beforeEach(() => {
-            imageViewConfigStore.applyConfig(null);
-            mockPreferenceStore.setPreference.mockClear();
-        });
-
-        it("follows the user's preferences and saves them in the layout copy", () => {
-            expect(displayOf(imageViewConfigStore)).toEqual(preferred);
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining(preferred));
-        });
-
-        it("applies the saved settings to the session without changing the user's preferences", () => {
-            imageViewConfigStore.applyConfig(saved);
-
-            expect(displayOf(imageViewConfigStore)).toEqual(saved);
-            expect(imageViewConfigStore.toConfig()).toEqual(expect.objectContaining(saved));
-            expect(mockPreferenceStore.setPreference).not.toHaveBeenCalled();
-        });
-
-        it("follows the user's preference for each saved setting the controls cannot set", () => {
-            imageViewConfigStore.applyConfig({pixelGridVisible: "yes", pixelGridColor: "auto-", nanColor: "not a color", smoothedBiasContrast: 1, cursorInfoVisible: "sometimes"});
-
-            expect(displayOf(imageViewConfigStore)).toEqual({...preferred, pixelGridColor: "#ffffff"});
-        });
-
-        it("follows a preference again when the user changes it, even back to the value it had at the restore", () => {
-            imageViewConfigStore.applyConfig(saved);
-
-            runInAction(() => (mockPreferenceStore.nanColorHex = "#000000"));
-            expect(imageViewConfigStore.nanColor).toBe("#000000");
-            runInAction(() => (mockPreferenceStore.nanColorHex = "#137CBD"));
-            expect(imageViewConfigStore.nanColor).toBe("#137CBD");
-            expect(displayOf(imageViewConfigStore)).toEqual({...saved, nanColor: "#137CBD"});
-        });
-
-        it("follows a preference again when it is set or reset to the value that it already has", () => {
-            imageViewConfigStore.applyConfig(saved);
-
-            // The values of the preferences do not change. Only the keys of the write are given.
-            runInAction(() => (mockPreferenceStore.lastWrittenKeys = [PreferenceKeys.PIXEL_GRID_VISIBLE]));
-            expect(displayOf(imageViewConfigStore)).toEqual({...saved, pixelGridVisible: preferred.pixelGridVisible});
-
-            runInAction(() => (mockPreferenceStore.lastWrittenKeys = [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, PreferenceKeys.GLOBAL_THEME]));
-            expect(displayOf(imageViewConfigStore)).toEqual({...saved, pixelGridVisible: preferred.pixelGridVisible, nanColor: preferred.nanColor, cursorInfoVisible: preferred.cursorInfoVisible});
-        });
-
-        it("follows every preference again when a regular layout is applied", () => {
-            imageViewConfigStore.applyConfig(saved);
-            imageViewConfigStore.followDisplayPreferences();
-
-            expect(displayOf(imageViewConfigStore)).toEqual(preferred);
-        });
-
-        it("returns to the user's preferences when a layout without the settings is applied", () => {
-            imageViewConfigStore.applyConfig(saved);
-            imageViewConfigStore.applyConfig({multiPanelEnabled: true});
-
-            expect(displayOf(imageViewConfigStore)).toEqual(preferred);
         });
     });
 

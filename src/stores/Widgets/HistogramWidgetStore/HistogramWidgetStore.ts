@@ -40,6 +40,7 @@ export class HistogramWidgetStore
     implements ConfigurableStore<HistogramWidgetConfig, Persisted<HistogramWidgetConfig>>, WorkspaceLayoutConfigurable<HistogramWorkspaceLayoutConfig>, WorkspaceConfigurableWidget<WorkspaceHistogramWidgetConfig>
 {
     widgetId: string = "";
+    protected override readonly canShowPvPreview = true;
     @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
@@ -202,6 +203,14 @@ export class HistogramWidgetStore
     @action setMaxNumBins = (maxNumBins: number) => {
         this.maxNumBins = maxNumBins;
     };
+
+    @computed get tabTitle(): string {
+        if (!this.effectiveFrame) {
+            return "Histogram";
+        }
+        const selectedString = this.isMatchingSelectedRegion ? "(Active)" : "";
+        return `Histogram: ${this.effectiveRegionInfo ?? "Unknown"} ${selectedString}`;
+    }
 
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;

@@ -2,13 +2,12 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
+import {autorun, computed, type IReactionDisposer, makeObservable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {genMeanRmsMarkers, LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {HelpType, Polarizations, TickType} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, closeTo, getColorForTheme, getHistogramPlotData, type HistogramPlotData, toExponential, toFixed} from "utilities";
 
@@ -36,7 +35,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private cachedFrame: FrameStore | null = null;
     private currentLinePlotProps: LinePlotComponentProps;
     private currentHistogram: CARTA.Histogram.$Properties | null = null;
 
@@ -123,23 +121,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         this.disposers.push(
             autorun(() => {
-                if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                    let regionString = "Unknown";
-                    const regionId = this.widgetStore.effectiveRegionId;
-
-                    if (regionId === -1) {
-                        regionString = "Image";
-                    } else if (this.widgetStore.effectiveFrame.regionSet) {
-                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                        if (region) {
-                            regionString = region.nameString;
-                        }
-                    }
-                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
-                } else {
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, this.widgetStore?.tabTitle ?? "Histogram");
                 const widgetStore = this.widgetStore;
                 if (widgetStore) {
                     const currentData = this.plotData;
@@ -157,19 +139,15 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     componentDidMount() {
-        // Remember the image that the widget shows when it mounts. A zoom range that the widget
-        // already has, such as one that a workspace restored, belongs to this image. Only a later
-        // change of image resets the zoom range.
-        this.cachedFrame = this.widgetStore.effectiveFrame ?? null;
-    }
-
-    componentDidUpdate() {
-        const frame = this.widgetStore.effectiveFrame;
-
-        if (frame !== this.cachedFrame) {
-            this.cachedFrame = frame ?? null;
-            this.widgetStore.clearXYBounds();
-        }
+        // Reset the zoom range when the image that the widget shows changes. A reaction runs at the
+        // change, so a zoom range that is set right after it, such as one that a workspace restored,
+        // stays. A zoom range that the widget has when it mounts belongs to the image it shows.
+        this.disposers.push(
+            reaction(
+                () => this.widgetStore?.effectiveFrame,
+                () => this.widgetStore?.clearXYBounds()
+            )
+        );
     }
 
     onGraphCursorMoved = _.throttle(x => {

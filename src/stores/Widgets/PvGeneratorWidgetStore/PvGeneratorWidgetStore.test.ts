@@ -4,19 +4,30 @@ import {observable, runInAction} from "mobx";
 import {FloatingObjzIndexManager} from "models/zindex/zindex";
 
 import {TelemetryService} from "../../../services";
-import {AppStore, PreferenceStore} from "../..";
+import {AppStore, PreferenceStore, PV_DEFAULT_WIDTH} from "../..";
 import {ACTIVE_FILE_ID} from "../RegionWidgetStore/RegionWidgetStore";
 
 import {PvGeneratorWidgetStore} from "./PvGeneratorWidgetStore";
 
 describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
     const createStore = (isSpectralAxisNonlinear: boolean) => {
-        const region = {regionId: 1, regionType: CARTA.RegionType.LINE, size: {x: 3, y: 4}, isTemporary: false, nameString: "line"};
+        const region = {
+            regionId: 1,
+            regionType: CARTA.RegionType.LINE,
+            size: {x: 3, y: 4},
+            controlPoints: [
+                {x: 1, y: 1},
+                {x: 4, y: 5}
+            ],
+            isTemporary: false,
+            nameString: "line"
+        };
         const frame = {
             isSpectralAxisNonlinear,
+            numChannels: 11,
             channelValueBounds: {min: 0, max: 10},
             findChannelIndexByValue: jest.fn((value: number) => value),
-            frameInfo: {fileId: 3},
+            frameInfo: {fileId: 3, fileInfoExtended: {width: 10, height: 10}},
             getRegion: jest.fn(() => region),
             regionSet: {focusedRegion: undefined, regions: [region]},
             resetPvRequestState: jest.fn(),
@@ -27,7 +38,7 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         jest.spyOn(TelemetryService.Instance, "addTelemetryEntry").mockResolvedValue(undefined);
         const store = new PvGeneratorWidgetStore();
         store.setRegionId(ACTIVE_FILE_ID, region.regionId);
-        return {store, appStore};
+        return {store, appStore, frame};
     };
 
     afterEach(() => {
@@ -42,10 +53,25 @@ describe("PvGeneratorWidgetStore on a nonlinear spectral axis", () => {
         expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
     });
 
+    test("starts with the width that the scripting API also uses", () => {
+        const {store} = createStore(false);
+        expect(store.width).toBe(PV_DEFAULT_WIDTH);
+    });
+
     test("still requests a PV image for a linear spectral axis", () => {
         const {store, appStore} = createStore(false);
         store.requestPV();
         expect(appStore.requestPV).toHaveBeenCalledTimes(1);
+    });
+
+    test("requests neither a PV image nor a preview of an image with one channel", () => {
+        const {store, appStore, frame} = createStore(false);
+        frame.numChannels = 1;
+        store.requestPV();
+        store.requestPV(true, "pv-generator-0");
+        expect(appStore.requestPV).not.toHaveBeenCalled();
+        expect(appStore.requestPreviewPV).not.toHaveBeenCalled();
+        expect(frame.setIsRequestingPV).not.toHaveBeenCalled();
     });
 });
 
@@ -223,6 +249,142 @@ describe("PvGeneratorWidgetStore with a PV preview in a workspace", () => {
         expect(previewFrame.renderConfig.applyConfig).toHaveBeenCalledWith({colorMap: "viridis"});
         expect(panel.setDefaultPosition).toHaveBeenCalledWith(10, 20);
         expect(panel.setDefaultSize).toHaveBeenCalledWith(300, 200);
+    });
+
+    test("saves the zoom and the center of a shown preview, and puts them back scaled by the size of its viewer", async () => {
+        const {store, appStore} = createSession(1);
+        Object.assign(appStore, {devicePixelRatio: 1});
+        const previewFrame = {
+            renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+            frameInfo: {fileInfoExtended: {width: 50, height: 20}},
+            center: {x: 40, y: 7},
+            zoomLevel: 2,
+            isAxisZoomable: true,
+            isStretchedToView: true,
+            effectiveZoomLevel: {x: 2, y: 3},
+            zoomAxis: "y",
+            renderWidth: 400,
+            renderHeight: 200,
+            // The store keeps the preview as an observable copy, so the zoom is set on the copy.
+            setAxisZoom: jest.fn(function (this: {effectiveZoomLevel: {x: number; y: number}}, x: number, y: number) {
+                this.effectiveZoomLevel = {x, y};
+            }),
+            setZoomAxis: jest.fn(),
+            setCenter: jest.fn()
+        };
+        store.setPreviewFrame(previewFrame as never);
+
+        const config = store.toWorkspaceConfig({imageIdOf: () => 1});
+        expect(config.preview?.view).toEqual({center: {x: 40, y: 7}, zoomLevel: 2, axisZoomLevel: {x: 2, y: 3}, zoomAxis: "y", viewSize: {width: 400, height: 200, devicePixelRatio: 1}});
+
+        // The viewer is twice as tall now. A preview is stretched to its viewer, so only the heights count.
+        Object.assign(previewFrame, {renderWidth: 300, renderHeight: 400, effectiveZoomLevel: {x: 1, y: 1}});
+        appStore.requestPreviewPV.mockImplementation(async (_message: unknown, _frame: unknown, id: string) => {
+            appStore.widgetsStore.pvGeneratorWidgets.get(id)?.setPreviewFrame(previewFrame as never);
+        });
+        store.setPreviewFrame(null);
+        expect(await store.restoreWorkspaceResult(config)).toEqual([]);
+
+        expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+        expect(previewFrame.setZoomAxis).toHaveBeenCalledWith("y");
+        expect(previewFrame.setCenter).toHaveBeenCalledWith(40, 7);
+    });
+
+    describe("the saved view of a restored preview", () => {
+        // A preview of 50 by 20 pixels, shown in a viewer of 400 by 200 pixels at a zoom of 2 by 3.
+        const restoreView = async () => {
+            const session = createSession(1);
+            Object.assign(session.appStore, {devicePixelRatio: 1});
+            const previewFrame = {
+                renderConfig: {toConfig: jest.fn(() => ({})), applyConfig: jest.fn()},
+                frameInfo: {fileInfoExtended: {width: 50, height: 20}},
+                center: {x: 40, y: 7},
+                zoomLevel: 2,
+                isAxisZoomable: true,
+                isStretchedToView: true,
+                effectiveZoomLevel: {x: 2, y: 3},
+                zoomAxis: "y",
+                renderWidth: 400,
+                renderHeight: 200,
+                setAxisZoom: jest.fn(function (this: {effectiveZoomLevel: {x: number; y: number}}, x: number, y: number) {
+                    this.effectiveZoomLevel = {x, y};
+                }),
+                setZoomAxis: jest.fn(),
+                setCenter: jest.fn(),
+                fitZoom: jest.fn()
+            };
+            const {store, appStore} = session;
+            store.setPreviewFrame(previewFrame as never);
+            const config = store.toWorkspaceConfig({imageIdOf: () => 1});
+            appStore.requestPreviewPV.mockImplementation(async (_message: unknown, _frame: unknown, id: string) => {
+                appStore.widgetsStore.pvGeneratorWidgets.get(id)?.setPreviewFrame(previewFrame as never);
+            });
+            store.setPreviewFrame(null);
+            expect(await store.restoreWorkspaceResult(config)).toEqual([]);
+            // The store keeps the preview as an observable copy. A resize changes the copy.
+            const shown = store.previewFrame as unknown as typeof previewFrame;
+            const resize = (width: number, height: number) => {
+                Object.assign(shown, {renderWidth: width, renderHeight: height});
+                store.onResizePreviewWidget(width, height);
+            };
+            previewFrame.setAxisZoom.mockClear();
+            return {store, shown, previewFrame, resize};
+        };
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        test("puts the saved view back on each resize, instead of the fitted zoom, until the viewer keeps one size", async () => {
+            const {previewFrame, resize} = await restoreView();
+
+            // The viewer is twice as tall. A preview is stretched to its viewer, so only the heights count.
+            resize(300, 400);
+            expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+            expect(previewFrame.fitZoom).not.toHaveBeenCalled();
+
+            jest.advanceTimersByTime(1000);
+            resize(300, 300);
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+        });
+
+        test("drops the saved view when a preview of another size replaces it, such as one from a moved cut", async () => {
+            const {shown, previewFrame, resize} = await restoreView();
+
+            shown.frameInfo.fileInfoExtended.width = 60;
+            resize(300, 400);
+
+            expect(previewFrame.setAxisZoom).not.toHaveBeenCalled();
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+        });
+
+        test("keeps the saved view waiting while the tab is in the background", async () => {
+            const hidden = jest.spyOn(document, "hidden", "get").mockReturnValue(true);
+            const {previewFrame, resize} = await restoreView();
+
+            jest.advanceTimersByTime(5000);
+            hidden.mockReturnValue(false);
+            document.dispatchEvent(new Event("visibilitychange"));
+            // The tab reports the size of the viewer once it is shown.
+            resize(300, 400);
+            expect(previewFrame.setAxisZoom).toHaveBeenLastCalledWith(4, 6);
+
+            jest.advanceTimersByTime(1000);
+            resize(300, 300);
+            expect(previewFrame.fitZoom).toHaveBeenCalledTimes(1);
+            hidden.mockRestore();
+        });
+    });
+
+    test("does not save the zoom of a preview whose viewer is not shown", () => {
+        const {store} = createSession(1);
+        store.setPreviewFrame({renderConfig: {toConfig: jest.fn(() => ({}))}, renderWidth: 1, renderHeight: 1} as never);
+
+        expect(store.toWorkspaceConfig({imageIdOf: () => 1}).preview?.view).toBeUndefined();
     });
 
     test("saves the request that made the preview, and makes the preview again with it, though the widget shows other settings", async () => {

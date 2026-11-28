@@ -3,6 +3,7 @@ import {runInAction} from "mobx";
 
 import {CatalogDatabase, CatalogSystemType, PreferenceKeys, RadiusUnits} from "enums";
 import {type Workspace, type WorkspaceCatalogQuerySource} from "models";
+import {describeNewerWorkspace, WORKSPACE_VERSION} from "models/Workspace";
 import {CatalogApiService} from "services";
 import {AppStore, MirrorSiteStore, PreferenceStore, type WorkspaceSourceWriteResult} from "stores";
 
@@ -66,6 +67,19 @@ describe("WorkspacePreflightStore", () => {
         const store = new WorkspacePreflightStore("copied", createWorkspace({plotWidgets: {"pv-generator-0": pvGenerator(2.5), "pv-generator-1": pvGenerator(0.5), "pv-generator-2": pvGenerator()} as never}), true);
 
         expect(store.warnings).toEqual(["A PV preview needs about 2.5 GB, more than the PV preview cube size limit of 1 GB. Raise the limit in Preferences > Performance to show the preview."]);
+        runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT));
+    });
+
+    test("warns first that a newer version of CARTA saved the workspace", () => {
+        mockFiles([]);
+        runInAction(() => PreferenceStore.Instance.preferences.set(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, 1));
+        const pvGenerator = {type: "pv-generator", width: 3, reverse: false, keep: false, xyRebin: 1, zRebin: 1, previewRegionId: -1, preview: {cubeSize: 2.5}};
+
+        const store = new WorkspacePreflightStore("copied", createWorkspace({workspaceVersion: WORKSPACE_VERSION + 1, plotWidgets: {"pv-generator-0": pvGenerator} as never}), true);
+
+        expect(store.warnings).toHaveLength(2);
+        expect(store.warnings[0]).toBe(describeNewerWorkspace(WORKSPACE_VERSION + 1));
+        expect(new WorkspacePreflightStore("copied", createWorkspace(), true).warnings).toEqual([]);
         runInAction(() => PreferenceStore.Instance.preferences.delete(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT));
     });
 

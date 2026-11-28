@@ -41,6 +41,17 @@ export class AnimatorStore {
         return this.animationMode === AnimationMode.FRAME || this.animationMode === AnimationMode.TIME_SERIES;
     }
 
+    /**
+     * Sets the frame rate, the step, the play mode and the setting beside the buttons back to their defaults.
+     * The animation mode stays as the opened images set it.
+     */
+    @action resetSettings = () => {
+        this.setFrameRate(5);
+        this.setStep(1);
+        this.setPlayMode(PlayMode.FORWARD);
+        this.setNumericInputType(NumericInputType.FrameRate);
+    };
+
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
         if (this.isAnimationActive) {
@@ -196,13 +207,14 @@ export class AnimatorStore {
             return;
         }
 
+        // Clear the flag even without an active image, so that it cannot keep blocking a workspace save.
+        this.isAnimationActive = false;
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
             return;
         }
 
-        this.isAnimationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.isFrontendAnimationMode) {
             if (this.animateHandle !== undefined) {

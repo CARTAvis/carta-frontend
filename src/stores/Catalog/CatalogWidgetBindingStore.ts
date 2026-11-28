@@ -1,7 +1,7 @@
 import {action, makeObservable, observable, observe} from "mobx";
 
 import {CatalogOverlay, CatalogPlotType, WorkspaceIssueEffect, WorkspaceItemKind} from "enums";
-import {describeCatalogSource, isWidgetWorkspaceConfigOf, type WorkspaceCatalog, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
+import {describeCatalogSource, isWidgetWorkspaceConfigOf, type WorkspaceCatalog, type WorkspaceCatalogPlotConfig, type WorkspaceCatalogWidgetConfig, type WorkspaceIssue} from "models";
 import type {CatalogStore} from "stores/Catalog/CatalogStore";
 import type {CatalogPlotLayoutSettings, CatalogPlotWidgetStoreProps} from "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore";
 import type {WidgetsStore} from "stores/Widgets/WidgetsStore";
@@ -232,10 +232,24 @@ export class CatalogWidgetBindingStore {
             const plotStore = plotWidgetId === undefined ? undefined : this.widgets().catalogPlotWidgets.get(plotWidgetId);
             // What a plot is drawn from means nothing without the catalog it is drawn from.
             if (catalogId !== undefined && plotStore) {
-                saved[state.widgetId] = {type: "catalog-plot", catalogId, ...plotStore.toConfig()};
+                const otherPlots = this.savedOtherPlots(state, savedCatalogIds);
+                saved[state.widgetId] = {type: "catalog-plot", catalogId, ...plotStore.toConfig(), ...(Object.keys(otherPlots).length ? {otherPlots} : {})};
             }
         });
         return saved;
+    }
+
+    /** The plots that a tab keeps for the saved catalogs it does not show, by the Workspace ID of the catalog. */
+    private savedOtherPlots(state: CatalogPlotState, savedCatalogIds: ReadonlySet<number>): NonNullable<WorkspaceCatalogPlotConfig["otherPlots"]> {
+        const otherPlots: NonNullable<WorkspaceCatalogPlotConfig["otherPlots"]> = {};
+        state.plotWidgetIds.forEach((widgetId, catalogFileId) => {
+            const catalogId = catalogFileId === state.activeCatalogFileId || catalogFileId === UNBOUND_PLOT_KEY ? undefined : this.savedIdOf(catalogFileId, savedCatalogIds);
+            const plotStore = this.widgets().catalogPlotWidgets.get(widgetId);
+            if (catalogId !== undefined && plotStore) {
+                otherPlots[catalogId] = plotStore.toConfig();
+            }
+        });
+        return otherPlots;
     }
 
     private savedIdOf(catalogFileId: number | undefined, savedCatalogIds: ReadonlySet<number>): number | undefined {
@@ -424,8 +438,9 @@ export class CatalogWidgetBindingStore {
     /**
      * Point the table and plot widgets at the catalogs they were saved against, once the Workspace's
      * catalogs and Layout have been restored, and put back what each of them showed. A widget whose
-     * catalog is unavailable takes the catalog it falls back to as its own, with nothing it was
-     * drawn from: that means nothing against another catalog.
+     * catalog is unavailable takes the catalog it falls back to as its own. The settings that it
+     * showed are not applied to that catalog. A plot tab gets the plot that it kept for that
+     * catalog, if the workspace saved one.
      *
      * @param catalogWidgets - what each widget showed, by stable widget ID.
      * @param catalogIds - Workspace catalog ID : the file ID it was restored as.
@@ -488,35 +503,33 @@ export class CatalogWidgetBindingStore {
             }
         }
 
-        for (const [widgetId, config] of entries.flatMap(([plotId, entry]) => (isWidgetWorkspaceConfigOf(entry, "catalog-plot") ? [[plotId, entry] as const] : []))) {
-            const state = Array.from(this.plots.values()).find(candidate => candidate.widgetId === widgetId);
-            if (!state || config.catalogId === undefined) {
-                continue;
-            }
-            const catalogFileId = catalogIds.get(config.catalogId);
+        // Put back the plot that a tab shows. A tab whose plot cannot be put back still gets the plots
+        // that it keeps for its other catalogs.
+        const restoreShownPlot = (widgetId: string, config: WorkspaceCatalogPlotConfig, state: CatalogPlotState, savedCatalogId: number): void => {
+            const catalogFileId = catalogIds.get(savedCatalogId);
             if (catalogFileId === undefined) {
                 const shown = describeShown(state.activeCatalogFileId);
-                const reason = `${describe(config.catalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`;
+                const reason = `${describe(savedCatalogId)} is unavailable${describeFallback(state.activeCatalogFileId)}`;
                 issues.push({
                     kind: WorkspaceItemKind.CatalogPlot,
                     subject: widgetId,
                     message: `Could not restore catalog plot ${widgetId}: ${reason}`,
                     reason,
-                    causeCatalogId: config.catalogId,
+                    causeCatalogId: savedCatalogId,
                     effect: WorkspaceIssueEffect.CatalogNotRestored,
                     effectDetail: shown
                 });
-                continue;
+                return;
             }
             const plotWidgetId = state.plotFor(state.activeCatalogFileId);
             if (plotWidgetId === undefined || (state.activeCatalogFileId !== catalogFileId && !this.rebind(plotWidgetId, catalogFileId))) {
                 issues.push({
                     kind: WorkspaceItemKind.CatalogPlot,
                     subject: widgetId,
-                    message: `Could not restore catalog plot ${widgetId} to ${describe(config.catalogId)}: the plot association could not be applied`,
-                    reason: `could not be pointed at ${describe(config.catalogId)}`
+                    message: `Could not restore catalog plot ${widgetId} to ${describe(savedCatalogId)}: the plot association could not be applied`,
+                    reason: `could not be pointed at ${describe(savedCatalogId)}`
                 });
-                continue;
+                return;
             }
             const plotStore = this.widgets().catalogPlotWidgets.get(plotWidgetId);
             const profileStore = this.catalogs.catalogProfileStores.get(catalogFileId);
@@ -530,13 +543,74 @@ export class CatalogWidgetBindingStore {
                 issues.push({
                     kind: WorkspaceItemKind.CatalogPlot,
                     subject: widgetId,
-                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(config.catalogId)}: ${unavailable.map(column => `column ${column}`).join(", ")} is unavailable`,
-                    reason: `${unavailable.map(column => `column ${column}`).join(", ")} of ${describe(config.catalogId)} ${unavailable.length === 1 ? "is" : "are"} unavailable`
+                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(savedCatalogId)}: ${unavailable.map(column => `column ${column}`).join(", ")} is unavailable`,
+                    reason: `${unavailable.map(column => `column ${column}`).join(", ")} of ${describe(savedCatalogId)} ${unavailable.length === 1 ? "is" : "are"} unavailable`
+                });
+            }
+        };
+        for (const [widgetId, config] of entries.flatMap(([plotId, entry]) => (isWidgetWorkspaceConfigOf(entry, "catalog-plot") ? [[plotId, entry] as const] : []))) {
+            const state = Array.from(this.plots.values()).find(candidate => candidate.widgetId === widgetId);
+            if (!state || config.catalogId === undefined) {
+                continue;
+            }
+            restoreShownPlot(widgetId, config, state, config.catalogId);
+            issues.push(...this.restoreOtherPlots(widgetId, state, config, catalogIds, describe));
+        }
+        return issues;
+    };
+
+    /**
+     * Gives a tab back the plots that it kept for the catalogs it did not show. A plot whose catalog
+     * is not restored is left out. The issue of that catalog already says that it is missing. A tab
+     * that shows one of these catalogs instead of its own catalog gets the plot of that catalog.
+     *
+     * @returns the columns that the catalogs no longer have, as issues.
+     */
+    @action private restoreOtherPlots(widgetId: string, state: CatalogPlotState, tabConfig: WorkspaceCatalogPlotConfig, catalogIds: Map<number, number>, describe: (id: number) => string): WorkspaceIssue[] {
+        const otherPlots = tabConfig.otherPlots;
+        const issues: WorkspaceIssue[] = [];
+        const componentId = Array.from(this.plots.entries()).find(([, candidate]) => candidate === state)?.[0];
+        const plotType = this.plotTypeOf(state);
+        if (componentId === undefined || plotType === undefined || !otherPlots || typeof otherPlots !== "object") {
+            return issues;
+        }
+        for (const [key, config] of Object.entries(otherPlots)) {
+            const savedCatalogId = Number(key);
+            const catalogFileId = catalogIds.get(savedCatalogId);
+            // The plot of the catalog that the tab shows is restored from the tab itself. A save
+            // does not write it twice, so such an entry comes only from an edited workspace.
+            if (catalogFileId === undefined || savedCatalogId === tabConfig.catalogId || !config || typeof config !== "object") {
+                continue;
+            }
+            let plotWidgetId = state.plotFor(catalogFileId);
+            if (plotWidgetId === undefined) {
+                plotWidgetId = this.widgets().addCatalogPlotWidget({xColumnName: CatalogOverlay.NONE, yColumnName: plotType === CatalogPlotType.Histogram ? undefined : CatalogOverlay.NONE, plotType}) ?? undefined;
+                if (plotWidgetId === undefined) {
+                    continue;
+                }
+                state.plotWidgetIds.set(catalogFileId, plotWidgetId);
+                this.retainedComponents.set(plotWidgetId, componentId);
+            }
+            const plotStore = this.widgets().catalogPlotWidgets.get(plotWidgetId);
+            const profileStore = this.catalogs.catalogProfileStores.get(catalogFileId);
+            plotStore?.applyConfig(config);
+            const unavailable =
+                plotStore?.resetUnknownColumns(column => {
+                    const header = profileStore?.getColumnHeader(column);
+                    return header !== undefined && isCatalogNumericDataType(header.dataType);
+                }) ?? [];
+            if (unavailable.length) {
+                const columns = unavailable.map(column => `column ${column}`).join(", ");
+                issues.push({
+                    kind: WorkspaceItemKind.CatalogPlot,
+                    subject: widgetId,
+                    message: `Could not fully restore catalog plot ${widgetId} for ${describe(savedCatalogId)}: ${columns} is unavailable`,
+                    reason: `${columns} of ${describe(savedCatalogId)} ${unavailable.length === 1 ? "is" : "are"} unavailable`
                 });
             }
         }
         return issues;
-    };
+    }
 
     /** Validate when catalog columns arrive, including a catalog loaded before Layout apply. */
     @action validateColumns = (catalogFileId: number): void => {

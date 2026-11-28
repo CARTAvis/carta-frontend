@@ -20,6 +20,20 @@ describe("DialogStore", () => {
         expect(dialogStore.dialogGeometries.has(DialogId.Contour)).toBe(false);
     });
 
+    test("gives the Image Fitting dialog a restored height of the fitting settings, and forgets the height when the dialog closes", () => {
+        const dialogStore = new DialogStore();
+        const count = dialogStore.fittingSettingsRestoreCount;
+
+        dialogStore.restoreFittingSettingsHeight(30);
+
+        expect(dialogStore.fittingSettingsHeight).toBe(30);
+        expect(dialogStore.fittingSettingsRestoreCount).toBe(count + 1);
+
+        dialogStore.hideDialog(DialogId.Fitting);
+
+        expect(dialogStore.fittingSettingsHeight).toBeUndefined();
+    });
+
     test("forgets the tab of the Contour dialog when it closes, as before, and keeps the tab of the Region dialog", () => {
         const dialogStore = new DialogStore();
         dialogStore.selectTab(DialogId.Contour, 2);

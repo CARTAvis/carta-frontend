@@ -8,7 +8,7 @@ import {action, autorun, computed, type IReactionDisposer, makeObservable, obser
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {HelpType, PlotType, Polarizations, RegionId, SmoothingType, TickType} from "enums";
+import {HelpType, PlotType, Polarizations, SmoothingType, TickType} from "enums";
 import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -348,12 +348,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.disposers.push(
             autorun(() => {
                 if (this.widgetStore) {
-                    const coordinate = this.widgetStore.coordinate;
                     const currentData = this.plotData;
-                    if (appStore && coordinate) {
-                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                        appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
+                    if (appStore && this.widgetStore.coordinate) {
+                        appStore.widgetsStore.setWidgetTitle(this.widgetId, this.widgetStore.tabTitle);
                     }
                     if (currentData) {
                         this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);

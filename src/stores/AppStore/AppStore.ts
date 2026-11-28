@@ -17,14 +17,16 @@ import {
     CARTA_INFO,
     type CatalogInfo,
     COMPUTED_POLARIZATIONS,
+    describeNewerWorkspace,
     type FileId,
     FloatingObjzIndexManager,
     type FrameView,
     type ImageItem,
     type ImageViewItem,
     momentsMade,
+    NewerWorkspaceError,
+    newerWorkspaceVersion,
     NONLINEAR_SPECTRAL_AXIS_MESSAGE,
-    NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS,
     type Point2D,
     PresetLayout,
     type RegionId,
@@ -64,6 +66,8 @@ import {
     WidgetsStore
 } from "stores";
 import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type ImageGenerationRequest, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {ImageGenerationJobStore} from "stores/ImageGeneration/ImageGenerationJobStore";
+import {ImageRequestCancelledError, type ImageRequestOptions, momentProblemOf, pvProblemOf, regionShapeOf} from "stores/ImageGeneration/ImageGenerationRequests";
 import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {CHECK_WINDOW_SIZE_PARAM} from "stores/Workspace/WorkspaceFieldOfView";
 import {WorkspaceIdRegistry} from "stores/Workspace/WorkspaceIdRegistry";
@@ -169,6 +173,8 @@ export interface WorkspaceRestoreReport {
      * workspace opened through a shared link.
      */
     storedName?: string;
+    /** The version of the workspace, when a newer version of CARTA saved it. */
+    newerVersion?: number;
 }
 
 /** What a workspace load is waiting for. */
@@ -249,6 +255,8 @@ export class AppStore {
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
+    /** The jobs that make moment images and PV images for scripts. */
+    readonly imageGenerationJobs: ImageGenerationJobStore = new ImageGenerationJobStore(this);
 
     // WebAssembly Module status
     @observable isAstReady: boolean = false;
@@ -432,6 +440,13 @@ export class AppStore {
         } catch (err) {
             console.error(err);
         }
+        // Apply the preferences after the files open, so that freezing the cursor gives the online
+        // query its position. A workspace that was restored, or that is being restored, sets its own
+        // values. So skip them then. A workspace in the URL that failed or was cancelled takes them.
+        if (!this.activeWorkspace && !this.isLoadingWorkspace) {
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+            this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
+        }
     }
 
     @action handleThemeChange = (isDarkMode: boolean) => {
@@ -552,6 +567,11 @@ export class AppStore {
 
     @computed get isAppendFileDisabled(): boolean {
         return this.isOpenFileDisabled || !this.activeFrame;
+    }
+
+    /** Whether the backend refuses to write files, such as images, region files and workspaces. */
+    @computed get isReadOnly(): boolean {
+        return this.backendService?.serverHasFeature(CARTA.ServerFeatureFlags.READ_ONLY) ?? false;
     }
 
     // Frame actions
@@ -891,9 +911,15 @@ export class AppStore {
             // Taken before the request goes out: a second load started while this one is still in
             // flight would otherwise be handed the same ID and replace the image this one opens.
             const fileId = this.fileCounter++;
-            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic);
+            // Take the AIPS beam support of a restore only while a workspace loads. Then a value that a stopped restore left does not apply to the images that the user opens.
+            const hasAipsBeamSupport = (isRestoring ? this.preferenceStore.hasAipsBeamSupportForRestore : undefined) ?? this.preferenceStore.hasAipsBeamSupport;
+            const ack = yield this.backendService.loadFile(path, filename, hdu, fileId, isImageArithmetic, hasAipsBeamSupport);
             if (!this.addFrame(ack, path, isImageArithmetic, hdu, false, shouldSetAsActive, shouldUpdateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            }
+            const frame = this.getFrame(ack.fileId);
+            if (frame) {
+                frame.hasAipsBeamSupport = hasAipsBeamSupport;
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -1210,6 +1236,10 @@ export class AppStore {
                 if (this.contourDataSource?.frameInfo.fileId === fileId) {
                     this.contourDataSource = firstFrame;
                 }
+                // Forget the image under the mouse. Cursor Info then shows the active image until the mouse moves over an image.
+                if (this.hoveredFrame === frame) {
+                    this.hoveredFrame = null;
+                }
                 // Clean up if frame is currently spatial reference
                 if (isRemovedFrameSpatialReference) {
                     const newReference = firstFrame;
@@ -1242,6 +1272,10 @@ export class AppStore {
 
                 if (!this.frames?.length) {
                     this.activeWorkspace = undefined;
+                    // The preferences of a workspace belong to its images. A restore that closes an image keeps them.
+                    if (!this.isLoadingWorkspace) {
+                        this.preferenceStore.clearSessionPreferences();
+                    }
 
                     const colorBlendingImages = this.imageViewConfigStore?.colorBlendingImages.slice();
                     for (const colorBlendingImage of colorBlendingImages) {
@@ -1283,6 +1317,8 @@ export class AppStore {
         this.clearSpatialReference(false);
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
+        // The preferences of a workspace belong to its images. A restore applies its own after this.
+        this.preferenceStore.clearSessionPreferences();
         if (this.backendService.closeFile(-1)) {
             // Nothing this session opened is left to name, so give every workspace ID back. A close
             // that did not go through leaves everything loaded, still to be named by a later save.
@@ -1296,6 +1332,8 @@ export class AppStore {
             // image of the image view active, and that image is closed below. A closed image that
             // stays active breaks the WCS of the next image that opens.
             this.setActiveImage(null);
+            // Cursor Info shows the image under the mouse. No image is left under it.
+            this.hoveredFrame = null;
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
@@ -1323,6 +1361,9 @@ export class AppStore {
         const previewFrame = this.previewFrames.get(previewId);
         previewFrame?.dispose?.();
         if (this.previewFrames.delete(previewId)) {
+            if (previewFrame && this.hoveredFrame === previewFrame) {
+                this.hoveredFrame = null;
+            }
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
         }
@@ -1636,22 +1677,26 @@ export class AppStore {
     /**
      * Request moment images of an image.
      *
-     * @param isStillWanted - called when the images are made. When it returns false, the images are
-     *                        closed on the backend and not added to the session.
      * @returns the moment images added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report.
+     * @throws When `momentProblemOf` finds a problem with the request. Also the error of the
+     *         backend when `options.shouldThrow` is true, or during a workspace
+     *         restore when `options.shouldThrow` is left out. Also an `ImageRequestCancelledError`
+     *         when the request is cancelled and `options.shouldThrow` is true.
      */
     @flow.bound
-    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, isStillWanted: () => boolean = () => true) {
+    *requestMoment(message: CARTA.MomentRequest.$Properties, frame: FrameStore, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return [];
         }
-        if (frame.isSpectralAxisNonlinear && message.moments?.some(momentType => NONLINEAR_SPECTRAL_AXIS_UNSUPPORTED_MOMENTS.includes(momentType))) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        const problem = momentProblemOf(frame, message.moments);
+        if (problem) {
+            throw new Error(problem);
         }
+        // Take the shape of the region now. The user can change the region while the backend works.
+        const regionShape = options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.CURSOR);
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame if keep is false
         if (!message.keep) {
@@ -1667,6 +1712,9 @@ export class AppStore {
         const momentImages: FrameStore[] = [];
         try {
             const ack = yield this.backendService.requestMoment(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAcks && !isStillWanted()) {
                 this.discardGeneratedImages(ack.openFileAcks);
             } else if (!ack.cancel && ack.openFileAcks) {
@@ -1677,7 +1725,9 @@ export class AppStore {
                     moments: message.moments ?? [],
                     channelRange: {min: message.spectralRange?.min ?? 0, max: message.spectralRange?.max ?? 0},
                     mask: message.mask ?? CARTA.MomentMask.None,
-                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0}
+                    pixelRange: {min: message.pixelRange?.min ?? 0, max: message.pixelRange?.max ?? 0},
+                    regionShape,
+                    regionShapeOwner: regionShape ? (options.regionShapeOwner ?? frame.spatialReference ?? frame) : undefined
                 };
                 const moments = momentsMade(message.moments ?? [], ack.openFileAcks.length);
                 for (const [index, openFileAck] of ack.openFileAcks.entries()) {
@@ -1704,7 +1754,7 @@ export class AppStore {
             frame.resetMomentRequestState();
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (shouldThrow) {
                 throw err;
             }
         }
@@ -1722,6 +1772,10 @@ export class AppStore {
 
     @action cancelRequestingMoment = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
+        if (frame) {
+            // A script job that still waits for the region data has sent no request to cancel.
+            this.imageGenerationJobs.cancelWaitingMomentJob(frame);
+        }
         if (frame && frame.requestingMomentsProgress < 1.0) {
             this.backendService.cancelRequestingMoment(fileId);
         }
@@ -1730,22 +1784,28 @@ export class AppStore {
     /**
      * Request a PV image of an image.
      *
-     * @param isStillWanted - called when the image is made. When it returns false, the image is
-     *                        closed on the backend and not added to the session.
      * @returns the PV image added to the session.
-     * @throws When the spectral axis is not linear. During a workspace restore, also the error of
-     *         the backend. The restore lists it in its report, so no toast shows it.
+     * @throws When `pvProblemOf` finds a problem with the request. Also the error of the backend
+     *         when `options.shouldThrow` is true, or during a workspace restore when
+     *         `options.shouldThrow` is left out. Also an `ImageRequestCancelledError` when the
+     *         request is cancelled and `options.shouldThrow` is true. A toast shows the error of
+     *         the backend only when the error is not thrown.
      */
     @flow.bound
-    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, isStillWanted: () => boolean = () => true) {
+    *requestPV(message: CARTA.PvRequest.$Properties, frame: FrameStore, shouldKeepExisting: boolean, options: ImageRequestOptions = {}) {
         if (!message || !frame) {
             return undefined;
         }
-        if (frame.isSpectralAxisNonlinear) {
-            throw new Error(NONLINEAR_SPECTRAL_AXIS_MESSAGE);
+        const spectralRange = message.spectralRange ? {min: message.spectralRange.min ?? 0, max: message.spectralRange.max ?? 0} : undefined;
+        const problem = pvProblemOf(frame, message.regionId ?? RegionIdType.NONE, spectralRange, options.regionShape);
+        if (problem) {
+            throw new Error(problem);
         }
+        // Take the shape of the cut now. The user can change the cut while the backend works.
+        const regionShape = options.regionShape ?? regionShapeOf(frame, message.regionId ?? RegionIdType.NONE);
 
-        const isRestoring = this.isLoadingWorkspace;
+        const isStillWanted = options.isStillWanted ?? (() => true);
+        const shouldThrow = options.shouldThrow ?? this.isLoadingWorkspace;
         this.startFileLoading();
         // clear previously generated moment images under this frame
         if (!shouldKeepExisting) {
@@ -1760,6 +1820,9 @@ export class AppStore {
         let pvImage: FrameStore | undefined;
         try {
             const ack = yield this.backendService.requestPV(message);
+            if (ack.cancel && options.shouldThrow) {
+                throw new ImageRequestCancelledError();
+            }
             if (!ack.cancel && ack.openFileAck && !isStillWanted()) {
                 this.discardGeneratedImages([ack.openFileAck]);
             } else if (!ack.cancel && ack.openFileAck) {
@@ -1775,7 +1838,9 @@ export class AppStore {
                                 regionId: message.regionId ?? RegionIdType.NONE,
                                 width: message.width ?? 1,
                                 channelRange: spectralRange ? {min: spectralRange.min ?? 0, max: spectralRange.max ?? 0} : undefined,
-                                reverse: !!message.reverse
+                                reverse: !!message.reverse,
+                                regionShape,
+                                regionShapeOwner: regionShape ? (options.regionShapeOwner ?? frame.spatialReference ?? frame) : undefined
                             }
                         };
                         pvImage = newPVImage;
@@ -1789,11 +1854,17 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
         } catch (err) {
+            // The backend answers a cancelled PV request as a failed request, so the error alone does
+            // not say that the request was cancelled. The image says it while it cancels.
+            const isCancelled = frame.isRequestPVCancelling;
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
-            if (isRestoring) {
+            if (options.shouldThrow && isCancelled) {
+                throw new ImageRequestCancelledError();
+            }
+            if (shouldThrow) {
                 throw err;
             }
             AppToaster.show(ErrorToast(err));
@@ -1880,6 +1951,8 @@ export class AppStore {
         }
         frame?.resetFitting();
         this.restartTaskProgress();
+        // Take the shape of the region now. The user can change the region while the backend works.
+        const regionShape = regionShapeOf(frame, message.regionId ?? 0);
 
         const fittingImages: FrameStore[] = [];
         let failure: unknown;
@@ -1900,7 +1973,9 @@ export class AppStore {
                           initialValues: message.initialValues ?? [],
                           fixedParams: message.fixedParams ?? [],
                           offset: message.offset ?? 0,
-                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky
+                          solver: message.solver ?? CARTA.FittingSolverType.Cholesky,
+                          regionShape,
+                          regionShapeOwner: regionShape ? (frame.spatialReference ?? frame) : undefined
                       }
                     : undefined;
                 this.imageFittingStore.setResultString(
@@ -2177,9 +2252,7 @@ export class AppStore {
                     this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
                 await this.loadDefaultFiles();
-                this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
-                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
                 if (this.preferenceStore.shouldCheckNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -2650,7 +2723,16 @@ export class AppStore {
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
-            if (updatedFrame && channelHist) {
+            // Skip the histogram of a channel or Stokes that the image has left. Its tiles can arrive
+            // late, such as when a workspace restore sets the channel right after it opens the image.
+            // Applying it would set the image back to that channel, and the view would ask for tiles
+            // of that channel, which the backend no longer sends. Apply the histogram of the channel
+            // that the image shows or is set to. During an animation, apply every histogram, because
+            // the images matched to the active image follow it only through their histograms.
+            const isCurrent = channel === updatedFrame?.channel && stokes === updatedFrame.stokes;
+            const isRequired = channel === updatedFrame?.requiredChannel && stokes === updatedFrame.requiredStokes;
+            const isLeft = !!updatedFrame && !this.channelMapStore.isChannelMapEnabled && !this.animatorStore.isServerAnimationActive && !isCurrent && !isRequired;
+            if (updatedFrame && channelHist && !isLeft) {
                 const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
                 const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
@@ -2876,7 +2958,7 @@ export class AppStore {
                 regions: mapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
-                supportAipsBeam: AppStore.Instance.preferenceStore.hasAipsBeamSupport,
+                supportAipsBeam: frame.hasAipsBeamSupport ?? AppStore.Instance.preferenceStore.hasAipsBeamSupport,
                 vectorOverlaySettings
             };
         });
@@ -2924,20 +3006,22 @@ export class AppStore {
             this.fileBrowserStore.resetLoadingStates();
         }
 
+        // Reset the PV and moment generator states of every image. A request may have been made for
+        // an image that is not the active image now. A state that is left set would refuse every
+        // workspace save until the image is closed.
+        for (const image of this.frames) {
+            if (image?.isRequestingPV) {
+                image.resetPvRequestState();
+                image.setIsRequestPVCancelling(false);
+                this.endFileLoading();
+            }
+            if (image?.isRequestingMoments) {
+                image.resetMomentRequestState();
+                this.endFileLoading();
+            }
+        }
+
         const frame = this.activeFrame;
-
-        // Reset PV generator states
-        if (frame?.isRequestingPV) {
-            frame.resetPvRequestState();
-            frame.setIsRequestPVCancelling(false);
-            this.endFileLoading();
-        }
-
-        // Reset moment generator states
-        if (frame?.isRequestingMoments) {
-            frame.resetMomentRequestState();
-            this.endFileLoading();
-        }
 
         // Reset cube histogram states
         if (frame?.renderConfig?.isUsingCubeHistogram) {
@@ -3007,14 +3091,18 @@ export class AppStore {
                 return false;
             }
             restoreIssues.forEach(issue => this.logStore.addWarning(issue.message, ["workspace", issue.kind]));
+            const newerVersion = newerWorkspaceVersion(workspace);
+            if (newerVersion !== undefined) {
+                this.logStore.addWarning(describeNewerWorkspace(newerVersion), ["workspace"]);
+            }
 
             // Take the name before `finishLoadingWorkspace` clears it. The report shows the name.
             const workspaceName = this.loadingWorkspaceName;
             this.finishLoadingWorkspace();
             this.activeWorkspace = workspace;
             const {repointed} = restorer;
-            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size) {
-                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined});
+            if (restoreIssues.length || repointed.images.size || repointed.catalogs.size || newerVersion !== undefined) {
+                this.showWorkspaceRestoreReport({name: workspaceName, issues: restoreIssues, repointed, storedName: !isKey && workspace.editable !== false ? name : undefined, newerVersion});
             }
             return true;
         } catch (err) {
@@ -3022,7 +3110,13 @@ export class AppStore {
             if (!WorkspaceRestorer.isCurrentGeneration(generation)) {
                 return false;
             }
-            AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+            // The restore may have applied the preferences, the code snippets and the overlay of the
+            // workspace before it failed. Do not keep them.
+            this.preferenceStore.clearSessionPreferences();
+            this.preferenceStore.setCodeSnippetsEnabledForSession(false);
+            this.overlaySettings.forgetRestoredSettings();
+            const message = err instanceof NewerWorkspaceError ? `Could not load workspace "${name}". ${err.message}` : `Could not load workspace "${name}"`;
+            AppToaster.show({icon: "warning-sign", message, intent: "danger", timeout: err instanceof NewerWorkspaceError ? 6000 : 3000});
             this.finishLoadingWorkspace();
             return false;
         }
@@ -3067,7 +3161,7 @@ export class AppStore {
     public *writeBackRepointedLocations() {
         const report = this.workspaceRestoreReport;
         const storedName = report?.storedName;
-        if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none") {
+        if (!report?.repointed || storedName === undefined || this.workspaceWriteBack !== "none" || this.isReadOnly) {
             return false;
         }
         // Change the state only while the report that started the write is still shown. A later
@@ -3093,6 +3187,9 @@ export class AppStore {
      * restore reads.
      */
     public writeWorkspaceSourceChanges = async (storedName: string, changes: WorkspaceSourceChanges): Promise<WorkspaceSourceWriteResult> => {
+        if (this.isReadOnly) {
+            return {state: "failed"};
+        }
         try {
             // Read the workspace as it is stored. The form that a restore reads is upgraded. If that
             // form were written back, the write would change more than the sources.
@@ -3175,14 +3272,36 @@ export class AppStore {
      * Workspace dialog shows the reason before the user saves.
      */
     @computed get workspaceSaveBlocker(): string | undefined {
+        if (this.isReadOnly) {
+            return "Cannot save workspace in read-only mode.";
+        }
+
         if (this.layoutStore?.hasPopoutWidget) {
             return "Cannot save workspace while an image view is popped out. Please dock it first.";
+        }
+
+        // During an animation the channel, the Stokes or the image changes all the time, so the
+        // workspace would keep one frame of the animation that the user did not choose.
+        if (this.animatorStore?.isAnimationActive) {
+            // The Stop button of the animator is disabled while the channel map mode is on.
+            if (this.channelMapStore?.isChannelMapEnabled) {
+                return "Cannot save workspace while an animation is playing. Please turn off the channel map mode and stop the animation first.";
+            }
+            return "Cannot save workspace while an animation is playing. Please stop it first.";
         }
 
         // A workspace still being restored is only partly in the session: saving it now would write
         // back less than was opened, without the user being told.
         if (this.isLoadingWorkspace) {
             return "Cannot save workspace while a workspace is still loading. Please wait for it to finish.";
+        }
+
+        // A moment, PV or fitting image that is still being made is not in the session yet. Check each
+        // request from the GUI and each script job, because the shared loading flag is cleared by the
+        // first of them that ends. Check them before the loading flag, which they also set, so that
+        // the message names them.
+        if (this.frames.some(frame => frame.isRequestingMoments || frame.isRequestingPV) || this.imageFittingStore.isFitting || this.imageGenerationJobs.hasRunningJobs()) {
+            return "Cannot save workspace while a moment or PV image is still being made or an image fitting is still running. Please wait for it to finish.";
         }
 
         // An image or catalog on its way from the backend is not in the session yet, and so would be
@@ -3244,6 +3363,9 @@ export class AppStore {
      * one alert for the workspaces that could not be deleted.
      */
     async deleteWorkspaces(names: string[]) {
+        if (this.isReadOnly) {
+            return;
+        }
         const failed: string[] = [];
         for (const name of names) {
             try {
@@ -4049,6 +4171,11 @@ export class AppStore {
         this.recalculateStatsRequirements();
         this.recalculateHistogramRequirements();
     };
+
+    /** Returns the statistics that the widgets ask for of a region, as last sent to the backend. */
+    statsRequirementsOf(fileId: number, regionId: number): CARTA.SetStatsRequirements | undefined {
+        return this.statsRequirements?.get(fileId)?.get(regionId);
+    }
 
     private recalculateStatsRequirements() {
         if (!this.activeFrame) {
