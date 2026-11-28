@@ -1,7 +1,5 @@
 import {rs} from "@rstest/core";
 
-import * as ReturnPathUtilities from "utilities/scripting/returnPath" with {rstest: "importActual"};
-
 const MOCK_APP_STORE = rs.hoisted(() => {
     const undefinedTarget = Object.create({value: undefined});
     return {
@@ -20,11 +18,10 @@ const MOCK_APP_STORE = rs.hoisted(() => {
 rs.mock("stores", () => ({
     AppStore: {Instance: MOCK_APP_STORE}
 }));
-rs.mock("utilities", () => ReturnPathUtilities);
 
 import type {CARTA} from "carta-protobuf";
 
-import {markAsScriptingMap} from "utilities";
+import {markAsScriptingMap} from "utilities/scripting/returnPath";
 
 import {ScriptingService} from "./ScriptingService";
 

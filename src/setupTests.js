@@ -4,25 +4,27 @@ import "@testing-library/jest-dom";
 import "rstest-canvas-mock";
 
 // Keep application singletons from reaching external services while unit tests load them.
+// Tests for Axios error handling should supply their own mock or use the real implementation.
 rs.mock("axios", () => {
-    const request = rs.fn(() => Promise.resolve({data: []}));
+    const response = () => Promise.resolve({data: []});
+    const request = rs.fn(response);
     const instance = {
         defaults: {headers: {common: {}}},
-        delete: request,
-        get: request,
-        post: request,
-        put: request
+        delete: rs.fn(response),
+        get: rs.fn(response),
+        post: rs.fn(response),
+        put: rs.fn(response)
     };
     return {
         default: Object.assign(request, {
             CancelToken: {source: rs.fn(() => ({cancel: rs.fn(), token: {}}))},
             create: rs.fn(() => instance),
-            delete: request,
-            get: request,
+            delete: rs.fn(response),
+            get: rs.fn(response),
             isAxiosError: () => false,
             isCancel: error => Boolean(error?.__CANCEL__),
-            post: request,
-            put: request
+            post: rs.fn(response),
+            put: rs.fn(response)
         })
     };
 });

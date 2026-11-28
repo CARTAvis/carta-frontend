@@ -258,7 +258,7 @@ describe("AppStore.handleCatalogFilterStream", () => {
         const profileStore = {
             catalogCoordinateSystem: {system: CatalogSystemType.Ecliptic, equinox: "B1950.0", epoch: "B1950.0"},
             catalogData: accumulatedData,
-            get2DCoordinateData: jest
+            get2DCoordinateData: rs
                 .fn()
                 .mockReturnValueOnce({wcsX: [3], wcsY: [4], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}})
                 .mockReturnValueOnce({wcsX: [1, 2, 3], wcsY: [4, 5, 6], xHeaderInfo: {units: "deg"}, yHeaderInfo: {units: "deg"}}),

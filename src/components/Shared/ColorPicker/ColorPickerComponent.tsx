@@ -45,7 +45,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }, ColorPickerComponent.ChangeDelay);
 
     componentWillUnmount() {
-        this.handleColorChange.cancel();
+        this.handleColorChange.flush();
     }
 
     public render() {

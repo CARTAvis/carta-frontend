@@ -16,12 +16,6 @@ rs.mock("stores", () => ({
     AnimatorStore: {Instance: {}},
     AppStore: Object.defineProperty({}, "Instance", {configurable: true, get: () => undefined})
 }));
-rs.mock("utilities", () => ({
-    formatTimeSeriesTickLabels: () => [],
-    getDiscreteSliderTicks: () => [],
-    getTimeLabelFormatName: () => "",
-    toFixed: (value: number, digits: number) => value.toFixed(digits)
-}));
 
 describe("AnimatorComponent", () => {
     beforeEach(() => {

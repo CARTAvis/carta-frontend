@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {toJS} from "mobx";
 
 import {AppStore} from "stores";
-import {isScriptingMap, parseReturnPath, type ReturnPath} from "utilities";
+import {isScriptingMap, parseReturnPath, type ReturnPath} from "utilities/scripting/returnPath";
 
 export class ExecutionEntry {
     target: string | null | undefined;

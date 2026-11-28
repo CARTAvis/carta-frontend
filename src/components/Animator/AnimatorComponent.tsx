@@ -8,7 +8,9 @@ import {observer} from "mobx-react";
 import {RangeSlider, ResizeDetector, SafeNumericInput, ScrollShadow, Slider} from "components/Shared";
 import {AnimationMode, HelpType, NumericInputType, PlayMode, TimeLabelFormat} from "enums";
 import {AnimatorStore, AppStore, DEFAULT_ANIMATOR_WIDGET_CONFIG, type DefaultWidgetConfig, type FrameStore, type WidgetProps} from "stores";
-import {formatTimeSeriesTickLabels, getDiscreteSliderTicks, getTimeLabelFormatName, toFixed} from "utilities";
+import {getDiscreteSliderTicks} from "utilities/slider/slider";
+import {formatTimeSeriesTickLabels, getTimeLabelFormatName} from "utilities/time/time";
+import {toFixed} from "utilities/units/units";
 
 import "./AnimatorComponent.scss";
 

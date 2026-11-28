@@ -1,23 +1,39 @@
-**Description**
+## Description
 
-linked issues and companion PRs (if there are), what is implemented or fixed, how to test it, …
+<!-- What changed, and why? Note any user-facing impact. -->
 
-**Checklist**
+## Related work
 
-For linked issues (if there are):
-- [ ] assignee and label added
-- [ ] GitHub Project estimate added
+<!-- Add "Closes #123" if this PR resolves an issue. Add "Stacked on #456" for a parent PR. Update the branch names below if testing requires a different branch. -->
 
-For the pull request:
-- [ ] reviewers and assignee added
-- [ ] GitHub Project estimate added
-- [ ] changelog updated / no changelog update needed
-- [ ] unit test added (for functions with no dependenies)
-- [ ] API documentation added (for public variables and methods in stores)
+| Backend | Protobuf | Schemas |
+| --- | --- | --- |
+| dev | dev | dev |
 
-For dependencies:
-- [ ] e2e test passing / corresponding fix added / new e2e test created
-- [ ] protobuf version bumped / no protobuf version bumped needed
-- [ ] protobuf updated to the latest dev commit / no protobuf update needed
-- [ ] corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged)
-- [ ] user manual prepared (for large new features)
+## Testing
+
+<!-- List the checks you ran and their results. Include steps reviewers can use to verify the change and any checks still pending. If no suggestion is available, leave the field empty. -->
+
+## Checklist
+
+<!-- Mark each applicable item when complete. Leave unrelated items unchecked. -->
+
+### Linked issues
+
+- [ ] Added an assignee and label.
+- [ ] Added a GitHub Project estimate.
+
+### Pull request
+
+- [ ] Added reviewers and an assignee.
+- [ ] Added a GitHub Project estimate.
+- [ ] Updated the changelog or confirmed no update is needed.
+- [ ] Covered workspace snapshot and restore in code or tests, or confirmed they are unaffected.
+
+### Dependencies and documentation
+
+- [ ] Verified the relevant end-to-end tests and updated or added coverage as needed.
+- [ ] Updated protobuf to the latest `dev` commits as needed.
+- [ ] Updated schemas to the latest `dev` commits as needed.
+- [ ] Updated or added ICD tests, or confirmed no change is needed.
+- [ ] Updated the user manual for major features as needed.

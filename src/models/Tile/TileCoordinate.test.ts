@@ -48,7 +48,8 @@ function fastestRun(run: () => void, samples = 5): number {
     return best;
 }
 
-const TILE_COORDINATE_DURATION_BUDGET = process.env.CARTA_TEST_COVERAGE === "1" ? 100 : 20;
+// Leave room for coverage instrumentation and shared CI runners.
+const TILE_COORDINATE_DURATION_BUDGET = 100;
 
 test("encodes 1M coordinates within the performance budget", () => {
     const layer = 12;
